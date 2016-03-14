@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+	<record id="wizard_valid_lines_form_view" model="ir.ui.view">
+	    <field name="name">wizard.valid.lines.form.view</field>
+	    <field name="model">wizard.valid.line</field>
+	    <field name="type">form</field>
+	    <field name="arch" type="xml">
+		<form string="Valid lines">
+		    <field name="mrc_id" invisible="1" />
+		    <button string="Select all lines" icon="gtk-go-down" name="select_all_lines" type="object" colspan="4" />
+		    <field name="line_ids" mode="tree" nolabel="1" colspan="4" domain="[('mrc_id', '=', mrc_id), ('valid_ok', '=', False)]">
+			<tree string="Lines">
+			    <field name="name" readonly="1" />
+                            <field name="amc" readonly="1" />
+                            <field name="fmc" readonly="1" />
+                            <field name="last_reviewed" readonly="1" />
+                            <field name="valid_ok" readonly="1" />
+                            <field name="valid_until" readonly="1" />
+			</tree>
+		    </field>
+		    <button string="Cancel" icon="gtk-cancel" special="cancel" type="object" colspan="2" />
+		    <button string="Valid lines" icon="gtk-execute" name="valid_lines" type="object" colspan="2" />
+		</form>
+	    </field>
+	</record>
+    
+    </data>
+</openerp>

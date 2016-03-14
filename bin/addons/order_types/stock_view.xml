@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="order_type_stock_move_tree2" model="ir.ui.view">
+            <field name="name">order.type.stock.move.tree2</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_tree2" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='product_uom']" position="after">
+                        <field name="order_type" />
+                        <field name="order_category" />
+                        <field name="order_priority" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_tree" model="ir.ui.view">
+            <field name="name">order.type.view.move.tree</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_move_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='product_uom']" position="after">
+                        <field name="order_type" />
+                        <field name="order_category" />
+                        <field name="order_priority" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_form" model="ir.ui.view">
+            <field name="name">order.type.view.move.form</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/group[5]" position="after">
+                        <group colspan="2" col="2">
+                            <separator string="Order Traceability" />
+                            <field name="order_type" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_category" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_priority" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_search" model="ir.ui.view">
+            <field name="name">order.type.view.move.search</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search" />
+            <field name="arch" type="xml">
+                <xpath expr="/search//field[@name='prodlot_id']" position="before">
+                    <field name="order_type" />
+                    <field name="order_category" />
+                    <field name="order_priority" />
+                </xpath>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_tree_reception_picking" model="ir.ui.view">
+            <field name="name">order.type.view.move.tree.reception.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
+            <field name="arch" type="xml">
+                <data>
+                	<xpath expr="/tree" position="attributes">
+                		<attribute name="editable">top</attribute>
+                		<attribute name="noteditable">True</attribute>
+                		<attribute name="hide_new_button">True</attribute>
+                		<attribute name="hide_delete_button">True</attribute>
+                	</xpath>
+                	
+                	<xpath expr="/tree//button[@string='Split in production lots']" position="replace" />
+                	<xpath expr="/tree//button[@string='Put in current pack']" position="replace" />
+                	<xpath expr="/tree//button[@string='Put in a new pack']" position="replace" />
+                	<xpath expr="/tree//button[@string='Set Available']" position="replace" />
+                	<xpath expr="/tree//button[@string='Process']" position="replace" />
+                	<xpath expr="/tree//button[@string='Scrap Products']" position="replace" />
+                	
+	                <xpath expr="/tree/field[@name='product_uom']" position="after">
+	                    <field name="order_type" />
+	                    <field name="order_category" />
+	                    <field name="order_priority" />
+	                </xpath>
+	            </data>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_tree_reception_picking_board" model="ir.ui.view">
+            <field name="name">order.type.view.move.tree.reception.picking.board</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_move_tree_reception_picking_board" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='product_uom']" position="after">
+                        <field name="order_type" />
+                        <field name="order_category" />
+                        <field name="order_priority" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_form_reception_picking" model="ir.ui.view">
+            <field name="name">order.type.view.move.form.reception.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/group[5]" position="after">
+                        <group> 
+                            <separator string="Order Traceability" />
+                            <field name="order_type" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_category" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                            <field name="order_priority" attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="order_type_view_move_search_reception_incoming_picking" model="ir.ui.view">
+            <field name="name">order.type.view.move.search.reception.incoming.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search_reception_incoming_picking" />
+            <field name="arch" type="xml">
+                <data>
+                	<xpath expr="/search//filter[@string='To Do']" position="attributes">
+                		<attribute name="string">In Progress</attribute>
+                	</xpath>
+                	
+                	<xpath expr="/search/group[2]/field[@name='tracking_id']" position="replace" />
+                	
+                    <xpath expr="/search/group[2]/field[@name='prodlot_id']" position="after">
+                        <group> 
+                            <separator string="Order Traceability" />
+                            <field name="order_priority" />
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    
+            <record id="order_type_view_move_search_reception_outcoming_picking" model="ir.ui.view">
+            <field name="name">order.type.view.move.search.reception.outcoming.picking</field>
+            <field name="model">stock.move</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_move_search_reception_outcoming_picking" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[2]/field[@name='prodlot_id']" position="after">
+                        <group> 
+                            <separator string="Order Traceability" />
+                            <field name="order_priority" />
+                        </group>
+                    </xpath>
+                    
+                    <xpath expr="/search//filter[@string='Available']" position="replace" />
+                </data>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

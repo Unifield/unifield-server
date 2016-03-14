@@ -1,0 +1,77 @@
+-
+  To test that the rules are working properly, I first create a rule to test against, then create an object to test the value_not_synchronized_on_create property for the rule. Then I write on the object twice to test the write_access and value_not_synchronized_on_write rules. 
+-
+  !python {model: msf_field_access_rights.field_access_rule}:
+
+    users_pool = self.pool.get('res.users')
+    
+    model_pool = self.pool.get('ir.model')
+    
+    field_access_rule_line_pool = self.pool.get('msf_field_access_rights.field_access_rule_line')
+
+    user_model_search = model_pool.search(cr, uid, [('model','=','res.users')], context=context)
+
+    user_model = model_pool.browse(cr, uid, user_model_search[0], context=context)
+    
+    rule_values = {
+      'name':'msf_field_access_rights field_access_rules users test',
+      'model_id':user_model.id,
+      'instance_level':'hq',
+      'filter':False,
+      'domain_text':False,
+      'group_ids':False,
+      'state':'filter_validated',
+      'active':'1'
+    }
+    
+    rule_id = self.create(cr, uid, rule_values, context=context)
+    
+    self.generate_rules_button(cr, uid, [rule_id], context=context)
+    
+    rule_line = [line for line in self.browse(cr, uid, rule_id).field_access_rule_line_ids if line.field_name == 'user_email'][0]
+    
+    new_line_values = {
+      'write_access':'1',
+      'value_not_synchronized_on_create':'1',
+      'value_not_synchronized_on_write':'1',
+    }
+    
+    field_access_rule_line_pool.write(cr, uid, rule_line.id, new_line_values, context=context)
+    
+    user_values = {
+      'name':'msf_field_access_rights_test',
+      'login':'msf_field_access_rights_test',
+      'user_email':'test@test.com',
+    }
+    
+    context['sync_update_execution'] = True
+    
+    context['applyToAdmin'] = True
+    
+    user_id = users_pool.create(cr, uid, user_values, context=context)
+    
+    user = users_pool.browse(cr, uid, user_id, context=context)
+    
+    assert not user.user_email, 'Was able to write on field with value_not_synchronized_on_create'
+    
+
+
+    users_pool.write(cr, uid, user_id, {'user_email':'test2@test.com'}, context=context)
+    
+    user = users_pool.browse(cr, uid, user_id, context=context)
+    
+    assert not user.user_email, 'Was able to write on field with value_not_synchronized_on_write'
+    
+    
+    
+    del context['sync_update_execution']
+
+    field_access_rule_line_pool.write(cr, uid, rule_line.id, {'write_access':False}, context=context)
+
+    from osv import orm
+    
+    from msf_field_access_rights import tests
+    
+    args = {'cr':cr, 'uid':uid, 'id':user_id, 'values':{'user_email':'test2@test.com'}, 'context':context}
+    
+    tests.test_functions.assert_exception(users_pool.write, 'Was able to write on field without write_access', **args)

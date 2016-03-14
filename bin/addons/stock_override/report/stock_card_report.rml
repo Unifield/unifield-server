@@ -1,0 +1,254 @@
+<?xml version="1.0" ?>
+<document filename="stock_card.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Stock Card" author="Unifield,MSF" allowSplitting="20">
+        <pageTemplate>
+            <frame id="first" x1="28.0" y1="20.0" width="786" height="525" />
+            <pageGraphics>
+                <fill color="black" />
+                <stroke color="black" />
+                <setFont name="DejaVu Sans" size="8" />
+                <image x="28.0" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            </pageGraphics>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <blockTableStyle id="MainTitle">
+            <lineStyle kind="GRID" colorName="#000000" start="0,1" stop="0,1" />
+        </blockTableStyle>
+
+        <blockTableStyle id="Header">
+        </blockTableStyle>
+        
+        <blockTableStyle id="BalanceHeader">
+            <lineStyle kind="GRID" colorName="#000000" start="5,1" stop="5,1" />
+        </blockTableStyle>
+        
+        <blockTableStyle id="LineHeader">
+            <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
+        </blockTableStyle>
+
+        <blockTableStyle id="Lines">
+            <lineStyle kind="LINEABOVE" colorName="#000000" />
+            <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" stop="-1,0" />
+        </blockTableStyle>
+
+        <paraStyle name="ParaMainTitle" fontName="Helvetica-Bold" fontSize="12" alignment="CENTER" />
+        <paraStyle name="HeaderBold" fontName="Helvetica-Bold" fontSize="8" alignment="LEFT" />
+        <paraStyle name="Header" fontName="Helvetica" fontSize="8" alignment="LEFT" />
+        <paraStyle name="ParaLineHeader" fontName="Helvetica-Bold" fontSize="9" alignment="CENTER" />
+        <paraStyle name="ParaLines" fontName="Helvetica" fontSize="8" alignment="CENTER" />
+        <paraStyle name="ParaLinesLeft" fontName="Helvetica" fontSize="8" alignment="LEFT" />
+    </stylesheet>
+
+    <story>
+
+        [[ repeatIn(objects, 'o') ]]
+
+        <blockTable colWidths="785.0" style="MainTitle">
+            <tr>
+                <td> </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="ParaMainTitle">STOCK CARD</para>
+                </td>
+            </tr>
+            <tr>
+                <td> </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="80.0,180.0,20.0,120.0,80.0,120.0,80.0,120.0" style="BalanceHeader">
+            <tr>
+                <td>
+                    <para style="HeaderBold">From</para>
+                </td>
+                <td>
+                    <para style="Header">[[ formatLang(o.from_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold">To</para>
+                </td>
+                <td>
+                    <para style="Header">[[ formatLang(o.to_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+                <td>
+                    <para style="HeaderBold"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderBold">Location</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.location_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+                <td>
+                    <para style="HeaderBold">Stock Balance</para>
+                </td>
+                <td>
+                    <para style="Header">[[ formatLang(o.available_stock or 0.00) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold">UoM</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.product_id.uom_id.name ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="80.0,120.0,80.0,120.0,80.0,320.0" style="Header">
+            <tr>
+                <td>
+                    <para style="HeaderBold">Code</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.product_id.default_code ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+                <td>
+                    <para style="HeaderBold">Batch Number</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.prodlot_id.name ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="80.0,320.0,80.0,120.0,80.0,120.0" style="Header">
+            <tr>
+                <td>
+                    <para style="HeaderBold">Description</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.product_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold">Expiry Date</para>
+                </td>
+                <td>
+                    <para style="Header">[[ formatLang(o.prodlot_id.life_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderBold"> </para>
+                </td>
+                <td>
+                    <para style="Header"> </para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="ParaMainTitle">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="95.0,100.0,220.0,55.0,55.0,55.0,120.0,100.0" style="LineHeader" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="ParaLineHeader">Date</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Doc. Reference</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Origin</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Qty IN</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Qty OUT</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Balance</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Source/Destination</para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader">Notes</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+                <td>
+                    <para style="ParaLineHeader"> </para>
+                </td>
+            </tr>
+        </blockTable>
+        <section>
+            <blockTable colWidths="95.0,100.0,220.0,55.0,55.0,55.0,120.0,100.0" style="Lines">
+                [[ repeatIn(o.card_lines, 'l') ]]
+                <tr>
+                    <td>
+                        <para style="ParaLines">[[ formatLang(l.date_done, date_time=True) ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLinesLeft">[[ l.doc_ref ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLinesLeft">[[ parse_origin(l.origin) ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLines">[[ formatLang(l.qty_in) ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLines">[[ formatLang(l.qty_out) ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLines">[[ formatLang(l.balance) ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLinesLeft">[[ l.src_dest ]]</para>
+                    </td>
+                    <td>
+                        <para style="ParaLines">[[ l.notes ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+        </section>
+
+    </story>
+
+</document>

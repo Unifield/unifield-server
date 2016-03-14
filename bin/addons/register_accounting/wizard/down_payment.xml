@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Down Payment Wizard Form -->
+        <record model="ir.ui.view" id="wizard_down_payment_form">
+            <field name='name'>wizard.down.payment.form</field>
+            <field name='model'>wizard.down.payment</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Down Payment">
+                    <separator string="Message" colspan="4"/>
+                    <newline/>
+                    <label string="Please choose the PO for this down payment." align="0.0" colspan="4"/>
+                    <newline/>
+                    <separator string="Your Selection" colspan="4"/>
+                    <newline/>
+                    <field name="purchase_id" domain="[('down_payment_filter', '=', {'currency_id': currency_id, 'partner_id': partner_id})]" colspan="2"/>
+                    <newline/>
+                    <group col="6" colspan="4">
+                        <label string="" colspan="2"/>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2"/>
+                        <button name="button_validate" type="object" string="Validate" icon="gtk-ok" attrs="{'readonly': [('state', '=', 'closed')]}" colspan="2"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

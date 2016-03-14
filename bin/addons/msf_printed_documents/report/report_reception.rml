@@ -1,0 +1,864 @@
+<?xml version="1.0" ?>
+<document filename="reception_report.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Reception Report" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="530" />
+
+        <pageGraphics>
+            <drawString x="20" y="560.0">Reception</drawString>
+            <fill color="blue"/>
+            <drawString x="20" y="540.0">[[ '%s' % (objects[0].name) ]]</drawString>
+
+
+            <fill color="blue">[[ getState(objects[0]) == "cancel" and removeParentNode('fill') ]]</fill>
+            <fill color="red">[[ getState(objects[0]) != "cancel" and removeParentNode('fill') ]]</fill>
+
+            <drawString x="20" y="520.0">[[ getSel(objects[0], 'state') ]]</drawString>
+
+            <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica" size="8"/>
+            <fill color="black"/>
+            <drawString x="730" y="530.0">Page : <pageNumber /></drawString>
+            <drawString x="765" y="530">/</drawString>
+            <drawString x="770" y="530.0"><pageCount /> </drawString>
+        </pageGraphics>
+
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+
+
+        <blockTableStyle id="OrderInformationsHaut">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5"  />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="OrderInformationsGD">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformationsBas">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5"  />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="OrderInformationsRien">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="OrderInformationsFin1">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="black" start="2,0" stop="3,0" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformationsFin2">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="black" start="2,0" stop="3,6" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformationsFin2_2">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="1,-1" stop="3,-1"/>
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  start="1,-1" stop="3,-1"/>
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5"  start="1,-1" stop="3,-1"/>
+        </blockTableStyle>
+
+
+
+        <blockTableStyle id="OrderInformationsFin2_3">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="1,-1" stop="3,-1" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5"  start="1,-1" stop="3,-1"/>
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="1,-1" stop="3,-1" />
+        </blockTableStyle>
+
+
+
+
+
+
+        <blockTableStyle id="OrderInformations">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformations2">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="CENTER" />
+            <blockBackground colorName="silver" start="0,6" stop="0,6" />
+            <lineStyle kind="GRID" colorName="#000000" start="0,6" stop="-1,-1" thickness="0.5"/>
+            <blockTopPadding value="0"   />
+            <blockBottomPadding value="0" />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformations3">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="CENTER" />
+            <blockTopPadding value="0" />
+            <blockBottomPadding value="0" />
+
+            <lineStyle kind="LINEBEFORE" colorName="black"  start="2,0" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="OrderInformations4">
+            <blockAlignment value="CENTER" />
+            <blockVAlign value="CENTER" />
+            <lineStyle kind="INNERGRID" colorName="#000000" thickness="0.5" />
+            <lineStyle kind="LINEBEFORE" colorName="#000000" thickness="0.5" start="0,0" stop="1,-1" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitleS">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="silver" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle2">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="silver" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle3">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+
+
+        <blockTableStyle id="ItemsTitle4">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="silver" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="1.0" />
+        </blockTableStyle>
+
+
+        <blockTableStyle id="ItemsTitle5">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle6">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle7">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="ItemsTitle8">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+[[ getExpDate(line) ]]
+
+        <blockTableStyle id="LinesTable2">
+
+
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE"  />
+            <blockBackground colorName="silver"  />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5"  />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" />
+
+
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockBackground colorName="white"  start="0,1"/>
+            <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
+
+        </blockTableStyle>
+
+        <blockTableStyle id="LinesTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEBEFORE" colorName="black" start="0,0" stop="0,0" thickness="0.5" />
+            <lineStyle kind="LINEAFTER" colorName="black" start="-1,0" stop="-1,0" thickness="0.5" />
+        </blockTableStyle>
+
+        <blockTableStyle id="LinesTableEnd">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="LINEABOVE" colorName="black" start="0,0" stop="-1,-1" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="RemarkTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+        <blockTableStyle id="StatusTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="black" thickness="0.5" />
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+
+		<!-- Header font style -->
+        <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
+        <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
+        <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
+		<!-- Information font style -->
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationSpe" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="8.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationN" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="white"/>
+
+        <paraStyle name="TextInformationGROS" fontName="Helvetica" fontSize="11.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation2" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" textColor="blue"/>
+        <paraStyle name="TextInformation4" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="18.0" spaceBefore="1.0" spaceAfter="1.0" />
+
+        <paraStyle name="TextInformation5" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="12.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <!-- Lines font style -->
+        <paraStyle name="Lines" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" />
+    </stylesheet>
+
+    <story>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="800.0" >
+            <tr><td><para style="Standard">Expected Receipt Date : [[ getERD(objects[0]) ]]</para></td></tr>
+            <tr><td><para style="Standard">Actual Receipt Date   : [[ getActualReceiptDate(objects[0]) ]]</para></td></tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" >
+            <tr><td></td></tr>
+        </blockTable>
+
+        <blockTable colWidths="175.0,10.0,175.0,175.0,175.0,90.0" style="OrderInformations">
+            <tr>
+                <td>
+                    <para style="TextInformation">PO ref. : [[ getPOref(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation">Details : [[ getDetail(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"><u>From :</u></para>
+                </td>
+                <td>
+                    <para style="TextInformation"><u>To :</u></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="TextInformation">Origin ref : [[ getOriginRef(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation">Transport mode : [[  getSel(objects[0].purchase_id, 'transport_type') ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ getPartnerName(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ getProject(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="TextInformation">Category : [[ getSel(objects[0].purchase_id, 'categ') ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation">Priority : [[  getSel(objects[0].purchase_id, 'priority') ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ getPartnerAddress(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ getWarehouse(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="TextInformation">Total items : [[ getTotItems(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation">Confirmed delivery date : [[  getConfirmedDeliveryDate(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ getPartnerPhone(objects[0]) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation">□ To stock</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+                <td>
+                    <para style="TextInformation">□ To cross-docking</para>
+                </td>
+                <td>
+                    <para style="TextInformation"></para>
+                </td>
+            </tr>
+
+        </blockTable>
+
+        <blockTable colWidths="800.0" >
+            <tr><td></td></tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="OrderInformations2" repeatRows="7">
+
+            <tr>
+                <td>
+                    <blockTable colWidths="800.0" style="OrderInformations3">
+                        <tr>
+                            <td>
+                                <para style="TextInformationGROS" alignment="CENTER"><b>[[ getWarning(objects[0]) ]]</b></para>
+                            </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <blockTable colWidths="800.0" style="OrderInformations3">
+                        <tr>
+                            <td>
+                                <para style="TextInformation" alignment="CENTER"></para>
+                            </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <blockTable colWidths="800.0" style="OrderInformations3">
+                        <tr>
+                            <td>
+                                <para style="TextInformation" alignment="CENTER"></para>
+                            </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <blockTable colWidths="800.0" style="OrderInformations3">
+                        <tr>
+                            <td>
+                                <para style="TextInformation" alignment="CENTER"></para>
+                            </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <blockTable colWidths="800.0" style="OrderInformations3">
+                        <tr>
+                            <td>
+                                <para style="TextInformation" alignment="CENTER"></para>
+                            </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+
+
+            <tr>
+                <td>
+                    <blockTable colWidths="800.0" style="OrderInformations3">
+                        <tr>
+                            <td>
+                                <para style="TextInformation" alignment="LEFT"></para>
+                            </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <blockTable colWidths="30,325,50,50,50,60,75,60,20,20,20,20,20" style="OrderInformations3">
+                        <tr>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">Item</para>
+                                </td>
+
+                                <td>
+                                <blockTable colWidths="65,260" style="OrderInformations4">
+                                    <tr>
+                                        <td>
+                                            <para style="TextInformation" alignment="LEFT">Code</para>
+                                        </td>
+                                        <td>
+                                            <para style="TextInformation" alignment="LEFT">Description</para>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <para style="TextInformation" alignment="LEFT">Comment</para>
+                                        </td>
+                                        <td>
+                                            <para style="TextInformation" alignment="LEFT">Changed article</para>
+                                        </td>
+                                    </tr>
+
+                                </blockTable>
+                                </td>
+
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Qty confirmed</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Unit of Measure</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Qty backorder</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Qty received</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation5" alignment="CENTER">Batch / Serial number</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">Expiry date</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">ED</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">BM</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">KC</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">DG</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">NP</para>
+                                </td>
+                        </tr>
+                    </blockTable>
+
+
+                </td>
+            </tr>
+
+
+
+
+
+            <tr>
+            [[ repeatIn(get_lines(objects[0]), 'line') ]]
+                <td>
+                    <blockTable colWidths="30,325,50,50,50,60,75,60,20,20,20,20,20" style="OrderInformations3">
+                        <tr>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getNbItem() ]]</para>
+                                </td>
+
+                                <td>
+                                <blockTable colWidths="65,260" style="OrderInformations4">
+                                    <tr>
+                                        <td>
+                                            <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.default_code or False ]]</para>
+                                        </td>
+                                        <td>
+                                            <para style="TextInformationSpe" alignment="CENTER">[[ line.product_id and line.product_id.name or False ]]</para>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <para style="TextInformationN" alignment="LEFT">-</para>
+                                        </td>
+                                        <td>
+                                            <para style="TextInformationN" alignment="LEFT">-</para>
+                                        </td>
+                                    </tr>
+
+                                </blockTable>
+                                </td>
+
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyPO(line) ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ line.product_uom and line.product_uom.name or False ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyBO(line,objects[0]) ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getQtyIS(line,objects[0]) ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getBatch(line) ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ getExpDate(line) ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'ed') ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'bm') ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'kc') ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'dg') ]]</para>
+                                </td>
+                                <td>
+                                    <para style="TextInformation4" alignment="CENTER">[[ check(line,'np') ]]</para>
+                                </td>
+                        </tr>
+                    </blockTable>
+
+                </td>
+            </tr>
+
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="OrderInformationsRien" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="800.0" style="OrderInformationsRien" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="OrderInformationsHaut" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">REMARKS :</para>
+                  <para style="TextInformation" alignment="LEFT">[[ objects[0].note ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+        <blockTable colWidths="800.0" style="OrderInformationsGD" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="800.0" style="OrderInformationsGD" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+        <blockTable colWidths="800.0" style="OrderInformationsGD" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="OrderInformationsBas" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="OrderInformationsRien" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="800.0" style="OrderInformationsRien" >
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+
+                </td>
+            </tr>
+        </blockTable>
+
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">Received by :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">Controlled by :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">Name :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_3" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">Date :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_3" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_2" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT">Signature :</para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+        <blockTable colWidths="175,150,150,150,175" style="OrderInformationsFin2_3" keepWithNext="1">
+            <tr>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+                <td>
+                  <para style="TextInformation" alignment="LEFT"></para>
+                </td>
+            </tr>
+        </blockTable>
+
+
+
+
+    </story>
+
+</document>

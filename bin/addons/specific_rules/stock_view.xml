@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        
+        <record id="stock_initial_inventory_form_view" model="ir.ui.view">
+            <field name="name">stock.initial.inventory.form.view</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Initial stock inventory">
+                    <separator colspan="4" string="General information" />
+                    <field name="name" string="Reference" />
+                    <field name="date" />
+                    <label colspan="2" string=" " />
+                    <field name="date_done" readonly="True" attrs="{'invisible': [('state', '!=', 'done')]}" />
+                    <!--<separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('sublist_id', '!=', False)]}">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                              on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />-->
+                    <notebook colspan="4">
+                        <page string="Inventory lines">
+                            <field colspan="4" name="inventory_line_id" nolabel="1" widget="one2many_list" attrs="{'readonly': [('state', '!=', 'draft')]}">
+                                <tree string="Products" editable="bottom" colors="red: err_msg!=''">
+                                    <field name="product_id" 
+                                           domain="[('type', 'not in', ('consu', 'service', 'service_recep'))]" 
+                                           context="available_for_restriction={'location_id': location_id}, search_default_not_restricted=1, 'location': location_id"
+                                           on_change="product_change(product_id, location_id, 'product_id', True,  prod_lot_id)" />
+                                    <field name="average_cost" />
+                                    <field name="currency_id" />
+                                    <field name="location_id" domain="[('usage', '=', 'internal')]" on_change="product_change(product_id, location_id, 'location_id', prod_lot_id)" required="True" />
+                                    <field name="prodlot_name"
+                                        attrs="{'required': [('hidden_batch_management_mandatory', '=', True)], 'readonly': [('hidden_batch_management_mandatory', '=', False)]}" />
+                                    <field name="expiry_date"
+                                        attrs="{'required': [('hidden_perishable_mandatory', '=', True)], 'readonly': [('hidden_perishable_mandatory', '=', False)]}" />
+                                    <field name="product_qty" required="True" on_change="onchange_uom_qty(product_uom, product_qty)"/>
+                                    <field name="product_uom" required="True" on_change="onchange_uom_qty(product_uom, product_qty)" />
+                                    <field name="hidden_batch_management_mandatory" readonly="True" string="B.Num" />
+                                    <field name="hidden_perishable_mandatory" readonly="True" string="Exp" />
+                                    <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-dialog-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
+                                    <field name="duplicate_line" invisible="True" />  
+                                    <field name="err_msg" readonly="True" invisible="True" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group colspan="4" col="6">
+                        <field name="state" />
+                        <button name="action_cancel_inventary" states="draft,confirm" string="Cancel Inventory" type="object" icon="gtk-cancel" />
+                        <button name="action_confirm" states="draft" string="Confirm Inventory" type="object" icon="gtk-apply" />
+                        <button name="action_done" states="confirm" string="Validate Inventory" type="object" icon="gtk-jump-to" />
+                        <button name="action_cancel_draft" states="cancel" string="Set to Draft" type="object" icon="gtk-convert" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="stock_initial_inventory_tree_view" model="ir.ui.view">
+            <field name="name">stock.initial.inventory.tree.view</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Initial stock inventories">
+                    <field name="name" string="Reference" />
+                    <field name="date" />
+                    <field name="state" />
+                    <field name="date_done" readonly="True" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="stock_initial_inventory_search_view" model="ir.ui.view">
+            <field name="name">stock.initial.inventory.search.view</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Initial stock inventories">
+                    <field name="name" string="Reference" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+
+        
+        <record id="action_initial_inventory" model="ir.actions.act_window">
+            <field name="name">Initial stock inventory</field>
+            <field name="res_model">initial.stock.inventory</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="stock_initial_inventory_search_view" />
+        </record>
+        
+        <menuitem action="action_initial_inventory"
+                  id="menu_initial_inventory"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="99" />
+                  
+        <!-- Cost reevaluation document -->
+        <record id="cost_reevaluation_form_view" model="ir.ui.view">
+            <field name="name">cost.reevaluation.form.view</field>
+            <field name="model">stock.cost.reevaluation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Product cost revaluation">
+                    <field name="name" />
+                    <field name="date" />
+                    <separator colspan="4" string="Product filters" />
+                    <field name="sublist_id" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('nomen_manda_0', '!=', False)]}"/>
+                    <group colspan="2" col="4" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('sublist_id', '!=', False)]}">
+                        <field name="nomen_manda_0"
+                            domain="[('level', '=', '0'), ('type', '=', 'mandatory')]"
+                            widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_1"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_2"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                        <field name="nomen_manda_3"
+                            domain="[('id','=', 0)]"
+                            widget="selection"
+                            get_selection="get_nomen"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False)"
+                        />
+                    </group>
+                    <button colspan="4" icon="gtk-go-down" string="Fill lines" type="object" name="fill_lines" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                    <notebook colspan="4">
+                        <page string="Products">
+                            <field name="reevaluation_line_ids" colspan="4" mode="tree" nolabel="1">
+                                <tree string="Products" editable="top">
+                                    <field name="product_id" on_change="product_id_change(product_id)"/>
+                                    <field name="average_cost" />
+                                    <field name="currency_id" />
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group colspan="4" col="6">
+                        <field name="state" />
+                        <button name="action_cancel" type="object" string="Cancel" icon="gtk-cancel" states="draft,confirm" />
+                        <button name="action_confirm" type="object" string="Confirm" icon="gtk-apply" states="draft" />
+                        <button name="action_done" type="object" string="Validate" icon="gtk-jump-to" states="confirm" />
+                        <button name="action_cancel_draft" type="object" string="Set to Draft" icon="gtk-convert" states="cancel" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="cost_reevaluation_tree_view" model="ir.ui.view">
+            <field name="name">cost.reevaluation.tree.view</field>
+            <field name="model">stock.cost.reevaluation</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product cost revaluation">
+                    <field name="name" />
+                    <field name="date" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="cost_reevaluation_search_view" model="ir.ui.view">
+            <field name="name">cost.reevaluation.search.view</field>
+            <field name="model">stock.cost.reevaluation</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Product cost revaluation">
+                    <field name="name" />
+                    <field name="state" />
+                </search>
+            </field>
+        </record>
+        
+        <record id="action_cost_reevaluation" model="ir.actions.act_window">
+            <field name="name">Product cost revaluation</field>
+            <field name="res_model">stock.cost.reevaluation</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="cost_reevaluation_search_view" />
+        </record>
+        
+        <menuitem action="action_cost_reevaluation"
+                  id="menu_cost_reevaluation"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="99" />
+    </data>
+</openerp>

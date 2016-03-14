@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+            
+        <record id="initial_stock_inventory_form_import" model="ir.ui.view">
+            <field name="name">initial.stock.inventory.form.import</field>
+            <field name="model">initial.stock.inventory</field>
+            <field name="type">form</field>
+            <field name="priority">301</field>
+            <field name="inherit_id" ref="specific_rules.stock_initial_inventory_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='hidden_perishable_mandatory']" position="after">
+                    <field name="to_correct_ok" invisible="1"/>
+                    <field name="inactive_product" invisible="1" />
+                    <!-- <field name="comment" attrs="{'invisible': [('inactive_product', '=', False), ('to_correct_ok', '=', False)]'}" />-->
+                    <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >
+                    <attribute name="colors">red:to_correct_ok == True or err_msg!='' or inactive_product == True</attribute>
+                </xpath>
+                <xpath expr="/form/notebook//field[@name='inventory_line_id']" position="before" >
+                <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}" >
+                    <field name="file_to_import" colspan="2" />
+                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
+                    <!--                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>-->
+                </group>
+            </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="stock_inventory_form_inactive_product" model="ir.ui.view">
+        	<field name="name">stock.inventory.form.inactive.product</field>
+        	<field name="model">stock.inventory</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="stock.view_inventory_form" />
+        	<field name="arch" type="xml">
+        		<data>
+                    <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree/field[@name='comment']" position="replace">
+                        <field name="to_correct_ok" invisible="1" />
+                        <field name="inactive_product" invisible="1" />
+                        <field name="inactive_error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=,' False)]}" />
+                        <field name="inv_expiry_date" invisible="1" />
+                </xpath>
+                <xpath expr="/form/notebook/page/field[@name='inventory_line_id']/tree" position="attributes" >
+                    <attribute name="colors">red:to_correct_ok ==True or has_problem == True or inactive_product == True</attribute>
+                </xpath>
+                <xpath expr="/form/notebook//field[@name='inventory_line_id']" position="before" >
+                <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}" >
+                    <field name="file_to_import" colspan="2" />
+                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+                    <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" type="object" icon="gtk-add" colspan="4" />
+                    <!--                    <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="1" type="object" invisible="0"/>-->
+                </group>
+            </xpath>
+        		</data>
+        	</field>
+        </record>
+        
+    </data>
+</openerp>

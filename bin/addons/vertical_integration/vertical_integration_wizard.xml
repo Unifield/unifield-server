@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <!-- OCG export -->
+
+        <record id="hq_export_ocg_view" model="ir.ui.view">
+            <field name="name">Export to HQ system (OCG)</field>
+            <field name="model">wizard.hq.report.ocg</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Export to HQ system">
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
+                <field name="fiscalyear_id"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '&lt;&gt;', 'created'), ('number', '&lt;', 16)]"/>
+                <newline/>
+                <button icon="terp-camera_test" string="Export" name="button_create_report" type="object" default_focus="1"/>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_hq_export_ocg" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCG)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.hq.report.ocg</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hq_export_ocg_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_ocg"
+            id="menu_action_hq_export_ocg"  sequence="10"/>
+
+    <!-- OCA export -->
+
+        <record id="hq_export_oca_view" model="ir.ui.view">
+            <field name="name">Export to HQ system (OCA)</field>
+            <field name="model">wizard.hq.report.oca</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Export to HQ system">
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
+                <field name="fiscalyear_id"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', 'in', ['mission-closed']), ('number', '&lt;', 16)]"/>
+                <field name="selection"/>
+                <group colspan="6" col="4">
+                    <label string="" colspan="2"/>
+                    <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                    <button icon="terp-camera_test" string="Export" name="button_create_report" type="object" default_focus="1" colspan="1"/>
+                </group>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_hq_export_oca" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCA)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.hq.report.oca</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hq_export_oca_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_oca"
+            id="menu_action_hq_export_oca"  sequence="20"/>
+
+    <!-- OCB export -->
+
+        <record id="ocb_export_wizard" model="ir.ui.view">
+            <field name="name">Export to HQ system (OCB)</field>
+            <field name="model">ocb.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Export to HQ system">
+                <field name="instance_id" domain="['&amp;', ('level', 'in', ['coordo','section']), ('instance_to_display_ids','=',True)]"/>
+                <field name="fiscalyear_id"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
+                <field name="selection"/>
+                <group colspan="6" col="4">
+                    <label string="" colspan="2"/>
+                    <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                    <button icon="terp-camera_test" string="Export" name="button_export" type="object" default_focus="1" colspan="1"/>
+                </group>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_hq_export_ocb" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCB)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocb.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocb_export_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_ocb"
+            id="menu_action_hq_export_ocb"  sequence="30"/>
+
+    <!-- OCB matching export -->
+
+        <record id="ocb_matching_export_wizard" model="ir.ui.view">
+            <field name="name">OCB matching export</field>
+            <field name="model">ocb.matching.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="OCB matching export">
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
+                <group colspan="6" col="4">
+                    <label string="" colspan="2"/>
+                    <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                    <button icon="terp-camera_test" string="Export" name="button_export" type="object" default_focus="1" colspan="1"/>
+                </group>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_hq_ocb_matching_export" model="ir.actions.act_window">
+            <field name="name">OCB matching export</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocb.matching.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocb_matching_export_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_ocb_matching_export"
+            id="menu_action_hq_ocb_matching_export" sequence="40"/>
+
+
+    <!-- OCBA export -->
+
+        <record id="ocba_export_wizard" model="ir.ui.view">
+            <field name="name">Export to HQ system (OCBA)</field>
+            <field name="model">ocba.export.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Export to HQ system">
+                <field name="instance_id" domain="['&amp;', ('level', 'in', ['coordo','section']), ('instance_to_display_ids','=',True)]"/>
+                <field name="fiscalyear_id"/>
+                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('number', '&lt;', 16)]"/>
+                <field name="selection"/>
+
+                <group colspan="6" col="4">
+                    <label string="" colspan="2"/>
+                    <button special="cancel" string="Cancel" colspan="1" icon="gtk-cancel"/>
+                    <button icon="terp-camera_test" string="Export" name="button_export" type="object" default_focus="1" colspan="1"/>
+                </group>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_hq_export_ocba" model="ir.actions.act_window">
+            <field name="name">Export to HQ system (OCBA)</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">ocba.export.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="ocba_export_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_hq_export_ocba"
+            id="menu_action_hq_export_ocba" sequence="50"/>
+
+    </data>
+</openerp>

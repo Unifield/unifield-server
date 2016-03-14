@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+    
+        <record id="msf_budget_decision_moment_initial" model="msf.budget.decision.moment">
+            <field name="name">Initial</field>
+            <field name="order">1</field>
+        </record>
+        <record id="msf_budget_decision_moment_first_revision" model="msf.budget.decision.moment">
+            <field name="name">First Revision</field>
+            <field name="order">2</field>
+        </record>
+        <record id="msf_budget_decision_moment_second_revision" model="msf.budget.decision.moment">
+            <field name="name">Second Revision</field>
+            <field name="order">3</field>
+        </record>
+        <record id="msf_budget_decision_moment_third_revision" model="msf.budget.decision.moment">
+            <field name="name">Third Revision</field>
+            <field name="order">4</field>
+        </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,5 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_object_query_all","object.query all","model_object_query",,1,1,1,1
+"access_object_query_object_all","object.query.object all","model_object_query_object",,1,1,1,1
+"access_object_query_result_fields_all","object.query.result.fields all","model_object_query_result_fields",,1,1,1,1
+"access_object_selection_data_all","object.query.selection_data all","model_object_query_selection_data",,1,1,1,1

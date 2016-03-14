@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="stock_move_memory_tree_in" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.in</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree//field[@name='quantity']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_uom, quantity)</attribute>
+                    </xpath>
+
+                    <xpath expr="/tree//field[@name='product_uom']" position="attributes">
+                        <attribute name="on_change">onchange_uom_qty(product_uom, quantity)</attribute>
+                    </xpath>
+				
+					<field name="prodlot_id" position="replace">
+                    	<field name="prodlot_id" string="Batch Number"
+                    		domain="[('product_id', '=', product_id), ('check_type','=', True)]"
+                    		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
+                    		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
+                    		on_change="change_lot(prodlot_id)" />
+                    		
+                    	<field name="expiry_date" attrs="{'readonly': ['|', '&amp;', ('batch_number_check', '=', False), ('expiry_date_check', '=', False), '&amp;', ('batch_number_check', '=', True), ('expiry_date_check', '=', True)]}"
+                    		on_change="change_expiry(expiry_date, product_id, type_check)" />
+                    	<field name="batch_number_check" invisible="True" />
+                    	<field name="expiry_date_check" invisible="True" />
+                    	<field name="type_check" invisible="True" />
+                    	<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
+            			<field name="integrity_status" invisible="False" />
+            			<field name="location_id" invisible="1" />
+                    </field>
+                    
+				</data>
+            </field>
+        </record>
+        
+        <record id="stock_move_memory_tree_out" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.out</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree//field[@name='quantity']" position="attributes">
+                        <attribute name="on_change">change_lot(prodlot_id, quantity, location_id, product_uom)</attribute>
+                    </xpath>
+				
+					<field name="prodlot_id" position="replace">
+                    	<field name="prodlot_id" string="Batch Number"
+                            domain="[('product_id', '=', product_id), ('check_type','=', True), ('stock_available', '>', 0.00)]"
+                    		context="{'location_id': location_id, 'product_id': product_id, 'expiry_date_check': expiry_date_check, 'batch_number_check': batch_number_check}"
+                    		attrs="{'readonly': [('batch_number_check', '=', False), ('expiry_date_check', '=', False)]}"
+                    		on_change="change_lot(prodlot_id, quantity, location_id)" />
+                    		
+                    	<field name="expiry_date" attrs="{'readonly': ['|', '&amp;', ('batch_number_check', '=', False), ('expiry_date_check', '=', False), '&amp;', ('batch_number_check', '=', True), ('expiry_date_check', '=', True)]}"
+                    		on_change="change_expiry(expiry_date, product_id, type_check)" />
+                    	<field name="batch_number_check" invisible="True" />
+                    	<field name="expiry_date_check" invisible="True" />
+                    	<field name="type_check" invisible="True" />
+                    	<field name="lot_check" />
+	                   	<field name="exp_check" />
+	                   	<field name="kc_check" />
+	           			<field name="ssl_check" invisible="True" />
+	           			<field name="dg_check" />
+	           			<field name="np_check" />
+            			<field name="integrity_status" invisible="False" />
+            			<field name="location_id" invisible="1" />
+                    </field>
+                    
+				</data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

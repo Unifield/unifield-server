@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="product_supplierinfo_tree_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.tree.view</field>
+			<field name="model">product.supplierinfo</field>
+			<field name="type">tree</field>
+			<field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_tree_view" />
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='min_qty']" position="replace">
+					<field name="catalogue_id" />
+				</xpath>
+			</field>
+		</record>
+		
+		<record id="product_supplierinfo_tree_view2" model="ir.ui.view">
+			<field name="name">product.supplierinfo.tree.view2</field>
+			<field name="model">product.supplierinfo</field>
+			<field name="type">tree</field>
+			<field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_tree_view" />
+			<field name="arch" type="xml">
+				<data>
+					<xpath expr="/tree" position="attributes">
+						<!-- TODO: Voir avec JF pour ne pas être obligé d'avoir editable=top pour
+							   avoir un noteditable
+						<attribute name="editable">top</attribute>-->
+						<attribute name="noteditable">editable==False</attribute>
+					</xpath>
+					
+					<xpath expr="//field[@name='sequence_bis']" position="before">
+						<field name="editable" invisible="1" />
+					</xpath>
+				</data>
+			</field>
+		</record>
+        
+		<record id="manufacturer_supplierinfo_form_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+            	<xpath expr="//field[@name='product_uom']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='manufacturer_id']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            </field>
+		</record>
+		
+		<record id="product_supplierinfo_form_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+				<xpath expr="//field[@name='name']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+                <attribute name="on_change">onchange_supplier(name)</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='product_name']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='product_code']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            </field>
+		</record>
+		
+		<record id="product_supplierinfo_form_view" model="ir.ui.view">
+			<field name="name">product.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_form_view"/>
+            <field name="arch" type="xml">
+            	<xpath expr="/form/field[@name='name']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+				<xpath expr="//field[@name='delay']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	<xpath expr="//field[@name='pricelist_ids']" position="attributes">
+            		<attribute name="attrs">{'readonly': [('catalogue_id', '!=', False)]}</attribute>
+            	</xpath>
+            	
+            	<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="before">
+        			<field name="uom_id" />
+        		</xpath>
+        		
+        		<xpath expr="//tree[@string='Pricelist']/field[@name='price']" position="after">
+        			<field name="rounding" />
+        			<field name="min_order_qty" />
+        			<field name="valid_from" />
+        		</xpath>
+            	
+            	<xpath expr="//field[@name='min_qty']" position="replace">
+            		<field name="catalogue_id" readonly="1" invisible="0" />
+            	</xpath>
+            	
+            </field>
+        </record>
+        
+        
+        <!-- Add a new default search and tree views for pricelists -->
+        <record id="currency_product_pricelist_tree_view" model="ir.ui.view">
+        	<field name="name">currency.product.pricelist.tree.view</field>
+        	<field name="model">product.pricelist</field>
+        	<field name="type">tree</field>
+        	<field name="priority" eval="8" />
+        	<field name="arch" type="xml">
+        		<tree string="Currencies" hide_new_button="1">
+        			<field name="currency_id" string="Currency" />
+        			<field name="currency_name" string="Currency name" />
+        		</tree>
+        	</field>
+        </record>
+        
+        <record id="currency_product_pricelist_search_view" model="ir.ui.view">
+        	<field name="name">currency.product.pricelist.search.view</field>
+        	<field name="model">product.pricelist</field>
+        	<field name="type">search</field>
+        	<field name="priority" eval="8" />
+        	<field name="arch" type="xml">
+        		<search string="Currencies" >
+        			<field name="currency_name" string="Currency name" />
+        			<field name="currency_id" string="Currency" />
+        		</search>
+        	</field>
+        </record>
+        
+        <record id="action_menu_pricelist" model="ir.actions.act_window.view">
+        	<field name="view_mode">tree</field>
+        	<field name="view_id" ref="product.product_pricelist_view_tree" />
+        	<field name="act_window_id" ref="product.product_pricelist_action2" />
+        </record>
+        
+        <!-- Add the two fields in Currency form -->
+        <record id="res_currency_add_checkboxes_form_view" model="ir.ui.view">
+        	<field name="name">res.currency.add.checkboxes.form.view</field>
+        	<field name="model">res.currency</field>
+        	<field name="type">form</field>
+        	<field name="inherit_id" ref="base.view_currency_form" />
+        	<field name="arch" type="xml">
+        		<data>
+        			<xpath expr="/form//group[3]" position="attributes">
+        				<attribute name="col">4</attribute>
+        			</xpath>
+        			
+        			<xpath expr="/form//separator[@string='Miscelleanous']" position="attributes">
+        				<attribute name="colspan">4</attribute>
+        			</xpath>
+        			
+	        		<xpath expr="/form//field[@name='active']" position="after">
+	        			<field name="is_section_currency" invisible="1" />
+	        			<field name="is_esc_currency" invisible="1" />
+	        		</xpath>
+        		</data>
+        	</field>
+        </record>
+
+        <record id="catalogue_product_search_view" model="ir.ui.view">
+            <field name="name">catalogue.product.search.view</field>
+            <field name="model">product.product</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="product.product_search_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='list_ids']" position="after">
+                    <field name="catalogue_ids" widget="many2one" />
+                </xpath>
+            </field>
+        </record>
+        
+        
+        <!-- Remove pricelists configuration menu entries -->
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
+
+		
+	</data>
+</openerp>

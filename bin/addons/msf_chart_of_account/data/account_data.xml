@@ -1,0 +1,44 @@
+<openerp>
+    <data noupdate="1">
+        
+        <!-- Properties -->
+        <record forcecreate="True" id="property_account_receivable" model="ir.property">
+            <field name="name">property_account_receivable</field>
+            <field name="fields_id" search="[('model','=','res.partner'),('name','=','property_account_receivable')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.1201'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record forcecreate="True" id="property_account_payable" model="ir.property">
+            <field name="name">property_account_payable</field>
+            <field name="fields_id" search="[('model','=','res.partner'),('name','=','property_account_payable')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.3000'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+        
+
+        <record forcecreate="True" id="property_account_categ_receivable" model="ir.property">
+            <field name="name">property_account_income_categ</field>
+            <field name="fields_id" search="[('model','=','product.category'),('name','=','property_account_income_categ')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.6540'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+
+        <record forcecreate="True" id="property_account_categ_expense" model="ir.property">
+            <field name="name">property_account_expense_categ</field>
+            <field name="fields_id" search="[('model','=','product.category'),('name','=','property_account_expense_categ')]"/>
+            <field eval="'account.account,'+str(ref('msf_chart_of_account.6540'))" name="value"/>
+            <field name="company_id" ref="base.main_company"/>
+        </record>
+    
+        <record model="account.tax" id="normal_vat">
+            <field name="name">Normal VAT 4,2%</field>
+            <field name="description">1</field>
+            <field name="amount" eval="0.042"/>
+            <field name="type">percent</field>
+            <field name="account_collected_id" ref="msf_chart_of_account.3030"/>
+            <field name="account_paid_id" ref="msf_chart_of_account.3030"/>
+        </record>
+-->
+    </data>
+</openerp>

@@ -1,0 +1,342 @@
+id,user_type,accrual_account,activation_date,code,default_destination_id,inactivation_date,type,name,note,type_for_register,reconcile,parent_id,is_not_hq_correctible,shrink_entries_for_hq,currency_revaluation
+account_MSF,View,FALSE,1-Nov-13,MSF,,,View,MSF Chart of Accounts,,None,FALSE,,FALSE,FALSE,FALSE
+account_1,View,FALSE,1-Nov-13,1,,,View,Current Assets,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_10,View,FALSE,1-Nov-13,10,,,View,Cash and cash equivalents,,None,FALSE,1,FALSE,FALSE,FALSE
+account_101,View,FALSE,1-Nov-13,101,,,View,Cash on hand,,None,FALSE,10,FALSE,FALSE,FALSE
+account_10100,Cash,FALSE,1-Nov-13,10100,,,Liquidity,Cash on hand,,None,FALSE,101,FALSE,TRUE,TRUE
+account_102,View,FALSE,1-Nov-13,102,,,View,Cash at Bank,,None,FALSE,10,FALSE,FALSE,FALSE
+account_10200,Cash,FALSE,1-Nov-13,10200,,,Liquidity,Cash at Bank,,None,FALSE,102,FALSE,TRUE,TRUE
+account_10210,Cash,FALSE,1-Nov-13,10210,,,Liquidity,Outstanding checks,,None,TRUE,102,FALSE,TRUE,TRUE
+account_11,View,FALSE,1-Nov-13,11,,,View,Financial assets,,None,FALSE,1,FALSE,FALSE,FALSE
+account_110,View,FALSE,1-Nov-13,110,,,View,Guarantee and  Deposits,,None,FALSE,11,FALSE,FALSE,FALSE
+account_11000,Asset,FALSE,1-Nov-13,11000,,,Regular,Guarantee and  Deposits,,None,TRUE,110,FALSE,FALSE,FALSE
+account_12,View,FALSE,1-Nov-13,12,,,View,Accounts receivable,,None,FALSE,1,FALSE,FALSE,FALSE
+account_120,View,FALSE,1-Nov-13,120,,,View,Receivables,,None,FALSE,12,FALSE,FALSE,FALSE
+account_12000,Receivables,TRUE,1-Nov-13,12000,,,Receivable,Receivable from other missions,,None,TRUE,120,FALSE,TRUE,TRUE
+account_12010,Receivables,TRUE,1-Nov-13,12010,,,Receivable,Receivable from other sections,,None,TRUE,120,FALSE,TRUE,TRUE
+account_12011,Cash,TRUE,1-Nov-13,12011,,,Receivable,Expenses re-invoice to other sections,,None,TRUE,120,FALSE,TRUE,FALSE
+account_12020,Tax,TRUE,1-Nov-13,12020,,,Receivable,VAT recoverable,,None,TRUE,120,FALSE,TRUE,FALSE
+account_12030,Receivables,TRUE,1-Nov-13,12030,,,Receivable,Taxes receivables,,None,TRUE,120,FALSE,TRUE,FALSE
+account_12040,Receivables,TRUE,1-Nov-13,12040,,,Receivable,Social security receivable,,None,TRUE,120,FALSE,TRUE,FALSE
+account_12050,Receivables,TRUE,1-Nov-13,12050,,,Receivable,Other receivables,,None,TRUE,120,FALSE,TRUE,TRUE
+account_129,View,FALSE,1-Nov-13,129,,,View,Depreciation on receivables,,None,FALSE,12,FALSE,FALSE,FALSE
+account_12990,Receivables,TRUE,1-Nov-13,12990,,,Receivable,Depreciation on receivables,,None,TRUE,129,FALSE,TRUE,FALSE
+account_13,View,FALSE,1-Nov-13,13,,,View,Advances and Prepayment,,None,FALSE,1,FALSE,FALSE,FALSE
+account_130,View,FALSE,1-Nov-13,130,,,View,Internal advances,,None,FALSE,13,FALSE,FALSE,FALSE
+account_13000,Receivables,FALSE,1-Nov-13,13000,,,Receivable,Operating advances,,Operational Advance,TRUE,130,FALSE,TRUE,TRUE
+account_13010,Receivables,FALSE,1-Nov-13,13010,,,Receivable,Security envelopes  ,,Operational Advance,TRUE,130,FALSE,TRUE,FALSE
+account_131,View,FALSE,1-Nov-13,131,,,View,Advances done to third parties,,None,FALSE,13,FALSE,FALSE,FALSE
+account_13100,Receivables,FALSE,1-Nov-13,13100,,,Receivable,Advances done to third parties,,Down payment,TRUE,131,FALSE,TRUE,TRUE
+account_4203,Receivables,FALSE,1-Nov-13,4203,,,Receivable,Advances with suppliers and various,,Down payment,TRUE,131,FALSE,TRUE,FALSE
+account_132,View,FALSE,1-Nov-13,132,,,View,Advances to personal,,None,FALSE,13,FALSE,FALSE,FALSE
+account_13200,Receivables,FALSE,1-Nov-13,13200,,,Receivable,Advances on salaries of expatriates,,None,TRUE,132,FALSE,TRUE,FALSE
+account_13210,Receivables,FALSE,1-Nov-13,13210,,,Receivable,Advances on salaries of national staff,,Third party required - Payroll,TRUE,132,FALSE,TRUE,TRUE
+account_4202,Receivables,FALSE,1-Nov-13,4202,,,Receivable,Advance to the staff,,Third party required - Payroll,TRUE,132,FALSE,TRUE,TRUE
+account_133,View,FALSE,1-Nov-13,133,,,View,Prepaid expenses,,None,FALSE,13,FALSE,FALSE,FALSE
+account_13300,Receivables,FALSE,1-Nov-13,13300,,,Receivable,Prepaid expenses rentals,,None,TRUE,133,FALSE,TRUE,TRUE
+account_13310,Receivables,FALSE,1-Nov-13,13310,,,Receivable,Prepaid expenses insurances,,None,TRUE,133,FALSE,TRUE,TRUE
+account_13320,Receivables,FALSE,1-Nov-13,13320,,,Receivable,Other prepaid expenses,,None,TRUE,133,FALSE,TRUE,TRUE
+account_134,View,FALSE,1-Nov-13,134,,,View,Prepayment - goods not yet allocated to a project,,None,FALSE,13,FALSE,FALSE,FALSE
+account_13400,Receivables,FALSE,1-Nov-13,13400,,,Receivable,Goods not yet allocated to a project,,None,TRUE,134,FALSE,TRUE,FALSE
+account_14,View,FALSE,1-Nov-13,14,,,View,Suspense accounts,,None,FALSE,1,FALSE,FALSE,FALSE
+account_140,View,FALSE,1-Nov-13,140,,,View,Non-monetary ,,None,FALSE,14,FALSE,FALSE,FALSE
+account_14000,Cash,FALSE,1-Nov-13,14000,,,Regular,Advances to HQ departments  ,,None,TRUE,140,FALSE,TRUE,TRUE
+account_14010,Cash,FALSE,1-Nov-13,14010,,,Regular,Advances or expenses for other missions,,None,TRUE,140,FALSE,TRUE,TRUE
+account_14020,Cash,FALSE,1-Nov-13,14020,,,Regular,Advances and expenses for other MSF section,,None,TRUE,140,FALSE,TRUE,FALSE
+account_14030,Cash,FALSE,1-Nov-13,14030,,,Regular,Advances and expenses for other NGO,,None,TRUE,140,FALSE,TRUE,FALSE
+account_14040,Cash,FALSE,1-Nov-13,14040,,,Regular,Locally received grant payments,,None,TRUE,140,FALSE,TRUE,FALSE
+account_141,View,FALSE,1-Nov-13,141,,,View,Monetary,,None,FALSE,14,FALSE,FALSE,FALSE
+account_14100,Cash,FALSE,1-Nov-13,14100,,,Regular,Bank transfer with HQ ,,None,TRUE,141,FALSE,TRUE,TRUE
+account_14110,Cash,FALSE,1-Nov-13,14110,,,Regular,Cash transfer with HQ,,None,TRUE,141,FALSE,TRUE,FALSE
+account_14120,Cash,FALSE,1-Nov-13,14120,,,Regular,Internal transfer same currency,,Internal Transfer (same currency),TRUE,141,FALSE,TRUE,TRUE
+account_14130,Cash,FALSE,1-Nov-13,14130,,,Regular,Internal transfer with currency exchange,,Internal Transfer,TRUE,141,FALSE,TRUE,TRUE
+account_14140,Cash,FALSE,1-Nov-13,14140,,,Regular,Transfer to another financial mission: Same section,,None,TRUE,141,FALSE,TRUE,FALSE
+account_14150,Cash,FALSE,1-Nov-13,14150,,,Regular,Transfer to another financial mission: Other section,,None,TRUE,141,FALSE,TRUE,FALSE
+account_14160,Cash,FALSE,1-Nov-13,14160,,,Regular,Others,,None,TRUE,141,FALSE,TRUE,FALSE
+account_15,View,FALSE,1-Nov-13,15,,,View,Inventory,,None,FALSE,1,FALSE,FALSE,FALSE
+account_150,View,FALSE,1-Nov-13,150,,,View,Medical inventory,,None,FALSE,15,FALSE,FALSE,FALSE
+account_15000,Stock,FALSE,1-Nov-13,15000,,,Regular,Medical inventory,,None,FALSE,150,FALSE,FALSE,FALSE
+account_151,View,FALSE,1-Nov-13,151,,,View,Non-medical inventory,,None,FALSE,15,FALSE,FALSE,FALSE
+account_15100,Stock,FALSE,1-Nov-13,15100,,,Regular,Non-medical inventory,,None,FALSE,151,FALSE,FALSE,FALSE
+account_152,View,FALSE,1-Nov-13,152,,,View,Other inventories,,None,FALSE,15,FALSE,FALSE,FALSE
+account_15200,Stock,FALSE,1-Nov-13,15200,,,Regular,Other Inventory,,None,FALSE,152,FALSE,FALSE,FALSE
+account_153,View,FALSE,1-Nov-13,153,,,View,Stock Transfers,,None,FALSE,15,FALSE,FALSE,FALSE
+account_15300,Stock,FALSE,1-Nov-13,15300,,,Regular,Stock transfers between missions,,None,FALSE,153,FALSE,FALSE,FALSE
+account_15310,Stock,FALSE,1-Nov-13,15310,,,Regular,Stock transfers between sections,,None,FALSE,153,FALSE,FALSE,FALSE
+account_15320,Stock,FALSE,1-Nov-13,15320,,,Regular,Stock in transit,,None,FALSE,153,FALSE,FALSE,FALSE
+account_159,View,FALSE,1-Nov-13,159,,,View,Depreciation on inventory,,None,FALSE,15,FALSE,FALSE,FALSE
+account_15910,Stock,TRUE,1-Nov-13,15910,,,Regular,Depreciation on medical inventory,,None,FALSE,159,FALSE,FALSE,FALSE
+account_15920,Stock,TRUE,1-Nov-13,15920,,,Regular,Depreciation on non-medical inventory,,None,FALSE,159,FALSE,FALSE,FALSE
+account_15930,Stock,TRUE,1-Nov-13,15930,,,Regular,Depreciation on other inventory,,None,FALSE,159,FALSE,FALSE,FALSE
+account_2,View,FALSE,1-Nov-13,2,,,View,Non-Current Assets,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_20,View,FALSE,1-Nov-13,20,,,View,"Property, plant and equipment",,None,FALSE,2,FALSE,FALSE,FALSE
+account_200,View,FALSE,1-Nov-13,200,,,View,Land,,None,FALSE,20,FALSE,FALSE,FALSE
+account_20000,Asset,FALSE,1-Nov-13,20000,,,Regular,Land,,None,FALSE,200,FALSE,FALSE,FALSE
+account_201,View,FALSE,1-Nov-13,201,,,View,Buildings,,None,FALSE,20,FALSE,FALSE,FALSE
+account_20100,Asset,FALSE,1-Nov-13,20100,,,Regular,Buildings,,None,FALSE,201,FALSE,FALSE,FALSE
+account_202,View,FALSE,1-Nov-13,202,,,View,Medical equipment,,None,FALSE,20,FALSE,FALSE,FALSE
+account_20200,Asset,FALSE,1-Nov-13,20200,,,Regular,Medical equipment,,None,FALSE,202,FALSE,FALSE,FALSE
+account_203,View,FALSE,1-Nov-13,203,,,View,Non- medical equipment,,None,FALSE,20,FALSE,FALSE,FALSE
+account_20300,Asset,FALSE,1-Nov-13,20300,,,Regular,Non- medical equipment,,None,FALSE,203,FALSE,FALSE,FALSE
+account_21,View,FALSE,1-Nov-13,21,,,View,Accumulated depreciation,,None,FALSE,2,FALSE,FALSE,FALSE
+account_210,View,FALSE,1-Nov-13,210,,,View,Buildings - accumulated depreciation,,None,FALSE,21,FALSE,FALSE,FALSE
+account_21000,Asset,TRUE,1-Nov-13,21000,,,Regular,Buildings - accumulated depreciation,,None,FALSE,210,FALSE,FALSE,FALSE
+account_211,View,FALSE,1-Nov-13,211,,,View,Medical equipment-accumulated depreciation ,,None,FALSE,21,FALSE,FALSE,FALSE
+account_21100,Asset,TRUE,1-Nov-13,21100,,,Regular,Medical equipment- accumulated depreciation,,None,FALSE,211,FALSE,FALSE,FALSE
+account_212,View,FALSE,1-Nov-13,212,,,View,Non-medical equipment - accumulated depreciation,,None,FALSE,21,FALSE,FALSE,FALSE
+account_21200,Asset,TRUE,1-Nov-13,21200,,,Regular,Non-medical equipment - accumulated depreciation,,None,FALSE,212,FALSE,FALSE,FALSE
+account_22,View,FALSE,1-Nov-13,22,,,View,Intangibles assets,,None,FALSE,2,FALSE,FALSE,FALSE
+account_220,View,FALSE,1-Nov-13,220,,,View,Software - trademarks and licences,,None,FALSE,22,FALSE,FALSE,FALSE
+account_22000,Asset,FALSE,1-Nov-13,22000,,,Regular,Software - trademarks and licences,,None,FALSE,220,FALSE,FALSE,FALSE
+account_23,View,FALSE,1-Nov-13,23,,,View,Accumulated depreciation on intangibles assets,,None,FALSE,2,FALSE,FALSE,FALSE
+account_230,View,FALSE,1-Nov-13,230,,,View,Software-trademarks and licence-accumulated depreciation,,None,FALSE,23,FALSE,FALSE,FALSE
+account_23000,Asset,FALSE,1-Nov-13,23000,,,Regular,Software - trademarks and licence  - accumulated depreciation,,None,FALSE,230,FALSE,FALSE,FALSE
+account_24,View,FALSE,1-Nov-13,24,,,View,Long term investments,,None,FALSE,2,FALSE,FALSE,FALSE
+account_240,View,FALSE,1-Nov-13,240,,,View,Guarantees and deposits: Greater than 1 year,,None,FALSE,24,FALSE,FALSE,FALSE
+account_24000,Asset,FALSE,1-Nov-13,24000,,,Regular,Guarantees and deposits: Greater than 1 year,,None,TRUE,240,FALSE,FALSE,FALSE
+account_25,View,FALSE,1-Nov-13,25,,,View,Other non-current assets,,None,FALSE,2,FALSE,FALSE,FALSE
+account_250,View,FALSE,1-Nov-13,250,,,View,Other non-current assets,,None,FALSE,25,FALSE,FALSE,FALSE
+account_25000,Asset,FALSE,1-Nov-13,25000,,,Regular,Other non-current assets,,None,FALSE,250,FALSE,FALSE,FALSE
+account_3,View,FALSE,1-Nov-13,3,,,View,Current Liabilities ,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_30,View,FALSE,1-Nov-13,30,,,View,Accounts payable,,None,FALSE,3,FALSE,FALSE,FALSE
+account_300,View,FALSE,1-Nov-13,300,,,View,Payables,,None,FALSE,30,FALSE,FALSE,FALSE
+account_30000,Payables,FALSE,1-Nov-13,30000,,,Payable,Payable to other missions,,None,TRUE,300,FALSE,TRUE,TRUE
+account_30010,Payables,FALSE,1-Nov-13,30010,,,Payable,Payable to other sections,,None,TRUE,300,FALSE,TRUE,FALSE
+account_30020,Payables,FALSE,1-Nov-13,30020,,,Payable,Trade payables,,None,TRUE,300,FALSE,TRUE,TRUE
+account_301,View,FALSE,1-Nov-13,301,,,View,Personnel related accounts,,None,FALSE,30,FALSE,FALSE,FALSE
+account_30100,Payables,FALSE,1-Nov-13,30100,,,Payable,Remuneration (net salary) payable,,Third party required - Payroll,TRUE,301,FALSE,TRUE,TRUE
+account_30110,Payables,FALSE,1-Nov-13,30110,,,Payable,Expatriates payables - (OCA only)),,None,TRUE,301,FALSE,TRUE,TRUE
+account_302,View,FALSE,1-Nov-13,302,,,View,Social security,,None,FALSE,30,FALSE,FALSE,FALSE
+account_30200,Payables,FALSE,1-Nov-13,30200,,,Payable,Social security,,Third party required - Payroll,TRUE,302,FALSE,TRUE,FALSE
+account_303,View,FALSE,1-Nov-13,303,,,View,State and other public authority related accounts,,None,FALSE,30,FALSE,FALSE,FALSE
+account_30300,Tax,FALSE,1-Nov-13,30300,,,Payable,VAT payable,,None,TRUE,303,FALSE,TRUE,FALSE
+account_30310,Tax,FALSE,1-Nov-13,30310,,,Payable,Payroll taxes / PAYE payable,,Third party required - Payroll,TRUE,303,FALSE,TRUE,FALSE
+account_30320,Tax,FALSE,1-Nov-13,30320,,,Payable,Other Taxes,,Third party required - Payroll,TRUE,303,FALSE,TRUE,FALSE
+account_31,View,FALSE,1-Nov-13,31,,,View,Accrued liabilities,,None,FALSE,3,FALSE,FALSE,FALSE
+account_310,View,FALSE,1-Nov-13,310,,,View,Employee costs,,None,FALSE,31,FALSE,FALSE,FALSE
+account_31000,Payables,TRUE,1-Nov-13,31000,,,Payable,Accrued salaries payable,,None,TRUE,310,FALSE,TRUE,FALSE
+account_31010,Payables,TRUE,1-Nov-13,31010,,,Payable,Accrued 13th month payable,,None,TRUE,310,FALSE,TRUE,FALSE
+account_31020,Payables,TRUE,1-Nov-13,31020,,,Payable,Accrued holiday pay - leave days payment,,None,TRUE,310,FALSE,TRUE,FALSE
+account_31030,Payables,TRUE,1-Nov-13,31030,,,Payable,Accrued severance pay - employees benefits,,None,TRUE,310,FALSE,TRUE,FALSE
+account_31040,Payables,TRUE,1-Nov-13,31040,,,Payable,Other accrued employee costs,,None,TRUE,310,FALSE,TRUE,TRUE
+account_311,View,FALSE,1-Nov-13,311,,,View,Accrued payroll taxes,,None,FALSE,31,FALSE,FALSE,FALSE
+account_31100,Payables,TRUE,1-Nov-13,31100,,,Payable,Accrued payroll taxes,,None,TRUE,311,FALSE,TRUE,FALSE
+account_312,View,FALSE,1-Nov-13,312,,,View,Accrued social security,,None,FALSE,31,FALSE,FALSE,FALSE
+account_31200,Payables,TRUE,1-Nov-13,31200,,,Payable,Accrued social security,,None,TRUE,312,FALSE,TRUE,FALSE
+account_313,View,FALSE,1-Nov-13,313,,,View,Other accrued liabilities,,None,FALSE,31,FALSE,FALSE,FALSE
+account_31300,Payables,TRUE,1-Nov-13,31300,,,Payable,Other accrued liabilities,,None,TRUE,313,FALSE,TRUE,TRUE
+account_32,View,FALSE,1-Nov-13,32,,,View,Short Term Provisions,,None,FALSE,3,FALSE,FALSE,FALSE
+account_320,View,FALSE,1-Nov-13,320,,,View,Short Term Provisions,,None,FALSE,32,FALSE,FALSE,FALSE
+account_32000,Debt,FALSE,1-Nov-13,32000,,,Regular,Short Term Provisions,,None,TRUE,320,FALSE,FALSE,FALSE
+account_33,View,FALSE,1-Nov-13,33,,,View,Other current liabilities,,None,FALSE,3,FALSE,FALSE,FALSE
+account_330,View,FALSE,1-Nov-13,330,,,View,Other current liabilities,,None,FALSE,33,FALSE,FALSE,FALSE
+account_33000,Debt,FALSE,1-Nov-13,33000,,,Regular,Other current liabilities,,None,TRUE,330,FALSE,TRUE,FALSE
+account_33010,Debt,FALSE,1-Nov-13,33010,,,Regular,Expenses paid by HQ,,None,TRUE,330,FALSE,TRUE,FALSE
+account_4,View,FALSE,1-Nov-13,4,,,View,Non-current Liabilities                  ,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_40,View,FALSE,1-Nov-13,40,,,View,Non- current amounts payable,,None,FALSE,4,FALSE,FALSE,FALSE
+account_400,View,FALSE,1-Nov-13,400,,,View,Non- current amounts payable,,None,FALSE,40,FALSE,FALSE,FALSE
+account_40000,Debt,FALSE,1-Nov-13,40000,,,Regular,Non- current amounts payable,,None,TRUE,400,FALSE,FALSE,FALSE
+account_41,View,FALSE,1-Nov-13,41,,,View,Long term provisions,,None,FALSE,4,FALSE,FALSE,FALSE
+account_410,View,FALSE,1-Nov-13,410,,,View,Long term provisions,,None,FALSE,41,FALSE,FALSE,FALSE
+account_41000,Debt,FALSE,1-Nov-13,41000,,,Regular,Long term provisions,,None,TRUE,410,FALSE,FALSE,FALSE
+account_5,View,FALSE,1-Nov-13,5,,,View,Reserves,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_50,View,FALSE,1-Nov-13,50,,,View,Surplus / Deficit carried forward,,None,FALSE,5,FALSE,FALSE,FALSE
+account_500,View,FALSE,1-Nov-13,500,,,View,Surplus carried forward,,None,FALSE,50,FALSE,FALSE,FALSE
+account_50000,Equity,FALSE,1-Nov-13,50000,,,Regular,Surplus carried forward,,None,FALSE,500,FALSE,FALSE,FALSE
+account_510,View,FALSE,1-Nov-13,510,,,View,Deficit carried forward,,None,FALSE,50,FALSE,FALSE,FALSE
+account_51000,Equity,FALSE,1-Nov-13,51000,,,Regular,Deficit carried forward,,None,FALSE,510,FALSE,FALSE,FALSE
+account_6,View,FALSE,1-Nov-13,6,,,View,Expenses,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_60,View,FALSE,1-Nov-13,60,,,View,Purchase of medical items,,None,FALSE,6,FALSE,FALSE,FALSE
+account_600,View,FALSE,1-Nov-13,600,,,View,Purchase of medical items,,None,FALSE,60,FALSE,FALSE,FALSE
+account_60000,Expense,FALSE,1-Nov-13,60000,Operations,,Regular,Medicines,,None,FALSE,600,FALSE,FALSE,FALSE
+account_60010,Expense,FALSE,1-Nov-13,60010,Operations,,Regular,Vaccines,,None,FALSE,600,FALSE,FALSE,FALSE
+account_60020,Expense,FALSE,1-Nov-13,60020,Operations,,Regular,Medical kits,,None,FALSE,600,FALSE,FALSE,FALSE
+account_60030,Expense,FALSE,1-Nov-13,60030,Operations,,Regular,Therapeutic Food,,None,FALSE,600,FALSE,FALSE,FALSE
+account_601,View,FALSE,1-Nov-13,601,,,View,Purchase of medical equipment,,None,FALSE,60,FALSE,FALSE,FALSE
+account_60100,Expense,FALSE,1-Nov-13,60100,Operations,,Regular,Medical equipment ,,None,FALSE,601,FALSE,FALSE,FALSE
+account_60110,Expense,FALSE,1-Nov-13,60110,Operations,,Regular,Laboratory equipment ,,None,FALSE,601,FALSE,FALSE,FALSE
+account_60120,Expense,FALSE,1-Nov-13,60120,Operations,,Regular,Cold chain equipment,,None,FALSE,601,FALSE,FALSE,FALSE
+account_602,View,FALSE,1-Nov-13,602,,,View,Medical Renewable supplies and consumables,,None,FALSE,60,FALSE,FALSE,FALSE
+account_60200,Expense,FALSE,1-Nov-13,60200,Operations,,Regular,Laboratory: consumables and small material,,None,FALSE,602,FALSE,FALSE,FALSE
+account_60210,Expense,FALSE,1-Nov-13,60210,Operations,,Regular,Other Medical: consumables and small material,,None,FALSE,602,FALSE,FALSE,FALSE
+account_609,View,FALSE,1-Nov-13,609,,,View,Variation of Medical Stock,,None,FALSE,60,FALSE,FALSE,FALSE
+account_60900,Expense,FALSE,1-Nov-13,60900,Operations,,Regular,Variation of Medical Stock,,None,FALSE,609,FALSE,FALSE,FALSE
+account_61,View,FALSE,1-Nov-13,61,,,View,Purchase of non-medical items ,,None,FALSE,6,FALSE,FALSE,FALSE
+account_610,View,FALSE,1-Nov-13,610,,,View,Purchase of non-medical items ,,None,FALSE,61,FALSE,FALSE,FALSE
+account_61000,Expense,FALSE,1-Nov-13,61000,Operations,,Regular,Construction and rehabilitation material,,None,FALSE,610,FALSE,FALSE,FALSE
+account_61010,Expense,FALSE,1-Nov-13,61010,Operations,,Regular,Water Hygiene and Sanitation material (WASH),,None,FALSE,610,FALSE,FALSE,FALSE
+account_61020,Expense,FALSE,1-Nov-13,61020,Operations,,Regular,Food non therapeutic ,,None,FALSE,610,FALSE,FALSE,FALSE
+account_61030,Expense,FALSE,1-Nov-13,61030,Operations,,Regular,Non-food relief items (NFI),,None,FALSE,610,FALSE,FALSE,FALSE
+account_61040,Expense,FALSE,1-Nov-13,61040,Operations,,Regular,Temporary shelter,,None,FALSE,610,FALSE,FALSE,FALSE
+account_61050,Expense,FALSE,1-Nov-13,61050,Operations,,Regular,Logistic kits,,None,FALSE,610,FALSE,FALSE,FALSE
+account_61090,Expense,FALSE,1-Nov-13,61090,Operations,,Regular,Variation of non-medical stock,,None,FALSE,610,FALSE,FALSE,FALSE
+account_611,View,FALSE,1-Nov-13,611,,,View,Purchase of non-medical equipment,,None,FALSE,61,FALSE,FALSE,FALSE
+account_61100,Expense,FALSE,1-Nov-13,61100,Operations,,Regular,Construction and rehabilitation equipment and tools ,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61110,Expense,FALSE,1-Nov-13,61110,Operations,,Regular,Water Hygiene and Sanitation equipment (WASH) ,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61120,Expense,FALSE,1-Nov-13,61120,Operations,,Regular,Energy equipment ,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61130,Expense,FALSE,1-Nov-13,61130,Operations,,Regular,Temporary structure,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61140,Expense,FALSE,1-Nov-13,61140,Support,,Regular,Vehicle or other means of transport,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61150,Expense,FALSE,1-Nov-13,61150,Support,,Regular,IT & office equipment ,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61160,Expense,FALSE,1-Nov-13,61160,Support,,Regular,Telecom equipment ,,None,FALSE,611,FALSE,FALSE,FALSE
+account_61170,Expense,FALSE,1-Nov-13,61170,Operations,,Regular,Furniture ,,None,FALSE,611,FALSE,FALSE,FALSE
+account_612,View,FALSE,1-Nov-13,612,,,View,Non-medical renewable supplies and consumables,,None,FALSE,61,FALSE,FALSE,FALSE
+account_61200,Expense,FALSE,1-Nov-13,61200,Support,,Regular,Fuel,,None,FALSE,612,FALSE,FALSE,FALSE
+account_61210,Expense,FALSE,1-Nov-13,61210,Support,,Regular,Spare parts vehicles,,None,FALSE,612,FALSE,FALSE,FALSE
+account_61220,Expense,FALSE,1-Nov-13,61220,Support,,Regular,"Supplies, stationery and other consumables",,None,FALSE,612,FALSE,FALSE,FALSE
+account_62,View,FALSE,1-Nov-13,62,,,View,Purchase of lands and facilities,,None,FALSE,6,FALSE,FALSE,FALSE
+account_620,View,FALSE,1-Nov-13,620,,,View,Purchase of land and facilities,,None,FALSE,62,FALSE,FALSE,FALSE
+account_62000,Expense,FALSE,1-Nov-13,62000,Operations,,Regular,Purchase of land and facilities,,None,FALSE,620,FALSE,FALSE,FALSE
+account_63,View,FALSE,1-Nov-13,63,,,View,Subcontracted services,,None,FALSE,6,FALSE,FALSE,FALSE
+account_630,View,FALSE,1-Nov-13,630,,,View,Subcontracted medical services,,None,FALSE,63,FALSE,FALSE,FALSE
+account_63000,Expense,FALSE,1-Nov-13,63000,Operations,,Regular,Incentives to MOH,,None,FALSE,630,FALSE,FALSE,FALSE
+account_63010,Expense,FALSE,1-Nov-13,63010,Operations,,Regular,Medical consultation & referrals,,None,FALSE,630,FALSE,FALSE,FALSE
+account_63020,Expense,FALSE,1-Nov-13,63020,Operations,,Regular,Medical external diagnostic tests,,None,FALSE,630,FALSE,FALSE,FALSE
+account_63030,Expense,FALSE,1-Nov-13,63030,Operations,,Regular,"Medical and nutritional surveys, research and evaluation",,None,FALSE,630,FALSE,FALSE,FALSE
+account_631,View,FALSE,1-Nov-13,631,,,View,Subcontracted non-medical services,,None,FALSE,63,FALSE,FALSE,FALSE
+account_63100,Expense,FALSE,1-Nov-13,63100,Operations,,Regular,Construction & rehabilitation ,,None,FALSE,631,FALSE,FALSE,FALSE
+account_63110,Expense,FALSE,1-Nov-13,63110,Operations,,Regular,Water hygiene and sanitation - WASH,,None,FALSE,631,FALSE,FALSE,FALSE
+account_63120,Expense,FALSE,1-Nov-13,63120,Operations,,Regular,"Non-Medical surveys, research and evaluation ",,None,FALSE,631,FALSE,FALSE,FALSE
+account_632,View,FALSE,1-Nov-13,632,,,View,Other subcontracting ,,None,FALSE,63,FALSE,FALSE,FALSE
+account_63200,Expense,FALSE,1-Nov-13,63200,Operations,,Regular,Funding of partner organisation,,None,FALSE,632,FALSE,FALSE,FALSE
+account_64,View,FALSE,1-Nov-13,64,,,View,Transport ,,None,FALSE,6,FALSE,FALSE,FALSE
+account_640,View,FALSE,1-Nov-13,640,,,View,Freight,,None,FALSE,64,FALSE,FALSE,FALSE
+account_64000,Expense,FALSE,1-Nov-13,64000,Operations,,Regular,International freight by air,,None,FALSE,640,FALSE,FALSE,FALSE
+account_64010,Expense,FALSE,1-Nov-13,64010,Operations,,Regular,Other international freight,,None,FALSE,640,FALSE,FALSE,FALSE
+account_64020,Expense,FALSE,1-Nov-13,64020,Operations,,Regular,Domestic freight,,None,FALSE,640,FALSE,FALSE,FALSE
+account_64030,Expense,FALSE,1-Nov-13,64030,Operations,,Regular,Local customs & clearance costs,,None,FALSE,640,FALSE,FALSE,FALSE
+account_64040,Expense,FALSE,1-Nov-13,64040,Operations,,Regular,Miscellaneous storage & distribution costs,,None,FALSE,640,FALSE,FALSE,FALSE
+account_641,View,FALSE,1-Nov-13,641,,,View,Transport of persons,,None,FALSE,64,FALSE,FALSE,FALSE
+account_64100,Expense,FALSE,1-Nov-13,64100,Expatriates,,Regular,International travel ,,None,FALSE,641,FALSE,FALSE,FALSE
+account_64110,Expense,FALSE,1-Nov-13,64110,Expatriates,,Regular,Domestic travel,,None,FALSE,641,FALSE,FALSE,FALSE
+account_65,View,FALSE,1-Nov-13,65,,,View,General and running costs,,None,FALSE,6,FALSE,FALSE,FALSE
+account_650,View,FALSE,1-Nov-13,650,,,View,Rental ,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65000,Expense,FALSE,1-Nov-13,65000,Operations,,Regular,Premises and land rental,,None,FALSE,650,FALSE,FALSE,FALSE
+account_65010,Expense,FALSE,1-Nov-13,65010,Operations,,Regular,Equipment rental,,None,FALSE,650,FALSE,FALSE,FALSE
+account_65020,Expense,FALSE,1-Nov-13,65020,Support,,Regular,Vehicle rental,,None,FALSE,650,FALSE,FALSE,FALSE
+account_65021,Expense,FALSE,1-Nov-13,65021,Support,,Regular,Aircraft rental,,None,FALSE,650,FALSE,FALSE,FALSE
+account_651,View,FALSE,1-Nov-13,651,,,View,Maintenance,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65100,Expense,FALSE,1-Nov-13,65100,Support,,Regular,Maintenance of premises,,None,FALSE,651,FALSE,FALSE,FALSE
+account_65110,Expense,FALSE,1-Nov-13,65110,Support,,Regular,Maintenance of equipment,,None,FALSE,651,FALSE,FALSE,FALSE
+account_65120,Expense,FALSE,1-Nov-13,65120,Support,,Regular,Maintenance of vehicles,,None,FALSE,651,FALSE,FALSE,FALSE
+account_652,View,FALSE,1-Nov-13,652,,,View,Utilities & other energy consumables ,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65200,Expense,FALSE,1-Nov-13,65200,Support,,Regular,Utilities  & other energy consumables,,None,FALSE,652,FALSE,FALSE,FALSE
+account_653,View,FALSE,1-Nov-13,653,,,View,Telephone & telecommunication bills,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65300,Expense,FALSE,1-Nov-13,65300,Support,,Regular,Satellite & internet,,None,FALSE,653,FALSE,FALSE,FALSE
+account_65310,Expense,FALSE,1-Nov-13,65310,Support,,Regular,"Mobile, land lines & postage",,None,FALSE,653,FALSE,FALSE,FALSE
+account_654,View,FALSE,1-Nov-13,654,,,View,Insurance of premises & equipment,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65400,Expense,FALSE,1-Nov-13,65400,Support,,Regular,Insurance of buildings ,,None,FALSE,654,FALSE,FALSE,FALSE
+account_65410,Expense,FALSE,1-Nov-13,65410,Support,,Regular,Insurance of vehicles,,None,FALSE,654,FALSE,FALSE,FALSE
+account_655,View,FALSE,1-Nov-13,655,,,View,Professional services,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65500,Expense,FALSE,1-Nov-13,65500,Support,,Regular,External auditors,,None,FALSE,655,FALSE,FALSE,FALSE
+account_65510,Expense,FALSE,1-Nov-13,65510,Support,,Regular,Legal & Tax Advisors,,None,FALSE,655,FALSE,FALSE,FALSE
+account_65520,Expense,FALSE,1-Nov-13,65520,Support,,Regular,Security Services,,None,FALSE,655,FALSE,FALSE,FALSE
+account_65530,Expense,FALSE,1-Nov-13,65530,Operations,,Regular,Training costs for non MSF staff,,None,FALSE,655,FALSE,FALSE,FALSE
+account_65540,Expense,FALSE,1-Nov-13,65540,Support,,Regular,Other professional services,,None,FALSE,655,FALSE,FALSE,FALSE
+account_656,View,FALSE,1-Nov-13,656,,,View,Communication and representation expenses,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65600,Expense,FALSE,1-Nov-13,65600,Operations,,Regular,Communication & advocacy,,None,FALSE,656,FALSE,FALSE,FALSE
+account_65610,Expense,FALSE,1-Nov-13,65610,Operations,,Regular,Reception and representative expenses ,,None,FALSE,656,FALSE,FALSE,FALSE
+account_65620,Expense,FALSE,1-Nov-13,65620,Operations,,Regular,Identification & visibility material,,None,FALSE,656,FALSE,FALSE,FALSE
+account_657,View,FALSE,1-Nov-13,657,,,View,Other general and running costs,,None,FALSE,65,FALSE,FALSE,FALSE
+account_65710,Expense,FALSE,1-Nov-13,65710,Support,,Regular,Bank fees & costs,,None,FALSE,657,FALSE,FALSE,FALSE
+account_65720,Expense,FALSE,1-Nov-13,65720,Support,,Regular,Local taxes ,,None,FALSE,657,FALSE,FALSE,FALSE
+account_66,View,FALSE,1-Nov-13,66,,,View,Staff costs,,None,FALSE,6,FALSE,FALSE,FALSE
+account_660,View,FALSE,1-Nov-13,660,,,View,Payroll,,None,FALSE,66,FALSE,FALSE,FALSE
+account_66000,Expense,FALSE,1-Nov-13,66000,National Staff,,Regular,Gross salary,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66001,Expense,FALSE,1-Nov-13,66001,National Staff,,Regular,Salaries Domestic staff,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66002,Expense,FALSE,1-Nov-13,66002,National Staff,,Regular,Salaries Coordination/Administration staff,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66003,Expense,FALSE,1-Nov-13,66003,National Staff,,Regular,Salaries medical staff,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66004,Expense,FALSE,1-Nov-13,66004,National Staff,,Regular,Salaries paramedical staff,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66005,Expense,FALSE,1-Nov-13,66005,National Staff,,Regular,Salaries non-medical staff,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66006,Expense,FALSE,1-Nov-13,66006,National Staff,,Regular,Salaries logistic support staff,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66010,Expense,FALSE,1-Nov-13,66010,Expatriates,,Regular,Daily tariff (RAC),,None,FALSE,660,FALSE,FALSE,FALSE
+account_66020,Expense,FALSE,1-Nov-13,66020,National Staff,,Regular,Salary provision for untaken vacation,,None,FALSE,660,FALSE,FALSE,FALSE
+account_66030,Expense,FALSE,1-Nov-13,66030,National Staff,,Regular,Severance pay ,,None,FALSE,660,FALSE,FALSE,FALSE
+account_661,View,FALSE,1-Nov-13,661,,,View,Employer contributions ,,None,FALSE,66,FALSE,FALSE,FALSE
+account_66100,Expense,FALSE,1-Nov-13,66100,National Staff,,Regular,Employer contributions: Social security ,,None,FALSE,661,FALSE,FALSE,FALSE
+account_66110,Expense,FALSE,1-Nov-13,66110,National Staff,,Regular,Employer contributions: Payroll taxes ,,None,FALSE,661,FALSE,FALSE,FALSE
+account_66120,Expense,FALSE,1-Nov-13,66120,National Staff,,Regular,Employer contributions: Pension funds,,None,FALSE,661,FALSE,FALSE,FALSE
+account_66130,Expense,FALSE,1-Nov-13,66130,National Staff,,Regular,Other taxable allowances and benefits,,None,FALSE,661,FALSE,FALSE,FALSE
+account_66140,Expense,FALSE,1-Nov-13,66140,National Staff,,Regular,Employer contribution provision for untaken vacation,,None,FALSE,661,FALSE,FALSE,FALSE
+account_662,View,FALSE,1-Nov-13,662,,,View,Other staff costs,,None,FALSE,66,FALSE,FALSE,FALSE
+account_66200,Expense,FALSE,1-Nov-13,66200,Expatriates,,Regular,Posting Tariff ,,None,FALSE,662,TRUE,FALSE,FALSE
+account_66210,Expense,FALSE,1-Nov-13,66210,National Staff,,Regular,Other non-taxable allowances & benefits ,,None,FALSE,662,FALSE,FALSE,FALSE
+account_66220,Expense,FALSE,1-Nov-13,66220,Expatriates,,Regular,Per diem ,,None,FALSE,662,FALSE,FALSE,FALSE
+account_66230,Expense,FALSE,1-Nov-13,66230,National Staff,,Regular,Health costs ,,None,FALSE,662,FALSE,FALSE,FALSE
+account_66240,Expense,FALSE,1-Nov-13,66240,National Staff,,Regular,Training costs for MSF staff,,None,FALSE,662,FALSE,FALSE,FALSE
+account_66250,Expense,FALSE,1-Nov-13,66250,Expatriates,,Regular,Other staff costs ,,None,FALSE,662,FALSE,FALSE,FALSE
+account_66260,Expense,FALSE,1-Nov-13,66260,Expatriates,,Regular,Food Pot for Expats (OCA only),,None,FALSE,662,FALSE,FALSE,FALSE
+account_663,View,FALSE,1-Nov-13,663,,,View,Temporary staff,,None,FALSE,66,FALSE,FALSE,FALSE
+account_66300,Expense,FALSE,1-Nov-13,66300,Operations,,Regular,"Daily workers (non MoH, non-incentive)",,None,FALSE,663,FALSE,FALSE,FALSE
+account_66310,Expense,FALSE,1-Nov-13,66310,Operations,,Regular,Expert visit from HQ,,None,FALSE,663,FALSE,FALSE,FALSE
+account_67,View,FALSE,1-Nov-13,67,,,View,Miscellaneous other operating costs,,None,FALSE,6,FALSE,FALSE,FALSE
+account_670,View,FALSE,1-Nov-13,670,,,View,Miscellaneous expenses,,None,FALSE,67,FALSE,FALSE,FALSE
+account_67000,Expense,FALSE,1-Nov-13,67000,Support,,Regular,Cash differences ,,None,FALSE,670,FALSE,FALSE,FALSE
+account_67010,Expense,FALSE,1-Nov-13,67010,Support,,Regular,Bad debt ,,None,FALSE,670,FALSE,FALSE,FALSE
+account_67020,Expense,FALSE,1-Nov-13,67020,Support,,Regular,Theft,,None,FALSE,670,FALSE,FALSE,FALSE
+account_67030,Expense,FALSE,1-Nov-13,67030,Support,,Regular,Litigation ,,None,FALSE,670,FALSE,FALSE,FALSE
+account_67040,Expense,FALSE,1-Nov-13,67040,Support,,Regular,Realized loss currency exchange,,None,FALSE,670,FALSE,FALSE,FALSE
+account_67050,Expense,FALSE,1-Nov-13,67050,Support,,Regular,Unrealized loss currency exchange,,None,FALSE,670,FALSE,FALSE,FALSE
+account_671,View,FALSE,1-Nov-13,671,,,View,Losses on assets,,None,FALSE,67,FALSE,FALSE,FALSE
+account_67100,Expense,FALSE,1-Nov-13,67100,Support,,Regular,Differences of inventory (loss),,None,FALSE,671,FALSE,FALSE,FALSE
+account_67110,Expense,FALSE,1-Nov-13,67110,Support,,Regular,Expired and damaged goods,,None,FALSE,671,FALSE,FALSE,FALSE
+account_67120,Expense,FALSE,1-Nov-13,67120,Support,,Regular,Theft or deterioration of inventory goods,,None,FALSE,671,FALSE,FALSE,FALSE
+account_67130,Expense,FALSE,1-Nov-13,67130,Support,,Regular,Depreciation on inventories,,None,FALSE,671,FALSE,FALSE,FALSE
+account_67140,Expense,FALSE,1-Nov-13,67140,Support,,Regular,Impairment on fixed asset,,None,FALSE,671,FALSE,FALSE,FALSE
+account_68,View,FALSE,1-Nov-13,68,,,View,Depreciation and provisions ,,None,FALSE,6,FALSE,FALSE,FALSE
+account_680,View,FALSE,1-Nov-13,680,,,View,Depreciation on fixed assets,,None,FALSE,68,FALSE,FALSE,FALSE
+account_68000,Expense,FALSE,1-Nov-13,68000,Support,,Regular,Depreciation on building,,None,FALSE,680,FALSE,FALSE,FALSE
+account_68010,Expense,FALSE,1-Nov-13,68010,Support,,Regular,Depreciation on medical equipment,,None,FALSE,680,FALSE,FALSE,FALSE
+account_68020,Expense,FALSE,1-Nov-13,68020,Support,,Regular,Depreciation on non-medical equipment,,None,FALSE,680,FALSE,FALSE,FALSE
+account_68030,Expense,FALSE,1-Nov-13,68030,Support,,Regular,"Depreciation on software, trademarks and licence",,None,FALSE,680,FALSE,FALSE,FALSE
+account_681,View,FALSE,1-Nov-13,681,,,View,Dotation on provision ,,None,FALSE,68,FALSE,FALSE,FALSE
+account_68100,Expense,FALSE,1-Nov-13,68100,Support,,Regular,Dotation on provision ,,None,FALSE,681,FALSE,FALSE,FALSE
+account_69,View,FALSE,1-Nov-13,69,,,View,Contributions for cash and expenses paid for others  ,,None,FALSE,6,FALSE,FALSE,FALSE
+account_690,View,FALSE,1-Nov-13,690,,,View,Contributions for cash and expenses paid for others  ,,None,FALSE,69,FALSE,FALSE,FALSE
+account_69001,Expense,FALSE,1-Nov-13,69001,Support,,Regular,Expenses paid for other missions or HQ,,None,FALSE,690,FALSE,FALSE,FALSE
+account_69002,Expense,FALSE,1-Nov-13,69002,Support,,Regular,Expenses paid for other sections or other NGO,,None,FALSE,690,FALSE,FALSE,FALSE
+account_7,View,FALSE,1-Nov-13,7,,,View,Incomes,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_70,View,FALSE,1-Nov-13,70,,,View,Contribution in kind received - goods and services,,None,FALSE,7,FALSE,FALSE,FALSE
+account_700,View,FALSE,1-Nov-13,700,,,View, Contributions in kind received,,None,FALSE,70,FALSE,FALSE,FALSE
+account_70000,Income,FALSE,1-Nov-13,70000,Operations,,Regular,Medical goods received in kind,,None,FALSE,700,FALSE,FALSE,FALSE
+account_70010,Income,FALSE,1-Nov-13,70010,Operations,,Regular,Non-medical goods received in kind,,None,FALSE,700,FALSE,FALSE,FALSE
+account_70020,Income,FALSE,1-Nov-13,70020,Operations,,Regular,Subcontracted services received in kind,,None,FALSE,700,FALSE,FALSE,FALSE
+account_71,View,FALSE,1-Nov-13,71,,,View,Other income,,None,FALSE,7,FALSE,FALSE,FALSE
+account_710,View,FALSE,1-Nov-13,710,,,View,Donations received in the field,,None,FALSE,71,FALSE,FALSE,FALSE
+account_71000,Income,FALSE,1-Nov-13,71000,Operations,,Regular,Donations received in the field,,None,FALSE,710,FALSE,FALSE,FALSE
+account_711,View,FALSE,1-Nov-13,711,,,View,Finance income,,None,FALSE,71,FALSE,FALSE,FALSE
+account_71100,Income,FALSE,1-Nov-13,71100,Support,,Regular,Interest incomes,,None,FALSE,711,FALSE,FALSE,FALSE
+account_71110,Income,FALSE,1-Nov-13,71110,Support,,Regular,Realized gain currency exchange,,None,FALSE,711,FALSE,FALSE,FALSE
+account_71120,Income,FALSE,1-Nov-13,71120,Support,,Regular,Unrealized gain currency exchange,,None,FALSE,711,FALSE,FALSE,FALSE
+account_712,View,FALSE,1-Nov-13,712,,,View,Sales of equipment and goods,,None,FALSE,71,FALSE,FALSE,FALSE
+account_71200,Income,FALSE,1-Nov-13,71200,Support,,Regular,Sales of equipment,,None,FALSE,712,FALSE,FALSE,FALSE
+account_71210,Income,FALSE,1-Nov-13,71210,Support,,Regular,Other sales,,None,FALSE,712,FALSE,FALSE,FALSE
+account_713,View,FALSE,1-Nov-13,713,,,View,Gain on inventory,,None,FALSE,71,FALSE,FALSE,FALSE
+account_71300,Income,FALSE,1-Nov-13,71300,Support,,Regular,Positive differences of inventory ,,None,FALSE,713,FALSE,FALSE,FALSE
+account_79,View,FALSE,1-Nov-13,79,,,View,Contributions for cash and expenses paid by others,,None,FALSE,7,FALSE,FALSE,FALSE
+account_790,View,FALSE,1-Nov-13,790,,,View,Contributions for cash and expenses paid by others,,None,FALSE,79,FALSE,FALSE,FALSE
+account_79001,Income,FALSE,1-Nov-13,79001,Support,,Regular,Donations from HQ,,None,FALSE,790,FALSE,FALSE,FALSE
+account_79002,Income,FALSE,1-Nov-13,79002,Support,,Regular,Expenses paid by other missions,,None,FALSE,790,FALSE,FALSE,FALSE
+account_79003,Income,FALSE,1-Nov-13,79003,Support,,Regular,Expenses paid by other sections or other NGO,,None,FALSE,790,FALSE,FALSE,FALSE
+account_8,View,FALSE,1-Nov-13,8,,,View,Off balance sheet suspense accounts ,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_80,View,FALSE,1-Nov-13,80,,,View,Variation of stock inventory,,None,FALSE,8,FALSE,FALSE,FALSE
+account_800,View,FALSE,1-Nov-13,800,,,View,Variation of stock inventory,,None,FALSE,80,FALSE,FALSE,FALSE
+account_80000,Stock,FALSE,1-Nov-13,80000,,,Regular,Variation of medical stock  inventory,,None,FALSE,800,FALSE,FALSE,FALSE
+account_80100,Stock,FALSE,1-Nov-13,80100,,,Regular,Variation of non-medical stock  inventory,,None,FALSE,800,FALSE,FALSE,FALSE
+account_81,View,FALSE,1-Nov-13,81,,,View,Contribution in kind,,None,FALSE,8,FALSE,FALSE,FALSE
+account_810,View,FALSE,1-Nov-13,810,,,View,Contribution in kind,,None,FALSE,81,FALSE,FALSE,FALSE
+account_81000,Payables,FALSE,1-Nov-13,81000,,,Payable,Medical goods received in kind,,Donation,FALSE,810,FALSE,TRUE,FALSE
+account_81100,Payables,FALSE,1-Nov-13,81100,,,Payable,Non-medical goods received in kind,,Donation,FALSE,810,FALSE,TRUE,FALSE
+account_81200,Payables,FALSE,1-Nov-13,81200,,,Payable,Subcontracted services received in kind,,Donation,FALSE,810,FALSE,TRUE,FALSE
+account_9,View,FALSE,1-Nov-13,9,,,View,Off balance sheet items,,None,FALSE,MSF,FALSE,FALSE,FALSE
+account_90,View,FALSE,1-Nov-13,90,,,View,Inventories,,None,FALSE,9,FALSE,FALSE,FALSE
+account_900,View,FALSE,1-Nov-13,900,,,View,Medical inventories,,None,FALSE,90,FALSE,FALSE,FALSE
+account_90000,Stock,FALSE,1-Nov-13,90000,,,Regular,Medical inventories,,None,FALSE,900,FALSE,FALSE,FALSE
+account_901,View,FALSE,1-Nov-13,901,,,View,Non-medical inventories,,None,FALSE,90,FALSE,FALSE,FALSE
+account_90100,Stock,FALSE,1-Nov-13,90100,,,Regular,Non-medical inventories,,None,FALSE,901,FALSE,FALSE,FALSE
+account_902,View,FALSE,1-Nov-13,902,,,View,Stock transfers,,None,FALSE,90,FALSE,FALSE,FALSE
+account_90200,Stock,FALSE,1-Nov-13,90200,,,Regular,Stock in transit,,None,FALSE,902,FALSE,FALSE,FALSE
+account_91,View,FALSE,1-Nov-13,91,,,View,Contribution in kind,,None,FALSE,9,FALSE,FALSE,FALSE
+account_910,View,FALSE,1-Nov-13,910,,,View,Contribution in kind,,None,FALSE,91,FALSE,FALSE,FALSE
+account_91000,Extra-accounting expenses,FALSE,1-Nov-13,91000,Operations,,Regular,Medical goods received in kind,,Donation,FALSE,910,FALSE,FALSE,FALSE
+account_91100,Extra-accounting expenses,FALSE,1-Nov-13,91100,Operations,,Regular,Non-medical goods received in kind,,Donation,FALSE,910,FALSE,FALSE,FALSE
+account_91200,Extra-accounting expenses,FALSE,1-Nov-13,91200,Operations,,Regular,Subcontracted services received in kind,,Donation,FALSE,910,FALSE,FALSE,FALSE

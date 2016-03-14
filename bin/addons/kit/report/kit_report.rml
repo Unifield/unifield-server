@@ -1,0 +1,270 @@
+<?xml version="1.0" ?>
+<document filename="kit.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Kit" author="Unifield,MSF" allowSplitting="20">
+        <pageTemplate>
+            <frame id="first" x1="28.0" y1="28.0" width="786" height="525" />
+            <pageGraphics>
+                <image x="28.0" y="510" height="35.0" >[[ company.logo or removeParentNode('image') ]]</image>
+                <fill color="black" />
+                <stroke color="black" />
+                <setFont name="DejaVu Sans" size="8" />
+                <drawString x="25" y="555">[[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]] [[ time.strftime(%X:%M") ]]</drawString>
+                <setFont name="DejaVu Sand Bold" size="10" />
+                <drawString x="382" y="555">[[ company.partner_id.name ]]</drawString>
+                <stroke color="#000000" />
+                <lines>25 550 818 550</lines>
+            </pageGraphics>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+        <!-- Table styles -->
+        <blockTableStyle id="MainTitle">
+            <blockAlignment value="CENTER" />
+            <blockValign value="MIDDLE" />
+        </blockTableStyle>
+
+        <blockTableStyle id="HeaderInfo">
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="#f2f2f2" />
+        </blockTableStyle>
+
+        <blockTableStyle id="LineHeader">
+            <blockAlignment value="CENTER" />
+            <blockValign value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="#000000" />
+            <blockBackground colorName="#f2f2f2" start="0,0" stop="-1,0" />
+        </blockTableStyle>
+
+        <blockTableStyle id="LineInfo">
+            <blockAlignment value="LEFT" />
+            <blockValgin value="MIDDLE" />
+            <lineStyle kind="GRID" colorName="#000000" />
+        </blockTableStyle>
+
+        <blockTableStyle id="Notes">
+            <blockAlignment value="LEFT" />
+            <lineStyle kind="OUTLINE" colorName="#000000" />
+        </blockTableStyle>
+
+        <!-- Font styles -->
+        <paraStyle name="Title" fontName="Helvetica" fontSize="20.0" leading="20" alignment="CENTER" />
+        <paraStyle name="Header" fontName="Helvetica" fontSize="8.0" alignment="LEFT" />
+        <paraStyle name="HeaderRight" fontName="Helvetica-Bold" fontSize="8.0" alignment="RIGHT" />
+        <paraStyle name="LHeader" fontName="Helvetica-Bold" fontSize="7.0" alignment="CENTER" />
+        <paraStyle name="Line" fontName="Helvetica" fontSize="7.0" alignment="LEFT" />
+        <paraStyle name="LineCentered" fontName="Helvetica" fontSize="7.0" alignment="CENTER" />
+        <paraStyle name="LFooter" fontName="Helvetica-Bold" fontSize="7.0" alignment="LEFT" />
+    </stylesheet>
+
+    <story>
+
+        [[ repeatIn(objects, 'o') ]]
+
+        <blockTable colWidths="842.0" style="MainTitle">
+            <tr>
+                <td>
+                    <para style="Title">[[ o.composition_type == 'theoretical' and 'THEORETICAL KIT COMPOSITION' or 'KIT COMPOSITION LIST' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Header">
+            <font color="white"> </font>
+        </para>
+
+        <!-- Header Information -->
+        <blockTable colWidths="80.0,240.0,80.0,110.0,90.0,120.0" style="HeaderInfo">
+            <tr>
+                <td>
+                    <para style="HeaderRight">Product :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.composition_product_id and get_name('product.product', o.composition_product_id.id) or '' ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight">Version :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.composition_type == 'theoretical' and o.composition_version_txt or get_name('composition.kit', o.composition_version_id.id) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight">Creation Date :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ formatLang(o.composition_creation_date, date=True) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderRight">State :</para>
+                </td>
+                <td>
+                    <para style="Header">[[ getSel(o, 'state') ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight">[[ o.composition_type == 'real' and 'Reference :' or '' ]]</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.composition_type == 'real' and o.composition_reference or '' ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderRight">[[ o.composition_type == 'real' and 'Expiry Date :' or '' ]]</para>
+                </td>
+                <td>
+                    <para style="Header">[[ o.composition_type == 'real' and formatLang(o.composition_exp, date=True) or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Header">
+            <font color="white"> </font>
+        </para>
+
+        <section>
+
+            <!-- Composition items for Kit Composition List -->
+            <blockTable colWidths="90.0,130.0,40.0,60.0,80.0,80.0,60.0,40.0,40.0,170.0" style="LineHeader" repeatRows="1">
+                [[ o.composition_type == 'real' or removeParentNode('blockTable') ]]
+                <tr>
+                    <td>
+                        <para style="LHeader">Module</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Product</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Qty</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">UoM</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Asset</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Batch Nb</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Expiry Date</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">B. Num</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Exp</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Comment</para>
+                    </td>
+                </tr>
+                <tr>
+                    [[ repeatIn(o.composition_item_ids, 'item', 'tr') ]]
+                    <td>
+                        <para style="Line">[[ item.item_module ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.item_product_id and get_name('product.product', item.item_product_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ formatLang(item.item_qty) ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.item_uom_id and get_name('product.uom', item.item_uom_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.item_asset_id and get_name('product.asset', item.item_asset_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.item_lot ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ formatLang(item.item_exp, date=True) ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineCentered">[[ item.hidden_batch_management_mandatory and 'X' or ' ' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineCentered">[[ item.hidden_perishable_mandatory and 'X' or ' ' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.inactive_error ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+
+            <!-- Composition items for Theoretical Kit Composition -->
+            <blockTable colWidths="110.0,200.0,55.0,75.0,50.0,50.0,250.0" style="LineHeader" repeatRows="1">
+                [[ o.composition_type == 'theoretical' or removeParentNode('blockTable') ]]
+                <tr>
+                    <td>
+                        <para style="LHeader">Module</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Product</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Qty</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">UoM</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">B. Num</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Exp</para>
+                    </td>
+                    <td>
+                        <para style="LHeader">Comment</para>
+                    </td>
+                </tr>
+                <tr>
+                    [[ repeatIn(o.composition_item_ids, 'item', 'tr') ]]
+                    <td>
+                        <para style="Line">[[ item.item_module ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.item_product_id and get_name('product.product', item.item_product_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ formatLang(item.item_qty) ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.item_uom_id and get_name('product.uom', item.item_uom_id.id) or '' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineCentered">[[ item.hidden_batch_management_mandatory and 'X' or ' ' ]]</para>
+                    </td>
+                    <td>
+                        <para style="LineCentered">[[ item.hidden_perishable_mandatory and 'X' or ' ' ]]</para>
+                    </td>
+                    <td>
+                        <para style="Line">[[ item.inactive_error ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+
+        </section>
+
+        <para style="Header">
+            <font color="white"> </font>
+        </para>
+
+        <section>
+
+            <blockTable colWidths="600.0" style="Notes">
+                <tr>
+                    <td>
+                        <para style="LFooter">Notes :</para>
+                        <para style="Line">[[ o.composition_description ]]</para>
+                    </td>
+                </tr>
+            </blockTable>
+
+        </section>
+
+    </story>
+
+</document>

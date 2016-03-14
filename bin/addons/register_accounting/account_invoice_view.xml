@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    <!-- Supplier Invoice Form -->
+        <record model="ir.ui.view" id="wizard_supplier_invoice_form">
+            <field name="name">wizard.supplier.invoice.form</field>
+            <field name="model">wizard.account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" eval="False" />
+            <field name="priority">200</field>
+            <field name="arch" type="xml">
+                <form string="Supplier Invoice">
+                    <group colspan="4" col="6">
+                        <field name="journal_id" domain="[('is_current_instance','=',True),('type','=','purchase')]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="number" readonly="1" />
+                        <field name="type" invisible="1"/>
+                        <field name="currency_id" readonly="1" />
+                        <newline/>
+                        <field name="partner_id" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,'1')" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1"/>
+                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1"/>
+                        <newline/>
+                        <field name="document_date" required="1"/>
+                        <field name="date_invoice" required="1"/>
+                        <field name="register_posting_date" required="1"/>
+                        <field name="reference" />
+                        <field name="state" invisible="1"/>
+                        <newline/>
+                        <label string="" colspan="4"/>
+                        <field name="amount_total"/>
+                    </group>
+                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                      <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <group colspan="2"/>
+                    <notebook colspan="4">
+                        <page string="Invoice">
+                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1"/>
+                            <field name="check_total" readonly="1" invisible="1"/>
+                            <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
+                                address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
+                                name="invoice_line" nolabel="1">
+                                <tree editable="bottom" string="Invoice lines" colors="red:analytic_distribution_state == 'invalid' or inactive_product == True;black:inactive_product == False and analytic_distribution_state in ('none','valid')">
+                                    <field name="name"/>
+                                    <field name="reference"/>
+                                    <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                        context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_document_date': parent.document_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment,'d_reference': parent.reference}"
+                                        />
+                                    <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                     <!-- Removed if subtotal is set -->
+                                    <field name="price_subtotal"/>
+                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type,
+                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id,
+                                        {'company_id': parent.company_id})"/>
+                                    <field invisible="True" name="uos_id"/>
+                                    <field invisible="1" name="inactive_product"/>
+                                </tree>
+                            </field>
+                            <group col="4" colspan="4">
+                                <button string="Compute Total" name="compute_wizard" type="object" icon='gtk-execute' colspan="4"/>
+                                <group col="6" colspan="4">
+                                    <button name="invoice_reset_wizard" string="Reset Invoice" icon="gtk-cancel" type="object" attrs="{'invisible':['|', ('partner_id','=',False), ('date_invoice','=',False)]}"/>
+                                    <button name="invoice_create_wizard" string="Validate" icon="terp-camera_test" type="object"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Other Info">
+                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)"/>
+                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)"
+                                widget="selection" groups="base.group_multi_company"/>
+                            <newline/>
+                            <field name="payment_term" widget="selection"/>
+                            <field name="name"/>
+                            <newline/>
+                            <field name="origin" />
+                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" />
+                            <field name="user_id"/>
+                            <separator colspan="4" string="Additional Information"/>
+                            <field colspan="4" name="comment" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_direct_invoice_refund" model="ir.ui.view">
+            <field name="name">account.direct.refund.form</field>
+            <field name="model">account.invoice.refund</field>
+            <field name="type">form</field>
+            <field name="priority" eval="100" />
+            <field name="arch" type="xml">
+                <form string="Refund Invoice">
+                <separator string="Refund Invoice Options" colspan="4"/>
+                <group colspan="4" >
+                    <field name="description"/>
+                    <field name="journal_id" widget='selection'/>
+                    <field name="document_date"/>
+                    <field name="date" on_change="onchange_date(date)"/>
+                    <field name="filter_refund" readonly="1" />
+                </group>
+                <separator colspan="4"/>
+                <group col="4" colspan="4" fill="1">
+                    <label align="0.0" width="300" string="Refund Invoice: Creates the refund invoice, ready for editing."/>
+                </group>
+                <separator colspan="4"/>
+                <group colspan="4" col="6">
+                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                    <button string='Refund' icon="gtk-execute" name="invoice_refund" type="object"/>
+                </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_direct_invoice_refund" model="ir.actions.act_window">
+            <field name="name">Refund</field>
+            <field name="res_model">account.invoice.refund</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_direct_invoice_refund"/>
+            <field name="target">new</field>
+        </record>
+
+    <!--
+        Supplier Direct Invoice Pop-up when editing a register line that comes from a direct invoice
+    -->
+        <record model="ir.ui.view" id="direct_supplier_invoice_form">
+            <field name="name">direct_supplier.invoice.form</field>
+            <field name="model">account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" eval="False" />
+            <field name="priority">250</field>
+            <field name="arch" type="xml">
+                <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1" hide_edit_button="1" hide_delete_button="1" noteditable="1">
+                    <group colspan="4" col="8">
+                        <field name="is_direct_invoice" invisible="1" readonly="1"/>
+                        <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
+                        <field name="number" readonly="1"/>
+                        <field name="type" invisible="1"/>
+                        <field name="currency_id" invisible="1" />
+                        <field name="fake_currency_id" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <newline/>
+                        <field name="partner_id" domain="[('supplier', '=', True)]" on_change="onchange_partner_id(type,partner_id,date_invoice,payment_term, partner_bank_id,company_id,is_inkind_donation,is_intermission,is_debit_note,is_direct_invoice)" context="{'default_customer': 0, 'search_default_supplier': 1, 'default_supplier': 1}" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+
+                        <field domain="[('partner_id','=',partner_id)]" name="address_invoice_id" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <newline/>
+                        <field name="document_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}"/>
+                        <field name="date_invoice" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="register_posting_date" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True)]}"/>
+                        <field name="reference" attrs="{'readonly': [('is_direct_invoice', '=', True),('state', '=', 'paid')]}" />
+                        <newline/>
+                        <label string="" colspan="4"/>
+                        <field name="amount_total"/>
+                    </group>
+                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                      <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
+                    </group>
+                    <field name="analytic_distribution_id" invisible="1"/>
+                    <group colspan="2"/>
+                    <notebook colspan="4">
+                        <page string="Invoice">
+                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'in_invoice')]" required="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="check_total" readonly="1" invisible="1"/>
+                            <field colspan="4" default_get="{'check_total': check_total, 'address_invoice_id':
+                                address_invoice_id, 'partner_id': partner_id, 'price_type': 'price_type' in dir() and price_type or False}"
+                                name="invoice_line" nolabel="1" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}">
+                                <tree editable="bottom" string="Invoice lines" >
+                                    <field name="is_corrected" invisible="1"/>
+                                    <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
+                                    <field name="name"/>
+                                    <field name="reference" />
+                                    <field domain="[('company_id', '=', parent.company_id), ('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'invoice_lines')]" name="account_id" on_change="onchange_account_id(parent.fiscal_position,account_id)"/>
+                                    <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                                    <field name="is_allocatable" invisible="1"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                     <!-- Removed if subtotal is set -->
+                                    <field name="price_subtotal"/>
+                                    <field name="product_id" on_change="product_id_change(product_id, uos_id, quantity, name, parent.type,
+                                        parent.partner_id, parent.fiscal_position, price_unit, parent.address_invoice_id, parent.currency_id,
+                                        {'company_id': parent.company_id})"/>
+                                    <field invisible="True" name="uos_id"/>
+                                    <field name="inactive_product" invisible="1"  />
+                                </tree>
+                            </field>
+                            <group col="4" colspan="4">
+                                <button string="Compute Total" name="button_dummy_compute_total" type="object" icon='gtk-execute' colspan="4" states="draft,open"/>
+                                <button name="button_close_direct_invoice" string="Validate" icon="terp-camera_test" type="object" colspan="4" states="draft,open"/>
+                            </group>
+                        </page>
+                        <page string="Other Info">
+                            <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="company_id" on_change="onchange_company_id(company_id,partner_id,type,invoice_line,currency_id)"
+                                widget="selection" groups="base.group_multi_company" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <newline/>
+                            <field name="payment_term" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="name" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <newline/>
+                            <field name="origin" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field domain="[('partner_id','=',partner_id)]" name="address_contact_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <field name="user_id" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
+                            <separator colspan="4" string="Additional Information"/>
+                            <field colspan="4" name="comment" nolabel="1"/>
+                        </page>
+                    </notebook>
+                    <group col="4" colspan="4">
+                        <field name="state" readonly="1" colspan="2"/>
+                        <button name="%(action_direct_invoice_refund)d" type='action' string='Refund' states='open,paid' icon="gtk-execute" colspan="2"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_direct_invoice" model="ir.actions.act_window">
+            <field name="name">Supplier Direct Invoices</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="view_id" ref="direct_supplier_invoice_form"/>
+            <field name="domain">[('type','=','in_invoice'), ('is_direct_invoice', '!=', False)]</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'purchase'}</field>
+            <field name="search_view_id" ref="account.view_account_invoice_filter"/>
+            <field name="help">With Supplier Direct Invoices you can enter and manage direct invoices issued by your user into Registers.</field>
+        </record>
+
+        <record id="direct_invoice_tree" model="ir.ui.view">
+            <field name="name">account.invoice.tree.direct</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="priority">250</field>
+            <field name="arch" type="xml">
+                <tree noteditable="1" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" string="Invoice" hide_new_button="1" hide_delete_button="1">
+                    <field name="document_date"/>
+                    <field name="date_invoice"/>
+                    <field name="number"/>
+                    <field name="partner_id" />
+                    <field name="name"/>
+                    <field name="journal_id" invisible="1"/>
+                    <field name="period_id" invisible="1" />
+                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    <field name="user_id" invisible="1"/>
+                    <field name="date_due"/>
+                    <field name="origin"/>
+                    <field name="currency_id"/>
+                    <field name="residual" sum="Residual Amount"/>
+                    <field name="amount_untaxed" sum="Untaxed Amount" invisible="1"/>
+                    <field name="amount_total" sum="Total Amount"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="act_direct_supplier_invoice">
+            <field name="sequence" eval="5"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="direct_invoice_tree"/>
+            <field name="act_window_id" ref="action_direct_invoice"/>
+        </record>
+
+    <!-- Supplier Direct Invoices Menu -->
+        <menuitem action="action_direct_invoice" id="menu_action_direct_invoice" parent="account.menu_finance_payables"/>
+
+
+    <!-- Validate button is set as function -->
+        <record id="invoice_tree_2" model="ir.ui.view">
+            <field name="name">account.invoice.tree.2</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.invoice_tree"/>
+            <field name="priority">18</field>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/button[@name='invoice_open']" position="replace">
+                    <button name="invoice_open" states="draft,proforma2" type="object" string="Approve" icon="terp-camera_test"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="invoice_form_2" model="ir.ui.view">
+            <field name="name">account.invoice.form.2</field>
+            <field name="model">account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.invoice_form"/>
+            <field name="priority">50</field>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="journal_id" position="replace">
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
+                    </field>
+                    <button name="action_cancel_draft" position="replace"/>
+                    <button name='invoice_open' position="replace">
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                    </button>
+
+                    <!-- Take care of attrs redefinition that omit the "states" one. So we need to add readonly with state to avoid this bug  -->
+                    <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="invoice_supplier_form_2" model="ir.ui.view">
+            <field name="name">account.invoice.supplier.form.2</field>
+            <field name="model">account.invoice</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.invoice_supplier_form"/>
+            <field name="priority">55</field>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="check_total" position="after">
+                        <field name="supplier_reference"/>
+                    </field>
+                    <field name="journal_id" position="replace">
+                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="vat_ok" invisible="1" />
+                    </field>
+                    <button name="action_cancel_draft" position="replace"/>
+                    <button name='invoice_open' position="replace">
+                        <button name="invoice_open" states="draft,proforma2" type="object" string="Validate" icon="gtk-go-forward"/>
+                        <field name="is_direct_invoice" invisible="1"/>
+                    </button>
+                    <button string='Refund' position="replace">
+                      <button name="%(account.action_account_invoice_refund)d" type='action' string='Refund' icon="gtk-execute" attrs="{'invisible': ['|', ('state', 'in', ['draft']), ('type', 'in', ['in_refund', 'out_refund'])]}"/>
+                    </button>
+                    <page string="Payments" position="after">
+                        <page string="Down Payments">
+                            <field name="down_payment_ids" nolabel="1" colspan="4">
+                                <tree string="Down Payment">
+                                    <field name="statement_id" string="Register"/>
+                                    <field name="date"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="account_id"/>
+                                    <field name="amount_currency" string="Amount" sum="Total Amount"/>
+                                    <field name="down_payment_amount" string="Expended amount"/>
+                                    <field name="currency_id"/>
+                                    <field name="reconcile_txt"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </page>
+
+                    <xpath expr="/form//field[@name='tax_line']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='amount_untaxed']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+
+                    <xpath expr="/form//field[@name='amount_tax']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+
+                    <!-- Take care of attrs redefinition that omit the "states" one. So we need to add readonly with state to avoid this bug  -->
+                    <xpath expr="/form//button[@name='button_reset_taxes']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)], 'readonly': [('state', '!=', 'draft')]}</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!-- Delete "Pay Invoice" button by deleting view that add it previously -->
+        <delete model="ir.ui.view" id="account_voucher.view_invoice_supplier"/>
+        <delete model="ir.ui.view" id="account_voucher.view_invoice_customer"/>
+
+    <!-- Invoice search view -->
+        <record id="inherit_view_account_invoice_filter2" model="ir.ui.view">
+            <field name="name">inherit.view.account.invoice.filter.2</field>
+            <field name="model">account.invoice</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_invoice_filter"/>
+            <field name="priority">18</field>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search/group[1]/filter[@name='paid']" position="after">
+                        <separator orientation="vertical"/>
+                        <filter name="not_imported" icon="gtk-cancel" string="Not imported" domain="[('imported_state', '=', 'not')]"/>
+                        <filter name="partial" icon="terp-dolar_ok!" string="Partially imported" domain="[('imported_state', '=', 'partial')]"/>
+                        <filter name="imported" icon="gtk-apply" string="Imported" domain="[('imported_state', '=', 'imported')]"/>
+                        <separator orientation="vertical"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+
+    </data>
+</openerp>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="automatic_supply_form_view" model="ir.ui.view">
+            <field name="name">automatic.supply.form.view</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Automatic Supply">
+                    <group colspan="2" col="2">
+                        <separator string="General Information" />
+                        <field name="name" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Locations" />
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id)" widget="selection"/>
+                        <field name="location_id"/>
+                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    </group>
+                    <group colspan="2" col="4">
+                        <separator string="Period / Frequence Rule" colspan="4" />
+                        <field name="frequence_name" readonly="1" colspan="4" />
+                        <field name="frequence_id" invisible="1" />
+                        <label />
+                        <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="3" />
+                        <field name="next_date" colspan="4" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Misc" />
+                        <field name="active" />
+                        <field name="procurement_id" />
+                    </group>
+                    <group colspan="4" col="4">
+                        <separator colspan="4" string="Order quantity by product" />
+                        <field name="line_ids" nolabel="1" colspan="4">
+                            <tree string="Products" editable="top" colors="red: product_qty &lt;= 0.00">
+                                <field name="product_id" on_change="onchange_product_id(product_id, product_uom_id, product_qty)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['consu', 'service', 'service_recep'])]"/>
+                                <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]" 
+                                    on_change="onchange_uom_qty(product_uom_id, product_qty)"/>
+                                <field name="product_qty" 
+                                    on_change="onchange_uom_qty(product_uom_id, product_qty)" />
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="automatic_supply_tree_view" model="ir.ui.view">
+            <field name="name">automatic.supply.tree.view</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Automatic Supply rules">
+                    <field name="name" />
+                    <field name="warehouse_id" />
+                    <field name="location_id" />
+                    <field name="frequence_id" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="automatic_supply_search_view" model="ir.ui.view">
+            <field name="name">automatic.supply.search.view</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Automatic Supply">
+                    <group expand="1" string="Filters...">
+                        <field name="name" default_focus="1" colspan="4" />
+                        <field name="location_id" eval="context.get('location_id', False)" colspan="4" />
+                        <field name="product_ids" widget="many2one" string="Product" />
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_automatic_supply_tree" model="ir.actions.act_window">
+            <field name="name">Automatic Supply</field>
+            <field name="res_model">stock.warehouse.automatic.supply</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'withnum': 1}</field>
+            <field name="help">You can define automatic replenishment rules, so that OpenERP will periodically create purchase orders according to the quantity to order you have defined and according to the choosen frequency.</field>
+        </record>
+
+        <menuitem action="action_automatic_supply_tree"
+                  id="menu_automatic_supply"
+                  sequence="2"
+                  parent="stock_schedule.stock_automatic_procurements_menu" />
+
+    </data>
+</openerp>

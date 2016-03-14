@@ -1,0 +1,53 @@
+<openerp>
+  <data>
+    <record id="view_currency_setup" model="ir.ui.view">
+      <field name="name">Currencies Configuration</field>
+      <field name="model">currency.setup</field>
+      <field name="type">form</field>
+      <field name="inherit_id" ref="base.res_config_view_base"/>
+      <field name="arch" type="xml">
+        <data>
+          <form position="attributes">
+            <attribute name="string">Currencies Configuration</attribute>
+          </form>
+          <xpath expr="//label[@string='description']" position="attributes">
+                <attribute name="string">Determines used currencies.</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="title"]' position='attributes'>
+                    <attribute name='string'>Configure Your Currencies</attribute>
+          </xpath>
+          <xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    <attribute name='rowspan'>25</attribute>
+                    <attribute name='string'></attribute>
+          </xpath>
+          <group string="res_config_contents" position="replace">
+              <group colspan="5">
+              	<field name="functional_id" on_change="functional_on_change(functional_id)" attrs="{'readonly': [('second_time', '=', 'True')]}" />
+                <field name="second_time" invisible="1"/>
+                <separator colspan="5" string="ESC currency" />
+                <field name="esc_id" widget="selection" />
+                <separator colspan="5" string="Section currency" />
+                <field name="section_id" />
+              </group>
+           </group>
+        </data>
+      </field>
+    </record>
+
+    <record id="action_currency_setup" model="ir.actions.act_window">
+      <field name="name">Currency Setup Configuration</field>
+      <field name="type">ir.actions.act_window</field>
+      <field name="res_model">currency.setup</field>
+      <field name="view_id" ref="view_currency_setup"/>
+      <field name="view_type">form</field>
+      <field name="view_mode">form</field>
+      <field name="target">new</field>
+    </record>
+
+    <record id="currency_setup_todo" model="ir.actions.todo">
+        <field name="action_id" ref="action_currency_setup"/>
+        <field name="sequence">16</field>
+        <field name="restart">onskip</field>
+    </record>
+  </data>
+</openerp>

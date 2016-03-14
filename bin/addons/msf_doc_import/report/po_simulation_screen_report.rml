@@ -1,0 +1,261 @@
+<?xml version="1.0" ?>
+<document filename="po_simulation_screen.pdf">
+
+    <template pageSize="(842.0, 595.0)" title="PO Simulation screen" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="530" />
+
+            <pageGraphics>
+                <drawString x="35" y="560.0">PO IMPORT SIMULATION</drawString>
+                <image x="17" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8" />
+                <fill color="black" />
+            </pageGraphics>
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+
+        <blockTableStyle id="Header">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <blockSpan start="1,1" stop="-1,1" />
+            <lineStyle kind="GRID" colorName="black" />
+        </blockTableStyle>
+
+        <blockTableStyle id="HeaderDiff">
+            <lineStyle kind="GRID" colorName="black" />
+        </blockTableStyle>
+
+        <!-- Header -->
+        <paraStyle name="HeaderName" fontName="Helvetica-Bold" fontSize="9.0" alignment="RIGHT" />
+        <paraStyle name="HeaderValue" fontName="Helvetica" fontSize="9.0" alignment="LEFT" />
+        <!-- Header diff -->
+        <paraStyle name="HeaderDiffName" fontName="Helvetica-Bold" fontSize="9.0" alignment="CENTER" />
+        <paraStyle name="HeaderDiffNameRight" fontName="Helvetica-Bold" fontSize="9.0" alignment="RIGHT" />
+        <paraStyle name="HeaderDiffValue" fontName="Helvetica" fontSize="9.0" />
+        <paraStyle name="HeaderDiffValueColor" textColor="red" fontName="Helvetica" fontSize="9.0" />
+
+    </stylesheet>
+
+    <story>
+        [[ repeatIn(objects, 'o') ]]
+
+        <blockTable colWidths="189.0,189.0,189.0,189.0" style="Header">
+            <tr>
+                <td>
+                    <para style="HeaderName">Order Reference:</para>
+                </td>
+                <td>
+                    <para style="HeaderValue">[[ o.order_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderName">Creation Date:</para>
+                </td>
+                <td>
+                    <para style="HeaderValue">[[ formatLang(o.in_creation_date, date=True) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderName">Destination Address</para>
+                </td>
+                <td colspan="3">
+                    <para style="HeaderValue">[[ o.in_dest_addr and addr_to_str(o.in_dest_addr) or '' ]]</para>
+                </td>
+                <td>
+                </td>
+                <td>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para><font color="white"> </font></para>
+
+        <blockTable colWidths="188.0,284.0,284.0" style="HeaderDiff">
+            <tr>
+                <td>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Original values</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Imported values</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Supplier Reference:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ o.in_supplier_ref ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_supplier_ref != o.imp_supplier_ref and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ o.imp_supplier_ref ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Transport mode:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ getSel(o, 'in_transport_mode') ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_transport_mode != o.imp_transport_mode and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ getSel(o, 'imp_transport_mode') ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">RTS Date:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ formatLang(o.in_ready_to_ship_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_ready_to_ship_date != o.imp_ready_to_ship_date and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ formatLang(o.imp_ready_to_ship_date, date=True) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Shipment Date:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ formatLang(o.in_shipment_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_shipment_date != o.imp_shipment_date and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ formatLang(o.imp_shipment_date, date=True) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Header notes:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ o.in_notes ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ o.imp_message_esc ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Untaxed Amount:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ formatLang(o.in_amount_untaxed) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_amount_untaxed != o.imp_amount_untaxed and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ formatLang(o.imp_amount_untaxed) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Total:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ formatLang(o.in_amount_total) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_amount_total != o.imp_amount_total and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ formatLang(o.imp_amount_total) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Total Incl. Transport:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ formatLang(o.in_total_price_include_transport) ]]</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.in_total_price_include_transport != o.imp_total_price_include_transport and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ formatLang(o.imp_total_price_include_transport) ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="HeaderDiffNameRight">Discrepancy:</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue"></para>
+                </td>
+                <td>
+                    <para style="HeaderDiffValue">[[ setTag('para', 'para', {'style': o.amount_discrepancy != 0.00 and 'HeaderDiffValueColor' or 'HeaderDiffValue'}) ]] [[ formatLang(o.amount_discrepancy) ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para><font color="white"> </font></para>
+
+        <blockTable colWidths="60.0,50.0,60.0,30.0,30.0,35.0,35.0,30.0,30.0,21.0,25.0,60.0,30.0,30.0,30.0,30.0,35.0,35.0,50.0,50.0" style="HeaderDiff">
+            <tr>
+                <td>
+                    <para style="HeaderDiffName">Product</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Nomenclature</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Comment</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Qty</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">UoM</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Delivery Requested Date</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Delivery Confirmed Date</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Price Unit</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Currency</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Line</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">CHG</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Product</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Qty</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Price Unit</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Discrepancy</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Currency</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Delivery Requested Date</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Delivery Confirmed Date</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Message ESC 1</para>
+                </td>
+                <td>
+                    <para style="HeaderDiffName">Message ESC 2</para>
+                </td>
+            </tr>
+        </blockTable>
+
+    </story>
+
+</document>

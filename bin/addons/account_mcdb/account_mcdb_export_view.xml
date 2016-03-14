@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Actions to export -->
+        <!-- Account move line -->
+        <act_window id="action_output_currency_for_export"
+            name="Export search result"
+            res_model="output.currency.for.export"
+            src_model="account.move.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="output_currency_for_export_form_view"
+            context="{'from': 'account.move.line', 'search_domain': search_domain}"/>
+
+        <!-- Account Analytic Line -->
+        <act_window id="action_analytic_output_currency_for_export"
+            name="Export search result"
+            res_model="output.currency.for.export"
+            src_model="account.analytic.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="output_currency_for_export_form_view"
+            context="{'from': 'account.analytic.line', 'search_domain': search_domain}"/>
+
+        <!-- Register line -->
+        <act_window id="action_register_line_output_currency_for_export"
+            name="Export search result"
+            res_model="output.currency.for.export"
+            src_model="account.bank.statement.line"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="output_currency_for_export_form_view"
+            context="{'from': 'account.bank.statement.line', 'search_domain': search_domain}"/>
+
+    <!-- CSV Export view -->
+        <!-- Account move lines -->
+        <record id="account_move_line_csv_export_form" model="ir.ui.view">
+            <field name="name">account.move.line.csv.export.form</field>
+            <field name="model">account.line.csv.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Account Entries Export">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="File to download" />
+                    <field name="file" colspan="4" nolabel="1" filename="filename" />
+                    <field name="filename" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+        <!-- Account analytic lines -->
+        <record id="account_analytic_line_csv_export_form" model="ir.ui.view">
+            <field name="name">account.analytic.line.csv.export.form</field>
+            <field name="model">account.line.csv.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Lines Export">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="File to download" />
+                    <field name="file" colspan="4" nolabel="1" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

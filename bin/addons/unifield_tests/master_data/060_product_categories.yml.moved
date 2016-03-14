@@ -1,0 +1,16 @@
+-
+  Create a product category for LOG products
+-
+  !record {model: product.category, id: product_categ_log}:
+    name: LOG Category (Test)
+    family_id: nomen_log_family
+    property_account_income_categ: account_account_6101
+    property_account_expense_categ: account_account_6101
+-
+  Create a product category for MED products
+-
+  !record {model: product.category, id: product_categ_med}:
+    name: MED Category (Test)
+    family_id: nomen_med_family
+    property_account_income_categ: account_account_6101
+    property_account_expense_categ: account_account_6101

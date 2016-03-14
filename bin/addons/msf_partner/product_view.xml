@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+
+        <record id="manufacturer_supplierinfo_form_view" model="ir.ui.view">
+            <field name="name">manufacture.supplierinfo.form.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/field[@name='product_uom']" position="replace"/>
+                <xpath expr="/form/field[@name='name']" position="replace">
+                	<field name="company_id" invisible="1" />
+                	<field name="name" domain="[('supplier','=',True), ('id', '!=', company_id)]" on_change="onchange_supplier_id(name)"/>
+                </xpath>
+                <xpath expr="/form/field[@name='min_qty']" position="replace">
+                    <field name="manufacturer_id"/>
+                    <field name="product_uom"/>
+                    <field name="second_manufacturer_id" attrs="{'readonly': [('manufacturer_id', '=', False)]}"/>
+                    <field name="min_qty"/>
+                    <field name="third_manufacturer_id" attrs="{'readonly': [('second_manufacturer_id', '=', False)]}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="manufacturer_supplierinfo_tree_view" model="ir.ui.view">
+            <field name="name">manufacturer.supplierinfo.tree.view</field>
+            <field name="model">product.supplierinfo</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="product.product_supplierinfo_tree_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='min_qty']" position="after">
+                    <field name="manufacturer_id" />
+                    <field name="second_manufacturer_id" />
+                    <field name="third_manufacturer_id" />
+                </xpath>
+                <xpath expr="field[@name='sequence']" position="replace">
+                    <field name="sequence_bis" />
+                </xpath>
+            </field>
+        </record>
+
+	</data>
+</openerp>
+

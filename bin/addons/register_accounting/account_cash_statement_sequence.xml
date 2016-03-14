@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+
+    <!-- Sequence for Cash Register-->
+        <record id="seq_type_cash_register" model="ir.sequence.type">
+            <field name="name">Cash Register</field>
+            <field name="code">cash.register</field>
+        </record>
+
+        <record id="seq_cash_register" model="ir.sequence">
+            <field name="name">Cash Register</field>
+            <field name="code">cash.register</field>
+            <field name="prefix">/</field>
+            <field name="padding">2</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+    <!-- Sequence for all registers (bank & cash) -->
+        <record model="ir.sequence.type" id="seq_type_registers">
+            <field name="name">Bank and Cash Registers</field>
+            <field name="code">all.registers</field>
+        </record>
+
+        <record id="seq_registers" model="ir.sequence">
+            <field name="name">Bank and Cash Registers</field>
+            <field name="code">all.registers</field>
+            <field name="prefix"></field>
+            <field name="padding">1</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+        </record>
+
+    </data>
+</openerp>

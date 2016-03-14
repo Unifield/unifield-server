@@ -1,0 +1,943 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Change Bank & Cash menu to 'Registers' -->
+    <menuitem id="account.menu_finance_bank_and_cash" name="Registers" parent="account.menu_finance" sequence="1" />
+
+    <!-- Bank Statement Form => Inheritance -->
+        <record id="inherit_view_bank_statement_form" model="ir.ui.view">
+            <field name='name'>inherit.view.bank.statement.form</field>
+            <field name='model'>account.bank.statement</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_bank_statement_form' />
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="replace">
+                    <form string="Bank Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                        <group col="6" colspan="4">
+                            <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="journal_id" domain="[('type', '=', 'bank'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
+                            <newline/>
+                            <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                            <field name="currency" readonly="1"/>
+                            <newline/>
+                            <field name="prev_reg_id" invisible="1"/>
+                            <field name="balance_start" attrs="{'readonly': ['|', ('prev_reg_id', '!=', False), ('closing_balance_frozen', '=', True)]}"/>
+                            <group col="3" colspan="4">
+                                <field name="balance_end_real" colspan="2" attrs="{'readonly': ['|', ('closing_balance_frozen', '=', True), ('state', 'in', ['confirm'])]}" string="Bank statement balance"/>
+                                <button name="button_confirm_closing_bank_balance" type="object" string="Confirm End-of-the Month Balance" icon="gtk-apply"
+                                    colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                    confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                            </group>
+                            <field name="balance_end" readonly="1"/>
+                            <field name="balance_gap"/>
+                            <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                            <field name="virtual_id" invisible="1" readonly="1"/>
+                            <field name="closing_balance_frozen" invisible="1"/>
+                        </group>
+                        <group col="4" colspan="4">
+                            <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr"
+                                context="context"/>
+                            <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test"
+                                context="context"/>
+                            <label string="" colspan="2"/>
+                        </group>
+                        <group col="4" colspan="4">
+                            <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_wiz_import_cheques" states="open" string="Import Cheques" type="object" icon="gtk-dnd"/>
+                            <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
+                            <label string="" colspan="1"/>
+                        </group>
+                        <notebook colspan="4">
+                            <page string="Transaction" name="statement_line_ids">
+                                <field colspan="4" name="line_ids" nolabel="1">
+                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
+                                        <field name="transfer_amount" invisible="1"/>
+                                        <field name="red_on_supplier" invisible="1"/>
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                                        <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="date"/>
+                                        <field name="sequence_for_reference" />
+                                        <field name="name" string="Description"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]" name="account_id"
+                                            on_change="onchange_account(account_id, parent.virtual_id)"
+                                            attrs="{'readonly': ['|','|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                        <field name="type_for_register" invisible="1"/>
+                                        <field name="partner_type"
+                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
+                                        <field name="analytic_account_id"
+                                            domain="[('company_id', '=', parent.company_id), ('type', '&lt;&gt;', 'view')]" invisible="1"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
+                                        <field name="amount" invisible="1"/>
+                                        <field name="amount_in" readonly="0" attrs="{'readonly': ['|', ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)]}"/>
+                                        <field name="amount_out" readonly="0" attrs="{'readonly': ['|', ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)]}"/>
+                                        <field name="is_transfer_with_change" invisible="1"/>
+                                        <button name="button_transfer" string="Transfer details" type="object"
+                                            icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
+                                        <field name="direct_invoice" invisible="1" />
+                                        <field name="invoice_id" invisible="1"/>
+                                        <field name="number_imported_invoice"  invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                        <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object"
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
+                                        <field name="reconciled"/>
+                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
+                                            attrs="{'invisible': [('direct_invoice', '=', True)]}"
+                                            context="context"/>
+                                        <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test"
+                                            context="context"/>
+                                        <field name="state" readonly="True"/>
+                                        <button name="delete_button" states="draft,temp,unknown"
+                                            string="Delete" type="object" icon="gtk-del"
+                                            context="context"
+                                            confirm='Do you really want to delete selected record(s) ?' />
+                                        <field name="from_import_cheque_id" invisible="1"/>
+                                    </tree>
+                                    <form string="Statement lines">
+                                        <field name="document_date" attrs="{'readonly': [('from_import_cheque_id', '!=', False)]}"/>
+                                        <field name="date"/>
+                                        <field name="sequence" invisible="1"/>
+                                        <field name="sequence_for_reference"/>
+                                        <field name="name" string="Description"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]" name="account_id"
+                                            on_change="onchange_account(account_id, parent.virtual_id)"
+                                            attrs="{'readonly': ['|', '|', ('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
+                                            />
+                                        <field name="partner_type"
+                                            attrs="{'readonly': ['|',('from_import_cheque_id', '!=', False),('number_imported_invoice', '>', 0)], 'required': [('partner_type_mandatory', '=', True)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}" />
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
+                                        <field name="analytic_distribution_id" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
+                                        <field name="amount" invisible="1"/>
+                                        <field name="amount_in" readonly="0" attrs="{'readonly': ['|', ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)]}"/>
+                                        <field name="amount_out" readonly="0" attrs="{'readonly': ['|', ('from_import_cheque_id', '!=', False), ('direct_invoice', '=', True)]}"/>
+                                        <field name="direct_invoice" invisible="1"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <field name="number_imported_invoice"  invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                        <field name="reconciled"/>
+                                        <field name="state" readonly="True"/>
+                                        <field name="from_import_cheque_id" invisible="1"/>
+                                        <separator colspan="4" string="Notes"/>
+                                        <field colspan="4" name="note" nolabel="1"/>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                        <separator string="Comments"/>
+                        <field name="notes" nolabel="1"/>
+                        <separator string="Dates"/>
+                        <group col="6" colspan="4">
+                           <field name="date" string="Opening Date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                           <field name="closing_date" select="1" readonly="1"/>
+                        </group>
+                        <separator string="State" />
+                        <group col="8" colspan="4">
+                            <field name="state" readonly="1"/>
+                            <button name="button_dummy" states="draft,open" string="Compute" type="object" icon="terp-stock_format-scientific"/>
+                            <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="gtk-go-forward"/>
+                            <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
+                        </group>
+                    </form>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Cash Register Form => Inheritance -->
+        <record id="inherit_view_bank_statement_form2" model="ir.ui.view">
+            <field name='name'>inherit.view.bank.statement.form2</field>
+            <field name='model'>account.bank.statement</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_bank_statement_form2' />
+            <field name="priority" eval="21"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form" position="replace">
+                    <form string="Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                        <group col="6" colspan="4">
+                            <field name="name"/>
+                            <field name="company_id" select="1" groups="base.group_multi_company" invisible="True"/>
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" domain="[('type','=','cash'),('is_current_instance','=',True)]" select="1"/>
+                            <newline/>
+
+                            <field name="period_id" select="1" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                            <field name="currency" readonly="1"/>
+                            <field name="virtual_id" invisible="1" readonly="1"/>
+                        </group>
+                        <group col="2" colspan="4">
+                            <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr"
+                                context="context"/>
+                            <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test"
+                                context="context"/>
+                            <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                            <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
+                        </group>
+                        <group col="4" colspan="4">
+                            <button name="button_open_advances" string="List of Open Advances" type="object" icon="gtk-justify-fill" colspan="2"/>
+                            <label string="" colspan="4"/>
+                        </group>
+                        <notebook colspan="4">
+                            <page string="Cash Transactions" attrs="{'invisible': [('state','=','draft')]}">
+                                <field colspan="4" name="line_ids" nolabel="1">
+                                    <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard' or direct_invoice is True" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
+                                      <field name="transfer_amount" invisible="1"/>
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                                        <field name="from_cash_return" invisible="1"/>
+                                        <button name="button_advance" states="hard" string="Advance return" type="object"
+                                            icon="terp-stock_effects-object-colorize" context="context"
+                                            attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0), '|',
+                                            ('employee_id', '=', False), ('type_for_register','!=','advance')]}"/>
+                                        <field name="document_date"/>
+                                        <field name="red_on_supplier" invisible="1" />
+                                        <field name="date" />
+                                        <field name="sequence_for_reference"/>
+                                        <field name="name" string="Description"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]" name="account_id"
+                                            on_change="onchange_account(account_id, parent.virtual_id)"
+                                            attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}" />
+                                        <field name="type_for_register" invisible="1"/>
+                                        <field name="partner_type"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                            />
+                                        <field name="analytic_distribution_id" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                            attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
+                                        <field name="amount" invisible="1" />
+                                        <field name="amount_in" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}" />
+                                        <field name="amount_out" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                        <field name="is_transfer_with_change" invisible="1"/>
+                                        <button name="button_transfer" string="Transfer details" type="object"
+                                            icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
+                                        <field name="direct_invoice" invisible="1"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <field name="number_imported_invoice"  invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                        <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                        <field name="is_down_payment" invisible="1"/>
+                                        <button name="button_down_payment" string="Down payment" type="object"
+                                            icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
+                                        <field name="reconciled"/>
+                                        <!-- UTP-482 operational advance linked confirmed PO -->
+                                        <field name="cash_register_op_advance_po_id"
+                                            domain="[('state', 'in', ['approved']), ('currency_id', '=', parent.currency), ('order_type', 'in', ('regular','purchase_list','direct'))]" />
+                                        <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
+                                            attrs="{'invisible': [('direct_invoice', '=', True)]}"
+                                            context="context"/>
+                                        <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test"
+                                            context="context"/>
+                                        <field name="state" readonly="True"/>
+                                        <button name="delete_button" states="draft,temp,unknown"
+                                            string="Delete" type="object" icon="gtk-del"
+                                            context="context"
+                                            confirm='Do you really want to delete selected record(s) ?' />
+                                        <field name="employee_id" invisible="1"/>
+                                    </tree>
+                                    <form string="Statement lines">
+                                        <field name="from_cash_return" invisible="1"/>
+                                        <field name="document_date"/>
+                                        <field name="date"/>
+                                        <field name="sequence_for_reference"/>
+                                        <field name="name" string="Description"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
+                                        <field name="ref"/>
+                                        <field domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]" name="account_id"
+                                            on_change="onchange_account(account_id, parent.virtual_id)"
+                                            attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                        <field name="partner_type"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                            />
+                                        <field name="analytic_distribution_id" invisible="1"/>
+                                        <field name="analytic_distribution_state" invisible="1"/>
+                                        <field name="display_analytic_button" invisible="1"/>
+                                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                            attrs="{'invisible': [('display_analytic_button', '=', False)]}" context="context"/>
+                                        <field name="amount" invisible="1"/>
+                                        <field name="amount_in" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}" />
+                                        <field name="amount_out" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                        <field name="direct_invoice" invisible="1"/>
+                                        <field name="invoice_id" invisible="1"/>
+                                        <field name="number_imported_invoice"  invisible="1"/>
+                                        <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                        <separator colspan="4" string="Notes"/>
+                                        <field colspan="4" name="note" nolabel="1"/>
+                                        <field name="state" readonly="True"/>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="CashBox">
+                                <field name="prev_reg_id" invisible="1"/>
+                                <group col="4" colspan="4">
+                                    <field name="starting_details_ids" nolabel="1" colspan="2" attrs="{'invisible':['|',('state','!=','draft'),('prev_reg_id','!=',False)], 'readonly':['|',('state','!=','draft'),('prev_reg_id','!=',False)]}">
+                                        <tree string = "Opening Balance" editable="bottom">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal" sum="Total"/>
+                                        </tree>
+                                        <form string = "Opening Balance">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal"/>
+                                        </form>
+                                    </field>
+                                    <field name="closing_balance_frozen" invisible="1"/>
+                                    <field name="ending_details_ids" nolabel="1" colspan="2" attrs="{'readonly':['|', ('state','!=','open'), ('closing_balance_frozen', '=', True)]}">
+                                        <tree string = "Closing Balance" editable="bottom">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal" sum="Total"/>
+                                        </tree>
+                                        <form string = "Closing Balance">
+                                            <field name="pieces"/>
+                                            <field name="number" on_change="on_change_sub(pieces,number, parent.balance_end)"/>
+                                            <field name="subtotal"/>
+                                        </form>
+                                    </field>
+                                    <button name="button_confirm_closing_balance" type="object" string="Confirm month-end cash count" icon="gtk-apply"
+                                        colspan="1" attrs="{'readonly': [('closing_balance_frozen', '=', True)]}" states="open"
+                                        confirm="This action is IRREVERSIBLE. After that it will be impossible to change closing balance. Are you sure to freeze closing balance?"/>
+                                </group>
+                            </page>
+                            <page string="Responsible">
+                                <field name="responsible_ids" nolabel="1" />
+                            </page>
+                        </notebook>
+                        <group col="6" colspan="4">
+                            <group col="2" colspan="2">
+                                <separator string="Dates" colspan="4"/>
+                                <field name="date" select="1" readonly="True" on_change="onchange_date(date)" string="Opening Date"/>
+                                <field name="closing_date" select="1" readonly="1"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <separator string="Opening Balance" colspan="4"/>
+                                <field name="balance_start" string="Opening Balance" readonly="True"/>
+                                <field name="total_entry_encoding"/>
+                                <field name="msf_calculated_balance"/>
+                                <field name="open_advance_amount" attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
+                                <field name="unrecorded_expenses_amount"  attrs="{'readonly': [('state', 'not in',('draft', 'open'))]}"/>
+                            </group>
+                            <group col="2" colspan="2">
+                                <separator string="Closing Balance" colspan="4"/>
+                                <field name="balance_end" string="Theoretical Balance" readonly="1"/>
+                                <field name="balance_end_cash" readonly="1" string="CashBox Balance"/>
+                                <field name="closing_gap" readonly="1"/>
+                            </group>
+                        </group>
+                        <separator string="Comments"/>
+                        <field name="notes" nolabel="1"/>
+                        <separator string="State" />
+                        <group name="state" colspan="4">
+                            <field name="state" colspan="4" readonly="True"/>
+                        </group>
+                        <button name="button_open_cash" states="draft" string="Open CashBox" icon="gtk-go-forward" type="object" colspan="2"/>
+                        <group name="open_state" colspan="4">
+                            <button name="button_confirm_cash" states="open" string="Close Register" icon="gtk-ok" type="object" colspan="2" />
+                        </group>
+                    </form>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- Bank Statement Line Tree View -->
+        <record model="ir.ui.view" id="view_account_bank_statement_line_tree">
+            <field name="name">view.account.bank.statement.line.tree</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <tree hide_delete_button="1" string="Register Lines" editable="bottom" noteditable="state=='hard' or direct_invoice is True" hide_new_button="1">
+                    <button name="button_advance" states="hard" string="Advance return" type="object"
+                        icon="terp-stock_effects-object-colorize" context="context"
+                        attrs="{'invisible': ['|', ('from_cash_return', '=', True), '|', ('amount', '&gt;=', 0),'|',
+                            ('employee_id', '=', False),('type_for_register','!=','advance')]}"/>
+                    <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                    <field name="from_cash_return" invisible="1"/>
+                    <field name="amount" invisible="1"/>
+                    <field name="type_for_register" invisible="1"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="sequence_for_reference"/>
+                    <field name="name" string="Description"/>
+                    <field name="ref"/>
+                    <field name="account_id" domain="[('restricted_area', '=', 'register_lines')]"/>
+                    <field name="partner_type" context="{'search_default_active': True}"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
+                    <field name="amount_in"/>
+                    <field name="amount_out"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="functional_in" invisible="1"/>
+                    <field name="functional_out" invisible="1"/>
+                    <field name="functional_currency_id" invisible="1"/>
+                    <field name="state"/>
+                    <field name="statement_id" string="Register Name" readonly="1"/><!-- Pay ATTENTION that string="Register Name" had been added by UF-1736 -->
+                    <field name="direct_invoice" invisible="1" readonly="1"/>
+                    <button name="delete_button" states="draft,temp,unknown"
+                            string="Delete" type="object" icon="gtk-del"
+                            context="context"
+                            confirm='Do you really want to delete selected record(s) ?' />
+                </tree>
+            </field>
+        </record>
+
+    <!-- Bank Statement Line Form View -->
+        <record id="view_account_bank_statement_line_form" model="ir.ui.view">
+          <field name="name">view.account.bank.statement.line.form</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Register Line" hide_duplicate_button="1" hide_delete_button="1" hide_new_button="1">
+                    <field name="from_cash_return" invisible="1" readonly="1"/>
+                    <field name="amount" invisible="1" readonly="1"/>
+                    <field name="document_date" readonly="1"/>
+                    <field name="date" readonly="1"/>
+                    <field name="sequence_for_reference" readonly="1"/>
+                    <field name="name" string="Description" readonly="1"/>
+                    <field name="ref" readonly="1"/>
+                    <field name="account_id" readonly="1"/>
+                    <field name="partner_id" readonly="1"/>
+                    <field name="employee_id" readonly="1"/>
+                    <field name="transfer_journal_id" readonly="1"/>
+                    <field name="amount_in" readonly="1"/>
+                    <field name="amount_out" readonly="1"/>
+                    <field name="currency_id" readonly="1" invisible="1"/>
+                    <field name="functional_in" readonly="1" invisible="1"/>
+                    <field name="functional_out" readonly="1" invisible="1"/>
+                    <field name="functional_currency_id" readonly="1" invisible="1"/>
+                    <field name="state" readonly="1"/>
+                    <field name="statement_id" readonly="1"/>
+                    <field name="direct_invoice" invisible="1" readonly="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Bank Statement Line Filter -->
+        <record id="view_account_bank_statement_line_filter" model="ir.ui.view">
+            <field name="name">view.account.bank.statement.line.select</field>
+            <field name="model">account.bank.statement.line</field>
+            <field name="type">search</field>
+            <field name="priority" eval="20" />
+            <field name="arch" type="xml">
+                <search string="Register Lines">
+                    <group col='10' colspan='4'>
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new"/>
+                        <filter string="Temp" domain="[('state','=','temp')]" icon="terp-camera_test"/>
+                        <separator orientation="vertical"/>
+                        <field name="document_date" select='1'/>
+                        <field name="date" select='1'/>
+                        <newline/>
+                        <field name="sequence_for_reference" select='1'/>
+                        <field name="name" select='1' string="Description"/>
+                        <field name="ref" select='1'/>
+                        <field name="journal_id" select='1'/>
+                        <newline/>
+                        <field name="account_id" select='1'/>
+                        <field name="amount_in" select='1'/>
+                        <field name="amount_out" select='1'/>
+                        <newline/>
+                        <field name="partner_id" select='1' string="3RD Party Partner"/>
+                        <field name="transfer_journal_id" select='1' string='3RD Party Journal'/>
+                        <field name="employee_id" select='1' string="3RD Party Employee"/>
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="12" col="10">
+                        <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
+                        <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
+                        <filter string="3rd party Journal" icon="terp-dolar" domain="[]" context="{'group_by': 'transfer_journal_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Register Code" icon="terp-dolar_ok!" domain="[]" context="{'group_by': 'statement_id'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+    <!-- Bank Statement Filter -->
+        <record id="account.view_account_bank_statement_filter" model="ir.ui.view">
+            <field name="name">account.cash.statement.select</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Bank Statements">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
+                        <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
+                        <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
+                        <separator orientation="vertical"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
+                        <field name="name"/>
+                        <newline/>
+                        <field name="period_id"/>
+                        <field name="journal_id" widget='selection' domain="[('type', '=', 'cash')]" />
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons, for default tree view, check the view named account.view_bank_statement_tree_for_journal for more info -->
+        <record id="account.view_bank_statement_tree" model="ir.ui.view">
+            <field name="name">account.bank.statement.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="10"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="balance_end" />
+                    <field name="balance_end_real"/>
+                    <field name="state"/>
+                    <button name="button_open_bank" states="draft" string="Open Bank" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_confirm_bank" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- US-807: force the priority to 5 to show by default for all cases, BUT when the tree is called from Bank/Cash/Cheque main menu, then the explicit view name will be picked in the python code "register_accounting/account_bank_statement.py" method: get_statement() -->
+        <record id="account.view_bank_statement_tree_for_journal" model="ir.ui.view">
+            <field name="name">account.bank.statement.tree.journal</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="5"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1"  editable="bottom" noteditable="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="balance_end" />
+                    <field name="balance_end_real"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Cash Statement Tree -->
+        <record id="view_cash_statement_tree" model="ir.ui.view">
+            <field name="name">account.bank.statement.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="18"/>
+            <field name="arch" type="xml">
+                <tree colors="red:msf_calculated_balance &lt; 0;blue:state=='draft';black:(state in ('open','confirm') and msf_calculated_balance &gt;= 0)" string="Registers" hide_new_button="1" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="balance_start"/>
+                    <field name="msf_calculated_balance"/>
+                    <field name="balance_end_cash" string="Cashbox balance" />
+                    <field name="state"/>
+                    <button type="object" string="Open" name="button_open_cash" states="draft" icon="terp-gtk-go-back-rtl"/>
+                    <button type="object" string="Close Register" name="button_confirm_cash" states="open" icon="terp-camera_test"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Bank Statement Search Form -->
+        <record id="view_bank_statement_search" model="ir.ui.view">
+            <field name="name">account.bank.statement.search</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <search string="Search Bank Statements">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
+                        <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
+                        <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
+                        <separator orientation="vertical"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
+                        <field name="name"/>
+                        <newline/>
+                        <field name="period_id"/>
+                        <field name="journal_id" widget="selection" domain="[('type', '=', 'bank')]" />
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    <!--Bank Statement modification to change "Bank Statement" into "Bank Registers" -->
+        <record id="action_view_bank_statement_search" model="ir.actions.server">
+          <field name="name">Bank Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='bank', context=context)</field>
+        </record>
+
+        <record id="account.menu_bank_statement_tree" model="ir.ui.menu">
+          <field name="name">Bank Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_bank_statement_search"/>
+        </record>
+
+        <record id="action_bank_statement_periodic_tree" model="ir.actions.act_window">
+            <field name="name">Bank Statements</field>
+            <field name="res_model">account.bank.statement</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,graph</field>
+            <field name="domain">[('journal_id.type', '=', 'bank')]</field>
+            <field name="search_view_id" ref="view_bank_statement_search"/>
+            <field name="context">{'journal_type':'bank'}</field>
+        </record>
+
+        <act_window
+           id="act_account_journal_2_account_bank_statement"
+           name="Register Statements"
+           context="{'search_default_journal_id':active_id}"
+           res_model="account.bank.statement"
+           src_model="account.journal"/>
+
+    <!-- Cash Register context modification to display only open cash register by default and to display default instance -->
+        <record id="action_view_cash_statement_search" model="ir.actions.server">
+          <field name="name">Cash Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='cash', context=context)</field>
+        </record>
+
+        <record id="account.journal_cash_move_lines" model="ir.ui.menu">
+          <field name="name">Cash Registers</field>
+          <field name="sequence" eval="10"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_cash_statement_search"/>
+        </record>
+
+    <!-- Modification to display bank_statement_tree -->
+
+        <record model="ir.actions.act_window.view" id="account.act_cash_statement1_all">
+            <field name="sequence" eval="10"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_cash_statement_tree"/>
+            <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
+        </record>
+
+        <record model="ir.actions.act_window.view" id="account.act_cash_statement2_all">
+            <field name="sequence" eval="20"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="account.view_bank_statement_form2"/>
+            <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
+        </record>
+        <record model="ir.actions.act_window.view" id="account.act_cash_statement3_all">
+            <field name="sequence" eval="30"/>
+            <field name="view_mode">graph</field>
+            <field name="view_id" ref="account.account_cash_statement_graph"/>
+            <field name="act_window_id" ref="account.action_view_bank_statement_tree"/>
+        </record>
+
+    <!-- Cheque Register View -->
+        <record id="view_cheque_register_form" model="ir.ui.view">
+            <field name='name'>view.cheque.register.form</field>
+            <field name='model'>account.bank.statement</field>
+            <field name="type">form</field>
+            <field name="priority" eval="28"/>
+            <field name="arch" type="xml">
+                <form string="Cheque Register" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <group col="7" colspan="4">
+                        <field name="name" select="1" readonly="0" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <field name="journal_id" domain="[('type', '=', 'cheque'),('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)" select="1"/>
+                        <newline/>
+                        <field name="date" select="1" on_change="onchange_date(date)" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                        <field name="period_id" domain="[('state', '=', 'draft'),('special', '!=', True)]" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('prev_reg_id', '!=', False)]}"/>
+                        <field name="currency" readonly="1"/>
+                        <field name='company_id' widget="selection" groups="base.group_multi_company" invisible="1"/>
+                        <field name="virtual_id" invisible="1" readonly="1"/>
+                        <field name="prev_reg_id" invisible="1"/>
+                    </group>
+                    <group col="2" colspan="4">
+                        <button name="button_wiz_temp_posting" states="open" string="Temp Posting" type="object" icon="terp-gtk-jump-to-ltr"
+                            context="context"/>
+                        <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test"
+                            context="context"/>
+                        <button name="button_create_invoice" states="open" string="Direct Invoice" type="object" icon="terp-document-new" />
+                        <button name="button_wiz_import_invoices" states="open" string="Pending Payments" type="object" icon="gtk-save"/>
+                    </group>
+                    <group col="4" colspan="2">
+                        <field name="display_type"/>
+                        <button name="button_display_type" states="open,confirm" string="Apply display type" type="object" icon="terp-stock_zoom"
+                            context="context" colspan="2"/>
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Transaction" name="statement_line_ids">
+                            <field colspan="4" name="line_ids" nolabel="1">
+                                <!-- WARNING: because of UTP-331, in cheque register direct invoice lines should be editable but ONLY for cheque_number FIELD. That's why ALL field must be not editable when "direct_invoice" is True. -->
+                                <tree hide_delete_button="1" editable="bottom" string="Statement lines" noteditable="state=='hard'" colors="red:(display_analytic_button and (not analytic_distribution_id or analytic_distribution_state == 'invalid')) or (type_for_register == 'transfer' and transfer_amount == 0.0 and state in ('draft', 'temp')) or red_on_supplier == True" limit="20">
+                                    <field name="transfer_amount" invisible="1"/>
+                                    <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                    <button name="button_analytic_lines" string="Analytic lines" type="object" icon="terp-stock_zoom" />
+                                    <field name="document_date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="red_on_supplier" invisible="1" />
+                                    <field name="date" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="cheque_number" required="1"/>
+                                    <field name="sequence_for_reference"/>
+                                    <field name="name" string="Description" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="partner_type_mandatory" invisible="1"/>
+                                    <field name="ref"/>
+                                    <field domain="[('journal_id','=',parent.journal_id), ('restricted_area', '=', 'register_lines')]" name="account_id"
+                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                    <field name="type_for_register" invisible="1"/>
+                                    <field name="partner_type"
+                                            attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"
+                                            domain="[('filter_for_third_party', '=', account_id)]"
+                                            context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                        />
+                                    <field name="display_analytic_button" invisible="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="analytic_distribution_id" invisible="1"/>
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                            context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
+                                    <field name="amount" invisible="1"/>
+                                    <field name="amount_in" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}" />
+                                    <field name="amount_out" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="is_transfer_with_change" invisible="1"/>
+                                    <button name="button_transfer" string="Transfer details" type="object"
+                                        icon="terp-stock_format-default" context="context" attrs="{'invisible': [('is_transfer_with_change', '=', False)]}"/>
+                                    <field name="direct_invoice" invisible="1"/>
+                                    <field name="invoice_id" invisible="1"/>
+                                    <field name="number_imported_invoice"  invisible="1"/>
+                                    <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                                        string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                    <button name="button_open_invoices" attrs="{'invisible': [('number_imported_invoice', '=', 0)]}"
+                                        string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                    <field name="is_down_payment" invisible="1"/>
+                                    <button name="button_down_payment" string="Down payment" type="object"
+                                        icon="gtk-sort-descending" context="context" attrs="{'invisible': [('is_down_payment', '=', False)]}"/>
+                                    <field name="reconciled"/>
+                                    <button name="button_temp_posting" states="draft" string="Temp" type="object" icon="terp-gtk-jump-to-ltr"
+                                            attrs="{'invisible': [('direct_invoice', '=', True)]}"
+                                            context="context"/>
+                                    <button name="button_hard_posting" states="draft,temp" string="Hard" type="object" icon="terp-camera_test"
+                                        context="context"/>
+                                    <field name="state" readonly="True"/>
+                                    <button name="delete_button" states="draft,temp,unknown"
+                                            string="Delete" type="object" icon="gtk-del"
+                                            context="context"
+                                            confirm='Do you really want to delete selected record(s) ?' />
+                                </tree>
+                                <form string="Statement lines">
+                                    <field name="document_date"/>
+                                    <field name="date"/>
+                                    <field name="cheque_number" required="1"/>
+                                    <field name="sequence" invisible="1"/>
+                                    <field name="sequence_for_reference"/>
+                                    <field name="name" string="Description"/>
+                                    <field name="partner_type_mandatory" invisible="1"/>
+                                    <field name="ref"/>
+                                    <field domain="[('journal_id', '=', parent.journal_id), ('restricted_area', '=', 'register_lines')]" name="account_id"
+                                        on_change="onchange_account(account_id, parent.virtual_id)" attrs="{'readonly': ['|', ('number_imported_invoice', '>', 0), ('direct_invoice', '=', True)]}"/>
+                                    <field name="partner_type"
+                                        attrs="{'required': [('partner_type_mandatory', '=', True)], 'readonly': [('number_imported_invoice', '>', 0)]}"
+                                        domain="[('filter_for_third_party', '=', account_id)]"
+                                        context="{'curr': parent.currency, 'search_default_active': True, 'journal': parent.journal_id,}"
+                                        />
+                                    <field name="display_analytic_button" invisible="1"/>
+                                    <field name="analytic_distribution_state" invisible="1"/>
+                                    <field name="analytic_distribution_id" invisible="1"/>
+                                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                                            context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
+                                    <field name="amount" invisible="1"/>
+                                    <field name="amount_in" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}" />
+                                    <field name="amount_out" readonly="0" attrs="{'readonly': [('direct_invoice', '=', True)]}"/>
+                                    <field name="direct_invoice" invisible="1"/>
+                                    <field name="invoice_id" invisible="1"/>
+                                    <button name="button_open_invoice" attrs="{'invisible': [('invoice_id', '=', False)]}"
+                                            string="Invoice(s) reference(s)" type="object" icon="gtk-index" context="context"/>
+                                    <field name="number_imported_invoice"  invisible="1"/>
+                                    <field name="reconciled"/>
+                                    <field name="state" readonly="True"/>
+                                    <separator colspan="4" string="Notes"/>
+                                    <field colspan="4" name="note" nolabel="1"/>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+                    <group col="8" colspan="4">
+                        <field name="state" readonly="1"/>
+                        <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="gtk-go-forward"/>
+                        <button name="button_confirm_cheque" states="open" string="Close Register" type="object" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Cheque Register Tree -->
+        <record id="view_cheque_register_tree" model="ir.ui.view">
+            <field name="name">account.cheque.register.tree</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="27"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:state=='draft';black:state in ('open','confirm')" string="Register" hide_new_button="1" hide_delete_button="1">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="currency"/>
+                    <field name="journal_id"/>
+                    <field name="state"/>
+                    <button name="button_open_cheque" states="draft" string="Open Cheque Register" type="object" icon="terp-gtk-go-back-rtl"/>
+                    <button name="button_confirm_cheque" states="open" string="Close Register" type="object"  icon="terp-camera_test"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Cheque Register Search Form -->
+        <record id="view_cheque_register_search" model="ir.ui.view">
+            <field name="name">account.cheque.register.search</field>
+            <field name="model">account.bank.statement</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Cheque Registers">
+                    <group col="8" colspan="4">
+                        <filter string="Draft" domain="[('state','=','draft')]" icon="terp-document-new" name="draft"/>
+                        <filter string="Open" domain="[('state', '=', 'open')]" icon="terp-camera_test" name="open"/>
+                        <filter string="Closed" domain="[('state','=','confirm')]" icon="terp-dialog-close" name="confirm"/>
+                        <separator orientation="vertical"/>
+                        <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"/>
+                        <field name="name"/>
+                        <newline/>
+                        <field name="period_id"/>
+                        <field name="journal_id" widget="selection" domain="[('type', '=', 'cheque')]" />
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <filter string="Journal" context="{'group_by': 'journal_id'}" icon="terp-folder-orange"/>
+                        <filter string="State" context="{'group_by': 'state'}" icon="terp-stock_effects-object-colorize"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" context="{'group_by': 'period_id'}" icon="terp-go-month"/>
+                        <filter string="Instance" context="{'group_by': 'instance_id'}" icon="terp-stage"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+    <!-- Cheque Register Actions -->
+        <record id="action_view_cheque_statement_search" model="ir.actions.server">
+          <field name="name">Cheque Registers</field>
+          <field name="model_id" ref="model_account_bank_statement"/>
+          <field name="state">code</field>
+          <field name="code">action = obj.get_statement(st_type='cheque', context=context)</field>
+        </record>
+
+    <!-- Cheque Register Menu -->
+        <record id="menu_cash_register" model="ir.ui.menu">
+          <field name="name">Cheque Registers</field>
+          <field name="sequence" eval="7"/>
+          <field name="parent_id" ref="account.menu_finance_bank_and_cash"/>
+          <field name="icon">STOCK_EXECUTE</field>
+          <field name="action" ref="action_view_cheque_statement_search"/>
+        </record>
+
+    <!-- Account View -->
+        <record id="inherit_view_account_form" model="ir.ui.view">
+            <field name='name'>inherit.view.account.form</field>
+            <field name='model'>account.account</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_account_form' />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="type_for_register"/>
+                </xpath>
+            </field>
+        </record>
+    <!-- UF-426: remove Journal Items in Cash and Bank -->
+    <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
+
+    <!--
+      Add onchange on account_id for Journal entries (account.move)
+    -->
+        <record id="inherit_view_move_form" model="ir.ui.view">
+            <field name="name">inherit.view.move.form</field>
+            <field name="model">account.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//tree//field[@name='partner_id']" position="after">
+                        <field name="partner_type" context="{'journal_fake_name': True, 'search_default_active': True}"/>
+                    </xpath>
+                    <xpath expr="/form//tree//field[@name='account_id']" position="replace">
+                        <field name="account_id" on_change="onchange_account_id(account_id, partner_type)" domain="[('restricted_area', '=', 'account_move_lines')]"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    <!--
+      Add partner_txt to analytic journal entries
+    -->
+        <record id="inherit_view_account_analytic_tree" model="ir.ui.view">
+            <field name="name">inherit.view.account.analytic.tree</field>
+            <field name="model">account.analytic.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_analytic_line_tree"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="/tree/field[@name='account_id']" position="after">
+                    <field name="partner_txt"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

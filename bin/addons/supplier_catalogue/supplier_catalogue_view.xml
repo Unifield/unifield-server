@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <!--
+            SUPPLIER CATALOGUE VIEWS
+        -->
+
+        <!-- Default supplier catalogue search view -->
+        <record id="supplier_catalogue_search_view" model="ir.ui.view">
+            <field name="name">supplier.catalogue.search.view</field>
+            <field name="model">supplier.catalogue</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Supplier catalogues">
+                    <filter name="active" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
+                    <field name="partner_id" />
+                    <field name="name" />
+                    <field name="period_from" />
+                    <field name="period_to" />
+                    <field name="currency_id" widget="selection" />
+                </search>
+            </field>
+        </record>
+
+
+        <!-- Default supplier catalogue form view -->
+        <record id="supplier_catalogue_form_view" model="ir.ui.view">
+            <field name="name">supplier.catalogue.form.view</field>
+            <field name="model">supplier.catalogue</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Supplier catalogue">
+                    <field name="name" colspan="4" />
+                    <field name="period_from" attrs="{'required': [('is_esc', '=', False)], 'invisible': [('is_esc', '=', True)]}" />
+                    <field name="period_to" attrs="{'invisible': [('is_esc', '=', True)]}" />
+                    <field name="currency_id" domain="[('partner_currency', '=', partner_id)]" />
+                    <field name="partner_id" readonly="1" />
+                    <field name="is_esc" invisible="1" />
+                    <field name="esc_update_ts" attrs="{'invisible': [('is_esc', '=', False)]}" /> <!-- UTP-746 -->
+                    <field name="active" />
+
+                    <newline />
+
+                    <group name="import" string=" Import Lines " colspan="4" col="7" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <field name="filename_template" invisible="1"/>
+                        <field name="file_to_import" filename="filename_template" colspan="2"/>
+                        <label> </label>
+                        <button name="catalogue_import_lines" type="object" string="Import lines" icon="gtk-execute" colspan="2" />
+                        <button name="check_lines_to_fix" string="Check Lines" icon="gtk-dialog-warning" colspan="2" type="object" />
+                        <newline />
+                        <field name="filename" invisible="1"/>
+                        <field name="data" filename="filename" attrs="{'invisible': [('import_error_ok', '=', False)]}"/>
+                        <button name="clear_error" string="Clear errors" icon="gtk-clear" colspan="1" type="object" attrs="{'invisible': [('import_error_ok', '=', False)]}" />
+                        <field name="import_error_ok" invisible="1"/>
+                        <field name="text_error" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}" nolabel="1"/>
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="3" type="object" />
+                    </group>
+
+                    <notebook colspan="4">
+                        <page string="Products">
+                            <field name="line_ids" mode="tree" colspan="4" nolabel="1" />
+                        </page>
+                        <page string="Comment">
+                            <field name="comment" colspan="4" nolabel="1" />
+                        </page>
+                    </notebook>
+
+                    <field name="state" readonly="1" />
+                    <group colspan="2" col="2">
+                        <button type="object" name="button_confirm" icon="gtk-execute" string="Confirm" states="draft" colspan="2" />
+                        <button type="object" name="button_draft" icon="gtk-cancel" string="Reset to draft" states="confirmed" colspan="2" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!-- Default supplier catalogue tree view -->
+        <record id="supplier_catalogue_tree_view" model="ir.ui.view">
+            <field name="name">supplier.catalogue.tree.view</field>
+            <field name="model">supplier.catalogue</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Supplier catalogues" hide_new_button="1">
+                    <field name="name" />
+                    <field name="period_from" />
+                    <field name="period_to" />
+                    <field name="currency_id" />
+                    <field name="partner_id" />
+                </tree>
+            </field>
+        </record>
+
+        <!--
+            SUPPLIER CATALOGUE LINES VIEWS
+        -->
+
+        <!-- Supplier catalogue line search view -->
+        <record id="supplier_catalogue_line_search_view" model="ir.ui.view">
+            <field name="name">supplier.catalogue.line.search.view</field>
+            <field name="model">supplier.catalogue.line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Supplier catalogue lines">
+                    <filter string="Stockable" icon="terp-accessories-archiver" domain="[('type','=','product')]"/>
+                    <filter string="Non-Stockable" icon="terp-accessories-archiver" domain="[('type','=','consu')]"/>
+                    <filter string="Service" icon="terp-accessories-archiver" domain="[('type','=','service')]"/>
+                    <filter string="Service with Reception" icon="terp-accessories-archiver" domain="[('type','=','service_recep')]"/>
+                    <separator orientation="vertical"/>
+                    <field name="default_code"/>
+                    <field name="name"/>
+                    <field name="categ_id" widget="selection" operator="child_of" />
+                    <newline/>
+                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
+                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
+                    <filter string="Asset" icon="terp-accessories-archiver" domain="[('subtype','=','asset')]"/>
+                    <newline /> 
+                    <group>
+                    <field name="min_qty" />
+                    <field name="min_order_qty" />
+                    <field name="line_uom_id" />
+                    <field name="unit_price" />
+                    <field name="rounding" />
+                    </group>
+                    <newline />
+                    <group expand="1" string="Nomenclature Filters...">
+                        <field name="nomen_manda_0_s"
+                            domain="[('parent_id', '=', -1)]"
+                             widget="selection"
+                            on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+                        <field name="nomen_manda_1_s"
+                            domain="[('parent_id', '=', -1)]"
+                             widget="selection"
+                            on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+                        <field name="nomen_manda_2_s"
+                            domain="[('parent_id', '=', -1)]"
+                             widget="selection"
+                            on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+                        <field name="nomen_manda_3_s"
+                            domain="[('parent_id', '=', -1)]"
+                             widget="selection"
+                            on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+                    </group>
+                    <newline />
+                    <group expand="0" string="Optional Nomenclature Filters...">
+                        <field name="nomen_sub_0_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+                        <field name="nomen_sub_1_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+                        <field name="nomen_sub_2_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+                        <field name="nomen_sub_3_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+                        <field name="nomen_sub_4_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+                        <field name="nomen_sub_5_s" domain="[('parent_id', '=', -1)]" widget="selection" />
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <!-- Supplier catalogue line form view -->
+        <record id="supplier_catalogue_line_form_view" model="ir.ui.view">
+            <field name="name">supplier.catalogue.line.form.view</field>
+            <field name="model">supplier.catalogue.line</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Supplier catalogue line">
+                    <field name="product_id" on_change="product_change(product_id)" />
+                    <field name="line_uom_id" />
+                    <field name="min_qty" />
+                    <field name="unit_price" />
+                    <field name="rounding" />
+                    <field name="min_order_qty" />
+                    <field name="comment" />
+                </form>
+            </field>
+        </record>
+
+        <!-- Supplier catalogue line tree view -->
+        <record id="supplier_catalogue_line_tree_view" model="ir.ui.view">
+            <field name="name">supplier.catalogue.line.tree.view</field>
+            <field name="model">supplier.catalogue.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="16" />
+            <field name="arch" type="xml">
+                <tree string="Supplier catalogue lines" min_rows="20" editable="top" colors="red: to_correct_ok == True">
+                    <field name="line_number" readonly="1"/>
+                    <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty)" />
+                    <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" 
+                           domain="[('uom_by_product', '=', product_id)]" />
+                    <field name="min_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" />
+                    <field name="unit_price" />
+                    <field name="rounding" />
+                    <field name="min_order_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" />
+                    <field name="comment" />
+                    <field name="to_correct_ok" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Non-editable supplier catalogue line tree view -->
+        <record id="non_edit_supplier_catalogue_line_tree_view" model="ir.ui.view">
+            <field name="name">non.edit.supplier.catalogue.line.tree.view</field>
+            <field name="model">supplier.catalogue.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <tree string="Supplier catalogue lines" min_rows="20" 
+                    editable="top" noteditable="1" notselectable="0"
+                    hide_new_button="1" hide_delete_button="1">
+                    <field name="product_id" on_change="product_change(product_id)" />
+                    <field name="line_uom_id" />
+                    <field name="min_qty" />
+                    <field name="unit_price" />
+                    <field name="rounding" />
+                    <field name="min_order_qty" />
+                    <field name="comment" />
+                </tree>
+            </field>
+        </record>
+
+        <!--
+            SUPPLIER CATALOGUE ACTIONS
+        -->
+
+        <!-- Open the list of all supplier catalogues -->
+        <record id="action_supplier_catalogue_list" model="ir.actions.act_window">
+            <field name="name">Supplier catalogues</field>
+            <field name="res_model">supplier.catalogue</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Open the list of all supplier catalogue lines -->
+        <record id="action_supplier_catalogue_line_list" model="ir.actions.act_window">
+            <field name="name">Supplier catalogue lines</field>
+            <field name="res_model">supplier.catalogue.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="action_supplier_catalogue_line_non_edit" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="non_edit_supplier_catalogue_line_tree_view"/>
+            <field name="act_window_id" ref="action_supplier_catalogue_line_list"/>
+        </record>
+
+        <!--
+            SUPPLIER CATALOGUE MENU ENTRIES
+        -->
+
+        <!-- Menu in Purchases / Configuration -->
+        <menuitem id="menu_supplier_catalogue"
+                  action="action_supplier_catalogue_list"
+                  sequence="4"
+                  parent="purchase.menu_procurement_management" />
+        <!-- Menu in Purchases / Configuration -->
+        <!-- <menuitem id="menu_supplier_catalogue_line"
+                  action="action_supplier_catalogue_line_list"
+                  parent="menu_supplier_catalogue" /> -->
+
+        <!--
+            SUPPLIER HISTORICAL CATALOGUES
+        -->
+
+        <!-- Supplier historical catalogues form view -->
+        <record id="supplier_historical_catalogue_form_view" model="ir.ui.view">
+            <field name="name">supplier.historical.catalogue.form.view</field>
+            <field name="model">supplier.historical.catalogue</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Historical prices parameters">
+                    <group colspan="4" col="4">
+                        <separator colspan="4" string="Parameters" />
+                        <field name="currency_id" widget="selection" />
+                        <field name="partner_id" readonly="1" />
+                        <field name="from_date" />
+                        <field name="to_date" />
+                    </group>
+                    <group colspan="4" col="4">
+                        <separator colspan="4" string="Actions" />
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="open_historical_prices" type="object" string="Open historical prices" icon="terp-gtk-jump-to-ltr" colspan="3" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="monthly_budget_wizard_form_view" model="ir.ui.view">
+            <field name="name">Monthly Budget Export</field>
+            <field name="model">monthly.budget.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Monthly Budget Export">
+                    <field name="granularity" colspan="2"/>
+                    <field name="extension" colspan="2"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_confirm" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

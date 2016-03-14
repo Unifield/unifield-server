@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="msf_budget_view_tree">
+            <field name="name">msf.budget.view.tree</field>
+            <field name="model">msf.budget</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+               <tree colors="blue:state in ('draft');gray:state in ('done');black:state in ('valid')" string="Budget"  hide_new_button="1" hide_delete_button="1"  noteditable="1" >
+                    <field name="name" colspan="1"/>
+                    <field name="code" colspan="1"/>
+                    <field name="fiscalyear_id"/>
+                    <field name="cost_center_id"/>
+                    <field name="instance_type"/>
+                    <field name="state"/>
+                    <field name="decision_moment_id"/>
+                    <field name="version"/>
+                    <field name="total_budget_amount" digits="(24,0)"/>
+                    <button name="unlink" string="Delete" icon="gtk-del" type="object" attrs="{'invisible': [('state', '=', 'Validated')]}" confirm="Do you really want to delete this budget?" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_msf_budget_search" model="ir.ui.view">
+           <field name="name">msf.budget.search</field>
+           <field name="model">msf.budget</field>
+           <field name="type">search</field>
+           <field name="arch" type="xml">
+               <search string="Budget">
+                   <group col="20" colspan="4">
+                       <filter string="Draft" icon="terp-document-new" domain="[('state','=','draft')]" help="Draft Budgets"/>
+                       <filter name="validated" string="Validated" icon="terp-camera_test" domain="[('state','=','valid')]" help="Validated Budgets" />
+                       <separator orientation="vertical"/>
+                       <filter name='hq' string="HQ" domain="[('instance_type', '=', 'section')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a HQ instance." icon="terp-go-home"/>
+                       <filter name='coordo' string="Coordo" domain="[('instance_type', '=', 'coordo')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Coordo instance." icon="terp-go-home"/>
+                       <filter name='project' string="Project" domain="[('instance_type', '=', 'project')]" help="Budgets that use a cost center which is the 'top cost center for budget' from a Project instance." icon="terp-go-home"/>
+                       <separator orientation="vertical"/>
+                       <newline/>
+                       <field name="name" select="1"/>
+                       <field name="code" select="1" />
+                       <field name="cost_center_id"/>
+                       <field name="state"/>
+                       <field name="fiscalyear_id"/>
+                       <field name="currency_id"/>
+                       <field name="decision_moment_id"/>
+                       <field name="version"/>
+                   </group>
+               </search>
+           </field>
+        </record>
+
+        <record model="ir.ui.view" id="msf_budget_view_form">
+            <field name="name">msf.budget.view.form</field>
+            <field name="model">msf.budget</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget" hide_new_button="1" hide_delete_button="1"  hide_duplicate_button="1" >
+                    <field name="name" readonly="1"/>
+                    <field name="code" readonly="1"/>
+                    <field name="fiscalyear_id" readonly="1"/>
+                    <field name="cost_center_id" readonly="1"/>
+                    <field name="decision_moment_id" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <field name="version" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <field name="type" readonly="1" invisible="1"/>
+                    <label string="" colspan="2"/>
+                    <field name="currency_id" readonly="1"/>
+                    <group col="3" colspan="4">
+                        <button name="button_display_type" string="Parent accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'view'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts only" type="object" icon="terp-stock_zoom" context="{'granularity': 'expense'}" colspan="1"/>
+                        <button name="button_display_type" string="Accounts and destinations" type="object" icon="terp-stock_zoom" context="{'granularity': 'all'}" colspan="1"/>
+                    </group>
+                    <field name="budget_line_ids" colspan="4" nolabel="1" readonly="1">
+                        <tree string="Budget Lines" editable="top" colors="black:line_type in ('normal');blue:line_type in ('view')">
+                            <field name="name"/>
+                            <field name="budget_amount" digits="(24,0)"/>
+                            <field name="comm_amount" digits="(24,0)"/>
+                            <field name="actual_amount" digits="(24,0)"/>
+                            <field name="balance" digits="(24,0)"/>
+                            <field name="percentage" digits="(24,0)"/>
+                            <field name="line_type"/>
+                        </tree>
+                        <form string="Budget Line">
+                            <group colspan="4">
+                                <field name="name" colspan="2" readonly="1"/>
+                                <field name="budget_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="comm_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="actual_amount" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="balance" colspan="1" readonly="1" digits="(24,0)"/>
+                                <field name="percentage" colspan="1" readonly="1" digits="(24,0)"/>
+                            </group>
+                        </form>
+                    </field>
+                    <field name="state" select="1" readonly="1" attrs="{'invisible': [('type', '=', 'view')]}"/>
+                    <group col="4" colspan="2">
+                        <button string="Approve" name="validate" type="workflow" icon="gtk-ok" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'draft')]}" help="By using this button you will not only validate the budget but also update all parent budgets. This will take a while..."/>
+                        <button string="Done" name="done" type="workflow" icon="gtk-jump-to" attrs="{'invisible': [('|'), ('type', '=', 'view'), ('state', '!=', 'valid')]}"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="act_crossovered_budget_view">
+            <field name="name">Budgets</field>
+            <field name="res_model">msf.budget</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="msf_budget_view_tree"/>
+            <field name="search_view_id" ref="view_msf_budget_search"/>
+            <field name="context">{'search_default_validated': 1}</field>
+            <field name="help">A budget is a forecast of your company's income and expenses expected for a period in the future. With a budget, a company is able to carefully look at how much money they are taking in during a given period, and figure out the best way to divide it among various categories. By keeping track of where your money goes, you may be less likely to overspend, and more likely to meet your financial goals. Forecast a budget by detailing the expected revenue per analytic account and monitor its evolution based on the actuals realised during that period.</field>
+        </record>
+
+        <menuitem id="next_id_31" name="Budgets" parent="account.menu_finance" sequence="11"/>
+        <menuitem parent="next_id_31"
+            id="menu_act_crossovered_budget_view"
+            action="act_crossovered_budget_view" sequence="1" />
+
+        <record id="wizard_budget_actual_export_view" model="ir.ui.view">
+            <field name="name">Actuals by CC Export</field>
+            <field name="model">wizard.actual.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Actuals by CC Export">
+                    <field name="currency_table_id" domain="[('state','=','valid')]"/>
+                    <newline/>
+                    <field name="cost_center_ids"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_report" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="wizard_budget_import_view" model="ir.ui.view">
+            <field name="name">Budget Import</field>
+            <field name="model">wizard.budget.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Import">
+                    <label string="Select a .CSV file to import." align="0.0" colspan="3"/>
+                    <field name="import_file"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                        <button name="button_import" string="Import Budget" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="wizard_budget_import_confirm_view" model="ir.ui.view">
+            <field name="name">Budget Already Existing</field>
+            <field name="model">wizard.budget.import.confirm</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Already Existing">
+                    <label string="Do you want to overwrite the following budgets:" align="0.0" colspan="3"/>
+                    <field name="budget_list" colspan="4" nolabel="1" readonly="1"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button name="button_cancel" string="No" type="object" icon="gtk-cancel"/>
+                        <button name="button_confirm" string="Yes" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="wizard_budget_import_finish_view" model="ir.ui.view">
+            <field name="name">Budget Imported</field>
+            <field name="model">wizard.budget.import.finish</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Budget Imported">
+                    <label string="The budget has been correctly uploaded." align="0.0" colspan="3"/>
+                    <separator colspan="4"/>
+                    <button name="button_close" string="OK" type="object" icon="gtk-ok"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_wizard_budget_import" model="ir.actions.act_window">
+            <field name="name">Import Budget</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.budget.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="wizard_budget_import_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <record id="wizard_local_expenses_view" model="ir.ui.view">
+            <field name="name">Local Expenses</field>
+            <field name="model">wizard.local.expenses</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Local Expenses">
+                    <field name="cost_center_id"/>
+                    <field name="fiscalyear_id"/>
+                    <field name="start_period_id"/>
+                    <field name="end_period_id"/>
+                    <field name="breakdown"/>
+                    <field name="granularity"/>
+                    <field name="booking_currency_id"/>
+                    <field name="output_currency_id"/>
+                    <separator colspan="4"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_report" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_wizard_local_expenses" model="ir.actions.act_window">
+            <field name="name">Local Expenses</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.local.expenses</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="wizard_local_expenses_view"/>
+            <field name="target">new</field>
+        </record>
+
+
+		<!-- Menu Item: Analytic Accounts which displays only Cost Center, and not allow: delete, new, edit
+		hide_new_button="1" hide_delete_button="1"
+		 -->
+
+        <menuitem parent="account.menu_finance_generic_reporting"
+            action="action_wizard_local_expenses"
+            id="menu_action_wizard_local_expenses"/>
+
+        <menuitem parent="next_id_31"
+            action="action_wizard_budget_import"
+            id="menu_action_wizard_budget_import"  sequence="2"/>
+
+        <record id="view_msf_budget_summary_tree" model="ir.ui.view">
+            <field name="name">msf.budget.summary.tree</field>
+            <field name="model">msf.budget.summary</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Budget Status">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="budget_amount" digits="(24,0)"/>
+                    <field name="actual_amount" digits="(24,0)"/>
+                    <field name="balance_amount" digits="(24,0)"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_wizard_budget_summary_tree" model="ir.actions.server">
+            <field name="name">Budget Status</field>
+            <field name="model_id" ref="model_msf_budget"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.budget_summary_open_window(context=context)</field>
+        </record>
+
+        <record id="ir_action_wizard_budget_summary_tree" model="ir.values">
+            <field eval="'client_action_multi'" name="key2"/>
+            <field eval="'msf.budget'" name="model"/>
+            <field name="name">Budget Status</field>
+            <field eval="'ir.actions.server,%d'%action_wizard_budget_summary_tree" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <record id="view_account_analytic_account_budget_tree" model="ir.ui.view">
+            <field name="name">account.analytic.account.budget.tree</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="domain">[('category','=','OC')]</field>
+            <field name="field_parent">child_complete_ids</field>
+            <field name="arch" type="xml">
+                <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts"
+                 toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="description"/>
+                    <field name="category"/>
+                    <field name="type" />
+                    <field name="date_start"/>
+                    <field name="date"/>
+                    <field name="parent_id" invisible="1"/>
+                    <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" context="context"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_account_analytic_account_budget_form" model="ir.actions.act_window">
+            <field name="name">Analytic Accounts</field>
+            <field name="res_model">account.analytic.account</field>
+            <field name="view_id" ref="view_account_analytic_account_budget_tree"/>
+            <field name="domain">[('category','=','OC')]</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
+        </record>
+
+        <menuitem action="action_account_analytic_account_budget_form" id="menu_action_account_analytic_account_budget_form" parent="next_id_31" />
+
+        <!-- US-431: new tree, for childest budget, budget lines drill browsing -->
+        <record id="view_msf_budget_summary_budget_line_tree" model="ir.ui.view">
+            <field name="name">Budget Lines</field>
+            <field name="model">msf.budget.summary.line</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_ids</field>
+            <field name="arch" type="xml">
+                <tree string="Budget Status">
+                    <field name="name" string="Name" />
+                    <field name="budget_amount" digits="(24,0)"/>
+                    <field name="actual_amount" digits="(24,0)"/>
+                    <field name="balance" digits="(24,0)"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- US-431: budget lines drill browsing from budget summary line action -->
+        <record id="action_open_budget_summary_budget_lines"
+            model="ir.actions.server">
+            <field name="name">Budget Lines</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="msf_budget.model_msf_budget_summary"/>
+            <field name="state">code</field>
+            <field name="code">action = self.pool.get('msf.budget.summary').action_open_budget_summary_budget_lines(cr, uid, object.id, context)</field>
+        </record>
+        <record id="ir_open_budget_summary_budget_lines" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">msf.budget.summary</field>
+            <field name="name">Open Budget Lines</field>
+            <field eval="'ir.actions.server,%d'%action_open_budget_summary_budget_lines"
+                name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <!-- US-431: browse analytic lines from budget lines -->
+        <record id="action_open_budget_summary_line_analytic_lines"
+            model="ir.actions.server">
+            <field name="name">Analytic Items</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="msf_budget.model_msf_budget_summary_line"/>
+            <field name="state">code</field>
+            <field name="code">action = self.pool.get('msf.budget.summary.line').action_open_analytic_lines(cr, uid, object.id, context)</field>
+        </record>
+        <record id="ir_open_budget_summary_line_analytic_lines" model="ir.values">
+            <field name="key2">tree_but_open</field>
+            <field name="model">msf.budget.summary.line</field>
+            <field name="name">Open Analytic Lines</field>
+            <field eval="'ir.actions.server,%d'%action_open_budget_summary_line_analytic_lines" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+        <!-- msf.budget.decision.moment -->
+
+        <record id="view_msf_budget_decision_moment_tree" model="ir.ui.view">
+            <field name="name">msf.budget.decision.moment.tree</field>
+            <field name="model">msf.budget.decision.moment</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Decision Moments" editable="bottom"
+                    hide_new_button="PROP_INSTANCE_HIDE_BUTTON"
+                    hide_delete_button="PROP_INSTANCE_HIDE_BUTTON">
+                    <field name="name"/>
+                    <field name="order"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_msf_budget_decision_moment_form" model="ir.ui.view">
+            <field name="name">msf.budget.decision.moment.form</field>
+            <field name="model">msf.budget.decision.moment</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Decision Moment">
+                    <field name="name"/>
+                    <field name="order"/>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_msf_budget_decision_moment_tree">
+            <field name="name">Decision Moments</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">msf.budget.decision.moment</field>
+            <field name="view_type">form</field>
+            <field name="view_id" ref="view_msf_budget_decision_moment_tree"/>
+        </record>
+
+        <menuitem id="menu_action_msf_budget_decision_moment_tree"
+            parent="next_id_31"
+            action="action_msf_budget_decision_moment_tree"/>
+
+        <act_window id="action_monthly_budget_wizard"
+            name="Monthly Budget"
+            res_model="monthly.budget.wizard"
+            src_model="msf.budget"
+            key2="client_print_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="monthly_budget_wizard_form_view"
+            context="context"/>
+
+    </data>
+</openerp>

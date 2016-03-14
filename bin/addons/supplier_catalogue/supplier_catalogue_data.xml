@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data noupdate="1">
+		
+		<record id="purchase.item0" model="product.pricelist.item">
+            <field name="base" eval="-2"/>
+        </record>
+        
+        <record id="base.EUR" model="res.currency">
+        	<field name="is_section_currency" eval="True" />
+        	<field name="is_esc_currency" eval="True" />
+        </record>
+        
+        <record id="base.CHF" model="res.currency">
+        	<field name="is_section_currency" eval="True" />
+        	<field name="is_esc_currency" eval="False" />
+        </record>
+		
+	</data>
+</openerp>

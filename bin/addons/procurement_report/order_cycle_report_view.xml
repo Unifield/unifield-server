@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="order_cycle_report_tree_view" model="ir.ui.view">
+			<field name="name">order.cycle.report.tree.view</field>
+			<field name="model">order.cycle.rules.report</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Order cycle rules" editable="top" noteditable="1"
+    				hide_new_button="1" hide_delete_button="1">
+    				<field name="rule_id" />
+    				<field name="location_id" />
+    				<field name="nomen_name" />
+    				<field name="product_id" />
+    				<field name="product_uom_id" />
+    				<field name="frequency_id" />
+    				<field name="delivery_lt" />
+                    <field name="order_coverage" />
+                    <field name="safety_time" />
+                    <field name="safety_stock" />
+                    <field name="consumption" />
+    				<field name="total_stock" />
+    				<field name="stock" />
+    				<field name="intermediate_stock" />
+    				<field name="consumption_stock" />
+    				<field name="amc" />
+    				<field name="moh" />
+    				<field name="fmc" />
+    			</tree>
+			</field>
+		</record>
+		
+		<record id="order_cycle_report_search_view" model="ir.ui.view">
+			<field name="name">order.cycle.report.search.view</field>
+			<field name="model">order.cycle.rules.report</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Order cycle rules">
+					<field name="product_reference" />
+					<field name="product_name" />
+					<field name="product_id" />
+					<field name="location_id" />
+					<newline />
+    				<group expand="1" string="Nomenclature Filters...">
+						<field name="nomen_manda_0_s"
+							domain="[('parent_id', '=', False)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(0, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_1_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(1, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_2_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(2, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+						<field name="nomen_manda_3_s"
+							domain="[('parent_id', '=', -1)]"
+							 widget="selection"
+							on_change="onChangeSearchNomenclature(3, 'mandatory', nomen_manda_0_s, nomen_manda_1_s, nomen_manda_2_s, nomen_manda_3_s, context)" />
+					</group>
+				</search>
+			</field>
+		</record>
+		
+		<act_window
+			id="action_order_cycle_rules_report"
+			src_model="procurement.rules.report"
+			res_model="order.cycle.rules.report"
+			name="Order cycle rules"
+			key2="client_action_multi"
+			view_type="form"
+			view_mode="tree,form" />
+		
+	</data>
+</openerp>

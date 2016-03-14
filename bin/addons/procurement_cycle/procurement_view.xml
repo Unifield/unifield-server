@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="order_cycle_form_view" model="ir.ui.view">
+            <field name="name">order.cycle.form.view</field>
+            <field name="model">stock.warehouse.order.cycle</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order Cycle">
+                    <group colspan="2" col="2">
+                        <separator string="General Information" />
+                        <field name="name" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Locations" />
+                        <field name="warehouse_id" on_change="onchange_warehouse_id(warehouse_id)" widget="selection"/>
+                        <field name="location_id"/>
+                        <field name="company_id" groups="base.group_multi_company" widget="selection"/>
+                    </group>
+                    <group colspan="2" col="4">
+                        <separator string="Period / Frequence Rule" colspan="4 "/>
+                        <field name="frequence_name" readonly="1" colspan="4" />
+                        <field name="frequence_id" invisible="1" />
+                        <label />
+                        <button name="choose_change_frequence" type="object" string="Change/Choose Frequency" icon="terp-go-today" colspan="3" />
+                        <field name="next_date" colspan="4" />
+                    </group>
+                    <group colspan="2" col="2">
+                        <separator string="Misc" />
+                        <field name="active" />
+                    </group>
+                    <group colspan="4" col="6" >
+                        <separator colspan="6" string="Parameter for quantity calculation" />
+                        <field name="leadtime" />
+                        <label string="If null, will take the supplier lead time from the product form" colspan="4" align="0.0"/>
+                        <field name="order_coverage" />
+                        <label string="In months" colspan="4" align="0.0"/>
+                        <field name="safety_stock_time" />
+                        <label string="In months (will be converted into quantity regarding monthly consumption)" colspan="4" align="0.0"/>
+                        <newline />
+                        <group name="consumption calculation" colspan="6" col="6">
+                            <field name="past_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'past')" />
+                            <field name="reviewed_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'review')" />
+                            <field name="manual_consumption" on_change="consumption_method_change(past_consumption, reviewed_consumption, manual_consumption, order_coverage, 'manual')" />
+                        </group>
+                        <group colspan="2" col="5">
+                            <field name="consumption_period_from"
+                                    on_change="on_change_period(consumption_period_from, consumption_period_to)"
+                                    attrs="{'required': [('past_consumption', '=', True)], 
+                                            'readonly': [('past_consumption', '=', False)]}" />
+                            <label string="-" />
+                            <field name="consumption_period_to" nolabel="1" colspan="2"
+                                    on_change="on_change_period(consumption_period_from, consumption_period_to)"
+                                    attrs="{'required': [('past_consumption', '=', True)], 
+                                            'readonly': [('past_consumption', '=', False)]}" />
+                        </group>
+                    </group>
+                    <group colspan="4" col="4" >
+                        <separator colspan="4" string="Products that will be included in the current policy" />
+                        <field name="product_ids" nolabel="1" colspan="4" mode="tree">
+                            <tree string="Products" editable="top">
+                                <field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]" />
+                                <field name="uom_id" domain="[('uom_by_product', '=', product_id)]" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+                                <field name="safety_stock" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+                                <field name="consumption" />
+                                <field name="real_stock" />
+                                <field name="available_stock" />
+                                <field name="expiry_before" />
+                                <field name="qty_to_order" />
+                                <field name="required_date" />
+                                <field name="supplier_id" />
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="order_cycle_line_tree_view" model="ir.ui.view">
+            <field name="name">order.cycle.line.tree.view</field>
+            <field name="model">stock.warehouse.order.cycle.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Products" editable="top">
+                    <field name="product_id" on_change="product_change(product_id)" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]" />
+                    <field name="uom_id" domain="[('uom_by_product', '=', product_id)]" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+                    <field name="safety_stock" on_change="onchange_uom_qty(uom_id, safety_stock)" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="order_cycle_tree_view" model="ir.ui.view">
+            <field name="name">order.cycle.tree.view</field>
+            <field name="model">stock.warehouse.order.cycle</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Order Cycle rules">
+                    <field name="name" />
+                    <field name="warehouse_id" />
+                    <field name="location_id" />
+                    <field name="frequence_id" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="order_cycle_search_view" model="ir.ui.view">
+            <field name="name">order.cycle.search.view</field>
+            <field name="model">stock.warehouse.order.cycle</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Order Cycle">
+                    <group expand="1" string="Filters...">
+                        <field name="name" default_focus="1" colspan="4" />
+                        <field name="location_id" eval="context.get('location_id', False)" colspan="4" />
+                        <field name="product_line_ids" widget="many2one" />
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_order_cycle_tree" model="ir.actions.act_window">
+            <field name="name">Order Cycle</field>
+            <field name="res_model">stock.warehouse.order.cycle</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'withnum': 1}</field>
+        </record>
+
+        <menuitem action="action_order_cycle_tree"
+                  id="menu_order_cycle"
+                  sequence="3"
+                  parent="stock_schedule.stock_automatic_procurements_menu" />
+
+    </data>
+</openerp>

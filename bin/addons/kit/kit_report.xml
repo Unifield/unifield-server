@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report 
+            auto="False"
+            id="kit_report"
+            model="composition.kit"
+            name="kit.report"
+            target_filename='${eval(_get_report_name)}'
+            rml="addons/kit/report/kit_report.rml"
+            string="Kit" />
+
+    </data>
+</openerp>

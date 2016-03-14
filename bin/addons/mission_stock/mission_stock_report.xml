@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+        <!--<report id="report_stock_mission"
+        		string="Stock mission report"
+        		model="stock.mission.report.line"
+        		name="stock.mission.report.report"
+        		rml="addons/mission_stock/report/report_stock_mission.rml"
+        		header="False"
+        		auto="True"
+                menu="True"/>-->
+
+        <report
+            id="stock_mission_report_xls"
+            auto="False"
+            menu="False"
+            header="False"
+            model="mission.stock.wizard"
+            name="stock.mission.report_xls"
+            string="Mission stock report"
+            file="mission_stock/report/stock_mission_report_xls.mako"
+            report_type="webkit"
+            />
+		
+	</data>
+</openerp>

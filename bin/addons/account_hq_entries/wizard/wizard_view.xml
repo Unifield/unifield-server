@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Validation Wizard -->
+        <record id="hq_entries_validation_form" model="ir.ui.view">
+            <field name="name">hq.entries.validation.form</field>
+            <field name="model">hq.entries.validation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Confirmation">
+                    <separator string="Valid lines"/>
+                    <field name="process_ids" nolabel="1" colspan="4"/>
+                    <separator string=""/>
+                    <field name="txt" nolabel="1" colspan="4" />
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                    <separator string="Selected Lines"/>
+                    <field name="line_ids" nolabel="1" colspan="4"/>
+                </form>
+            </field>
+        </record>
+
+    <!-- Split Wizard -->
+        <record id="hq_entries_split_form" model="ir.ui.view">
+            <field name="name">hq.entries.split.form</field>
+            <field name="model">hq.entries.split</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Split">
+                    <label string="You're about to split this HQ Entry line:" colspan="4" align="0.0"/>
+                    <group colspan="4" col="4">
+                        <field name="original_id" colspan="2"/>
+                        <field name="original_amount" colspan="2"/>
+                    </group>
+                    <newline/>
+                    <field name="line_ids" colspan="4" nolabel="1" context="{'parent_id': active_id}">
+                        <tree string="Split Lines" editable="top" colors="red:state == 'invalid'; black: state == 'valid'">
+                            <field name="name" readonly="1" />
+                            <field name="ref"/>
+                            <field name="account_hq_correctible" invisible="1"/>
+                            <field name="account_id" attrs="{'readonly': [('account_hq_correctible', '=', True)]}" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
+                            <field name="amount"/>
+                            <field name="destination_id"/>
+                            <field name="cost_center_id"/>
+                            <field name="analytic_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open'), ('cost_center_ids', '=', cost_center_id)]" string="Funding Pool" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': context.get('document_date')}"/>
+                            <field name="state"/>
+                            <field name="state_info"/>
+                        </tree>
+                    </field>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                        <button name="button_validate" type="object" string="Split" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!-- Unsplit Wizard -->
+        <record id="hq_entries_unsplit_form" model="ir.ui.view">
+            <field name="name">hq.entries.unsplit.form</field>
+            <field name="model">hq.entries.unsplit</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unsplit">
+                    <separator string="Valid lines" colspan="4"/>
+                    <field name="process_ids" nolabel="1" colspan="4"/>
+                    <separator string=""/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel" />
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                    <separator string="Selected lines" colspan="4"/>
+                    <field name="line_ids" nolabel="1" colspan="4"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

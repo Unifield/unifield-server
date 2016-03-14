@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+        <record model="ir.ui.view" id="wizard_write_off_form1">
+            <field name='name'>wizard.write.off.form1</field>
+            <field name='model'>cashbox.write.off</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Write-off - Wizard">
+                    <separator string="Decision about the action to do on this CashBox"/>
+                    <field name='choice'/>
+                    <newline />
+                    <!-- Delete since UTP-209 -->
+                    <!--field name='account_id' attrs="{'invisible':[('choice','!=','writeoff')], 'required':[('choice', '=', 'writeoff')]}"/>
+                    <newline />
+                    <field name='amount' attrs="{'invisible':[('choice','!=','writeoff')]}"/>
+                    <newline /-->
+                    <group colspan="4">
+                        <button string='Cancel' special='cancel' icon='gtk-cancel' />
+                        <button string='Ok' name='action_confirm_choice' type='object' icon='gtk-apply'/>
+                    </group>
+                </form>
+            </field>
+          </record>
+
+          <!-- Actions -->
+          <act_window id="action_write_off"
+            name="Re-open partially closed register"
+            res_model="cashbox.write.off"
+            src_model="account.bank.statement"
+            key2="client_action_multi"
+            view_mode='form'
+            view_type='form'
+            target='new' />
+    </data>
+</openerp>

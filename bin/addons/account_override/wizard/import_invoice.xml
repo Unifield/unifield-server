@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!--
+            Import invoice wizard view
+        -->
+
+        <record id="view_wizard_debit_note_import_invoice_form" model="ir.ui.view">
+            <field name="name">wizard.debit.note.import.invoice.form</field>
+            <field name="model">debit.note.import.invoice</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Debit Note Import Invoice Wizard">
+                    <field name="line_ids" nolabel="1" colspan="4" 
+                        domain="[('ready_for_import_in_debit_note','=',True), ('currency_id', '=', currency_id), ('partner_id', '=', partner_id)]">
+                        <tree string="Invoices">
+                            <field name="date_invoice"/>
+                            <field name="number"/>
+                            <field name="journal_id"/>
+                            <field name="partner_id"/>
+                            <field name="name"/>
+                            <field name="user_id"/>
+                            <field name="account_id"/>
+                            <field name="currency_id"/>
+                            <field name="amount_total"/>
+                            <field name="state"/>
+                            <field name="reconciled" invisible="1"/>
+                            <field name="is_debit_note" invisible="1"/>
+                            <field name="type" invisible="1"/>
+                        </tree>
+                    </field>
+                    <group colspan="4" col="4">
+                        <label string="" colspan="2"/>
+                        <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                        <button icon="gtk-ok" string="Ok" name="button_validate" type="object"/>
+                    </group>
+                    <field name="invoice_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

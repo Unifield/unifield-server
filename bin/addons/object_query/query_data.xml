@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data noupdate="1">
+    
+        <record id="product_query_object" model="object.query.object">
+            <field name="name">Product</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'product.product')]"/>
+        </record>
+    
+        <record id="sale_order_query_object" model="object.query.object">
+            <field name="name">Field Order</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'sale.order')]"/>
+        </record>
+        <record id="purchase_query_object" model="object.query.object">
+            <field name="name">Purchase Order</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'purchase.order')]"/>
+        </record>
+    
+    </data>
+</openerp>

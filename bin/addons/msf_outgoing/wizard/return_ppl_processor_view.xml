@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record id="return_ppl_processor_form_view" model="ir.ui.view">
+            <field name="name">return.ppl.processor.form.view</field>
+            <field name="model">return.ppl.processor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Return products">
+                    <field name="date" invisible="1" />
+                    <field name="picking_id" invisible="1" />
+                    <button name="copy_all" type="object" icon="gtk-jump-to" colspan="2" string="Copy all" />
+                    <button name="uncopy_all" type="object" icon="gtk-undo" colspan="2" string="Clear all" />
+                    <separator colspan="4" string="Move lines" />
+                    <field name="move_ids" mode="tree"
+                           colspan="4" nolabel="1" />
+                    <group colspan="4" col="6" name="actions">
+                        <separator string="Actions" colspan="6" />
+                        <label colspan="4"> </label>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="do_return_ppl" type="object" string="Return" icon="gtk-go-forward" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="return_ppl_move_processor_tree_view" model="ir.ui.view">
+            <field name="name">return.ppl.move.processor.tree.view</field>
+            <field name="model">return.ppl.move.processor</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Product Moves"
+                      editable="bottom"
+                      hide_delete_button="1"
+                      hide_new_button="1"
+                      colors="red: integrity_status not in ('ok', 'empty'); green: integrity_status in ('ok');"
+                      >
+                    <!-- Invisible fields -->
+                    <field name="ssl_check" invisible="1" />
+                    
+                    <field name="line_number"
+                           string="Line"
+                           readonly="1"
+                           />
+                    <field name="product_id"
+                           string="Product"
+                           readonly="1"
+                           />
+                    <field name="asset_id" readonly="1" />
+                    <field name="composition_list_id" readonly="1" />
+                    <field name="ordered_quantity" readonly="1" />
+                    <field name="ordered_uom_id" readonly="1" />
+                    <field name="quantity"
+                           string="Qty to return"
+                           />
+                    <field name="uom_id"
+                           string="UOM" 
+                           readonly="True"
+                           />
+                    <field name="prodlot_id" readonly="1" />
+                    <field name="expiry_date" readonly="1" />
+                    <field name="lot_check" />
+                    <field name="exp_check" />
+                    <field name="kc_check" />
+                    <field name="dg_check" />
+                    <field name="np_check" />
+                    <field name="integrity_status" string="" />
+                </tree>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

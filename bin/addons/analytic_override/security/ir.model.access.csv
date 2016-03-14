@@ -1,0 +1,7 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_analytic_distribution","analytic.distribution","model_analytic_distribution",,1,1,1,1
+"access_free_1_distribution_line","free.1.distribution.line","model_free_1_distribution_line",,1,1,1,1
+"access_free_2_distribution_line","free.2.distribution.line","model_free_2_distribution_line",,1,1,1,1
+"access_distribution_line","distribution.line","model_distribution_line",,1,1,1,1
+"access_cost_center_distribution_line","cost.center.distribution.line","model_cost_center_distribution_line",,1,1,1,1
+"access_funding_pool_distribution_line","funding.pool.distribution.line","model_funding_pool_distribution_line",,1,1,1,1

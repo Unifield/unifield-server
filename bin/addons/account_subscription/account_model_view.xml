@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record id="view_model_purchase_form" model="ir.ui.view">
+            <field name="name">account.model.form</field>
+            <field name="model">account.model</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_model_form"/>
+            <field name="arch" type="xml">
+                <form string="Journal Entry Model" position="replace">
+                    <form string="Journal Entry Model">
+                       <group><html>
+                            <p id="para_has_any_bad_ad_line_exp_in"
+                            style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                            Please review analytic allocation for lines displayed in red.
+                            </p>
+                        <script language="javascript">
+                            var has_any_bad_ad_line = $('#has_any_bad_ad_line_exp_in').val();
+                            if (has_any_bad_ad_line == "1") {
+                                msg_dom = $('#para_has_any_bad_ad_line_exp_in')
+                                msg_dom.show();
+                            }
+                        </script>
+                        </html></group>
+                        <group col="6" colspan="4">
+                            <field name="name"/>
+                            <field name="journal_id" domain="[('type','=','purchase'),('is_current_instance','=',True)]"/>
+                            <field name="currency_id"/>
+                            <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                                <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="3"/>
+                            </group>
+                            <group colspan="6" col="6" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
+                                <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="3" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                                <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="3"/>
+                            </group>
+                            <field name="analytic_distribution_id" invisible="1"/>
+                            <field colspan="6" nolabel="1" name="lines_id" widget="one2many_list"/>
+                        </group>
+                        <group>
+                            <field name="has_any_bad_ad_line_exp_in" invisible="1" />
+                        </group>
+                    </form>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_model_purchase_search" model="ir.ui.view">
+            <field name="name">account.model.search</field>
+            <field name="model">account.model</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_model_search"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//filter[@string='Sale']" position="replace"/>
+                    <xpath expr="//filter[@string='Purchase']" position="replace"/>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_account_journal_purchase_search" model="ir.ui.view">
+            <field name="name">account.journal.search</field>
+            <field name="model">account.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_journal_search"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//filter[@string='Sale']" position="replace"/>
+                    <xpath expr="//filter[@string='Purchase']" position="replace"/>
+                    <xpath expr="//filter[@string='Liquidity']" position="replace"/>
+                    <xpath expr="//filter[@string='Others']" position="replace"/>
+                    <xpath expr="//group[2]" position="replace"/>
+                </data>
+            </field>
+        </record>
+
+        <record id="account.view_model_line_tree" model="ir.ui.view">
+            <field name="name">account.model.line.tree</field>
+            <field name="model">account.model.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Journal Entry Model Line" editable="bottom"
+                    colors="red: exp_in_ad_state in ('no_header', 'bad_header', 'invalid')">
+                    <field name="sequence" readonly="1"/>
+                    <field name="name"/>
+                    <field name="account_id" domain="[('restricted_area', '=', 'recurring_lines')]"/>
+                    <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" context="context" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                    <field name="analytic_distribution_state_recap"/>
+                    <field name="have_analytic_distribution_from_header" invisible="1"/>
+                    <field name="analytic_distribution_state" invisible="1"/>
+                    <field name="is_allocatable" invisible="1"/>
+                    <field name="partner_id"/>
+                    <field name="debit"/>
+                    <field name="credit"/>
+                    <field name="exp_in_ad_state" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_subscription_form" model="ir.ui.view">
+            <field name="name">account.subscription.form</field>
+            <field name="model">account.subscription</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_subscription_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <separator string="Valid Up to" position="replace">
+                        <separator string="Frequency" colspan="4"/>
+                    </separator>
+                </data>
+            </field>
+        </record>
+
+
+        <record id="view_subscription_line_tree" model="ir.ui.view">
+            <field name="name">account.subscription.line.tree</field>
+            <field name="model">account.subscription.line</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_subscription_line_tree"/>
+            <field name="arch" type="xml">
+                <tree string="Subscription lines" position="replace">
+                    <tree string="Subscription lines" hide_new_button="1" hide_delete_button="1" noteditable="1">
+                        <field name="date"/>
+                        <field name="move_id"/>
+                    </tree>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account.validate_account_move_line_view" model="ir.ui.view">
+            <field name="name">Post Journal Entries</field>
+            <field name="model">validate.account.move.lines</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Post Journal Entries">
+                <separator string="Post Journal Entries" colspan="4"/>
+                <label string="All selected journal entries will be validated and posted. It means you won't be able to modify their accounting fields anymore." colspan="2"/>
+                <separator colspan="4"/>
+                <group colspan="4" col="6">
+                    <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                    <button icon="terp-camera_test" string="Approve" name="validate_move_lines" type="object" default_focus="1"/>
+               </group>
+            </form>
+            </field>
+        </record>
+
+    <!-- UFTP-103 Recurring entries AJ with colorize in red of invalid Analytic Distri -->
+        <record model="ir.ui.view" id="account_move_line_recurring_entries_to_validate">
+            <field name="name">account.move.line.recurring_entries_to_validate</field>
+            <field name="model">account.move.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Recurring Entries To Validate" min_rows="100" hide_new_button="1" hide_delete_button="1"
+                colors="red:analytic_distribution_state not in ('valid')">
+                    <field name="instance_id"/>
+                    <field name="is_corrigible" invisible="1"/>
+                    <field name="have_an_historic" invisible="1"/>
+                    <button name="button_do_accounting_corrections" type="object" string="Open Accounting Correction Wizard" 
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                    <button name="button_open_corrections" type="object" string="Open corrections history" 
+                        attrs="{'invisible': [('have_an_historic', '=', False)]}" icon="terp-mail-"/>
+                    <field name="journal_id"/>
+                    <field name="move_id"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id" domain="[('state','=','draft')]"/>
+                    <field name="account_id"/>
+                    <field name="account_type" invisible="1"/>
+                    <field name="move_state" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="transfer_journal_id" invisible="1"/>
+                    <field name="partner_txt"/>
+                    <field name="partner_type" invisible="1"/>
+                        <!-- allow AD editing -->
+                        <field name="display_analytic_button" invisible="1"/>
+                        <field name="analytic_distribution_state"/>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
+                            context="context" attrs="{'readonly': [('from_import_cheque_id', '!=', False)], 'invisible': [('display_analytic_button', '=', False)]}"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
+                    <field name="currency_id"/>
+                    <field name="debit" sum="Total Functional Debit"/>
+                    <field name="credit" sum="Total Functional Credit"/>
+                    <field name="functional_currency_id"/>
+                    <field name="output_amount_debit"/>
+                    <field name="output_amount_credit"/>
+                    <field name="output_currency"/>
+                    <field name="reconcile_txt" />
+                    <field name="state"/>
+                    <field name="statement_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <act_window
+            id="act_account_subscription_to_account_move_line_open"
+            name="Recurring Entries To Validate"
+            domain="[('move_id.state','=','draft'), ('is_recurring', '=', True)]"
+            res_model="account.move.line"
+            src_model="account.subscription"
+            view_id="account_move_line_recurring_entries_to_validate"/>
+
+    </data>
+</openerp>

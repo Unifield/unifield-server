@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <report
+            id="report_sales_follow_up_xls"
+            name="sales.follow.up.report_xls"
+            model="sale.order.followup"
+            string="Field Order Follow Up Excel Export"
+            file="sales_followup/report/sale_follow_up_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+         />
+     
+        <report
+            id="report_sales_follow_up_pdf"
+            name="sales.follow.up.report_pdf"
+            model="sale.order.followup"
+            string="Field Order Follow Up PDF Export"
+            rml="sales_followup/report/sale_follow_up_report.rml"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+        <!-- Multiple FO follow-up -->
+        <report
+            id="report_sales_follow_up_multi_xls"
+            name="sales.follow.up.multi.report_xls"
+            model="sale.followup.multi.wizard"
+            string="Field Order Follow Up per Client Excel Export"
+            file="sales_followup/report/sale_follow_up_multi_report_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+        <report
+            id="report_sales_follow_up_multi_pdf"
+            name="sales.follow.up.multi.report_pdf"
+            model="sale.followup.multi.wizard"
+            string="Field Order Follow Up per client PDF Export"
+            file="sales_followup/report/sale_follow_up_multi_report.rml"
+            header="False"
+            auto="False"
+            menu="False"
+        />
+
+    </data>
+</openerp>

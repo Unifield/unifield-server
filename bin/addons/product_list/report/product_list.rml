@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<document filename="product_list.pdf">
+  <template pageSize="(595.0,842.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="15.0" y1="42.0" width="539" height="758"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+  
+    <!-- TABLE STYLES -->
+    <blockTableStyle id="HeaderTable">
+        <blockAlignment value="CENTER" />
+        <blockValign value="MIDDLE" />
+        <lineStyle kind="OUTLINE" colorName="#000000" />
+    </blockTableStyle>
+    
+    <blockTableStyle id="InformationTable">
+        <blockAlignment value="CENTER" />
+        <blockValign value="MIDDLE" />
+        <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
+        <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
+        <lineStyle kind="LINEBEFORE" colorName="#000000" />
+        <lineStyle kind="LINEAFTER" colorName="#000000" />
+    </blockTableStyle>
+    
+    <blockTableStyle id="ProductList">
+        <blockAlignment value="CENTER" />
+        <blockValign value="MIDDLE" />
+        <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
+        <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
+        <lineStyle kind="LINEBEFORE" colorName="#0b0b0b" />
+        <lineStyle kind="LINEAFTER" colorName="#000000" />
+    </blockTableStyle>
+        
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    
+    <!-- PARAGRAPH STYLES -->
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="15.0" leading="20" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0" />
+    <paraStyle name="InformationHeader" fontName="Helvetica-Bold" fontSize="8.0" leading="10" alignment="CENTER" />
+    <paraStyle name="Information" fontName="Helvetica" fontSize="8.0" leading="10" alignment="CENTER" />
+    
+  </stylesheet>
+  <story>
+    <para style="Standard">[[repeatIn(objects,'o')]]</para>
+    <para style="Standard">[[ setLang(o.partner_id.lang) ]]</para>
+    
+    <!-- HEADER TABLE OF THE PRINTED FILE -->
+    <blockTable colWidths="565" style="HeaderTable">
+        <tr>
+            <td>
+                <para style="Header">PRODUCTS [[ o.type == 'list' and 'LIST' or 'SUBLIST' ]]</para>
+            </td>
+        </tr>
+    </blockTable>
+   
+   
+   <para style="Standard">
+      <font color="white"> </font>
+    </para>
+   
+   
+   <!-- GENERAL INFORMATION -->
+   <blockTable colWidths="165.0,50.0,70.0,140.0,140.0" style="InformationTable">
+        <tr>
+            <td>
+                <para style="InformationHeader">Name</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Ref.</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Creation date</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Warehouse</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Location</para>
+            </td>
+        </tr>
+        
+        <tr>
+            <td>
+                <para style="Information">[[ o.name ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.ref ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ formatLang(o.creation_date, date=True) ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.warehouse_id and o.warehouse_id.name or '' ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.location_id and o.location_id.name or '' ]]</para>
+            </td>
+        </tr>
+   </blockTable>
+   
+   
+    <para style="Standard">
+      <font color="white"> </font>
+    </para>
+    
+    
+    <!-- PRODUCT LIST -->
+    <blockTable colWidths="100.0,185.0,280.0" style="ProductList">
+        <tr>
+            <td>
+                <para style="InformationHeader">Product Code</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Product Description</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Comment</para>
+            </td>
+        </tr>
+   </blockTable>
+   
+   
+   <section>
+   [[ repeatIn(o.product_ids, 'line') ]]
+   <blockTable colWidths="100.0,185.0,280.0" style="ProductList">
+        <tr>
+            <td>
+                <para style="Information">[[ line.ref ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ line.name.name ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ line.comment ]]</para>
+            </td>
+        </tr>
+   </blockTable>
+   </section>
+       
+    <para style="Standard">
+      <font color="white"> </font>
+    </para>
+    
+  </story>
+</document>

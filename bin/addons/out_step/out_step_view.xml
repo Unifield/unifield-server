@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+		
+		<record id="view_picking_out_tree" model="ir.ui.view">
+            <field name="name">stock.picking.out.tree</field>
+            <field name="model">stock.picking</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="stock.view_picking_out_tree" />
+            <field name="arch" type="xml">
+            	<data>
+            	
+            		<!-- 
+            		<tree position="attributes">
+                       <attribute name="colors">green:delivered==True;blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date</attribute>
+                    </tree>
+                     -->
+            	
+                    <field name="state" position="replace">
+                    	<field name="state" invisible="True" />
+                    	<field name="delivered" invisible="True" />
+                    	<field name="state_hidden" />
+                    </field>
+                    
+                </data>
+            </field>
+        </record>
+		
+		
+		<record id="view_picking_out_search" model="ir.ui.view">
+            <field name="name">stock.picking.out.search</field>
+            <field name="model">stock.picking</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="stock.view_picking_out_search" />
+            <field name="arch" type="xml">
+            	<data>
+
+                    <filter name="done" position="replace">
+                        <!-- <separator orientation="vertical"/> -->
+                        <filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done'), ('delivered', '=', False)]" help="Delivery orders already processed"/>
+                        <filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state', '=', 'done'), ('delivered', '=', True)]" help="Delivered Delivery Orders" />
+                        <!-- <filter icon="gtk-no" name="not_delivered" string="Not Delivered" domain="[('state', '=', 'done'), ('delivered', '=', False)]" help="Not Delivered Delivery Orders" /> -->
+                        <separator orientation="vertical"/>
+					</filter>
+					
+                </data>
+            </field>
+        </record>
+    
+    </data>
+</openerp>

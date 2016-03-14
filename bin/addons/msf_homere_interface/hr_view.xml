@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Employee Form
+    -->
+
+    <record id="view_employee_form" model="ir.ui.view">
+        <field name="name">view.employee.form</field>
+        <field name="model">hr.employee</field>
+        <field name="type">form</field>
+        <field name="priority" eval="15"/>
+        <field name="arch" type="xml">
+            <form string="Employee">
+                <group colspan="4" col="8">
+                    <field name="allow_edition" invisible="1"/>
+                    <field name="ex_allow_edition" invisible="1"/>
+                    <field colspan="6" name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="user_id" on_change="onchange_user(user_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="company_id" widget="selection" on_change="onchange_company(company_id)" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="active" />
+                    <field name="employee_type" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}" on_change="onchange_type(employee_type)"/>
+                    <newline/>
+                    <field name="department_id" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    <field name="parent_id"/>
+                </group>
+                <group colspan="4" col="8">
+                  <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <newline />
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                </group>
+                <notebook colspan="6">
+                    <page string="Personal Information">
+                        <group col="2" colspan="2">
+                            <separator colspan="2" string="Social IDs"/>
+                            <field name="ssnid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="sinid" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="identification_id" attrs="{'readonly': ['|', '&amp;', ('employee_type', '=', 'local'), ('allow_edition', '=', False), '&amp;', ('employee_type', '=', 'ex'), ('ex_allow_edition', '=', False)], 'required': [('employee_type', 'in', ('local', 'ex'))]}"/>
+                            <field name="passport_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Status" colspan="2"/>
+                            <field name="gender" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="marital" widget="selection" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="country_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="birthday" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Contact Information" colspan="2"/>
+                            <field name="address_home_id" colspan="2" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="partner_id" invisible="1" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="address_id" colspan="2" on_change="onchange_address_id(address_id)" domain="[('partner_id', '=', partner_id)]" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="work_phone" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="mobile_phone" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="work_email" widget="email" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="work_location" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                        </group>
+                        <group col="2" colspan="2">
+                            <separator string="Position" colspan="2"/>
+                            <field name="job_id" domain="[('state','!=','old')]" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                            <field name="coach_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                        </group>
+                    </page>
+                    <page string="Categories">
+                        <field name="category_ids" nolabel="1" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    </page>
+                    <page string="Notes">
+                        <field colspan="4" nolabel="1" name="notes" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                    </page>
+                </notebook>
+            </form>
+        </field>
+    </record>
+
+    <!--
+        Employee Tree
+    -->
+
+    <!-- Change some elements:
+          * delete work phone column
+          * delete work e-mail column
+          * delete department column
+          * delete manager column (parent_id)
+          * add employee ID (identification_id) after description (name)
+          * add analytic distribution elements:
+            * cost center
+            * funding pool
+            * free 1
+            * free 2
+    -->
+    <record id="inherit_view_employee_tree" model="ir.ui.view">
+        <field name="name">inherit.view.employee.tree</field>
+        <field name="model">hr.employee</field>
+        <field name="type">tree</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="/tree" position="attributes">
+                    <attribute name="colors">red:not active</attribute>
+                </xpath>
+                <field name="work_phone" position="replace"/>
+                <field name="work_email" position="replace"/>
+                <field name="department_id" position="replace"/>
+                <field name="parent_id" position="replace"/>
+                <field name="name" position="after">
+                  <field name="identification_id" attrs="{'required': [('employee_type', '=', 'local')]}"/>
+                </field>
+                <field name="job_id" position="after">
+                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="active" invisible="1"/>
+                </field>
+            </data>
+        </field>
+    </record>
+
+    <!--
+        Editable Employee Tree
+    -->
+    <record id="editable_view_employee_tree" model="ir.ui.view">
+        <field name="name">editable.view.employee.tree</field>
+        <field name="model">hr.employee</field>
+        <field name="type">tree</field>
+        <field name="priority" eval="10" />
+        <field name="arch" type="xml">
+            <tree string="Employees" editable="top" colors="red:not active">
+                <field name="allow_edition" invisible="1"/>
+                <field name="name" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                <field name="identification_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)], 'required': [('employee_type', '=', 'local')]}"/>
+                <field name="job_id" attrs="{'readonly': [('employee_type', '=', 'local'), ('allow_edition', '=', False)]}"/>
+                <field name="destination_id" domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="cost_center_id" on_change="onchange_cc(cost_center_id, funding_pool_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                <field name="active" invisible="1"/>
+                <field name="employee_type" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!--
+        Employee Search
+    -->
+    <record id="inherit_view_employee_filter" model="ir.ui.view">
+        <field name="name">inherit.view.employee.filter</field>
+        <field name="model">hr.employee</field>
+        <field name="type">search</field>
+        <field name="inherit_id" ref="hr.view_employee_filter"/>
+        <field name="arch" type="xml">
+            <data>
+                <xpath expr="/search/filter[@name='active']" position="after">
+                    <separator orientation="vertical" />
+                    <filter icon="gtk-leave-fullscreen" domain="[('employee_type','=','local')]" name="employee_type_local" string="Local" />
+                    <filter icon="gtk-quit" domain="[('employee_type','=','ex')]" name="employee_type_expatriate" string="Expat'" />
+                </xpath>
+                <xpath expr="/search/field[@name='department_id']" position="replace">
+                </xpath>
+                <xpath expr="/search/field[@name='parent_id']" position="replace">
+                </xpath>
+                <xpath expr="//filter[@string='Manager']" position="replace">
+                </xpath>
+                <xpath expr="//filter[@string='Coach']" position="replace">
+                </xpath>
+                <xpath expr="//filter[@string='Department']" position="replace">
+                </xpath>
+                <xpath expr="//filter[@string='Company']" position="replace">
+                </xpath>
+                <xpath expr="//field[@name='job_id']" position="after">
+                    <newline/>
+                    <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                    <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                    <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                </xpath>
+            </data>
+        </field>
+    </record>
+
+    <record id="view_employee_filter_2" model="ir.ui.view">
+        <field name="name">view.employee.filter.2</field>
+        <field name="model">hr.employee</field>
+        <field name="type">search</field>
+        <field name="priority" eval="15"/>
+        <field name="arch" type="xml">
+            <search>
+
+                <filter icon="terp-personal+" name="inactive" string="Show Inactive" domain="[('active', '=', False)]" groups="base.group_extended"/>
+                <separator orientation="vertical" />
+                <field name="name"/>
+                <field name="job_id" widget="selection"/>
+                <newline/>
+                <field name="destination_id" domain="[('category','=','DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                <field name="cost_center_id" domain="[('category','=','OC'), ('type', '!=', 'view'), ('state', '=', 'open')]"/>
+                <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('state', '=', 'open')]"/>
+                <newline />
+                <group expand="0" string="Group By...">
+                    <filter string="Job" icon="terp-gtk-select-all" domain="[]" context="{'group_by':'job_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    </data>
+</openerp>

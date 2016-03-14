@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="stock_picking_not_available_form_view" model="ir.ui.view">
+            <field name="name">stock.picking.not.available.form.view</field>
+            <field name="model">stock.picking.not.available</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Warning">
+                    <separator colspan="4" string="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available)" />
+                    <button name="yes" string="Yes" type="object" colspan="2" />
+                    <button name="no" string="No" type="object" colspan="2" />
+                </form>
+            </field>
+        </record>
+
+
+    </data>
+</openerp>

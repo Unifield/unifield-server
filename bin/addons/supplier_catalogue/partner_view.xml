@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	 <data>
+	 	
+	 	<!-- Add catalogues list in supplier form -->
+	 	<record id="catalogue_partner_form" model="ir.ui.view">
+            <field name="name">leadtime.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="priority" eval="45" />
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+	                <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="after">
+	                    <page string="Catalogues" attrs="{'invisible': [('supplier', '=', False)]}">
+	                    	<field name="catalogue_ids" nolabel="1" colspan="4" mode="tree,form" readonly="0">
+	                    		<tree string="Catalogues" hide_new_button="1" editable="top" noteditable="1">
+	                    			<button name="edit_catalogue" type="object" string="Edit catalogue" icon="gtk-edit" />
+	                    			<field name="name" />
+	                    			<field name="period_from" />
+	                    			<field name="period_to" />
+	                    			<field name="currency_id" />
+	                    			<button name="open_lines" type="object" string="Open catalogue" icon="terp-stock_zoom" />
+	                    		</tree>
+	                    	</field>
+	                    </page>
+	                </xpath>
+                </data>
+            </field>
+        </record>
+        	
+        <!-- Action to create a new catalogue for this supplier -->
+        <act_window
+        	name="New catalogue"
+        	res_model="supplier.catalogue"
+        	src_model="res.partner"
+        	view_mode="form,tree"
+        	view_type="form"
+        	key2="client_action_multi"
+        	domain="[('partner_id', '=', active_id)]"
+        	context="{'partner_id': active_id}"
+        	id="action_new_catalogue_supplier" />
+        	
+        <!-- Choose catalogue from supplier (osv_memory) form view -->
+        <record id="from_supplier_choose_catalogue_form_view" model="ir.ui.view">
+        	<field name="name">from.supplier.choose.catalogue.form.view</field>
+        	<field name="model">from.supplier.choose.catalogue</field>
+        	<field name="type">form</field>
+        	<field name="arch" type="xml">
+        		<form string="Choose a catalogue">
+        			<field name="partner_id" invisible="1" />
+        			<field name="catalogue_id" domain="[('partner_id', '=', partner_id)]" colspan="4" />
+        			<button special="cancel" icon="gtk-cancel" string="Cancel" colspan="1" />
+        			<button name="open_catalogue" icon="terp-stock_zoom" string="Open catalogue" colspan="3" type="object" />
+        		</form>
+        	</field>
+        </record>
+        
+        <!-- Supplier catalogues action on supplier form -->
+        <!--<act_window
+        	name="Catalogues"
+        	res_model="from.supplier.choose.catalogue"
+        	src_model="res.partner"
+        	view_mode="form"
+        	view_type="form"
+        	key2="client_action_multi"
+        	target="new"
+        	domain="[]"
+        	id="action_choose_catalogue" />-->
+        	
+        <!-- Supplier historical catalogues action on supplier form -->
+		<act_window
+        	name="Historical prices"
+        	res_model="supplier.historical.catalogue"
+        	src_model="res.partner"
+        	view_mode="form"
+        	view_type="form"
+        	key2="client_action_multi"
+        	target="new"
+        	domain="[]"
+        	id="action_historical_catalogue" />
+	 	
+	 </data>
+</openerp>

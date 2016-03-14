@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+		<record id="wizard_view_usb_recovery" model="ir.ui.view">
+            <field name="name">USB Recovery Wizard</field>
+            <field name="model">usb_recovery</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="USB Synchronisation Recovery">
+                	<field name="push_file_name" invisible="1"/>
+                	<field name="patch_file_name" invisible="1"/>
+                	<field name="push_file_ready" invisible="1" />
+                	<field name="patch_file_ready" invisible="1" />
+                	<field name="is_update_client_installed" invisible="1" />
+                	
+                	<group colspan="4" col="1" attrs="{'invisible': [('usb_instance_type', '!=' ,'')] }">
+    					<label string="You have to run the Setup USB Synchronisation wizard before you can use this wizard" />
+					</group>
+					
+					<group colspan="4" col="4" attrs="{'invisible': [('usb_instance_type', '=' ,'')] }">
+						<field name="usb_instance_type" colspan="4" readonly="1" />
+                		<field name="usb_sync_step" colspan="4" readonly="1" />
+                		
+                		<button type="object" name="mark_first_sync" string="Reset Pull Push Alternation" 
+	                		attrs="{'invisible': [('usb_instance_type','=','')]}" colspan="4" />
+	                	
+	                	<button type="object" name="get_last_push_file" string="Download Last Pushed File" 
+	                		attrs="{'invisible': [('usb_instance_type','=','')]}" colspan="4" />
+
+	                	<button type="object" name="get_last_patch_file" string="Download Tarball of Patches" 
+	                		attrs="{'invisible': ['|',('usb_instance_type','=',''),('is_update_client_installed','!=',True)]}" colspan="4" />
+
+	                	<field name="push_file" colspan="2" filename="push_file_name" 
+	                		attrs="{'invisible': ['|', ('usb_instance_type','=',''), ('push_file_ready', '!=', True)]}" string="Download last Pushed file" />
+
+                    <field name="patch_file" colspan="2" filename="patch_file_name" 
+                           attrs="{'invisible': ['|', '|', ('usb_instance_type','=',''), ('patch_file_ready', '!=', True), ('is_update_client_installed', '!=', True)]}" string="Download last Tarball of Patches" />
+					</group>
+                		
+                </form>
+            </field>
+        </record> 
+    </data>
+</openerp>

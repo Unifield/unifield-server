@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+		<record model="ir.sequence.type" id="sync_client_order_type">
+        	<field name="name">Sync Monitor Sequence</field>
+        	<field name="code">sync.monitor</field>
+    	</record>
+    	
+    	<record model="ir.sequence" id="sync_client_order_sequence">
+	        <field name="name">Sync Monitor Sequence</field>
+	        <field name="code">sync.monitor</field>
+	        <field name="prefix"></field>
+	        <field name="padding">1</field>
+	    </record>
+    	
+		
+        <!-- msf_III.3_Monitor_object -->
+        <record id="sync_monitor_form" model="ir.ui.view">
+            <field name="name">sync.monitor.form</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form hide_edit_button="1" hide_delete_button="1">
+                    <field name="sequence_number"/>
+                    <field name="status"/>
+                    <separator string="Synchronization date and time" colspan="4"/>
+                    <field name="start"/>
+                    <field name="end"/>
+                    <separator string="Status details" colspan="4"/>
+                    <field name="data_pull"/>
+                    <field name="msg_pull"/>
+                    <field name="data_push"/>
+                    <field name="msg_push"/>
+                    <newline/>
+                    <separator string="Messages" colspan="4"/>
+                    <field name="error" colspan="4" nolabel="1"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="sync_monitor_tree" model="ir.ui.view">
+            <field name="name">sync.monitor.tree</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree hide_edit_button="1" hide_delete_button="1">
+                    <field name="sequence_number"/>
+                    <field name="start"/>
+                    <field name="end"/>
+                    <field name="data_pull"/>
+                    <field name="data_pull_receive" string="receive" />
+                    <field name="data_pull_execute" string="execute"/>
+                    <field name="msg_pull"/>
+                    <field name="msg_pull_receive" string="receive"/>
+                    <field name="msg_pull_execute" string="execute"/>
+                    <field name="data_push"/>
+                    <field name="data_push_create" string="create"/>
+                    <field name="data_push_send" string="send"/>
+                    <field name="msg_push"/>
+                    <field name="msg_push_create" string="create"/>
+                    <field name="msg_push_send" string="send"/>
+                    <field name="status" />
+                    <field name="state"  />
+                    <button name="interrupt" type="object" string="Interrupt"  icon="gtk-cancel"  states="syncing" />
+                    <field name="error"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="sync_monitor_search" model="ir.ui.view">
+            <field name="name">sync.monitor.search</field>
+            <field name="model">sync.monitor</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="start" />
+                    <field name="end" />
+                    <newline/>
+                    <field name="sequence_number"/>
+                    <field name="status"/>
+                    <newline/>
+                    <filter string="Status Ok" domain="[('status','=','ok')]"/>
+                    <filter string="Data Pull Ok" domain="[('data_pull','=','ok')]"/>
+                    <filter string="Msg Pull Ok" domain="[('msg_pull','=','ok')]"/>
+                    <filter string="Data Push Ok" domain="[('data_push','=','ok')]"/>
+                    <filter string="Msg Push Ok" domain="[('msg_push','=','ok')]"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="sync_monitor_action">
+            <field name="name">Synchronisation Monitor</field>
+            <field name="res_model">sync.monitor</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('my_instance', '=', True)]</field>
+        </record>
+
+        <menuitem id="sync_monitor_menu" name="Synchronisation Processes Monitor"
+            parent="mon_menu" sequence="20" action="sync_monitor_action"/>
+            
+        <record id="ir_actions_server_opensynccron0" model="ir.actions.server">
+			<field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_client', 'ir_cron_automaticsynchronization0')
+action = {
+'res_model' : 'ir.cron',
+'view_type' : 'form',
+'view_mode' : 'form',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+			<field eval="5" name="sequence"/>
+			<field name="state">code</field>
+			<field name="type">ir.actions.server</field>
+			<field name="model_id" ref="base.model_ir_cron"/>
+			<field name="condition">True</field>
+			<field name="name">Open Sync cron</field>
+		</record> 
+
+	
+		<record id="ir_ui_menu_cron_synchro" model="ir.ui.menu">
+			<field name="name">Automatic</field>
+			<field name="parent_id" ref="sync_menu"/>
+			<field name="sequence">30</field>
+		</record>
+
+		<record id="ir_values_menuitem_cron" model="ir.values">
+			<field name="name">Menuitem IR CRON</field>
+			<field name="key2">tree_but_open</field>
+			<field eval="1" name="object"/>
+			<field name="value" eval="'ir.actions.server,%s' % ref('ir_actions_server_opensynccron0')" />
+			<field name="key">action</field>
+			<field name="model">ir.ui.menu</field>
+			<field eval="ref('ir_ui_menu_cron_synchro')" name="res_id"/>
+		</record>
+
+    </data>
+</openerp>
+<!--
+    vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+-->

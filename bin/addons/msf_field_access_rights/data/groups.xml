@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+		<record model="res.groups" id="field_access_rule_group">
+			<field name="name">Field Access Rules Admin</field>
+		</record>
+	</data>
+</openerp>

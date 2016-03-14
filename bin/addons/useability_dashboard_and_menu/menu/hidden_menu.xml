@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <!-- This first menu will be the parent of all the menu that we want to hide -->
+        <menuitem id="menu_hidden"
+                  name="Hidden Menu"
+                  sequence="1"
+                  groups='base.group_no_one'
+                />
+
+        <!-- UF-1555/1557: The following block is for adding all menus that need to be deleted, set it to hidden and PLEASE DO NOT HARD-Delete THEM! -->
+        <menuitem id="base.menu_partner_address_form" parent="menu_hidden" />
+        <menuitem id="base.menu_address_book" parent="menu_hidden" />
+        <menuitem id="sale.menu_invoiced" parent="menu_hidden" />
+        <menuitem id="sale.menu_action_picking_list_to_invoice" parent="menu_hidden" />
+        <menuitem id="sale.menu_invoicing_sales_order_lines" parent="menu_hidden" />
+        <menuitem id="account_move_line_reconcile_writeoff"  parent="menu_hidden" />
+        <menuitem id="base.menu_localisation" parent="menu_hidden" />
+
+
+        <menuitem id="purchase.menu_procurement_management_invoice" parent="menu_hidden" />
+        <menuitem id="purchase.menu_procurement_management_pending_invoice" parent="menu_hidden" />
+        <menuitem id="purchase.menu_purchase_line_order_draft" parent="menu_hidden" />
+
+        <!-- Products -->
+        <menuitem id="purchase.menu_procurement_partner_contact_form" parent="menu_hidden" />
+        <menuitem id="purchase.menu_product_by_category_purchase_form" parent="menu_hidden" />
+        <menuitem id="purchase.menu_procurement_management_product" parent="menu_hidden" />
+
+        <!-- Picking on Purchase menu -->
+        <menuitem parent="menu_hidden" id="purchase.menu_action_picking_tree4" />
+        <menuitem parent="menu_hidden" id="purchase.menu_action_picking_tree_in_move" />
+<!--        <menuitem parent="menu_hidden" id="purchase.menu_procurement_management_inventory" /> -->
+
+        <!-- Purchase configuration menu -->
+<!--
+        <menuitem parent="menu_hidden" id="base.menu_procurement_management_supplier" />
+-->
+        <menuitem parent="menu_hidden" id="purchase.menu_purchase_uom_categ_form_action" />
+        <menuitem parent="menu_hidden" id="purchase.menu_purchase_uom_form_action" />
+        <menuitem parent="menu_hidden" id="purchase.menu_purchase_unit_measure_purchase" />
+        <menuitem parent="menu_hidden" id="purchase.menu_product_pricelist_action_purchase" />
+        <menuitem parent="menu_hidden" id="purchase.menu_product_pricelist_action2_purchase" />
+        <menuitem parent="menu_hidden" id="purchase.menu_purchase_product_pricelist_type" />
+        <menuitem parent="menu_hidden" id="purchase.menu_product_category_config_purchase" />
+
+        <menuitem id="base.menu_crm_config_lead" parent="menu_hidden" />
+        <menuitem id="base.menu_res_partner_canal-act" parent="menu_hidden" />
+        <menuitem id="resource.menu_resource_config" parent="menu_hidden" />
+<!--        <menuitem id="sale.menu_action_shop_form" parent="menu_hidden" />
+            used in useability_dashboard_and_menu/menu/supply_config_menu.xml
+-->
+        <menuitem id="resource.menu_view_resource_calendar_leaves_search" parent="menu_hidden" />
+
+        <menuitem id="base.menu_country_state_partner" parent="menu_hidden" />
+
+        <menuitem parent="menu_hidden" id="product.menu_product_pricelist_main" />
+        <menuitem parent="menu_hidden" id="product.menu_product_pricelist_action" />
+        <menuitem parent="menu_hidden" id="product.menu_product_pricelist_action2" />
+<!--        <menuitem parent="menu_hidden" id="product.menu_product_price_type" /> -->
+        <menuitem parent="menu_hidden" id="product.menu_product_pricelist_type_action2" />
+<!--        <menuitem parent="menu_hidden" id="purchase.menu_purchase_config_pricelist" /> -->
+        <menuitem parent="menu_hidden" id="purchase.menu_product_pricelist_action_purhase" />
+
+        <menuitem parent="menu_hidden" id="stock.menu_stock_product" />
+        <menuitem parent="menu_hidden" id="stock.menu_product_by_category_stock_form" />
+        <menuitem parent="menu_hidden" id="stock.menu_stock_products_menu" />
+
+
+        <menuitem parent="menu_hidden" id="account_voucher.menu_action_sale_receipt" />
+        <menuitem parent="menu_hidden" id="account.menu_eaction_account_moves_sale"/>
+        <menuitem parent="menu_hidden" id="account_voucher.menu_action_vendor_receipt"/>
+        <menuitem parent="menu_hidden" id="account_voucher.menu_action_purchase_receipt"/>
+        <menuitem parent="menu_hidden" id="account_voucher.menu_action_vendor_payment"/>
+        <menuitem parent="menu_hidden" id="account.menu_eaction_account_moves_purchase"/>
+        <menuitem parent="menu_hidden" id="account_voucher.menu_encode_entries_by_voucher"/>
+        <menuitem parent="menu_hidden" id="account.menu_action_tax_code_tree"/>
+        <menuitem parent="menu_hidden" id="account_payment.menu_action_payment_order_form"/>
+        <menuitem parent="menu_hidden" id="account_payment.menu_main_payment"/>
+        <menuitem parent="menu_hidden" id="account.menu_validate_account_moves"/>
+        <menuitem parent="menu_hidden" id="account.periodical_processing_journal_entries_validation"/>
+        <menuitem parent="menu_hidden" id="account.menu_manual_reconcile"/>
+        <menuitem parent="menu_hidden" id="account.menu_automatic_reconcile"/>
+        <menuitem parent="menu_hidden" id="account.periodical_processing_reconciliation"/>
+        <menuitem parent="menu_hidden" id="account.menu_menu_Bank_process"/>
+        <menuitem parent="menu_hidden" id="account.menu_account_pp_statements"/>
+        <menuitem parent="menu_hidden" id="account.menu_action_manual_recurring"/>
+        <menuitem parent="menu_hidden" id="account.menu_wizard_fy_close"/>
+        <menuitem parent="menu_hidden" id="account.menu_wizard_account_open_closed_fiscalyear"/>
+        <menuitem parent="menu_hidden" id="account.menu_wizard_fy_close_state"/>
+        <menuitem parent="menu_hidden" id="account.menu_account_print_journal"/>
+        <menuitem parent="menu_hidden" id="account.menu_account_general_journal"/>
+        <menuitem parent="menu_hidden" id="account.menu_account_central_journal"/>
+        <menuitem parent="menu_hidden" id="account.menu_journals_report"/>
+        <menuitem parent="menu_hidden" id="account.menu_aged_trial_balance"/>
+        <menuitem parent="menu_hidden" id="account.menu_account_vat_declaration"/>
+        <menuitem parent="menu_hidden" id="account.menu_tax_report"/>
+        <menuitem parent="menu_hidden" id="account.account_analytic_journal_print"/>
+        <menuitem parent="menu_hidden" id="account.next_id_40"/>
+        <menuitem parent="menu_hidden" id="account.menu_action_analytic_entries_report"/>
+        <menuitem parent="menu_hidden" id="account_voucher.menu_action_sale_receipt_report_all"/>
+        <menuitem parent="menu_hidden" id="account.menu_action_account_entries_report_all"/>
+        <menuitem parent="menu_hidden" id="account.menu_action_account_invoice_report_all"/>
+        <menuitem parent="menu_hidden" id="account.menu_finance_statistic_report_statement"/>
+        <menuitem parent="menu_hidden" id="account.menu_act_ir_actions_bleble"/>
+        <menuitem parent="menu_hidden" id="account.menu_action_account_journal_view"/>
+        <menuitem parent="menu_hidden" id="account_payment.menu_action_payment_mode_form"/>
+
+        <menuitem parent="menu_hidden"  id="account.menu_action_account_moves_bank"/>
+
+		<!-- UF-1555: END Hidden menus block -->
+        
+        
+        <menuitem id="product_nomenclature.menu_products_nomenclature_sales" 
+        parent="menu_hidden" />
+        
+        <menuitem id="product.menu_products_category" 
+        parent="menu_hidden"/>
+
+        <menuitem id="product.menu_product_ul_form_action" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="base.menu_procurement_management_supplier" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="base.menu_base_config" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="base.menu_action_res_bank_form" 
+        parent="menu_hidden"/>
+        
+        <menuitem id="product_attributes.menu_product_config" 
+        parent="menu_hidden"  />
+        
+        <!-- Hide Packs, not used in Unifield -->
+        <menuitem id="stock.menu_action_tracking_form" 
+        parent="menu_hidden"  />
+        
+        <menuitem id="stock.menu_warehouse_config" 
+        parent="menu_hidden"  />
+        
+        <menuitem id="stock.menu_product_in_config_stock" 
+        parent="menu_hidden"  />
+        
+        <menuitem id="object_query.menu_preferences_conf" 
+        parent="menu_hidden"  />
+            
+        <menuitem id="purchase.menu_purchase_config_pricelist" 
+        parent="menu_hidden" />
+
+        <menuitem id="account.account_template_folder" parent="menu_hidden" />
+    </data>
+</openerp>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <report id="rates_table_xls"
+        string="FX rates by currency table"
+        model="res.currency.table"
+        name="msf.rates.table"
+        file="res_currency_tables/report/rates_table_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+        
+        <report id="currency_table_xls"
+        string="FX rates by currency"
+        model="res.currency.table"
+        name="msf.currency.table"
+        target_filename="FX rates by currency_%(instance_code)s_%(year)s%(month)s%(day)s"
+        file="res_currency_tables/report/currency_table_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"/>
+        
+
+    </data>
+</openerp>
+

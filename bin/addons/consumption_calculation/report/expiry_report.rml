@@ -1,0 +1,409 @@
+<?xml version="1.0" ?>
+<document filename="expiry_report.pdf">
+
+    <template pageSize="(842.0,595.0)" title="Expiry Report" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+
+        <pageGraphics>
+            <image x="35" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+            <setFont name="Helvetica-Bold" size="10"/>
+            <drawString x="40" y="520.0">[[ getAddress() ]]</drawString>
+        </pageGraphics>
+
+    </pageTemplate>
+    </template>
+
+    <stylesheet>
+    
+    	<blockTableStyle id="TitleTable">
+    		<blockAlignment value="CENTRE"/>
+      		<blockValign value="MIDDLE"/>
+  			<lineStyle kind="OUTLINE" colorName="black" />
+    	</blockTableStyle>
+    	<blockTableStyle id="DocInfo">
+    		<blockAlignment value="LEFT"/>
+      		<blockValign value="MIDDLE"/>
+    	</blockTableStyle>
+    	<blockTableStyle id="LinesTable">
+    		<blockAlignment value="LEFT"/>
+      		<blockValign value="MIDDLE"/>
+      		<lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" start="0,0" stop="-1,0" />
+    	</blockTableStyle>
+    	<blockTableStyle id="LinesTableTotal">
+    		<blockAlignment value="LEFT"/>
+      		<blockValign value="MIDDLE"/>
+    	</blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+        
+        <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
+        <paraStyle name="TextInfo" fontName="Helvetica" fontSize="8.0" leading="7.0" />
+        <paraStyle name="TextInfoBold" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" />
+        <paraStyle name="TextInfoBoldRight" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" alignment="RIGHT" />
+        
+    </stylesheet>
+
+    <story>
+    
+    	[[ setLang('en_US') ]]
+    
+	    <blockTable colWidths="310.0,132.0,310.0" style="TitleTable">
+	    	<tr>
+	    		<td>
+	    			<para style="Title"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="Title">EXPIRY REPORT</para>
+	    		</td>
+	    		<td>
+	    			<para style="Title"> </para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+	    
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    
+	    <blockTable colWidths="112.0,250.0,410.0" style="DocInfo">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Report date : </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ toDate() ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Location : </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ objects[0].location_id.name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Period of calculation : </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ objects[0].week_nb ]] week[[ objects[0].week_nb > 1 and 's' or '' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Limit date : </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ toDate(objects[0].date_to) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Currency : </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ getCurrency() ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    
+	    <blockTable colWidths="772.0" style="LinesTableTotal">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Products/batches already expired</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+	    
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTable" repeatRows="1">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">CODE</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">DESCRIPTION</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Location</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Stock</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">UoM</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Batch #</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Expiry Date</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Exp. Qty</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Unit Cost</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Exp. Value</para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		[[ repeatIn(objects[0].line_ids, 'l') ]]
+	    		<td>
+	    			<para style="TextInfo">[[ l.expiry_date &lt; time.strftime('%Y-%m-%d') and l.product_code or removeParentNode('tr') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.product_name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.location_id and l.location_id.name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(l.real_stock or 0.00) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.uom_id and l.uom_id.name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.batch_number ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.expiry_date ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(l.expired_qty or 0.00) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.product_id and l.product_id.standard_price or '0.00' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.00) ]]</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTableTotal">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">TOTAL</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">[[ formatLang(getTotal(objects[0], 'expired')) ]]</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    
+	    <blockTable colWidths="772.0" style="LinesTableTotal">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">Products/batches to expire</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+	    
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTable" repeatRows="1">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfoBold">CODE</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">DESCRIPTION</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Location</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Stock</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">UoM</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Batch #</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Expiry Date</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Exp. Qty</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Unit Cost</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">Exp. Value</para>
+	    		</td>
+	    	</tr>
+	    	<tr>
+	    		[[ repeatIn(objects[0].line_ids, 'l') ]]
+	    		<td>
+	    			<para style="TextInfo">[[ l.expiry_date &gt;= time.strftime('%Y-%m-%d') and l.product_code or removeParentNode('tr') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.product_name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.location_id and l.location_id.name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(l.real_stock or 0.00) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.uom_id and l.uom_id.name ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.batch_number ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.expiry_date ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(l.expired_qty or 0.00) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ l.product_id and l.product_id.standard_price or '0.00' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo">[[ formatLang(l.product_id and l.product_id.standard_price*l.expired_qty or 0.00) ]]</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+	    
+	    <blockTable colWidths="77.0,298.0,70.0,45.0,33.0,70.0,55.0,42.0,40.0,42.0" style="LinesTableTotal">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">TOTAL</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">[[ formatLang(getTotal(objects[0], 'expiry')) ]]</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+	    
+	    <blockTable colWidths="78.0,340.0,60.0,40.0,33.0,50.0,55.0,74.0,42.0" style="LinesTableTotal">
+	    	<tr>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfo"> </para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBoldRight">ALL TOTAL</para>
+	    		</td>
+	    		<td>
+	    			<para style="TextInfoBold">[[ formatLang(getTotal(objects[0], 'all')) ]]</para>
+	    		</td>
+	    	</tr>
+	    </blockTable>
+	    
+    </story>
+    
+</document>

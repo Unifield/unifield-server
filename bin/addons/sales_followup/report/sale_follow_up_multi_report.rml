@@ -1,0 +1,299 @@
+<?xml version="1.0" ?>
+<document filename="sale_follow_up_report.pdf">
+
+    <template pageSize="(842.0,595.0)" title="FO Follow Up" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="30.0" y1="15.0" width="772" height="520" />
+
+            <pageGraphics>
+                <setFont name="Helvetica-Bold" size="15"/>
+                <drawString x="320.0" y="560.0">FIELD ORDER FOLLOW-UP</drawString>
+                <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8"/>
+                <fill color="grey" />
+                <drawString x="400.0" y="15.0">Page : <pageNumber /> / </drawString>
+                <drawString x="442.0" y="15.0"><pageCount /></drawString>
+            </pageGraphics>
+
+        </pageTemplate>
+
+        <pageTemplate id="second">
+            <frame id="second" x1="0.0" y1="10.0" width="842" height="525" />
+
+            <pageGraphics>
+                <image x="725" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8"/>
+                <fill color="grey" />
+                <drawString x="400.0" y="15.0">Page : <pageNumber /> / </drawString>
+                <drawString x="442.0" y="15.0"><pageCount /></drawString>
+            </pageGraphics>
+
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+    
+    	<blockTableStyle id="OrderInformations">
+    		<blockAlignment value="LEFT"/>
+            <blockValign value="MIDDLE"/>
+            <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
+    	</blockTableStyle>
+    	<blockTableStyle id="LinesTable">
+    		<blockAlignment value="LEFT"/>
+            <blockValign value="MIDDLE"/>
+            <blockBackground colorName="#c0c0c0" strart="0,0" stop="-1,0" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" start="0,0" stop="-1,-1" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="0,1" stop="-1,-1" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="0,-1" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,0" stop="-1,-1" />
+    	</blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+
+        <!-- information font style -->
+        <paraStyle name="TextInformation" fontName="Helvetica" fontRize="9.0" alignment="LEFT" leading="9.0" spaceBefore="1.0" spaceAfter="1.0" />
+
+        <!-- Lines font style -->
+        <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
+        
+    </stylesheet>
+
+    <story>
+        [[ repeatIn(objects, 'r') ]]
+    
+        <setNextTemplate name="second" />
+	    
+        <blockTable colWidths="250.0,6.0,250.0,266.0" style="OrderInformations">
+            <tr>
+                <td>
+                    <para style="TextInformation"><u>Instance information:</u></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"><u>Request parameters:</u></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">Name: <font color="blue">[[ r.company_id.instance_id.instance or 'N/A' ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Partner: <font color="blue">[[ r.partner_id and r.partner_id.name or 'N/A' ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">Address:</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date start: <font color="blue">[[ r.start_date and formatLang(r.start_date, date=True) or 'N/A' ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"><font color="blue">[[ r.company_id.partner_id.name or '' ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date end: <font color="blue">[[ r.end_date and formatLang(r.end_date, date=True) or 'N/A' ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"><font color="blue">[[ r.company_id.partner_id.address[0].street ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Date of the request: <font color="blue">[[ formatLang(r.report_date, date_time=True) ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"><font color="blue">[[ r.company_id.partner_id.address[0].zip ]] [[ r.company_id.partner_id.address[0].city ]]</font></para>
+                    <para style="TextInformation"><font color="blue">[[ r.company_id.partner_id.address[0].country_id and r.company_id.partner_id.address[0].country_id.name ]]</font></para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+	    </blockTable>
+        
+	    <para style="Standard">
+	    	<font color="white"> </font>
+	    </para>
+
+    <section>
+            [[ repeatIn(getOrders(r), 'o', 'section') ]]
+        <blockTable colWidths="32.0,50.0,150.0,50.0,30.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0,80.0" style="LinesTable" repeatRows="2">
+	    	<tr>
+	    		<td colspan="2">
+                    <para style="Lines">Order ref:</para>
+                </td>
+                <td>
+                    <para style="Lines">[[ o.name ]]       Status: [[ getSel(o, 'state') ]]</para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines">Received: [[ formatLang(o.date_order, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines">Req. Delivery date: [[ o.delivery_requested_date and formatLang(o.delivery_requested_date, date=True) or '' ]]</para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines"># Items: [[ getCountProducts(o) ]]</para>
+                </td>
+                <td>
+                    <para style="Lines">Estimated amount: [[ formatLang(o.amount_total or 0.00) ]] [[ o.pricelist_id.currency_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+            </tr>
+	    	<tr>
+	    		<td>
+                    <para style="Lines"><i>Item</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Code</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Description</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Qty ordered</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Uom ordered</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Qty delivered</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Uom delivered</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Packing</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>Qty to deliver</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>Transport</i></para>
+                </td>
+                <td>
+                    <para style="Lines"><i>Transport file</i></para>
+	    		</td>
+	    		<td>
+                    <para style="Lines"><i>ETA</i></para>
+	    		</td>
+                <td>
+                    <para style="Lines"><i>RTS Date</i></para>
+	    		</td>
+	    	</tr>
+            <tr>
+                [[ repeatIn(getLines(o, grouped=True), 'line') ]]
+	    		<td>
+                    <para style="LinesBlue">[[ line.get('line_number', '-') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('product_code', '-') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('product_name', '-') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('ordered_qty') and formatLang(line['ordered_qty']) or 'N/A' ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('uom_id', '-') ]]</para>
+	    		</td>
+	    		<td>
+                    <para style="LinesBlue">[[ formatLang(line.get('delivered_qty', 0.00)) ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('delivered_uom', '') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('packing', '') ]]</para>
+	    		</td>
+	    		<td>
+                    <para style="LinesBlue">[[ line.get('backordered_qty', 0.00) &gt;= 0 and formatLang(line.get('backordered_qty', 0.00)) or removeParentNode('para') ]]</para>
+                    <para style="LinesBlue">[[ line.get('backordered_qty', 0.00) &lt; 0 and '0' or removeParentNode('para') ]] (+[[ formatLang(abs(line.get('backordered_qty', 0.00))) ]])</para>
+	    		</td>
+                <td>
+	    			<para style="LinesBlue">[[ line.get('transport', '') and getSel(line['transport'], 'transport_type') or '' ]]</para>
+	    		</td>
+                <td>
+	    			<para style="LinesBlue">[[ line.get('shipment', '') ]]</para>
+	    		</td>
+	    		<td>
+	    			<para style="LinesBlue">[[ line.get('eta', '') and formatLang(line['eta'], date=True) or 'N/A' ]]</para>
+	    		</td>
+                <td>
+	    			<para style="LinesBlue">[[ line.get('rts', '') and formatLang(line['rts'], date=True) or 'N/A' ]]</para>
+	    		</td>
+	    	</tr>
+        </blockTable>
+
+        <para style="LinesBlue">
+            <font color="white"> </font>
+        </para>
+
+    </section>
+        
+    </story>
+    
+</document>

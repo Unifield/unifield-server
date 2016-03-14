@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Delete total from Search view for Sales Receipt and Supplier Vouchers (from account_voucher module)
+    -->
+        <record id="inherit_view_voucher_tree" model="ir.ui.view">
+            <field name="name">inherit.view.voucher.tree</field>
+            <field name="model">account.voucher</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account_voucher.view_voucher_tree"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='amount']" position="attributes">
+                        <attribute name="sum"></attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

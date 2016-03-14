@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+
+  	<record model="ir.sequence.type" id="sync_client_order_type">
+    	<field name="name">Sync Server Update Sequence</field>
+    	<field name="code">sync.server.update</field>
+  	</record>
+
+  	<record model="ir.sequence" id="sync_client_order_sequence">
+	    <field name="name">Sync Server Update Sequence</field>
+	    <field name="code">sync.server.update</field>
+	    <field name="prefix"></field>
+	    <field name="padding">1</field>
+	  </record>
+
+    <record model="ir.ui.view" id="update_search_view">
+      <field name="name">update.search</field>
+      <field name="model">sync.server.update</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search string="Synchronization Monitor">
+          <field name="create_date"/>
+          <field name="sequence"/>
+          <filter icon="terp-gtk-stop" string="Not Validated"
+                  domain="[('sequence','=',False)]"/>
+          <newline/>
+          <field name="rule_id"/>
+          <field name="model"/>
+          <field name="sdref"/>
+        </search>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="update_tree_view">
+      <field name="name">update.tree</field>
+      <field name="model">sync.server.update</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree string="Synchronization Monitor"
+              colors="red:sequence==0" resequencable="0">
+          <field name="source"/>
+          <field name="create_date"/>
+          <field name="sequence" invisible="1"/>
+          <field name="fancy_sequence"/>
+          <field name="rule_id"/>
+          <field name="model"/>
+          <field name="sdref"/>
+          <field name="is_deleted"/>
+          <field name="fancy_version"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="update_form_view">
+      <field name="name">update.form</field>
+      <field name="model">sync.server.update</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Synchronization Monitor">
+          <group colspan="2" col="2">
+            <separator string="Record" colspan="2"/>
+            <field name="model"/>
+            <field name="sdref"/>
+            <group colspan="2" col="6">
+              <field name="is_deleted"/>
+              <field name="force_recreation"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+              <field name="version"
+                     attrs="{'invisible':[('is_deleted','=',True)]}"/>
+            </group>
+            <separator string="Synchronization" colspan="4"/>
+            <field name="rule_id"/>
+            <field name="create_date"/>
+            <field name="source"/>
+            <group colspan="2" col="2">
+              <field name="sequence"
+                     attrs="{'invisible':[('sequence','=',False)]}"/>
+              <field name="session_id"
+                     attrs="{'invisible':[('sequence','!=',False)]}"/>
+            </group>
+            <group colspan="4" col="1"
+                   attrs="{'invisible':[('sequence','!=',False)]}">
+              <label string="Warning: This record has not been validated by its proprietary instance."/>
+            </group>
+          </group>
+          <group colspan="2" col="1">
+            <separator string="Pulled by"/>
+            <field name="puller_ids" nolabel="1">
+              <tree>
+                <field name="entity_id"/>
+                <field name="create_date"/>
+              </tree>
+            </field>
+          </group>
+          <group colspan="4" col="2"
+                 attrs="{'invisible':[('is_deleted','=',True)]}">
+            <group colspan="1" col="1">
+              <separator string="Fields"/>
+              <field name="fields" nolabel="1"/>
+            </group>
+            <group colspan="1" col="1">
+              <separator string="Values"/>
+              <field name="values" nolabel="1"/>
+            </group>
+          </group>
+        </form>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="update_action">
+      <field name="name">Synchronization Monitor</field>
+      <field name="res_model">sync.server.update</field>
+      <field name="view_type">form</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{}</field>
+    </record>
+
+    <menuitem id="update_menu_id" name="Data Monitor"
+              parent="mon_menu" action="update_action"/>
+
+
+    <record model="ir.ui.view" id="sync_server_monitor_email_tree_view">
+        <field name="name">sync.server.monitor.email.tree</field>
+        <field name="model">sync.server.monitor.email</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Sync Alert Configuration" hide_new_button="1" hide_delete_button="1" >
+            <field name="title"/>
+            <field name="name"/>
+            <field name="nb_days"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="sync_server_monitor_email_form_view">
+        <field name="name">sync.server.monitor.email.form</field>
+        <field name="model">sync.server.monitor.email</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Sync Alert Configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                <separator colspan="4" string="Alert on instances with no activity" />
+                <field name="name" colspan="4"/>
+                <field name="nb_days" colspan="1"/>
+            </form>
+        </field>
+    </record>
+
+    <record id="ir_actions_server_open_monitor_email" model="ir.actions.server">
+        <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'sync_server', 'sync_server_monitor_email')
+action = {
+    'res_model' : 'sync.server.monitor.email',
+    'view_type' : 'form',
+    'view_mode' : 'form,tree',
+    'type': 'ir.actions.act_window',
+    'res_id' : res[1],
+}</field>
+        <field eval="5" name="sequence"/>
+        <field name="state">code</field>
+        <field name="type">ir.actions.server</field>
+        <field name="model_id" ref="model_sync_server_monitor_email"/>
+        <field name="condition">True</field>
+        <field name="name">Open Sync Email Alert</field>
+    </record>
+
+
+    <record id="ir_ui_menu_sync_server_monitor_email_configuration" model="ir.ui.menu">
+        <field name="name">Sync Email Alert</field>
+        <field name="parent_id" ref="mon_menu"/>
+        <field name="sequence">100</field>
+    </record>
+
+    <record id="ir_values_menuitem_sync_server_monitor_email_configuration" model="ir.values">
+        <field name="name">Sync Email Alert</field>
+        <field name="key2">tree_but_open</field>
+        <field eval="1" name="object"/>
+        <field name="value" eval="'ir.actions.server,%s' % ref('sync_server.ir_actions_server_open_monitor_email')" />
+        <field name="key">action</field>
+        <field name="model">ir.ui.menu</field>
+        <field eval="ref('ir_ui_menu_sync_server_monitor_email_configuration')" name="res_id"/>
+    </record>
+  </data>
+</openerp>
+<!--
+     vim:ts=2:sw=2:sts=2:expandtab:wrap:linebreak:
+  -->

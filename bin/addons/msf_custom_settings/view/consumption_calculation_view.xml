@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+    <!-- We move add the button cancel that will cancel the related stock moves -->
+        <record id="real_average_consumption_form_view" model="ir.ui.view">
+            <field name="name"> real.average.consumption.form.view </field>
+            <field name="model">real.average.consumption</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="consumption_calculation.real_average_consumption_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <!-- Will be do later -->
+                    <!--<xpath expr="/form//button[@name='button_update_stock']" position="after" >
+                        <button 
+                        name="action_cancel"
+                        string="Cancel" 
+                        type="object" 
+                        colspan="2" 
+                        attrs="{'invisible': [('created_ok', '=', False)]}"
+                        icon="gtk-cancel"/>
+                    </xpath>-->
+                </data>
+           </field>
+        </record>
+        
+        
+        <record id="monthly_review_consumption_form_view" model="ir.ui.view">
+            <field name="name">monthly.review.consumption.form.view</field>
+            <field name="model">monthly.review.consumption</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="consumption_calculation.monthly_review_consumption_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                </data>
+           </field>
+        </record>
+        
+        <record id="monthly_review_consumption_tree_view" model="ir.ui.view">
+            <field name="name">monthly.review.consumption.tree.view</field>
+            <field name="model">monthly.review.consumption</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="consumption_calculation.monthly_review_consumption_tree_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        
+    </data>
+</openerp>

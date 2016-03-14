@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+
+<!-- =========================Connection Manager=============================== -->
+
+        <record model="ir.ui.view" id="entity_tree_view">
+            <field name="name">connection.tree</field>
+            <field name="model">sync.client.sync_server_connection</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Instance Tree">
+                    <field name="host"/>
+                    <field name="database"/>
+                    <field name="login"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="entity_form_view">
+            <field name="name">connection.form</field>
+            <field name="model">sync.client.sync_server_connection</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Instance Form">
+                    <separator string="Connection information" colspan="4"/>
+                    <field name="host" required="1" on_change="change_host(host, protocol)"/>
+                    <field name="port" required="1"/>
+                    <field name="protocol" required="1" on_change="change_protocol(host, protocol)"/>
+                    <field name="database" required="1"/>
+                    <field name="login" required="1"/>
+                    <field name="password" required="1" password="1"/>
+                    <field name="max_size" required="1"/>
+                    <field name="timeout" required="1"/>
+                    <label string="" colspan="2" />
+                    <field name="netrpc_retry" required="1" />
+                    <field name="xmlrpc_retry" required="1" />
+                    <separator string="Connection state" colspan="4"/>
+                    <!-- the following line break the 6.1 web client backport because its a functional field of type integer -->
+                    <!-- <field name="uid" invisible="1"/> -->
+                    <field name="state"/>
+                    <button  icon="gtk-apply" string="Connect" name="action_connect" type="object" attrs="{'invisible' : [('state', '=', 'Connected')]}"/>
+                    <button  icon="gtk-go-back" string="Reset Connection" name="action_disconnect" type="object" attrs="{'invisible' : [('state', '!=', 'Connected')]}"/>
+                </form>
+            </field>
+        </record>
+
+<!-- =========================MENUS and ACTIONS=============================== -->
+
+        <record model="ir.actions.act_window" id="connection_manager_action">
+
+        <field name="name">Connection Manager</field>
+            <field name="res_model">sync.client.sync_server_connection</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{}</field>
+        </record>
+
+        <menuitem id="main_menu"
+        		 name="Synchronization"
+        		 parent=""
+                 web_icon="images/sync.jpg"
+                 web_icon_hover="images/sync-hover.jpg"
+        		/>
+
+        <menuitem id="sync_menu" name="Synchronization" parent="main_menu" sequence="20"/>
+
+        <menuitem id="reg_menu" name="Registration" parent="main_menu" sequence="10"/>
+
+        <menuitem id="mon_menu" name="Monitoring" parent="main_menu" sequence="30"/>
+
+        <menuitem id="syncback_menu" name="Backup" parent="main_menu" sequence="25"/>
+
+        <menuitem id="connection_manager_menu" name="Connection Manager" parent="reg_menu"
+                action="connection_manager_action"/>
+
+        <record model="ir.ui.view" id="ir_model_data_inherit">
+            <field name="name">ir.model.data.inherit</field>
+            <field name="model">ir.model.data</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_model_data_form"/>
+            <field name="arch" type="xml">
+                <field name="date_init" position="after">
+                     <field name="last_modification"/>
+                  <field name="sync_date"/>
+                </field>
+            </field>
+        </record>
+
+
+    </data>
+</openerp>

@@ -1,0 +1,169 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+        <!--
+            Process
+        -->
+
+        <record id="account.process_process_supplierinvoiceprocess0" model="process.process">
+            <field eval="False" name="active"/>
+        </record>
+
+        <record id="process_process_supplierinvoiceprocess0" model="process.process">
+            <field eval="1" name="active"/>
+            <field name="model_id" ref="account.model_account_invoice"/>
+            <field eval="&quot;&quot;&quot;Supplier Invoice&quot;&quot;&quot;" name="name"/>
+        </record>
+
+        <!--
+            Process Node
+        -->
+        
+        <record id="process_node_supplierdraftinvoices0" model="process.node">
+            <field name="menu_id" ref="account.menu_action_invoice_tree2"/>
+            <field name="model_id" ref="account.model_account_invoice"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Draft Invoices&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Draft state of an invoice&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state=='draft'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+
+        <record id="process_node_supplierinvoiceinvoice0" model="process.node">
+            <field name="menu_id" ref="account.menu_finance_payables"/>
+            <field name="model_id" ref="account.model_account_invoice"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Create Invoice&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Invoice's state is Open&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state=='open'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+
+        <record id="process_node_supplierinvoicemovelines0" model="process.node">
+            <field name="model_id" ref="account.model_account_move"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Accounting&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Accounting entries.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+
+        <record id="process_node_supplierreconciliation0" model="process.node">
+            <field name="model_id" ref="account.model_account_move_reconcile"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Reconciliation&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Comparison between accounting and payment entries&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+
+        <record id="process_node_supplierpaidinvoice0" model="process.node">
+            <field name="menu_id" ref="account.menu_action_invoice_tree1"/>
+            <field name="model_id" ref="account.model_account_invoice"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Paid invoice&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Invoice's state is Done.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state=='paid'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="process_node_supplierdraftcommitment0" model="process.node">
+            <field name="menu_id" ref="analytic_distribution.menu_commitment_entries"/>
+            <field name="model_id" ref="analytic_distribution.model_account_commitment"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Draft Commitment Vouchers&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Draft state of an commitment voucher&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state=='draft'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="process_node_suppliervalidcommitment0" model="process.node">
+            <field name="menu_id" ref="analytic_distribution.menu_commitment_entries"/>
+            <field name="model_id" ref="analytic_distribution.model_account_commitment"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Valid Commitment Vouchers&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Valid state of an commitment voucher&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state=='open'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="process_node_supplierdonecommitment0" model="process.node">
+            <field name="menu_id" ref="analytic_distribution.menu_commitment_entries"/>
+            <field name="model_id" ref="analytic_distribution.model_account_commitment"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Done Commitment Vouchers&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Done state of an commitment voucher&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="process_process_supplierinvoiceprocess0"/>
+            <field eval="&quot;&quot;&quot;object.state=='done'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+
+        <!--
+            Process Transition
+        -->
+
+        <record id="process_transition_suppliercustomerinvoice0" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Validation&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Draft invoices are validated. &quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_supplierinvoiceinvoice0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_supplierdraftinvoices0"/>
+            <field eval="[(6,0,[ref('account.pro2_to_open')])]" name="transition_ids"/>
+        </record>
+        
+        <record id="process_transition_supplierentries0" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Validation&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Accountant validates the accounting entries coming from the invoice. &quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_supplierinvoicemovelines0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_supplierinvoiceinvoice0"/>
+        </record>
+
+        <record id="process_transition_supplierentriesreconcile0" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Accounting entries&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Accounting entries are an input of the reconciliation.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_supplierreconciliation0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_supplierinvoicemovelines0"/>
+        </record>
+
+        <record id="process_transition_supplierreconcilepaid0" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;System payment&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;As soon as the reconciliation is done, the invoice's state turns to “done” (i.e. paid) in the system.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_supplierpaidinvoice0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_supplierreconciliation0"/>
+        </record>
+
+        <record id="process_transition_suppliervalidcommitment0" model="process.transition">
+            <field eval="[(6,0,[ref('analytic_distribution.commit_t1')])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Validation&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Commitment vouchers are validated. &quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_suppliervalidcommitment0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_supplierdraftcommitment0"/>
+        </record>
+        
+        <record id="process_transition_supplierdonecommitment0" model="process.transition">
+            <field eval="[(6,0,[ref('analytic_distribution.commit_t2')])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Validation&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Commitment vouchers are done. &quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_supplierdonecommitment0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_suppliervalidcommitment0"/>
+        </record>
+        
+        <record id="process_transition_supplierinvoicecommitment0" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;Validation&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Commitment vouchers are done. &quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="target_node_id" ref="process_node_supplierinvoiceinvoice0"/>
+            <field model="process.node" name="source_node_id" ref="process_node_supplierdonecommitment0"/>
+        </record>
+
+   </data>
+</openerp>

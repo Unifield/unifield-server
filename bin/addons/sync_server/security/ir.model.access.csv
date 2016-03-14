@@ -1,0 +1,9 @@
+"id","name","model_id","perm_read","perm_write","perm_create","perm_unlink","group_id/id"
+"sync_read_group_id","sync_read_group","sync.server.entity_group","True","","","","sync_common.sync_read_group"
+"sync_read_group_type_id","sync_read_group_type","sync.server.group_type","True","","","","sync_common.sync_read_group"
+"sync_read_group_entity_id","sync_read_group_entity","sync.server.entity","True","","","","sync_common.sync_read_group"
+"sync_read_sync_rule_id","sync_read_sync_rule","sync_server.sync_rule","True","","","","sync_common.sync_read_group"
+"sync_read_sync_update_id","sync_read_sync_update","sync.server.update","True","","","","sync_common.sync_read_group"
+"sync_read_message_rule_id","sync_read_message_rule","sync_server.message_rule","True","","","","sync_common.sync_read_group"
+"sync_read_message_id","sync_read_message","sync.server.message","True","","","","sync_common.sync_read_group"
+

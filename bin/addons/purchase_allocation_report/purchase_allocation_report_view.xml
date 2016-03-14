@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="purchare_order_line_allocation_report_treeform" model="ir.ui.view">
+			<field name="name">purchase.order.line.allocation.report.tree</field>
+			<field name="model">purchase.order.line.allocation.report</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Purchase order line allocation" 
+					editable="top" noteditable="1"
+					hide_new_button="1" hide_delete_button="1">
+					<field name="order_id" />
+					<field name="order_type" />
+					<field name="order_category" />
+					<field name="line_number" />
+					<field name="product_id" />
+					<field name="product_qty" />
+					<field name="uom_id" />
+					<field name="unit_price" />
+					<field name="percentage" />
+					<field name="subtotal" />
+					<field name="currency_id" />
+                                        <field name="destination_id" />
+					<field name="cost_center_id" />
+					<field name="account_id" />
+					<field name="source_doc" />
+					<field name="partner_id" />
+					<field name="partner_doc" />
+					<field name="state" invisible="1" />
+					<field name="supplier" invisible="1" />
+					<field name="creation_date" invisible="1" />
+				</tree>
+			</field>
+		</record>
+		
+		<record id="purchase_order_line_allocation_report_search" model="ir.ui.view">
+			<field name="name">purchase.order.line.allocation.report.search</field>
+			<field name="model">purchase.order.line.allocation.report</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Purchase order line allocation report">
+					<field name="order_id" string="Purchase order" />
+					<field name="product_id" />
+					<field name="order_category" />
+					<field name="order_type" />
+					<field name="state" />
+					<field name="supplier" />
+					<field name="creation_date" />
+					<newline />
+					<group colspan="4" col="16" expand="0" string="Group By">
+						<filter name="group_order" string="Order" icon="terp-purchase" domain="[]" context="{'group_by' : 'order_id'}" />
+						<separator orientation="vertical" />
+						<filter name="group_product" string="Product" icon="terp-accessories-archiver" domain="[]" context="{'group_by' : 'product_id'}" />
+						<separator orientation="vertical" />
+						<filter name="group_supplier" string="Supplier" icon="terp-personal" domain="[]" context="{'group_by' : 'supplier'}" />
+						<separator orientation="vertical" />
+						<filter name="group_state" string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by' : 'state'}" />
+					</group>
+				</search>
+			</field>
+		</record>
+		
+		<record id="action_purchase_order_line_allocation_report" model="ir.actions.act_window">
+			<field name="name">PO lines allocation report</field>
+			<field name="res_model">purchase.order.line.allocation.report</field>
+			<field name="view_mode">tree,form</field>
+			<field name="view_type">form</field>
+		</record>
+		
+		<menuitem id="menu_po_line_allocation_report"
+				  action="action_purchase_order_line_allocation_report"
+				  sequence="8"
+				  parent="purchase.menu_procurement_management" />
+				  
+				  
+		<record id="purchase_order_allocation_line_report_from_po" model="ir.ui.view">
+			<field name="name">purchase.order.allocation.line.report.from.po</field>
+			<field name="model">purchase.order</field>
+			<field name="type">form</field>
+			<field name="priority" eval="99" />
+			<field name="arch" type="xml">
+				<form string="Purchase order lines allocation report">
+					<group colspan="4" col="6">
+						<field name="name" readonly="1" />
+						<field name="partner_id" readonly="1" />
+						<newline />
+						<field name="order_type" readonly="1" />
+						<field name="categ" readonly="1" />
+						<newline />
+						<field name="priority" readonly="1" />
+						<field name="details" readonly="1" />
+						<newline />
+						<field name="date_order" readonly="1" />
+						<field name="create_uid" readonly="1" />
+						<field name="state" readonly="1" />
+					</group> 
+					<field name="allocation_report_lines" readonly="1" mode="tree" colspan="4" nolabel="1">
+						<tree string="Lines allocation">
+							<field name="line_number" />
+							<field name="product_id" />
+							<field name="product_qty" />
+							<field name="uom_id" />
+							<field name="unit_price" />
+							<field name="percentage" />
+							<field name="subtotal" />
+							<field name="currency_id" />
+                                                        <field name="destination_id" />
+							<field name="cost_center_id" />
+							<field name="account_id" />
+							<field name="source_doc" />
+							<field name="partner_id" />
+							<field name="partner_doc" />
+						</tree>
+					</field>
+				</form>
+			</field>
+		</record>
+		
+		<record id="action_from_purchase_order_allocation_report" model="ir.actions.server">
+            <field name="name">Allocation report</field>
+            <field name="model_id" ref="model_purchase_order"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_allocation_report(context=context)</field>
+        </record>
+        
+        <record id="ir_open_product_list_export_view" model="ir.values">
+            <field name="key2">client_action_relate</field>
+            <field name="model">purchase.order</field>
+            <field name="name">Allocation report</field>
+            <field eval="'ir.actions.server,%d'%action_from_purchase_order_allocation_report" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+            
+	</data>
+</openerp>

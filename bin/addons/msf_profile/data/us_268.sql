@@ -1,0 +1,11 @@
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/1018');
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/1016');
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/1017');
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/2673');
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/2672');
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/3129');
+delete from account_move_line where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/3130');
+delete from account_move where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move/1122');
+delete from account_move where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move/453');
+delete from account_move where id in (select res_id from ir_model_data where module='sd' and name='96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move/1303');
+delete from ir_model_data where module='sd' and name in ('96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/1018', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/1016', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/1017', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/2673', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/2672', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/3129', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move_line/3130', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move/1122', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move/453', '96b1dbcf-cbc2-11e4-a1b8-28d24497629c/account_move/1303');

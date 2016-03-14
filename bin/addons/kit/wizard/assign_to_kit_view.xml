@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+    	<record id="view_assign_to_kit_form" model="ir.ui.view">
+            <field name="name">assign.to.kit.form</field>
+            <field name="model">assign.to.kit</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            	<form string="Assign to Kit">
+            		<group col="4" colspan="4">
+            			<field name="product_id_assign_to_kit" colspan="4" />
+            			<field name="qty_assign_to_kit" />
+            			<field name="uom_id_assign_to_kit" />
+            			<field name="prodlot_id_assign_to_kit" />
+            			<field name="move_id_assign_to_kit" invisible="True" />
+            			<field name="expiry_date_assign_to_kit" />
+            		</group>
+                    <group col="4" colspan="4">
+                        <field name="kit_ids_assign_to_kit" nolabel="True" mode="tree,form,graph">
+                        	<tree hide_new_button="True" string="Kit Distribution" editable="top" colors="red:integrity_status!='empty'">
+	                			<field name="kit_id_assign_to_kit_line" />
+	                			<field name="required_qty_assign_to_kit_line" />
+	                			<field name="qty_assign_to_kit_by_product_uom" />
+			            		<field name="assigned_qty_assign_to_kit_line" sum="Total Assign" />
+			            		<field name="integrity_status" />
+                        	</tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="4">
+	                    <button icon="gtk-cancel" type="object" name="refresh_kit_creation_view" string="Cancel"/>
+	                    <button name="automatic_assignment" type="object" string="Auto Assignment" icon="gtk-execute" />
+	                    <button name="do_assign_to_kit" string="Process" type="object" icon="gtk-go-forward" />
+                    </group>
+            	</form>
+            </field>
+		</record>
+    
+    </data>
+</openerp>

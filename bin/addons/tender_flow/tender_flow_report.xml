@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+  <data>
+     <report
+        id="report_tender_rfq_comparison_xls"
+        string="Comparison RfQ"
+        model="tender"
+        name="tender_rfq_comparison_xls"
+        file="tender_flow/report/tender_rfq_comparison_xls.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="True"
+        />
+  </data>
+</openerp>

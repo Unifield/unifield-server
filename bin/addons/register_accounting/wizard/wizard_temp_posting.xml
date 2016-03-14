@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+            <record model="ir.ui.view" id="wizard_temp_posting_form1">
+                  <field name='name'>wizard.temp.posting.form1</field>
+                  <field name='model'>wizard.temp.posting</field>
+                  <field name='type'>form</field>
+                  <field name='arch' type='xml'>
+                        <form string="Temp Posting - Wizard">
+                            <separator string="Temp Posting" />
+                            <label string="The selected items will be temp-posted." colspan="4"/>
+                            <group colspan="4">
+                                <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
+                                <button name="action_confirm_temp_posting" string="Temp Post" type="object" icon="gtk-apply" colspan="2" />
+                            </group>
+                        </form>
+                  </field>
+            </record>
+
+            <!-- Activities -->
+            <act_window name="Temp Posting"
+                        res_model="wizard.temp.posting"
+                        src_model="account.bank.statement.line"
+                        key2="client_action_multi"
+                        view_mode="form"
+                        view_type="form"
+                        target="new"
+                        id="act_wizard_temp_posting" />
+      </data>
+</openerp>

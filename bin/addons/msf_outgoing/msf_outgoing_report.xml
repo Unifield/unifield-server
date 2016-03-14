@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <!-- delete packing list original report -->
+    	<delete model="ir.actions.report.xml" id="stock.report_picking_list"/>
+    	
+    	<!-- shipment -->
+        <!-- remove in UFTP-30
+        <report auto="False" 
+                id="report_pro_forma_invoice" 
+                model="shipment" 
+                name="pro.forma.invoice"
+                header="False"
+                rml="addons/msf_outgoing/report/pro_forma_invoice.rml"
+                string="Pro Forma Invoice" />
+        -->
+                
+        <report auto="False" 
+                id="report_invoice"
+                model="shipment"
+                name="invoice"
+                header="False"
+                rml="addons/msf_outgoing/report/invoice.rml"
+                string="Invoice" />
+                
+            <!--<report auto="False" 
+                id="report_certificate_donation" 
+                model="shipment" 
+                name="certificate.donation"
+                header="False"
+                rml="addons/msf_outgoing/report/certificate_donation.rml"
+                string="Certificate of Donation" />-->
+                
+        <report auto="False" 
+                id="report_certificate_free_gift" 
+                model="shipment" 
+                name="certificate.free.gift"
+                header="False"
+                rml="addons/msf_outgoing/report/certificate_free_gift.rml"
+                string="Free Gift Certificate" />
+                
+        <report auto="False" 
+                id="report_packing_list" 
+                model="shipment" 
+                name="packing.list"
+                header="False"
+                rml="addons/msf_outgoing/report/packing_list.rml"
+                string="Packing List" />
+
+        <report auto="False"
+                id="report_packing_list_xls"
+                model="shipment"
+                name="packing.list.xls"
+                header="False"
+                report_type="webkit"
+                file="msf_outgoing/report/packing_list_xls.mako"
+                string="Packing List (xls)" />
+                
+        <!--
+        <report auto="False" 
+                id="report_cargo_manifest" 
+                model="shipment" 
+                name="cargo.manifest"
+                header="False"
+                rml="addons/msf_outgoing/report/cargo_manifest.rml"
+                string="Cargo Manifest" />
+        -->
+        
+        <!-- stock picking -->
+        <!-- <report auto="False" 
+                id="stock_picking_test" 
+                model="stock.picking" 
+                name="stock.picking.test"
+                header="False"
+                rml="addons/msf_outgoing/report/stock_picking_test.rml"
+                string="Stock Picking Test" /> -->
+                
+        <report auto="False" 
+                id="picking_ticket" 
+                model="stock.picking" 
+                name="picking.ticket"
+                header="False"
+                rml="addons/msf_outgoing/report/picking_ticket.rml"
+                string="Picking Ticket" />
+
+        <report auto="False"
+                id="empty_picking_ticket"
+                model="stock.picking"
+                name="empty.picking.ticket"
+                header="False"
+                rml="addons/msf_outgoing/report/empty_picking_ticket.rml"
+                string="Pre-Packing List" />
+        
+        <!--<report auto="False"
+                id="pre_packing_list" 
+                model="stock.picking" 
+                name="pre.packing.list"
+                header="False"
+                rml="addons/msf_outgoing/report/pre_packing_list.rml"
+                string="Pre-Packing List" />-->
+                
+        <report auto="False" 
+                id="labels" 
+                model="stock.picking" 
+                name="labels"
+                header="False"
+                rml="addons/msf_outgoing/report/labels.rml"
+                string="Labels" />
+    
+    </data>
+</openerp>

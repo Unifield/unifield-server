@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+	
+	    <!-- Sequences for tender -->
+        <record id="seq_type_tender" model="ir.sequence.type">
+            <field name="name">Tender</field>
+            <field name="code">tender</field>
+        </record>
+
+        <record id="seq_tender" model="ir.sequence">
+            <field name="name">Tender</field>
+            <field name="code">tender</field>
+            <field name="prefix">%(y)s/%(hqcode)s/%(instance)s/T</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+        
+	    <!-- Sequences for rfq -->
+        <record id="seq_type_rfq" model="ir.sequence.type">
+            <field name="name">RfQ</field>
+            <field name="code">rfq</field>
+        </record>
+
+        <record id="seq_rfq" model="ir.sequence">
+            <field name="name">RfQ</field>
+            <field name="code">rfq</field>
+            <field name="prefix">%(y)s/RfQ</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
+	</data>
+</openerp>
+

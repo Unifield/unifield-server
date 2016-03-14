@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- HQ Entries tree view -->
+        <record id="hq_entries_tree" model="ir.ui.view">
+            <field name="name">HQ Entries List</field>
+            <field name="model">hq.entries</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="HQ Entries List" editable="top" noteditable="user_validated==True or is_original==True" hide_new_button="1" colors="black: analytic_state=='valid' and is_split==True;blue:analytic_state in ('valid') and is_original==False and is_split==False;gray:is_original==True;red:analytic_state in ('invalid')" limit="50">
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="account_id" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
+                    <field name="partner_txt"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
+                    <field name="free_1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="free_2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="user_validated" invisible="1"/>
+                    <field name="analytic_state" invisible="1"/>
+                    <field name="is_original" invisible="1"/>
+                    <field name="is_split" invisible="1"/>
+                    <field name="original_id"/>
+                </tree>
+            </field>
+        </record>
+
+    <!-- HQ Entries search view -->
+        <record id="hq_entries_filter" model="ir.ui.view">
+            <field name="name">HQ Entries</field>
+            <field name="model">hq.entries</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search HQ Entries">
+                    <group col='10' colspan='4'>
+                        <filter icon="gtk-new" string="To validate" domain="[('user_validated', '=', False)]" help="Non validated entries" name="non_validated"/>
+                        <filter icon="gtk-apply" string="Validated" domain="[('user_validated', '=', True)]" help="Validated entries" name="validated"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="gtk-about" string="Original" domain="[('is_original', '=', True)]" help="Original HQ entries" name="original"/>
+                        <filter icon="terp-administration" string="Split" domain="[('is_split', '=', True)]" help="Split entries" name="split"/>
+                        <separator orientation="vertical"/>
+                        <field name="date" select='1'/>
+                        <field name="account_id" select='1'/>
+                        <field name="partner_txt" select='1'/>
+                        <newline/>
+                        <field name="destination_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"/>
+                        <field name="cost_center_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"/>
+                        <field name="analytic_id" select='1' domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING')]"/>
+                        <newline/>
+                        <field name="name" />
+                        <field name="ref" />
+                        <field name="currency_id" />
+                        <field name="amount" />
+                    </group>
+                    <newline/>
+                    <group expand="0" string="Group By..." colspan="12" col="10">
+                        <filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_txt'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Account"  icon="terp-folder-green" context="{'group_by':'account_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Period" icon="terp-go-month" domain="[]" context="{'group_by':'period_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Original" icon="gtk-about" domain="[]" context="{'group_by': 'original_id'}"/>
+                    </group>
+                    <newline/>
+                </search>
+            </field>
+        </record>
+
+    <!-- HQ Entries form view -->
+      <record id="hq_entries_form" model="ir.ui.view">
+          <field name="name">HQ Entry</field>
+          <field name="model">hq.entries</field>
+          <field name="type">form</field>
+          <field name="arch" type="xml">
+              <form string="HQ Entry" hide_duplicate_button="1" hide_new_button="1">
+                  <separator string="General Information"/>
+                  <group colspan="4" col="4">
+                      <field name="name" readonly="1"/>
+                      <field name="ref" readonly="1"/>
+                      <field name="account_id" readonly="1"/>
+                      <field name="period_id" readonly="1"/>
+                      <field name="document_date" readonly="1"/>
+                      <field name="date" readonly="1"/>
+                      <field name="partner_txt" readonly="1"/>
+                      <newline/>
+                      <field name="amount" readonly="1"/>
+                      <field name="currency_id" readonly="1"/>
+                  </group>
+                  <group colspan="2" col="2">
+                      <separator string="Analytic Allocation (At import)"/>
+                      <field name="destination_id_first_value" readonly="1"/>
+                      <field name="cost_center_id_first_value" readonly="1"/>
+                      <field name="analytic_id_first_value" readonly="1"/>
+                  </group>
+                  <group colspan="2" col="2">
+                      <separator string="Analytic Allocation (Current)"/>
+                      <field name="destination_id" readonly="1"/>
+                      <field name="cost_center_id" readonly="1"/>
+                      <field name="analytic_id" readonly="1"/>
+                      <field name="free_1_id" readonly="1"/>
+                      <field name="free_2_id" readonly="1"/>
+                  </group>
+                  <separator string="Extra Information"/>
+                  <group colspan="4" col="4">
+                      <field name="is_original" string="Original Entry" readonly="1"/>
+                      <field name="is_split" string="Split Entry" readonly="1"/>
+                  </group>
+              </form>
+          </field>
+      </record>
+
+    <!--
+        Wizard
+    -->
+        <record id="hq_entries_import_wizard" model="ir.ui.view">
+            <field name="name">hq.entries.import.wizard</field>
+            <field name="model">hq.entries.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import HQ Entries">
+                    <label string="This will import HQ entries from a csv file." colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename"/>
+                    <field name="filename" invisible="1"/>
+                    <group colspan="4" col="2">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="analytic_hq_reallocation_wizard" model="ir.ui.view">
+            <field name="name">analytic.hq.reallocation.wizard</field>
+            <field name="model">hq.analytic.reallocation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Analytic Reallocation">
+                    <group  colspan="6" col="6">
+                        <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="cost_center_id" on_change="onchange_cost_center(cost_center_id, analytic_id)" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                        <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    </group>
+                    <newline/>
+                    <field name="free_1_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <field name="free_2_id" context="{'search_default_active': 1, 'hide_inactive': 1}"/>
+                    <group colspan="6" col="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="hq_reallocation_wizard" model="ir.ui.view">
+            <field name="name">hq.reallocation.wizard</field>
+            <field name="model">hq.reallocation</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Reallocation">
+                    <field name="account_id" colspan="2"/>
+                    <label string="" colspan="2"/>
+                    <group colspan="6" col="4">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <!--
+            New account attribute for HQ entries corrections
+        -->
+
+        <record id="inherit_view_account_form2" model="ir.ui.view">
+            <field name='name'>inherit.view.account.form2</field>
+            <field name='model'>account.account</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_account_form'/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="is_not_hq_correctible"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="inherit_view_account_tree2" model="ir.ui.view">
+            <field name='name'>inherit.view.account.tree2</field>
+            <field name='model'>account.account</field>
+            <field name="type">tree</field>
+            <field name='inherit_id' ref='account.view_account_tree'/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='activation_date']" position="before">
+                    <field name="is_not_hq_correctible" invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+
+    <!-- Actions: Menu actions -->
+        <record id="action_hq_entries_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import HQ Entries</field>
+            <field name="res_model">hq.entries.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="hq_entries_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_hq_entries_tree">
+            <field name="name">HQ Entries</field>
+            <field name="res_model">hq.entries</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="hq_entries_tree"/>
+            <field name="search_view_id" ref="hq_entries_filter"/>
+            <field name="context">{'search_default_non_validated': 1}</field>
+        </record>
+
+    <!-- Action: lines validation -->
+        <record id="action_hq_validation" model="ir.actions.server">
+            <field name="name">Validation</field>
+            <field name="model_id" ref="model_hq_entries"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_validation_wizard(context=context)</field>
+        </record>
+
+        <record id="ir_open_hq_validation" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hq.entries</field>
+            <field name="name">Validation</field>
+            <field eval="'ir.actions.server,%d'%action_hq_validation" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+    <!-- Display HQ Entry Split wizard -->
+        <record id="action_hq_split" model="ir.actions.server">
+            <field name="name">Split</field>
+            <field name="model_id" ref="model_hq_entries"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_split_wizard(context=context)</field>
+        </record>
+
+        <record id="ir_open_hq_split" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hq.entries</field>
+            <field name="name">Split</field>
+            <field eval="'ir.actions.server,%d'%action_hq_split" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+    <!-- Display HQ Entry Unsplit wizard -->
+        <record id="action_hq_unsplit" model="ir.actions.server">
+            <field name="name">Unsplit</field>
+            <field name="model_id" ref="model_hq_entries"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.get_unsplit_wizard(context=context)</field>
+        </record>
+
+        <record id="ir_open_hq_unsplit" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">hq.entries</field>
+            <field name="name">Unsplit</field>
+            <field eval="'ir.actions.server,%d'%action_hq_unsplit" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+
+    <!-- Mass analytic reallocation wizard for HQ Entries -->
+        <act_window id="action_hq_analytic_reallocation"
+            name="Analytic reallocation"
+            res_model="hq.analytic.reallocation"
+            src_model="hq.entries"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="analytic_hq_reallocation_wizard"/>
+
+    <!-- Mass reallocation wizard for HQ Entries -->
+        <act_window id="action_hq_reallocation"
+            name="Change Account"
+            res_model="hq.reallocation"
+            src_model="hq.entries"
+            key2="client_action_multi"
+            view_mode="form"
+            view_type="form"
+            target="new"
+            view_id="hq_reallocation_wizard"/>
+
+    <!-- Menu -->
+        <menuitem id="menu_hq" name="HQ" parent="account.menu_finance" sequence="6"/>
+        <menuitem name="HQ Import" action="action_hq_entries_import_wizard" id="menu_hq_entries_import" parent="menu_hq" sequence="1"/>
+        <menuitem name="HQ Entries" action="action_hq_entries_tree" id="menu_hq_entries" parent="menu_hq" sequence="2"/>
+        
+
+    </data>
+</openerp>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="threshold_value_form_view" model="ir.ui.view">
+            <field name="name">threshold.value.form.view</field>
+            <field name="model">threshold.value</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Threshold value">
+
+                    <separator colspan="4" string="General Information" />
+                    <field name="name" />
+                    <field name="warehouse_id" widget="selection" on_change="onchange_warehouse_id(warehouse_id)" />
+                    <field name="compute_method" on_change="on_change_compute_method(compute_method)"/>
+                    <field name="location_id" />
+                    <field name="active" attrs="{'invisible': [('compute_method', '=', False)]}" />
+                    <newline />
+                    <group colspan="4" col="4" attrs="{'invisible': [('compute_method', '!=', False)]}">
+                        <separator colspan="4" />
+                        <label colspan="4" 
+                                string="Please choose a method of computation. 
+                                If you choose 'Fixed values', you should enter manually a threshold value and a order quantity for each product.
+                                If you choose 'Computed values', you should enter some parameters to automatically compute the threshold value for each product and the quantity to order." />
+                    </group>
+
+                    <group colspan="4" col="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}">
+                        <separator colspan="4" string="Calculation parameters" />
+                        <field name="consumption_method" on_change="on_change_method(consumption_method)" 
+                                attrs="{'required': [('compute_method', '=', 'computed')]}"/>
+
+                        <group colspan="2" col="5">
+                            <field name="consumption_period_from"
+                                    on_change="on_change_period(consumption_period_from, consumption_period_to)"
+                                    attrs="{'required': [('compute_method', '=', 'computed'), ('consumption_method', '=', 'amc')], 
+                                            'readonly': [('consumption_method', '=', 'fmc')]}" />
+                            <label string="-" />
+                            <field name="consumption_period_to" nolabel="1" colspan="2"
+                                    on_change="on_change_period(consumption_period_from, consumption_period_to)"
+                                    attrs="{'required': [('compute_method', '=', 'computed'), ('consumption_method', '=', 'amc')],
+                                            'readonly': [('consumption_method', '=', 'fmc')]}" />
+                        </group>
+
+                        <field name="frequency" attrs="{'required': [('compute_method', '=', 'computed')]}" />
+                        <field name="safety_month" attrs="{'required': [('compute_method', '=', 'computed')]}" />
+                        <field name="lead_time" attrs="{'required': [('compute_method', '=', 'computed')], 'readonly': [('supplier_lt', '=', True)]}"  />
+                        <field name="supplier_lt" />
+                    </group>
+
+                    <group colspan="4" col="4" attrs="{'invisible': [('compute_method', '=', False)]}">
+                        <button colspan="4" icon="gtk-execute" string="Refresh values" type="object" name="dummy" />
+                        <field name="line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'computed')]}" context="{'rule_id': active_id, 'compute_method': compute_method}">
+                            <tree string="Products" editable="top">
+                                <field name="product_id" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]"
+                                    on_change="onchange_product_id(product_id, parent.compute_method, parent.consumption_method, parent.consumption_period_from, parent.consumption_period_to, parent.frequency, parent.safety_month, parent.lead_time,parent.supplier_lt, fixed_threshold_value, fixed_product_qty, False, 'product_id', context)"/>
+                                <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]"
+                                       on_change="onchange_product_id(product_id, parent.compute_method, parent.consumption_method, parent.consumption_period_from, parent.consumption_period_to, parent.frequency, parent.safety_month, parent.lead_time,parent.supplier_lt, fixed_threshold_value, fixed_product_qty, product_uom_id, 'product_uom_id', context)"/>
+                                <field name="consumption" />
+                                <field name="real_stock" />
+                                <field name="available_stock" />
+                                <field name="expiry_before" />
+                                <field name="required_date" />
+                                <field name="supplier_id" />
+                                <field name="threshold_value" readonly="1" />
+                                <field name="fake_threshold_value" invisible="1" />
+                            </tree>
+                        </field>
+
+                        <field name="fixed_line_ids" nolabel="1" colspan="4" attrs="{'invisible': [('compute_method', '!=', 'fixed')]}" context="{'compute_method': compute_method}">
+                            <tree string="Products" editable="top">
+                                <field name="product_id" domain="[('list_ids', '=', parent.sublist_id), ('type', 'not in', ['service', 'service_recep', 'consu'])]"
+                                       on_change="onchange_product_id(product_id, parent.compute_method, parent.consumption_method, parent.consumption_period_from, parent.consumption_period_to, parent.frequency, parent.safety_month, parent.lead_time,parent.supplier_lt, fixed_threshold_value, fixed_product_qty, product_uom_id, 'product_id', context)"/>
+                                <field name="product_uom_id" domain="[('uom_by_product', '=', product_id)]" 
+                                    on_change="onchange_uom_qty(product_uom_id, fixed_threshold_value, fixed_product_qty)" />
+                                <field name="fixed_threshold_value" required="1" 
+                                    on_change="onchange_uom_qty(product_uom_id, fixed_threshold_value, fixed_product_qty)" />
+                                <field name="fixed_product_qty" required="1" 
+                                    on_change="onchange_uom_qty(product_uom_id, fixed_threshold_value, fixed_product_qty)" />
+                            </tree>
+                        </field>
+
+                    </group>
+            </form>
+        </field>
+        </record>
+
+        <record id="threshold_value_tree_view" model="ir.ui.view">
+            <field name="name">threshold.value.tree.view</field>
+            <field name="model">threshold.value</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Threshold value">
+                    <field name="name" />
+                    <field name="location_id" />
+                    <field name="sublist_id" invisible="1" />
+                    <field name="nomen_manda_0" invisible="1" />
+                    <field name="nomen_manda_1" invisible="1" />
+                    <field name="nomen_manda_2" invisible="1" />
+                    <field name="nomen_manda_3" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="threshold_value_search_view" model="ir.ui.view">
+            <field name="name">threshold.value.search.view</field>
+            <field name="model">threshold.value</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Threshold values">
+                     <group expand="1" string="Filters..." colspan="4" col="12">
+                        <field name="name" default_focus="1" />
+                        <field name="warehouse_id" widget="selection" />
+                        <field name="location_id" eval="context.get('location_id', False)" widget="selection" 
+                            domain="[('usage', '=', 'internal'), ('location_category', '=', 'stock')]" />
+                        <field name="compute_method" />
+                        <field name="product_ids" widget="many2one" />
+                    </group>
+                    <newline/>
+                    <group expand="1" string="Group By...">
+                        <separator orientation="vertical"/>
+                        <filter name="group_location" string="Location" icon="terp-go-home" context="{'group_by':'location_id'}"/>
+                        <separator orientation="vertical"/>
+                        <filter string="Sublist" icon="terp-go-week" domain="" context="{'group_by':'sublist_id'}"/>
+                        <filter string="Main type" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_0'}"/>
+                        <filter string="Group" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_1'}"/>
+                        <filter string="Family" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_2'}"/>
+                        <filter string="Root" icon="terp-tools" domain="" context="{'group_by':'nomen_manda_3'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="action_threshold_value" model="ir.actions.act_window">
+            <field name="name">Threshold value</field>
+            <field name="res_model">threshold.value</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'withnum': 1}</field>
+        </record>
+
+        <menuitem id="menu_threshold_value"
+                  action="action_threshold_value"
+                  parent="stock_schedule.stock_automatic_procurements_menu" />
+
+    </data>
+</openerp>

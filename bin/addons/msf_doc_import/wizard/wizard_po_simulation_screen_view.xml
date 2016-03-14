@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="wizard_import_po_simulation_screen_form_view" model="ir.ui.view">
+            <field name="name">wizard.import.po.simulation.screen.form.view</field>
+            <field name="model">wizard.import.po.simulation.screen</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="PO Import - Simulation Screen">
+                    <separator colspan="4" string="Purchase Order Information" />
+                    <field name="order_id" />
+                    <field name="in_creation_date" />
+                    <group colspan="4" name="file" string="Import data">
+                        <field name="filetype" attrs="{'readonly': [('state', '!=', 'draft')]}" required="1"/>
+                        <newline />
+                        <field name="file_to_import" filename="filename" attrs="{'readonly': [('state', '!=', 'draft')]}" />
+                        <field name="filename" invisible="1" />
+                        <field name="error_file" filename="error_filename" readonly="1"
+                               attrs="{'invisible': [('import_error_ok', '!=', False), ('state', '!=', 'done')]}" />
+                        <field name="error_filename" invisible="1" />
+                        <field name="import_error_ok" invisible="1" />
+                        <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('state', '=', 'draft')]}" />
+                        <field name="state" invisible="0" />
+                    </group>
+                    <!-- Buttons -->
+                    <group name="buttons" colspan="4" col="6">
+                        <button name="return_to_po" string="Return to PO" icon="gtk-jump-to" type="object" />
+                        <button name="launch_simulate" string="Simulate" icon="gtk-execute" type="object" states="draft" />
+                        <button name="launch_import" string="Import" icon="gtk-execute" type="object" states="simu_done" />
+                        <button name="go_to_simulation" string="Update" icon="gtk-execute" type="object" states="simu_progress,import_progress" />
+                        <button name="print_simulation_report" string="Print report" icon="gtk-print" type="object" states="simu_done,import_progress,done" />
+                    </group>
+                    <group name="errors" colspan="4" attrs="{'invisible': [('import_error_ok', '=', False)]}">
+                        <html>
+                            <p id="view_error_msg"
+                                style="text-align:center; color:red; font-weight: bold; font-size: 1.2.em;">
+                                WARNING: There are problems with the import file. Please see the 'Information' tab.
+                            </p>
+                        </html>
+                    </group>
+                    <notebook colspan="4">
+                        <page string="Purchase Order">
+                            <field name="in_dest_addr" />
+                            <newline />
+                            <label> </label>
+                            <separator colspan="1" string="Original values" />
+                            <separator colspan="1" string="Imported values" />
+                            <field name="in_supplier_ref" />
+                            <field name="imp_supplier_ref" nolabel="1" />
+                            <label> </label>
+                            <field name="in_transport_mode" />
+                            <field name="imp_transport_mode" nolabel="1" />
+                            <label> </label>
+                            <field name="in_ready_to_ship_date" />
+                            <field name="imp_ready_to_ship_date" nolabel="1" />
+                            <label> </label>
+                            <field name="in_shipment_date" />
+                            <field name="imp_shipment_date" nolabel="1" />
+                            <label> </label>
+                            <group colspan="4" string="Header notes">
+                                 <field name="imp_notes" colspan="4" nolabel="1" />
+                            </group>
+                            <group colspan="4" string="Message ESC Header">
+                                <field name="imp_message_esc" colspan="4" nolabel="1" />
+                            </group>
+                            <group colspan="4" col="12">
+                                <field name="in_currency" />
+                                <field name="in_amount_untaxed" />
+                                <field name="imp_amount_untaxed" nolabel="1" />
+                                <field name="in_amount_tax" />
+                                <label> </label>
+                                <field name="in_amount_total" />
+                                <field name="imp_amount_total" nolabel="1" />
+                                <field name="amount_discrepancy" />
+                                <newline />
+                                <field name="in_transport_cost" />
+                                <label> </label>
+                                <field name="in_total_price_include_transport" />
+                                <field name="imp_total_price_include_transport" nolabel="1"/>
+                            </group>
+                        </page>
+                        <page string="Details">
+                            <!-- LINES -->
+                            <field name="simu_line_ids" nolabel="1" colspan="4">
+                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change == 'error'; orange: change_ok==True and type_change not in ('del', 'error'); blue: type_change=='split'; green: type_change=='new'">
+                                    <field name="in_product_id" />
+                                    <field name="in_nomen" />
+                                    <field name="in_comment" />
+                                    <field name="in_qty" />
+                                    <field name="in_uom" />
+                                    <field name="in_drd" />
+                                    <field name="in_dcd" />
+                                    <field name="in_price" />
+                                    <field name="in_currency" />
+                                    <field name="in_line_number" invisible="1" />
+                                    <field name="str_in_line_number" />
+                                    <field name="type_change" />
+                                    <field name="error_msg" invisible="1" />
+                                    <button name="get_error_msg" type="object" icon="gtk-dialog-warning" string="See error" attrs="{'invisible': [('error_msg', '=', False)]}" />
+                                    <field name="imp_product_id" />
+                                    <field name="imp_qty" />
+                                    <field name="imp_uom" />
+                                    <field name="imp_price" />
+                                    <field name="imp_discrepancy" />
+                                    <field name="imp_currency" />
+                                    <field name="imp_drd" />
+                                    <field name="imp_dcd" />
+                                    <field name="imp_esc1" />
+                                    <field name="imp_esc2" />
+                                    <field name="change_ok" invisible="1" />
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Information">
+                            <field name="nb_file_lines" />
+                            <field name="nb_treated_lines" />
+                            <field name="message" nolabel="1" colspan="4" readonly="1" />
+                        </page>
+                        <!--<page string="Previous simulations">
+                        </page>-->
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

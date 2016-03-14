@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <!-- Account View -->
+        <record id="inherit_view_account_tree" model="ir.ui.view">
+            <field name="name">inherit.view.account.tree</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="field_parent">child_id</field>
+            <field name="inherit_id" ref="account.view_account_tree"/>
+            <field name="priority">19</field>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='type']" position="replace">
+                </xpath>
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="type" invisible="1"/>
+                    <field name="type_for_register" invisible="1"/>
+                    <field name="accrual_account" invisible="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="inherit_view_account_search_pma" model="ir.ui.view">
+            <field name="name">inherit.view.account.search.pma</field>
+            <field name="model">account.account</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_search"/>
+            <field name="priority">25</field>
+            <field name="arch" type="xml">
+                <xpath expr="/search/group[1]" position="replace">
+                    <group col="12" colspan="4">
+
+                        <filter name="active" icon="terp-check" string="Active" domain="[('filter_active', '=', True)]" />
+                        <filter name="inactive" icon="gtk-dialog-error" string="Inactive" domain="[('filter_active', '=', False)]"/>
+                        <separator orientation="vertical"/>
+                        <filter icon="terp-sale" string="Receivable Accounts" domain="[('type','=','receivable')]"/>
+                        <filter icon="terp-purchase" string="Payable Accounts" domain="[('type','=','payable')]"/>
+                        <filter name="accrual_account" string="Accrual Account" domain="[('accrual_account','=',True)]"/>
+                        <separator orientation="vertical"/>
+                        <newline/>
+
+                        <group col="6" colspan="4">
+                            <field name="code"/>
+                            <field name="name"/>
+                            <field name="is_not_hq_correctible"/>
+                        </group>
+                        <newline/>
+
+                        <field name="user_type"/>
+                        <field name="type"/>
+                        <field name="type_for_register"/>
+
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    <!--
+        Journal Entries
+    -->
+        <record id="view_move_form_2" model="ir.ui.view">
+            <field name="name">account.move.form.2</field>
+            <field name="model">account.move</field>
+            <field name="type">form</field>
+            <field name="priority" eval="20" />
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+                <form string="Journal Entries" position="replace">
+                    <form string="Journal Entries" hide_delete_button="1">
+                        <group colspan="4" col="6">
+                            <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" context="{'from_manual_entry': True}"/>
+                            <field name="name" readonly="1"/>
+                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" domain="[('number', '!=', 16)]"/>
+                            <field name="document_date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
+                            <field name="date" string="Posting Date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
+
+                            <group col="6" colspan="6">
+                                <group col="2" colspan="2">
+                                    <group  attrs="{'invisible': [('status', '!=', 'sys')]}">
+                                      <label string=""/>
+                                    </group>
+                                    <field name="manual_name" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)], 'invisible': [('status', '=', 'sys')]}"/>
+                                </group>
+                                <field name="ref" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
+                                <group colspan="2" col="2">
+                                    <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
+                                    <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
+                                </group>
+                          </group>
+                        </group>
+                        <field name="partner_id" invisible="1"/>
+                        <field name="block_manual_currency_id" invisible="1"/>
+                        <field name="amount" invisible="1"/>
+                        <field name="imported" invisible="1"/>
+                        <notebook colspan="4">
+                            <page string="Journal Items">
+                                <field colspan="4" name="line_id" nolabel="1" height="250" widget="one2many_list" default_get="{'lines': [], 'journal':journal_id, 'period_id':period_id, 'move_reference': ref}" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}">
+                                    <tree colors="blue:state in ('draft');black:state in ('posted')" editable="top" string="Journal Items">
+                                        <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
+                                        <field name="name"/>
+                                        <field name="reference"/>
+                                        <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
+                                        <field name="partner_id" invisible="1"/>
+                                        <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
+                                        <field name="credit_currency" sum="Total Booking Credit" string="Book. Credit"/>
+                                        <field name="currency_id" string="Book. Currency"/>
+                                        <field name="debit" sum="Total Functional Debit" string="Func. Debit" readonly="1"/>
+                                        <field name="credit" sum="Total Functional Credit" string="Func. Credit" readonly="1"/>
+                                        <field name="functional_currency_id" readonly="1"/>
+                                        <field name="reconcile_total_partial_id" string="Reconcile"/>
+                                        <field name="state"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                        <group colspan="4" col="4">
+                            <field name="state" colspan="2"/>
+                            <field name="status" readonly="1" colspan="2"/>
+                        </group>
+                        <group colspan="6" col="4">
+                            <!--button name="button_cancel" states="posted" string="Cancel" type="object" icon="gtk-cancel"/-->
+                            <label string="" colspan="2"/>
+                            <button name="button_validate" states="draft" string="Approve" type="object" icon="terp-camera_test" attrs="{'invisible': ['|', ('state', '!=', 'draft'), ('status', '=', 'sys')]}" colspan="2"/>
+                        </group>
+                    </form>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_move_tree_2" model="ir.ui.view">
+            <field name="name">account.move.tree.2</field>
+            <field name="model">account.move</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_move_tree"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <tree string="Journal Entries" position="replace">
+                    <tree colors="blue:state in ('draft');black:state in ('posted')" string="Journal Entries" noteditable="status=='sys' or state=='posted'" hide_delete_button="1">
+                        <field name="status" invisible="1"/>
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="document_date"/>
+                        <field name="date" string="Posting Date"/>
+                        <field name="period_id"/>
+                        <field name="journal_id"/>
+                        <field name="employee_id" invisible="1"/>
+                        <field name="transfer_journal_id" invisible="1"/>
+                        <field name="partner_id" invisible="1"/>
+                        <field name="partner_type"/>
+                        <field name="book_amount" sum="Booking Amount"/>
+                        <field name="currency_id" />
+                        <field name="amount" sum="Total Amount"/>
+                        <field name="functional_currency_id" />
+                        <field name="state"/>
+                        <button name="button_delete" states="draft" string="Delete" type="object" icon="gtk-del" attrs="{'invisible': [('status', '=', 'sys')]}" confirm="Are you sure you want to delete these line?"/>
+                    </tree>
+                </tree>
+            </field>
+        </record>
+
+    <!-- Redefine journal entries action (especially with from_web_menu in context to know we come from the web interface) -->
+        <record id="account.action_move_journal_line" model="ir.actions.act_window">
+            <field name="name">Journal Entries</field>
+            <field name="res_model">account.move</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,graph</field>
+            <field name="view_id" ref="account.view_move_tree"/>
+            <field name="search_view_id" ref="account.view_account_move_filter"/>
+            <field name="help">A journal entry consists of several journal items, each of which is either a debit or a credit transaction. OpenERP automatically creates one journal entry per accounting document: invoice, refund, supplier payment, bank statements, etc.</field>
+            <field name="domain">[('period_id.number', '!=', 0)]</field>
+            <field name="context">{'from_web_menu': True}</field>
+        </record>
+
+    <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->
+    <delete id="account.action_account_invoice_confirm" model="ir.actions.act_window"/>
+
+    <!-- Account View -->
+        <record id="inherit_view_account_form" model="ir.ui.view">
+            <field name='name'>inherit.view.account.form</field>
+            <field name='model'>account.account</field>
+            <field name="type">form</field>
+            <field name='inherit_id' ref='account.view_account_form' />
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='user_type']" position="after">
+                    <field name="shrink_entries_for_hq"/>
+                </xpath>
+            </field>
+        </record>
+
+    <!-- UF-1715 -->
+    <report id="account_partner_balance_tree_xls"
+        auto="False"
+        menu="False"
+        header="False"
+        model="account.partner.balance.tree"
+        name="account.partner.balance.tree_xls"
+        file="finance/report/account_partner_balance_tree_xls.mako"
+        report_type="webkit" 
+        string="Partner Balance"/>
+
+    <record id="account.action_account_moves_all_a" model="ir.actions.act_window">
+        <field name="context">{'search_default_posted': 1, 'target_filename_prefix': 'Journal Items'}</field>
+    </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,1482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+	<data>
+
+		<menuitem name="Deliveries" id="menu_warehouse_deliveries" parent="stock.menu_stock_warehouse_mgmt" sequence="3"/>
+		<menuitem id="menu_report_config" name="Report Customization" parent="stock.menu_stock_configuration" sequence="1"/>
+		# -------------------------------------------------------------
+		# Labels
+		# -------------------------------------------------------------
+		<record id="view_labels_tree" model="ir.ui.view">
+			<field name="name">stock.labels.tree</field>
+			<field name="model">ppl.customize.label</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Labels Customization">
+					<field name="name"/>
+					<field name="logo" />
+					<field name="requestor_order_reference" />
+					<field name="packing_parcel_number" />
+					<field name="pre_packing_list_reference" />
+					<field name="destination_partner" />
+					<field name="destination_address" />
+					<field name="weight" />
+					<field name="specific_information" />
+				</tree>
+			</field>
+		</record>
+		<record id="view_labels_form" model="ir.ui.view">
+			<field name="name">stock.labels.form</field>
+			<field name="model">ppl.customize.label</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Labels Customization">
+					<notebook>
+						<page string="Customization">
+							<field name="name"/>
+							<separator string="Options" />
+							<field name="logo" />
+							<field name="requestor_order_reference" />
+							<field name="packing_parcel_number" />
+							<field name="pre_packing_list_reference" />
+							<field name="destination_partner" />
+							<field name="destination_address" />
+							<field name="weight" />
+							<field name="specific_information" />
+						</page>
+						<page string="Notes">
+							<field name="notes" nolabel="True" />
+						</page>
+					</notebook>
+				</form>
+			</field>
+		</record>
+		<record id="action_labels_tree" model="ir.actions.act_window">
+			<field name="name">Labels</field>
+			<field name="res_model">ppl.customize.label</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		<menuitem action="action_labels_tree" id="menu_report_custo_labels" parent="menu_report_config" sequence="7"/>
+		<record id="view_picking_out_search" model="ir.ui.view">
+			<field name="name">view.picking.out.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="inherit_id" ref="stock.view_picking_out_search" />
+			<field name="arch" type="xml">
+				<data>
+					<xpath expr="/search/group[@string='Group By...']/filter[@string='Partner']" position="before">
+						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
+					</xpath>
+				</data>
+			</field>
+		</record>
+		<record id="view_picking_out_tree" model="ir.ui.view">
+			<field name="name">stock.picking.out.tree</field>
+			<field name="model">stock.picking</field>
+			<field name="type">tree</field>
+			<field name="inherit_id" ref="stock.view_picking_out_tree" />
+			<field name="arch" type="xml">
+				<data>
+					<field name="origin" position="after">
+						<field name="sale_id" invisible="True" />
+					</field>
+				</data>
+			</field>
+		</record>
+		<record id="stock.action_picking_tree" model="ir.actions.act_window">
+			<field name="name">Delivery Orders</field>
+			<field name="res_model">stock.picking</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar</field>
+			<field name="domain">[('type','=','out'), ('subtype', '=', 'standard')]</field>
+			<field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'}</field>
+			<field name="search_view_id" ref="stock.view_picking_out_search"/>
+			<field name="help">This is the list of all delivery orders that have to be prepared, according to your different sales orders and your logistics rules.</field>
+		</record>
+		<menuitem id="stock.menu_action_picking_tree" parent="menu_warehouse_deliveries" />
+		<record id="view_warehouse" model="ir.ui.view">
+			<field name="name">stock.warehouse</field>
+			<field name="model">stock.warehouse</field>
+			<field name="type">form</field>
+			<field name="inherit_id" ref="stock.view_warehouse" />
+			<field name="arch" type="xml">
+				<data>
+
+					<field name="lot_stock_id" position="after">
+						<field name="lot_packing_id" domain="[('quarantine_location', '=', False)]" />
+						<field name="lot_dispatch_id" domain="[('quarantine_location', '=', False)]" />
+						<field name="lot_distribution_id" domain="[('quarantine_location', '=', False)]" />
+					</field>
+				</data>
+			</field>
+		</record>
+		<record id="view_pack_type_tree" model="ir.ui.view">
+			<field name="name">pack.type.tree</field>
+			<field name="model">pack.type</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree string="Pack Types" editable="bottom">
+					<field name="name" />
+					<field name="length" />
+					<field name="width" />
+					<field name="height" />
+				</tree>
+			</field>
+		</record>
+		<record id="action_pack_type_tree" model="ir.actions.act_window">
+			<field name="name">Pack Types</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="res_model">pack.type</field>
+			<field name="view_type">form</field>
+			<field name="view_id" ref="view_pack_type_tree"/>
+			<field name="help">This is the list of all your pack types.</field>
+		</record>
+		<menuitem action="action_pack_type_tree" id="menu_action_pack_type_tree"
+		sequence="6"
+		parent="stock.menu_product_in_config_stock"/>
+		<!-- Changed name to 'Picking Tickets' -->
+		<record id="view_picking_ticket_tree" model="ir.ui.view">
+
+			<field name="name">picking.ticket.tree</field>
+			<field name="model">stock.picking</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date"
+                    string="Picking Tickets" hide_new_button="1">
+					<field name="name" />
+					<field name="partner_id2" />
+					<field name="backorder_id" />
+					<field name="sale_id" invisible="True" />
+					<field name="reason_type_id" />
+					<field name="origin"/>
+					<field name="overall_qty" invisible="True" />
+					<field name="date"/>
+					<field name="min_date" string="Expected Pick Date" />
+                    <field name="state"/>
+                    <field name="line_state" />
+					<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" context="{'from_button': True}"/>
+                    <button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply" context="{'from_button': True}" />
+				</tree>
+			</field>
+		</record>
+		<!-- Remove 'Process Later' (draft_force_assign) and 'Process Now' (draft_validate) buttons -->
+		<!-- 'Check Availability' button available for 'draft' state -->
+		<!-- Add 'Create Picking...' button -->
+		<!-- Changed name to 'Picking Ticket' -->
+		<!-- Add 'Flow Type' drop down list -->
+		<!-- TREE -->
+		<!-- Remove 'Scrap Products' button -->
+		<!-- Remove 'Scrapped' -->
+		<!-- Remove 'Split in production lots' -->
+		<!-- Remove 'Put in current pack' -->
+		<!-- Remove 'Put in a new pack' -->
+		<!-- Remove 'Process' at stock.move level -->
+		<!-- FORM -->
+		<!-- Remove 'Scrap' button -->
+		<!-- Remove 'New Pack' -->
+		<!-- Remove 'tracking_id' -->
+		<!-- Remove 'Split' -->
+		<!-- Remove 'Process' button -->
+		<!-- Added Asset Id to move tree and form -->
+		<record id="view_picking_ticket_form" model="ir.ui.view">
+			<field name="name">picking.ticket.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<!-- without priority 'view_picking_form' from stock is used -->
+			<!-- but then other form view also use it... -->
+			<!-- <field eval="11" name="priority"/> -->
+			<field name="arch" type="xml">
+				<form string="Picking Ticket">
+					<group col="6" colspan="4">
+						<group colspan="4" col="4">
+							<field name="name" readonly="1"/>
+							<field name="origin" readonly="1"/>
+							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
+							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+								   domain="[('partner_id', '=', partner_id2)]"
+								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
+							<field name="backorder_id" readonly="1" />
+							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
+						</group>
+						<group colspan="2" col="2">
+							<field name="date" readonly="1"/>
+							<field name="stock_journal_id" widget="selection" invisible="True" />
+							<field name="min_date" string="Expected Pick Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}"
+								   on_change="change_min_date()" required="1" />
+                            <field name="min_date_manually" invisible="1" />
+							<field name="sale_id" invisible="True" />
+							<field name="subtype" invisible="True" readonly="True" />
+							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+						</group>
+					</group>
+					<notebook colspan="4">
+						<page string="Products">
+							<field name="from_wkf" invisible="1"/>
+							<field colspan="4"
+								name="move_lines"
+								nolabel="1"
+								widget="one2many_list"
+								default_get="{'subtype': subtype, 'type': 'out', 'reason_type_id': reason_type_id, 'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id, 'warehouse_id': warehouse_id, 'from_wkf': from_wkf, 'date_expected': min_date}"
+							    on_change="onchange_move()"
+							    >
+								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
+								colors="red: inactive_product==True">
+                                    <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
+									<field name="composition_list_id" />
+									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
+									<field name="product_uom" string="UoM"/>
+									<field name="asset_id" />
+									<field name="prodlot_id" string="Batch Number" />
+									<field name="expired_date" />
+									<field name="kc_dg" invisible="1" />
+									<field name="location_id" string="Src. Loc"  />
+									<field name="location_dest_id" string="Dest. Loc" />
+									<field name="virtual_available" invisible="1" />
+									<field name="date" string="Actual Pick Date" />
+									<field name="state"/>
+									<field name="fake_state" invisible="1"/>
+								    <button name="cancel_assign" string="Cancel Availability" type="object" icon="gtk-undo" states="assigned" context="{'from_button': True}" />
+                                    <button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+                                    <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply" context="{'from_button': True}" />
+
+									<field name="lot_check" />
+									<field name="exp_check" />
+									<field name="kc_check" />
+									<field name="ssl_check" invisible="True" />
+									<field name="dg_check" />
+									<field name="np_check" />
+									<field name="inactive_product" invisible="1" />
+                                    <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+                                    <field name="pt_created" invisible="1" />
+                                    <button name="call_cancel_wizard" type="object" string="Cancel" states="draft,assigned,confirmed" icon="gtk-del"  attrs="{'invisible': [('pt_created', '=', True)]}"   context="{'from_button': True}"  />
+								</tree>
+                                <form string="Stock Moves" hide_new_button="context.get('from_wkf')">
+									<group colspan="2" col="4">
+										<separator colspan="4" string="Move Information"/>
+										<field name="name" invisible="1" colspan="4" />
+										<field name="from_wkf_line" invisible="1" />
+										<!-- Service products can't be sent -->
+                                        <field name="product_id"
+                                               context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
+                                               on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
+                                               attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+                                               colspan="4" />
+                                        <field name="composition_list_id" invisible="True" />
+										<field name="product_qty"
+											on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"
+											attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+											 />
+										<field name="product_uom"
+                                            on_change="onchange_uom(product_uom, product_qty)"
+                                            string="Unit Of Measure"
+											attrs="{'readonly': ['|', ('from_wkf_line', '=', True), ('state', '=', 'assigned')]}"
+											colspan="2"
+											domain="[('uom_by_product', '=', product_id)]"
+											 />
+										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
+									</group>
+									<group colspan="2" col="2">
+										<separator string="Locations" colspan="2" />
+										<field name="location_virtual_id" invisible="1" />
+                        				<field name="location_output_id" invisible="1" />
+                        				<!-- # picking_ticket_src is a fields.function to compute the available locations according to the product-->
+										<field name="location_id"
+											domain="[('picking_ticket_src', '=', product_id), ('id', '!=', location_dest_id)]"
+											context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
+											attrs="{'readonly': [('state', '=', 'assigned')]}"
+										 	 />
+										<field name="location_dest_id" on_change="location_dest_change(location_dest_id, location_id)" domain="[('name', '=', 'Packing')]" />
+									</group>
+									<group colspan="2" col="4">
+										<separator string="Traceability" colspan="4" />
+										<field name="asset_id" colspan="4" />
+										<field name="hidden_batch_management_mandatory" invisible="True" />
+										<field name="hidden_perishable_mandatory" invisible="True" />
+										<field name="prodlot_id"
+											context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+											'search_default_real': True}"
+											domain="[('product_id','=?',product_id), ('check_type','=', True)]"
+											on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2"
+											attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
+										<field name="expired_date" />
+										<group colspan="4" col="10">
+											<field name="lot_check" />
+											<field name="exp_check" />
+											<field name="kc_check" />
+											<field name="ssl_check" invisible="True" />
+											<field name="dg_check" />
+											<field name="np_check" />
+										</group>
+										<field name="reason_type_id"
+										       domain="[('outgoing_ok', '=', True)]"
+										       attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
+									</group>
+									<group colspan="2" col="2">
+										<separator string="Dates" colspan="2" />
+										<field name="create_date" invisible="1"/>
+										<field name="date" string="Actual Pick Date" />
+										<field name="date_expected" string="Expected Pick Date" />
+									</group>
+	           			            <field name="purchase_line_id"  invisible="1"/>
+	           			            <field name="move_cross_docking_ok"  invisible="1"/>
+	           			            <field name="picking_id"  invisible="1"/>
+									<label string="" colspan="4"/>
+									<field name="state"/>
+									<group col="4" colspan="2">
+										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" context="{'from_button': True}" />
+									</group>
+								</form>
+							</field>
+							<group col="14" colspan="4">
+                                <field name="state" readonly="1"/>
+                                <field name="line_state" readonly="1" attrs="{'invisible': [('state', '!=', 'draft')]}" nolabel="1" />
+                                <field name="flow_type" />
+                                <group colspan="1" col="1">
+                                    <button name="call_cancel_wizard" type="object" states="draft" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
+                                    <button name="button_cancel" states="assigned,confirmed" string="_Cancel Picking" icon="gtk-cancel"   context="{'from_button': True}" />
+                                </group>
+                                <field name="has_draft_moves" invisible="1" />
+                                <button name="action_confirm_moves" states="draft" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': [('has_draft_moves', '=', False)]}"/>
+								<button name="action_assign" states="draft,confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
+								<button name="convert_to_standard" states="draft,assigned" string="Convert to Simple Out" type="object" icon="gtk-convert" context="{'from_button': True}" />
+								<button name="create_picking" states="draft" string="Create Picking..." type="object" icon="gtk-add" help="Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available" context="{'from_button': True}" />
+								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
+								<button name="validate_picking" states="assigned" string="Validate Picking..." type="object" icon="gtk-apply"  context="{'from_button': True}" />
+								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
+							</group>
+						</page>
+						<page string="Additional info">
+							<field name="auto_picking" invisible="1"/>
+							<field name="date_done" />
+							<field name="move_type" invisible="1"/>
+							<field name="type" invisible="1"/>
+							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
+						</page>
+						<page string="Notes">
+							<field colspan="4" name="note" nolabel="1"/>
+						</page>
+					</notebook>
+				</form>
+			</field>
+		</record>
+		<!-- Changed name to 'Picking Tickets' -->
+		<record id="view_picking_ticket_search" model="ir.ui.view">
+			<field name="name">picking.ticket.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Picking Tickets">
+					<group col="8" colspan="4">
+						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
+						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
+						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
+						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
+						<separator orientation="vertical"/>
+						<field name="name"/>
+						<field name="partner_id2" />
+						<field name="origin"/>
+                        <newline />
+						<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" />
+						<field name="date" />
+						<field name="min_date" />
+                    </group>
+                    <newline />
+                    <group string="State of lines" col="8" colspan="4">
+                        <filter icon="gtk-no" name="line_not_available" string="Not available" domain="[('line_state', '=', 'confirmed')]" />
+                        <filter icon="gtk-dialog-question" name="line_mixed" string="Partially available" domain="[('line_state', '=', 'mixed')]" />
+                        <filter icon="gtk-yes" name="line_available" string="Available" domain="[('line_state', '=', 'assigned')]" />
+                    </group>
+					<newline/>
+					<group expand="0" string="Group By..." colspan="4" col="8">
+						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
+						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
+						<separator orientation="vertical" />
+						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+						<separator orientation="vertical" />
+						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+						<separator orientation="vertical" />
+						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+						<separator orientation="vertical" />
+                                                <!-- Field stock_journal_id is not in the tree view
+						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}" />-->
+					</group>
+				</search>
+			</field>
+		</record>
+
+		<!-- Search 'PT and PPL' -->
+		<record id="view_pt_ppl_search" model="ir.ui.view">
+			<field name="name">pt.ppl.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Picking Tickets">
+					<group col="8" colspan="4">
+						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" />
+						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" />
+						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('overall_qty','=', 0.0)]" />
+						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('overall_qty','!=', 0.0)]" />
+						<separator orientation="vertical"/>
+
+						<filter icon="" name="pt" string="PT" domain="[('subtype','=', 'picking')]" />
+						<filter icon="" name="ppl" string="PPL" domain="[('subtype','=', 'ppl')]" />
+
+						<field name="name"/>
+						<field name="partner_id2" />
+						<field name="origin"/>
+						<newline />
+						<field name="reason_type_id" widget="selection" />
+						<field name="date" />
+						<field name="min_date" />
+					</group>
+					<newline/>
+					<group expand="0" string="Group By..." colspan="4" col="8">
+						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
+						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
+						<separator orientation="vertical" />
+						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+						<separator orientation="vertical" />
+						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+						<separator orientation="vertical" />
+						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+						<separator orientation="vertical" />
+					</group>
+				</search>
+			</field>
+		</record>
+
+
+		<!-- Added 'subtype' in domain -->
+		<record id="action_draft_picking_ticket" model="ir.actions.act_window">
+			<field name="name">Draft Picking Ticket</field>
+			<field name="res_model">stock.picking</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar</field>
+			<field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('state', '=', 'draft')]</field>
+			<field name="context">{'contact_display':'partner_address',
+								   'picking_type': 'picking_ticket',
+				                   'search_default_sale_id':1,
+				                   'group_by_no_leaf':0,
+				                   'group_by':'origin'}</field>
+			<field name="search_view_id" ref="view_picking_ticket_search"/>
+			<field name="help">This is the list of draft picking tickets.</field>
+		</record>
+		<record id="action_draft_picking_ticket_tree" model="ir.actions.act_window.view">
+			<field eval="1" name="sequence"/>
+			<field name="view_mode">tree</field>
+			<field name="view_id" ref="view_picking_ticket_tree"/>
+			<field name="act_window_id" ref="action_draft_picking_ticket"/>
+		</record>
+		<record id="action_draft_picking_ticket_form" model="ir.actions.act_window.view">
+			<field eval="2" name="sequence"/>
+			<field name="view_mode">form</field>
+			<field name="view_id" ref="view_picking_ticket_form"/>
+			<field name="act_window_id" ref="action_draft_picking_ticket"/>
+		</record>
+		<record id="action_draft_picking_ticket_cal" model="ir.actions.act_window.view">
+			<field eval="3" name="sequence"/>
+			<field name="view_mode">calendar</field>
+			<field name="act_window_id" ref="action_draft_picking_ticket"/>
+		</record>
+		<!-- <menuitem action="action_draft_picking_ticket" id="menu_action_draft_picking_ticket" parent="stock.menu_stock_warehouse_mgmt" sequence="4"/> -->
+
+		<!-- Added 'subtype' in domain -->
+		<record id="action_picking_ticket" model="ir.actions.act_window">
+			<field name="name">Picking Tickets</field>
+			<field name="res_model">stock.picking</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar</field>
+			<field name="domain">[('type','=','out'), ('subtype', '=', 'picking')]</field>
+			<field name="context">{'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1}</field>
+			<!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
+			<field name="search_view_id" ref="view_picking_ticket_search"/>
+			<field name="help">This is the list of all picking tickets (draft and confirmed) that have to be prepared from sales orders.</field>
+		</record>
+		<record id="action_picking_ticket_tree" model="ir.actions.act_window.view">
+			<field eval="1" name="sequence"/>
+			<field name="view_mode">tree</field>
+			<field name="view_id" ref="view_picking_ticket_tree"/>
+			<field name="act_window_id" ref="action_picking_ticket"/>
+		</record>
+		<record id="action_picking_ticket_form" model="ir.actions.act_window.view">
+			<field eval="2" name="sequence"/>
+			<field name="view_mode">form</field>
+			<field name="view_id" ref="view_picking_ticket_form"/>
+			<field name="act_window_id" ref="action_picking_ticket"/>
+		</record>
+		<record id="action_picking_ticket_cal" model="ir.actions.act_window.view">
+			<field eval="3" name="sequence"/>
+			<field name="view_mode">calendar</field>
+			<field name="act_window_id" ref="action_picking_ticket"/>
+		</record>
+		<menuitem action="action_picking_ticket" id="menu_action_picking_ticket" parent="menu_warehouse_deliveries" sequence="4"/>
+		<!-- Changed name to 'PPL' -->
+		<record id="view_ppl_tree" model="ir.ui.view">
+			<field name="name">ppl.tree</field>
+			<field name="model">stock.picking</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Pre-Packing Lists">
+					<field name="name"/>
+                    <field name="description_ppl"/>
+					<field name="partner_id2"/>
+					<field name="backorder_id" />
+					<field name="origin"/>
+					<field name="reason_type_id" />
+					<field name="date"/>
+					<field name="min_date" string="Expected Pack Date" />
+					<field name="state"/>
+					<button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver"/>
+				</tree>
+			</field>
+		</record>
+		<!-- Remove 'Process Later' (draft_force_assign) and 'Process Now' (draft_validate) buttons -->
+		<!-- 'Check Availability' button available for 'draft' state -->
+		<!-- Changed name to 'PPL' -->
+		<!-- Add 'Flow Type' drop down list -->
+		<!-- TREE -->
+		<!-- Remove 'Scrap Products' button -->
+		<!-- Remove 'Scrapped' -->
+		<!-- Remove 'Split in production lots' -->
+		<!-- Remove 'Put in current pack' -->
+		<!-- Remove 'Put in a new pack' -->
+		<!-- Remove 'Process' at stock.move level -->
+		<!-- FORM -->
+		<!-- Remove 'Scrap' button -->
+		<!-- Remove 'New Pack' -->
+		<!-- Remove 'tracking_id' -->
+		<!-- Remove 'Split' -->
+		<!-- Remove 'Process' button -->
+		<!-- Added Asset Id to move tree and form -->
+		<record id="view_ppl_form" model="ir.ui.view">
+			<field name="name">ppl.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<!-- without priority 'view_picking_form' from stock is used -->
+			<!-- but then other form view also use it... -->
+			<!-- <field eval="11" name="priority"/> -->
+			<field name="arch" type="xml">
+				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Pre-Packing List">
+					<group col="6" colspan="4">
+						<group colspan="4" col="4">
+							<field name="name" readonly="1"/>
+							<field name="origin" readonly="1"/>
+							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
+							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}"
+								   domain="[('partner_id', '=', partner_id2)]"
+							/>
+							<field name="invoice_state" invisible="1" />
+							<field name="backorder_id" readonly="1" />
+							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
+							<field name="num_of_packs" />
+							<field name="total_volume" />
+							<field name="total_weight" />
+						</group>
+						<group colspan="2" col="2">
+							<field name="date" readonly="1" />
+							<field name="stock_journal_id" widget="selection" invisible="True" />
+							<field name="min_date" string="Expected Pack Date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
+							<field name="sale_id" invisible="True" />
+							<field name="subtype" invisible="True" />
+							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+							<field name='ppl_customize_label' required="True" />
+							<field name="description_ppl"  />
+						</group>
+
+					</group>
+					<notebook colspan="4">
+						<page string="Products">
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
+								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
+                                    <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
+									<field name="composition_list_id" />
+									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
+									<field name="product_uom" string="UoM"/>
+									<field name="product_uos" />
+									<field name="asset_id" />
+									<field name="prodlot_id" string="Batch Number" />
+									<field name="expired_date" />
+									<field name="kc_dg" />
+									<field name="location_id" string="Src. Loc" />
+									<field name="location_dest_id" string="Dest. Loc" />
+									<field name="qty_per_pack" />
+									<field name="from_pack" />
+									<field name="to_pack" />
+									<field name="date" string="Actual Pack Date" />
+									<field name="state"/>
+
+
+									<field name="lot_check" />
+									<field name="exp_check" />
+									<field name="kc_check" />
+									<field name="ssl_check" invisible="True" />
+									<field name="dg_check" />
+									<field name="np_check" />
+									<field name="inactive_product" invisible="1" />
+                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+								</tree>
+								<form string="Stock Moves">
+									<group colspan="2" col="4">
+										<separator colspan="4" string="Move Information"/>
+										<field name="name" invisible="1" colspan="4" />
+                                        <field name="product_id"
+                                               context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True, 'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"
+                                               on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id,parent.type,purchase_line_id,True)"
+                                               colspan="4" />
+                                        <field name="composition_list_id" invisible="True" />
+										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
+										<field name="product_uom" string="Unit Of Measure" colspan="2" domain="[('uom_by_product', '=', product_id)]"/>
+										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
+										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
+										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
+									</group>
+									<group colspan="2" col="2">
+										<separator string="Locations" colspan="2" />
+										<field name="location_id" domain="[ ('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('check_cd','in',[purchase_line_id,move_cross_docking_ok]), ('id', '!=', location_dest_id)]" readonly="1"
+										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" readonly="1" />
+									</group>
+									<group colspan="2" col="4">
+										<separator string="Traceability" colspan="4" />
+										<field name="asset_id" colspan="4" />
+										<field name="hidden_batch_management_mandatory" invisible="True" />
+										<field name="hidden_perishable_mandatory" invisible="True" />
+										<field name="prodlot_id"
+										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+										'search_default_real': True}"
+										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
+										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="2"
+										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
+										<field name="expired_date" />
+										<group colspan="4" col="10">
+											<field name="lot_check" />
+											<field name="exp_check" />
+											<field name="kc_check" />
+											<field name="ssl_check" invisible="True" />
+											<field name="dg_check" />
+											<field name="np_check" />
+										</group>
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
+									</group>
+									<group colspan="2" col="2">
+										<separator string="Dates" colspan="2" />
+										<field name="create_date" invisible="1"/>
+										<field name="date" string="Actual Pack Date" />
+										<field name="date_expected" string="Expected Pack Date" />
+									</group>
+	           			            <field name="purchase_line_id"  invisible="1"/>
+	           			            <field name="move_cross_docking_ok"  invisible="1"/>
+
+									<label string="" colspan="4"/>
+									<field name="state"/>
+									<group col="4" colspan="2">
+										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
+										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find" />
+									</group>
+								</form>
+							</field>
+							<group col="12" colspan="4">
+								<field name="state" readonly="1"/>
+								<field name="flow_type" />
+                                <button name="ppl_return" string="Return Products..." states="confirmed,assigned" type="object" icon="gtk-undo" context="{'from_button': True}" />
+								<button name="action_assign" states="" string="Check Availability" type="object" icon="gtk-find"/>
+								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to" />
+                                <button name="ppl" states="assigned" string="Pack..." type="object" icon="terp-accessories-archiver" context="{'from_button': True}" />
+								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
+							</group>
+						</page>
+						<page string="Additional info">
+							<field name="auto_picking" invisible="1" />
+							<field name="date_done" />
+							<field name="move_type" invisible="1"/>
+							<field name="type" invisible="1"/>
+							<field name="company_id" groups="base.group_multi_company" widget="selection" invisible="1"/>
+						</page>
+						<page string="Notes">
+							<field colspan="4" name="note" nolabel="1"/>
+							<field  name="from_wkf" invisible="1"/>
+						</page>
+					</notebook>
+				</form>
+			</field>
+		</record>
+		<!-- Changed name to 'PPL' -->
+		<record id="view_ppl_search" model="ir.ui.view">
+			<field name="name">ppl.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Pre-Packing List">
+					<group col="8" colspan="4">
+						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
+						<filter icon="terp-dialog-close" name="done" string="Closed" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+						<separator orientation="vertical"/>
+						<field name="name"/>
+						<field name="partner_id2" />
+						<field name="origin"/>
+						<field name="reason_type_id" widget="selection" />
+						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
+						<field name="date" />
+						<field name="min_date" />
+					</group>
+					<newline/>
+					<group expand="0" string="Group By..." colspan="4" col="8">
+						<filter string="Origin" name="origin" icon="terp-partner" domain="[]" context="{'group_by':'origin'}"/>
+						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
+						<separator orientation="vertical" />
+						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+						<separator orientation="vertical" />
+						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+						<separator orientation="vertical" />
+						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+					</group>
+				</search>
+			</field>
+		</record>
+		<!-- Added 'subtype' in domain -->
+		<record id="action_ppl" model="ir.actions.act_window">
+			<field name="name">Pre-Packing Lists</field>
+			<field name="res_model">stock.picking</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar</field>
+			<field name="domain">[('type','=','out'), ('subtype', '=', 'ppl')]</field>
+			<field name="context">{'contact_display': 'partner_address', 'ppl_screen':True,
+								   'picking_type': 'picking_ticket',
+								   'search_default_available':1}</field>
+			<!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
+			<field name="search_view_id" ref="view_ppl_search"/>
+			<field name="help">This is the list of all ppl that have been picked.</field>
+		</record>
+		<record id="action_ppl_tree" model="ir.actions.act_window.view">
+			<field eval="1" name="sequence"/>
+			<field name="view_mode">tree</field>
+			<field name="view_id" ref="view_ppl_tree"/>
+			<field name="act_window_id" ref="action_ppl"/>
+		</record>
+		<record id="action_ppl_form" model="ir.actions.act_window.view">
+			<field eval="2" name="sequence"/>
+			<field name="view_mode">form</field>
+			<field name="view_id" ref="view_ppl_form"/>
+			<field name="act_window_id" ref="action_ppl"/>
+		</record>
+		<record id="action_ppl_cal" model="ir.actions.act_window.view">
+			<field eval="3" name="sequence"/>
+			<field name="view_mode">calendar</field>
+			<field name="act_window_id" ref="action_ppl"/>
+		</record>
+		<menuitem action="action_ppl" id="menu_action_ppl" parent="menu_warehouse_deliveries" sequence="5" />
+
+		<record id="view_pt_ppl_form" model="ir.ui.view">
+			<field name="name">pt.ppl.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" string="Shipment preparation">
+					<group col="6" colspan="4">
+						<group colspan="4" col="4">
+							<field name="name" readonly="1"/>
+							<field name="origin" readonly="1"/>
+							<field name="partner_id2"  readonly="1" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
+							 />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"  readonly="1"/>
+							<field name="invoice_state"/>
+							<field name="backorder_id" readonly="1" />
+							<field name="num_of_packs" attrs="{'invisible': [('subtype', 'in', ('picking'))]}"/>
+							<field name="total_weight" attrs="{'invisible': [('subtype', 'in', ('picking'))]}"/>
+						</group>
+						<group colspan="2" col="2">
+							<field name="date" readonly="1"/>
+							<field name="stock_journal_id" widget="selection" invisible="True" />
+							<field name="min_date" readonly="1" string="Expected Pack Date"  />
+							<field name="reason_type_id" widget="selection" readonly="1"/>
+							<field name="sale_id" invisible="True" />
+							<field name="subtype" invisible="True" />
+							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+							<field name='ppl_customize_label' required="True" readonly="1" attrs="{'invisible': [('subtype', 'in', ('picking'))]}"/>
+						</group>
+					</group>
+					<notebook colspan="4">
+						<page string="Products">
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}" readonly="1">
+								<tree string="Stock Moves" colors="red: inactive_product==True">
+									<field name="product_id"/>
+									<field name="asset_id" />
+									<field name="composition_list_id" />
+									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
+									<field name="product_uom" string="UoM"/>
+									<field name="product_uos" />
+									<field name="prodlot_id" string="Batch Number" />
+									<field name="expired_date" />
+									<field name="kc_dg" />
+									<field name="location_id" string="Src. Loc" />
+									<field name="location_dest_id" string="Dest. Loc" />
+									<field name="qty_per_pack" />
+									<field name="from_pack" />
+									<field name="to_pack" />
+									<field name="date" string="Actual Pack Date" />
+									<field name="state"/>
+									<field name="lot_check" />
+									<field name="exp_check" />
+									<field name="kc_check" />
+									<field name="ssl_check" invisible="True" />
+									<field name="dg_check" />
+									<field name="np_check" />
+									<field name="inactive_product" invisible="1" />
+                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+								</tree>
+							</field>
+							<group col="12" colspan="4">
+								<field name="state" readonly="1"/>
+								<field name="flow_type" />
+							</group>
+						</page>
+						<page string="Additional info">
+							<field name="auto_picking" readonly="1"/>
+							<field name="date_done" readonly="1"/>
+							<field name="move_type" readonly="1"/>
+							<field name="type" readonly="1"/>
+							<field name="company_id" groups="base.group_multi_company" widget="selection" readonly="1"/>
+						</page>
+						<page string="Notes">
+							<field colspan="4" name="note" nolabel="1" readonly="1"/>
+						</page>
+					</notebook>
+				</form>
+			</field>
+		</record>
+		<record id="view_pt_ppl_tree" model="ir.ui.view">
+			<field name="name">pt.ppl.tree</field>
+			<field name="model">stock.picking</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree hide_new_button="1" hide_delete_button="1" colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Shipment preparation">
+					<field name="name"/>
+					<field name="partner_id2" />
+					<field name="sale_id" invisible="True" />
+					<field name="reason_type_id" />
+					<field name="origin"/>
+					<field name="order_category"/>
+					<field name="overall_qty" invisible="True" />
+					<field name="date"/>
+					<field name="min_date" string="Expected Pick Date" />
+					<field name="backorder_id" />
+					<field name="invoice_state"/>
+					<field name="stock_journal_id" widget="selection"/>
+					<field name="state"/>
+				</tree>
+			</field>
+		</record>
+		<record id="action_pt_ppl" model="ir.actions.act_window">
+			<field name="name">Shipment preparation</field>
+			<field name="res_model">stock.picking</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form</field>
+			<field name="domain">[('type','=','out'), ( 'subtype', 'in', ['picking','ppl'] )]</field>
+			<field name="context">{'group_by':'origin,state' }</field>
+			<field name="search_view_id" ref="view_pt_ppl_search"/>
+		</record>
+		<record id="action_pt_ppl_tree" model="ir.actions.act_window.view">
+			<field eval="1" name="sequence"/>
+			<field name="view_mode">tree</field>
+			<field name="view_id" ref="view_pt_ppl_tree"/>
+			<field name="act_window_id" ref="action_pt_ppl"/>
+		</record>
+		<record id="action_pt_ppl_form" model="ir.actions.act_window.view">
+			<field eval="2" name="sequence"/>
+			<field name="view_mode">form</field>
+			<field name="view_id" ref="view_pt_ppl_form"/>
+			<field name="act_window_id" ref="action_pt_ppl"/>
+		</record>
+		<!-- <menuitem action="action_pt_ppl" id="menu_action_pt_ppl" parent="menu_warehouse_deliveries" sequence="6" /> -->
+
+		<!-- Changed name to 'Packing' -->
+		<record id="view_packing_tree" model="ir.ui.view">
+			<field name="name">packing.tree</field>
+			<field name="model">stock.picking</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+				<tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date" string="Packing">
+					<field name="name"/>
+					<field name="partner_id2"/>
+					<field name="origin"/>
+					<field name="reason_type_id" />
+					<field name="date"/>
+					<field name="min_date"/>
+					<field name="backorder_id" />
+					<field name="invoice_state"/>
+					<field name="stock_journal_id" widget="selection"/>
+					<field name="state"/>
+				</tree>
+			</field>
+		</record>
+		<!-- Remove 'Process Later' (draft_force_assign) and 'Process Now' (draft_validate) buttons -->
+		<!-- 'Check Availability' button available for 'draft' state -->
+		<!-- Changed name to 'Packing' -->
+		<!-- Add 'Flow Type' drop down list -->
+		<!-- TREE -->
+		<!-- Remove 'Scrap Products' button -->
+		<!-- Remove 'Scrapped' -->
+		<!-- Remove 'Split in production lots' -->
+		<!-- Remove 'Put in current pack' -->
+		<!-- Remove 'Put in a new pack' -->
+		<!-- Remove 'Process' at stock.move level -->
+		<!-- FORM -->
+		<!-- Remove 'Scrap' button -->
+		<!-- Remove 'New Pack' -->
+		<!-- Remove 'tracking_id' -->
+		<!-- Remove 'Split' -->
+		<!-- Remove 'Process' button -->
+		<!-- Added Asset Id to move tree and form -->
+		<record id="view_packing_form" model="ir.ui.view">
+			<field name="name">packing.form</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<!-- without priority 'view_picking_form' from stock is used -->
+			<!-- but then other form view also use it... -->
+			<!-- <field eval="11" name="priority"/> -->
+			<field name="arch" type="xml">
+				<form string="Packing">
+					<group col="6" colspan="4">
+						<group colspan="4" col="4">
+							<field name="name" readonly="1"/>
+							<field name="origin" readonly="1"/>
+							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                        required="1"
+							attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+							<field name="address_id" colspan="2" context="{'contact_display':'partner'}"
+								   domain="[('partner_id', '=', partner_id2)]"
+							/>
+							<field name="invoice_state"/>
+							<field name="backorder_id" readonly="1" />
+							<field name="shipment_id" readonly="True" />
+						</group>
+						<group colspan="2" col="2">
+							<field name="date" readonly="1" />
+							<field name="min_date" attrs="{'readonly': [('state', 'in', ['done', 'cancel'])]}" />
+							<field name="stock_journal_id" widget="selection" invisible="True" />
+							<field name="reason_type_id" widget="selection"/>
+							<field name="sale_id" invisible="True" />
+							<field name="subtype" invisible="True" />
+							<field name="warehouse_id" attrs="{'readonly': ['|', '|', ('sale_id', '!=', False), ('state', '!=', 'draft'), ('subtype', '!=', 'picking')]}" />
+						</group>
+					</group>
+					<notebook colspan="4">
+						<page string="Products">
+							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}">
+								<tree string="Stock Moves" colors="red: inactive_product==True">
+									<field name="product_id"/>
+									<field name="composition_list_id" />
+									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
+									<field name="product_uom" string="UoM"/>
+									<field name="product_uos" />
+									<field name="asset_id" />
+									<field name="prodlot_id" string="Batch Number" />
+									<field name="expired_date" />
+									<field name="kc_dg" />
+									<field name="location_id" string="Src. Loc" />
+									<field name="location_dest_id" string="Dest. Loc" />
+									<field name="qty_per_pack" />
+									<field name="from_pack" />
+									<field name="to_pack" />
+									<field name="num_of_packs" />
+									<field name="total_amount" />
+									<field name="currency_id" />
+									<field name="date"/>
+									<field name="state"/>
+									<field name="lot_check" />
+									<field name="exp_check" />
+									<field name="kc_check" />
+									<field name="ssl_check" invisible="True" />
+									<field name="dg_check" />
+									<field name="np_check" />
+									<field name="inactive_product" invisible="1" />
+                    				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+								</tree>
+								<form string="Stock Moves">
+									<group colspan="2" col="4">
+										<separator colspan="4" string="Move Information"/>
+										<field name="name" invisible="1" colspan="4" />
+                                        <field name="product_id" context="{'location': location_id, 'prodlot_id': prodlot_id, 'compute_child': True}" on_change="onchange_product_id(product_id,location_id,location_dest_id, parent.address_id)" colspan="4" />
+										<field name="asset_id" />
+                                        <field name="composition_list_id" invisible="True" />
+										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
+										<field name="product_uom" string="Unit Of Measure" colspan="4" />
+										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
+										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
+										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" />
+									</group>
+									<group colspan="2" col="2">
+										<separator string="Locations" colspan="2" />
+										<field name="location_id" domain="[('quarantine_location', '=', False),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_dest_id)]"
+										context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}" />
+										<field name="location_dest_id" domain="[('usage','&lt;&gt;','view'),('check_prod_loc','=',[product_id,'out']), ('id', '!=', location_id)]" on_change="location_dest_change(location_dest_id, location_id)" />
+									</group>
+									<group colspan="2" col="2">
+										<separator string="Dates" colspan="2" />
+										<field name="create_date" invisible="1"/>
+										<field name="date"/>
+										<field name="date_expected"/>
+									</group>
+									<group colspan="2" col="4">
+										<separator string="Traceability" colspan="4" />
+										<field name="reason_type_id"  attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}" widget="selection"/>
+										<field name="prodlot_id"
+										context="{'location_id':location_id, 'product_id':product_id, 'hidden_perishable_mandatory': hidden_perishable_mandatory,
+										'search_default_real': True}"
+										domain="[('product_id','=?',product_id), ('check_type','=', True)]"
+										on_change="onchange_lot_id(prodlot_id,product_qty, location_id, product_id, product_uom)" colspan="3"
+										attrs="{'readonly': [('hidden_batch_management_mandatory','=',False), ('hidden_perishable_mandatory','=',False)]}" />
+										<field name="hidden_batch_management_mandatory" invisible="True" />
+										<field name="hidden_perishable_mandatory" invisible="True" />
+										<field name="expired_date" />
+										<field name="lot_check" />
+										<field name="exp_check" />
+										<field name="kc_check" />
+										<field name="ssl_check" invisible="True" />
+										<field name="dg_check" />
+										<field name="np_check" />
+									</group>
+									<label string="" colspan="4"/>
+									<field name="state"/>
+									<group col="4" colspan="2">
+										<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+										<button name="cancel_assign" states="assigned" string="Cancel Availability" type="object" icon="gtk-find"/>
+									</group>
+								</form>
+							</field>
+							<group col="12" colspan="4">
+								<field name="state" readonly="1"/>
+								<field name="flow_type" />
+								<button name="button_cancel" states="assigned,confirmed,draft" string="_Cancel Picking" icon="gtk-cancel"  context="{'from_button': True}" />
+								<button name="action_assign" states="draft,confirmed" string="Check Availability" type="object" icon="gtk-find"/>
+								<button name="force_assign" states="confirmed" string="Force Availability" type="object" icon="gtk-jump-to"/>
+								<button name="packing" states="assigned" string="Pack..." type="object" icon="gtk-go-forward"/>
+								<button name="%(stock.act_stock_return_picking)d" string="Return Products" states="done" type="action" icon="gtk-execute"/>
+								<!-- <button name="%(stock.action_stock_invoice_onshipping)d" string="Create Invoice" attrs="{'invisible': ['|','|',('state','&lt;&gt;','done'),('invoice_state','=','invoiced'),('invoice_state','=','none')]}"  type="action" icon="terp-gtk-go-back-rtl"/> -->
+							</group>
+						</page>
+						<page string="Additional info">
+							<field name="auto_picking" />
+							<field name="date_done" />
+							<field name="move_type" />
+							<field name="type" />
+							<field name="company_id" groups="base.group_multi_company" widget="selection"/>
+						</page>
+						<page string="Notes">
+							<field colspan="4" name="note" nolabel="1"/>
+						</page>
+					</notebook>
+				</form>
+			</field>
+		</record>
+		<!-- Changed name to 'Packing' -->
+		<record id="view_packing_search" model="ir.ui.view">
+			<field name="name">packing.search</field>
+			<field name="model">stock.picking</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Packing">
+					<group col="8" colspan="4">
+						<filter icon="terp-check" name="available" string="Available" domain="[('state','=','assigned')]" help="Assigned Delivery Orders"/>
+						<filter icon="terp-camera_test" name="confirmed" string="Confirmed" domain="[('state','=','confirmed')]" help="Confirmed Delivery Orders"/>
+						<filter icon="terp-dialog-close" name="done" string="Done" domain="[('state','=','done')]" help="Delivery orders already processed"/>
+						<separator orientation="vertical"/>
+						<filter icon="terp-accessories-archiver-minus" string="Back Orders" domain="[('backorder_id', '!=', False)]" help="Is a Back Order" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-dolar" name="to_invoice" string="To Invoice" domain="[('invoice_state','=','2binvoiced')]" help="Delivery orders to invoice"/>
+						<separator orientation="vertical"/>
+						<field name="name"/>
+						<field name="partner_id2" />
+						<field name="origin"/>
+						<field name="reason_type_id" widget="selection"/>
+						<field name="stock_journal_id" widget="selection"/>
+						<field name="company_id" widget="selection" groups="base.group_multi_company"/>
+					</group>
+					<newline/>
+					<group expand="0" string="Group By..." colspan="4" col="8">
+						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
+						<separator orientation="vertical" />
+						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+						<separator orientation="vertical" />
+						<filter string="Reason Type" icon="terp-purchase" domain="[]" context="{'group_by':'reason_type_id'}"/>
+						<separator orientation="vertical" />
+						<filter string="Order Date" icon="terp-go-month" domain="[]"  context="{'group_by':'date'}"/>
+						<filter string="Expected Date" icon="terp-go-month" domain="[]"  context="{'group_by':'min_date'}"/>
+						<separator orientation="vertical" />
+						<filter string="Journal" icon="terp-folder-orange" domain="[]" context="{'group_by':'stock_journal_id'}" />
+					</group>
+				</search>
+			</field>
+		</record>
+		<!-- Added 'subtype' in domain -->
+		<record id="action_packing" model="ir.actions.act_window">
+			<field name="name">Packing (debug)</field>
+			<field name="res_model">stock.picking</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar</field>
+			<field name="domain">[('type','=','out'), ('subtype', '=', 'packing')]</field>
+			<field name="context">{'contact_display': 'partner_address'}</field>
+			<field name="search_view_id" ref="view_packing_search"/>
+			<field name="help">This is the list of all packing that have been picked.</field>
+		</record>
+		<record id="action_packing_tree" model="ir.actions.act_window.view">
+			<field eval="1" name="sequence"/>
+			<field name="view_mode">tree</field>
+			<field name="view_id" ref="view_packing_tree"/>
+			<field name="act_window_id" ref="action_packing"/>
+		</record>
+		<record id="action_packing_form" model="ir.actions.act_window.view">
+			<field eval="2" name="sequence"/>
+			<field name="view_mode">form</field>
+			<field name="view_id" ref="view_packing_form"/>
+			<field name="act_window_id" ref="action_packing"/>
+		</record>
+		<record id="action_packing_cal" model="ir.actions.act_window.view">
+			<field eval="3" name="sequence"/>
+			<field name="view_mode">calendar</field>
+			<field name="act_window_id" ref="action_packing"/>
+		</record>
+		<!--<menuitem action="action_packing" id="menu_action_packing" parent="stock.menu_stock_warehouse_mgmt" sequence="6"/>-->
+
+		<!-- Shipment -->
+		<record id="view_change_desc_wizard" model="ir.ui.view">
+			<field name="name">stock.picking.wizard</field>
+			<field name="model">stock.picking</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+                <form string="Change description shipment line">
+					<field name="description_ppl"/>
+					<button name="change_description_save" string="Save description" icon="gtk-save" type="object" />
+				</form>
+			</field>
+		</record>
+
+		<record id="view_shipment_tree" model="ir.ui.view">
+			<field name="name">shipment.tree</field>
+			<field name="model">shipment</field>
+			<field name="type">tree</field>
+			<field name="arch" type="xml">
+                <tree string="Shipment" hide_new_button="1" hide_delete_button="1" colors="blue:state in ['draft'] and (shipment_expected_date &gt; current_date or shipment_expected_date == current_date);grey:state in ['cancel'];red:state not in ['cancel', 'done'] and shipment_expected_date &lt; current_date;black:state in ['done'];green: state in ['delivered']">
+					<field name="name"/>
+					<field name="partner_id2"/>
+					<field name="address_id"/>
+					<field name="num_of_packs" />
+					<field name="total_weight" />
+					<field name="total_volume" />
+					<field name="total_amount" />
+					<field name="currency_id" />
+					<field name="date" />
+					<field name="shipment_expected_date" />
+					<field name="state"/>
+					<button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add"/>
+					<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo"/>
+					<button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply"/>
+				</tree>
+			</field>
+		</record>
+		<record id="view_shipment_form" model="ir.ui.view">
+			<field name="name">shipment.form</field>
+			<field name="model">shipment</field>
+			<field name="type">form</field>
+			<field name="arch" type="xml">
+				<form string="Shipment" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+					<group col="6" colspan="4">
+						<group colspan="4" col="4">
+							<field name="name" readonly="1"/>
+							<field name="date" readonly="True" />
+							<field name="shipment_actual_date" />
+							<field name="shipment_expected_date" attrs="{'readonly': [('state', 'not in', ('draft', 'packed'))]}" />
+                            <field name="transport_type" attrs="{'readonly': [('state', 'in', ('done', 'delivered', 'cancel'))]}" />
+							<field name="backshipment_id" readonly="True" />
+							<field name="partner_id2" on_change="on_change_partner(partner_id2, address_id)"
+                                                                required="1"
+								attrs="{'readonly': [('state', 'not in', ['draft', 'waiting', 'confirmed', 'assigned'])]}" />
+							<field name="address_id" context="{'contact_display':'partner'}"
+								   domain="[('partner_id', '=', partner_id2)]"
+								   attrs="{'readonly': ['|', ('partner_id2', '=', False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+							<field name="in_ref" readonly="True" />
+						</group>
+					</group>
+
+					<notebook colspan="4">
+						<page string="Pack Families">
+							<field colspan="4" name="pack_family_memory_ids" nolabel="1" widget="one2many_list" readonly="True">
+								<tree string="Pack Families" colors="red: not_shipped">
+									<field name="fake_state" invisible="True" />
+									<field name="sale_order_id"/>
+									<field name="ppl_id" />
+                                    <field name="description_ppl" />
+									<button name="change_description" string="Change description" icon="gtk-edit" type="object" attrs="{'invisible': [('fake_state', 'not in', ['draft', 'assigned'])]}" />
+									<field name="from_pack"/>
+									<field name="to_pack"/>
+									<field name="num_of_packs" />
+									<field name="pack_type"/>
+									<field name="total_volume" />
+									<field name="weight"/>
+									<field name="total_weight" />
+									<field name="amount" />
+									<field name="total_amount" />
+									<field name="currency_id" />
+									<field name="location_id" />
+                                    <field name="state" />
+                                    <field name="not_shipped"  string="Returned" />
+								</tree>
+								<form>
+									<field name="sale_order_id"/>
+									<field name="ppl_id" />
+                                    <field name="description_ppl" /><newline />
+									<field name="from_pack"/>
+									<field name="to_pack"/>
+									<field name="num_of_packs" />
+									<field name="pack_type"/>
+									<field name="total_volume" />
+									<field name="weight"/>
+									<field name="total_weight" />
+									<field name="amount" />
+									<field name="total_amount" />
+									<field name="currency_id" />
+									<field name="location_id" />
+									<field name="location_dest_id" />
+									<field name="state" />
+									<field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
+										<tree colors="red: inactive_product==True">
+											<field name="name" />
+											<field name="origin" />
+											<field name="product_id" />
+											<field name="prodlot_id" />
+											<field name="expired_date" />
+											<field name="product_qty" />
+											<field name="product_uom" />
+											<field name="location_id" />
+											<field name="location_dest_id" />
+											<field name="state" />
+											<field name="inactive_product" invisible="1" />
+                    						<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
+										</tree>
+									</field>
+								</form>
+							</field>
+							<group col="12" colspan="4">
+								<field name="state" readonly="1"/>
+                                <button name="return_packs" states="draft" string="Return Packs to Stock..." type="object" icon="gtk-undo" context="{'from_button': True}" />
+                                <button name="create_shipment" states="draft" string="Create Shipment..." type="object" icon="gtk-add" context="{'from_button': True}" />
+								<button name="action_cancel" states="packed" string="Cancel Shipment" type="object" icon="gtk-cancel" />
+								<button name="ship" states="packed" string="Ship" type="object" icon="gtk-redo" />
+                                <button name="return_packs_from_shipment" states="shipped" string="Return Packs from Shipment..." type="object" icon="gtk-undo" context="{'from_button': True}" />
+                                <button name="validate" states="shipped" string="Validate" type="object" icon="gtk-apply" context="{'from_button': True}" />
+								<button name="set_delivered" icon="gtk-apply" type="object" string="Validate Delivery" attrs="{'invisible': [('state', '!=', 'done')]}"
+								confirm="Synchronization engine should confirm the delivery at the project reception, are you sure?"/>
+							</group>
+						</page>
+						<page string="Additional Items" invisible="1">
+						    <field colspan="4" name="additional_items_ids" nolabel="1" widget="one2many_list" >
+						    </field>
+						</page>
+						<page string="Document Information">
+							<group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+								<field name="cargo_manifest_reference" />
+								<field name="date_of_departure" />
+								<field name="planned_date_of_arrival" />
+								<field name="transit_via" />
+								<field name="registration" />
+								<field name="driver_name" />
+							</group>
+						</page>
+						<page string="Transport Information">
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+								<separator string="Shipper" colspan="2" />
+                                <field name="shipper_name" />
+                                <field name="shipper_contact" />
+								<field name="shipper_address" />
+								<field name="shipper_phone" />
+								<field name="shipper_email" />
+								<field name="shipper_other" />
+								<field name="shipper_date" />
+							</group>
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+                                <separator string="Carrier" colspan="2" />
+                                <field name="carrier_id" on_change="selected_carrier(carrier_id)" />
+                                <field name="carrier_name" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_address" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_phone" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_email" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+                                <field name="carrier_other" attrs="{'readonly': ['|', ('carrier_id', '!=',  False), ('state', 'in', ('done', 'cancel', 'delivered'))]}" />
+								<field name="carrier_date" />
+							</group>
+                            <group col="2" colspan="1" attrs="{'readonly': [('state', 'in', ('done', 'cancel', 'delivered'))]}">
+								<separator string="Consignee" colspan="2" />
+                                <field name="consignee_name" />
+                                <field name="consignee_contact" />
+								<field name="consignee_address" />
+								<field name="consignee_phone" />
+								<field name="consignee_email" />
+								<field name="consignee_other" />
+								<field name="consignee_date" />
+							</group>
+						</page>
+					</notebook>
+				</form>
+			</field>
+		</record>
+
+        <record id="shipment_additionalitems_tree" model="ir.ui.view">
+            <field name="name">shipment.additionalitems.tree</field>
+            <field name="model">shipment.additionalitems</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                    <tree string="Additional Items" editable="bottom">
+                        <field name="name"/>
+                        <field name="quantity" />
+                        <field name="uom" />
+                        <field name="comment"/>
+                        <field name="volume"/>
+                        <field name="weight" />
+                        <field name="picking_id" />
+                    </tree>
+            </field>
+        </record>
+
+		<!-- Changed name to 'Shipment' -->
+		<record id="view_shipment_search" model="ir.ui.view">
+			<field name="name">shipment.search</field>
+			<field name="model">shipment</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Shipment">
+					<group col="8" colspan="4">
+						<filter icon="terp-document-new" name="draft" string="Draft" domain="[('state','=','draft')]" />
+						<filter icon="terp-check" name="shipped" string="Shipped" domain="[('state','=','shipped')]" />
+						<filter icon="terp-dialog-close" name="closed" string="Closed" domain="[('state','=','done')]" />
+						<filter icon="gtk-yes" name="delivered" string="Delivered" domain="[('state','=','delivered')]" />
+						<separator orientation="vertical"/>
+						<filter icon="terp-folder-orange" name="empty" string="Empty" domain="[('num_of_packs','=', 0)]" />
+						<filter icon="terp-folder-green" name="not_empty" string="Not Empty" domain="[('num_of_packs','!=', 0)]" />
+						<separator orientation="vertical"/>
+						<field name="name"/>
+						<field name="partner_id2" />
+					</group>
+					<newline/>
+					<group expand="0" string="Group By..." colspan="4" col="8">
+						<filter string="Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id2'}"/>
+						<separator orientation="vertical" />
+						<filter string="State" icon="terp-stock_effects-object-colorize" domain="[]" context="{'group_by':'state'}"/>
+					</group>
+				</search>
+			</field>
+		</record>
+		<!-- Added 'subtype' in domain -->
+		<record id="action_shipment" model="ir.actions.act_window">
+			<field name="name">Shipment Lists</field>
+			<field name="res_model">shipment</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar</field>
+			<field name="domain">[]</field>
+			<field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
+			<field name="search_view_id" ref="view_shipment_search"/>
+			<field name="help">This is the list of all shipment lists that have been picked. The shipment lists are regrouped by address.</field>
+		</record>
+
+		<record id="action_shipment_tree" model="ir.actions.act_window.view">
+			<field eval="1" name="sequence"/>
+			<field name="view_mode">tree</field>
+			<field name="view_id" ref="view_shipment_tree"/>
+			<field name="act_window_id" ref="action_shipment"/>
+		</record>
+		<record id="action_shipment_form" model="ir.actions.act_window.view">
+			<field eval="2" name="sequence"/>
+			<field name="view_mode">form</field>
+			<field name="view_id" ref="view_shipment_form"/>
+			<field name="act_window_id" ref="action_shipment"/>
+		</record>
+		<record id="action_shipment_cal" model="ir.actions.act_window.view">
+			<field eval="3" name="sequence"/>
+			<field name="view_mode">calendar</field>
+			<field name="act_window_id" ref="action_shipment"/>
+		</record>
+		<menuitem action="action_shipment" id="menu_action_shipment" parent="menu_warehouse_deliveries" sequence="6"/>
+
+
+		<!-- Closed Shipment lines -->
+
+        <record id="view_shipped_closed_tree" model="ir.ui.view">
+            <field name="name">Closed Shipped Lines</field>
+            <field name="model">stock.move</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1" colors="red: not_shipped">
+                    <field name="origin"/>
+                    <field name="picking_id" string="Pack"/>
+                    <field name="line_number"/>
+                    <field name="product_id"/>
+                    <field name="product_qty" />
+                    <field name="product_uom" string="UoM"/>
+                    <field name="prodlot_id"/>
+                    <field name="expired_date"/>
+                    <field name="asset_id"/>
+                    <field name="partner_id"/>
+                    <field name="date"/>
+                    <field name="not_shipped" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+		<record id="view_closed_shipment_search" model="ir.ui.view">
+			<field name="name">Closed Shipment Lists</field>
+			<field name="model">stock.move</field>
+			<field name="type">search</field>
+			<field name="arch" type="xml">
+				<search string="Shipment">
+                    <field name="name"/>
+                    <field name="picking_id" string="Pack" domain="[('already_shipped','=',True), ('shipment_id','!=',False)]"/>
+                    <field name="origin"/>
+                    <field name="prodlot_id"/>
+                    <field name="asset_id"/>
+				</search>
+			</field>
+		</record>
+
+		<!-- Added 'subtype' in domain -->
+		<record id="action_closed_shipment" model="ir.actions.act_window">
+			<field name="name">Closed Shipment Lists</field>
+			<field name="res_model">stock.move</field>
+			<field name="type">ir.actions.act_window</field>
+			<field name="view_type">form</field>
+			<field name="search_view_id" ref="view_closed_shipment_search"/>
+	        <field name="view_id" ref="view_shipped_closed_tree" />
+	        <field name="domain">[('state', '=', 'done'), ('origin', '!=', False), ('picking_id', '!=', False),('picking_id.already_shipped','=',True), ('picking_id.shipment_id','!=',False), ('product_qty','>', 0), ('location_dest_id.name','!=','Dispatch')]</field>
+			<field name="help">This is the list of all shipment lines with product information</field>
+		</record>
+
+		<menuitem action="action_closed_shipment" id="menu_action_closed_shipment" parent="menu_warehouse_deliveries" sequence="7"/>
+
+	</data>
+</openerp>

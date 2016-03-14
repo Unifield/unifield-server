@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="mulitple_sourcing_wizard_form_view" model="ir.ui.view">
+            <field name="name">multiple.sourcing.wizard.form.view</field>
+            <field name="model">multiple.sourcing.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Source multiple lines">
+                    <field name="company_id" invisible="1" />
+                    <field name="error_on_lines" invisible="1" />
+                    <group colspan="4" col="4" attrs="{'invisible': [('error_on_lines', '=', False)]}">
+                        <label string="Some of the selected lines have already been sourced. These lines have been ignored." colspan="4" />
+                    </group>
+                    <group colspan="4" col="4">
+                        <separator colspan="4" string="Selected lines to source" />
+                        <field name="line_ids" nolabel="1" colspan="4" />
+                        <separator colspan="4" string="Procurement method" />
+                        <field name="type" 
+                               on_change="change_type(type)"/>
+                        <field name="po_cft" attrs="{'readonly': [('type', '=', 'make_to_stock')]}"
+                               on_change="change_po_cft(po_cft)"/>
+                        <separator colspan="4" string="Supplier selection" />
+                        <field name="supplier_id"
+                               domain="[('id', '!=', company_id), ('available_for_dpo', '=', po_cft), ('line_contains_fo', '=', line_ids)]"
+                               attrs="{'readonly': ['|', ('po_cft', '=', 'cft'), ('type', '=', 'make_to_stock')]}"
+                               on_change="change_supplier(supplier_id)"
+                        />
+
+
+                   <field name="location_id"  domain="[('usage', '=', 'internal'), ('quarantine_location', '=', False), 
+                                                      ('scrap_location', '=', False), ('destruction_location', '=', False), 
+                                                      ('output_ok', '=', False), ('input_ok', '=', False)]" 
+                                                      attrs="{'readonly': [('type', '!=', 'make_to_stock')]}" 
+                              on_change="change_location(location_id, line_ids)" />
+
+                    </group>
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" help="Close the wizard" />
+                    <button name="save_lines" string="Save" icon="gtk-apply" type="object" help="Save new settings and close the wizard" />
+                    <button name="source_lines" string="Source default" icon="terp-camera_test" type="object" help="Check confirm the lines as 'default'/main wizard settings" />
+                    <button name="save_source_lines" string="Save &amp; source" icon="gtk-redo" type="object" help="Source lines with new options selected on the wizard" />
+                </form>
+            </field>
+        </record>
+
+        <record id="sourcing_line_special_tree_view" model="ir.ui.view">
+            <field name="name">sourcing.line.special.tree.view</field>
+            <field name="model">sale.order.line</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="10" />
+            <field name="arch" type="xml">
+                <tree string="Lines to source" hide_new_button="True" noteditable="True">
+                    <field name="order_id" string="Order reference" />
+                    <field name="line_number" />
+                    <field name="product_id" />
+                    <field name="product_uom_qty" />
+                    <field name="product_uom" />
+                    <field name="real_stock" />
+                    <field name="available_stock" />
+                    <field name="virtual_stock" />
+                    <field name="supplier" invisible="1" />
+                </tree>
+            </field>
+        </record>
+
+        <act_window name="Source lines"
+                    res_model="multiple.sourcing.wizard"
+                    src_model="sale.order.line"
+                    view_mode="form"
+                    target="new"
+                    key2="client_action_multi"
+                    id="action_multiple_sourcing" 
+                    domain="False" />
+
+    </data>
+</openerp>

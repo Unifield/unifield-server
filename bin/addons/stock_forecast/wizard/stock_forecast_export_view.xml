@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="action_stock_forecast_export_view" model="ir.actions.server">
+            <field name="name">Export Forecast List</field>
+            <field name="model_id" ref="model_stock_forecast_export"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.export_to_csv(context=context)</field>
+        </record>
+        
+        <record id="ir_open_stock_forecast_export_view" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">stock.forecast</field>
+            <field name="name">Export Forecast List</field>
+            <field eval="'ir.actions.server,%d'%action_stock_forecast_export_view" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+        
+        <record id="stock_forecast_export_form_view" model="ir.ui.view">
+            <field name="name">stock.forecast.export.form.view</field>
+            <field name="model">stock.forecast.export</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Forecast List Export">
+                    <separator colspan="4" string="Message" />
+                    <field name="message" colspan="4" nolabel="1" />
+                    <separator colspan="4" string="File to download" />
+                    <field name="file" colspan="4" nolabel="1" filename="filename" />
+                    <field name="filename" invisible="1"/>
+                </form>
+            </field>
+            
+        </record>
+        
+    </data>
+</openerp>

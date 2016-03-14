@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+        <record model="ir.ui.view" id="manage_version_form_view">
+            <field name="name">"manage_version_form_view</field>
+            <field name="model">sync_server.version.manager</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unifield Version Manager">
+                    <field name="state" invisible="1" />
+                    <group states="upload">
+                        <group colspan="4" col="6">
+                            <field name="name" required="1" />
+                            <!-- the following trick force the user to select the importance from the list -->
+                            <field name="importance" attrs="{'required':[('name','!=','')]}" />
+                            <field name="date" />
+                        </group>
+                        <separator string="Comment" colspan="4" />
+                        <field name="comment" nolabel="1" colspan="4" attrs="{'required':[('importance','!=','')]}" />
+                        <field name="patch" required="1" />
+                        <label string="" colspan="1" />
+                        <button name="add_revision" string="Add Revision" type="object" icon="gtk-go-forward" />
+                        <separator string="History of Revision" colspan="4" />
+                        <field name="version_ids" colspan="4" nolabel="1">
+                            <tree>
+                                <field name="state" />
+                                <field name="name"/>
+                                <field name="sum" />
+                                <field name="date" />
+                                <field name="importance" />
+                               <button name="activate_revision" string="Activate" type="object"  icon="gtk-ok" confirm="Are you sure you want to activate this revision?" states="draft" />
+                               <button name="delete_revision" string="Delete" type="object"  icon="gtk-cancel" confirm="Are you sure you want to delete this revision?" states="draft" />
+                            </tree>
+                        </field>
+                    </group>
+                    <group states="error">
+                        <field name="message" colspan="4" nolabel="1" />
+                        <label string="" colspan="3"/>
+                        <button name="back" string="OK" type="object" icon="gtk-go-back" />
+                    </group>
+                </form>
+            </field>
+        </record>
+    
+        <record model="ir.actions.act_window" id="manage_version_action">
+            <field name="name">Manage Version</field>
+            <field name="res_model">sync_server.version.manager</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+            
+        <menuitem id="manage_version_menu" name="Manage Unifield Version" parent="sync_server.sync_menu" sequence="99" action="manage_version_action" />
+    
+        <record id="ir_cron_autovacuum" model="ir.cron">
+            <field name="function">vacuum</field>
+            <field name="user_id">1</field>
+            <field name="name">Auto Vacuum</field>
+            <field name="interval_type">hours</field>
+            <field eval="-1" name="numbercall"/>
+            <field eval="5" name="priority"/>
+            <field eval="0" name="doall"/>
+            <field eval="1" name="active"/>
+            <field eval="2" name="interval_number"/>
+            <field name="model">sync_server.version.manager</field>
+        </record>
+
+    </data>
+</openerp>
+

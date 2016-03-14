@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<openerp>
+    <data>
+
+    <!-- Bank confirmation wizard -->
+        <record model="ir.ui.view" id="wizard_confirm_bank_form">
+            <field name='name'>wizard.confirm.bank.form</field>
+            <field name='model'>wizard.confirm.bank</field>
+            <field name='type'>form</field>
+            <field name='arch' type='xml'>
+                <form string="Invoice Lines">
+                    <label string="Did you reconcile your bank statement with your paper bank statement?" colspan="4" align="0.0"/>
+                    <group col="4" colspan="4">
+                        <label string="" colspan="2"/>
+                        <button string='No' special='cancel' icon='gtk-cancel'/>
+                        <button name="button_confirm" type="object" string="Yes" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

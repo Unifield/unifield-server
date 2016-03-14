@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="us_963" model="patch.scripts">
+            <field name="method">update_us_963_negative_rule_seq</field>
+        </record>
+
+        <record id="another_translation_fix" model="patch.scripts">
+            <field name="method">another_translation_fix</field>
+        </record>
+
+    </data>
+</openerp>

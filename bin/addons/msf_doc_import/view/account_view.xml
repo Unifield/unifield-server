@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="migration_accounting_import_error" model="ir.ui.view">
+            <field name="name">migration.accounting.import.errors</field>
+            <field name="model">msf.doc.import.accounting.errors</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Information">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+    <!--
+        Wizard
+    -->
+        <record id="migration_accounting_import_wizard" model="ir.ui.view">
+            <field name="name">migration.accounting.import.wizard</field>
+            <field name="model">msf.doc.import.accounting</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Entries">
+                    <label string="This will import Entries from a XML file." colspan="4"/>
+                    <newline/>
+                    <field name="file" filename="filename" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="filename" invisible="1"/>
+                    <field name="date" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <field name="progression" widget="progressbar" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}" colspan="4" />
+                    <field name="message" nolabel="1" attrs="{'invisible': [('state', '=', 'draft')]}"/>
+                    <newline/>
+                    <button name="button_update" type="object" string="Update" icon="gtk-refresh" attrs="{'invisible': [('state', '!=', 'inprogress')]}"/>
+                    <newline />
+                    <field name="error_ids" nolabel="1" attrs="{'invisible': [('state', '!=', 'error')]}"/>
+                    <group col="4" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <separator string="Import template"/>
+                        <newline />
+                        <html>
+                          <br />
+                          <table style="margin: 0 auto;">
+                            <thead>
+                              <tr style='background-color: #ccc;'>
+                                <th class='proprietary_instance' style='border: thin solid black; text-transform: none;'>Proprietary Instance</th>
+                                <th class='journal_code' style='border: thin solid black; border-left: none; text-transform: none;'>Journal Code</th>
+                                <th class='entry_sequence' style='border: thin solid black; border-left: none; text-transform: none;'>Entry Sequence</th>
+                                <th class='description' style='border: thin solid black; border-left: none; text-transform: none;'>Description</th>
+                                <th class='reference' style='border: thin solid black; border-left: none; text-transform: none;'>Reference</th>
+                                <th class='document_date' style="border: thin solid black; border-left: none; text-transform: none;">Document Date</th>
+                                <th class='posting_date' style='border: thin solid black; border-left: none; text-transform: none;'>Posting Date</th>
+                                <th class='period' style='border: thin solid black; border-left: none; text-transform: none;'>Period</th>
+                                <th class='account' style='border: thin solid black; border-left: none; text-transform: none;'>G/L Account</th>
+                                <th class='partner' style='border: thin solid black; border-left: none; text-transform: none;'>Partner</th>
+                                <th class='employee' style='border: thin solid black; border-left: none; text-transform: none;'>Employee</th>
+                                <th class='journal' style='border: thin solid black; border-left: none; text-transform: none;'>Journal</th>
+                                <th class='destination' style='border: thin solid black; border-left: none; text-transform: none;'>Destination</th>
+                                <th class='cost_center' style='border: thin solid black; border-left: none; text-transform: none;'>Cost Centre</th>
+                                <th class='destination' style='border: thin solid black; border-left: none; text-transform: none;'>Funding Pool</th>
+                                <th class='debit' style='border: thin solid black; border-left: none; text-transform: none;'>Booking Debit</th>
+                                <th class='credit' style='border: thin solid black; border-left: none; text-transform: none;'>Booking Credit</th>
+                                <th class='currency' style='border: thin solid black; border-left: none; text-transform: none;'>Booking Currency</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <th style="border: thin solid black; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                                <th style="border: thin solid black; border-left: none; border-top: none;"></th>
+                              </tr>
+                            </tbody>
+                          </table>
+                          <br />
+                        </html>
+                    </group>
+                    <group colspan="4" col="2" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                        <button string="Cancel" special="cancel" icon="gtk-cancel"/>
+                        <button name="button_validate" type="object" string="Import" icon="terp-camera_test"/>
+                    </group>
+                    <field name="state" invisible="1"/>
+                </form>
+            </field>
+        </record>
+
+    <!--
+        Actions
+    -->
+
+        <record id="action_migration_accounting_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import Entries</field>
+            <field name="res_model">msf.doc.import.accounting</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="migration_accounting_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem id="menu_finance_migration_accounting" name="Import Entries" parent="account.menu_finance_entries" sequence="39" action="action_migration_accounting_import_wizard"/>
+
+    </data>
+</openerp>

@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+            <record model="ir.ui.view" id="wizard_hard_posting_form1">
+                  <field name='name'>wizard.hard.posting.form1</field>
+                  <field name='model'>wizard.hard.posting</field>
+                  <field name='type'>form</field>
+                  <field name='arch' type='xml'>
+                        <form string="Hard Posting - Wizard">
+                            <separator string="Hard Posting" />
+                            <label string="The selected items will be hard-posted." colspan="4"/>
+                            <group colspan="4">
+                                <button string='Cancel' special='cancel' icon='gtk-cancel' colspan="2" />
+                                <button name="action_confirm_hard_posting" string="Hard Post" type="object" icon="gtk-apply" colspan="2" />
+                            </group>
+                        </form>
+                  </field>
+            </record>
+            <!-- Activities -->
+            <act_window name="Hard Posting"
+                        res_model="wizard.hard.posting"
+                        src_model="account.bank.statement.line"
+                        key2="client_action_multi"
+                        view_mode="form"
+                        view_type="form"
+                        target="new"
+                        id="act_wizard_hard_posting" />
+      </data>
+</openerp>

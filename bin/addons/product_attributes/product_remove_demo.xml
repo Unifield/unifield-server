@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="product.product_product_0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_pc1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_pc2" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_pc3" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_pc4" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_mb1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_mb2" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_cpu1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_cpu3" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_hdd1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_hdd2" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_hdd3" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_fan" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_fan2" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_cpu_gen" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_ram" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_ram512" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_cpu2" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_tow1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_20" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_21" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_22" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_23" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_24" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_25" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_26" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_shelfofcm0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_shelfofcm1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_woodmm0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_kitchendesignproject0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_employee0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_restaurantexpenses0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_worker0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_rearpanelarm0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_rearpanelarm1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_sidepanel0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_shelf0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_shelf1" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_assemblysection0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_woodlintelm0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_metalcleats0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_hotelexpenses0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product.product_product_kitshelfofcm0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product_expiry.product_product_jambon" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product_expiry.product_product_from" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product_expiry.product_product_pain" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="product_expiry.product_product_lait" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        <record id="sale.advance_product_0" model="product.product">
+            <field name="active" eval="False"/>
+        </record>
+        
+    </data>
+</openerp>
