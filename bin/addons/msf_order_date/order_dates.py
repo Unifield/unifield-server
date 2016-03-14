@@ -1365,8 +1365,7 @@ class stock_picking(osv.osv):
         self.write(cr, uid, ids, {'manual_min_date_stock_picking': value}, context=context)
         return True
 
-    # utp-360: I rename the date 'Actual Receipt Date' because before it was 'Creation Date'
-    _columns = {'date': fields.datetime('Actual Receipt Date', help="Date of Order", select=True),
+    _columns = {'date': fields.datetime('Creation Date', help="Date of Order", select=True),
                 'min_date': fields.function(get_min_max_date, fnct_inv=_set_minimum_date, multi="min_max_date",
                                             method=True, store=True, type='datetime', string='Expected Date', select=1,
                                             help="Expected date for the picking to be processed"),
