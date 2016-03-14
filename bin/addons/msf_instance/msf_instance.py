@@ -140,7 +140,7 @@ class msf_instance(osv.osv):
                     # data filtered only for coordo or project
                     if instance.level != 'section' and instance.mission:
                         visible_ids = self.search(cr, uid, [
-                            ('|'),
+                            '|',
                             ('mission', '=', instance.mission),
                             ('level', '=', 'section')])
                         res.append(('id', 'in', visible_ids))
