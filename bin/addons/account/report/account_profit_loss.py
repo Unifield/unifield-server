@@ -95,6 +95,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         ]
 
         ctx = self.context.copy()
+        ctx['financial_report'] = True
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
         ctx['state'] = data['form']['target_move']
 
