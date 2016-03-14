@@ -85,7 +85,7 @@ def delete_related_entity_rel(update_id_list, step=''):
                     (tuple(update_id_list),))
         entity_count = cr3.rowcount
         print '%s/3 sync_server_entity_rel deleted : %s' % (step, locale.format('%d', entity_count, 1))
-        print_time_elapsed(intermediate_time, time.time(), '%/3' % step)
+        print_time_elapsed(intermediate_time, time.time(), '%s/3' % step)
         conn.commit()
 
 def print_time_elapsed(start_time, stop_time, step=''):
