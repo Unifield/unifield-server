@@ -35,12 +35,13 @@ import os
 import report
 import tempfile
 import time
+import datetime
 from mako.template import Template
 from mako import exceptions
 import netsvc
 import pooler
 from report_helper import WebKitHelper
-from report.report_sxw import *
+from report.report_sxw import report_sxw, report_rml, _int_format, _float_format, _date_format, _dttime_format, browse_record_list
 import addons
 import tools
 from tools.translate import _
@@ -55,6 +56,23 @@ def mako_template(text):
     # default_filters=['unicode', 'h'] can be used to set global filters
     return Template(text, input_encoding='utf-8', output_encoding='utf-8')
 
+class _int_noformat(_int_format):
+    def __str__(self):
+        return str(self.val)
+
+
+class _float_noformat(_float_format):
+    def __str__(self):
+        return str(self.val)
+
+
+_fields_process = {
+    'integer': _int_noformat,
+    'float': _float_noformat,
+    'date': _date_format,
+    'datetime': _dttime_format
+}
+
 
 class WebKitParser(report_sxw):
     """Custom class that use webkit to render HTML reports
@@ -67,6 +85,10 @@ class WebKitParser(report_sxw):
         self.localcontext={}
         report_sxw.__init__(self, name, table, rml, parser, 
             header, store)
+
+    def getObjects(self, cr, uid, ids, context):
+        table_obj = pooler.get_pool(cr.dbname).get(self.table)
+        return table_obj.browse(cr, uid, ids, list_class=browse_record_list, context=context, fields_process=_fields_process)
 
     def get_lib(self, cursor, uid, company) :
         """Return the lib wkhtml path"""
