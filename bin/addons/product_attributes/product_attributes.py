@@ -1479,7 +1479,7 @@ class product_attributes(osv.osv):
                 vals['controlled_substance'] = 'True'
 
         if 'heat_sensitive_item' in vals:
-            vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
+            vals.update(self.onchange_heat(cr, user, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
