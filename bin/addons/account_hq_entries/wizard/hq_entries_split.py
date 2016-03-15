@@ -100,8 +100,8 @@ class hq_entries_split_lines(osv.osv_memory):
             line_ids = self.search(cr, uid, [('wizard_id', '=', context.get('parent_id', False))])
             for line in self.browse(cr, uid, line_ids) or []:
                 res -= line.amount
-        # Do not allow negative amounts
-        if res < 0.0:
+        # Do not allow negative amounts if the original amount is positive and vice versa
+        if (original_line.amount >= 0 and res < 0.0) or (original_line.amount < 0 and res > 0.0):
             res = 0.0
         return res
 
@@ -140,9 +140,11 @@ class hq_entries_split_lines(osv.osv_memory):
         if wiz and wiz.original_id and wiz.original_id.name:
             vals['name'] = wiz.original_id.name
         if vals.get('amount', 0.0):
-            # Check that amount is not negative
-            if vals.get('amount') <= 0.0:
+            # Check that amount is not negative if the original amount is positive and vice versa
+            if wiz.original_amount >= 0 and vals.get('amount') < 0.0:
                 raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
+            elif wiz.original_amount < 0 and vals.get('amount') > 0.0:
+                raise osv.except_osv(_('Error'), _('Positive value is not allowed!'))
         # In case we come from an account that is "Not HQ correctible", the account_id field is readonly and so not retrieved from the wizard. So we take the original line account as account_id value in vals dictionnary.
         if not 'account_id' in vals or not vals.get('account_id', False):
             if not vals.get('wizard_id'):
@@ -160,13 +162,15 @@ class hq_entries_split_lines(osv.osv_memory):
             for line in line.wizard_id.line_ids:
                 # Check line amount
                 if line.amount == 0.0:
+                    # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
+                    self.unlink(cr, uid, [res], context=context)
                     raise osv.except_osv(_('Error'), _('Null amount is not allowed!'))
                 expected_max_amount -= line.amount
             expected_max_amount += line.amount
             # Case where amount is superior to expected
-            if line.amount > expected_max_amount:
+            if abs(line.amount) > abs(expected_max_amount):
                 # Allow those where difference is inferior to 10^-2
-                if (line.amount - abs(expected_max_amount)) > 10 ** -2:
+                if (abs(line.amount) - abs(expected_max_amount)) > 10 ** -2:
                     # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
                     self.unlink(cr, uid, [res], context=context)
                     raise osv.except_osv(_('Error'), _('Expected max amount: %.2f') % (expected_max_amount or 0.0,))
@@ -179,6 +183,13 @@ class hq_entries_split_lines(osv.osv_memory):
         # Checks
         if context is None:
             context = {}
+        original_amount = self.pool.get('hq.entries.split').browse(cr, uid, context.get('active_id')).original_amount
+        if vals.get('amount', 0.0):
+            # Check that amount is not negative if the original amount is positive and vice versa
+            if original_amount >= 0 and vals.get('amount') < 0.0:
+                raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
+            elif original_amount < 0 and vals.get('amount') > 0.0:
+                raise osv.except_osv(_('Error'), _('Positive value is not allowed!'))
         # Prepare some values
         res = super(hq_entries_split_lines, self).write(cr, uid, ids, vals, context=context)
         for line in self.browse(cr, uid, ids, context=context):

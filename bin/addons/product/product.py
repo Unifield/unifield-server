@@ -478,7 +478,7 @@ class product_product(osv.osv):
         'price_extra': fields.float('Variant Price Extra', digits_compute=dp.get_precision('Sale Price')),
         'price_margin': fields.float('Variant Price Margin', digits_compute=dp.get_precision('Sale Price')),
         'pricelist_id': fields.dummy(string='Pricelist', relation='product.pricelist', type='many2one'),
-        'name_template': fields.related('product_tmpl_id', 'name', string="Name", type='char', size=128, store=True),
+        'name_template': fields.related('product_tmpl_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
     }
     
     def unlink(self, cr, uid, ids, context=None):

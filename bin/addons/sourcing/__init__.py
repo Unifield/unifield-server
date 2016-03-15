@@ -28,5 +28,6 @@ import product_template
 import purchase_order
 import res_partner
 import sale_order
+import po_automation_config
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

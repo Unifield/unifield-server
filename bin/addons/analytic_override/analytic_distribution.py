@@ -180,7 +180,7 @@ class analytic_distribution1(osv.osv):
             'name': name,
             'date': source_date or date,
             'document_date': document_date,
-            'ref': ref or '',
+            'ref': ref or False,
             'journal_id': journal_id,
             'general_account_id': general_account_id or False,
             'move_id': move_id or False,
@@ -288,7 +288,7 @@ class distribution_line(osv.osv):
                 'distrib_id': line.distribution_id.id,
                 'distribution_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
-                'ref': ref or move_line.move_id.name,
+                'ref': ref or move_line.move_id.name or False,
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({

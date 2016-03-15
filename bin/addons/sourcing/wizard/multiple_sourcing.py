@@ -43,6 +43,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         ),
         'run_scheduler': fields.boolean(
             string='Run scheduler ?',
+            readonly="True",
         ),
         'type': fields.selection(
             _SELECTION_TYPE,
@@ -83,6 +84,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         sol_obj = self.pool.get('sale.order.line')
         user_obj = self.pool.get('res.users')
+        po_auto_cfg_obj = self.pool.get('po.automation.config')
 
         if context is None:
             context = {}
@@ -96,7 +98,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res.update({
             'line_ids': [],
             'error_on_lines': False,
-            'run_scheduler': True,
+            'run_scheduler': po_auto_cfg_obj.get_po_automation(cr, uid, context=context),
             'type': 'make_to_stock',
             'po_cft': False,
         })
@@ -227,6 +229,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
         """
         # Objects
         line_obj = self.pool.get('sale.order.line')
+        po_auto_cfg_obj = self.pool.get('po.automation.config')
 
         if context is None:
             context = {}
@@ -235,11 +238,13 @@ class multiple_sourcing_wizard(osv.osv_memory):
             ids = [ids]
 
         lines_to_confirm = []
-        run_scheduler = False
+        run_scheduler = True
 
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.run_scheduler:
-                run_scheduler = True
+                run_scheduler = wiz.run_scheduler
+            else:
+                run_scheduler = po_auto_cfg_obj.get_po_automation(cr, uid, context=context)
             for line in wiz.line_ids:
                 if line.order_id.procurement_request and wiz.po_cft == 'dpo':
                     raise osv.except_osv(_('Error'), _(
