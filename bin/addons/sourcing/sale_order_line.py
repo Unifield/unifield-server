@@ -1032,6 +1032,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         # Objects
         order_obj = self.pool.get('sale.order')
+        po_auto_obj = self.pool.get('po.automation.config')
 
         if context is None:
             context = {}
@@ -1122,6 +1123,9 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('Warning'),
                 _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
             )
+
+        if not run_scheduler:
+            run_scheduler = po_auto_obj.get_po_automation(cr, uid, context=context)
 
         self.check_confirm_order(cr, uid, ids, run_scheduler=run_scheduler, context=context)
 
