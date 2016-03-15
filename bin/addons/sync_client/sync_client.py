@@ -57,6 +57,7 @@ class BackgroundProcess(Thread):
         self.context = context
         self.uid = uid
         self.db, pool = pooler.get_db_and_pool(cr.dbname)
+        connected = True
         try:
             entity = pool.get('sync.client.entity')
             # Lookup method to call
@@ -65,6 +66,7 @@ class BackgroundProcess(Thread):
             entity.is_syncing(raise_on_syncing=True)
             # Check if connection is up
             if not pool.get('sync.client.sync_server_connection').is_connected:
+                connected = False
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
             # Check for update
             if hasattr(entity, 'upgrade'):
@@ -75,6 +77,12 @@ class BackgroundProcess(Thread):
         except BaseException, e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
+            if not connected:
+                if context is None:
+                    context = {}
+                keyword = 'manual' in method and 'beforemanualsync' or 'beforeautomaticsync'
+                context['logger'] = logger
+                pool.get('backup.config').exp_dump_for_state(cr, uid, keyword, context=context)
             if isinstance(e, osv.except_osv):
                 logger.append(e.value)
                 raise
@@ -170,6 +178,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     if need_connection:
                         # Check if connection is up
                         if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                            if fn.__name__ == 'sync_manual_withbackup':
+                               self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
+
                             raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
