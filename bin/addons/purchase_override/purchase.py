@@ -163,6 +163,9 @@ class purchase_order(osv.osv):
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
+        if not 'date_confirm' in default:
+            default['date_confirm'] = False
+
         return super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
 
     # @@@purchase.purchase_order._invoiced
