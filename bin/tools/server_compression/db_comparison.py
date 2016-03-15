@@ -5,24 +5,18 @@ import psycopg2.extras
 import time
 import sys
 import oerplib
-import traceback
 import copy
 
 start_time = time.time()
 locale.setlocale(locale.LC_ALL, '')
 
-#HOST_ORIGIN = 'fm-sp-222.uf5.unifield.org'
 HOST_ORIGIN = 'localhost'
 PORT_ORIGIN = '10091'
 DB_ORIGIN = 'fm_sp_222_OCB_ALL_GROUP_V6'
 
-#HOST_COMPRESSED = 'fm-sp-222-ocg-compressed.uf5.unifield.org'
 HOST_COMPRESSED = 'localhost'
 PORT_COMPRESSED = '10251'
 DB_COMPRESSED = 'fm_sp_222_test_1303v1'
-
-MODEL_TO_IGNORE = [
-]
 
 FIELDS_TO_IGNORE = [
     'date',
@@ -72,8 +66,9 @@ def update_progress(progress, checked):
         status = "Done...\r\n"
     block = int(round(bar_length * progress))
     progress = round(progress, 3)
-    text = "\rPercent: [{0}] {1}% {2} ({3} checked)".format("#"*block +
-            "-"*(bar_length - block), progress * 100, status, checked)
+    text = "\rPercent: [{0}] {1}% {2} ({3} checked)"\
+        .format("#"*block + "-"*(bar_length - block),
+                progress * 100, status, checked)
     sys.stdout.write(text)
     sys.stdout.flush()
 
@@ -90,11 +85,12 @@ def diff(a, b):
     return ret_dict
 
 # get all the ir_model_data objects from the origin db:
-deleted_object_count = 0
-model_to_ignore_count = 0
+not_existing_count = 0
 object_not_synchronized_count = 0
-data_id_list = oerp_origin.search('ir.model.data', [('model', 'in',
-    tuple(synchronized_model))])
+data_id_list = oerp_origin.search('ir.model.data',
+                                  [('model', 'in', tuple(synchronized_model)),
+                                   ('sdref', 'not in', tuple(SDREF_TO_IGNORE)),
+                                   ])
 data_count = len(data_id_list)
 counter = 0
 time_stamp = time.strftime("%Y%m%d-%H%M%S")
@@ -105,31 +101,21 @@ result_file.write('%s object to checks...\n' % data_count)
 print '%s object to checks...' % data_count
 for data_object in oerp_origin.browse('ir.model.data', data_id_list):
     counter += 1
-    if data_object.model in MODEL_TO_IGNORE:
-        model_to_ignore_count += 1
-        continue
     if not data_object.res_id:
         continue
     sdref = data_object.name
-    if sdref in SDREF_TO_IGNORE:
-        continue
     # check if the related object still exists
     origin_id = oerp_origin.search(data_object.model, [('id', '=',
                                                         data_object.res_id)])
     if not origin_id:
-        deleted_object_count += 1
+        not_existing_count += 1
         continue
     if not oerp_origin.search('sync.client.update_received',
-                              [('sdref', '=', data_object.name)]):
+                              [('sdref', '=', sdref)]):
         # this object has not been syncrhonized
         object_not_synchronized_count += 1
         continue
-    try:
-        origin_obj = oerp_origin.browse(data_object.model, data_object.res_id)
-    except:
-        result_file.write('Object with sdref %s cannot been checked\n' %
-                          data_object.name)
-        continue
+    origin_obj = oerp_origin.browse(data_object.model, data_object.res_id)
     compressed_data_obj_id = oerp_compressed.search('ir.model.data',
                                                     [('name', '=', sdref)])
     if compressed_data_obj_id:
@@ -180,11 +166,9 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
 print '%s objects have never been synchronized' % object_not_synchronized_count
 result_file.write('%s objects have never been synchronized\n' %
                   object_not_synchronized_count)
-print '%s models ignored.' % model_to_ignore_count
-result_file.write('%s models ignored.\n' % model_to_ignore_count)
-print '%s objects have an sdref but don\'t exists in base.' % deleted_object_count
+print '%s objects have an sdref but don\'t exists in base.' % not_existing_count
 result_file.write('%s objects have an sdref but don\'t exists in base.\n' %
-                  deleted_object_count)
+                  not_existing_count)
 elapsed_time = time.time() - start_time
 minute, second = divmod(elapsed_time, 60)
 hour, minute = divmod(minute, 60)
