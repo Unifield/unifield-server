@@ -1762,8 +1762,14 @@ class account_bank_statement_line(osv.osv):
             #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
             move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
             for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
-                if abs(invoice_move_line.amount_currency) <= amount:
-                    amount_to_write = sign * abs(invoice_move_line.amount_currency)
+                amount_currency = invoice_move_line.amount_currency
+
+                if invoice_move_line.reconcile_partial_id:
+                    amount_currency = 0
+                    for line in invoice_move_line.reconcile_partial_id.line_partial_ids:
+                        amount_currency += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+                if abs(amount_currency) <= amount:
+                    amount_to_write = sign * abs(amount_currency)
                 else:
                     amount_to_write = sign * amount
                 # create a new move_line corresponding to this invoice move line
