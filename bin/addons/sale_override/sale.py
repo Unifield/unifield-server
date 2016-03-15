@@ -265,6 +265,24 @@ class sale_order_sourcing_progress(osv.osv):
         for to_po in to_po_obj.read(cr, uid, to_po_ids, ['nb_lines'], context=context):
             to_po_lines += to_po['nb_lines']
 
+        if not to_po_lines:
+            cr.execute('''
+                SELECT count(p.*) AS nb_line
+                FROM procurement_order p
+                    LEFT JOIN sale_order_line sol ON p.id = sol.procurement_id
+                WHERE
+                    (
+                        p.purchase_id IS NOT NULL
+                        OR
+                        p.tender_id IS NOT NULL
+                        OR
+                        p.rfq_id IS NOT NULL
+                    )
+                    AND
+                    sol.order_id IN %s
+            ''', (tuple(order_ids),))
+            to_po_lines = cr.fetchone()[0]
+
         mem_res = {
             'line_from_stock_completed': mem_fsl_nb,
             'line_on_order_completed': to_po_lines,
