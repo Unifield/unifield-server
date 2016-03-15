@@ -96,9 +96,8 @@ class procurement_order(osv.osv):
                 for proc in procurement_obj.browse(cr, uid, ids, context=context):
                     if maxdate >= proc.date_planned:
                         try:
-                            time.sleep(3)
                             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
-                            if procurement_obj.read(cr, uid, proc.id, ['state'], context=context)['state'] == 'running':
+                            if procurement_obj.read(cr, uid, proc.id, ['state'], context=context)['state'] in ('tender', 'rfq', 'running'):
                                 self.pool.get('sale.order.po.creation.progress.mem').add_or_create_progress_mem(cr, uid, proc.id, context=context)
                         except except_orm, e:
                             ids.remove(proc.id)
