@@ -548,7 +548,7 @@ class product_attributes(osv.osv):
             selection=[
                 ('False', 'No'),
                 ('True', 'Yes'),
-                ('no_know', 'Don\'t know'),
+                ('no_know', 'tbd'),
             ],
             string='Short Shelf Life',
             required=True,
@@ -637,7 +637,7 @@ class product_attributes(osv.osv):
             selection=[
                 ('yes', 'Yes'),
                 ('no', 'No'),
-                ('no_know', 'Don\'t know'),
+                ('no_know', 'tbd'),
             ],
             string='Sterile',
             required=True,
@@ -646,7 +646,7 @@ class product_attributes(osv.osv):
             selection=[
                 ('yes', 'Yes'),
                 ('no', 'No'),
-                ('no_know', 'Don\'t know'),
+                ('no_know', 'tbd'),
             ],
             string='Single Use',
             required=True,
@@ -676,7 +676,7 @@ class product_attributes(osv.osv):
             selection=[
                 ('False', 'No'),  # False is put as key for migration (see US-752)
                 ('True', 'Yes'),  # True is put as key for migration (see US-752)
-                ('no_know', 'Don\'t know'),
+                ('no_know', 'tbd'),
             ],
             string='Dangerous goods',
             required=True,

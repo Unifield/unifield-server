@@ -92,7 +92,7 @@
         </record>
         <record model="product.heat_sensitive" id="heat_no_know">
             <field name="code">no_know</field>
-            <field name="name">Don't know</field>
+            <field name="name">tbd</field>
         </record>
         <record model="product.heat_sensitive" id="heat_1">
             <field name="code">KR</field>
