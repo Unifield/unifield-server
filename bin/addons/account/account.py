@@ -1524,6 +1524,36 @@ class account_move(osv.osv):
         valid_moves = [move.id for move in valid_moves]
         return len(valid_moves) > 0 and valid_moves or False
 
+    # US-852: At the end of each sync execution of the create move line, make a quick check if any other move lines of the same move were invalid
+    # due to the missing of this move line? If yes, just set them to valid. 
+    def validate_sync(self, cr, uid, move_ids, context=None):
+        if context is None:
+            context = {}
+        if not (context.get('sync_update_execution', False)) or not move_ids:
+            return
+
+        if isinstance(move_ids, (int, long)):
+            move_ids = [move_ids]
+
+        move_line_obj = self.pool.get('account.move.line')
+        for move in self.browse(cr, uid, move_ids, context):
+            if move.journal_id.type == 'system':
+                continue
+
+            amount = 0
+            line_draft_ids = []
+            for line in move.line_id:
+                # Hook to check line
+                amount += line.debit - line.credit
+                if line.state=='draft':
+                    line_draft_ids.append(line.id)
+
+            if line_draft_ids:
+                if abs(amount) < 10 ** -4:
+                    move_line_obj.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+                elif move.journal_id.centralisation:
+                    move_line_obj.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+        return True
 account_move()
 
 class account_move_reconcile(osv.osv):
