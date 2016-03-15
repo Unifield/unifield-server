@@ -83,6 +83,7 @@ class BackgroundProcess(Thread):
                 keyword = 'manual' in method and 'beforemanualsync' or 'beforeautomaticsync'
                 context['logger'] = logger
                 pool.get('backup.config').exp_dump_for_state(cr, uid, keyword, context=context)
+                del context['logger']
             if isinstance(e, osv.except_osv):
                 logger.append(e.value)
                 raise
