@@ -38,9 +38,6 @@ oerp_compressed = oerplib.OERP(HOST_COMPRESSED, DB_COMPRESSED, protocol='netrpc'
                                port=PORT_COMPRESSED, timeout=300)
 oerp_compressed.login('admin', 'admin', DB_COMPRESSED)
 
-db_origin_id = oerp_origin.get('sync.client.entity').browse(1).identifier
-db_compressed_id = oerp_compressed.get('sync.client.entity').browse(1).identifier
-
 # get a list of synchrnoized models
 cr = conn_origin.cursor(cursor_factory=psycopg2.extras.DictCursor)
 cr.execute("""SELECT DISTINCT(model)
@@ -89,7 +86,7 @@ not_existing_count = 0
 object_not_synchronized_count = 0
 data_id_list = oerp_origin.search('ir.model.data',
                                   [('model', 'in', tuple(synchronized_model)),
-                                   ('sdref', 'not in', tuple(SDREF_TO_IGNORE)),
+                                   ('name', 'not in', tuple(SDREF_TO_IGNORE)),
                                    ])
 data_count = len(data_id_list)
 counter = 0
@@ -159,9 +156,6 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
         oerp_compressed = oerplib.OERP(HOST_COMPRESSED, DB_COMPRESSED, protocol='netrpc',
                                        port=PORT_COMPRESSED, timeout=300)
         oerp_compressed.login('admin', 'admin', DB_COMPRESSED)
-
-        db_origin_id = oerp_origin.get('sync.client.entity').browse(1).identifier
-        db_compressed_id = oerp_compressed.get('sync.client.entity').browse(1).identifier
 
 print '%s objects have never been synchronized' % object_not_synchronized_count
 result_file.write('%s objects have never been synchronized\n' %
