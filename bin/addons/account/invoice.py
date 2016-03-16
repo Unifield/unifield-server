@@ -348,6 +348,9 @@ class account_invoice(osv.osv):
         if view_type == 'tree':
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
+            # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard
+            if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
+                doc.set('hide_new_button', 'True')
             partner_string = _('Customer')
             if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund'):
                 partner_string = _('Supplier')

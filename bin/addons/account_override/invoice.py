@@ -668,7 +668,7 @@ class account_invoice(osv.osv):
         No longer fills the date automatically, but requires it to be set
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
 
@@ -700,6 +700,7 @@ class account_invoice(osv.osv):
                     }
 
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
+
         return True
 
     def action_reconcile_imported_invoice(self, cr, uid, ids, context=None):

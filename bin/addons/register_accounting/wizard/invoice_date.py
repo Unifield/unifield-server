@@ -51,6 +51,7 @@ class wizard_invoice_date(osv.osv_memory):
 
             inv_obj.write(cr, uid, [wiz.invoice_id.id], values)
             wf_service.trg_validate(uid, 'account.invoice', wiz.invoice_id.id, 'invoice_open', cr)
+
         return { 'type': 'ir.actions.act_window_close', }
 
 wizard_invoice_date()
