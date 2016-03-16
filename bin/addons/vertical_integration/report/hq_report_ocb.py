@@ -566,7 +566,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance = pool.get('msf.instance').browse(cr, uid, instance_id)
-        instance_name = instance.code or ''
+        instance_name = 'OCB'  # since US-949
         processrequests = [
             {
                 'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive'],
