@@ -368,6 +368,36 @@ class account_account(osv.osv):
             res[account.id] = level
         return res
 
+    def _get_child_of_coa(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return the direct child of Chart Of Account account
+        """
+        if context is None:
+            context = {}
+        res = {}
+        msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
+        if msf_coa:
+            id_list = self.search(cr, uid, [('parent_id','=', msf_coa),
+                                            ('id', 'in', ids)], context=context)
+            for account_id in ids:
+                res[account_id]=account_id in id_list
+            return res
+        else:
+            raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+
+    def _search_child_of_coa(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Return a domain with parent_id = Chart Of Account
+        """
+        if context is None:
+            context = {}
+        res = []
+        msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
+        if msf_coa:
+                return [('parent_id', '=', msf_coa)]
+        else:
+            raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
         'currency_id': fields.many2one('res.currency', 'Secondary Currency', help="Forces all moves for this account to have this secondary currency."),
@@ -413,6 +443,7 @@ class account_account(osv.osv):
             'Incoming transactions always use the rate at date.', \
             required=True),
         'level': fields.function(_get_level, string='Level', method=True, store=True, type='integer'),
+        'is_child_of_coa': fields.function(_get_child_of_coa, fnct_search=_search_child_of_coa, method=True, type='boolean', string='Is child of CoA', help="Check if the current account is a direct child of Chart Of Account account."),
     }
 
     _defaults = {
