@@ -15,11 +15,19 @@ COMPACT_UPDATE = True
 DELETE_ENTITY_REL = True  # not recommanded to change it to False because it
                           # can remove delete only entity_rel related to
                           # currently deleted updates
-UPDATE_TO_FETCH = 1000
+UPDATE_TO_FETCH = 10000
 
 # we will delete all the pulled update which are not master data and use active rule
 # but it is safer to keep some safety margin by keeping some more updates
 SAFE_MARGIN_SEQUENCE_TO_KEEP = 2000
+
+RULE_TYPE = {
+    'USB':1,
+    'OC': 2,
+    'MISSION': 3,
+    'COORDINATIONS': 4,
+    'HQ + MISSION': 5,
+}
 
 # the objects with the folowing sdref will be ignored
 SDREF_TO_EXCLUDE = [
@@ -36,7 +44,7 @@ MODEL_TO_EXCLUDE = [
     'financing.contract.format.line',
 ]
 
-DB_NAME = 'SYNC_SERVER-20160314_compressed'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160314_compressed3'   # replace with your own DB
 
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=%s" % DB_NAME)
@@ -51,6 +59,19 @@ not_deleted_update = 0
 total_update_count = 0
 cr2.execute("""SELECT COUNT(*) FROM sync_server_update""", ())
 number_of_update = cr2.fetchone()[0]
+
+time_stamp = time.strftime("%Y%m%d-%H%M%S")
+file_name = 'compact_updates_%s.txt' % time_stamp
+result_file = open(file_name, "a")
+
+PRINT_SCREEN = True
+PRINT_FILE = True
+def print_file_and_screen(string):
+    if PRINT_FILE:
+        result_file.write(string+'\n')
+        result_file.flush()
+    if PRINT_SCREEN:
+        print string
 
 def update_progress(progress, deleted):
     '''Displays or updates a console progress bar
@@ -75,31 +96,33 @@ def update_progress(progress, deleted):
     sys.stdout.write(text)
     sys.stdout.flush()
 
-def delete_related_entity_rel(update_id_list, step=''):
-    if DELETE_ENTITY_REL and update_id_list:
-        intermediate_time = time.time()
-        print '%s/3 Start deleting of the related sync_server_entity_rel...' % step
-        cr3.execute("""DELETE FROM sync_server_entity_rel
-        WHERE id IN
-        (SELECT id FROM sync_server_entity_rel WHERE update_id IN %s)""",
-                    (tuple(update_id_list),))
-        entity_count = cr3.rowcount
-        print '%s/3 sync_server_entity_rel deleted : %s' % (step, locale.format('%d', entity_count, 1))
-        print_time_elapsed(intermediate_time, time.time(), '%s/3' % step)
-        conn.commit()
-
 def print_time_elapsed(start_time, stop_time, step=''):
     ''' print elapsed time in a human readable format
     '''
     elapsed_time = stop_time - start_time
     minute, second = divmod(elapsed_time, 60)
     hour, minute = divmod(minute, 60)
-    print "%s Elapsed time : %d:%02d:%02d" % (step, hour, minute, second)
+    print_file_and_screen("%s Elapsed time : %d:%02d:%02d" % (step, hour, minute, second))
 
-print 'working on db %s' % DB_NAME
+def delete_related_entity_rel(update_id_list, step=''):
+    if DELETE_ENTITY_REL and update_id_list:
+        intermediate_time = time.time()
+        print_file_and_screen('%s/3 Start deleting of the related sync_server_entity_rel...' % step)
+        cr3.execute("""DELETE FROM sync_server_entity_rel
+        WHERE id IN
+        (SELECT id FROM sync_server_entity_rel WHERE update_id IN %s)""",
+                    (tuple(update_id_list),))
+        entity_count = cr3.rowcount
+        print_file_and_screen('%s/3 sync_server_entity_rel deleted : %s' % (step, locale.format('%d', entity_count, 1)))
+        print_time_elapsed(intermediate_time, time.time(), '%s/3' % step)
+        conn.commit()
+
+print_file_and_screen('working on db %s' % DB_NAME)
 
 if DELETE_NO_MASTER:
-    update_no_master_ids = []
+    chunk_update_no_master_ids = []
+    update_no_master_ids = set()
+
     intermediate_time = time.time()
     # start by deleting the the update with active rules and no master_data
     # then there will be much less updates to parse with heaver code after
@@ -107,8 +130,8 @@ if DELETE_NO_MASTER:
                 WHERE last_sequence !=0""", ())
     smallest_last_sequence = cr2.fetchone()[0]
     smallest_last_sequence -= SAFE_MARGIN_SEQUENCE_TO_KEEP
-    print '1/3 Start deleting updates with active rules and not master_data'\
-          ' where sequence is < %s ...' % smallest_last_sequence
+    print_file_and_screen('1/3 Start deleting updates with active rules and not master_data'\
+          ' where sequence is < %s ...' % smallest_last_sequence)
     cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
     no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
     cr2.execute("""SELECT id FROM sync_server_update
@@ -118,21 +141,24 @@ if DELETE_NO_MASTER:
         multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
         if not multiple_updates:
             break
-        update_no_master_ids = [x[0] for x in multiple_updates]
+        chunk_update_no_master_ids = [x[0] for x in multiple_updates]
         cr3.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                    (tuple(update_no_master_ids),))
+                    (tuple(chunk_update_no_master_ids),))
         conn.commit()
-        total_update_count += len(update_no_master_ids)
-    print '1/3 %s updates deleted.' % locale.format('%d', cr2.rowcount, 1)
+        total_update_count += len(chunk_update_no_master_ids)
+        update_no_master_ids.union(chunk_update_no_master_ids)
+    print_file_and_screen('1/3 %s updates deleted.' % locale.format('%d', cr2.rowcount, 1))
     print_time_elapsed(intermediate_time, time.time(), '1/3')
-    delete_related_entity_rel(update_no_master_ids, step='1')
+    delete_related_entity_rel(list(update_no_master_ids), step='1')
+    del chunk_update_no_master_ids
     del update_no_master_ids
     del multiple_updates
 
 if DELETE_INACTIVE_RULES:
-    update_inactive_rules = []
+    chunk_update_inactive_rules = []
+    update_inactive_rules = set()
     intermediate_time = time.time()
-    print '2/3 Start deleting the updates related to inactive rules...'
+    print_file_and_screen('2/3 Start deleting the updates related to inactive rules...')
     cr2.execute("""SELECT id FROM sync_server_update
                 WHERE rule_id IN
                 (SELECT id FROM sync_server_sync_rule WHERE active='f')""")
@@ -141,14 +167,16 @@ if DELETE_INACTIVE_RULES:
         multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
         if not multiple_updates:
             break
-        update_inactive_rules = [x[0] for x in multiple_updates]
+        chunk_update_inactive_rules = [x[0] for x in multiple_updates]
         cr3.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                    (tuple(update_inactive_rules),))
+                    (tuple(chunk_update_inactive_rules),))
         conn.commit()
-        total_update_count += len(update_inactive_rules)
-    print '2/3 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1)
+        total_update_count += len(chunk_update_inactive_rules)
+        update_inactive_rules.union(chunk_update_inactive_rules)
+    print_file_and_screen('2/3 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1))
     print_time_elapsed(intermediate_time, time.time(), '2/3')
-    delete_related_entity_rel(update_inactive_rules, step='2')
+    delete_related_entity_rel(list(update_inactive_rules), step='2')
+    del chunk_update_inactive_rules
     del update_inactive_rules
     del multiple_updates
 
@@ -180,6 +208,10 @@ if COMPACT_UPDATE:
     cr2.execute("""SELECT id, direction FROM sync_server_sync_rule""", ())
     rule_direction_dict = dict(cr2.fetchall())
 
+    # create a dict of rule type to be able to compress all source in a same oc
+    cr2.execute("""SELECT id, type_id FROM sync_server_sync_rule""", ())
+    rule_type_dict = dict(cr2.fetchall())
+
     cr.execute("""
     SELECT * FROM
     sync_server_update ORDER BY sequence, id
@@ -187,13 +219,18 @@ if COMPACT_UPDATE:
     total_updates = cr.rowcount
     multiple_updates = cr.fetchall()
     current_cursor = 0
-    print '3/3 Start compressing the updates, this may take a while ...'
+    print_file_and_screen('3/3 Start compressing the updates, this may take a while ...')
     for row in multiple_updates:
         current_cursor += 1
         if row['sdref'] in SDREF_TO_EXCLUDE or\
            row['model'] in MODEL_TO_EXCLUDE:
             continue
-        key = row['sdref'], row['rule_id'], entity_branch_name[row['source']]
+        if rule_direction_dict[row['rule_id']] == RULE_TYPE['OC']:
+            # if the rule type is 'OC' it is the possible to aggregate all the
+            # children of HQ in the same key.
+            key = row['sdref'], row['rule_id'], entity_branch_name[row['source']]
+        else:
+            key = row['sdref'], row['rule_id'], row['source']
         if key not in rows_already_seen:
             rows_already_seen[key] = {'id': row['id'],
                                       'is_deleted': row['is_deleted'],
@@ -285,9 +322,9 @@ if COMPACT_UPDATE:
                 deleted_update_ids.append(row['id'])
                 conn.commit()
 
+                # update the previous one with the current values
                 fields = ','.join(map(lambda x: '%s = %%s' % x, fields_to_set))
                 sql_query = 'UPDATE sync_server_update SET %s WHERE id = %%s' % fields
-
                 cr2.execute(sql_query, values_to_set + [rows_already_seen[key]['id']])
 
             conn.commit()
@@ -297,17 +334,18 @@ if COMPACT_UPDATE:
     # free memory
     del multiple_updates
     del rows_already_seen
-    print '%s not deleted updates.' % not_deleted_update
-    print '%s down direction update kept' % down_direction_count
-    print '3/3 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1)
+    print_file_and_screen('%s not deleted updates.' % not_deleted_update)
+    print_file_and_screen('%s down direction update kept' % down_direction_count)
+    print_file_and_screen('3/3 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1))
     print_time_elapsed(intermediate_time, time.time(), '3/3')
     total_update_count += len(deleted_update_ids)
     delete_related_entity_rel(deleted_update_ids, step='3')
     del deleted_update_ids
 
-print '\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
-    total_update_count, 1), locale.format('%d', number_of_update, 1))
+print_file_and_screen('\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
+    total_update_count, 1), locale.format('%d', number_of_update, 1)))
 
+result_file.close()
 cr.close()
 cr2.close()
 cr3.close()

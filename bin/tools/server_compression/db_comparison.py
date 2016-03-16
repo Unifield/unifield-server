@@ -95,12 +95,18 @@ counter = 0
 time_stamp = time.strftime("%Y%m%d-%H%M%S")
 file_name = 'db_comparison_%s.txt' % time_stamp
 result_file = open(file_name, "a")
-result_file.write('\n\n---------------------------\n')
-result_file.write('%s object to checks...\n' % data_count)
-print '%s object to checks...' % data_count
+
+PRINT_SCREEN = True
+PRINT_FILE = True
+def print_file_and_screen(string):
+    if PRINT_FILE:
+        result_file.write(string+'\n')
+        result_file.flush()
+    if PRINT_SCREEN:
+        print string
+print_file_and_screen('%s object to checks...' % data_count)
 for data_object in oerp_origin.browse('ir.model.data', data_id_list):
     if counter % 10 == 0:
-        result_file.flush()
         progress = counter/float(data_count)
         update_progress(progress, counter)
     counter += 1
@@ -138,24 +144,21 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
         if origin_values != compressed_values:
             diff_result = diff(origin_values, compressed_values)
             if diff_result:
-                result_file.write('Objects type %s with sdref %s are different : %r\n' %
+                print_file_and_screen('Objects type %s with sdref %s are different : %r' %
                                   (data_object.model, sdref, diff_result))
             else:
                 diff_result2 = set(compressed_values) - set(origin_values)
-                result_file.write('Object type %s with sdref %s have different values on '
-                                  'compressed version : %r\n' % diff_result2)
+                print_file_and_screen('Object type %s with sdref %s have different values on '
+                                  'compressed version : %r' % diff_result2)
     else:
-        result_file.write("Object with sdref %s doesn't exists on compressed db\n" % data_object.name)
+        print_file_and_screen("Object with sdref %s doesn't exists on compressed db" % data_object.name)
 
-print '%s objects have never been synchronized' % object_not_synchronized_count
-result_file.write('%s objects have never been synchronized\n' %
+print_file_and_screen('%s objects have never been synchronized' %
                   object_not_synchronized_count)
-print '%s objects have an sdref but don\'t exists in base.' % not_existing_count
-result_file.write('%s objects have an sdref but don\'t exists in base.\n' %
+print_file_and_screen('%s objects have an sdref but don\'t exists in base.' %
                   not_existing_count)
 elapsed_time = time.time() - start_time
 minute, second = divmod(elapsed_time, 60)
 hour, minute = divmod(minute, 60)
-print "Elapsed time : %d:%02d:%02d" % (hour, minute, second)
-result_file.write("Elapsed time : %d:%02d:%02d\n" % (hour, minute, second))
+print_file_and_screen("Elapsed time : %d:%02d:%02d" % (hour, minute, second))
 result_file.close()
