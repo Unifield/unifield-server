@@ -1391,9 +1391,13 @@ class account_invoice_line(osv.osv):
     def onchange_donation_product(self, cr, uid, ids, product_id, qty, currency_id, context=None):
         res = {'value': {}}
         if product_id:
-            p_info = self.pool.get('product.product').read(cr, uid, product_id, ['donation_expense_account', 'partner_ref', 'standard_price'], context=context)
+            p_info = self.pool.get('product.product').read(cr, uid, product_id, ['donation_expense_account', 'partner_ref', 'standard_price', 'categ_id'], context=context)
             if p_info['donation_expense_account']:
                 res['value']['account_id'] = p_info['donation_expense_account'][0]
+            elif p_info['categ_id']:
+                categ = self.pool.get('product.category').read(cr, uid, p_info['categ_id'][0], ['donation_expense_account'])
+                if categ['donation_expense_account']:
+                    res['value']['account_id'] = categ['donation_expense_account'][0]
             if p_info['partner_ref']:
                 res['value']['name'] = p_info['partner_ref']
             if p_info['standard_price']:
