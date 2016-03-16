@@ -336,9 +336,9 @@ class account_account(osv.osv):
         'has_partner_type_external': fields.boolean('External'),
         'has_partner_type_esc': fields.boolean('ESC'),
         'has_partner_type_intermission': fields.boolean('Intermission'),
-        'has_partner_type_local': fields.boolean('NAT'),  # NAT employee
-        'has_partner_type_ex': fields.boolean('Expat'),  # Expat
-        'has_partner_type_book': fields.boolean('Book'),  # transfer journal
+        'has_partner_type_local': fields.boolean('Employee Local'),  # NAT employee
+        'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
+        'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
     }
 
     _defaults = {
@@ -528,11 +528,11 @@ class account_account(osv.osv):
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
                 errors = [ _('following accounts are not compatible with' \
-                    ' partner') ]
+                    ' partner:') ]
                 for r in self.pool.get('account.account').browse(cr, uid,
                     not_compatible_ids, context=context):
                     errors.append(_('%s - %s') % (r.code, r.name, ))
-                raise osv.except_osv(_('Error'), errors)
+                raise osv.except_osv(_('Error'), "\n- ".join(errors))
 
         return res
 
