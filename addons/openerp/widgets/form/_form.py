@@ -423,6 +423,26 @@ class Boolean(TinyInputWidget):
 
 register_widget(Boolean, ["boolean"])
 
+class NullBoolean(Char):
+    template = "/openerp/widgets/form/templates/null_boolean.mako"
+
+    label_type = BooleanLabel
+
+    def __init__(self, **attrs):
+        super(NullBoolean, self).__init__(**attrs)
+        self.editable = False
+
+    def set_value(self, value):
+        self.default = value or ''
+        if value == '?':
+            self.default = '?'
+            self.null_bool = True
+        elif value == 'X':
+            self.default = 1
+        else:
+            self.default = 0
+
+register_widget(NullBoolean, ["null_boolean"])
 
 class Float(TinyInputWidget):
     template = "/openerp/widgets/form/templates/float.mako"

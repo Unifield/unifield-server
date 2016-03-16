@@ -17,13 +17,17 @@
         <span class="fielderror">${error}</span>
     % endif
 % else:
+    % if value == '?':
+    <span class="text_null_boolean" name="${name}" id="${name}" >${value}</span>
+    % else:
     <input
-        type="text"
+        type="checkbox"
         kind="${kind}"
         class="checkbox" 
         id="${name}" 
         value="${value}"
         disabled="disabled"
         ${py.checker(value)}>
+   % endif
 % endif
 
