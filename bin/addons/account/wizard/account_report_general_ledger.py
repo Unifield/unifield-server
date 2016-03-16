@@ -70,9 +70,8 @@ class account_report_general_ledger(osv.osv_memory):
     }
     
     def _get_journals(self, cr, uid, context=None):
-        """exclude extra-accounting journals from this report (IKD, ODX)."""
-        domain = [('type', 'not in', ['inkind', 'extra'])]
-        return self.pool.get('account.journal').search(cr, uid, domain, context=context)
+         return self.pool.get('account.journal').search(cr, uid, [],
+            context=context)
     
     _defaults = {
         'amount_currency': True,
