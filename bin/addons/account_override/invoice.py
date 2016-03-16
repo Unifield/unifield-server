@@ -1388,14 +1388,21 @@ class account_invoice_line(osv.osv):
                         al_ids += [x.id for x in ml.analytic_lines]
         return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
 
-    def onchange_donation_product(self, cr, uid, ids, product_id, context=None):
+    def onchange_donation_product(self, cr, uid, ids, product_id, qty, currency_id, context=None):
         res = {'value': {}}
         if product_id:
-            p_info = self.pool.get('product.product').read(cr, uid, product_id, ['donation_expense_account', 'partner_ref'], context=context)
+            p_info = self.pool.get('product.product').read(cr, uid, product_id, ['donation_expense_account', 'partner_ref', 'standard_price'], context=context)
             if p_info['donation_expense_account']:
                 res['value']['account_id'] = p_info['donation_expense_account'][0]
             if p_info['partner_ref']:
                 res['value']['name'] = p_info['partner_ref']
+            if p_info['standard_price']:
+                std_price = p_info['standard_price']
+                company_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+                if company_curr_id and company_curr_id != currency_id:
+                    std_price = self.pool.get('res.currency').compute(cr, uid, company_curr_id, currency_id, std_price, context=context)
+                res['value']['price_unit'] = std_price
+                res['value']['price_subtotal'] = (qty or 0) * std_price
         return res
 
     def onchange_donation_qty_price(self, cr, uid, ids, qty, price_unit, context=None):
