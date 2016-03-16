@@ -77,21 +77,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
-
-        # US-334/6: Only account 10100 and 10200 must never be displayed in \
-        # details when you tick "Unreconciled" because they are the only \
-        # account not reconciliable.
-        a_obj = self.pool.get('account.account')
-        self.unreconciled_filter = self._get_data_form(data, 'unreconciled', False)
-        if self.unreconciled_filter:
-            self.unreconciliable_accounts = a_obj.search(self.cr, self.uid, [
-                    ('reconcile', '=', False),
-                    ('type', '=', 'liquidity'),
-                ], context=self.context)
-        else:
-            self.unreconciliable_accounts = []
-        if self.unreconciliable_accounts:
-            self.account_ids += self.unreconciliable_accounts
+        # unreconciled: not reconciled or partial reconciled
+        # (partial: reconcile_partia_id set vs reconcile_id)
+        self.unreconciled_filter = \
+            self._get_data_form(data, 'unreconciled', False) \
+            and " AND reconcile_id is null" or ''
 
         self.context['state'] = data['form']['target_move']
 
@@ -137,7 +127,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         query = self.query
         if self.unreconciled_filter:
-            query += " AND reconcile_id is null"
+            query += self.unreconciled_filter
+
         query_ib = self.init_balance and self.init_query or False
         move_states = [ 'posted', ] if self.target_move == 'posted' \
             else [ 'draft', 'posted', ]
@@ -146,6 +137,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             include_accounts=self.account_ids,
             account_report_types=self.account_report_types,
             with_balance_only=self.display_account == 'bal_solde',
+            reconcile_filter=self.unreconciled_filter,
             context=used_context)
 
         return res
@@ -324,9 +316,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_journal j on (l.journal_id=j.id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
-            sql = sql.replace('{{reconcile}}',
-                    self.unreconciled_filter and \
-                        " AND reconcile_id is null" or '')
+            sql = sql.replace('{{reconcile}}', self.unreconciled_filter)
             self.cr.execute(sql, (account.id, ))
             res = self.cr.dictfetchall()
         else:

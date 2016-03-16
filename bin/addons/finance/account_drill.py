@@ -83,7 +83,7 @@ class AccountDrill(object):
         JOIN account_journal j on (l.journal_id=j.id)
         JOIN account_account a on (a.id=l.account_id)
         JOIN account_account_type at on (at.id=a.user_type)
-        WHERE l.account_id = %s{options}{query}
+        WHERE l.account_id = %s{reconcile}{options}{query}
         GROUP BY l.currency_id'''
 
     # initial balance move lines base query (from IB journal period 0)
@@ -99,7 +99,7 @@ class AccountDrill(object):
 
     def __init__(self, pool, cr, uid, query, query_ib, move_states=[],
         include_accounts=False, account_report_types=False,
-        with_balance_only=False, context=None):
+        with_balance_only=False, reconcile_filter='', context=None):
         super(AccountDrill, self).__init__()
         self.pool = pool
         self.cr = cr
@@ -125,6 +125,7 @@ class AccountDrill(object):
 
         # JI base query: constructed via _sql
         self.sql = self._sql
+        self.sql = self.sql.replace('{reconcile}', reconcile_filter)
         if account_report_types:
             report_types = [ "'%s'" % (rt, ) for rt in account_report_types ]
             options = " AND (at.report_type in (%s)" % (
@@ -308,7 +309,7 @@ class account_drill(osv.osv):
 
     def build_tree(self, cr, uid, query, query_ib, move_states=[],
         include_accounts=False, account_report_types=False,
-        with_balance_only=False,
+        with_balance_only=False, reconcile_filter='',
         context=None):
         """
         build account amounts consolidated tree
@@ -329,6 +330,7 @@ class account_drill(osv.osv):
             include_accounts=include_accounts,
             account_report_types=account_report_types,
             with_balance_only=with_balance_only,
+            reconcile_filter=reconcile_filter,
             context=context)
         ac.map()
         ac.reduce()
