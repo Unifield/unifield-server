@@ -115,6 +115,7 @@ class AccountDrill(object):
         self.move_states = move_states or [ 'draft', 'posted', ]
         self.include_accounts = include_accounts
         self.with_balance_only = with_balance_only
+        self.reconcile_filter = reconcile_filter
 
         # nodes
         self.root = None
@@ -125,7 +126,7 @@ class AccountDrill(object):
 
         # JI base query: constructed via _sql
         self.sql = self._sql
-        self.sql = self.sql.replace('{reconcile}', reconcile_filter)
+        self.sql = self.sql.replace('{reconcile}', self.reconcile_filter)
         if account_report_types:
             report_types = [ "'%s'" % (rt, ) for rt in account_report_types ]
             options = " AND (at.report_type in (%s)" % (
@@ -203,10 +204,11 @@ class AccountDrill(object):
         if level > self._move_level:
             return
 
-        child_ids = self._search([
+        domain = [
             ('parent_id', '=', parent.account_id),
             ('level', '=', level),
-        ])
+        ]
+        child_ids = self._search(domain)
         if child_ids:
             for id in child_ids:
                 if not self.include_accounts or id in self.include_accounts:

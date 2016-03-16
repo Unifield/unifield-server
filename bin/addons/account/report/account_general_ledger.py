@@ -81,7 +81,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         # (partial: reconcile_partia_id set vs reconcile_id)
         self.unreconciled_filter = \
             self._get_data_form(data, 'unreconciled', False) \
-            and " AND reconcile_id is null" or ''
+            and " AND reconcile_id is null AND a.reconcile='t'" or ''
 
         self.context['state'] = data['form']['target_move']
 
@@ -314,6 +314,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 LEFT JOIN account_invoice i on (m.id =i.move_id)
                 LEFT JOIN account_period per on (per.id=l.period_id)
                 JOIN account_journal j on (l.journal_id=j.id)
+                JOIN account_account a on (a.id=l.account_id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
             sql = sql.replace('{{reconcile}}', self.unreconciled_filter)
