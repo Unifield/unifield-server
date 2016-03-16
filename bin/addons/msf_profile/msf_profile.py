@@ -346,17 +346,19 @@ class patch_scripts(osv.osv):
         no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
         phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
-        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', 'in', phs_ids)])
+        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
         if prd_ids:
             cr.execute("""
-                UPDATE product_product SET heat_sensitive_item = %s WHERE id IN %s
+                UPDATE product_product SET heat_sensitive_item = %s, show_cold_chain = True WHERE id IN %s
             """, (heat_id, tuple(prd_ids),))
 
-        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False)])
+        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
         if no_prd_ids:
             cr.execute("""
                 UPDATE product_product SET heat_sensitive_item = %s WHERE id IN %s
             """, (no_heat_id, tuple(no_prd_ids),))
+
+        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
 
         return True
 

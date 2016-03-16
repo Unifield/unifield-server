@@ -260,6 +260,7 @@ class product_attributes(osv.osv):
                               is_cs = True,
                               cs_txt = 'X'
                             WHERE %s = True OR narcotic = True''' % moved_column
+            cr.execute(request)
 
         return
 
