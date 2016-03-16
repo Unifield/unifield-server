@@ -44,7 +44,8 @@ MODEL_TO_EXCLUDE = [
     'financing.contract.format.line',
 ]
 
-DB_NAME = 'SYNC_SERVER-20160314_compressed3'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160316-163301-zip'   # replace with your own DB
+DB_PORT = '11031'
 
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=%s" % DB_NAME)
@@ -146,7 +147,7 @@ if DELETE_NO_MASTER:
                     (tuple(chunk_update_no_master_ids),))
         conn.commit()
         total_update_count += len(chunk_update_no_master_ids)
-        update_no_master_ids.union(chunk_update_no_master_ids)
+        update_no_master_ids = update_no_master_ids.union(chunk_update_no_master_ids)
     print_file_and_screen('1/6 %s updates deleted.' % locale.format('%d', cr2.rowcount, 1))
     print_time_elapsed(intermediate_time, time.time(), '1/6')
     delete_related_entity_rel(list(update_no_master_ids), step='2')
@@ -172,7 +173,7 @@ if DELETE_INACTIVE_RULES:
                     (tuple(chunk_update_inactive_rules),))
         conn.commit()
         total_update_count += len(chunk_update_inactive_rules)
-        update_inactive_rules.union(chunk_update_inactive_rules)
+        update_inactive_rules = update_inactive_rules.union(chunk_update_inactive_rules)
     print_file_and_screen('3/6 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1))
     print_time_elapsed(intermediate_time, time.time(), '3/6')
     delete_related_entity_rel(list(update_inactive_rules), step='4')
@@ -181,7 +182,7 @@ if DELETE_INACTIVE_RULES:
     del multiple_updates
 
 if COMPACT_UPDATE:
-    oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port='10251', timeout=3600)
+    oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port=DB_PORT, timeout=3600)
     oerp.login('admin', 'admin', DB_NAME)
     sync_server_update = oerp.get('sync.server.update')
     intermediate_time = time.time()
