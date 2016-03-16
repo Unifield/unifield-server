@@ -11,12 +11,12 @@ start_time = time.time()
 locale.setlocale(locale.LC_ALL, '')
 
 HOST_ORIGIN = 'localhost'
-PORT_ORIGIN = '10091'
-DB_ORIGIN = 'fm_sp_222_OCB_ALL_GROUP_V6'
+PORT_ORIGIN = '10411'
+DB_ORIGIN = 'fm_sp_222_oca_not_compressed'
 
 HOST_COMPRESSED = 'localhost'
-PORT_COMPRESSED = '10251'
-DB_COMPRESSED = 'fm_sp_222_test_1303v1'
+PORT_COMPRESSED = '10401'
+DB_COMPRESSED = 'fm_sp_222_oca_compressed'
 
 FIELDS_TO_IGNORE = [
     'date',
@@ -44,6 +44,8 @@ cr.execute("""SELECT DISTINCT(model)
         FROM sync_client_update_received ORDER BY model""", ())
 synchronized_model = [x[0] for x in cr.fetchall()]
 cr.close()
+
+print 'connexion done'
 
 def update_progress(progress, checked):
     '''Displays or updates a console progress bar
@@ -97,6 +99,10 @@ result_file.write('\n\n---------------------------\n')
 result_file.write('%s object to checks...\n' % data_count)
 print '%s object to checks...' % data_count
 for data_object in oerp_origin.browse('ir.model.data', data_id_list):
+    if counter % 10 == 0:
+        result_file.flush()
+        progress = counter/float(data_count)
+        update_progress(progress, counter)
     counter += 1
     if not data_object.res_id:
         continue
@@ -140,22 +146,6 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
                                   'compressed version : %r\n' % diff_result2)
     else:
         result_file.write("Object with sdref %s doesn't exists on compressed db\n" % data_object.name)
-    if counter % 10 == 0:
-        result_file.flush()
-        progress = counter/float(data_count)
-        update_progress(progress, counter)
-
-        # reset the connexion as seems to be a problem if it not reset for
-        # a long time
-        conn_origin = psycopg2.connect("dbname=%s" % DB_ORIGIN)
-        conn_compressed = psycopg2.connect("dbname=%s" % DB_COMPRESSED)
-
-        oerp_origin = oerplib.OERP(HOST_ORIGIN, DB_ORIGIN, protocol='netrpc',
-                                   port=PORT_ORIGIN, timeout=300)
-        oerp_origin.login('admin', 'admin', DB_ORIGIN)
-        oerp_compressed = oerplib.OERP(HOST_COMPRESSED, DB_COMPRESSED, protocol='netrpc',
-                                       port=PORT_COMPRESSED, timeout=300)
-        oerp_compressed.login('admin', 'admin', DB_COMPRESSED)
 
 print '%s objects have never been synchronized' % object_not_synchronized_count
 result_file.write('%s objects have never been synchronized\n' %

@@ -36,7 +36,7 @@ MODEL_TO_EXCLUDE = [
     'financing.contract.format.line',
 ]
 
-DB_NAME = 'DAILY_SYNC_SERVER-COMPRESSED-23-20160303-073301'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160314_compressed'   # replace with your own DB
 
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=%s" % DB_NAME)
