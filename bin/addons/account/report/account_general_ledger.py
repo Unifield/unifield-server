@@ -179,6 +179,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_title': self._get_title,
             'get_initial_balance': self._get_initial_balance,
             'get_tree_nodes': self._get_tree_nodes,
+            'show_node_in_report': self._show_node_in_report,
         })
         
         # company currency
@@ -204,6 +205,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         while node:
             res.append(node)
             node = self._drill.next_node()
+        return res
+
+    def _show_node_in_report(self, node):
+        res = True
+        if self.account_ids or self.unreconciled_filter:
+            # hide if zero bal and any by account or unreconciled filter on
+            bal = node.data.get('*', {}).get('debit', 0.) \
+                - node.data.get('*', {}).get('credit', 0.)
+            if bal == 0.:
+                res = False
         return res
 
     def _get_journals_str(self, data):

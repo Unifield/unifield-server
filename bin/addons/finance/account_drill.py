@@ -38,7 +38,7 @@ class AccountDrillNode(object):
         self.level = level
         self.account_id = account_id
 
-        # set during maping/reduce
+        # set during map/reduce
         self.data = {}
         self.zero_bal = False
 
@@ -46,7 +46,6 @@ class AccountDrillNode(object):
         self.code = ''
         self.name = ''
         self.obj = None
-
 
     def get_currencies(self):
         if not self.data:
@@ -64,7 +63,6 @@ class AccountDrillNode(object):
 
     def is_move_level(self):
         return self.level == self.drill._move_level
-
 
 class AccountDrill(object):
     """
@@ -173,15 +171,17 @@ class AccountDrill(object):
         while level > 0:
             nodes = self.nodes_by_level[level]
             for n in nodes:
-                if self._move_level:
+                if level == self._move_level:
                     if self.with_balance_only:
-                        bal = n.data[ccy].get('debit', 0.) \
-                            - n.data[ccy].get('credit', 0.)
+                        bal = n.data.get('*', {}).get('debit', 0.) \
+                            - n.data.get('*', {}).get('credit', 0.)
                         if bal == 0.:
+                            # JI level:
                             # with only balance filter: do not agregate account
                             # debit/credit with a zero balance
                             n.zero_bal = True
                             continue
+
                 parent = n.parent
                 if parent:
                     for ccy in n.data:

@@ -273,7 +273,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 %>
 
 % for o in get_tree_nodes(a):
-% if '*' in o.data:
+% if '*' in o.data and show_node_in_report(o):
 <Row>
 <Cell ss:StyleID="ssBorder${ac_style_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
