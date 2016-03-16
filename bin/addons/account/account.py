@@ -221,15 +221,16 @@ class account_account(osv.osv):
         display_only_checked_account = context.get('display_only_checked_account', False)
         # in case of report do not get the account that should not been displayed
         if display_only_checked_account:
-            # get the level 0 'MSF Chart of Accounts'
-            ids2 = self.search(cr, uid, [('level','=', 0),
-                ('display_in_reports','=',True)], context=context)
+            # get the 'MSF Chart of Accounts'
+            msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
 
             # get the level 1 accounts that should be displayed in reports
-            level_1_account_ids = self.search(cr, uid, [('level','=', 1),
-                ('display_in_reports','=',True)], context=context)
+            level_1_account_ids = self.search(cr, uid,
+                        [('parent_id', '=',msf_coa),
+                         ('display_in_reports','=',True)],
+                        context=context)
 
-            ids2 += self.search(cr, uid, [('parent_id', 'child_of',
+            ids2 = msf_coa + self.search(cr, uid, [('parent_id', 'child_of',
                 level_1_account_ids)], context=context)
         else:
             ids2 = self.search(cr, uid, [('parent_id', 'child_of', ids)], context=context)
