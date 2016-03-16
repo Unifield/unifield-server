@@ -839,6 +839,37 @@ class account_move(osv.osv):
         cr.execute("select move_id, sum(debit-credit) from account_move_line where state='valid' group by move_id having abs(sum(debit-credit)) > 0.00001")
         return [x[0] for x in cr.fetchall()]
 
+    # US-852: At the end of each sync execution of the create move line, make a quick check if any other move lines of the same move were invalid
+    # due to the missing of this move line? If yes, just set them to valid. 
+    def validate_sync(self, cr, uid, move_ids, context=None):
+        if context is None:
+            context = {}
+        if not (context.get('sync_update_execution', False)) or not move_ids:
+            return
+
+        if isinstance(move_ids, (int, long)):
+            move_ids = [move_ids]
+
+        move_line_obj = self.pool.get('account.move.line')
+        for move in self.browse(cr, uid, move_ids, context):
+            if move.journal_id.type == 'system':
+                continue
+
+            amount = 0
+            line_draft_ids = []
+            for line in move.line_id:
+                # Hook to check line
+                amount += line.debit - line.credit
+                if line.state=='draft':
+                    line_draft_ids.append(line.id)
+
+            if abs(amount) < 10 ** -4:
+                if line_draft_ids:
+                    move_line_obj.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+            elif move.journal_id.centralisation:
+                move_line_obj.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+        return True
+
 account_move()
 
 class account_move_reconcile(osv.osv):
