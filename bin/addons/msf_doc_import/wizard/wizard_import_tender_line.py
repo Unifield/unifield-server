@@ -203,12 +203,17 @@ class wizard_import_tender_line(osv.osv_memory):
                     if not context.get('yml_test', False):
                         cr.commit()
 
+            categ_log = tender_obj.onchange_categ(
+                    cr, uid, [tender_browse.id], tender_browse.categ, context=context).get('warning', {}).get('message', '').upper()
+            categ_log = categ_log.replace('THIS', 'THE')
+
         error_log += '\n'.join(error_list)
         if error_log:
             error_log = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
-        final_message = _(''' 
+        final_message = _('''
+%s
 Importation completed in %s!
 # of imported lines : %s on %s lines
 # of ignored lines: %s
@@ -216,7 +221,7 @@ Importation completed in %s!
 %s
 
 %s
-''') % (total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (categ_log, total_time ,complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
 #        try:
         wizard_vals = {'message': final_message, 'state': 'done'}
         if line_with_error:

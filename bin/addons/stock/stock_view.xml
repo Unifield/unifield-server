@@ -1093,7 +1093,8 @@
                     <field name="partner_id" />
                     <field name="backorder_id" groups="base.group_extended"/>
                     <field name="origin"/>
-                    <field name="date"/>
+                    <field name="date" string="Creation date" />
+                    <field name="date_done" string="Actual Receipt Date" />
                     <field name="min_date"/>
                     <field name="invoice_state" groups="base.group_extended"/>
                     <field name="stock_journal_id" groups="base.group_extended" widget="selection"/>

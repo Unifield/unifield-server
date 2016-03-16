@@ -320,6 +320,13 @@ class patch_scripts(osv.osv):
                 with open(file_path, 'w') as file:
                         file.writelines(lines)
 
+    def uftp_144_patch(self, cr, uid, *a, **b):
+        """
+        Sorting Fix in AJI: ref and partner_txt mustn't be empty strings
+        """
+        cr.execute("UPDATE account_analytic_line SET ref=NULL WHERE ref='';")
+        cr.execute("UPDATE account_analytic_line SET partner_txt=NULL WHERE partner_txt='';")
+
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')
         cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])
@@ -379,6 +386,21 @@ class patch_scripts(osv.osv):
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
             cr.execute("update sync_client_update_received set rule_sequence=-rule_sequence where is_deleted='t'")
+
+
+    def another_translation_fix(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.update_received'):
+            ir_trans = self.pool.get('ir.translation')
+            cr.execute('''select id, xml_id, name from ir_translation where
+                xml_id is not null and
+                res_id is null and
+                type='model'
+            ''')
+            for x in cr.fetchall():
+                res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
+                if res_id:
+                    cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
+        return True
 patch_scripts()
 
 

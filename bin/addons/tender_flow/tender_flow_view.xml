@@ -27,7 +27,7 @@
                         <page string="Tender Lines">
                             <field colspan="4" mode="tree,form,graph" name="tender_line_ids" nolabel="1" widget="one2many_list">
                                 <tree string="Tender Lines" editable="top" hide_delete_button="1" noteditable="line_state in ['cancel', 'done']" colors="blue: line_state=='cancel'">
-                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
+                                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty, parent.categ)" attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
                                     <field name="comment" />
                                     <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
                                         on_change="onchange_uom_qty(product_uom, qty)" />
@@ -171,7 +171,7 @@
             <field name="arch" type="xml">
                 <tree string="Tender Lines" editable="top">
                     <!-- <field name="date_planned" /> -->
-                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('purchase_type', '=', parent.categ)]" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
+                    <field name="product_id" on_change="on_product_change(product_id, product_uom, qty)" attrs="{'readonly': [('state', '!=', 'draft')]}" context="{'available_for_restriction': 'tender', 'search_default_not_restricted': 1}" />
                     <field name="comment" />
                     <field name="qty" attrs="{'readonly': [('state', '!=', 'draft')]}" 
                            on_change="onchange_uom_qty(product_uom, qty)" />

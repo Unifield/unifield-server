@@ -4296,7 +4296,10 @@ class orm(orm_template):
 
         # figure out the applicable order_by for the m2o
         dest_model = self.pool.get(order_field_column._obj)
-        m2o_order = dest_model._order
+        if order_field_column.m2o_order:
+            m2o_order = order_field_column.m2o_order
+        else:
+            m2o_order = dest_model._order
         if not regex_order.match(m2o_order):
             # _order is complex, can't use it here, so we default to _rec_name
             m2o_order = dest_model._rec_name

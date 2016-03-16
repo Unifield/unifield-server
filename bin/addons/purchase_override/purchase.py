@@ -434,31 +434,6 @@ class purchase_order(osv.osv):
         (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
     ]
 
-    def _check_service(self, cr, uid, ids, vals, context=None):
-        '''
-        Avoid the saving of a PO with non service products on Service PO
-        '''
-        # UTP-871 : Remove check of service
-        return True
-
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        if context.get('import_in_progress'):
-            return True
-
-        for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can purchase only \'Transport\' products on a \'Transport\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can purchase only \'Service\' products on a \'Service\' purchase order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-
-        return True
-
     def purchase_cancel(self, cr, uid, ids, context=None):
         '''
         Call the wizard to ask if you want to re-source the line
@@ -574,8 +549,6 @@ class purchase_order(osv.osv):
         '''
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
-
-        self._check_service(cr, uid, ids, vals, context=context)
 
         for order in self.browse(cr, uid, ids, context=context):
             partner_type = self.pool.get('res.partner').browse(cr, uid, vals.get('partner_id', order.partner_id.id), context=context).partner_type
@@ -1373,6 +1346,7 @@ stock moves which are already processed : '''
         pol_obj = self.pool.get('purchase.order.line')
         so_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
+        socl_obj = self.pool.get('sale.order.line.cancel')
         move_obj = self.pool.get('stock.move')
         proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
@@ -1400,6 +1374,7 @@ stock moves which are already processed : '''
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [line.id], context=context)
                 if sol_ids:
                     store_to_call += sol_ids
+
 
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     so = sol.order_id
@@ -1435,6 +1410,13 @@ stock moves which are already processed : '''
                             '|', ('order_id.id', '=', line.order_id.id), ('order_id.state', 'in', ['sourced', 'approved']),
                         ], context=context)
                         for opl in pol_obj.browse(cr, uid, other_po_lines, context=context):
+                            # Check if the other PO line will not be canceled
+                            socl_ids = socl_obj.search(cr, uid, [
+                                ('sync_order_line_db_id', '=', opl.sync_order_line_db_id),
+                            ], limit=1, order='NO_ORDER', context=context)
+                            if socl_ids:
+                                continue
+
                             if opl.product_uom.id != line.product_uom.id:
                                 line_qty += uom_obj._compute_qty(cr, uid, opl.product_uom.id, opl.product_qty, line.product_uom.id)
                             else:
@@ -1812,7 +1794,11 @@ stock moves which are already processed : '''
             if (order.invoice_method in ['picking', 'order'] and not order.from_yml_test and order.order_type not in ['in_kind', 'purchase_list'] and order.partner_id.partner_type != 'intermission') or (order.invoice_method == 'manual' and order.order_type == 'direct' and order.partner_id.partner_type == 'esc'):
                 # UTP-827: no commitment if they are imported for ESC partners
                 if not (order.partner_id.partner_type == 'esc' and setup.import_commitments):
-                    self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
+                    # US-917: Check if any CV exists for the given PO
+                    commit_obj = self.pool.get('account.commitment')
+                    existingCV = commit_obj.search(cr, uid, [('purchase_id', 'in', [order.id])], context=context)
+                    if not existingCV:
+                        self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             todo = []
             todo2 = []
             todo3 = []
@@ -2046,6 +2032,12 @@ stock moves which are already processed : '''
             if reason_type_id:
                 picking_values.update({'reason_type_id': reason_type_id})
 
+            # US-917: Check if any IN exists for the given PO
+            pick_obj = self.pool.get('stock.picking')
+            existingIN = pick_obj.search(cr, uid, [('purchase_id', 'in', [order.id])], context=context)
+            if existingIN:
+                return
+
             picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)
             todo_moves = []
             for order_line in order.order_line:
@@ -2174,7 +2166,6 @@ stock moves which are already processed : '''
         vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
 
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
-        self._check_service(cr, uid, [res], vals, context=context)
 
         return res
 
@@ -3595,10 +3586,9 @@ class purchase_order_line(osv.osv):
         elif not product and not comment and not nomen_manda_0:
             res['value'].update({'price_unit': 0.00, 'product_qty': 0.00, 'product_uom': False, 'old_price_unit': 0.00})
 
-
         if context and context.get('categ') and product:
             # Check consistency of product
-            consistency_message = self.pool.get('product.product').check_consistency(cr, uid, product, context.get('categ'), context=context)
+            consistency_message = product_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
             if consistency_message:
                 res.setdefault('warning', {})
                 res['warning'].setdefault('title', 'Warning')
@@ -3812,39 +3802,62 @@ class product_product(osv.osv):
     }
 
     def check_consistency(self, cr, uid, product_id, category, context=None):
-        '''
+        """
         Check the consistency of product according to category
-        '''
-        context = context is None and {} or context
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product_id: ID of the product.product to check
+        :param category: DB value of the category to check
+        :param context: Context of the call
+        :return: A warning message or False
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
         display_message = False
 
         # No check for Other
         if category == 'other':
             return False
 
-        product = self.read(cr, uid, product_id, ['nomen_manda_0', 'type', 'transport_ok'], context=context)
+        product = self.read(cr, uid, product_id, [
+            'nomen_manda_0',
+            'type',
+            'transport_ok',
+        ], context=context)
         transport_product = product['transport_ok']
         product_type = product['type']
         main_type = product['nomen_manda_0'][0]
 
         if category == 'medical':
             try:
-                med_nomen = self.pool.get('product.nomenclature').search(cr,
-                        uid, [('level', '=', 0), ('name', '=', 'MED')],
-                        context=context)[0]
+                med_nomen = nomen_obj.search(cr, uid, [
+                    ('level', '=', 0),
+                    ('name', '=', 'MED'),
+                ], context=context)[0]
             except IndexError:
-                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('MED nomenclature Main Type not found'),
+            )
 
             if main_type != med_nomen:
                 display_message = True
 
         if category == 'log':
             try:
-                log_nomen = self.pool.get('product.nomenclature').search(cr,
-                        uid, [('level', '=', 0), ('name', '=', 'LOG')],
-                        context=context)[0]
+                log_nomen = nomen_obj.search(cr, uid, [
+                    ('level', '=', 0),
+                    ('name', '=', 'LOG'),
+                ], context=context)[0]
+
             except IndexError:
-                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+                raise osv.except_osv(
+                    _('Error'),
+                    _('LOG nomenclature Main Type not found')
+                )
 
             if main_type != log_nomen:
                 display_message = True
@@ -3856,7 +3869,8 @@ class product_product(osv.osv):
             display_message = True
 
         if display_message:
-            return 'Warning you are about to add a product which does not conform to this PO’s order category, do you wish to proceed ?'
+            return 'Warning you are about to add a product which does not conform to this' \
+                ' PO’s order category, do you wish to proceed ?'
         else:
             return False
 

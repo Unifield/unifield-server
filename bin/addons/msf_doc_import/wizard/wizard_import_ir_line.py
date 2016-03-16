@@ -234,12 +234,11 @@ class wizard_import_ir_line(osv.osv_memory):
 
                         # write order line on FO
                         vals['order_line'].append((0, 0, to_write))
-                        if sale_obj._check_service(cr, uid, fo_id, vals, context=context):
-                            sale_line_obj.create(cr, uid, to_write, context=context)
-                            if to_write['error_list']:
-                                lines_to_correct += 1
-                            percent_completed = float(line_num)/float(total_line_num-1)*100.0
-                            complete_lines += 1
+                        sale_line_obj.create(cr, uid, to_write, context=context)
+                        if to_write['error_list']:
+                            lines_to_correct += 1
+                        percent_completed = float(line_num)/float(total_line_num-1)*100.0
+                        complete_lines += 1
                     except IndexError, e:
                         error_log += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s") % (line_num, template_col_count, e)
                         line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -261,7 +260,6 @@ class wizard_import_ir_line(osv.osv_memory):
                         self.write(cr, uid, ids, {'percent_completed':percent_completed})
                         if not context.get('yml_test', False):
                             cr.commit()
-                sale_obj._check_service(cr, uid, ids, vals, context=context)
             error_log += '\n'.join(error_list)
             if error_log:
                 error_log = _("Reported errors for ignored lines : \n") + error_log.decode('utf-8')

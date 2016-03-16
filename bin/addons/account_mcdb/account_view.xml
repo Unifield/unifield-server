@@ -80,7 +80,7 @@
                     <field name="functional_currency_id"/>
                     <field name="output_amount"/>
                     <field name="output_currency"/>
-                    <field name="reversal_origin"/>
+                    <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
             </field>
@@ -167,7 +167,7 @@
                         </group>
                         <newline/>
                         <group>
-                            <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                            <field name="instance_id" domain="[('instance_to_display_ids','=',True)]" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
                             <field name="journal_id_fake" context="{'journal_id':self, 'visible_id':self, 'normal_view':False, 'exclude_journals': ['IB']}"/>
                             <field name="journal_type"/>
                         </group>
@@ -390,7 +390,7 @@
                             </group>
                             <newline/>
                             <group col='8' colspan='4'>
-                                <field name="instance_id" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                                <field name="instance_id" domain="[('instance_to_display_ids','=',True)]" on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
                                 <field name="journal_id_fake" context="{'exclude_journals': ['IB']}" />
                                 <field name="journal_type"/>
                             </group>

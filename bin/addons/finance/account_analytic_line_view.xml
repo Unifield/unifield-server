@@ -23,7 +23,7 @@
                     <field name="currency_id"/>
                     <field name="amount" sum="Sum"/>
                     <field name="functional_currency_id"/>
-                    <field name="reversal_origin"/>
+                    <field name="reversal_origin_txt"/>
                     <field name="user_id" invisible="1"/>
                 </tree>
             </field>
