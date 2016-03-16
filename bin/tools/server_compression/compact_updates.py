@@ -346,8 +346,8 @@ if COMPACT_UPDATE:
 print_file_and_screen('\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
     total_update_count, 1), locale.format('%d', number_of_update, 1)))
 
-result_file.close()
 cr.close()
 cr2.close()
 cr3.close()
 print_time_elapsed(start_time, time.time(), 'Total')
+result_file.close()
