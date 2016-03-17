@@ -219,8 +219,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        datas = {}
-        datas['ids'] = ids
+        datas = {
+            'ids': ids,
+            'need_ad': context.get('need_ad', False),
+        }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
             context=context)
         if file_name:
@@ -244,9 +246,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        datas = {}
-        datas['ids'] = ids
-        datas['need_ad'] = context.get('need_ad', False)
+        datas = {
+            'ids': ids,
+            'need_ad': context.get('need_ad', False),
+        }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
             context=context)
         if file_name:
