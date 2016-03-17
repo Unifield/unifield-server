@@ -484,7 +484,6 @@ class account_account(osv.osv):
         emp_obj = self.pool.get('hr.employee')
         partner_obj = self.pool.get('res.partner')
 
-        should_have_field_suffix = False
         if partner_type:
             pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
                 else (partner_type._name, partner_type.id, )
@@ -508,13 +507,14 @@ class account_account(osv.osv):
                 if partner_ids:
                     partner_id = partner_ids[0]
 
+        should_have_field_suffix = False
         if employee_id:
             tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
             # note: allowed for employees with no type
             should_have_field_suffix = tp_rec.employee_type or False
         elif transfer_journal_id:
             should_have_field_suffix = 'book'
-        else:
+        elif partner_id:
             tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
             should_have_field_suffix = tp_rec.partner_type or False
         if not should_have_field_suffix:
