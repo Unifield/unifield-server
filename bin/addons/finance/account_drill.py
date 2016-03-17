@@ -300,6 +300,9 @@ class AccountDrill(object):
                 self.context)
             node.code = node.obj.code
             node.name = "%s %s" % (node.code, node.obj.name, )
+            if self._next_node_index == 0:
+                # MSF top account
+                node.name += " / %s" % (_('Total Selection'), )
 
         self._next_node_index += 1
         return node
