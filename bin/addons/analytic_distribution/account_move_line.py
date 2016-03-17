@@ -190,7 +190,7 @@ class account_move_line(osv.osv):
                         line_vals = {
                                      'name': obj_line.get('name', ''),
                                      'date': obj_line.get('date', False),
-                                     'ref': obj_line.get('ref', ''),
+                                     'ref': obj_line.get('ref', False),
                                      'journal_id': journal.get('analytic_journal_id', [False])[0],
                                      'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
                                         anal_amount, round=False, context=context),

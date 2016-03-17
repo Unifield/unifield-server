@@ -87,7 +87,7 @@ class account_move_line(osv.osv):
         """
         res = {}
         for line in self.browse(cr, uid, ids):
-            res[line.id] = ''
+            res[line.id] = False
             if line.reference:
                 res[line.id] = line.reference
                 continue
@@ -456,7 +456,8 @@ class account_move_line(osv.osv):
             if line_draft_ids:
                 self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
         elif move.journal_id.centralisation:
-            self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
+            if line_draft_ids:
+                self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
         return True
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):

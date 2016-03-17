@@ -67,14 +67,36 @@ class account_analytic_line(osv.osv):
                 res[al.id] = True
         return res
 
+    def _get_reversal_origin_txt(cr, uid, ids, field_names, args, context=None):
+        ret = {}
+        if not ids:
+            return ret
+        for id in ids:
+            ret[id] = ''
+        cr.execute('''select a1.id, a2.name from
+            account_analytic_line a1, account_analytic_line a2
+            where a2.id = a1.reversal_origin and
+            a1.id in %s ''', (tuple(ids),)
+        )
+        for x in cr.fetchall():
+            ret[x[0]] = x[1]
+        return ret
+
+    def _get_analytic_reversal(self, cr, uid, ids, context=None):
+        return self.search(cr, uid, [('reversal_origin', 'in', ids)])+ids
+
     _columns = {
         'distribution_id': fields.many2one('analytic.distribution', string='Analytic Distribution'),
-        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]"),
+        'cost_center_id': fields.many2one('account.analytic.account', string='Cost Center', domain="[('category', '=', 'OC'), ('type', '<>', 'view')]", m2o_order='code'),
         'from_write_off': fields.boolean(string='Write-off?', readonly=True, help="Indicates that this line come from a write-off account line."),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '<>', 'view')]"),
         'distrib_line_id': fields.reference('Distribution Line ID', selection=[('funding.pool.distribution.line', 'FP'),('free.1.distribution.line', 'free1'), ('free.2.distribution.line', 'free2')], size=512),
         'free_account': fields.function(_get_is_free, method=True, type='boolean', string='Free account?', help="Is that line comes from a Free 1 or Free 2 account?"),
         'reversal_origin': fields.many2one('account.analytic.line', string="Reversal origin", readonly=True, help="Line that have been reversed."),
+        'reversal_origin_txt': fields.function(_get_reversal_origin_txt, string="Reversal origin", type='char', size=256,
+                                               store={
+                                                    'account.analytic.line': (_get_analytic_reversal, ['name', 'reversal_origin'], 20),
+                                               }),
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'is_reversal': fields.boolean('Reversal?'),
         'is_reallocated': fields.boolean('Reallocated?'),
@@ -95,6 +117,14 @@ class account_analytic_line(osv.osv):
         'exported': lambda *a: False,
         'is_engi': lambda *a: False,
     }
+
+    def unlink(self, cr, uid, ids, context=None):
+        # store_set_value is not called on unlink if target and source are the same obj
+        if ids:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            cr.execute("update account_analytic_line set reversal_origin_txt='' where reversal_origin in %s", (tuple(ids),))
+        return super(account_analytic_line, self).unlink(cr, uid, ids, context=context)
 
     def _check_date(self, cr, uid, vals, context=None):
         """

@@ -268,7 +268,6 @@ class wizard_import_pick_line(osv.osv_memory):
 
                         # write move line on picking
                         #vals['move_lines'].append((0, 0, to_write))
-                        #if pick_obj._check_service(cr, uid, picking.id, vals, context=context):
                         move_id = move_obj.create(cr, uid, to_write, context=context)
                         if to_write['error_list']:
                             lines_to_correct += 1

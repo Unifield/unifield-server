@@ -262,12 +262,11 @@ class wizard_import_po_line(osv.osv_memory):
                             continue
 
                         # write order line on PO
-                        if purchase_obj._check_service(cr, uid, wiz.po_id.id, vals, context=context):
-                            purchase_line_obj.create(cr, uid, to_write, context=context)
-                            vals['order_line'].append((0, 0, to_write))
-                            if to_write['error_list']:
-                                lines_to_correct += 1
-                            complete_lines += 1
+                        purchase_line_obj.create(cr, uid, to_write, context=context)
+                        vals['order_line'].append((0, 0, to_write))
+                        if to_write['error_list']:
+                            lines_to_correct += 1
+                        complete_lines += 1
 
                     except IndexError, e:
                         message += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"

@@ -998,57 +998,70 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
-    def onchange_categ(self, cr, uid, ids, categ, context=None):
-        '''
+    def onchange_categ(self, cr, uid, ids, category, context=None):
+        """
         Check if the list of products is valid for this new category
-        '''
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of purchase.order to check
+        :param category: DB value of the new choosen category
+        :param context: Context of the call
+        :return: A dictionary containing the warning message if any
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         message = {}
-        if ids and categ in ['service', 'transport']:
-            # Avoid selection of non-service producs on Service FO
-            category = categ == 'service' and 'service_recep' or 'transport'
+        res = False
+
+        if ids and category in ['log', 'medical']:
+            # Check if all product nomenclature of products in FO/IR lines are consistent with the category
+            try:
+                med_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+            try:
+                log_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            nomen_id = category == 'log' and log_nomen or med_nomen
+            cr.execute('''SELECT l.id
+                          FROM sale_order_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+                            LEFT JOIN sale_order so ON l.order_id = so.id
+                          WHERE (t.nomen_manda_0 != %s) AND so.id in %s LIMIT 1''',
+                       (nomen_id, tuple(ids)))
+            res = cr.fetchall()
+
+        if ids and category in ['service', 'transport']:
+            # Avoid selection of non-service products on Service FO
+            category = category == 'service' and 'service_recep' or 'transport'
             transport_cat = ''
             if category == 'transport':
                 transport_cat = 'OR p.transport_ok = False'
-            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+            cr.execute('''SELECT l.id
                           FROM sale_order_line l
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
                             LEFT JOIN sale_order fo ON l.order_id = fo.id
-                          WHERE (t.type != 'service_recep' %s) AND fo.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+                          WHERE (t.type != 'service_recep' %s) AND fo.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))
             res = cr.fetchall()
-            if res:
-                cat_name = categ == 'service' and 'Service' or 'Transport'
-                message.update({'title': _('Warning'),
-                                'message': _('The product [%s] %s is not a \'%s\' product. You can sale only \'%s\' products on a \'%s\' field order. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+
+        if res:
+            message.update({
+                'title': _('Warning'),
+                'message': _('This order category is not consistent with product(s) on this order.'),
+            })
 
         return {'warning': message}
-
-    def _check_service(self, cr, uid, ids, vals, context=None):
-        '''
-        Avoid the saving of a FO with a non service products on Service FO
-        '''
-        categ = {'transport': _('Transport'),
-                 'service': _('Service')}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        if context is None:
-            context = {}
-        if context.get('import_in_progress'):
-            return True
-
-        for order in self.browse(cr, uid, ids, context=context):
-            for line in order.order_line:
-                if vals.get('categ', order.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Transport\' product. You can sale only \'Transport\' products on a \'Transport\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                elif vals.get('categ', order.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can sale only \'Service\' products on a \'Service\' field order. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-
-        return True
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -1071,7 +1084,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['invoice_quantity'] = 'order'
 
         res = super(sale_order, self).create(cr, uid, vals, context)
-        self._check_service(cr, uid, [res], vals, context=context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -1096,8 +1108,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['order_policy'] = 'manual'
             else:
                 vals['order_policy'] = 'picking'
-
-        self._check_service(cr, uid, ids, vals, context=context)
 
         res = super(sale_order, self).write(cr, uid, ids, vals, context=context)
 
@@ -2982,15 +2992,79 @@ class sale_order_line(osv.osv):
                 'view_id': [view_id],
                 }
 
+    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty=0,
+            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
+        """
+        Call sale_order_line.product_id_change() method and check if the selected product is consistent
+        with order category.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order.line where product is changed
+        :param pricelist: ID of the product.pricelist of the order of the line
+        :param product: ID of product.product of the selected product
+        :param qty: Quantity of the sale.order.line
+        :param uom: ID of the product.uom of the UoM of the sale.order.line
+        :param qty_uos: Quantity of the sale.order.line converted in UoS
+        :param uos: ID of the product.uom of the Unit of Sale of the sale.order.line
+        :param name: Description of the sale.order.line
+        :param partner_id: ID of res.partner of the order of the line
+        :param lang: Lang of the user
+        :param update_tax: Boolean to check if the taxes should be updated
+        :param date_order: Date of the order of the line
+        :param packaging: Packaging selected for the line
+        :param fiscal_position: Fiscal position selected on the order of the line
+        :param flag: ???
+        :param context: Context of the call
+        :return: Result of the sale_order_line.product_id_change() method
+        """
+        prod_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
+
+        res = self.product_id_change(cr, uid, ids,
+                                     pricelist,
+                                     product,
+                                     qty=qty,
+                                     uom=uom,
+                                     qty_uos=qty_uos,
+                                     uos=uos,
+                                     name=name,
+                                     partner_id=partner_id,
+                                     lang=lang,
+                                     update_tax=update_tax,
+                                     date_order=date_order,
+                                     packaging=packaging,
+                                     fiscal_position=fiscal_position,
+                                     flag=flag)
+
+        if context and context.get('categ') and product:
+            # Check consistency of product
+            consistency_message = prod_obj.check_consistency(cr, uid, product, context.get('categ'), context=context)
+            if consistency_message:
+                res.setdefault('warning', {})
+                res['warning'].setdefault('title', 'Warning')
+                res['warning'].setdefault('message', '')
+
+                res['warning']['message'] = '%s \n %s' % \
+                    (res.get('warning', {}).get('message', ''), consistency_message)
+
+        return res
+
+
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
             uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False, context=None):
         """
         If we select a product we change the procurement type to its own procurement method (procure_method).
         If there isn't product, the default procurement method is 'From Order' (make_to_order).
         Both remains changeable manually.
         """
         product_obj = self.pool.get('product.product')
+
+        if context is None:
+            context = {}
 
         res = super(sale_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty,
             uom, qty_uos, uos, name, partner_id,
