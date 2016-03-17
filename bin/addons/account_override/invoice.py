@@ -82,14 +82,17 @@ class account_invoice(osv.osv):
         # @@@override@account.invoice.py
         if context is None:
             context = {}
-        type_inv = context.get('type', 'out_invoice')
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        company_id = context.get('company_id', user.company_id.id)
-        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-        args = [('type', '=', type2journal.get(type_inv, 'sale')),
-                ('company_id', '=', company_id),
-                ('refund_journal', '=', refund_journal.get(type_inv, False))]
+        if context.get('is_inkind_donation'):
+            args = [('type', 'in', ['inkind', 'extra'])]
+        else:
+            type_inv = context.get('type', 'out_invoice')
+            company_id = context.get('company_id', user.company_id.id)
+            type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
+            refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
+            args = [('type', '=', type2journal.get(type_inv, 'sale')),
+                    ('company_id', '=', company_id),
+                    ('refund_journal', '=', refund_journal.get(type_inv, False))]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
         journal_obj = self.pool.get('account.journal')
@@ -1385,6 +1388,31 @@ class account_invoice_line(osv.osv):
                     if ml.analytic_lines:
                         al_ids += [x.id for x in ml.analytic_lines]
         return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
+
+    def onchange_donation_product(self, cr, uid, ids, product_id, qty, currency_id, context=None):
+        res = {'value': {}}
+        if product_id:
+            p_info = self.pool.get('product.product').read(cr, uid, product_id, ['donation_expense_account', 'partner_ref', 'standard_price', 'categ_id'], context=context)
+            if p_info['donation_expense_account']:
+                res['value']['account_id'] = p_info['donation_expense_account'][0]
+            elif p_info['categ_id']:
+                categ = self.pool.get('product.category').read(cr, uid, p_info['categ_id'][0], ['donation_expense_account'])
+                if categ['donation_expense_account']:
+                    res['value']['account_id'] = categ['donation_expense_account'][0]
+            if p_info['partner_ref']:
+                res['value']['name'] = p_info['partner_ref']
+            if p_info['standard_price']:
+                std_price = p_info['standard_price']
+                company_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+                if company_curr_id and company_curr_id != currency_id:
+                    std_price = self.pool.get('res.currency').compute(cr, uid, company_curr_id, currency_id, std_price, context=context)
+                res['value']['price_unit'] = std_price
+                res['value']['price_subtotal'] = (qty or 0) * std_price
+        return res
+
+    def onchange_donation_qty_price(self, cr, uid, ids, qty, price_unit, context=None):
+        return {'value': {'price_subtotal': (qty or 0) * (price_unit or 0)}}
+
 
 account_invoice_line()
 

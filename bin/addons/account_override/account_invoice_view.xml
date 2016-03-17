@@ -330,7 +330,7 @@
             <field name="type">tree</field>
             <field name="priority">19</field>
             <field name="arch" type="xml">
-                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')" hide_new_button="1">
+                <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="document_date" />
                     <field name="date_invoice"/>
                     <field name="number"/>
@@ -351,9 +351,9 @@
             <field name="type">form</field>
             <field name="priority">63</field>
             <field name="arch" type="xml">
-                <form string="In-kind Donation" hide_duplicate_button="1">
+                <form string="In-kind Donation">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', 'inkind')]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]" on_change="onchange_journal_id(journal_id)"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="is_inkind_donation" invisible="1"/>
@@ -381,8 +381,7 @@
                     </group>
                     <notebook colspan="4">
                         <page string="Invoice">
-                            <field invisible="1" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'donation_header')]" name="account_id"/>
-                            <field name="fake_account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'donation_header')]"/>
+                            <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'donation_header')]"/>
                             <field name="reference_type" nolabel="1" size="0"/>
                             <field name="reference" nolabel="1"/>
                             <field name="name"/>
@@ -391,25 +390,35 @@
                             <label string="" colspan="2"/>
                             <field name="check_total" required="2"/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list">
-                                <tree editable="top" string="Donation Lines" noteditable="1" hide_new_button="1">
-                                    <field name="line_number"/>
+                                <tree string="Donation Lines">
+                                    <field name="line_number" readonly="1"/>
                                     <field name="is_corrected" invisible="1"/>
                                     <button name="button_open_analytic_lines" string="Have been corrected" type="object" icon="terp-mail-" attrs="{'invisible': [('is_corrected', '=', False)]}"/>
-                                    <field name="product_id"/>
+                                    <field name="product_id" />
                                     <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
                                     <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection"
                                         context="{'d_journal_id': parent.journal_id , 'd_partner_id': parent.partner_id, 'd_address_invoice_id':parent.address_invoice_id,'d_date_invoice': parent.date_invoice, 'd_register_posting_date': parent.register_posting_date, 'd_account_id': parent.account_id, 'd_partner_bank_id': parent.partner_bank_id, 'd_payment_term': parent.payment_term, 'd_name': parent.name, 'd_origine': parent.origin, 'd_address_contact_id': parent.address_contact_id, 'd_user_id': parent.user_id, 'd_comment': parent.comment}"
                                         />
-                                    <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}"/>
+                                    <field name="analytic_distribution_state_recap" attrs="{'invisible': [('is_allocatable', '=', False)]}" readonly="1"/>
                                     <field name="analytic_distribution_state" invisible="1"/>
                                     <field name="have_analytic_distribution_from_header" invisible="1"/>
-                                    <field name="quantity"/>
-                                    <field name="price_unit"/>
-                                    <field name="price_subtotal"/>
+                                    <field name="quantity" />
+                                    <field name="price_unit" />
+                                    <field name="price_subtotal" readonly="1"/>
                                     <field name="name"/>
                                     <field name="inactive_product" invisible="1" />
                                     <field name="inactive_error" invisible="1" />
                                 </tree>
+                                <form string="Donation Line">
+                                    <field name="product_id" on_change="onchange_donation_product(product_id, quantity, parent.currency_id, context)"/>
+                                    <field name="account_id" domain="[('restricted_area', '=', 'donation_lines')]"/>
+                                    <field name="name" colspan="4" />
+                                    <field name="quantity" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
+                                    <field name="price_unit" on_change="onchange_donation_qty_price(quantity, price_unit, context)"/>
+                                    <field name="price_subtotal" readonly="1"/>
+                                    <separator colspan="4" string="Notes" />
+                                    <field name="note" colspan="4" nolabel="1" />
+                                </form>
                             </field>
                             <group col="8" colspan="4">
                                 <label string="" colspan="2"/>
@@ -698,7 +707,7 @@
             <field name="view_mode">tree,form,calendar,graph</field>
             <field eval="False" name="view_id"/>
             <field name="domain">[('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True)]</field>
-            <field name="context">{'type':'in_invoice', 'journal_type': 'inkind'}</field>
+            <field name="context">{'type':'in_invoice', 'journal_type': 'inkind', 'is_inkind_donation': '1'}</field>
             <field name="search_view_id" ref="view_account_invoice_filter_donation"/>
         </record>
 
