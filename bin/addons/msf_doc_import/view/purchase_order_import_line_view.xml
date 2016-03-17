@@ -132,6 +132,8 @@
                 <form string="Export PO validated">
                     <separator colspan="4" string="File format" />
                     <field name="file_type" />
+                    <newline />
+                    <field name="need_ad" colspan="2" />
                     <separator colspan="4" string="Actions" />
                     <group colspan="4" col="4">
                         <label> </label>

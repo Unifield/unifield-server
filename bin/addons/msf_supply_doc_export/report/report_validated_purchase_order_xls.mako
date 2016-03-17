@@ -32,6 +32,10 @@
         </Borders>
         <Protection />
     </Style>
+    <Style ss:ID="line_wb">
+        <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+        <Protection ss:Protected="0" />
+    </Style>
     <Style ss:ID="line">
         <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
         <Borders>
@@ -57,7 +61,8 @@
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="1">
-## definition of the columns' size
+    ## definition of the columns' size
+<% max_ad_lines = maxADLines(o) %>
 <% nb_of_columns = 17 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
@@ -165,7 +170,74 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Message ESC Header')}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${o.message_esc or ''|x}</Data></Cell>
     </Row>
-    
+
+    % if need_ad and o.analytic_distribution_id:
+        <Row>
+            <Cell ss:MergeDown="${len(o.analytic_distribution_id.cost_center_lines)}" ss:StyleID="header" ><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+        </Row>
+        % for ccl in o.analytic_distribution_id.cost_center_lines:
+        <Row>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.name or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</Data></Cell>
+        </Row>
+        % endfor
+    % endif
+
+    % if need_ad:
+    <Row>
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:MergeAcross="${(max_ad_lines*4)-1}" ss:StyleID="header" ><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+    </Row>
+    <Row>
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
+        % for x in range(1, max_ad_lines+1):
+        <Cell ss:MergeAcross="3" ss:StyleID="header" ><Data ss:Type="String">${_('Line %s' % x)}</Data></Cell>
+        % endfor
+    </Row>
+    % endif
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>    
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref.')}</Data></Cell>    
@@ -186,8 +258,17 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
+        % if need_ad:
+            % for x in range(1, max_ad_lines+1):
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+            % endfor
+        % endif
     </Row>
     % for line in o.order_line:
+    <% len_cc_lines = line.analytic_distribution_id and len(line.analytic_distribution_id.cost_center_lines) or 0 %>
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.external_ref or '')|x}</Data></Cell>
@@ -222,6 +303,22 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.fnct_project_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        % if need_ad:
+            % if line.analytic_distribution_id:
+                % for ccl in line.analytic_distribution_id.cost_center_lines:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
+                % endfor
+            % endif
+            % for x in range(0, max_ad_lines-len_cc_lines):
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            % endfor
+        % endif
     </Row>
     % endfor
 </Table>
