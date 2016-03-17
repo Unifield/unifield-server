@@ -1384,6 +1384,10 @@ class shipment(osv.osv):
                 raise osv.except_osv(_('Error, no partner !'),
                     _('Please put a partner on the shipment if you want to generate invoice.'))
 
+            # (US-952) No STV created when a shipment is generated on an external supplier
+            if partner.partner_type == 'external':
+                continue
+
             inv_type = 'out_invoice'
 
             if inv_type in ('out_invoice', 'out_refund'):
