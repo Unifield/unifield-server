@@ -215,13 +215,31 @@ class account_account(osv.osv):
 
     def _get_children_and_consol(self, cr, uid, ids, context=None):
         #this function search for all the children and all consolidated children (recursively) of the given account ids
-        ids2 = self.search(cr, uid, [('parent_id', 'child_of', ids)], context=context)
+        if context is None:
+            context={}
+
+        display_only_checked_account = context.get('display_only_checked_account', False)
+        # in case of report do not get the account that should not been displayed
+        if display_only_checked_account:
+            # get the 'MSF Chart of Accounts'
+            msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
+
+            # get the level 1 accounts that should be displayed in reports
+            level_1_account_ids = self.search(cr, uid,
+                        [('parent_id', '=',msf_coa),
+                         ('display_in_reports','=',True)],
+                        context=context)
+
+            ids2 = msf_coa + self.search(cr, uid, [('parent_id', 'child_of',
+                level_1_account_ids)], context=context)
+        else:
+            ids2 = self.search(cr, uid, [('parent_id', 'child_of', ids)], context=context)
         ids3 = []
-        for rec in self.browse(cr, uid, ids2, context=context):
-            for child in rec.child_consol_ids:
+        for account in self.browse(cr, uid, ids2, context=context):
+            for child in account.child_consol_ids:
                 ids3.append(child.id)
         if ids3:
-            ids3 = self._get_children_and_consol(cr, uid, ids3, context)
+            ids3 = self._get_children_and_consol(cr, uid, ids3, context=context)
         return ids2 + ids3
 
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
@@ -238,6 +256,8 @@ class account_account(osv.osv):
                         (__compute will handle their escaping) as a
                         tuple
         """
+        if context is None:
+            context = {}
         mapping = {
             'balance': "COALESCE(SUM(l.debit),0) " \
                        "- COALESCE(SUM(l.credit), 0) as balance",
@@ -245,7 +265,8 @@ class account_account(osv.osv):
             'credit': "COALESCE(SUM(l.credit), 0) as credit"
         }
         #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
+                context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
@@ -285,6 +306,7 @@ class account_account(osv.osv):
             children_and_consolidated.reverse()
             brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
             currency_obj = self.pool.get('res.currency')
+            display_only_checked_account = context.get('display_only_checked_account', False)
             while brs:
                 current = brs[0]
 #                can_compute = True
@@ -300,6 +322,10 @@ class account_account(osv.osv):
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
                     for child in current.child_id:
+                        # in context of report, if the current account is not
+                        # displayed, it should no impact the total amount
+                        if display_only_checked_account and not account.display_in_reports:
+                            continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]
                         else:
@@ -341,6 +367,23 @@ class account_account(osv.osv):
                 level = obj.level + 1
             res[account.id] = level
         return res
+
+    def _get_child_of_coa(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return the direct child of Chart Of Account account
+        """
+        if context is None:
+            context = {}
+        res = {}
+        msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
+        if msf_coa:
+            id_list = self.search(cr, uid, [('parent_id','=', msf_coa),
+                                            ('id', 'in', ids)], context=context)
+            for account_id in ids:
+                res[account_id]=account_id in id_list
+            return res
+        else:
+            raise osv.except_osv(_('Error'), _('Operation not implemented!'))
 
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True),
@@ -387,6 +430,7 @@ class account_account(osv.osv):
             'Incoming transactions always use the rate at date.', \
             required=True),
         'level': fields.function(_get_level, string='Level', method=True, store=True, type='integer'),
+        'is_child_of_coa': fields.function(_get_child_of_coa, method=True, type='boolean', string='Is child of CoA', help="Check if the current account is a direct child of Chart Of Account account."),
     }
 
     _defaults = {

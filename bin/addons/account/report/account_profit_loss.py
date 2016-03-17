@@ -107,6 +107,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
 
         # set context
         ctx = self.context.copy()
+        ctx['display_only_checked_account'] = True
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
         ctx['state'] = data['form']['target_move']
         if data['form']['filter'] == 'filter_period':
