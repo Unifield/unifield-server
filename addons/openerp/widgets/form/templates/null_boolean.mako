@@ -18,7 +18,7 @@
     % endif
 % else:
     % if value == '?':
-    <span class="text_null_boolean" name="${name}" id="${name}" >${value}</span>
+    <span kind="${kind}" class="text_null_boolean" name="${name}" id="${name}" >${value}</span>
     % else:
     <input
         type="checkbox"
