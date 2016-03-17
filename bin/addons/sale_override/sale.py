@@ -889,6 +889,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         order_brw_list = self.browse(cr, uid, ids, context=context)
+        reset_soq = []
 
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
@@ -897,6 +898,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_ids = []
             for line in order.order_line:
                 line_ids.append(line.id)
+                if line.soq_updated:
+                    reset_soq.append(line.id)
             no_price_lines = []
             if order.order_type == 'regular':
                 cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
@@ -937,6 +940,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if not order.procurement_request and order.split_type_sale_order == 'original_sale_order':
                 line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
+
+        line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
 
         self.write(cr, uid, ids, {
             'state': 'validated',
@@ -2920,7 +2925,7 @@ class sale_order_line(osv.osv):
         self.check_empty_line(cr, uid, ids, vals, context=context)
 
         # Remove SoQ updated flag in case of manual modification
-        if 'product_uom_qty' in vals and not 'soq_updated' in vals:
+        if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)

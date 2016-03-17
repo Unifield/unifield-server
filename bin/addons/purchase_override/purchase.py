@@ -1091,6 +1091,7 @@ stock moves which are already processed : '''
             ids = [ids]
 
         todo = []
+        reset_soq = []
 
         for po in self.browse(cr, uid, ids, context=context):
             line_error = []
@@ -1121,6 +1122,8 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if line.state=='draft':
                     todo.append(line.id)
+                if line.soq_updated:
+                    reset_soq.append(line.id)
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
@@ -1128,6 +1131,7 @@ stock moves which are already processed : '''
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 
         po_line_obj.action_confirm(cr, uid, todo, context)
+        po_line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
 
         self.write(cr, uid, ids, {'state' : 'confirmed',
                                   'validator' : uid,
@@ -3074,7 +3078,7 @@ class purchase_order_line(osv.osv):
             exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
 
         # Remove SoQ updated flag in case of manual modification
-        if 'product_uom_qty' in vals and not 'soq_updated' in vals:
+        if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
         for line in self.browse(cr, uid, ids, context=context):
