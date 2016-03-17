@@ -9,8 +9,8 @@ import oerplib
 start_time = time.time()
 intermediate_time = start_time
 
-DELETE_NO_MASTER = True
-DELETE_INACTIVE_RULES = True
+DELETE_NO_MASTER = False #True
+DELETE_INACTIVE_RULES = False #True
 COMPACT_UPDATE = True
 DELETE_ENTITY_REL = True  # not recommanded to change it to False because it
                           # can remove delete only entity_rel related to
@@ -44,7 +44,7 @@ MODEL_TO_EXCLUDE = [
     'financing.contract.format.line',
 ]
 
-DB_NAME = 'SYNC_SERVER-20160316-163301-zip'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160316-163301-zip3'   # replace with your own DB
 DB_PORT = '11031'
 
 locale.setlocale(locale.LC_ALL, '')
@@ -194,6 +194,24 @@ if COMPACT_UPDATE:
     sync_server_entity_id_list = [x[0] for x in cr2.fetchall()]
     entity_branch_name = {}
 
+    # build a dict of groups for each instances
+    cr2.execute("""SELECT id FROM sync_server_entity""", ())
+    instance_list = [x[0] for x in cr2.fetchall()]
+
+    instance_group_dict = {}
+    for instance_id in instance_list:
+        instance_group_dict[instance_id] = {}
+        for group_name, groupe_id in RULE_TYPE.items():
+            # get the group of this instance if any
+            cr2.execute("""SELECT name
+            FROM sync_entity_group_rel inner join sync_server_entity_group on group_id=id
+            WHERE type_id=%s and entity_id=%s""" % (RULE_TYPE[group_name], instance_id), ())
+            res = [x[0] for x in cr2.fetchall()]
+            if len(res) > 1:
+                instance_group_dict[instance_id][group_name]=res
+            else:
+                instance_group_dict[instance_id][group_name] = res and res[0] or None
+
     def get_recursive_parent(entity_id):
         entity = sync_server_entity.browse(entity_id)
         if entity.parent_id:
@@ -226,11 +244,32 @@ if COMPACT_UPDATE:
         if row['sdref'] in SDREF_TO_EXCLUDE or\
            row['model'] in MODEL_TO_EXCLUDE:
             continue
-        if rule_direction_dict[row['rule_id']] == RULE_TYPE['OC']:
-            # if the rule type is 'OC' it is the possible to aggregate all the
-            # children of HQ in the same key.
-            key = row['sdref'], row['rule_id'], entity_branch_name[row['source']]
+        if rule_type_dict[row['rule_id']] == RULE_TYPE['OC']:
+            # if the rule type is 'OC' it is the possible to aggregate all the updates
+            oc_name = instance_group_dict[row['source']]['OC']
+            if not oc_name:
+                import pdb; pdb.set_trace()
+            key = row['sdref'], row['rule_id'], oc_name
+        elif rule_type_dict[row['rule_id']] == RULE_TYPE['MISSION']:
+            # get the name of the concerned mission
+            mission_name = instance_group_dict[row['source']]['MISSION']
+            if not mission_name:
+                import pdb; pdb.set_trace()
+            key = row['sdref'], row['rule_id'], mission_name
+        elif rule_type_dict[row['rule_id']] == RULE_TYPE['COORDINATIONS']:
+            # get the name of the concerned coodo
+            coordo_name = instance_group_dict[row['source']]['COORDINATIONS']
+            if not coordo_name:
+                import pdb; pdb.set_trace()
+            key = row['sdref'], row['rule_id'], coordo_name
+        elif rule_type_dict[row['rule_id']] == RULE_TYPE['HQ + MISSION']:
+            hq_mission_list = instance_group_dict[row['source']]['HQ + MISSION']
+            hq_mission_name = ''.join(sorted(hq_mission_list))
+            if not hq_mission_name:
+                import pdb; pdb.set_trace()
+            key = row['sdref'], row['rule_id'], hq_mission_name
         else:
+            # this case should never happen
             key = row['sdref'], row['rule_id'], row['source']
         if key not in rows_already_seen:
             rows_already_seen[key] = {'id': row['id'],
@@ -271,8 +310,16 @@ if COMPACT_UPDATE:
                 previous_values = rows_already_seen[key]['values']
                 current_values = eval(row['values'])
                 diff = set(current_values).difference(previous_values)
-                ref_diff = [x.split('sd.')[1] for x in diff if
-                            isinstance(x, (str, unicode)) and x.startswith('sd.')]
+                if row['model'] == 'ir.translation':
+                    # if the reference changes
+                    xml_id = current_values[-2]
+                    if xml_id and xml_id in diff:
+                        # special handling for ir_translation as they are refering
+                        # to product using product_ instead of sd.
+                        ref_diff = [xml_id]
+                else:
+                    ref_diff = [x.split('sd.')[1] for x in diff if
+                                isinstance(x, (str, unicode)) and x.startswith('sd.')]
 
                 # before to do any replacement, check that the object in this
                 # update is not pointing to other object created after the
