@@ -2354,7 +2354,7 @@ class sale_order_line(osv.osv):
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
 
         if lines_to_check:
-            self.check_confirm_order(cr, uid, lines_to_check, context=context)
+            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context)
 
         return res
 

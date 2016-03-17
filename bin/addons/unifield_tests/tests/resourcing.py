@@ -255,7 +255,7 @@ No split of FO found !""")
             'po_cft': 'po',
             'supplier': self.get_record(db, 'ext_supplier_1'),
         })
-        self.order_line_obj.confirmLine(line_ids)
+        self.order_line_obj.confirmLine(line_ids, run_scheduler=False)
 
         # Run the scheduler
         new_order_id = self.run_auto_pos_creation(db, order_to_check=order_id)

@@ -108,7 +108,7 @@ class US311Test(ResourcingTest):
             'po_cft': 'po',
             'supplier': self.p_crd_id,
         })
-        self.p_sol_obj.confirmLine([self.p_irl1_id, self.p_irl2_id])
+        self.p_sol_obj.confirmLine([self.p_irl1_id, self.p_irl2_id], run_scheduler=False)
 
         # Run the scheduler
         self.p_ir_id = self.run_auto_pos_creation(self.p1, order_to_check=self.p_ir_id)
@@ -170,7 +170,7 @@ class US311Test(ResourcingTest):
             'po_cft': 'po',
             'supplier': self.get_record(self.c1, 'ext_supplier_1'),
         })
-        self.c_sol_obj.confirmLine(line_ids)
+        self.c_sol_obj.confirmLine(line_ids, run_scheduler=False)
 
         # Get the generated PO
         self.c_fo_id = self.run_auto_pos_creation(self.c1, order_to_check=self.c_fo_id)

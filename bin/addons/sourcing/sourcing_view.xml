@@ -191,7 +191,36 @@
 		    target="new"
             key2="client_action_multi"
             empty_ids="1"
-		    id="action_compute_schedulers_sourcing"/>
+            id="action_compute_schedulers_sourcing"/>
+
+        <!-- PO Automation -->
+        <record id="po_automation_config_data" model="po.automation.config">
+            <field name="name">yes</field>
+        </record>
+
+        <record id="po_automation_config_tree_view" model="ir.ui.view">
+            <field name="name">po.automation.config.tree.view</field>
+            <field name="model">po.automation.config</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="PO Automation configuration" hide_delete_button="True" hide_new_button="True" editable="top">
+                    <field name="name" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_po_automation_config" model="ir.actions.act_window">
+            <field name="name">PO Automation</field>
+            <field name="res_model">po.automation.config</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="menu_action_po_automation_config"
+            action="action_po_automation_config"
+            parent="base.menu_sale_config_sales"
+            name="PO Automation" />
 
 	</data>
 </openerp>
