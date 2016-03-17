@@ -11,15 +11,16 @@ start_time = time.time()
 locale.setlocale(locale.LC_ALL, '')
 
 HOST_ORIGIN = 'localhost'
-PORT_ORIGIN = '10411'
-DB_ORIGIN = 'fm_sp_222_oca_not_compressed'
+PORT_ORIGIN = '11041'
+DB_ORIGIN = 'fm_sp_222_oca_nc'
 
 HOST_COMPRESSED = 'localhost'
-PORT_COMPRESSED = '10401'
+PORT_COMPRESSED = '11031'
 DB_COMPRESSED = 'fm_sp_222_oca_compressed'
 
 FIELDS_TO_IGNORE = [
     'date',
+    'res_id',
 ]
 
 SDREF_TO_IGNORE = [
