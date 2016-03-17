@@ -96,9 +96,9 @@
                     <field name="imp_exp_date" />
                     <field name="lot_check" />
                     <field name="exp_check" />
-                    <field name="kc_check" />
-                    <field name="dg_check" />
-                    <field name="np_check" />
+                    <field name="kc_check" wizard="null_boolean" />
+                    <field name="dg_check" wizard="null_boolean" />
+                    <field name="np_check" wizard="null_boolean" />
                     <field name="imp_packing_list" />
                     <field name="message_esc1" />
                     <field name="message_esc2" />

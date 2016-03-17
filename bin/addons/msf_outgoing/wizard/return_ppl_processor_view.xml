@@ -37,7 +37,7 @@
                       colors="red: integrity_status not in ('ok', 'empty'); green: integrity_status in ('ok');"
                       >
                     <!-- Invisible fields -->
-                    <field name="ssl_check" invisible="1" />
+                    <field name="ssl_check" invisible="1" widget="null_boolean" />
                     
                     <field name="line_number"
                            string="Line"
@@ -62,9 +62,9 @@
                     <field name="expiry_date" readonly="1" />
                     <field name="lot_check" />
                     <field name="exp_check" />
-                    <field name="kc_check" />
-                    <field name="dg_check" />
-                    <field name="np_check" />
+                    <field name="kc_check" wizard="null_boolean" />
+                    <field name="dg_check" wizard="null_boolean" />
+                    <field name="np_check" wizard="null_boolean" />
                     <field name="integrity_status" string="" />
                 </tree>
             </field>
