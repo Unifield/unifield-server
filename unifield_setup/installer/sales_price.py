@@ -136,12 +136,16 @@ class product_template(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        setup_obj = self.pool.get('unifield.setup.configuration')
         res = {}
+        setup_obj = self.pool.get('unifield.setup.configuration')
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
             standard_price = obj.standard_price
-            percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
+            #US-1035: Fixed the wrong hardcoded id given when calling config setup object 
+            setup_br = setup_obj.get_config(cr, uid)
+            if not setup_br:
+                return res
+            percentage = setup_obj.browse(cr, uid, [setup_br.id], context)[0].sale_price
             list_price = standard_price * (1 + (percentage/100.00))
             res[obj.id] = list_price
         return res
@@ -167,7 +171,6 @@ class product_product(osv.osv):
         On change standard_price, update the list_price = Field Price according to standard_price = Cost Price and the sale_price of the unifield_setup_configuration
         '''
         res = {}
-        setup_obj = self.pool.get('unifield.setup.configuration')
         if standard_price :
             if standard_price < 0.0:
                 warn_msg = {
@@ -178,7 +181,13 @@ class product_product(osv.osv):
                             'value': {'standard_price': 1, 
                                       'list_price': self.onchange_sp(cr, uid, ids, standard_price=1, context=context).get('value').get('list_price')}})
             else:
-                percentage = setup_obj.browse(cr, uid, [1], context)[0].sale_price
+                setup_obj = self.pool.get('unifield.setup.configuration')
+                #US-1035: Fixed the wrong hardcoded id given when calling config setup object 
+                setup_br = setup_obj.get_config(cr, uid)
+                if not setup_br:
+                    return res
+                
+                percentage = setup_obj.browse(cr, uid, setup_br.id, context)[0].sale_price
                 list_price = standard_price * (1 + (percentage/100.00))
                 if 'value' in res:
                     res['value'].update({'list_price': list_price})
