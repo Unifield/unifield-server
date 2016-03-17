@@ -209,6 +209,7 @@ class sale_order_sourcing_progress(osv.osv):
             SELECT min(first_date), max(last_date)
             FROM procurement_request_sourcing_document
             WHERE order_id IN %s
+            AND sourcing_document_model != 'stock.picking'
         ''', (tuple(order_ids),))
         min_date, max_date = cr.fetchone()
 
@@ -254,7 +255,7 @@ class sale_order_sourcing_progress(osv.osv):
 
         fsl_nb = 0
         ool_nb = 0
-        to_po_lines = 0
+        to_po_lines = []
         for order_id in order_ids:
             # Save number of lines in the sale.order records
             on_stock_nb_lines, on_order_nb_lines = self._get_nb_lines_by_type(cr, uid, order_id, context=context)
@@ -262,11 +263,24 @@ class sale_order_sourcing_progress(osv.osv):
             ool_nb += on_order_nb_lines
 
         to_po_ids = to_po_obj.search(cr, uid, [('order_id', 'in', order_ids)], context=context)
-        for to_po in to_po_obj.read(cr, uid, to_po_ids, ['nb_lines'], context=context):
-            to_po_lines += to_po['nb_lines']
+        for to_po in to_po_obj.read(cr, uid, to_po_ids, ['nb_lines', 'start_date'], context=context):
+            if isinstance(to_po['nb_lines'], list):
+                to_po_lines.extend(to_po['nb_lines'])
+            else:
+                to_po_lines.extend(eval(str(to_po['nb_lines'])))
 
-        if not to_po_lines:
-            cr.execute('''
+            if not min_date or min_date > to_po['start_date']:
+                min_date = to_po['start_date']
+
+        # In case of restart of the server or delete of osv.memory
+#        if not to_po_lines:
+        sol_where = ''
+        params = [tuple(order_ids)]
+        if to_po_lines:
+            sol_where = ' AND sol.id NOT IN %s'
+            params.append(tuple(to_po_lines))
+
+        cr.execute('''
                 SELECT count(p.*) AS nb_line
                 FROM procurement_order p
                     LEFT JOIN sale_order_line sol ON p.id = sol.procurement_id
@@ -279,13 +293,14 @@ class sale_order_sourcing_progress(osv.osv):
                         p.rfq_id IS NOT NULL
                     )
                     AND
-                    sol.order_id IN %s
-            ''', (tuple(order_ids),))
-            to_po_lines = cr.fetchone()[0]
+                    sol.order_id IN %%s
+                    %s
+        ''' % sol_where, tuple(params))
+        nb_to_po_lines = len(to_po_lines) + cr.fetchone()[0]
 
         mem_res = {
             'line_from_stock_completed': mem_fsl_nb,
-            'line_on_order_completed': to_po_lines,
+            'line_on_order_completed': nb_to_po_lines,
         }
 
         sourcing_ok = fsl_nb + ool_nb >= nb_all_lines
@@ -550,9 +565,16 @@ class sale_order_po_creation_progress_mem(osv.osv_memory):
             string='Order',
             required=True,
         ),
-        'nb_lines': fields.integer(
+        'nb_lines': fields.text(
             string='Nb lines processed',
         ),
+        'start_date': fields.datetime(
+            string='Start date',
+        ),
+    }
+
+    _defaults = {
+        'start_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
 
     def add_or_create_progress_mem(self, cr, uid, procurement_id, context=None):
@@ -575,13 +597,18 @@ class sale_order_po_creation_progress_mem(osv.osv_memory):
             mem_ids = self.search(cr, uid, [('order_id', '=', order_id)], context=context)
             if mem_ids:
                 for mem_id in mem_ids:
+                    nb_lines = self.read(cr, uid, mem_id, ['nb_lines'], context=context)['nb_lines']
+                    if isinstance(nb_lines, list):
+                        nb_lines.append(o['id'])
+                    else:
+                        eval(str(nb_lines)).append(o['id'])
                     self.write(cr, uid, [mem_id], {
-                        'nb_lines': self.read(cr, uid, mem_id, ['nb_lines'], context=context)['nb_lines'] + 1,
+                        'nb_lines': nb_lines,
                     }, context=context)
             else:
                 mem_ids = [self.create(cr, uid, {
                     'order_id': order_id,
-                    'nb_lines': 1,
+                    'nb_lines': [o['id']],
                 }, context=context)]
 
         return mem_ids
