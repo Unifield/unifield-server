@@ -380,15 +380,16 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
 
                     # US-672 check Third party compat with account
-                    tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
-                        cr, uid, [r_account],
-                        employee_id=r_employee,
-                        transfer_journal_id=r_journal,
-                        partner_id=r_partner,
-                        context=context)[r_account]
-                    if not tp_check_res:
-                        errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
-                        continue
+                    if r_employee or r_journal or r_partner:
+                        tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
+                            cr, uid, [r_account],
+                            employee_id=r_employee,
+                            transfer_journal_id=r_journal,
+                            partner_id=r_partner,
+                            context=context)[r_account]
+                        if not tp_check_res:
+                            errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
+                            continue
 
                     # Check analytic axis only if G/L account is analytic-a-holic
                     if account.is_analytic_addicted:
