@@ -338,6 +338,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     r_account = account_ids[0]
                     account = self.pool.get('account.account').browse(cr, uid, r_account)
+
+                    # Third party
                     # Check that Third party exists (if not empty)
                     tp_label = False
                     tp_content = False
@@ -365,6 +367,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if tp_label and tp_content:
                         errors.append(_('Line %s. %s not found: %s') % (current_line_num, tp_label, tp_content,))
                         continue
+
                     list_third_party = []
                     if r_employee:
                         list_third_party.append(r_employee)
@@ -375,6 +378,18 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if len(list_third_party) > 1:
                         errors.append(_('Line %s. You cannot only add partner or employee or journal.') % (current_line_num,))
                         continue
+
+                    # US-672 check Third party compat with account
+                    tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
+                        cr, uid, [r_account],
+                        employee_id=r_employee,
+                        transfer_journal_id=r_journal,
+                        partner_id=r_partner,
+                        context=context)[r_account]
+                    if not tp_check_res:
+                        errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
+                        continue
+
                     # Check analytic axis only if G/L account is analytic-a-holic
                     if account.is_analytic_addicted:
                         # Check Destination
