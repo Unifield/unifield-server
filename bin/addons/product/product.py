@@ -316,9 +316,15 @@ class product_template(osv.osv):
         return res and res[1] or False
 
     def onchange_uom(self, cursor, user, ids, uom_id,uom_po_id):
+        res = {
+            'value': {
+                'soq_quantity': 0.00,
+            }
+        }
         if uom_id:
-            return {'value': {'uom_po_id': uom_id}}
-        return False
+            res['value']['uom_po_id'] = uom_id
+
+        return res
 
     _defaults = {
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'product.template', context=c),

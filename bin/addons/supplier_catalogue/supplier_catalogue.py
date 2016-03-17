@@ -1007,6 +1007,9 @@ class supplier_catalogue_line(osv.osv):
         if min_order_qty:
             res = uom_obj._change_round_up_qty(cr, uid, uom_id, min_order_qty, 'min_order_qty', result=res)
 
+        res.setdefault('value', {})
+        res['value']['rounding'] = 0.00
+
         return res
 
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
