@@ -39,9 +39,11 @@ class hr_payroll_validation(osv.osv_memory):
     }
 
     def check(self, cr, uid, context=None):
-        # US-672/2 account/partner compatible check pass
-        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid,
-            [('state', '=', 'draft')])
+        # US-672/2 expenses lines account/partner compatible check pass
+        line_ids = self.pool.get('hr.payroll.msf').search(cr, uid, [
+            ('state', '=', 'draft'),
+            ('account_id.is_analytic_addicted', '=', True)
+        ])
         if not line_ids:
             raise osv.except_osv(_('Warning'), _('No draft line found!'))
 
@@ -214,11 +216,41 @@ class hr_payroll_validation(osv.osv_memory):
         if period_validated_ids:
             period_validated = self.pool.get('hr.payroll.import.period').browse(cr, uid, period_validated_ids[0])
             raise osv.except_osv(_('Error'), _('Payroll entries have already been validated for: %s in this period: "%s"!') % (field, period_validated.period_id.name,))
+
+        # US-672 check counterpart entries account/thirdparty compat
+        # (expenses lines are checked at wizard init in fields_get)
+        account_partner_not_compat_log = []
+        for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
+            'name', 'ref', 'partner_id', 'account_id', 'amount', ]):
+            if not line['partner_id']:
+                continue
+
+            account_id = line.get('account_id', False) and line.get('account_id')[0] or False
+            if not account_id:
+                raise osv.except_osv(_('Error'), _('No account found!'))
+            account = self.pool.get('account.account').browse(cr, uid, account_id)
+
+            if not account.is_analytic_addicted:
+                if not self.pool.get('account.account').is_allowed_for_thirdparty(
+                    cr, uid, [account_id],
+                    partner_id=line['partner_id'] and line['partner_id'][0] or False,
+                    context=context)[account_id]:
+                    entry_msg = "%s - %s / %0.02f / %s / %s" % (
+                        line['name'] or '',  line['ref'] or '',
+                        round(line['amount'], 2),
+                        line['account_id'][1], line['partner_id'][1], )
+                    account_partner_not_compat_log.append(entry_msg)
+        if account_partner_not_compat_log:
+            account_partner_not_compat_log.insert(0,
+                _('Following counterpart entries have account/partner not compatible:'))
+            raise osv.except_osv(_('Error'),  "\n".join(account_partner_not_compat_log))
+
         # Fetch default funding pool: MSF Private Fund
         try:
             msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_fp_id = 0
+
         # Create a move (use one of the line to fetch the date)
         a_line_among_all = self.pool.get('hr.payroll.msf').read(cr, uid, line_ids[0], ['date'])
         move_date = a_line_among_all.get('date', False)
@@ -231,6 +263,7 @@ class hr_payroll_validation(osv.osv_memory):
             'ref': 'Salaries' + ' ' + field,
         }
         move_id = self.pool.get('account.move').create(cr, uid, move_vals, context=context)
+
         # Create lines into this move
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id', 
             'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id', 
@@ -287,6 +320,7 @@ class hr_payroll_validation(osv.osv_memory):
                     if f2_id:
                         common_vals.update({'analytic_id': f2_id})
                         self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
+
             # UTP-1042: Specific partner's accounts are not needed.
             # create move line values
             line_vals = {
