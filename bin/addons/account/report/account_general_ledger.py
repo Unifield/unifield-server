@@ -309,10 +309,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if self.account_report_types:
                 # filter by B/S P&L report type
                 if child_account.user_type \
-                    and child_account.user_type.report_type \
-                    and child_account.user_type.report_type \
+                    and child_account.user_type.report_type:
+                    do_filtering = True
+                    if 'asset' in self.account_report_types \
+                        or 'liability' in self.account_report_types:
+                        if child_account.user_type \
+                            and child_account.user_type.code == 'tax':
+                            # since US-227/7.1 we display tax account when
+                            # BS acccounts are asked
+                            do_filtering = False
+                    if do_filtering and child_account.user_type.report_type \
                         not in self.account_report_types:
-                    continue
+                        continue
             if self.unreconciled_filter:
                 if child_account.id in self.unreconciliable_accounts:
                     # unreconciliable filter:
@@ -660,8 +668,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
             if line:
                 infos.append(line)
-
-        return infos and ", \n".join(infos) or ''
+        return infos and ", \n".join(infos) or _('No Filter')
         
     def _get_line_debit(self, line, booking=False):
         return self.__get_line_amount(line, 'debit', booking=booking)
@@ -706,8 +713,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.cr.execute('select code from msf_instance where id IN %s',
                     (tuple(data['form']['instance_ids']),))
             else:
-                self.cr.execute('select code from msf_instance',
-                    (tuple(data['form']['instance_ids']),))
+                self.cr.execute('select code from msf_instance')
             instances = [x for x, in self.cr.fetchall()]
         return ', '.join(instances)
 
