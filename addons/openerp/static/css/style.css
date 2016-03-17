@@ -757,6 +757,40 @@ img.m2o_open {
 }
 
 /* LOGIN AJAX FORM*/
+
+#logintable .loginbox,
+#logintable .vision{
+   float: left;
+   padding: 35px 10px 5px 35px;
+   min-width:450px;
+   vertical-align: top;
+}
+
+#logintable .loginbox td,
+#logintable .vision td{
+    max-width: 200px;
+}
+#logintable .vision .box {
+    min-height: 144px;
+}
+
+#logintable .vision .box img {
+    float: left;
+}
+
+#logintable .vision{
+    padding-top:56px;
+    padding-right:35px;
+}
+
+table#logintable .vision p{
+    max-width: 500px;
+    min-width: 100px;
+    min-height: 70px;
+    margin: 25px;
+    font-size: 1.5em;
+}
+
 input.user_pass {
     width: 150px;
 }
