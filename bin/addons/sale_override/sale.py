@@ -303,7 +303,7 @@ class sale_order_sourcing_progress(osv.osv):
             'line_on_order_completed': nb_to_po_lines,
         }
 
-        sourcing_ok = fsl_nb + ool_nb >= nb_all_lines
+        sourcing_ok = fsl_nb + nb_to_po_lines >= nb_all_lines
         sourcing_completed = self._get_line_completed(mem_res, fsl_nb, ool_nb)
 
         return {
