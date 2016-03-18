@@ -887,7 +887,7 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         sql = """
-            SELECT absl.id, CASE WHEN absl.amount < 0 AND a.type_for_register = 'down_payment' THEN true ELSE false END AS res
+            SELECT absl.id, CASE WHEN a.type_for_register = 'down_payment' THEN true ELSE false END AS res
             FROM account_bank_statement_line AS absl, account_account AS a
             WHERE absl.account_id = a.id
             AND absl.id IN %s
