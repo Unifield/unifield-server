@@ -2377,6 +2377,20 @@ class account_bank_statement_line(osv.osv):
         """
         # We browse all ids
         for st_line in self.browse(cr, uid, ids):
+            # if trying to delete an amount OUT on down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
+            if st_line.account_id and st_line.account_id.type_for_register == 'down_payment' and st_line.down_payment_id and st_line.amount < 0:
+                args = [('down_payment_id', '=', st_line.down_payment_id.id)]
+                lines_ids = self.search(cr, uid, args, context=context)
+                lines_amount = 0
+                # browse all lines of the PO
+                for line in self.read(cr, uid, lines_ids, ['id', 'amount'], context=context):
+                    if st_line.id != line['id']:
+                        lines_amount += line['amount']
+
+                if lines_amount > 0:
+                    raise osv.except_osv(_('Error'),
+                                         _("You can't delete this line. Amounts IN can't be higher than Amounts OUT for the selected PO."))
+
             # if the line have a link to a move we have to make some treatments
             if st_line.move_ids:
                 # in case of hard posting line : do nothing (because not allowed to change an entry which was posted!

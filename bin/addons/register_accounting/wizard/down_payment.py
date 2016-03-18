@@ -79,7 +79,7 @@ class wizard_down_payment(osv.osv_memory):
                 lines_amount += line['amount']
 
         if absl.amount + lines_amount > 0:
-            raise osv.except_osv(_('Error'), _("Amounts IN can't be higher than Amounts OUT for the selected PO"))
+            raise osv.except_osv(_('Error'), _("Amounts IN can't be higher than Amounts OUT for the selected PO."))
 
         # Cut away open and paid invoice linked to this PO
         invoice_ids = self.pool.get('account.invoice').search(cr, uid, [('purchase_ids', 'in', [po_id]), ('state', 'in', ['paid', 'open'])])

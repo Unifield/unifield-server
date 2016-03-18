@@ -73555,3 +73555,15 @@ msgstr "Une valeur négative n'est pas autorisée !"
 #, python-format
 msgid "Positive value is not allowed!"
 msgstr "Une valeur positive n'est pas autorisée !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/down_payment.py:83
+#, python-format
+msgid "Amounts IN can't be higher than Amounts OUT for the selected PO."
+msgstr "Les montants entrants ne peuvent pas être supérieurs aux montants sortants pour le BC sélectionné."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2394
+#, python-format
+msgid "You can't delete this line. Amounts IN can't be higher than Amounts OUT for the selected PO."
+msgstr "Vous ne pouvez pas supprimer cette ligne. Les montants entrants ne peuvent pas être supérieurs aux montants sortants pour le BC sélectionné."
