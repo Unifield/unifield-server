@@ -22,7 +22,7 @@ UPDATE_TO_FETCH = 10000
 SAFE_MARGIN_SEQUENCE_TO_KEEP = 2000
 
 RULE_TYPE = {
-    'USB':1,
+    'USB': 1,
     'OC': 2,
     'MISSION': 3,
     'COORDINATIONS': 4,
@@ -134,7 +134,7 @@ def delete_no_master():
                 WHERE last_sequence !=0""", ())
     smallest_last_sequence = cr2.fetchone()[0]
     smallest_last_sequence -= SAFE_MARGIN_SEQUENCE_TO_KEEP
-    print_file_and_screen('1/6 Start deleting updates with active rules and not master_data'\
+    print_file_and_screen('1/6 Start deleting updates with active rules and not master_data'
           ' where sequence is < %s ...' % smallest_last_sequence)
     cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
     no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
@@ -264,11 +264,11 @@ def compact_updates():
             no_group_count += 1
         if key not in rows_already_seen:
             rows_already_seen[key] = {
-                    'id': row['id'],
-                    'is_deleted': row['is_deleted'],
-                    'sequence': row['sequence'],
-                    'source': row['source'],
-                    'values': row['values'] and eval(row['values']) or [],
+                'id': row['id'],
+                'is_deleted': row['is_deleted'],
+                'sequence': row['sequence'],
+                'source': row['source'],
+                'values': row['values'] and eval(row['values']) or [],
             }
         else:
             if row['is_deleted']:
@@ -280,11 +280,11 @@ def compact_updates():
                     deleted_update_ids.append(rows_already_seen[key]['id'])
                     # and keep the current
                     rows_already_seen[key] = {
-                            'id': row['id'],
-                            'is_deleted': row['is_deleted'],
-                            'sequence': row['sequence'],
-                            'source': row['source'],
-                            'values': row['values'] and eval(row['values']) or [],
+                        'id': row['id'],
+                        'is_deleted': row['is_deleted'],
+                        'sequence': row['sequence'],
+                        'source': row['source'],
+                        'values': row['values'] and eval(row['values']) or [],
                     }
                 else:   # the previous was not a delete, the current and the
                         # previous should be deleted
@@ -342,7 +342,7 @@ def compact_updates():
                     'source', 'owner', 'create_date', 'write_uid',
                     'create_uid']
                 items = [x for x in row.iteritems() if x[0] not in
-                        field_list_to_remove]
+                         field_list_to_remove]
                 # if sources are different and direction of the rule is
                 # down, it is required to keep this updates
                 if rows_already_seen[key]['source'] != row['source']:
@@ -389,8 +389,9 @@ if DELETE_INACTIVE_RULES:
 if COMPACT_UPDATE:
     total_update_count += compact_updates()
 
-print_file_and_screen('\n\nTotal updates deleted = %s/%s\n\n' % (locale.format('%d',
-    total_update_count, 1), locale.format('%d', number_of_update, 1)))
+print_file_and_screen('\n\nTotal updates deleted = %s/%s\n\n' %
+                      (locale.format('%d', total_update_count, 1),
+                       locale.format('%d', number_of_update, 1)))
 
 print_time_elapsed(start_time, time.time(), 'Total')
 result_file.close()

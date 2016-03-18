@@ -146,18 +146,18 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
             diff_result = diff(origin_values, compressed_values)
             if diff_result:
                 print_file_and_screen('Objects type %s with sdref %s are different : %r' %
-                                  (data_object.model, sdref, diff_result))
+                                      (data_object.model, sdref, diff_result))
             else:
                 diff_result2 = set(compressed_values) - set(origin_values)
                 print_file_and_screen('Object type %s with sdref %s have different values on '
-                                  'compressed version : %r' % diff_result2)
+                                      'compressed version : %r' % diff_result2)
     else:
         print_file_and_screen("Object with sdref %s doesn't exists on compressed db" % data_object.name)
 
 print_file_and_screen('%s objects have never been synchronized' %
-                  object_not_synchronized_count)
+                      object_not_synchronized_count)
 print_file_and_screen('%s objects have an sdref but don\'t exists in base.' %
-                  not_existing_count)
+                      not_existing_count)
 elapsed_time = time.time() - start_time
 minute, second = divmod(elapsed_time, 60)
 hour, minute = divmod(minute, 60)
