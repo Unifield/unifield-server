@@ -85,6 +85,9 @@ class account_report_general_ledger(osv.osv_memory):
     }
     
     def default_get(self, cr, uid, fields, context=None):
+        if context is None:
+            context = {}
+        context['report_cross_fy'] = True
         res = super(account_report_general_ledger, self).default_get(cr, uid, fields, context=context)
         # get company default currency
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
