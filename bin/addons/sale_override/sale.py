@@ -273,7 +273,6 @@ class sale_order_sourcing_progress(osv.osv):
                 min_date = to_po['start_date']
 
         # In case of restart of the server or delete of osv.memory
-#        if not to_po_lines:
         sol_where = ''
         params = [tuple(order_ids)]
         if to_po_lines:
@@ -357,7 +356,7 @@ class sale_order_sourcing_progress(osv.osv):
             if sp.order_id.sourcing_trace_ok:
                 mem_ids = mem_obj.search(cr, uid, [
                     ('order_id', '=', sp.order_id.id),
-                ], context=context)
+                ], limit=1, context=context)
                 if mem_ids:
                     for mem_res in mem_obj.read(cr, uid, mem_ids, f_to_read, context=context):
                         res[sp.id] = {
@@ -582,6 +581,11 @@ class sale_order_po_creation_progress_mem(osv.osv_memory):
         If no document exists for the given source document of the procurement_id,
         create a new one with nb_lines = 1.
         If a document exists, add 1 to the nb_lines
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param procurement_id: ID of the procurement.order that update the sale.order.po.creation.progress.mem
+        :param context: Context of the call
+        :return: List of ID of existing or new sale.order.po.creation.progress.mem
         """
         sol_obj = self.pool.get('sale.order.line')
 
