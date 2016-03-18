@@ -48,19 +48,31 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not data['form'].get('fiscalyear_id', False):
             used_context['all_fiscalyear'] = True
             used_context['report_cross_fy'] = True
-        print used_context
+            data['form']['initial_balance'] = False  # IB not applicable
         self.query = obj_move._query_get(self.cr, self.uid, obj='l',
             context=used_context)
-        ctx2 = data['form'].get('used_context',{}).copy()
-        #ctx2.update({'initial_bal': True})
-        ctx2.update({'period0': 1, 'show_period_0': 1, 'state_agnostic': 1, })
 
-        if 'chart_account_id' in ctx2:
-            del ctx2['chart_account_id']  # US-822: IB period 0 journals entries
-        if 'journal_ids' in ctx2:
-            del ctx2['journal_ids']  # US-822: IB period 0 journals entries
-        self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
+        # IB entries query
         self.init_balance = data['form']['initial_balance']
+        if self.init_balance:
+            ib_local_context = data['form'].get('used_context',{}).copy()
+            if 'chart_account_id' in ib_local_context:
+                del ib_local_context['chart_account_id']  # US-822: IB period 0 journals entries
+            if 'journal_ids' in ib_local_context:
+                del ib_local_context['journal_ids']  # US-822: IB period 0 journals entries
+
+            ib_local_context.update({
+                'period0': 1,
+                'show_period_0': 1,
+                'state_agnostic': 1,
+            })
+            self.init_query = obj_move._query_get(self.cr, self.uid, obj='l',
+                context=ib_local_context)
+        else:
+            self.init_query = False
+
+        # form params
+
         self.display_account = data['form']['display_account']
         self.target_move = data['form'].get('target_move', 'all')
         self.account_report_types = self._get_data_form(data, 'account_type')
@@ -118,10 +130,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.query = instance_ids_in
             else:
                 self.query += ' AND ' + instance_ids_in
-            if not self.init_query:
-                self.init_query = instance_ids_in
-            else:
-                self.init_query += ' AND ' + instance_ids_in
+            if self.init_balance:
+                if not self.init_query:
+                    self.init_query = instance_ids_in
+                else:
+                    self.init_query += ' AND ' + instance_ids_in
 
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
@@ -135,11 +148,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if self.unreconciled_filter:
             query += self.unreconciled_filter
 
-        query_ib = self.init_balance and self.init_query or False
         move_states = [ 'posted', ] if self.target_move == 'posted' \
             else [ 'draft', 'posted', ]
         self._drill = self.pool.get("account.drill").build_tree(self.cr,
-            self.uid, query, query_ib, move_states=move_states,
+            self.uid, query, self.init_query, move_states=move_states,
             include_accounts=self.account_ids,
             account_report_types=self.account_report_types,
             with_balance_only=self.display_account == 'bal_solde',

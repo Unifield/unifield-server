@@ -81,7 +81,7 @@ class account_report_general_ledger(osv.osv_memory):
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
         'account_type': 'all',
         'unreconciled': False,
-        'is_initial_balance_available': True,
+        'is_initial_balance_available': False,  # as no FY selection, not available by default US-926 point 7)
     }
     
     def default_get(self, cr, uid, fields, context=None):
