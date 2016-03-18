@@ -50,7 +50,7 @@ class UF2490OneRfQ(UF2490OnePO):
             'po_cft': 'rfq',
             'supplier': self.get_record(db, 'ext_supplier_1'),
         })
-        self.order_line_obj.confirmLine(line_ids, run_scheduler=False)
+        self.order_line_obj.confirmLine(line_ids)
 
         # Run the scheduler
         new_order_id = self.run_auto_pos_creation(db, order_to_check=order_id)

@@ -95,7 +95,7 @@ class PickConvertToStandardTest(ResourcingTest):
             'po_cft': 'po',
             'supplier': self.get_record(self.c1, 'ext_supplier_1'),
         })
-        self.c_sol_obj.confirmLine(line_ids, run_scheduler=False)
+        self.c_sol_obj.confirmLine(line_ids)
 
         # Run the scheduler
         self.c_so_id = self.run_auto_pos_creation(self.c1, order_to_check=self.c_so_id)
