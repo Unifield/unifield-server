@@ -41,13 +41,20 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def set_context(self, objects, data, ids, report_type=None):
         new_ids = ids
         obj_move = self.pool.get('account.move.line')
-        
+
+        # local context AND move line _query_get call
         self.sortby = data['form'].get('sortby', 'sort_date')
         used_context = data['form'].get('used_context',{})
-        self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=used_context)
+        if not data['form'].get('fiscalyear_id', False):
+            used_context['all_fiscalyear'] = True
+            used_context['report_cross_fy'] = True
+        print used_context
+        self.query = obj_move._query_get(self.cr, self.uid, obj='l',
+            context=used_context)
         ctx2 = data['form'].get('used_context',{}).copy()
         #ctx2.update({'initial_bal': True})
         ctx2.update({'period0': 1, 'show_period_0': 1, 'state_agnostic': 1, })
+
         if 'chart_account_id' in ctx2:
             del ctx2['chart_account_id']  # US-822: IB period 0 journals entries
         if 'journal_ids' in ctx2:
@@ -66,8 +73,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else:  # all
                 self.account_report_types = False
 
-        # settings regarding report mode
-        # default general ledger mode
+        # default general ledger mode else trial balance
         self.show_move_lines = True
         self.title = _('General Ledger')
         if 'report_mode' in data['form']:
