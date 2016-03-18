@@ -74,7 +74,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
     def _get_order_line(self, order_id):
         order_line_ids = self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)])
         for order_line_id in order_line_ids:
-            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id)
+            yield self.pool.get('sale.order.line').browse(self.cr, self.uid, order_line_id, context=self.localcontext)
 
         raise StopIteration
 
