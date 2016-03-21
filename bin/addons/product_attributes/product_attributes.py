@@ -251,7 +251,7 @@ class product_attributes(osv.osv):
                             last_modification = now(),
                             touched='[''%s'']'
                         WHERE model = 'product.product'
-                        AND id IN (%s)
+                        AND res_id IN (%s)
         ''' % (new_column, ids_req))
 
         # Make the migration
