@@ -2377,8 +2377,8 @@ class account_bank_statement_line(osv.osv):
         """
         # We browse all ids
         for st_line in self.browse(cr, uid, ids):
-            # if trying to delete an amount OUT on down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
-            if st_line.account_id and st_line.account_id.type_for_register == 'down_payment' and st_line.down_payment_id and st_line.amount < 0:
+            # if trying to delete a down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
+            if st_line.account_id and st_line.account_id.type_for_register == 'down_payment' and st_line.down_payment_id:
                 args = [('down_payment_id', '=', st_line.down_payment_id.id)]
                 lines_ids = self.search(cr, uid, args, context=context)
                 lines_amount = 0
