@@ -365,7 +365,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformationMail">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].email or '' ]]</para>
+                    <parawrap style="TextInformationMail">[[ len(objects[0].company_id.partner_id.address) and objects[0].company_id.partner_id.address[0].email or '' ]]</parawrap>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
