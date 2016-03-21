@@ -16,11 +16,18 @@ DB_ORIGIN = 'fm_sp_222_oca_nc'
 
 HOST_COMPRESSED = 'localhost'
 PORT_COMPRESSED = '11031'
-DB_COMPRESSED = 'fm_sp_222_oca_compressed'
+DB_COMPRESSED = 'fm_sp_222_oca_compressed8'
 
 FIELDS_TO_IGNORE = [
+    'id',
+    'partner_id',
+    'group_ids',
+    'field_access_rule_line_ids',
     'date',
     'res_id',
+    'field_access_rule_model_id',
+    'model_access',  # model_acess fields is an id on res_group and may vary according to the creation order
+    'rule_groups', # same thing
 ]
 
 SDREF_TO_IGNORE = [
@@ -132,10 +139,8 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
         compressed_data_obj = oerp_compressed.browse('ir.model.data',
                                                      compressed_data_obj_id[0])
         compressed_local_id = compressed_data_obj.res_id
-        compressed_obj = oerp_compressed.browse(compressed_data_obj.model,
-                                                compressed_local_id)
-        compressed_values = copy.copy(compressed_obj.__data__['values'])
-        origin_values = copy.copy(origin_obj.__data__['values'])
+        compressed_values = oerp_compressed.read(compressed_data_obj.model, compressed_local_id)
+        origin_values = oerp_origin.read(data_object.model, origin_obj.id)
         # remove fields to ignore
         for field in FIELDS_TO_IGNORE:
             if field in compressed_values:
