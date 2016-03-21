@@ -81,21 +81,22 @@ class patch_scripts(osv.osv):
                        "SET name='base_ZMW' "
                        "WHERE model='res.currency' AND name='ZMW'")
 
-        # some update where refering to the old currency with sdref=sd.ZMW
-        # as the reference changed, we need to modify all of this updates
-        # pointing to a wrong reference
-        updates_to_modify = update_module.search(
-            cr, uid, [('values', 'like', '%sd.ZMW%')],)
-        for update in update_module.browse(cr, uid, updates_to_modify,
-                                           context={}):
-            update_values = eval(update.values)
-            if 'sd.ZMW' in update_values:
-                index = update_values.index('sd.ZMW')
-                update_values[index] = 'sd.base_ZMW'
-            vals = {
-                'values': update_values,
-            }
-            update_module.write(cr, uid, update.id, vals)
+        if update_module:
+            # some update where refering to the old currency with sdref=sd.ZMW
+            # as the reference changed, we need to modify all of this updates
+            # pointing to a wrong reference
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.ZMW%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify,
+                                               context={}):
+                update_values = eval(update.values)
+                if 'sd.ZMW' in update_values:
+                    index = update_values.index('sd.ZMW')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {
+                    'values': update_values,
+                }
+                update_module.write(cr, uid, update.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
