@@ -241,6 +241,20 @@ class product_attributes(osv.osv):
 
     def execute_migration(self, cr, moved_column, new_column):
         super(product_attributes, self).execute_migration(cr, moved_column, new_column)
+
+        # Get the list of ID of product.product that will be updated to make a touch() on it to trigger a new sync. update
+        ids_req = 'SELECT id FROM product_product WHERE %s = True' % moved_column
+        if new_column == 'controlled_substance':
+            ids_req = '%s OR narcotic = True' % ids_req
+
+        cr.execute('''UPDATE ir_model_data SET
+                            last_modification = now(),
+                            touched='[''%s'']'
+                        WHERE model = 'product.product'
+                        AND id IN (%s)
+        ''' % (new_column, ids_req))
+
+        # Make the migration
         if new_column == 'standard_ok':
             request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
             cr.execute(request)
