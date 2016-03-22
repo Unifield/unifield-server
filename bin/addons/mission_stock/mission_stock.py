@@ -690,6 +690,7 @@ class stock_mission_report_line(osv.osv):
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade"),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True),
+        'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
