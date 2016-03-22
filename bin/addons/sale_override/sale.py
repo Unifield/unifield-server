@@ -517,7 +517,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 old_state_txt = st[1]
 
         vals = {
-            'user_id': uid.realUid,
+            'user_id': hasattr(uid, 'realUid') and uid.realUid or uid,
             'method': 'write',
             'name': _('State'),
             'object_id': object_id,
