@@ -434,7 +434,7 @@
     <Cell ss:StyleID="s131"><Data ss:Type="String">Exp. Date</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">KC</Data></Cell>
     <Cell ss:StyleID="s131"><Data ss:Type="String">DG</Data></Cell>
-    <Cell ss:StyleID="s131"><Data ss:Type="String">NP</Data></Cell>
+    <Cell ss:StyleID="s131"><Data ss:Type="String">CS</Data></Cell>
    </Row>
    % for m in pf.move_lines:
    <Row ss:AutoFitHeight="0" ss:Height="11.0625">

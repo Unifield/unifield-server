@@ -232,7 +232,7 @@
                     <para style="LineHeader">DG</para>
                 </td>
                 <td>
-                    <para style="LineHeader">NP</para>
+                    <para style="LineHeader">CS</para>
                 </td>
                 <td>
                     <para style="LineHeader">Qty Packed</para>
@@ -326,7 +326,7 @@
                             <para style="LineHeader">DG</para>
                         </td>
                         <td>
-                            <para style="LineHeader">NP</para>
+                            <para style="LineHeader">CS</para>
                         </td>
                         <td>
                             <para style="LineHeader">Qty Packed</para>
