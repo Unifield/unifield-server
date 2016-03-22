@@ -260,11 +260,11 @@ class product_attributes(osv.osv):
             cr.execute(request)
 
         if new_column == 'dangerous_goods':
-            request = 'UPDATE product_product SET dangerous_goods = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column
             cr.execute(request)
 
         if new_column == 'short_shelf_life':
-            request = 'UPDATE product_product SET short_shelf_life = \'True\' WHERE %s = True' % moved_column
+            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column
             cr.execute(request)
 
         if new_column == 'controlled_substance':
