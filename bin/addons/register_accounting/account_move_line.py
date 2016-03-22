@@ -81,6 +81,7 @@ class account_move_line(osv.osv):
             # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
             ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
+            ('name', 'not like', 'Down payment for %'),  # US-738/UC4: filter dp counterpart by name ACCEPTABLE till not translated in register_accounting/invoice.py create_down_payments()
         ]
 
         # UFTP-358: do not allow to import an entry from November in an October
