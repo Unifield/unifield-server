@@ -504,9 +504,9 @@ table.errorbox {
 .error_message_content {
 	font-size: 1.4em;
 	padding: 0 5px 0 0;
-	text-align: center;
+	text-align: left;
 	color: #333333;
-    white-space: normal;
+    white-space: pre-line;
 }
 
 .login_error_message {
