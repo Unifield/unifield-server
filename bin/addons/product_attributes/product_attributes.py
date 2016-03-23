@@ -1574,6 +1574,10 @@ class product_attributes(osv.osv):
         if 'heat_sensitive_item' in vals:
             vals.update(self.onchange_heat(cr, user, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
+        for f in ['sterilized', 'closed_article', 'single_use']:
+            if f in vals and not vals.get(f):
+                vals[f] = 'no'
+
         res = super(product_attributes, self).create(cr, user, vals,
                                                      context=context)
 
