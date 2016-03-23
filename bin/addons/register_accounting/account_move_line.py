@@ -141,17 +141,17 @@ class account_move_line(osv.osv):
                         raise osv.except_osv(_('Error Currency'),_("Register line %s: currency not equal to invoice %s")%(reg_line.id,move_line.id,))
                     amount_reg = reg_line.amount
                     ignore_id = reg_line.first_move_line_id.id
-                    for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+                    for ml in sorted(reg_line.imported_invoice_line_ids, key=lambda x: sign * x.amount_currency):
                         if ml.id == ignore_id:
                             continue
                         if ml.id == move_line.id:
-                            if abs(move_line_total) < abs(amount_reg):
+                            if abs(move_line_total - amount_reg) < 0.001:
                                 move_line_total = 0
                             else:
                                 move_line_total = move_line_total-amount_reg
                             break
-                        if abs(ml.amount_currency) > abs(amount_reg):
-                            break
+                        if abs(ml.amount_currency - amount_reg) < 0.001:
+                           break
                         amount_reg -= ml.amount_currency
 
             result = move_line_total
