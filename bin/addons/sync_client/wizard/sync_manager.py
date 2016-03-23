@@ -80,7 +80,7 @@ class sync_manager(osv.osv_memory):
         return {'type': 'ir.actions.act_window_close'}
 
     def recover_data_and_messages(self, cr, uid, ids, context=None):
-        self.pool.get('sync.client.entity').sync_threaded(cr, uid, recover=True, context=context)
+        self.pool.get('sync.client.entity').sync_manual_threaded(cr, uid, recover=True, context=context)
         return {'type': 'ir.actions.act_window_close'}
 
 sync_manager()
