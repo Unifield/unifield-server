@@ -2683,6 +2683,7 @@ class orm(orm_template):
         create = False
         todo_end = []
         self._field_create(cr, context=context)
+        to_migarte = []
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -2880,7 +2881,7 @@ class orm(orm_template):
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
                                     self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
                                         self._table, k, f_pg_type, f._type, newname)
-                                    self.execute_migration(cr, newname, k)
+                                    to_migrate.append((newname, k))
 
                             # if the field is required and hasn't got a NOT NULL constraint
                             if f.required and f_pg_notnull == 0:
@@ -3021,6 +3022,9 @@ class orm(orm_template):
         else:
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             create = not bool(cr.fetchone())
+        
+        for t in to_migrate:
+            self.execute_migration(cr, t[0], t[1])
 
         cr.commit()     # start a new transaction
 
