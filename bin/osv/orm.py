@@ -783,7 +783,7 @@ class orm_template(object):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         # mode: id (XML id) or .id (database id) or False for name_get
-        def _get_id(model_name, id, current_module=False, mode='id'):
+        def _get_id(model_name, id, current_module=False, mode='id', context=None):
             if mode=='.id':
                 id = int(id)
                 obj_model = self.pool.get(model_name)
@@ -803,7 +803,7 @@ class orm_template(object):
                 id = ir_model_data[0]['res_id']
             else:
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.name_search(cr, uid, id, operator='=')
+                ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
                     raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
@@ -888,7 +888,7 @@ class orm_template(object):
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = value and _get_id(relation, value, current_module, mode)
+                    res = value and _get_id(relation, value, current_module, mode, context=context)
 
                 elif field_type=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
@@ -901,7 +901,7 @@ class orm_template(object):
                     res = []
                     if value:
                         for db_id in value.split(config.get('csv_internal_sep')) or []:
-                            res.append( _get_id(relation, db_id, current_module, mode) )
+                            res.append( _get_id(relation, db_id, current_module, mode, context=context) )
                     res = [(6,0,res)]
 
                 elif field_type == 'integer':
@@ -940,7 +940,7 @@ class orm_template(object):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
                         try:
-                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
+                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id, context=context)
                             ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
                         except:
                             ref_db_id = None
