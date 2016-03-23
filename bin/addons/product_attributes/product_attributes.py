@@ -1182,6 +1182,9 @@ class product_attributes(osv.osv):
                     product_uom_categ.append(category_id)
 
         if 'heat_sensitive_item' in vals:
+            if not vals.get('heat_sensitive_item'):
+                heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+                vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
@@ -1572,6 +1575,9 @@ class product_attributes(osv.osv):
                 vals['controlled_substance'] = 'True'
 
         if 'heat_sensitive_item' in vals:
+            if not vals.get('heat_sensitive_item'):
+                heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+                vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, user, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         for f in ['sterilized', 'closed_article', 'single_use']:
