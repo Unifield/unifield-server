@@ -80,10 +80,13 @@ class account_report_general_ledger(osv.osv_memory):
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
         'account_type': 'all',
         'unreconciled': False,
-        'is_initial_balance_available': True,
+        'is_initial_balance_available': False,  # as no FY selection, not available by default US-926 point 7)
     }
     
     def default_get(self, cr, uid, fields, context=None):
+        if context is None:
+            context = {}
+        context['report_cross_fy'] = True
         res = super(account_report_general_ledger, self).default_get(cr, uid, fields, context=context)
         # get company default currency
         user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)

@@ -272,7 +272,8 @@ ccy_sub_total_style_suffix = 'Colored2'
 ccy_sub_total_style_right_suffix = 'Right'
 %>
 
-% for o in get_children_accounts(a):
+% for o in get_tree_nodes(a):
+% if '*' in o.data and show_node_in_report(o):
 <Row>
 <Cell ss:StyleID="ssBorder${ac_style_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
@@ -284,18 +285,19 @@ ccy_sub_total_style_right_suffix = 'Right'
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ac_style_suffix}">
-    <Data ss:Type="Number">${sum_debit_account(o)}</Data>
+    <Data ss:Type="Number">${o.data['*']['debit']}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ac_style_suffix}">
-    <Data ss:Type="Number">${sum_credit_account(o)}</Data>
+    <Data ss:Type="Number">${o.data['*']['credit']}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ac_style_suffix}">
-    <Data ss:Type="Number">${sum_balance_account(o)}</Data>
+    <Data ss:Type="Number">${o.data['*']['debit'] - o.data['*']['credit']}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ac_style_suffix}">
-    <Data ss:Type="Number">${sum_balance_account(o)}</Data>
+    <Data ss:Type="Number">${o.data['*']['debit'] - o.data['*']['credit']}</Data>
 </Cell>
 </Row>
+% endif
 
 % for line in lines(o, initial_balance_mode=True):
 <Row>
@@ -352,35 +354,27 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endfor
 
-% for c in get_currencies(o, include_with_ib=True):
-<%
-debit = sum_debit_account(o, ccy=c, booking=True, is_sub_total=True)
-credit = sum_credit_account(o, ccy=c, booking=True, is_sub_total=True)
-bal = sum_balance_account(o, ccy=c, booking=True, is_sub_total=True)
-show_line = debit or credit or bal
-%>
-% if show_line:
+% for ccy in o.get_currencies():
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
-    <Data ss:Type="String">${(c.name or c.code or '')|x}</Data>
+    <Data ss:Type="String">${(ccy or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${debit}</Data>
+    <Data ss:Type="Number">${o.data[ccy]['debit_ccy']}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${credit}</Data>
+    <Data ss:Type="Number">${o.data[ccy]['credit_ccy']}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${bal}</Data>
+    <Data ss:Type="Number">${o.data[ccy]['debit_ccy'] - o.data[ccy]['credit_ccy']}</Data>
 </Cell>
 <Cell ss:StyleID="ssNumber${ccy_sub_total_style_suffix}">
-    <Data ss:Type="Number">${sum_balance_account(o, ccy=c, booking=False, is_sub_total=True)}</Data>
+    <Data ss:Type="Number">${o.data[ccy]['debit'] - o.data[ccy]['credit']}</Data>
 </Cell>
 </Row>
-% endif
 % endfor
 
 % endfor
