@@ -170,11 +170,9 @@ class account_invoice(osv.osv):
                     'currency_id': inv.currency_id.id,
                     # US-738/UC4: check note below
                     'name': 'Down payment for ' + ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids]),
+                    'is_downpayment': True,  # US-738/UC4
                     'document_date': inv.document_date,
                 })
-                # US-738/UC4 BEWARE: if 'Down payment for' label changed or translated
-                # => to update domain of register_accounting/account_move_line/py _search_ready_for_import_in_register()
-                # (actually no flag field added (to sync) added)
 
                 # create dp counterpart line
                 dp_account = dp_info and dp_info.account_id and dp_info.account_id.id or False

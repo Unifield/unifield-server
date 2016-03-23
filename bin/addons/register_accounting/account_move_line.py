@@ -81,7 +81,7 @@ class account_move_line(osv.osv):
             # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
             ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
-            ('name', 'not like', 'Down payment for %'),  # US-738/UC4: filter dp counterpart by name ACCEPTABLE till not translated in register_accounting/invoice.py create_down_payments()
+            ('is_downpayment', '=', False),  # US-738/UC4
         ]
 
         # UFTP-358: do not allow to import an entry from November in an October
@@ -214,6 +214,7 @@ class account_move_line(osv.osv):
         'transfer_amount': fields.float(string="Transfer amount", readonly=True, required=False),
         'is_transfer_with_change': fields.boolean(string="Is a line that come from a transfer with change?", readonly=True, required=False),
         'cheque_number': fields.char(string="Cheque Number", size=120, readonly=True),
+        'is_downpayment': fields.boolean('Is downpayment'),  # US-738/UC4
     }
 
     _defaults = {
@@ -221,6 +222,7 @@ class account_move_line(osv.osv):
         'down_payment_amount': lambda *a: 0.0,
         'is_transfer_with_change': lambda *a: False,
         'cheque_number': lambda *a: '',
+        'is_downpayment': lambda *a: False,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
