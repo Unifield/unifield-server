@@ -2683,7 +2683,7 @@ class orm(orm_template):
         create = False
         todo_end = []
         self._field_create(cr, context=context)
-        to_migarte = []
+        to_migrate = []
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
