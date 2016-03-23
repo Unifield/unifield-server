@@ -451,6 +451,7 @@ class product_attributes(osv.osv):
         'standard_ok': fields.boolean(string='Standard'),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
+        'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 

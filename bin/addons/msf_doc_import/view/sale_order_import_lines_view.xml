@@ -10,12 +10,16 @@
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
+                <xpath expr="/form" position="attributes">
+                    <attribute name="noteditable">import_in_progress==True</attribute>
+                </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree[@string='Sales Order Lines']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
                     <field name="inactive_product" invisible="1" />
+                    <field name="soq_updated" invisible="1" readonly="1" />
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True;blue:soq_updated == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Sales Order']/field[@name='order_line']" position="before" >
                 <group name="import" string=" Import Lines " colspan="4" attrs="{'invisible':[('state', '!=', 'draft')]}">

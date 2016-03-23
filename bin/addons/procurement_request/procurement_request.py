@@ -466,11 +466,16 @@ class procurement_request(osv.osv):
         uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         nb_lines = 0
         line_ids = []
+        reset_soq = []
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
             for line in req.order_line:
                 line_ids.append(line.id)
+
+                if line.soq_updated:
+                    reset_soq.append(line.id)
+
                 if line.nomen_manda_0.id == nomen_manda_0 \
                 or line.nomen_manda_1.id == nomen_manda_1 \
                 or line.nomen_manda_2.id == nomen_manda_2 \
@@ -483,6 +488,7 @@ class procurement_request(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
             self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)
         line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
+        line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True

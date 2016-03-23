@@ -29,9 +29,11 @@ from mx.DateTime import *
 import time
 from tools.translate import _
 import logging
+import threading
 from workflow.wkf_expr import _eval_expr
 
 import decimal_precision as dp
+import pooler
 
 from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
@@ -897,6 +899,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         order_brw_list = self.browse(cr, uid, ids, context=context)
+        reset_soq = []
 
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
@@ -905,6 +908,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_ids = []
             for line in order.order_line:
                 line_ids.append(line.id)
+                if line.soq_updated:
+                    reset_soq.append(line.id)
             no_price_lines = []
             if order.order_type == 'regular':
                 cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
@@ -945,6 +950,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if not order.procurement_request and order.split_type_sale_order == 'original_sale_order':
                 line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
+
+        line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
 
         self.write(cr, uid, ids, {
             'state': 'validated',
@@ -2245,6 +2252,103 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def _manual_create_sync_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
+    def round_to_soq(self, cr, uid, ids, context=None):
+        """
+        Create a new thread to check for each line of the order if the quantity
+        is compatible with SoQ rounding of the product. If not compatible,
+        update the quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :return: True
+        """
+        th = threading.Thread(
+            target=self._do_round_to_soq,
+            args=(cr, uid, ids, context, True),
+        )
+        th.start()
+        th.join(5.0)
+
+        return True
+
+    def _do_round_to_soq(self, cr, uid, ids, context=None, use_new_cursor=False):
+        """
+        Check for each line of the order if the quantity is compatible
+        with SoQ rounding of the product. If not compatible, update the
+        quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :param use_new_cursor: True if this method is called into a new thread
+        :return: True
+        """
+        sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if use_new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
+
+        try:
+            self.write(cr, uid, ids, {
+                'import_in_progress': True,
+            }, context=context)
+            if use_new_cursor:
+                cr.commit()
+
+            sol_ids = sol_obj.search(cr, uid, [
+                ('order_id', 'in', ids),
+                ('product_id', '!=', False),
+            ], context=context)
+
+            to_update = {}
+            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                # Check only products with defined SoQ quantity
+                if not sol.product_id.soq_quantity:
+                    continue
+
+                # Get line quantity in product UoM
+                line_qty = sol.product_uom_qty
+                if sol.product_uom.id != sol.product_id.uom_id.id:
+                    line_qty = uom_obj._compute_qty_obj(cr, uid, sol.product_uom, sol.product_uom_qty, sol.product_id.uom_id, context=context)
+
+                good_quantity = 0
+                if line_qty % sol.product_id.soq_quantity:
+                    good_quantity = (line_qty - (line_qty % sol.product_id.soq_quantity)) + sol.product_id.soq_quantity
+
+                if good_quantity and sol.product_uom.id != sol.product_id.uom_id.id:
+                    good_quantity = uom_obj._compute_qty_obj(cr, uid, sol.product_id.uom_id, good_quantity, sol.product_uom, context=context)
+
+                if good_quantity:
+                    to_update.setdefault(good_quantity, [])
+                    to_update[good_quantity].append(sol.id)
+
+            for qty, line_ids in to_update.iteritems():
+                sol_obj.write(cr, uid, line_ids, {
+                    'product_uom_qty': qty,
+                    'soq_updated': True,
+                }, context=context)
+        except Exception as e:
+            logger = logging.getLogger('sale.order.round_to_soq')
+            logger.error(e)
+        finally:
+            self.write(cr, uid, ids, {
+                'import_in_progress': False,
+            }, context=context)
+
+        if use_new_cursor:
+            cr.commit()
+            cr.close()
+
+        return True
+
 sale_order()
 
 
@@ -2297,11 +2401,16 @@ class sale_order_line(osv.osv):
                     help='If the line has been canceled/removed on the splitted FO',
                 ),
                 'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+                'soq_updated': fields.boolean(
+                    string='SoQ updated',
+                    readonly=True,
+                ),
                 }
 
     _defaults = {
         'is_line_split': False,  # UTP-972: By default set False, not split
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'soq_updated': False,
     }
 
     def ask_unlink(self, cr, uid, ids, context=None):
@@ -2888,6 +2997,10 @@ class sale_order_line(osv.osv):
             vals.update({'cost_price': vals.get('cost_price', False)})
 
         self.check_empty_line(cr, uid, ids, vals, context=context)
+
+        # Remove SoQ updated flag in case of manual modification
+        if not 'soq_updated' in vals:
+            vals['soq_updated'] = False
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
