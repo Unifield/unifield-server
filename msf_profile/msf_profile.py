@@ -93,6 +93,24 @@ class patch_scripts(osv.osv):
                     update_values[index] = 'sd.base_ZMW'
                 vals = {'values': update_values,}
                 update_module.write(cr, uid, update.id, vals)
+        else:
+            # change the sdref on the client that use the wrong ZMK
+            cr.execute("""UPDATE ir_model_data
+            SET name='ZMW' WHERE name='ZMK'""")
+
+            cr.execute("""UPDATE ir_model_data
+            SET name='base_ZMW' WHERE name='base_ZMK'""")
+
+            # check if some updates with wrong sdref were ready to be sent and if yes, fix them
+            update_module = self.pool.get('sync.client.update_to_send')
+            if update_module:
+                # change sdref ZMW to base_ZMW
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='base_ZMW' "
+                           "WHERE sdref='base_ZMK'")
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='ZMW' "
+                           "WHERE sdref='ZMK'")
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
