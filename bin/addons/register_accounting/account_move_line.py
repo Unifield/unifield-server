@@ -98,7 +98,7 @@ class account_move_line(osv.osv):
         default_account = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.import_invoice_default_account
         if default_account:
             dom1.append(('account_id', '!=', default_account.id))
-        return dom1+[('amount_residual_import_inv', '>', 0)]
+        return dom1+[('amount_residual_import_inv', '>', 0.001)]
 
     # @@override account.account_move_line _amount_residual()
     def _amount_residual_import_inv(self, cr, uid, ids, field_names, args, context=None):

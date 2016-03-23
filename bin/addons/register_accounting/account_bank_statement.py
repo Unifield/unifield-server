@@ -1755,7 +1755,8 @@ class account_bank_statement_line(osv.osv):
         res_ml_ids = []
         process_invoice_move_line_ids = []
         total_payment = True
-        if st_line.first_move_line_id.amount_currency != total_amount:
+        diff = st_line.first_move_line_id.amount_currency - total_amount
+        if abs(diff) > 0.001:
             # multi unpartial payment
             total_payment = False
             # Delete them
