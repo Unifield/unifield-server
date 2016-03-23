@@ -150,6 +150,8 @@ class product_heat_sensitive(osv.osv):
         :param limit: Optional max number of records to return
         :return: List of objects names matching the search criteria, used to provide completion for to-many relationships
         """
+        data_obj = self.pool.get('ir.model.data')
+
         if context is None:
             context = {}
 
@@ -157,7 +159,11 @@ class product_heat_sensitive(osv.osv):
             args = []
 
         if context.get('sync_update_execution'):
-            args.append(('active', 'in', ['t', 'f']))
+            item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')
+            if item_id:
+                ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
+                        access_rights_uid=uid)
+                return self.name_get(cr, uid, ids, context)
 
         return super(product_heat_sensitive, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
 
@@ -181,6 +187,51 @@ class product_cold_chain(osv.osv):
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
         return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=100):
+        """
+        In context of sync. update execution, look for active and inactive heat sensitive items
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param name: Object name to search
+        :param args: List of tubles specifying search criteria [('field_name', 'operator', 'value'), ...]
+        :param operatior: Operator for search criterion
+        :param context: Context of the call
+        :param limit: Optional max number of records to return
+        :return: List of objects names matching the search criteria, used to provide completion for to-many relationships
+        """
+        data_obj = self.pool.get('ir.model.data')
+        if context is None:
+            context = {}
+
+        if args is None:
+            args = []
+
+        if context.get('sync_update_execution'):
+            match_dict = {
+                '3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)': 'cold_1',
+                '6*0 Cold Chain *0 - Problem if any window blue': 'cold_2',
+                '7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM': 'cold_3',
+                '8*A Cold Chain *A - Problem if B, C and/or D totally blue': 'cold_4',
+                '9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM': 'cold_5',
+                '10*B Cold Chain *B - Problem if C and/or D totally blue': 'cold_6',
+                '11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM': 'cold_7',
+                '12*C Cold Chain *C - Problem if D totally blue': 'cold_8',
+                '13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM': 'cold_9',
+                '14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)': 'cold_10',
+                '15*F Cold Chain *F - Cannot be frozen: check Freeze-tag': 'cold_11',
+                '16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)': 'cold_12',
+                '17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag': 'cold_13',
+            }
+
+            if name in match_dict.keys():
+                item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', match_dict[name])
+                if item_id:
+                    ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
+                            access_rights_uid=uid)
+                    return self.name_get(cr, uid, ids, context)
+
+        return super(product_heat_sensitive, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
 
 product_cold_chain()
 
@@ -582,15 +633,6 @@ class product_attributes(osv.osv):
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
         'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
-        'short_shelf_life': fields.selection(
-            selection=[
-                ('False', 'No'),
-                ('True', 'Yes'),
-                ('no_know', 'tbd'),
-            ],
-            string='Short Shelf Life',
-            required=True,
-        ),
         'is_ssl': fields.function(
             _compute_kc_dg_cs_ssl_values,
             method=True,
@@ -613,6 +655,15 @@ class product_attributes(osv.osv):
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['short_shelf_life'], 10),
             }
+        ),
+        'short_shelf_life': fields.selection(
+            selection=[
+                ('False', 'No'),
+                ('True', 'Yes'),
+                ('no_know', 'tbd'),
+            ],
+            string='Short Shelf Life',
+            required=True,
         ),
         'criticism': fields.selection([('',''),
             ('exceptional','1-Exceptional'),
@@ -639,11 +690,6 @@ class product_attributes(osv.osv):
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
 
-        'heat_sensitive_item': fields.many2one(
-            'product.heat_sensitive',
-            string='Temperature sensitive item',
-            required=True,
-        ),
         'is_kc': fields.function(
             _compute_kc_dg_cs_ssl_values,
             method=True,
@@ -666,6 +712,11 @@ class product_attributes(osv.osv):
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
             }
+        ),
+        'heat_sensitive_item': fields.many2one(
+            'product.heat_sensitive',
+            string='Temperature sensitive item',
+            required=True,
         ),
         'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
         'show_cold_chain': fields.boolean('Show cold chain'),
@@ -710,15 +761,6 @@ class product_attributes(osv.osv):
             string='Closed Article',
             required=True,
         ),
-        'dangerous_goods': fields.selection(
-            selection=[
-                ('False', 'No'),  # False is put as key for migration (see US-752)
-                ('True', 'Yes'),  # True is put as key for migration (see US-752)
-                ('no_know', 'tbd'),
-            ],
-            string='Dangerous goods',
-            required=True,
-        ),
         'is_dg': fields.function(
             _compute_kc_dg_cs_ssl_values,
             method=True,
@@ -741,6 +783,15 @@ class product_attributes(osv.osv):
             store={
                 'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
             }
+        ),
+        'dangerous_goods': fields.selection(
+            selection=[
+                ('False', 'No'),  # False is put as key for migration (see US-752)
+                ('True', 'Yes'),  # True is put as key for migration (see US-752)
+                ('no_know', 'tbd'),
+            ],
+            string='Dangerous goods',
+            required=True,
         ),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
@@ -1136,6 +1187,10 @@ class product_attributes(osv.osv):
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
+
+        for f in ['sterilized', 'closed_article', 'single_use']:
+            if f in vals and not vals.get(f):
+                vals[f] = 'no'
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
