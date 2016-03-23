@@ -377,7 +377,7 @@ class account_account(osv.osv):
         res = {}
         msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
         if msf_coa:
-            id_list = self.search(cr, uid, [('parent_id','=', msf_coa),
+            id_list = self.search(cr, uid, [('parent_id', 'in', msf_coa),
                                             ('id', 'in', ids)], context=context)
             for account_id in ids:
                 res[account_id]=account_id in id_list
