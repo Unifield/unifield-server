@@ -53,11 +53,10 @@ class patch_scripts(osv.osv):
 
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
-        if update_module:  # if we are on a server instance
+        if update_module:
             # if this script is exucuted on server side, update the first delete
             # update of ZMK to be executed before the creation of ZMW (sequence
-            # 4875). Then if ZMK is correctly deleted, ZMW can be added and
-            # this will solve the problem on all new instances (init sync)
+            # 4875). Then if ZMK is correctly deleted, ZMW can be added
             cr.execute("UPDATE sync_server_update "
                        "SET sequence=4874 "
                        "WHERE id=2222677")
@@ -66,36 +65,33 @@ class patch_scripts(osv.osv):
             cr.execute("UPDATE sync_server_update "
                        "SET sdref='base_ZMW' "
                        "WHERE model='res.currency' AND sdref='ZMW'")
-        else:  # we are on a client instance
-            update_module = self.pool.get('sync.client.update_received')
-            # update the local currency
-            currency_module = self.pool.get('res.currency')
-            currency_ids = currency_module.search(cr, uid, [('name', '=', 'ZMK')])
-            values = {
-                'name': 'ZMW',
-            }
-            currency_module.write(cr, uid, currency_ids, values)
 
-            # update the sdref
-            cr.execute("UPDATE ir_model_data "
-                       "SET name='base_ZMW' "
-                       "WHERE model='res.currency' AND name='ZMW'")
+            # remove the ZMK creation update
+            cr.execute("DELETE FROM sync_server_update WHERE id=52325;")
+            cr.commit()
 
-        if update_module:
             # some update where refering to the old currency with sdref=sd.ZMW
             # as the reference changed, we need to modify all of this updates
-            # pointing to a wrong reference
+            # pointing to a wrong reference (currency_rates, ...)
             updates_to_modify = update_module.search(
                 cr, uid, [('values', 'like', '%sd.ZMW%')],)
-            for update in update_module.browse(cr, uid, updates_to_modify,
-                                               context={}):
+            for update in update_module.browse(cr, uid, updates_to_modify):
                 update_values = eval(update.values)
                 if 'sd.ZMW' in update_values:
                     index = update_values.index('sd.ZMW')
                     update_values[index] = 'sd.base_ZMW'
-                vals = {
-                    'values': update_values,
-                }
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+
+            # do the same for sdref=sd.base_ZMK
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.base_ZMK' in update_values:
+                    index = update_values.index('sd.base_ZMK')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
                 update_module.write(cr, uid, update.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
