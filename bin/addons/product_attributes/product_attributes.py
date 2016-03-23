@@ -209,29 +209,29 @@ class product_cold_chain(osv.osv):
 
         if context.get('sync_update_execution'):
             match_dict = {
-                '3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)': 'cold_1',
-                '6*0 Cold Chain *0 - Problem if any window blue': 'cold_2',
-                '7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM': 'cold_3',
-                '8*A Cold Chain *A - Problem if B, C and/or D totally blue': 'cold_4',
-                '9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM': 'cold_5',
-                '10*B Cold Chain *B - Problem if C and/or D totally blue': 'cold_6',
-                '11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM': 'cold_7',
-                '12*C Cold Chain *C - Problem if D totally blue': 'cold_8',
-                '13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM': 'cold_9',
-                '14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)': 'cold_10',
-                '15*F Cold Chain *F - Cannot be frozen: check Freeze-tag': 'cold_11',
-                '16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)': 'cold_12',
-                '17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag': 'cold_13',
+                tools.ustr('3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)'): 'cold_1',
+                tools.ustr('6*0 Cold Chain *0 - Problem if any window blue'): 'cold_2',
+                tools.ustr('7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM'): 'cold_3',
+                tools.ustr('8*A Cold Chain *A - Problem if B, C and/or D totally blue'): 'cold_4',
+                tools.ustr('9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM'): 'cold_5',
+                tools.ustr('10*B Cold Chain *B - Problem if C and/or D totally blue'): 'cold_6',
+                tools.ustr('11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM'): 'cold_7',
+                tools.ustr('12*C Cold Chain *C - Problem if D totally blue'): 'cold_8',
+                tools.ustr('13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM'): 'cold_9',
+                tools.ustr('14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)'): 'cold_10',
+                tools.ustr('15*F Cold Chain *F - Cannot be frozen: check Freeze-tag'): 'cold_11',
+                tools.ustr('16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)'): 'cold_12',
+                tools.ustr('17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag'): 'cold_13',
             }
 
-            if name in match_dict.keys():
+           if name in match_dict.keys():
                 item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', match_dict[name])
                 if item_id:
                     ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
                             access_rights_uid=uid)
                     return self.name_get(cr, uid, ids, context)
 
-        return super(product_heat_sensitive, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
+        return super(product_cold_chain, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
 
 product_cold_chain()
 
