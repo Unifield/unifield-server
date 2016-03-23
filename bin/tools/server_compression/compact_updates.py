@@ -9,16 +9,24 @@ import oerplib
 start_time = time.time()
 intermediate_time = start_time
 
-DELETE_NO_MASTER = False #True
-DELETE_INACTIVE_RULES = False #True
+DB_NAME = 'SYNC_SERVER-20160321-163301-zip'   # replace with your own DB
+DB_PORT = '11031'
+
+DELETE_NO_MASTER = True
+DELETE_INACTIVE_RULES = True
 COMPACT_UPDATE = True
 DELETE_ENTITY_REL = True  # not recommanded to change it to False because it
                           # can remove delete only entity_rel related to
                           # currently deleted updates
 UPDATE_TO_FETCH = 10000
 
-# we will delete all the pulled update which are not master data and use active rule
-# but it is safer to keep some safety margin by keeping some more updates
+# updates with mast_data='f' and active_rule after this date will not been deleted
+NOT_DELETE_DATE = '2016-01-01'
+
+# we will delete all the pulled update which are not master data and use
+# active rule but it is safer to keep some safety margin by keeping some more
+# updates this is redondant with NOT_DELETE_DATE. Both rules will be applied,
+# so the more restrive will win
 SAFE_MARGIN_SEQUENCE_TO_KEEP = 2000
 
 RULE_TYPE = {
@@ -44,9 +52,6 @@ MODEL_TO_EXCLUDE = [
     'financing.contract.format.line',
 ]
 
-DB_NAME = 'SYNC_SERVER-20160316-163301-zip4'   # replace with your own DB
-DB_PORT = '11031'
-
 locale.setlocale(locale.LC_ALL, '')
 conn = psycopg2.connect("dbname=%s" % DB_NAME)
 total_update_count = 0
@@ -70,22 +75,10 @@ def update_progress(progress, deleted):
     '''Displays or updates a console progress bar
     '''
     bar_length = 50  # Modify this to change the length of the progress bar
-    status = ""
-    if isinstance(progress, int):
-        progress = float(progress)
-    if not isinstance(progress, float):
-        progress = 0
-        status = "error: progress var must be float\r\n"
-    elif progress < 0:
-        progress = 0
-        status = "Halt...\r\n"
-    elif progress >= 1:
-        progress = 1
-        status = "Done...\r\n"
     block = int(round(bar_length * progress))
     progress = round(progress, 3)
-    text = "\rProgress: [{0}] {1}% {2} ({3} deleted)".format("#"*block +
-            "-"*(bar_length - block), progress * 100, status, deleted)
+    text = "\rProgress: [{0}] {1}% ({2} deleted)".format("#"*block +
+            "-"*(bar_length - block), progress * 100, deleted)
     sys.stdout.write(text)
     sys.stdout.flush()
 
@@ -115,8 +108,6 @@ def delete_related_entity_rel(update_id_list, step=''):
         print_time_elapsed(intermediate_time, step='%s/6' % step)
         conn.commit()
 
-print_file_and_screen('Working on db %s' % DB_NAME)
-
 def delete_no_master():
     '''Delete updates that have active rule and no master_data if all instances
     already pull them.
@@ -139,8 +130,9 @@ def delete_no_master():
     cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
     no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
     cr2.execute("""SELECT id FROM sync_server_update
-                WHERE sequence < %s and rule_id IN %s""",
-                (smallest_last_sequence, tuple(no_master_data_active_rules),))
+                WHERE sequence < %s and rule_id IN %s
+                AND create_date < %s""",
+                (smallest_last_sequence, tuple(no_master_data_active_rules), NOT_DELETE_DATE))
     while True:
         multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
         if not multiple_updates:
@@ -208,10 +200,11 @@ def compact_updates():
     not_deleted_update = 0
     update_count = 0
     no_group_count = 0
-    oerp = oerplib.OERP('127.0.0.1', DB_NAME, protocol='netrpc', port=DB_PORT, timeout=3600)
-    oerp.login('admin', 'admin', DB_NAME)
     intermediate_time = time.time()
-    down_direction_count = 0
+    oerp = oerplib.OERP('localhost', DB_NAME, protocol='netrpc',
+                               port='11031', timeout=300)
+    oerp.login('admin', 'admin', DB_NAME)
+    cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # build a dict of groups for each instances
     cr2.execute("""SELECT id FROM sync_server_entity""", ())
@@ -219,11 +212,11 @@ def compact_updates():
     instance_group_dict = {}
     for instance_id in instance_list:
         instance_group_dict[instance_id] = {}
-        for group_name, group_id in RULE_TYPE.items():
+        for group_id in RULE_TYPE.values():
             # get the group of this instance if any
             cr2.execute("""SELECT name
             FROM sync_entity_group_rel inner join sync_server_entity_group on group_id=id
-            WHERE type_id=%s and entity_id=%s""" % (RULE_TYPE[group_name], instance_id), ())
+            WHERE type_id=%s and entity_id=%s""" % (group_id, instance_id), ())
             res = [x[0] for x in cr2.fetchall()]
             if len(res) > 1:
                 instance_group_dict[instance_id][group_id] = ''.join(sorted(res))
@@ -248,16 +241,25 @@ def compact_updates():
     multiple_updates = cr.fetchall()
     cr.close()
     current_cursor = 0
+    bi_privatet_up_down = 0
     print_file_and_screen('5/6 Start compressing the updates, this may take a while (%s updates to parse)' % total_updates)
     for row in multiple_updates:
+
         current_cursor += 1
         if row['sdref'] in SDREF_TO_EXCLUDE:
             continue
 
         # generate a key according to the group concerned by the update
         # ie. group_name='OCA_MISSION_BD1' or group_name='OCA_COORDINATION'
+        rule_direction = rule_direction_dict[row['rule_id']]
         group_name = instance_group_dict[row['source']][rule_type_dict[row['rule_id']]]
-        if group_name:
+
+        # if sources are different and direction of the rule is
+        # down, bi-private or up it's needed to use the source and not group
+        if rule_direction in ('down', 'bi-private', 'up'):
+            key = row['sdref'], row['rule_id'], row['source']
+            bi_privatet_up_down += 1
+        elif group_name:
             key = row['sdref'], row['rule_id'], group_name
         else:
             key = row['sdref'], row['rule_id'], row['source']
@@ -268,112 +270,58 @@ def compact_updates():
                 'is_deleted': row['is_deleted'],
                 'sequence': row['sequence'],
                 'source': row['source'],
-                'values': row['values'] and eval(row['values']) or [],
+                'count': 1,
             }
         else:
             if row['is_deleted']:
-                if rows_already_seen[key]['is_deleted']:
-                    # the previous update was also a delete
-                    # so delete the previous update to keep only the last one
-                    cr2.execute('DELETE FROM sync_server_update WHERE id = %s',
-                                (rows_already_seen[key]['id'],))
-                    deleted_update_ids.append(rows_already_seen[key]['id'])
-                    # and keep the current
-                    rows_already_seen[key] = {
-                        'id': row['id'],
-                        'is_deleted': row['is_deleted'],
-                        'sequence': row['sequence'],
-                        'source': row['source'],
-                        'values': row['values'] and eval(row['values']) or [],
-                    }
-                else:   # the previous was not a delete, the current and the
-                        # previous should be deleted
-                    cr2.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                                ((rows_already_seen[key]['id'], row['id']),))
-                    deleted_update_ids.append(rows_already_seen[key]['id'])
-                    deleted_update_ids.append(row['id'])
-                    # remove the already seen key
-                    del rows_already_seen[key]
+                # delete the previous update to keep only the last one
+                cr2.execute('DELETE FROM sync_server_update WHERE id = %s',
+                            (rows_already_seen[key]['id'],))
+                deleted_update_ids.append(rows_already_seen[key]['id'])
+                # and keep the current
+                rows_already_seen[key] = {
+                    'id': row['id'],
+                    'is_deleted': row['is_deleted'],
+                    'sequence': row['sequence'],
+                    'source': row['source'],
+                    'count': rows_already_seen[key]['count'] + 1,
+                }
                 conn.commit()
             else:
-                # check no reference to other object change between the
-                # previous update and the current
-                previous_values = rows_already_seen[key]['values']
-                current_values = eval(row['values'])
-                diff = set(current_values).difference(previous_values)
-                ref_diff = False
-                if row['model'] == 'ir.translation':
-                    # if the reference changes
-                    xml_id = current_values[-2]
-                    if xml_id and xml_id in diff:
-                        # special handling for ir_translation as they are refering
-                        # to product using product_ instead of sd.
-                        ref_diff = [xml_id]
-                else:
-                    ref_diff = [x.split('sd.')[1] for x in diff if
-                                isinstance(x, (str, unicode)) and x.startswith('sd.')]
+                current_count = rows_already_seen[key]['count']
+                # for more safety, the first and last update will be kept
+                if current_count == 1:
+                    rows_already_seen[key] = {'id': row['id'],
+                                              'is_deleted': row['is_deleted'],
+                                              'sequence': row['sequence'],
+                                              'source': row['source'],
+                                              'count': current_count + 1,
+                                              }
+                    not_deleted_update += 1
+                    continue
 
-                # before to do any replacement, check that the object in this
-                # update is not pointing to other object created after the
-                # update where it will be moved to.
-                if ref_diff:
-                    # if the sequence number where the update will be moved is
-                    # smaller thant the sequence number of the refered object,
-                    # the update will not be compressed
-                    sequence_to_moved_on = rows_already_seen[key]['sequence']
-                    cr2.execute('''SELECT id
-                                FROM sync_server_update
-                                WHERE sequence > %s AND sdref IN %s AND
-                                is_deleted='f' LIMIT 1''',
-                                (sequence_to_moved_on, tuple(ref_diff)))
-                    if cr2.fetchone():
-                        rows_already_seen[key] = {'id': row['id'],
-                                                  'is_deleted': row['is_deleted'],
-                                                  'sequence': row['sequence'],
-                                                  'source': row['source'],
-                                                  'values': row['values'] and eval(row['values']) or [],
-                                                  }
-                        not_deleted_update += 1
-                        continue  # if anything is matching, do not compress
-
-                # replace the content of the previous update with the current
-                field_list_to_remove = [
-                    'session_id', 'id', 'sdref', 'rule_id', 'sequence',
-                    'source', 'owner', 'create_date', 'write_uid',
-                    'create_uid']
-                items = [x for x in row.iteritems() if x[0] not in
-                         field_list_to_remove]
-                # if sources are different and direction of the rule is
-                # down, it is required to keep this updates
-                if rows_already_seen[key]['source'] != row['source']:
-                    rule_direction = rule_direction_dict[row['rule_id']]
-                    if rule_direction in ('down', 'bi-private'):
-                        down_direction_count += 1
-                        continue
-
-                fields_to_set = [x[0] for x in items]
-                values_to_set = [x[1] for x in items]
-
-                # delete the update
-                cr2.execute('DELETE FROM sync_server_update WHERE id = %s', (row['id'],))
-                deleted_update_ids.append(row['id'])
+                # delete the previous update
+                cr2.execute('DELETE FROM sync_server_update WHERE id = %s',
+                        (rows_already_seen[key]['id'],))
+                deleted_update_ids.append(rows_already_seen[key]['id'])
+                rows_already_seen[key] = {'id': row['id'],
+                                          'is_deleted': row['is_deleted'],
+                                          'sequence': row['sequence'],
+                                          'source': row['source'],
+                                          'count': current_count + 1,
+                                          }
                 conn.commit()
-
-                # update the previous one with the current values
-                fields = ','.join(['%s = %%s' % x for x in fields_to_set])
-                sql_query = 'UPDATE sync_server_update SET %s WHERE id = %%s' % fields
-                cr2.execute(sql_query, values_to_set + [rows_already_seen[key]['id']])
-
             conn.commit()
-        progress = current_cursor/float(total_updates)
-        update_progress(progress, len(deleted_update_ids))
+        if current_cursor % 100 == 0:
+            progress = current_cursor/float(total_updates)
+            update_progress(progress, len(deleted_update_ids))
 
     # free memory
     del multiple_updates
     del rows_already_seen
-    print_file_and_screen('%s not deleted updates.' % not_deleted_update)
-    print_file_and_screen('%s updates have no_group.' % no_group_count)
-    print_file_and_screen('%s down direction update kept' % down_direction_count)
+    print_file_and_screen('\n%s not deleted updates.' % not_deleted_update)
+    print_file_and_screen('%s updates have no group.' % no_group_count)
+    print_file_and_screen('%s updates are bi-private, up or down.' % bi_privatet_up_down)
     print_file_and_screen('5/6 Compression finished. %s update deleted.' % locale.format('%d', len(deleted_update_ids), 1))
     print_time_elapsed(intermediate_time, step='5/6')
     update_count += len(deleted_update_ids)
@@ -382,12 +330,16 @@ def compact_updates():
     cr2.close()
     return update_count
 
+print_file_and_screen('Working on db %s' % DB_NAME)
 if DELETE_NO_MASTER:
     total_update_count += delete_no_master()
 if DELETE_INACTIVE_RULES:
     total_update_count += delete_inactive_rules()
 if COMPACT_UPDATE:
-    total_update_count += compact_updates()
+    current_count = None
+    while current_count != 0:
+        current_count = compact_updates()
+        total_update_count += current_count
 
 print_file_and_screen('\n\nTotal updates deleted = %s/%s\n\n' %
                       (locale.format('%d', total_update_count, 1),
