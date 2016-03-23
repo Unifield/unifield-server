@@ -168,7 +168,7 @@ class sale_order_sourcing_progress(osv.osv):
             """
             Return the status of the line
             """
-            if not nb:
+            if not mem_nb:
                 return state
             elif mem_nb == nb:
                 return _('Done')
