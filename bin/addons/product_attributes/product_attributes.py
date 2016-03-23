@@ -138,6 +138,29 @@ class product_heat_sensitive(osv.osv):
             )
         return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
 
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=100):
+        """
+        In context of sync. update execution, look for active and inactive heat sensitive items
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param name: Object name to search
+        :param args: List of tubles specifying search criteria [('field_name', 'operator', 'value'), ...]
+        :param operatior: Operator for search criterion
+        :param context: Context of the call
+        :param limit: Optional max number of records to return
+        :return: List of objects names matching the search criteria, used to provide completion for to-many relationships
+        """
+        if context is None:
+            context = {}
+
+        if args is None:
+            args = []
+
+        if context.get('sync_update_execution'):
+            args.append(('active', 'in', ['t', 'f']))
+
+        return super(product_heat_sensitive, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
+
 product_heat_sensitive()
 
 class product_cold_chain(osv.osv):
