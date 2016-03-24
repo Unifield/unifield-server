@@ -9,5 +9,8 @@
             <field name="method">another_translation_fix</field>
         </record>
 
+        <record id="us_918_patch" model="patch.scripts">
+            <field name="method">us_918_patch</field>
+        </record>
     </data>
 </openerp>

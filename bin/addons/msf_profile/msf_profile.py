@@ -51,6 +51,67 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_918_patch(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # if this script is exucuted on server side, update the first delete
+            # update of ZMK to be executed before the creation of ZMW (sequence
+            # 4875). Then if ZMK is correctly deleted, ZMW can be added
+            cr.execute("UPDATE sync_server_update "
+                       "SET sequence=4874 "
+                       "WHERE id=2222677")
+
+            # change sdref ZMW to base_ZMW
+            cr.execute("UPDATE sync_server_update "
+                       "SET sdref='base_ZMW' "
+                       "WHERE model='res.currency' AND sdref='ZMW'")
+
+            # remove the ZMK creation update
+            cr.execute("DELETE FROM sync_server_update WHERE id=52325;")
+            cr.commit()
+
+            # some update where refering to the old currency with sdref=sd.ZMW
+            # as the reference changed, we need to modify all of this updates
+            # pointing to a wrong reference (currency_rates, ...)
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.ZMW%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.ZMW' in update_values:
+                    index = update_values.index('sd.ZMW')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+
+            # do the same for sdref=sd.base_ZMK
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.base_ZMK' in update_values:
+                    index = update_values.index('sd.base_ZMK')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+        else:
+            # change the sdref on the client that use the wrong ZMK
+            cr.execute("""UPDATE ir_model_data
+            SET name='ZMW' WHERE name='ZMK'""")
+
+            cr.execute("""UPDATE ir_model_data
+            SET name='base_ZMW' WHERE name='base_ZMK'""")
+
+            # check if some updates with wrong sdref were ready to be sent and if yes, fix them
+            update_module = self.pool.get('sync.client.update_to_send')
+            if update_module:
+                # change sdref ZMW to base_ZMW
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='base_ZMW' "
+                           "WHERE sdref='base_ZMK'")
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='ZMW' "
+                           "WHERE sdref='ZMK'")
+
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
         # remove period state from upper levels as an instance should be able
