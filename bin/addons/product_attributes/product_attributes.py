@@ -224,7 +224,7 @@ class product_cold_chain(osv.osv):
                 tools.ustr('17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag'): 'cold_13',
             }
 
-           if name in match_dict.keys():
+            if name in match_dict.keys():
                 item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', match_dict[name])
                 if item_id:
                     ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
