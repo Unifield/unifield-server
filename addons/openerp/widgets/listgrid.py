@@ -692,6 +692,20 @@ class Boolean(Char):
 #        else:
 #            return _('No')
 
+class NullBoolean(Char):
+    template = "/openerp/widgets/templates/listgrid/null_boolean.mako"
+
+    params = ['val', 'kind']
+
+    def get_text(self):
+        self.val = 0
+        self.kind = 'boolean'
+        if self.value == 'X':
+            self.val = 1
+        elif self.value == '?':
+            self.val = self.value
+            self.kind = 'text'
+
 class Button(TinyInputWidget):
 
     params = ['icon', 'id', 'parent_grid', 'btype', 'confirm', 'width', 'context']
@@ -782,6 +796,7 @@ CELLTYPES = {
         'float_time':FloatTime,
         'integer':Int,
         'boolean' : Boolean,
+        'null_boolean' : NullBoolean,
         'progressbar' : ProgressBar,
         'separator': Separator,
 }

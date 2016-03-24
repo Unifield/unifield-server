@@ -680,6 +680,15 @@ function onChange(caller){
                             openobject.dom.get(prefix + k).value = value || 0;
                         }
                         break;
+                    case 'null_boolean':
+                        if (value === 'X') {
+                            fld.outerHTML = '<input type="checkbox" kind="' + kind + '" class="checkbox" id="' + fld.getAttribute('id') + '" disabled="disabled" value="1" checked="checked">';
+                        } else if (value === '?') {
+                            fld.outerHTML = '<span class="text_null_boolean" kind="' + kind + '" name="' + fld.getAttribute('name') + '" id="' + fld.getAttribute('id') + '" value="?">?</span>';
+                        } else {
+                            fld.outerHTML = '<input type="checkbox" kind="' + kind + '" class="checkbox" id="' + fld.getAttribute('id') + '" disabled="disabled" value="0">';
+                        }
+                        break;
                     case 'text_html':
                         $('#' + prefix + k).val(value || '');
                         break;

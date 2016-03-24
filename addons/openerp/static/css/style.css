@@ -717,6 +717,20 @@ img.m2o_open {
     min-width: 10px;
 }
 
+.text_null_boolean {
+    color: #999999;
+    background-color: #FEFEFE;
+    font-size: 1.0em;
+    font-weight: bold;
+    padding: 0px 5px 0px 5px;
+    border: solid;
+    border-width: 1px;
+    border-color: #D4D4D4;
+    -moz-border-radius:4px;
+    -webkit-border-radius:4px;
+    border-radius:4px;
+}
+
 #view_form .fielderror,
 #search_form .fielderror {
     color: #FF0000;
