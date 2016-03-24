@@ -1360,6 +1360,7 @@ class procurement_order(osv.osv):
                 'sourcing_document_id': rfq_id,
                 'sourcing_document_model': 'purchase.order',
                 'sourcing_document_type': 'rfq',
+                'line_ids': sale_order_line and sale_order_line.id or False,
             }, context=context)
 
             # add a line to the RfQ
@@ -1424,6 +1425,7 @@ class procurement_order(osv.osv):
                 'sourcing_document_id': tender_id,
                 'sourcing_document_model': 'tender',
                 'sourcing_document_type': 'tender',
+                'line_ids': sale_order_line and sale_order_line.id or False,
             }, context=context)
             # add a line to the tender
             tender_line_id = tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,

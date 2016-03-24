@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import time
+
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
@@ -88,6 +90,22 @@ class procurement_request_sourcing_document(osv.osv):
             readonly=True,
             store=False,
         ),
+        'first_date': fields.datetime(
+            string='Start date',
+            readonly=True,
+        ),
+        'last_date': fields.datetime(
+            string='Last date',
+            readonly=True,
+        ),
+        'sourcing_lines': fields.many2many(
+            'sale.order.line',
+            'sale_line_sourcing_doc_rel',
+            'document_id',
+            'sale_line_id',
+            'Sourced lines',
+            readonly=True,
+        ),
     }
 
     def go_to_document(self, cr, uid, ids, context=None):
@@ -154,11 +172,30 @@ class procurement_request_sourcing_document(osv.osv):
         ], context=context)
 
         if not chk_ids:
-            self.create(cr, uid, {
+            create_data = {
                 'order_id': vals.get('order_id'),
                 'sourcing_document_id': vals.get('sourcing_document_id'),
                 'sourcing_document_model': vals.get('sourcing_document_model'),
                 'sourcing_document_type': vals.get('sourcing_document_type'),
+                'first_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            if vals.get('line_ids'):
+                create_data['sourcing_lines'] = [(6, 0, (vals.get('line_ids'),))]
+            self.create(cr, uid, create_data, context=context)
+        elif vals.get('line_ids'):
+            for chk in self.browse(cr, uid, chk_ids, context=context):
+                sourcing_lines = [vals.get('line_ids')]
+                for sl in chk.sourcing_lines:
+                    sourcing_lines.append(sl.id)
+
+                self.write(cr, uid, [chk.id], {
+                    'sourcing_lines': [(6, 0, sourcing_lines)],
+                    'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                }, context=context)
+        else:
+            self.write(cr, uid, chk_ids, {
+                'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
 
         return True
