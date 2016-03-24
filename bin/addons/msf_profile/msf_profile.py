@@ -51,6 +51,16 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_1061_patch(self, cr, uid, *a, **b):
+        '''setup the size on all attachment'''
+        attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = attachment_obj.search(cr, uid, [])
+        vals = {}
+        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            if attachment.datas and not attachment.size:
+                vals['size'] = attachment_obj.get_size(attachment.datas)
+                attachment_obj.write(cr, uid, attachment.id, vals)
+
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
         # remove period state from upper levels as an instance should be able
