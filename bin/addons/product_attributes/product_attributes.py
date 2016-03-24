@@ -103,9 +103,24 @@ product_international_status()
 
 class product_heat_sensitive(osv.osv):
     _name = "product.heat_sensitive"
+    _order = 'code desc'
     _columns = {
-        'code': fields.char('Code', size=256),
-        'name': fields.char('Name', size=256, required=True),
+        'code': fields.char(
+            string='Code',
+            size=256,
+        ),
+        'name': fields.char(
+            string='Name',
+            size=256,
+            required=True,
+        ),
+        'active': fields.boolean(
+            string='Active',
+        )
+    }
+
+    _defaults = {
+        'active': True,
     }
 
     def unlink(self, cr, uid, ids, context=None):
@@ -113,12 +128,44 @@ class product_heat_sensitive(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        ids_p = self.pool.get('product.product').search(cr, uid,
-                [('heat_sensitive_item','in',ids)],
-                limit=1, order='NO_ORDER')
+        ids_p = self.pool.get('product.product').search(cr, uid, [
+            ('heat_sensitive_item', 'in', ids),
+        ], limit=1, order='NO_ORDER')
         if ids_p:
-            raise osv.except_osv(_('Error'), _('You cannot delete this heat sensitive because it\'s used at least in one product'))
+            raise osv.except_osv(
+                _('Error'),
+                _('You cannot delete this heat sensitive because it\'s used at least in one product'),
+            )
         return super(product_heat_sensitive, self).unlink(cr, uid, ids, context=context)
+
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=100):
+        """
+        In context of sync. update execution, look for active and inactive heat sensitive items
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param name: Object name to search
+        :param args: List of tubles specifying search criteria [('field_name', 'operator', 'value'), ...]
+        :param operatior: Operator for search criterion
+        :param context: Context of the call
+        :param limit: Optional max number of records to return
+        :return: List of objects names matching the search criteria, used to provide completion for to-many relationships
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if args is None:
+            args = []
+
+        if context.get('sync_update_execution'):
+            item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')
+            if item_id:
+                ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
+                        access_rights_uid=uid)
+                return self.name_get(cr, uid, ids, context)
+
+        return super(product_heat_sensitive, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
 
 product_heat_sensitive()
 
@@ -141,6 +188,51 @@ class product_cold_chain(osv.osv):
             raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
         return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
 
+    def name_search(self, cr, uid, name='', args=None, operator='ilike', context=None, limit=100):
+        """
+        In context of sync. update execution, look for active and inactive heat sensitive items
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param name: Object name to search
+        :param args: List of tubles specifying search criteria [('field_name', 'operator', 'value'), ...]
+        :param operatior: Operator for search criterion
+        :param context: Context of the call
+        :param limit: Optional max number of records to return
+        :return: List of objects names matching the search criteria, used to provide completion for to-many relationships
+        """
+        data_obj = self.pool.get('ir.model.data')
+        if context is None:
+            context = {}
+
+        if args is None:
+            args = []
+
+        if context.get('sync_update_execution'):
+            match_dict = {
+                tools.ustr('3* Cold Chain * - Keep Cool: used for a kit containing cold chain module or item(s)'): 'cold_1',
+                tools.ustr('6*0 Cold Chain *0 - Problem if any window blue'): 'cold_2',
+                tools.ustr('7*0F Cold Chain *0F - Problem if any window blue or Freeze-tag = ALARM'): 'cold_3',
+                tools.ustr('8*A Cold Chain *A - Problem if B, C and/or D totally blue'): 'cold_4',
+                tools.ustr('9*AF Cold Chain *AF - Problem if B, C and/or D totally blue or Freeze-tag = ALARM'): 'cold_5',
+                tools.ustr('10*B Cold Chain *B - Problem if C and/or D totally blue'): 'cold_6',
+                tools.ustr('11*BF Cold Chain *BF - Problem if C and/or D totally blue or Freeze-tag = ALARM'): 'cold_7',
+                tools.ustr('12*C Cold Chain *C - Problem if D totally blue'): 'cold_8',
+                tools.ustr('13*CF Cold Chain *CF - Problem if D totally blue or Freeze-tag = ALARM'): 'cold_9',
+                tools.ustr('14*D Cold Chain *D - Store and transport at -25°C (store in deepfreezer, transport with dry-ice)'): 'cold_10',
+                tools.ustr('15*F Cold Chain *F - Cannot be frozen: check Freeze-tag'): 'cold_11',
+                tools.ustr('16*25 Cold Chain *25 - Must be kept below 25°C (but not necesseraly in cold chain)'): 'cold_12',
+                tools.ustr('17*25F Cold Chain *25F - Must be kept below 25°C and cannot be frozen: check  Freeze-tag'): 'cold_13',
+            }
+
+            if name in match_dict.keys():
+                item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', match_dict[name])
+                if item_id:
+                    ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
+                            access_rights_uid=uid)
+                    return self.name_get(cr, uid, ids, context)
+
+        return super(product_cold_chain, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
+
 product_cold_chain()
 
 class product_supply_source(osv.osv):
@@ -154,6 +246,7 @@ product_supply_source()
 
 class product_justification_code(osv.osv):
     _name = "product.justification.code"
+    _order = 'code'
     _rec_name = 'code'
     _columns = {
         'code': fields.char('Justification Code', size=32, required=True, translate=True),
@@ -206,6 +299,7 @@ class product_template(osv.osv):
 
 product_template()
 
+
 class product_attributes(osv.osv):
     _inherit = "product.product"
 
@@ -218,6 +312,48 @@ class product_attributes(osv.osv):
         pathname = path.join('product_attributes', 'product_attributes_data.xml')
         file = tools.file_open(pathname)
         tools.convert_xml_import(cr, 'product_attributes', file, {}, mode=mode, noupdate=True)
+
+    def execute_migration(self, cr, moved_column, new_column):
+        super(product_attributes, self).execute_migration(cr, moved_column, new_column)
+
+        if new_column not in ['standard_ok', 'dangerous_goods', 'short_shelf_life', 'controlled_substance']:
+            return
+
+        # Get the list of ID of product.product that will be updated to make a touch() on it to trigger a new sync. update
+        ids_req = 'SELECT id FROM product_product WHERE %s = True' % moved_column
+        if new_column == 'controlled_substance':
+            ids_req = '%s OR narcotic = True' % ids_req
+
+        cr.execute('''UPDATE ir_model_data SET
+                            last_modification = now(),
+                            touched='[''%s'']'
+                        WHERE model = 'product.product'
+                        AND res_id IN (%s)
+        ''' % (new_column, ids_req))
+
+        # Make the migration
+        if new_column == 'standard_ok':
+            request = 'UPDATE product_product SET standard_ok = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
+
+        if new_column == 'dangerous_goods':
+            request = 'UPDATE product_product SET is_dg = True, dg_txt = \'X\', dangerous_goods = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
+
+        if new_column == 'short_shelf_life':
+            request = 'UPDATE product_product SET is_ssl = True, ssl_txt = \'X\', short_shelf_life = \'True\' WHERE %s = True' % moved_column
+            cr.execute(request)
+
+        if new_column == 'controlled_substance':
+            # Update old ticked controlled substance but not narcotic
+            request = '''UPDATE product_product SET
+                              controlled_substance = 'True',
+                              is_cs = True,
+                              cs_txt = 'X'
+                            WHERE %s = True OR narcotic = True''' % moved_column
+            cr.execute(request)
+
+        return
 
     def _get_nomen(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -352,19 +488,186 @@ class product_attributes(osv.osv):
 
         return []
 
+    def _compute_is_kc(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Keep Cool product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.heat_sensitive_item.code == 'yes'
+
+    def _compute_kc_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Keep Cool
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        if product.heat_sensitive_item.code == 'no_know':
+            return '?'
+        elif product.heat_sensitive_item.code == 'no':
+            return ''
+        else:
+            return 'X'
+
+    def _compute_is_dg(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Dangerous Goods product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.dangerous_goods == 'True'
+
+    def _compute_dg_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Dangerous Goods
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        if product.dangerous_goods == 'True':
+            return 'X'
+        elif product.dangerous_goods == 'no_know':
+            return '?'
+
+        return ''
+
+    def _compute_is_cs(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Controlled Substance product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.controlled_substance
+
+    def _compute_cs_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Controlled Substance
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        return product.controlled_substance and 'X' or ''
+
+    def _compute_is_ssl(self, cr, uid, product, context=None):
+        """
+        Return True if the product is considered as a Short Shelf Life product
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: True or False
+        """
+        return product.short_shelf_life == 'True'
+
+    def _compute_ssl_txt(self, cr, uid, product, context=None):
+        """
+        Return the character to display on views or reports ('X' or '?' or '') for Short Shelf Life
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param product: browse_record of a product.product
+        :param context: Context of the call
+        :return: 'X' or '?' or ''
+        """
+        if product.short_shelf_life == 'True':
+            return 'X'
+        elif product.short_shelf_life == 'no_know':
+            return '?'
+
+        return ''
+
+    def _compute_kc_dg_cs_ssl_values(self, cr, uid, ids, field_names, args, context=None):
+        """
+        Compute the character to display ('X' or '?' or '') according to product values
+        for Keep Cool, Dangerous Goods, Controlled Substance and Short Shelf Life.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of product.product to compute values
+        :param field_names: Name of the fields to compute
+        :param args: Additionnal arguments
+        :param context: Conetxt of the call
+        :return: A dictionary with the ID of product.product as keys and
+                 a dictionary with computed field values for each ID in ids.
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not isinstance(field_names, list):
+            field_names = [field_names]
+
+        res = {}
+        for product in self.browse(cr, uid, ids, context=context):
+            res[product.id] = {}
+            for fld in field_names:
+                method_name = '_compute_%s' % fld
+                res[product.id][fld] = getattr(self, method_name)(cr, uid, product, context=context)
+
+        return res
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
-        'old_code' : fields.char('Old code', size=64),
+        'old_code' : fields.char(
+            string='Old code',
+            size=1024,
+        ),
         'new_code' : fields.char('New code', size=64),
-
         'international_status': fields.many2one('product.international.status', 'Product Creator', required=False),
         'perishable': fields.boolean('Expiry Date Mandatory'),
         'batch_management': fields.boolean('Batch Number Mandatory'),
         'product_catalog_page' : fields.char('Product Catalog Page', size=64),
-        'product_catalog_path' : fields.char('Product Catalog Path', size=64),
-        'short_shelf_life': fields.boolean('Short Shelf Life'),
+        'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
+        'is_ssl': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='boolean',
+            string='Is Short Shelf Life ?',
+            multi='ssl',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['short_shelf_life'], 10),
+            }
+        ),
+        'ssl_txt': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Short Shelf Life icon',
+            multi='ssl',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['short_shelf_life'], 10),
+            }
+        ),
+        'short_shelf_life': fields.selection(
+            selection=[
+                ('False', 'No'),
+                ('True', 'Yes'),
+                ('no_know', 'tbd'),
+            ],
+            string='Short Shelf Life',
+            required=True,
+        ),
         'criticism': fields.selection([('',''),
             ('exceptional','1-Exceptional'),
             ('specific','2-Specific'),
@@ -390,22 +693,122 @@ class product_attributes(osv.osv):
         'composed_kit': fields.boolean('Kit Composed of Kits/Modules'),
         'options_ids': fields.many2many('product.product','product_options_rel','product_id','product_option_id','Options'),
 
-        'heat_sensitive_item': fields.many2one('product.heat_sensitive', 'Temperature sensitive item',),
+        'is_kc': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='boolean',
+            string='Is Keep Cool ?',
+            multi='kc',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
+            }
+        ),
+        'kc_txt': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Keep Cool icon',
+            multi='kc',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['heat_sensitive_item'], 10),
+            }
+        ),
+        'heat_sensitive_item': fields.many2one(
+            'product.heat_sensitive',
+            string='Temperature sensitive item',
+            required=True,
+        ),
         'cold_chain': fields.many2one('product.cold_chain', 'Cold Chain',),
         'show_cold_chain': fields.boolean('Show cold chain'),
         # Inverse of m2m options_ids
         'options_ids_inv': fields.many2many('product.product', 'product_options_rel', 'product_option_id', 'product_id', 'Options Inv.'),
-        'sterilized': fields.selection([('yes', 'Yes'), ('no', 'No')], string='Sterile'),
-        'single_use': fields.selection([('yes', 'Yes'),('no', 'No')], string='Single Use'),
+        'sterilized': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'tbd'),
+            ],
+            string='Sterile',
+            required=True,
+        ),
+        'single_use': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('no_know', 'tbd'),
+            ],
+            string='Single Use',
+            required=True,
+        ),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
         'med_device_class': fields.selection([('',''),
             ('I','Class I (General controls)'),
             ('II','Class II (General control with special controls)'),
             ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
-        'closed_article': fields.selection([('yes', 'Yes'), ('no', 'No'),],string='Closed Article'),
-        'dangerous_goods': fields.boolean('Dangerous Goods'),
+        'manufacturer_txt': fields.text(
+            string='Manufacturer',
+        ),
+        'manufacturer_ref': fields.char(
+            size=1024,
+            string='Manufacturer Ref.'
+        ),
+        'closed_article': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+                ('recommanded', 'Recommended'),
+            ],
+            string='Closed Article',
+            required=True,
+        ),
+        'is_dg': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='boolean',
+            string='Is a Dangerous Goods ?',
+            multi='dg',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
+            }
+        ),
+        'dg_txt': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Dangerous Goods icon',
+            multi='dg',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['dangerous_goods'], 10),
+            }
+        ),
+        'dangerous_goods': fields.selection(
+            selection=[
+                ('False', 'No'),  # False is put as key for migration (see US-752)
+                ('True', 'Yes'),  # True is put as key for migration (see US-752)
+                ('no_know', 'tbd'),
+            ],
+            string='Dangerous goods',
+            required=True,
+        ),
         'restricted_country': fields.boolean('Restricted in the Country'),
         'country_restriction': fields.many2one('res.country.restriction', 'Country Restriction'),
+        'state_ud': fields.selection(
+            selection=[
+                ('valid', 'Valid'),
+                ('phase_out', 'Phase Out'),
+                ('stopped', 'Stopped'),
+                ('archived', 'Archived'),
+            ],
+            string='UniData Status',
+            readonly=True,
+            help="Automatically filled with UniData information.",
+        ),
         # TODO: validation on 'un_code' field
         'un_code': fields.char('UN Code', size=7),
         'gmdn_code' : fields.char('GMDN Code', size=5),
@@ -421,7 +824,42 @@ class product_attributes(osv.osv):
         'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
                              type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
-        'controlled_substance': fields.boolean(string='Controlled substance'),
+        'controlled_substance': fields.selection(
+            selection=[
+                ('!', '! - Requires national export license'),
+                ('N1', 'N1 - Narcotic 1'),
+                ('N2', 'N2 - Narcotic 2'),
+                ('P1', 'P1 - Psychotrop 1'),
+                ('P3', 'P3 - Psychotrop 3'),
+                ('P4', 'P4 - Psychotrop 4'),
+                ('Y', 'Y - Kit or module with controlled substance'),
+                ('True', 'CS / NP - Controlled Substance / Narcotic / Psychotropic')
+            ],
+            string='Controlled substance',
+        ),
+        'is_cs': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='boolean',
+            string='Is Controlled subst.',
+            multi='cs',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
+            }
+        ),
+        'cs_txt': fields.function(
+            _compute_kc_dg_cs_ssl_values,
+            method=True,
+            type='char',
+            size=8,
+            string='Controlled subst. icon',
+            multi='cs',
+            readonly=True,
+            store={
+                'product.product': (lambda self, cr, uid, ids, c=None: ids, ['controlled_substance'], 10),
+            }
+        ),
         'uom_category_id': fields.related('uom_id', 'category_id', string='Uom Category', type='many2one', relation='product.uom.categ'),
         'no_external': fields.function(_get_restriction, method=True, type='boolean', string='External partners orders', readonly=True, multi='restriction',
                                        store={'product.product': (lambda self, cr, uid, ids, c=None: ids, ['international_status', 'state'], 20),
@@ -448,11 +886,23 @@ class product_attributes(osv.osv):
         'form_value': fields.text(string='Form', translate=True),
         'fit_value': fields.text(string='Fit', translate=True),
         'function_value': fields.text(string='Function', translate=True),
-        'standard_ok': fields.boolean(string='Standard'),
+        'standard_ok': fields.selection(
+            selection=[
+                ('True', 'Standard'),
+                ('False', 'Non-standard'),
+            ],
+            string='Standardization Level',
+            required=True,
+        ),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'prodlot_ids': fields.one2many(
+            'stock.production.lot',
+            'product_id',
+            string='Batch Numbers',
+        ),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
@@ -464,15 +914,37 @@ class product_attributes(osv.osv):
     #    res.update({'international_status': id })
     #    return res
 
+    def _get_default_sensitive_item(self, cr, uid, context=None):
+        """
+        Return the ID of the product.heat_sensitive item with 'No' value.
+        :param cr: Cursor to the datase
+        :param uid: ID of the res.users that calls the method
+        :param context: Context of the call
+        :return: The ID of the product.heat_sensitive item with 'No' value.
+        """
+        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(product_attributes, self).default_get(cr, uid, fields, context=context)
+
+        res['heat_sensitive_item'] = self._get_default_sensitive_item(cr, uid, context=context)
+
+        return res
+
     _defaults = {
+        'closed_article': 'no',
         'duplicate_ok': True,
         'perishable': False,
         'batch_management': False,
-        'short_shelf_life': False,
+        'short_shelf_life': 'False',
         'narcotic': False,
         'composed_kit': False,
-        'dangerous_goods': False,
+        'dangerous_goods': 'False',
+        'controlled_substance': False,
         'restricted_country': False,
+        'sterilized': 'no',
+        'single_use': 'no',
+        'standard_ok': 'False',
         'currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'field_currency_id': lambda obj, cr, uid, c: obj.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
@@ -662,12 +1134,25 @@ class product_attributes(osv.osv):
 
         return result, res
 
-
     def onchange_heat(self, cr, uid, ids, heat, context=None):
-        heat_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_1')[1]
-        if not heat or heat == heat_id:
-            return {'value': {'show_cold_chain':False}}
-        return {'value': {'show_cold_chain':True}}
+        """
+        Set the value for the field 'show_cold_chain' according to
+        selection Temperature sensitive value.
+        If the returned value is True, the field Cold Chain will be displayed
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.product on which the field is computed
+        :param heat: ID of the selected product.heat_sensitive
+        :param context: Context of the call
+        :return: True of False in the 'show_cold_chain' field
+        """
+        heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+        heat3_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no_know')[1]
+        return {
+            'value': {
+                'show_cold_chain': heat and heat not in [heat2_id, heat3_id]
+            }
+        }
 
     def _check_gmdn_code(self, cr, uid, ids, context=None):
         int_pattern = re.compile(r'^\d*$')
@@ -705,6 +1190,20 @@ class product_attributes(osv.osv):
                     _('Error'),
                     _('White spaces are not allowed in XML ID code'),
                 )
+
+        if 'narcotic' in vals or 'controlled_substance' in vals:
+            if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
+                vals['controlled_substance'] = 'True'
+
+        if 'heat_sensitive_item' in vals:
+            if not vals.get('heat_sensitive_item'):
+                heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, user, 'product_attributes', 'heat_no')[1]
+                vals['heat_sensitive_item'] = heat2_id
+            vals.update(self.onchange_heat(cr, user, False, vals['heat_sensitive_item'], context=context).get('value', {}))
+
+        for f in ['sterilized', 'closed_article', 'single_use']:
+            if f in vals and not vals.get(f):
+                vals[f] = 'no'
 
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
@@ -747,6 +1246,20 @@ class product_attributes(osv.osv):
                 category_id = product.uom_id.category_id.id
                 if category_id not in product_uom_categ:
                     product_uom_categ.append(category_id)
+
+        if 'heat_sensitive_item' in vals:
+            if not vals.get('heat_sensitive_item'):
+                heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+                vals['heat_sensitive_item'] = heat2_id
+            vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
+
+        if 'narcotic' in vals or 'controlled_substance' in vals:
+            if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
+                vals['controlled_substance'] = 'True'
+
+        for f in ['sterilized', 'closed_article', 'single_use']:
+            if f in vals and not vals.get(f):
+                vals[f] = 'no'
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
@@ -1118,10 +1631,44 @@ class product_template(osv.osv):
     _inherit = 'product.template'
 
     _columns = {
-        'volume': fields.float('Volume', digits=(16,5), help="The volume in m3."),
+        'volume': fields.float(
+            string='Volume',
+            digits=(16, 5),
+            help="The volume in dm3.",
+        ),
+        'volume_updated': fields.boolean(
+            string='Volume updated',
+            readonly=True,
+        ),
         'weight': fields.float('Gross weight', digits=(16,5), help="The gross weight in Kg."),
         'weight_net': fields.float('Net weight', digits=(16,5), help="The net weight in Kg."),
     }
+
+    _defaults = {
+        'volume_updated': False,
+    }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Update the volume from dm³ to m³ if the volume was not
+        yet updated.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of product.template to update
+        :param vals: Values to apply on list of ID
+        :param context: Context of the call
+        :return: super write() method.
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if 'volume' in vals and not vals.get('volume_updated', False):
+            del vals['volume']
+
+        return super(product_template, self).write(cr, uid, ids, vals, context=context)
 
 product_template()
 
@@ -1140,6 +1687,31 @@ class product_deactivation_error(osv.osv_memory):
         'stock_exist': False,
         'opened_object': False,
     }
+
+    def return_to_product(self, cr, uid, ids, context=None):
+        """
+        When close the wizard view, reload the product view
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.deactivation.wizard
+        :param context: Context of the call
+        :return: A dictionary with parameters to reload the view
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'product.product',
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'res_id': self.browse(cr, uid, ids[0], context=context).product_id.id,
+            'target': 'test',
+            'context': context,
+        }
 
 product_deactivation_error()
 

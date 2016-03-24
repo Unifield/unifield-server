@@ -38,10 +38,10 @@
 					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
                    	<field name="lot_check" />
                    	<field name="exp_check" />
-                   	<field name="kc_check" />
-           			<field name="ssl_check" invisible="True" />
-           			<field name="dg_check" />
-           			<field name="np_check" />
+                    <field name="kc_check" widget="null_boolean" />
+                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                    <field name="dg_check" widget="null_boolean" />
+                    <field name="np_check" widget="null_boolean" />
 					<field name="integrity_status" />
 					<field name="location_id" invisible="1" />
                 </tree>
@@ -65,10 +65,10 @@
                     <field name="qty_to_return" on_change="onchange_uom_qty(product_uom, qty_to_return)" />
                     <field name="lot_check" />
                    	<field name="exp_check" />
-                   	<field name="kc_check" />
-           			<field name="ssl_check" invisible="True" />
-           			<field name="dg_check" />
-           			<field name="np_check" />
+                    <field name="kc_check" widget="null_boolean" />
+                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                    <field name="dg_check" widget="null_boolean" />
+                    <field name="np_check" widget="null_boolean" />
            			<field name="integrity_status" />
                 </tree>
             </field>
@@ -93,10 +93,10 @@
 					<button name="split" string="Split" colspan="1" type="object" icon="terp-stock_effects-object-colorize" />
 					<field name="lot_check" />
                    	<field name="exp_check" />
-                   	<field name="kc_check" />
-           			<field name="ssl_check" invisible="True" />
-           			<field name="dg_check" />
-           			<field name="np_check" />
+                    <field name="kc_check" widget="null_boolean" />
+                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                    <field name="dg_check" widget="null_boolean" />
+                    <field name="np_check" widget="null_boolean" />
            			<field name="integrity_status" />
                 </tree>
             </field>

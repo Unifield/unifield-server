@@ -783,7 +783,7 @@ class orm_template(object):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         # mode: id (XML id) or .id (database id) or False for name_get
-        def _get_id(model_name, id, current_module=False, mode='id'):
+        def _get_id(model_name, id, current_module=False, mode='id', context=None):
             if mode=='.id':
                 id = int(id)
                 obj_model = self.pool.get(model_name)
@@ -803,7 +803,7 @@ class orm_template(object):
                 id = ir_model_data[0]['res_id']
             else:
                 obj_model = self.pool.get(model_name)
-                ids = obj_model.name_search(cr, uid, id, operator='=')
+                ids = obj_model.name_search(cr, uid, id, operator='=', context=context)
                 if not ids:
                     raise ValueError('No record found for %s' % (id,))
                 id = ids[0][0]
@@ -888,7 +888,7 @@ class orm_template(object):
                         mode = False
                     else:
                         mode = field[len(prefix)+1]
-                    res = value and _get_id(relation, value, current_module, mode)
+                    res = value and _get_id(relation, value, current_module, mode, context=context)
 
                 elif field_type=='many2many':
                     relation = fields_def[field[len(prefix)]]['relation']
@@ -901,7 +901,7 @@ class orm_template(object):
                     res = []
                     if value:
                         for db_id in value.split(config.get('csv_internal_sep')) or []:
-                            res.append( _get_id(relation, db_id, current_module, mode) )
+                            res.append( _get_id(relation, db_id, current_module, mode, context=context) )
                     res = [(6,0,res)]
 
                 elif field_type == 'integer':
@@ -912,7 +912,8 @@ class orm_template(object):
                     res = value and float(value.replace(',','.')) or 0.0
                 elif field_type == 'selection':
                     for key, val in fields_def[field[len(prefix)]]['selection']:
-                        if value in [tools.ustr(key), tools.ustr(val)]:
+                        if value in [tools.ustr(key), tools.ustr(val)] or \
+                           tools.ustr(value) in [tools.ustr(key), tools.ustr(val)]:
                             res = key
                             break
                     if not value:
@@ -939,7 +940,7 @@ class orm_template(object):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
                         try:
-                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
+                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id, context=context)
                             ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
                         except:
                             ref_db_id = None
@@ -2663,6 +2664,18 @@ class orm(orm_template):
                 self.__schema.debug("Table '%s': column '%s': dropped NOT NULL constraint",
                                     self._table, column['attname'])
 
+    def execute_migration(self, cr, moved_column, new_column):
+        """
+        On change type of column, make a migration of data. The old values
+        are moved to a new column suffixed by _movedX.
+        This method must be overriden on needed objects.
+        :param cr: Cursor to the database
+        :param moved_column: The renamed old column
+        :param new_column: The column with the new type
+        :return: Nothing
+        """
+        pass
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2670,6 +2683,7 @@ class orm(orm_template):
         create = False
         todo_end = []
         self._field_create(cr, context=context)
+        to_migrate = []
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -2867,6 +2881,7 @@ class orm(orm_template):
                                     cr.execute("COMMENT ON COLUMN %s.%s IS '%s'" % (self._table, k, f.string.replace("'", "''")))
                                     self.__schema.debug("Table '%s': column '%s' has changed type (DB=%s, def=%s), data moved to column %s !",
                                         self._table, k, f_pg_type, f._type, newname)
+                                    to_migrate.append((newname, k))
 
                             # if the field is required and hasn't got a NOT NULL constraint
                             if f.required and f_pg_notnull == 0:
@@ -3007,6 +3022,9 @@ class orm(orm_template):
         else:
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             create = not bool(cr.fetchone())
+        
+        for t in to_migrate:
+            self.execute_migration(cr, t[0], t[1])
 
         cr.commit()     # start a new transaction
 

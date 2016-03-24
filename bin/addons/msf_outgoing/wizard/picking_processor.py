@@ -58,11 +58,17 @@ class stock_picking_processor(osv.osv):
                 'contains_dg': False,
             }
             # KC
-            kc_lines = line_obj.search(cr, uid, [('wizard_id', '=', wizard_id), ('kc_check', '=', True)], context=context)
+            kc_lines = line_obj.search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('kc_check', '!=', ''),
+            ], limit=1, order='NO_ORDER', context=context)
             if kc_lines:
                 res[wizard_id]['contains_kc'] = True
             # DG
-            dg_lines = line_obj.search(cr, uid, [('wizard_id', '=', wizard_id), ('dg_check', '=', True)], context=context)
+            dg_lines = line_obj.search(cr, uid, [
+                ('wizard_id', '=', wizard_id),
+                ('dg_check', '!=', ''),
+            ], limit=1, order='NO_ORDER', context=context)
             if dg_lines:
                 res[wizard_id]['contains_dg'] = True
 
@@ -284,10 +290,10 @@ class stock_move_processor(osv.osv):
                 'exp_check': False,
                 'asset_check': False,
                 'kit_check': False,
-                'kc_check': False,
-                'ssl_check': False,
-                'dg_check': False,
-                'np_check': False,
+                'kc_check': '',
+                'ssl_check': '',
+                'dg_check': '',
+                'np_check': '',
             }
 
             if line.product_id:
@@ -296,10 +302,10 @@ class stock_move_processor(osv.osv):
                     'exp_check': line.product_id.perishable,
                     'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
                     'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
-                    'kc_check': line.product_id.heat_sensitive_item and True or False,
-                    'ssl_check': line.product_id.short_shelf_life,
-                    'dg_check': line.product_id.dangerous_goods,
-                    'np_check': line.product_id.narcotic,
+                    'kc_check': line.product_id.kc_txt,
+                    'ssl_check': line.product_id.ssl_txt,
+                    'dg_check': line.product_id.dg_txt,
+                    'np_check': line.product_id.cs_txt,
                 }
 
         return res
@@ -576,7 +582,8 @@ class stock_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='KC',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -588,7 +595,8 @@ class stock_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='SSL',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -600,7 +608,8 @@ class stock_move_processor(osv.osv):
             _get_product_info,
             method=True,
             string='DG',
-            type='boolean',
+            type='char',
+            size=8,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
@@ -611,14 +620,15 @@ class stock_move_processor(osv.osv):
         'np_check': fields.function(
             _get_product_info,
             method=True,
-            string='NP',
-            type='boolean',
+            string='CS',
+            type='char',
+            size=8,
             store={
                 'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 20),
             },
             readonly=True,
             multi='product_info',
-            help="Ticked if the product is a Narcotic",
+            help="Ticked if the product is a Controlled Substance",
         ),
         'prodlot_id': fields.many2one(
             'stock.production.lot',

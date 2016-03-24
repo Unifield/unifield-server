@@ -12,5 +12,14 @@
         <record id="us_918_patch" model="patch.scripts">
             <field name="method">us_918_patch</field>
         </record>
+
+        <record id="us_750_patch" model="patch.scripts">
+            <field name="method">us_750_patch</field>
+        </record>
+
+        <record id="update_volume_patch" model="patch.scripts">
+            <field name="method">update_volume_patch</field>
+        </record>
+
     </data>
 </openerp>

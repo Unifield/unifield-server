@@ -386,6 +386,69 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def update_volume_patch(self, cr, uid, *a, **b):
+        """
+        Update the volume from dm³ to m³ for OCB databases
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param a: Unnamed parameters
+        :param b: Named parameters
+        :return: True
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance:
+            while instance.level != 'section':
+                if not instance.parent_id:
+                    break
+                instance = instance.parent_id
+
+        if instance and instance.name != 'OCBHQ':
+            cr.execute("""
+                UPDATE product_template
+                SET volume_updated = True
+                WHERE volume_updated = False
+            """)
+        else:
+            cr.execute("""
+                UPDATE product_template
+                SET volume = volume*1000,
+                    volume_updated = True
+                WHERE volume_updated = False
+            """)
+
+    def us_750_patch(self, cr, uid, *a, **b):
+        """
+        Update the heat_sensitive_item field of product.product
+        to 'Yes' if there is a value already defined by de-activated.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Non-named parameters
+        :param b: Named parameters
+        :return: True
+        """
+        prd_obj = self.pool.get('product.product')
+        phs_obj = self.pool.get('product.heat_sensitive')
+        data_obj = self.pool.get('ir.model.data')
+
+        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+
+        phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
+        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
+        if prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
+            """, (heat_id, tuple(prd_ids),))
+
+        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
+        if no_prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
+            """, (no_heat_id, tuple(no_prd_ids),))
+
+        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
+
+        return True
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
