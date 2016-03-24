@@ -88,7 +88,12 @@ class ir_attachment(osv.osv):
 
             # filter ids according to what access rules permit
             target_ids = targets.keys()
-            allowed_ids = self.pool.get(model).search(cr, uid, [('id', 'in', target_ids)], context=context)
+            if 'active' in self.pool.get(model)._columns:
+                allowed_ids = self.pool.get(model).search(cr, uid, [
+                    ('id', 'in', target_ids),
+                    ('active', 'in', ('t', 'f'))], context=context)
+            else:
+                allowed_ids = self.pool.get(model).search(cr, uid, [('id', 'in', target_ids)], context=context)
             disallowed_ids = set(target_ids).difference(allowed_ids)
             for res_id in disallowed_ids:
                 for attach_id in targets[res_id]:
