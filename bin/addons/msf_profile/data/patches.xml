@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_790" model="patch.scripts">
+            <field name="method">us_790_patch</field>
+        </record>
         <record id="us_963" model="patch.scripts">
             <field name="method">update_us_963_negative_rule_seq</field>
         </record>

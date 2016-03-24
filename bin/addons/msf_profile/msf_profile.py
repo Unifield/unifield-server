@@ -51,6 +51,17 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_790_patch(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.update_received'):
+            # delete old update received
+            cr.execute("""DELETE FROM sync_client_update_received
+            WHERE create_date < '2016-01-01' AND execution_date IS NOT NULL""")
+
+            # delete old update_to_send
+            cr.execute("""DELETE FROM sync_client_update_to_send
+            WHERE create_date < '2016-01-01' AND sent_date IS NOT NULL""")
+
+
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
         # remove period state from upper levels as an instance should be able
