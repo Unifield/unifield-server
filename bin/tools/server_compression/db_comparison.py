@@ -12,11 +12,11 @@ locale.setlocale(locale.LC_ALL, '')
 
 HOST_ORIGIN = 'localhost'
 PORT_ORIGIN = '11041'
-DB_ORIGIN = 'fm_sp_222_oca_nc2'
+DB_ORIGIN = 'fm_sp_222_ocg_21_03_nc'
 
 HOST_COMPRESSED = 'localhost'
 PORT_COMPRESSED = '11031'
-DB_COMPRESSED = 'fm_sp_222_oca_21_03'
+DB_COMPRESSED = 'fm_sp_222_ocg_21_03'
 
 FIELDS_TO_IGNORE = [
     'id',
@@ -30,6 +30,9 @@ FIELDS_TO_IGNORE = [
     'rule_groups', # same thing
     'currency_id',
     'product_ids',
+    'catalogue_ids',
+    'catalogue_id',
+    'account_destination_ids',
 ]
 
 SDREF_TO_IGNORE = [
@@ -114,7 +117,7 @@ def print_file_and_screen(string):
         result_file.flush()
     if PRINT_SCREEN:
         print string
-print_file_and_screen('comparing %s with %s' % (DB_ORIGIN, DB_COMPRESSED) 
+print_file_and_screen('comparing %s with %s' % (DB_ORIGIN, DB_COMPRESSED))
 print_file_and_screen('%s object to checks...' % data_count)
 for data_object in oerp_origin.browse('ir.model.data', data_id_list):
     if counter % 10 == 0:
@@ -144,6 +147,9 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
         compressed_local_id = compressed_data_obj.res_id
         compressed_values = oerp_compressed.read(compressed_data_obj.model, compressed_local_id)
         origin_values = oerp_origin.read(data_object.model, origin_obj.id)
+        if origin_values and not compressed_values:
+            print_file_and_screen('Objects type %s with sdref %s have no compressed_values : %r' %
+                    (data_object.model, sdref, compressed_values))
         # remove fields to ignore
         for field in FIELDS_TO_IGNORE:
             if field in compressed_values:
