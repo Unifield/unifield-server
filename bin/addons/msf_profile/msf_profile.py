@@ -100,6 +100,26 @@ class patch_scripts(osv.osv):
 
             cr.execute("""UPDATE ir_model_data
             SET name='base_ZMW' WHERE name='base_ZMK'""")
+            cr.commit()
+
+            # check if the currency related to sd.base_ZMW exist, if not,
+            # delete the ir_model_data base_ZMW entry and change the ZMW entry to base_ZMW
+            cr.execute("""SELECT res_id FROM ir_model_data
+            WHERE module='sd' and name='base_ZMW'""")
+            res_id = cr.fetchone()
+            if res_id and res_id[0]:
+                cr.execute("""SELECT id FROM res_currency
+                WHERE id=%s""", (res_id[0], ))
+                currency_exists = cr.fetchone()
+                if not currency_exists:
+                    # delete the entry
+                    cr.execute("""DELETE FROM ir_model_data
+                    WHERE module='sd' AND name='base_ZMW'""")
+                    cr.commit()
+
+            # modify the ZMW to base_ZMW
+            cr.execute("""UPDATE ir_model_data SET name='base_ZMW'
+            WHERE module='sd' AND name='ZMW'""")
 
             # check if some updates with wrong sdref were ready to be sent and if yes, fix them
             update_module = self.pool.get('sync.client.update_to_send')
