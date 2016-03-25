@@ -940,7 +940,7 @@ class orm_template(object):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
                         try:
-                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id, context=context)
+                            ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
                             ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
                         except:
                             ref_db_id = None
