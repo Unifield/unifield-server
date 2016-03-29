@@ -406,11 +406,11 @@ class account_year_end_closing(osv.osv):
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
             where ml.instance_id in %s and a.include_in_yearly_move = 't'
-            and ml.date >= '%s' and ml.date <= '%s' and m.period_id != %d
+            and ml.date >= %s and ml.date <= %s and m.period_id != %s
             group by ml.account_id, ml.currency_id
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop,
-            period_id)
-        cr.execute(sql)
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, period_id, ))
         if not cr.rowcount:
             return
 
@@ -544,9 +544,10 @@ class account_year_end_closing(osv.osv):
             inner join account_account_type t on t.id = a.user_type
             where ml.instance_id in %s
             and t.report_type in ('income', 'expense')
-            and ml.date >= '%s' and ml.date <= '%s'
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
-        cr.execute(sql)
+            and ml.date >= %s and ml.date <= %s
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, ))
         if not cr.rowcount:
             return
 
@@ -681,9 +682,10 @@ class account_year_end_closing(osv.osv):
             inner join account_account_type t on t.id = a.user_type
             where ml.instance_id in %s
             and t.report_type in ('income', 'expense')
-            and ml.date >= '%s' and ml.date <= '%s'
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
-        cr.execute(sql)
+            and ml.date >= %s and ml.date <= %s
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, ))
         if cr.rowcount:
             pl_balance = float(cr.fetchone()[0])
             if pl_balance > 0:
@@ -706,10 +708,11 @@ class account_year_end_closing(osv.osv):
             inner join res_currency c on c.id = ml.currency_id
             where ml.instance_id in %s
             and t.report_type in ('asset', 'liability')
-            and ml.date >= '%s' and ml.date <= '%s'
+            and ml.date >= %s and ml.date <= %s
             group by ml.account_id, ml.currency_id
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
-        cr.execute(sql)
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, ))
         if not cr.rowcount:
             return
 
