@@ -119,9 +119,6 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             ctx['date_to'] = data['form'].get('date_to', False)
         if 'instance_ids' in data['form']:
             ctx['instance_ids'] = data['form']['instance_ids']
-            
-        # US-227/6: accounts 8*, 9* are not displayed:
-        '''self._deduce_accounts_data = { 'debit': 0., 'credit': 0., }'''            
 
         cal_list = {}
         account_id = data['form'].get('chart_account_id', False)
@@ -131,13 +128,6 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         for typ in types:
             accounts_temp = []
             for account in accounts:
-                '''if account.code.startswith('8') or account.code.startswith('9'):
-                    # US-227/6: accounts 8*, 9* are not displayed
-                    if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
-                        self._deduce_accounts_data['debit'] += abs(account.debit - account.credit)
-                    if typ == 'income' and account.type <> 'view' and (account.debit <> account.credit):
-                        self._deduce_accounts_data['credit'] += abs(account.debit - account.credit)
-                    continue'''
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
                     if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
