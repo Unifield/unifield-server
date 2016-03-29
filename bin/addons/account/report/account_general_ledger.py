@@ -302,13 +302,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
     def get_children_accounts(self, account, ccy=False):
         res = []
         currency_obj = self.pool.get('res.currency')
-         
         ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
         currency = account.currency_id and account.currency_id or account.company_id.currency_id
         for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if child_account.code.startswith('8') or child_account.code.startswith('9'):
-                # UF-1714: exclude accounts '8*'/'9*'
-                continue
             if self.account_report_types:
                 # filter by B/S P&L report type
                 if child_account.user_type \
