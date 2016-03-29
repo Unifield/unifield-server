@@ -449,7 +449,7 @@ class update_received(osv.osv):
                         'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
-                        'log' : '',
+                        #'log' : '', #SP-228: Do not reset the log message even the update got run.
                     }, context=context)
                 for update_id, log in logs.items():
                     self.write(cr, uid, [update_id], {
@@ -486,21 +486,29 @@ class update_received(osv.osv):
                 row = eval(update.values)
 
                 #4 check for fallback value : report missing fallback_value
-                self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
+                #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
+                ret_fb = self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
 
                 if bad_fields :
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
-                values.append(row)
-                update_ids.append(update.id)
-                versions.append( (update.sdref, update.version) )
+                if ret_fb: #US-852: if everything is Ok, then do import as normal
+                    values.append(row)
+                    update_ids.append(update.id)
+                    versions.append( (update.sdref, update.version) )
 
-                #1 conflict detection
-                if self._conflict(cr, uid, update.sdref, update.version, context=context):
-                    #2 if conflict => manage conflict according rules : report conflict and how it's solve
-                    index_id = eval(update.fields).index('id')
-                    sd_ref = eval(update.values)[index_id]
-                    logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                    #1 conflict detection
+                    if self._conflict(cr, uid, update.sdref, update.version, context=context):
+                        #2 if conflict => manage conflict according rules : report conflict and how it's solve
+                        index_id = eval(update.fields).index('id')
+                        sd_ref = eval(update.values)[index_id]
+                        logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
+                else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
+                    self.write(cr, uid, [update.id], {
+                        'execution_date': datetime.now(),
+                        'run' : False,
+                        'log' : "Cannot execute due to missing the account_move_line"
+                    }, context=context)
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -510,7 +518,7 @@ class update_received(osv.osv):
                 try:
                     res = secure_import_data(obj, import_fields, values)
                 except Exception, import_error:
-                    import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, str(import_error), "\n".join([str(v) for v in values]))
+                    import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, tools.ustr(import_error), "\n".join([tools.ustr(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self.write(cr, uid, update_ids, {
                         'execution_date': datetime.now(),
@@ -790,6 +798,12 @@ class update_received(osv.osv):
                         raise ValueError
                 except ValueError:
                     try:
+                        #US-852: if account_move_line is given, then cannot use the fallback value, but exit the import!
+                        # THIS FIX COULD ALSO OPEN FOR OTHER BUG, BUT CHECK IF THE RULES THAT CONTAIN THE OBJECT (HERE account_move_line) 
+                        if 'account_move_line' in xmlid:
+                            m, sep, sdref = xmlid.partition('.')
+                            if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
+                                return False
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
@@ -806,6 +820,7 @@ class update_received(osv.osv):
                 else:
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
+        return True
 
     _order = 'create_date desc, id desc'
 

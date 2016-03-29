@@ -26,6 +26,7 @@ from datetime import datetime, date
 
 from order_types.stock import check_cp_rw
 from msf_order_date import TRANSPORT_TYPE
+from msf_partner import PARTNER_TYPE
 
 from dateutil.relativedelta import relativedelta
 import decimal_precision as dp
@@ -245,6 +246,33 @@ class shipment(osv.osv):
 ''' % (args[0][1], args[0][2]))
         return [('id', 'in', [x[0] for x in cr.fetchall()])]
 
+    def _get_is_company(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True if the partner_id2 of the shipment is the same partner
+        as the partner linked to res.company of the res.users
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of shipment to update
+        :param field_name: List of names of fields to update
+        :param args: Extra parametrer
+        :param context: Context of the call
+        :return: A dictionary with shipment ID as keys and True or False a values
+        """
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        cmp_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+        for ship in self.browse(cr, uid, ids, context=context):
+            res[ship.id] = ship.partner_id2.id == cmp_partner_id
+
+        return res
+
     _columns = {'name': fields.char(string='Reference', size=1024),
                 'date': fields.datetime(string='Creation Date'),
                 'shipment_expected_date': fields.datetime(string='Expected Ship Date'),
@@ -290,6 +318,7 @@ class shipment(osv.osv):
                 # functions
                 'partner_id': fields.related('address_id', 'partner_id', type='many2one', relation='res.partner', string='Customer', store=True),
                 'partner_id2': fields.many2one('res.partner', string='Customer', required=False),
+                'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # old_multi ship_vals
@@ -315,7 +344,16 @@ class shipment(osv.osv):
                     string='Associated Packing List',
                 ),
                 'in_ref': fields.char(string='IN Reference', size=1024),
-                }
+                'is_company': fields.function(
+                    _get_is_company,
+                    method=True,
+                    type='boolean',
+                    string='Is Company ?',
+                    store={
+                        'shipment': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
+                    }
+                ),
+            }
 
     def _get_sequence(self, cr, uid, context=None):
         ir_id = self.pool.get('ir.model.data')._get_id(cr, uid, 'msf_outgoing', 'seq_shipment')
@@ -1346,6 +1384,10 @@ class shipment(osv.osv):
                 raise osv.except_osv(_('Error, no partner !'),
                     _('Please put a partner on the shipment if you want to generate invoice.'))
 
+            # (US-952) No STV created when a shipment is generated on an external supplier
+            if partner.partner_type == 'external':
+                continue
+
             inv_type = 'out_invoice'
 
             if inv_type in ('out_invoice', 'out_refund'):
@@ -1985,16 +2027,17 @@ class stock_picking(osv.osv):
         result = {}
 
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
-            values = {'total_amount': 0.0,
-                      'currency_id': False,
-                      'is_dangerous_good': False,
-                      'is_keep_cool': False,
-                      'is_narcotic': False,
-                      'num_of_packs': 0,
-                      'total_volume': 0.0,
-                      'total_weight': 0.0,
-                      # 'is_completed': False,
-                      }
+            values = {
+                'total_amount': 0.0,
+                'currency_id': False,
+                'is_dangerous_good': '',
+                'is_keep_cool': '',
+                'is_narcotic': '',
+                'num_of_packs': 0,
+                'total_volume': 0.0,
+                'total_weight': 0.0,
+                # 'is_completed': False,
+            }
             result[stock_picking['id']] = values
 
             if stock_picking['pack_family_memory_ids']:
@@ -2019,11 +2062,11 @@ class stock_picking(osv.osv):
                     # currency
                     values['currency_id'] = move['currency_id'] or False
                     # dangerous good
-                    values['is_dangerous_good'] = move['is_dangerous_good']
+                    values['is_dangerous_good'] = values['is_dangerous_good'] or move['is_dangerous_good']
                     # keep cool - if heat_sensitive_item is True
-                    values['is_keep_cool'] = move['is_keep_cool']
+                    values['is_keep_cool'] = values['is_dangerous_good'] or move['is_keep_cool']
                     # narcotic
-                    values['is_narcotic'] = move['is_narcotic']
+                    values['is_narcotic'] = values['is_dangerous_good'] or move['is_narcotic']
 
             # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
             # - picking checks that the corresponding ppl is completed
@@ -2206,9 +2249,9 @@ class stock_picking(osv.osv):
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals'),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals'),
-                'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals'),
-                'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals'),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals'),
+                'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals'),
+                'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals'),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
                                     store={'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10), }),
                 'line_state': fields.function(_get_lines_state, method=True, type='selection',
@@ -4232,6 +4275,8 @@ class stock_picking(osv.osv):
 
     def _create_sync_message_for_field_order(self, cr, uid, picking, context=None):
         fo_obj = self.pool.get('sale.order')
+        rule_obj = self.pool.get('sync.client.message_rule')
+        msg_to_send_obj = self.pool.get('sync.client.message_to_send')
         if picking.sale_id:
             return_info = {}
             if picking.sale_id.original_so_id_sale_order:
@@ -4422,34 +4467,6 @@ class wizard(osv.osv):
 wizard()
 
 
-class product_product(osv.osv):
-    '''
-    add a getter for keep cool notion
-    '''
-    _inherit = 'product.product'
-
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
-        '''
-        get functional values
-        '''
-        result = {}
-        for product in self.browse(cr, uid, ids, context=context):
-            values = {'is_keep_cool': False,
-                      }
-            result[product.id] = values
-            # keep cool
-            is_keep_cool = bool(product.heat_sensitive_item)  # in ('*', '**', '***',)
-            values['is_keep_cool'] = is_keep_cool
-
-        return result
-
-    _columns = {'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
-                'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Batch Numbers',),
-                }
-
-product_product()
-
-
 class stock_move(osv.osv):
     '''
     stock move
@@ -4484,9 +4501,9 @@ class stock_move(osv.osv):
                       'amount': 0.0,
                       'currency_id': False,
                       'num_of_packs': 0,
-                      'is_dangerous_good': False,
-                      'is_keep_cool': False,
-                      'is_narcotic': False,
+                      'is_dangerous_good': '',
+                      'is_keep_cool': '',
+                      'is_narcotic': '',
                       'sale_order_line_number': 0,
                       }
             result[move.id] = values
@@ -4515,11 +4532,11 @@ class stock_move(osv.osv):
             # currency
             values['currency_id'] = move.sale_line_id and move.sale_line_id.currency_id and move.sale_line_id.currency_id.id or False
             # dangerous good
-            values['is_dangerous_good'] = move.product_id and move.product_id.dangerous_goods or False
+            values['is_dangerous_good'] = move.product_id and move.product_id.dg_txt or ''
             # keep cool - if heat_sensitive_item is True
-            values['is_keep_cool'] = bool(move.product_id and move.product_id.heat_sensitive_item or False)
+            values['is_keep_cool'] = move.product_id and move.product_id.kc_txt or ''
             # narcotic
-            values['is_narcotic'] = move.product_id and move.product_id.narcotic or False
+            values['is_narcotic'] = move.product_id and move.product_id.cs_txt or ''
             # sale_order_line_number
             values['sale_order_line_number'] = move.sale_line_id and move.sale_line_id.line_number or 0
 
@@ -4584,9 +4601,9 @@ class stock_move(osv.osv):
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',),  # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='boolean', string='Dangerous Good', multi='get_vals',),
-                'is_keep_cool': fields.function(_vals_get, method=True, type='boolean', string='Keep Cool', multi='get_vals',),
-                'is_narcotic': fields.function(_vals_get, method=True, type='boolean', string='Narcotic', multi='get_vals',),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals',),
+                'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals',),
+                'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',),  # old_multi get_vals
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),

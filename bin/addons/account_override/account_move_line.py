@@ -87,7 +87,7 @@ class account_move_line(osv.osv):
         """
         res = {}
         for line in self.browse(cr, uid, ids):
-            res[line.id] = ''
+            res[line.id] = False
             if line.reference:
                 res[line.id] = line.reference
                 continue
@@ -379,6 +379,16 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
+    def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
+        # US-672/2
+        if context and context.get('from_web_menu', False) \
+            and vals.get('account_id', False) \
+            and vals.get('partner_type', False):
+
+            self.pool.get('account.account').is_allowed_for_thirdparty(
+                cr, uid, vals['account_id'], partner_type=vals['partner_type'],
+                from_vals=True, raise_it=True, context=context)
+
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Filled in 'document_date' if we come from tests.
@@ -416,12 +426,17 @@ class account_move_line(osv.osv):
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
+        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
             aml = self.browse(cr, uid, [res], context)
             if aml and aml[0] and aml[0].partner_id and not aml[0].partner_id.active:
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
+
+        # US-852: Make an extra call to post-check all move lines when the "last" line got executed
+        if vals.get('move_id'):
+            self.pool.get('account.move').validate_sync(cr, uid, vals.get('move_id'), context)
         return res
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
@@ -446,6 +461,7 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
+        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):

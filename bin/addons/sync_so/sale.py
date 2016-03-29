@@ -335,6 +335,8 @@ class sale_order_sync(osv.osv):
         """
         Generate sync. messages manually for the FOs in ids
         """
+        sol_obj = self.pool.get('sale.order.line')
+        solc_obj = self.pool.get('sale.order.line.cancel')
         rule_obj = self.pool.get('sync.client.message_rule')
         msg_to_send_obj = self.pool.get('sync.client.message_to_send')
 
@@ -368,20 +370,35 @@ class sale_order_sync(osv.osv):
             }
             return msg_to_send_obj.create(cr, uid, data, context=context)
 
+        solccl_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'sale.order.line.cancel.create_line', context=context)
         nfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.normal_fo_create_po', context=context)
         vfo_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.validated_fo_update_original_po', context=context)
         csp_rule = rule_obj.get_rule_by_remote_call(cr, uid, 'purchase.order.create_split_po', context=context)
 
+        solccl_model_obj = solccl_rule and self.pool.get(solccl_rule.model) or None
         nfo_model_obj = nfo_rule and self.pool.get(nfo_rule.model) or None
         vfo_model_obj = vfo_rule and self.pool.get(vfo_rule.model) or None
         csp_model_obj = csp_rule and self.pool.get(csp_rule.model) or None
 
         if original_id:
             orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
-            available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
+
+            # Generate messages for cancel lines
+            available_solc_ids = solc_obj.search(cr, uid, eval(solccl_rule.domain),
                     order='NO_ORDER', context=context)
-            if nfo_model_obj and nfo_rule and original_id in available_nfo_ids:
-                generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
+            for asolc in solc_obj.browse(cr, uid, available_solc_ids, context=context):
+                sol_ids = sol_obj.search(cr, uid, [
+                    ('order_id', '=', original_id),
+                    ('sync_order_line_db_id', '=', asolc.resource_sync_line_db_id),
+                ], context=context)
+                if sol_ids:
+                    generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner_name)
+
+            if nfo_model_obj and nfo_rule:
+                available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
+                        order='NO_ORDER', context=context)
+                if original_id in available_nfo_ids:
+                    generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
             if vfo_model_obj and vfo_rule:
                 generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner_name)
 
@@ -392,6 +409,5 @@ class sale_order_sync(osv.osv):
                     generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
 
         return
-
 
 sale_order_sync()

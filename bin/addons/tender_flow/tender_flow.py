@@ -197,31 +197,6 @@ class tender(osv.osv):
 
         return super(tender, self).create(cr, uid, vals, context=context)
 
-    def _check_service(self, cr, uid, ids, vals, context=None):
-        '''
-        Avoid the saving of a Tender with non service products on Service Tender
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        categ = {'transport': _('Transport'),
-                 'service': _('Service')}
-        if context is None:
-            context = {}
-        if context.get('import_in_progress'):
-            return True
-        for tender in self.browse(cr, uid, ids, context=context):
-            for line in tender.tender_line_ids:
-                if line.line_state == 'cancel':
-                    continue
-                if vals.get('categ', tender.categ) == 'transport' and line.product_id and (line.product_id.type not in ('service', 'service_recep') or not line.product_id.transport_ok):
-                    raise osv.except_osv(_('Error'), _('The product [%s]%s is not a \'Transport\' product. You can have only \'Transport\' products on a \'Transport\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                elif vals.get('categ', tender.categ) == 'service' and line.product_id and line.product_id.type not in ('service', 'service_recep'):
-                    raise osv.except_osv(_('Error'), _('The product [%s] %s is not a \'Service\' product. You can have only \'Service\' products on a \'Service\' tender. Please remove this line.') % (line.product_id.default_code, line.product_id.name))
-                    return False
-                
-        return True
-
     def write(self, cr, uid, ids, vals, context=None):
         """
         Check consistency between lines and categ of tender
@@ -230,8 +205,6 @@ class tender(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         exp_sol_obj = self.pool.get('expected.sale.order.line')
-
-        self._check_service(cr, uid, ids, vals, context=context)
 
         if ('state' in vals and vals.get('state') not in ('draft', 'comparison')) or \
            ('sale_order_line_id' in vals and vals.get('sale_order_line_id')):
@@ -242,31 +215,68 @@ class tender(osv.osv):
 
         return super(tender, self).write(cr, uid, ids, vals, context=context)
 
-    def onchange_categ(self, cr, uid, ids, categ, context=None):
-        """ Check that the categ is compatible with the product
-        @param categ: Changed value of categ.
-        @return: Dictionary of values.
+    def onchange_categ(self, cr, uid, ids, category, context=None):
         """
+        Check if the list of products is valid for this new category
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of purchase.order to check
+        :param category: DB value of the new choosen category
+        :param context: Context of the call
+        :return: A dictionary containing the warning message if any
+        """
+        nomen_obj = self.pool.get('product.nomenclature')
+
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         message = {}
-        if ids and categ in ['service', 'transport']:
-            # Avoid selection of non-service producs on Service Tender
-            category = categ=='service' and 'service_recep' or 'transport'
-            transport_cat = ''
-            if category == 'transport':
-                transport_cat = 'OR p.transport_ok = False'
-            cr.execute('''SELECT p.default_code AS default_code, t.name AS name
+        res = False
+
+        if ids and category in ['log', 'medical']:
+            # Check if all product nomenclature of products in Tender lines are consistent with the category
+            try:
+                med_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'MED')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('MED nomenclature Main Type not found'))
+            try:
+                log_nomen = nomen_obj.search(cr, uid, [('level', '=', 0), ('name', '=', 'LOG')], context=context)[0]
+            except IndexError:
+                raise osv.except_osv(_('Error'), _('LOG nomenclature Main Type not found'))
+
+            nomen_id = category == 'log' and log_nomen or med_nomen
+            cr.execute('''SELECT l.id
                           FROM tender_line l
                             LEFT JOIN product_product p ON l.product_id = p.id
                             LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
                             LEFT JOIN tender t ON l.tender_id = t.id
-                          WHERE (pt.type != 'service_recep' %s) AND t.id in (%s) LIMIT 1''' % (transport_cat, ','.join(str(x) for x in ids)))
+                          WHERE (pt.nomen_manda_0 != %s) AND t.id in %s LIMIT 1''',
+                       (nomen_id, tuple(ids)))
             res = cr.fetchall()
-            if res:
-                cat_name = categ=='service' and 'Service' or 'Transport'
-                message.update({'title': _('Warning'),
-                                'message': _('The product [%s] %s is not a \'%s\' product. You can have only \'%s\' products on a \'%s\' tender. Please remove this line before saving.') % (res[0][0], res[0][1], cat_name, cat_name, cat_name)})
+
+        if ids and category in ['service', 'transport']:
+            # Avoid selection of non-service producs on Service Tender
+            category = category == 'service' and 'service_recep' or 'transport'
+            transport_cat = ''
+            if category == 'transport':
+                transport_cat = 'OR p.transport_ok = False'
+            cr.execute('''SELECT l.id
+                          FROM tender_line l
+                            LEFT JOIN product_product p ON l.product_id = p.id
+                            LEFT JOIN product_template pt ON p.product_tmpl_id = pt.id
+                            LEFT JOIN tender t ON l.tender_id = t.id
+                          WHERE (pt.type != 'service_recep' %s) AND t.id in %%s LIMIT 1''' % transport_cat,
+                       (tuple(ids),))
+            res = cr.fetchall()
+
+        if res:
+            message.update({
+                'title': _('Warning'),
+                'message': _('This order category is not consistent with product(s) on this tender.'),
+            })
                 
         return {'warning': message}
 
@@ -852,7 +862,7 @@ class tender_line(osv.osv):
     
     _SELECTION_TENDER_STATE = [('draft', 'Draft'),('comparison', 'Comparison'), ('done', 'Closed'),]
     
-    def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, context=None):
+    def on_product_change(self, cr, uid, id, product_id, uom_id, product_qty, categ, context=None):
         '''
         product is changed, we update the UoM
         '''
@@ -877,6 +887,17 @@ class tender_line(osv.osv):
         
         if uom_id:
             result['value']['product_uom'] = uom_id
+
+        if categ and product_id:
+            # Check consistency of product
+            consistency_message = prod_obj.check_consistency(cr, uid, product_id, categ, context=context)
+            if consistency_message:
+                result.setdefault('warning', {})
+                result['warning'].setdefault('title', 'Warning')
+                result['warning'].setdefault('message', '')
+
+                result['warning']['message'] = '%s \n %s' % \
+                    (result.get('warning', {}).get('message', ''), consistency_message)
 
         return result
 
@@ -1339,6 +1360,7 @@ class procurement_order(osv.osv):
                 'sourcing_document_id': rfq_id,
                 'sourcing_document_model': 'purchase.order',
                 'sourcing_document_type': 'rfq',
+                'line_ids': sale_order_line and sale_order_line.id or False,
             }, context=context)
 
             # add a line to the RfQ
@@ -1403,6 +1425,7 @@ class procurement_order(osv.osv):
                 'sourcing_document_id': tender_id,
                 'sourcing_document_model': 'tender',
                 'sourcing_document_type': 'tender',
+                'line_ids': sale_order_line and sale_order_line.id or False,
             }, context=context)
             # add a line to the tender
             tender_line_id = tender_line_obj.create(cr, uid, {'product_id': proc.product_id.id,

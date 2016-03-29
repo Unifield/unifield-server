@@ -98,7 +98,8 @@ class account_account(osv.osv):
             'credit': "COALESCE(SUM(l.credit), 0) as credit"
         }
         #get all the necessary accounts
-        children_and_consolidated = self._get_children_and_consol(cr, uid, ids, context=context)
+        children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
+                context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
@@ -170,12 +171,17 @@ class account_account(osv.osv):
             children_and_consolidated.reverse()
             brs = list(self.browse(cr, uid, children_and_consolidated, context=context))
             currency_obj = self.pool.get('res.currency')
+            display_only_checked_account = context.get('display_only_checked_account', False)
             while brs:
                 current = brs[0]
                 brs.pop(0)
                 for fn in field_names:
                     sums.setdefault(current.id, {})[fn] = accounts.get(current.id, {}).get(fn, 0.0)
                     for child in current.child_id:
+                        # in context of report, if the current account is not
+                        # displayed, it should no impact the total amount
+                        if display_only_checked_account and not child.display_in_reports:
+                            continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]
                         else:
@@ -329,12 +335,37 @@ class account_account(osv.osv):
         'credit': fields.function(__compute, digits_compute=dp.get_precision('Account'), method=True, string='Credit', multi='balance'),
         'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
+        'display_in_reports': fields.boolean("Display in P&L and B/S reports",
+            help="Uncheck this attribute if you want an account not to appear"
+            " in the 'Profit And Loss' and 'Balance Sheet' reports. This is "
+            "feasible only on level 1 accounts. When an account is "
+            "check/unchecked the behaviour will apply for all his children."),
+        # US-672/1
+        'has_partner_type_internal': fields.boolean('Internal'),
+        'has_partner_type_section': fields.boolean('Inter-section'),
+        'has_partner_type_external': fields.boolean('External'),
+        'has_partner_type_esc': fields.boolean('ESC'),
+        'has_partner_type_intermission': fields.boolean('Intermission'),
+        'has_partner_type_local': fields.boolean('Employee Local'),  # NAT employee
+        'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
+        'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
     }
 
     _defaults = {
         'activation_date': lambda *a: (datetime.datetime.today() + relativedelta(months=-3)).strftime('%Y-%m-%d'),
         'type_for_register': lambda *a: 'none',
         'shrink_entries_for_hq': lambda *a: True,
+        'display_in_reports': lambda *a: True,
+        # US-672/1: allow all partner types by default:
+        # => master data retro-compat before ticket
+        'has_partner_type_internal': True,
+        'has_partner_type_section': True,
+        'has_partner_type_external': True,
+        'has_partner_type_esc': True,
+        'has_partner_type_intermission': True,
+        'has_partner_type_local': True,
+        'has_partner_type_ex': True,
+        'has_partner_type_book': True,
     }
 
     # UTP-493: Add a dash between code and account name
@@ -433,7 +464,90 @@ class account_account(osv.osv):
         return super(account_account, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
 
+    def is_allowed_for_thirdparty(self, cr, uid, ids,
+        partner_type=False, partner_txt=False,
+        employee_id=False, transfer_journal_id=False, partner_id=False,
+        from_vals=False, raise_it=False,
+        context=None):
+        """
+        US-672/2 is allowed regarding to thirdparty
+        partner_type then partner_txt fields prevails on
+        employee_id/transfer_journal_id/partner_id
+        :type partner_type: 'model_name,id' if from_vals
+            else object with model in obj._name and id in obj.id
+        :type partner_type: object/str
+        :param from_vals: True if values are from 'vals'
+        :param raise_it: True to raise not compatible accounts
+        :return: {id: True/False, }
+        :rtype: dict
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for id in ids:
+            res[id] = True  # allowed by default
+        if not partner_type and not partner_txt \
+            and not employee_id and not transfer_journal_id and not partner_id:
+            return res
+
+        emp_obj = self.pool.get('hr.employee')
+        partner_obj = self.pool.get('res.partner')
+
+        if partner_type:
+            pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
+                else (partner_type._name, partner_type.id, )
+            if from_vals:
+                pt_id = int(pt_id)
+            employee_id = transfer_journal_id = partner_id = False
+            if pt_model == 'hr.employee':
+                employee_id = pt_id
+            elif pt_model == 'account.journal':
+                transfer_journal_id = pt_id
+            elif pt_model == 'res.partner':
+                partner_id = pt_id
+        elif partner_txt:
+            employee_ids = emp_obj.search(cr, uid,
+                [('name', '=', partner_txt)], context=context)
+            if employee_ids:
+                employee_id = employee_ids[0]
+            else:
+                partner_ids = partner_obj.search(cr, uid,
+                    [('name', '=', partner_txt)], context=context)
+                if partner_ids:
+                    partner_id = partner_ids[0]
+
+        should_have_field_suffix = False
+        if employee_id:
+            tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
+            # note: allowed for employees with no type
+            should_have_field_suffix = tp_rec.employee_type or False
+        elif transfer_journal_id:
+            should_have_field_suffix = 'book'
+        elif partner_id:
+            tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
+            should_have_field_suffix = tp_rec.partner_type or False
+        if not should_have_field_suffix:
+            return res  # allowed with no specific field suffix
+
+        field = 'has_partner_type_%s' % (should_have_field_suffix, )
+        for r in self.browse(cr, uid, ids, context=context):
+            res[r.id] = hasattr(r, field) and getattr(r, field) or False
+
+        if raise_it:
+            not_compatible_ids = [ id for id in res if not res[id] ]
+            if not_compatible_ids:
+                errors = [ _('following accounts are not compatible with' \
+                    ' partner:') ]
+                for r in self.pool.get('account.account').browse(cr, uid,
+                    not_compatible_ids, context=context):
+                    errors.append(_('%s - %s') % (r.code, r.name))
+                raise osv.except_osv(_('Error'), "\n- ".join(errors))
+
+        return res
+
 account_account()
+
 
 class account_journal(osv.osv):
     _name = 'account.journal'
@@ -838,6 +952,7 @@ class account_move(osv.osv):
     def get_valid_but_unbalanced(self, cr, uid, context=None):
         cr.execute("select move_id, sum(debit-credit) from account_move_line where state='valid' group by move_id having abs(sum(debit-credit)) > 0.00001")
         return [x[0] for x in cr.fetchall()]
+
 
 account_move()
 

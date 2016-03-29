@@ -51,6 +51,87 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_918_patch(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # if this script is exucuted on server side, update the first delete
+            # update of ZMK to be executed before the creation of ZMW (sequence
+            # 4875). Then if ZMK is correctly deleted, ZMW can be added
+            cr.execute("UPDATE sync_server_update "
+                       "SET sequence=4874 "
+                       "WHERE id=2222677")
+
+            # change sdref ZMW to base_ZMW
+            cr.execute("UPDATE sync_server_update "
+                       "SET sdref='base_ZMW' "
+                       "WHERE model='res.currency' AND sdref='ZMW'")
+
+            # remove the ZMK creation update
+            cr.execute("DELETE FROM sync_server_update WHERE id=52325;")
+            cr.commit()
+
+            # some update where refering to the old currency with sdref=sd.ZMW
+            # as the reference changed, we need to modify all of this updates
+            # pointing to a wrong reference (currency_rates, ...)
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.ZMW%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.ZMW' in update_values:
+                    index = update_values.index('sd.ZMW')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+
+            # do the same for sdref=sd.base_ZMK
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.base_ZMK' in update_values:
+                    index = update_values.index('sd.base_ZMK')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+        else:
+            # change the sdref on the client that use the wrong ZMK
+            cr.execute("""UPDATE ir_model_data
+            SET name='ZMW' WHERE name='ZMK'""")
+
+            cr.execute("""UPDATE ir_model_data
+            SET name='base_ZMW' WHERE name='base_ZMK'""")
+            cr.commit()
+
+            # check if the currency related to sd.base_ZMW exist, if not,
+            # delete the ir_model_data base_ZMW entry and change the ZMW entry to base_ZMW
+            cr.execute("""SELECT res_id FROM ir_model_data
+            WHERE module='sd' and name='base_ZMW'""")
+            res_id = cr.fetchone()
+            if res_id and res_id[0]:
+                cr.execute("""SELECT id FROM res_currency
+                WHERE id=%s""", (res_id[0], ))
+                currency_exists = cr.fetchone()
+                if not currency_exists:
+                    # delete the entry
+                    cr.execute("""DELETE FROM ir_model_data
+                    WHERE module='sd' AND name='base_ZMW'""")
+                    cr.commit()
+
+            # modify the ZMW to base_ZMW
+            cr.execute("""UPDATE ir_model_data SET name='base_ZMW'
+            WHERE module='sd' AND name='ZMW'""")
+
+            # check if some updates with wrong sdref were ready to be sent and if yes, fix them
+            update_module = self.pool.get('sync.client.update_to_send')
+            if update_module:
+                # change sdref ZMW to base_ZMW
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='base_ZMW' "
+                           "WHERE sdref='base_ZMK'")
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='ZMW' "
+                           "WHERE sdref='ZMK'")
+
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
         # remove period state from upper levels as an instance should be able
@@ -273,6 +354,13 @@ class patch_scripts(osv.osv):
                 with open(file_path, 'w') as file:
                         file.writelines(lines)
 
+    def uftp_144_patch(self, cr, uid, *a, **b):
+        """
+        Sorting Fix in AJI: ref and partner_txt mustn't be empty strings
+        """
+        cr.execute("UPDATE account_analytic_line SET ref=NULL WHERE ref='';")
+        cr.execute("UPDATE account_analytic_line SET partner_txt=NULL WHERE partner_txt='';")
+
     def disable_crondoall(self, cr, uid, *a, **b):
         cron_obj = self.pool.get('ir.cron')
         cron_ids = cron_obj.search(cr, uid, [('doall', '=', True), ('active', 'in', ['t', 'f'])])
@@ -299,7 +387,7 @@ class patch_scripts(osv.osv):
             view_obj.generate_button_access_rules(cr, uid, view)
 
     def pas_patch(self, cr, uid, *a, **b):
-        return
+        return True
         location_obj = self.pool.get('stock.location')
         product_obj = self.pool.get('product.product')
         prodlot_obj = self.pool.get('stock.production.lot')
@@ -332,10 +420,93 @@ class patch_scripts(osv.osv):
                     'quantity': product_obj.browse(cr, uid, prod_id, context=c).qty_available,
                 })
 
+        return True
+
+    def update_volume_patch(self, cr, uid, *a, **b):
+        """
+        Update the volume from dm³ to m³ for OCB databases
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param a: Unnamed parameters
+        :param b: Named parameters
+        :return: True
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance:
+            while instance.level != 'section':
+                if not instance.parent_id:
+                    break
+                instance = instance.parent_id
+
+        if instance and instance.name != 'OCBHQ':
+            cr.execute("""
+                UPDATE product_template
+                SET volume_updated = True
+                WHERE volume_updated = False
+            """)
+        else:
+            cr.execute("""
+                UPDATE product_template
+                SET volume = volume*1000,
+                    volume_updated = True
+                WHERE volume_updated = False
+            """)
+
+        return True
+
+    def us_750_patch(self, cr, uid, *a, **b):
+        """
+        Update the heat_sensitive_item field of product.product
+        to 'Yes' if there is a value already defined by de-activated.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Non-named parameters
+        :param b: Named parameters
+        :return: True
+        """
+        prd_obj = self.pool.get('product.product')
+        phs_obj = self.pool.get('product.heat_sensitive')
+        data_obj = self.pool.get('ir.model.data')
+
+        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+
+        phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
+        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
+        if prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
+            """, (heat_id, tuple(prd_ids),))
+
+        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
+        if no_prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
+            """, (no_heat_id, tuple(no_prd_ids),))
+
+        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
+
+        return True
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
             cr.execute("update sync_client_update_received set rule_sequence=-rule_sequence where is_deleted='t'")
+
+        return True
+
+    def another_translation_fix(self, cr, uid, *a, **b):
+        if self.pool.get('sync.client.update_received'):
+            ir_trans = self.pool.get('ir.translation')
+            cr.execute('''select id, xml_id, name from ir_translation where
+                xml_id is not null and
+                res_id is null and
+                type='model'
+            ''')
+            for x in cr.fetchall():
+                res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
+                if res_id:
+                    cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
+        return True
 patch_scripts()
 
 

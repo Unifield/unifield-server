@@ -21,5 +21,6 @@
 
 import sale_order
 import sale_report
+import sale_order_allocation
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

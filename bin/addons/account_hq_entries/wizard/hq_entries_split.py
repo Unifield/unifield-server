@@ -61,18 +61,17 @@ class hq_entries_split_lines(osv.osv_memory):
         'state_info': fields.function(_get_distribution_state, method=True, type='char', string="Info", help="Informs about distribution state.", multi='hq_split_line_distrib_state'),
     }
 
-    def _get_original_line(self, cr, uid, context=None):
+    def _get_original_line(self, cr, uid, context=None, wizard_id=False):
 
         """
         Fetch original line from context. If not, return False.
         """
-        res = False
-        if not context:
-            return res
-        if context.get('parent_id', False):
-            wiz = self.pool.get('hq.entries.split').browse(cr, uid, context.get('parent_id'))
-            res = wiz and wiz.original_id or False
-        return res
+        if not wizard_id:
+            wizard_id = context and context.get('parent_id', False) or False
+        if not wizard_id:
+            return False
+        wiz = self.pool.get('hq.entries.split').browse(cr, uid, wizard_id)
+        return wiz and wiz.original_id or False
 
     def _get_field(self, cr, uid, field_name, field_type=False, context=None):
         """
@@ -100,8 +99,8 @@ class hq_entries_split_lines(osv.osv_memory):
             line_ids = self.search(cr, uid, [('wizard_id', '=', context.get('parent_id', False))])
             for line in self.browse(cr, uid, line_ids) or []:
                 res -= line.amount
-        # Do not allow negative amounts
-        if res < 0.0:
+        # Do not allow negative amounts if the original amount is positive and vice versa
+        if (original_line.amount >= 0 and res < 0.0) or (original_line.amount < 0 and res > 0.0):
             res = 0.0
         return res
 
@@ -140,9 +139,11 @@ class hq_entries_split_lines(osv.osv_memory):
         if wiz and wiz.original_id and wiz.original_id.name:
             vals['name'] = wiz.original_id.name
         if vals.get('amount', 0.0):
-            # Check that amount is not negative
-            if vals.get('amount') <= 0.0:
+            # Check that amount is not negative if the original amount is positive and vice versa
+            if wiz.original_amount >= 0 and vals.get('amount') < 0.0:
                 raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
+            elif wiz.original_amount < 0 and vals.get('amount') > 0.0:
+                raise osv.except_osv(_('Error'), _('Positive value is not allowed!'))
         # In case we come from an account that is "Not HQ correctible", the account_id field is readonly and so not retrieved from the wizard. So we take the original line account as account_id value in vals dictionnary.
         if not 'account_id' in vals or not vals.get('account_id', False):
             if not vals.get('wizard_id'):
@@ -152,6 +153,13 @@ class hq_entries_split_lines(osv.osv_memory):
             if not account:
                 raise osv.except_osv(_('Error'), _('Account is required!'))
             vals['account_id'] = account.id
+        # US-672/2
+        hq_entry = self._get_original_line(cr, uid, context=context,
+            wizard_id=vals.get('wizard_id', False))
+        if hq_entry and hq_entry.partner_txt:
+            self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
+                [vals['account_id']], partner_txt=hq_entry.partner_txt,
+                raise_it=True, context=context)
         res = super(hq_entries_split_lines, self).create(cr, uid, vals, context=context)
         # Check that amount is not superior to what expected
         if res:
@@ -160,13 +168,15 @@ class hq_entries_split_lines(osv.osv_memory):
             for line in line.wizard_id.line_ids:
                 # Check line amount
                 if line.amount == 0.0:
+                    # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
+                    self.unlink(cr, uid, [res], context=context)
                     raise osv.except_osv(_('Error'), _('Null amount is not allowed!'))
                 expected_max_amount -= line.amount
             expected_max_amount += line.amount
             # Case where amount is superior to expected
-            if line.amount > expected_max_amount:
+            if abs(line.amount) > abs(expected_max_amount):
                 # Allow those where difference is inferior to 10^-2
-                if (line.amount - abs(expected_max_amount)) > 10 ** -2:
+                if (abs(line.amount) - abs(expected_max_amount)) > 10 ** -2:
                     # WARNING: On osv.memory, no rollback. That's why we should unlink the previous line before raising this error
                     self.unlink(cr, uid, [res], context=context)
                     raise osv.except_osv(_('Error'), _('Expected max amount: %.2f') % (expected_max_amount or 0.0,))
@@ -179,7 +189,24 @@ class hq_entries_split_lines(osv.osv_memory):
         # Checks
         if context is None:
             context = {}
+
+        original_amount = self.pool.get('hq.entries.split').browse(cr, uid, context.get('active_id')).original_amount
+        if vals.get('amount', 0.0):
+            # Check that amount is not negative if the original amount is positive and vice versa
+            if original_amount >= 0 and vals.get('amount') < 0.0:
+                raise osv.except_osv(_('Error'), _('Negative value is not allowed!'))
+            elif original_amount < 0 and vals.get('amount') > 0.0:
+                raise osv.except_osv(_('Error'), _('Positive value is not allowed!'))
         # Prepare some values
+
+        # US-672/2
+        for line in self.browse(cr, uid, ids, context=context):
+            hq_entry = line.wizard_id and line.wizard_id.original_id or False
+            if hq_entry and hq_entry.partner_txt:
+                self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
+                    [vals['account_id']], partner_txt=hq_entry.partner_txt,
+                    raise_it=True, context=context)
+
         res = super(hq_entries_split_lines, self).write(cr, uid, ids, vals, context=context)
         for line in self.browse(cr, uid, ids, context=context):
             # Check line amount
@@ -266,6 +293,7 @@ class hq_entries_split(osv.osv_memory):
                 total += line.amount
             if abs(wiz.original_amount - total) > 10**-2:
                 raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
+
             self.write(cr, uid, [wiz.id], {'running': True})
             # If all is OK, do process of lines
             # Mark original line as it is: an original one :-)

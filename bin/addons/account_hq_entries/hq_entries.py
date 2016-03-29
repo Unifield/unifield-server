@@ -168,6 +168,21 @@ class hq_entries(osv.osv):
                 res[e.id] = True
         return res
 
+    def _get_is_account_partner_compatible(self, cr, uid, ids, field_name, arg,
+        context=None):
+        if context is None:
+            context = {}
+        res = {}
+        account_obj = self.pool.get('account.account')
+
+        for r in self.browse(cr, uid, ids, context=context):
+            res[r.id] = True
+            if r.account_id and r.partner_txt:
+                res[r.id] = account_obj.is_allowed_for_thirdparty(cr, uid,
+                    r.account_id.id, partner_txt=r.partner_txt,
+                    context=context)[r.account_id.id]
+        return res
+
     _columns = {
         'account_id': fields.many2one('account.account', "Account", required=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True, domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
@@ -196,6 +211,7 @@ class hq_entries(osv.osv):
         'split_ids': fields.one2many('hq.entries', 'original_id', "Split lines", help="All lines linked to this original HQ Entry."),
         'cc_changed': fields.function(_get_cc_changed, method=True, type='boolean', string='Have Cost Center changed?', help="When you change the cost center from the initial value (from a HQ Entry or a Split line), so the Cost Center changed is True."),
         'account_changed': fields.function(_get_account_changed, method=True, type='boolean', string='Have account changed?', help="When your entry have a different account from the initial one or from the original one."),
+        'is_account_partner_compatible': fields.function(_get_is_account_partner_compatible, method=True, type='boolean', string='Account and partner compatible ?'),
     }
 
     _defaults = {
@@ -203,6 +219,7 @@ class hq_entries(osv.osv):
         'amount': lambda *a: 0.0,
         'is_original': lambda *a: False,
         'is_split': lambda *a: False,
+        'is_account_partner_compatible': lambda *a: True,
     }
 
     def split_forbidden(self, cr, uid, ids, context=None):
@@ -442,6 +459,13 @@ class hq_entries(osv.osv):
         """
         if context is None:
             context={}
+
+        #US-921: Only save the user_validated value if the update comes from sync!
+        if context.get('sync_update_execution', False):
+            if 'user_validated' in  vals:
+                return super(hq_entries, self).write(cr, uid, ids, {'user_validated': vals['user_validated']}, context)
+            return True
+
         if 'account_id' in vals:
             account = self.pool.get('account.account').browse(cr, uid, [vals.get('account_id')])[0]
             for line in self.browse(cr, uid, ids):
@@ -473,11 +497,31 @@ class hq_entries(osv.osv):
             raise osv.except_osv(_("Warning"),
                 _("No HQ Entry selected for transaction"))
 
-        domain = [('id', 'in', ids), ('user_validated', '=', True)]
+        # BKLG-77
+        domain = [
+            ('id', 'in', ids),
+            ('user_validated', '=', True),
+        ]
         if self.search(cr, uid, domain, context=context, count=True):
             raise osv.except_osv(_("Warning"),
                 _("You can not perform this action on a validated HQ Entry" \
                     " (please use the 'To Validate' filter in the HQ Entries list)"))
+
+        # US-306: forbid to validate mission closed or + entries
+        # => at coordo level you can not validate entries since field closed
+        # period; but they can come from HQ mission opened via SYNC)
+        period_ids = list(set([ he.period_id.id \
+            for he in self.browse(cr, uid, ids, context=context) ]))
+        if period_ids:
+            domain = [
+                ('id', 'in', period_ids),
+                ('state', 'in', ['mission-closed', 'done', ]),
+            ]
+            if self.pool.get('account.period').search(cr, uid, domain,
+                context=context, count=True):
+                raise osv.except_osv(_("Warning"),
+                    _("You can not validate HQ Entry in a mission-closed" \
+                      " period"))
 
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

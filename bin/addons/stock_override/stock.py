@@ -36,6 +36,8 @@ from msf_partner import PARTNER_TYPE
 from order_types.stock import check_cp_rw
 from order_types.stock import check_rw_warning
 
+from msf_partner import PARTNER_TYPE
+
 
 #----------------------------------------------------------
 # Procurement Order
@@ -269,6 +271,32 @@ class stock_picking(osv.osv):
 
         return res
 
+    def _get_is_company(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True if the partner_id2 of the stock.picking is the same partner
+        as the partner linked to res.company of the res.users
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of stock.picking to update
+        :param field_name: List of names of fields to update
+        :param args: Extra parametrer
+        :param context: Context of the call
+        :return: A dictionary with stock.picking ID as keys and True or False a values
+        """
+        user_obj = self.pool.get('res.users')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        cmp_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+        for pick in self.browse(cr, uid, ids, context=context):
+            res[pick.id] = pick.partner_id2.id == cmp_partner_id
+
+        return res
 
     _columns = {
         'state': fields.selection([
@@ -291,6 +319,13 @@ class stock_picking(osv.osv):
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'address_id': fields.many2one('res.partner.address', 'Delivery address', help="Address of partner", readonly=False, states={'done': [('readonly', True)], 'cancel': [('readonly', True)]}, domain="[('partner_id', '=', partner_id)]"),
         'partner_id2': fields.many2one('res.partner', 'Partner', required=False),
+        'partner_type': fields.related(
+            'partner_id',
+            'partner_type',
+            type='selection',
+            selection=PARTNER_TYPE,
+            readonly=True,
+        ),
         'from_wkf': fields.boolean('From wkf'),
         'from_wkf_sourcing': fields.boolean('From wkf sourcing'),
         'update_version_from_in_stock_picking': fields.integer(string='Update version following IN processing'),
@@ -319,6 +354,15 @@ class stock_picking(osv.osv):
             store=False,
         ),
         'company_id2': fields.many2one('res.partner', string='Company', required=True),
+        'is_company': fields.function(
+            _get_is_company,
+            method=True,
+            type='boolean',
+            string='Is Company ?',
+            store={
+                'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
+            }
+        )
     }
 
     _defaults = {'from_yml_test': lambda *a: False,
@@ -954,7 +998,7 @@ You cannot choose this supplier because some destination locations are not avail
         Check if invoice is needed. Cases where we do not need invoice:
         - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
         - OUT from FO AND stock picking type in internal, external or esc
-        So all OUT that have internel, external or esc should return FALSE from this method.
+        So all OUT that have internal, external or esc should return FALSE from this method.
         This means to only accept intermission and intersection invoicing on OUT with reason type "Deliver partner".
         """
         res = True
@@ -980,6 +1024,11 @@ You cannot choose this supplier because some destination locations are not avail
         company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
         if sp.partner_id.id == company_partner_id.id:
             res = False
+
+        # (US-952) Move out on an external partner should not create a Stock Transfer Voucher
+        if sp.type == 'out' and sp.partner_id.partner_type == 'external':
+            res = False
+
         return res
 
     def _create_invoice(self, cr, uid, stock_picking):
@@ -1555,12 +1604,13 @@ class stock_move(osv.osv):
             vals['date'] = vals.get('date_expected')
 
         if vals.get('location_dest_id', False):
-            loc_dest_id = location_obj.browse(cr, uid, vals['location_dest_id'], context=context)
-            if not loc_dest_id.virtual_location:
-                if loc_dest_id.scrap_location:
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-                elif loc_dest_id.usage == 'inventory':
-                    vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+            if not vals.get('reason_type_id', False):
+                loc_dest_id = location_obj.browse(cr, uid, vals['location_dest_id'], context=context)
+                if not loc_dest_id.virtual_location:
+                    if loc_dest_id.scrap_location:
+                        vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
+                    elif loc_dest_id.usage == 'inventory':
+                        vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
             # If the source location and teh destination location are the same, the state should be 'Closed'
             if vals.get('location_id', False) == vals.get('location_dest_id', False):
@@ -2124,13 +2174,6 @@ class stock_move(osv.osv):
         result = []
         for move in self.browse(cr, uid, ids, context=context):
             # add this move into the list of result
-            dg_check_flag = ''
-            if move.dg_check:
-                dg_check_flag = 'x'
-
-            np_check_flag = ''
-            if move.np_check:
-                np_check_flag = 'x'
             sub_total = move.product_qty * move.product_id.standard_price
 
             currency = ''
@@ -2148,8 +2191,8 @@ class stock_move(osv.osv):
                 'origin': move.origin,
                 'expired_date': move.expired_date,
                 'prodlot_id': move.prodlot_id.name,
-                'dg_check': dg_check_flag,
-                'np_check': np_check_flag,
+                'dg_check': move.product_id and move.product_id.dg_txt or '',
+                'np_check': move.product_id and move.product_id.cs_txt or '',
                 'uom': move.product_uom.name,
                 'prod_qty': move.product_qty,
             })

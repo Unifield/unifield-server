@@ -9173,6 +9173,12 @@ msgstr "Selected Lines"
 msgid "Negative value is not allowed!"
 msgstr "Negative value is not allowed!"
 
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:147
+#, python-format
+msgid "Positive value is not allowed!"
+msgstr "Positive value is not allowed!"
+
 #. module: register_accounting
 #: model:ir.actions.act_window,name:register_accounting.action_direct_invoice
 #: model:ir.ui.menu,name:register_accounting.menu_action_direct_invoice
@@ -63601,7 +63607,7 @@ msgstr "Free 1/Free 2"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
-msgid "Please verify the price of the invoice ! The real total does not match the computed total:"
+msgid "Please verify the price of the document ! The real total does not match the computed total:"
 msgstr "¡Por favor, verifique el importe de la factura! El total real no coincide con el total calculado:"
 
 #. module: account
@@ -66256,7 +66262,7 @@ msgstr "No lines…"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
-msgid "Please indicate an invoice date before approving the invoice:"
+msgid "Please indicate a date before approving the document:"
 msgstr "Por favor, indique una fecha de factura antes de aprobar la factura:"
 
 #. module: base

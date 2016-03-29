@@ -11,7 +11,7 @@
                     <xpath expr="/form//field[@name='period_to']" position="after">
                         <newline/>
                         <separator string="Instance" colspan="4"/>
-                        <field name="instance_ids">
+                        <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                            <tree string="Proprietary Instances">
                                 <field name="name"/>
                                 <field name="code"/>

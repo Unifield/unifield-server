@@ -1060,6 +1060,11 @@ class stock_picking(osv.osv):
 
             address_contact_id, address_invoice_id = \
                     self._get_address_invoice(cr, uid, picking).values()
+            if not address_contact_id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Please define an address on the partner if you want to generate invoice.'),
+                )
             address = address_obj.browse(cr, uid, address_contact_id, context=context)
 
             comment = self._get_comment_invoice(cr, uid, picking)
@@ -2460,7 +2465,7 @@ class stock_move(osv.osv):
             pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
             ##### UF-2378 For some reason, the RW code from OpenERP kept the IN always in Available, even its lines are closed!!!
             if pick.state != 'done' and pick.type=='in':
-                self.pool.get('stock.picking').write(cr, uid, pick_id, {'state': 'done', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                self.pool.get('stock.picking').write(cr, uid, pick_id, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         moves = self.browse(cr, uid, move_ids, context=context)
         self.create_chained_picking(cr, uid, moves, context)

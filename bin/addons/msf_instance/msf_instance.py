@@ -125,6 +125,28 @@ class msf_instance(osv.osv):
                 res.append(arg)
         return res
 
+    def _search_instance_to_display_ids(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with:
+        - if the current instance is an HQ instance: all instances of all missions
+        - if the current instance is a coordo or project instance: all instances with the same mission + the HQ instance
+        """
+        res = []
+        for arg in args:
+            if arg[0] == 'instance_to_display_ids':
+                user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+                if user.company_id and user.company_id.instance_id and user.company_id.instance_id.level:
+                    instance = user.company_id.instance_id
+                    # data filtered only for coordo or project
+                    if instance.level != 'section' and instance.mission:
+                        visible_ids = self.search(cr, uid, [
+                            '|',
+                            ('mission', '=', instance.mission),
+                            ('level', '=', 'section')])
+                        res.append(('id', 'in', visible_ids))
+            else:
+                res.append(arg)
+        return res
 
     _columns = {
         'level': fields.selection([('section', 'Section'),
@@ -154,6 +176,11 @@ class msf_instance(osv.osv):
                                             relation='msf.instance',
                                             fnct_search=_search_instance_child_ids),
         'restrict_level_from_entity': fields.function(_get_restrict_level_from_entity, method=True, store=False, fnct_search=_search_restrict_level_from_entity, string='Filter instance from entity info'),
+        'instance_to_display_ids': fields.function(_get_instance_child_ids, method=True,
+                                            string='Proprietary Instance',
+                                            type='many2one',
+                                            relation='msf.instance',
+                                            fnct_search=_search_instance_to_display_ids),
     }
     
     _defaults = {

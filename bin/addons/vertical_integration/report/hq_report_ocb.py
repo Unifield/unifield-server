@@ -361,7 +361,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                     AND p.date_stop >= r.name
                     AND r.currency_id IS NOT NULL
                     AND rc.active = 't'
-                    AND p.number NOT IN (13, 14, 15)
+                    AND p.special != 't'
                     and rc.reference_currency_id is null
                     ORDER BY rc.name
                 ) AS req
@@ -432,7 +432,9 @@ class hq_report_ocb(report_sxw.report_sxw):
                 """,
             # Pay attention to take analytic line that are not on HQ and MIGRATION journals.
             'rawdata': """
-                SELECT al.id, i.code, aj.code, al.entry_sequence, al.name, al.ref, al.document_date, al.date, 
+                SELECT al.id, i.code,
+                       CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
+                       al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
                        CASE WHEN al.amount_currency < 0 AND aml.is_addendum_line = 'f' THEN ABS(al.amount_currency) ELSE 0.0 END AS debit, 
                        CASE WHEN al.amount_currency > 0 AND aml.is_addendum_line = 'f' THEN al.amount_currency ELSE 0.0 END AS credit, 
@@ -564,7 +566,7 @@ class hq_report_ocb(report_sxw.report_sxw):
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
         instance = pool.get('msf.instance').browse(cr, uid, instance_id)
-        instance_name = instance.code or ''
+        instance_name = 'OCB'  # since US-949
         processrequests = [
             {
                 'headers': ['XML_ID', 'Name', 'Reference', 'Partner type', 'Active/inactive'],

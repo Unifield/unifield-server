@@ -410,7 +410,7 @@ class po_follow_up_mixin(object):
 
     def yieldPoLines(self, po_line_ids):
         for pol_id in po_line_ids:
-            yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
+            yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id, context=self.localcontext)
 
         raise StopIteration
 
@@ -667,6 +667,7 @@ class ir_values(osv.osv):
                 else:
                     if v[2].get('report_name', False) == 'msf.sale.order' \
                     or v[2].get('report_name', False) == 'sale.order_xls' \
+                    or v[2].get('report_name', False) == 'sale.order.allocation.report' \
                     or v[1] == 'Order Follow Up': # this is a sale order, we only display Order Follow Up for client_action_multi --- using the name of screen, and the name of the action is definitely the wrong way to go...
                         new_act.append(v)
                 values = new_act

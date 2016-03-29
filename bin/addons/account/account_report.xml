@@ -50,16 +50,36 @@
             rml="account/report/account_balance_landscape.rml"
             auto="False"
             menu="False"/>
-         
+
         <!-- UF-1714 -->
         <report id="account_general_ledger_xls"
-            auto="False" 
+            auto="False"
             menu="False"
             header="False"
             model="account.account"
             name="account.general.ledger_xls"
             file="account/report/account_general_ledger_xls.mako"
-            report_type="webkit" 
+            report_type="webkit"
             string="General Ledger"/>
+
+        <!-- uS-227 -->
+        <report id="account_balance_sheet_xls"
+            auto="False"
+            menu="False"
+            header="False"
+            model="account.account"
+            name="account.balance.sheet_xls"
+            file="account/report/account_balance_sheet_xls.mako"
+            report_type="webkit"
+            string="Balance Sheet"/>
+        <report id="account_profit_loss_xls"
+            auto="False"
+            menu="False"
+            header="False"
+            model="account.account"
+            name="account.profit.loss_xls"
+            file="account/report/account_profit_loss_xls.mako"
+            report_type="webkit"
+            string="Balance Sheet"/>
     </data>
 </openerp>

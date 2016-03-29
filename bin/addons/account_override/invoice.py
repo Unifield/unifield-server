@@ -82,14 +82,17 @@ class account_invoice(osv.osv):
         # @@@override@account.invoice.py
         if context is None:
             context = {}
-        type_inv = context.get('type', 'out_invoice')
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        company_id = context.get('company_id', user.company_id.id)
-        type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
-        refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
-        args = [('type', '=', type2journal.get(type_inv, 'sale')),
-                ('company_id', '=', company_id),
-                ('refund_journal', '=', refund_journal.get(type_inv, False))]
+        if context.get('is_inkind_donation'):
+            args = [('type', 'in', ['inkind', 'extra'])]
+        else:
+            type_inv = context.get('type', 'out_invoice')
+            company_id = context.get('company_id', user.company_id.id)
+            type2journal = {'out_invoice': 'sale', 'in_invoice': 'purchase', 'out_refund': 'sale_refund', 'in_refund': 'purchase_refund'}
+            refund_journal = {'out_invoice': False, 'in_invoice': False, 'out_refund': True, 'in_refund': True}
+            args = [('type', '=', type2journal.get(type_inv, 'sale')),
+                    ('company_id', '=', company_id),
+                    ('refund_journal', '=', refund_journal.get(type_inv, False))]
         if user.company_id.instance_id:
             args.append(('is_current_instance','=',True))
         journal_obj = self.pool.get('account.journal')
@@ -668,9 +671,10 @@ class account_invoice(osv.osv):
         No longer fills the date automatically, but requires it to be set
         """
         # Some verifications
-        if not context:
+        if context is None:
             context = {}
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
+        self.check_accounts_for_partner(cr, uid, ids, context=context)
 
         # Prepare workflow object
         wf_service = netsvc.LocalService("workflow")
@@ -700,6 +704,7 @@ class account_invoice(osv.osv):
                     }
 
             wf_service.trg_validate(uid, 'account.invoice', inv.id, 'invoice_open', cr)
+
         return True
 
     def action_reconcile_imported_invoice(self, cr, uid, ids, context=None):
@@ -1154,7 +1159,67 @@ class account_invoice(osv.osv):
 
         return res
 
+    def check_accounts_for_partner(self, cr, uid, ids, context=None,
+        header_obj=False, lines_field='invoice_line',
+        line_level_partner_type=False):
+        """
+        :param header_obj: target model for header or self
+        :param lines_field: lines o2m field
+        :param line_level_partner_type: partner to check lines account with
+            if true use partner_type for lines else use header partner
+        :return:
+        """
+        header_obj = header_obj or self
+        account_obj = self.pool.get('account.account')
+        header_errors = []
+        lines_errors = []
+
+        for r in header_obj.browse(cr, uid, ids, context=context):
+            partner_id = hasattr(r, 'partner_id') and r.partner_id \
+                and r.partner_id.id or False
+
+            # header check
+            if partner_id and hasattr(r, 'account_id') and r.account_id:
+                if not account_obj.is_allowed_for_thirdparty(cr, uid,
+                    [r.account_id.id], partner_id=partner_id,
+                        context=context)[r.account_id.id]:
+                    header_errors.append(
+                        _('invoice header account and partner not compatible.'))
+
+            # lines check
+            if lines_field and hasattr(r, lines_field):
+                if line_level_partner_type:
+                    partner_id = False
+                else:
+                    partner_type = False
+                line_index = 1
+                for l in getattr(r, lines_field):
+                    if l.account_id:
+                        if line_level_partner_type:
+                            # partner at line level
+                            partner_type = l.partner_type
+                        if (partner_id or partner_type) \
+                            and not account_obj.is_allowed_for_thirdparty(cr,
+                                uid, [l.account_id.id],
+                                partner_type=partner_type,
+                                partner_id=partner_id,
+                                context=context)[l.account_id.id]:
+                            num = hasattr(l, 'line_number') and l.line_number \
+                                or line_index
+                            if not lines_errors:
+                                header_errors.append(
+                                    _('following # lines with account/partner' \
+                                        ' are not compatible:'))
+                            lines_errors.append(_('#%d account %s - %s') % (num,
+                                l.account_id.code, l.account_id.name, ))
+                    line_index += 1
+
+        if header_errors or lines_errors:
+            raise osv.except_osv(_('Error'),
+                "\n".join(header_errors + lines_errors))
+
 account_invoice()
+
 
 class account_invoice_line(osv.osv):
     _name = 'account.invoice.line'
@@ -1384,6 +1449,31 @@ class account_invoice_line(osv.osv):
                     if ml.analytic_lines:
                         al_ids += [x.id for x in ml.analytic_lines]
         return self.pool.get('account.analytic.line').button_open_analytic_corrections(cr, uid, al_ids, context=context)
+
+    def onchange_donation_product(self, cr, uid, ids, product_id, qty, currency_id, context=None):
+        res = {'value': {}}
+        if product_id:
+            p_info = self.pool.get('product.product').read(cr, uid, product_id, ['donation_expense_account', 'partner_ref', 'standard_price', 'categ_id'], context=context)
+            if p_info['donation_expense_account']:
+                res['value']['account_id'] = p_info['donation_expense_account'][0]
+            elif p_info['categ_id']:
+                categ = self.pool.get('product.category').read(cr, uid, p_info['categ_id'][0], ['donation_expense_account'])
+                if categ['donation_expense_account']:
+                    res['value']['account_id'] = categ['donation_expense_account'][0]
+            if p_info['partner_ref']:
+                res['value']['name'] = p_info['partner_ref']
+            if p_info['standard_price']:
+                std_price = p_info['standard_price']
+                company_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
+                if company_curr_id and company_curr_id != currency_id:
+                    std_price = self.pool.get('res.currency').compute(cr, uid, company_curr_id, currency_id, std_price, context=context)
+                res['value']['price_unit'] = std_price
+                res['value']['price_subtotal'] = (qty or 0) * std_price
+        return res
+
+    def onchange_donation_qty_price(self, cr, uid, ids, qty, price_unit, context=None):
+        return {'value': {'price_subtotal': (qty or 0) * (price_unit or 0)}}
+
 
 account_invoice_line()
 
