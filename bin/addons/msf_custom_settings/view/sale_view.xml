@@ -65,6 +65,7 @@
                             <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
                                     attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'not in', ['draft', 'validated'])]}" />
                         </group>
+                        <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     </xpath>
 
                     <xpath expr="/form//field[@name='order_line']//separator[@string='Taxes']" position="replace" />

@@ -1060,6 +1060,11 @@ class stock_picking(osv.osv):
 
             address_contact_id, address_invoice_id = \
                     self._get_address_invoice(cr, uid, picking).values()
+            if not address_contact_id:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Please define an address on the partner if you want to generate invoice.'),
+                )
             address = address_obj.browse(cr, uid, address_contact_id, context=context)
 
             comment = self._get_comment_invoice(cr, uid, picking)

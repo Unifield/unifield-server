@@ -379,6 +379,16 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
+    def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
+        # US-672/2
+        if context and context.get('from_web_menu', False) \
+            and vals.get('account_id', False) \
+            and vals.get('partner_type', False):
+
+            self.pool.get('account.account').is_allowed_for_thirdparty(
+                cr, uid, vals['account_id'], partner_type=vals['partner_type'],
+                from_vals=True, raise_it=True, context=context)
+
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Filled in 'document_date' if we come from tests.
@@ -416,6 +426,7 @@ class account_move_line(osv.osv):
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
+        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
@@ -424,41 +435,9 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _("Partner '%s' is not active.") % (aml[0].partner_id.name or '',))
 
         # US-852: Make an extra call to post-check all move lines when the "last" line got executed
-        self.validate_all_move_lines_state_sync(cr, uid, res, context)
+        if vals.get('move_id'):
+            self.pool.get('account.move').validate_sync(cr, uid, vals.get('move_id'), context)
         return res
-
-    # US-852: At the end of each sync execution of the create move line, make a quick check if any other move lines of the same move were invalid
-    # due to the missing of this move line? If yes, just set them to valid. 
-    def validate_all_move_lines_state_sync(self, cr, uid, move_line_id, context=None):
-        if context is None:
-            context = {}
-        if not (context.get('sync_update_execution', False)) or not move_line_id:
-            return
-
-        aml = self.browse(cr, uid, move_line_id, context)
-        if not aml or not aml.move_id:
-            return
-
-        move = aml.move_id
-        obj_move = self.pool.get('account.move')
-        if move.journal_id.type == 'system':
-            return
-
-        amount = 0
-        line_draft_ids = []
-        for line in move.line_id:
-            # Hook to check line
-            amount += line.debit - line.credit
-            if line.state=='draft':
-                line_draft_ids.append(line.id)
-
-        if abs(amount) < 10 ** -4:
-            if line_draft_ids:
-                self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
-        elif move.journal_id.centralisation:
-            if line_draft_ids:
-                self.write(cr, uid, line_draft_ids, {'state': 'valid'}, context, check=False)
-        return True
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
@@ -482,6 +461,7 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
+        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):

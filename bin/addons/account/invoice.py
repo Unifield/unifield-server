@@ -332,10 +332,12 @@ class account_invoice(osv.osv):
         res = super(account_invoice,self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
 
         type = context.get('journal_type', 'sale')
-        for field in res['fields']:
-            if field == 'journal_id':
-                journal_select = journal_obj._name_search(cr, uid, '', [('type', '=', type)], context=context, limit=None, name_get_uid=1)
-                res['fields'][field]['selection'] = journal_select
+        if 'journal_id' in res['fields']:
+            filter_journal = [('type', '=', type), ('is_current_instance','=',True)]
+            if type == 'inkind' and context.get('is_inkind_donation'):
+                filter_journal = [('is_current_instance','=',True), ('type', 'in', ('inkind', 'extra'))]
+            journal_select = journal_obj._name_search(cr, uid, '', filter_journal, context=context, limit=None, name_get_uid=1)
+            res['fields']['journal_id']['selection'] = journal_select
 
         if view_type == 'form' and context.get('type', 'out_invoice') == 'in_refund':
             doc = etree.XML(res['arch'])
@@ -348,6 +350,9 @@ class account_invoice(osv.osv):
         if view_type == 'tree':
             doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
+            # (US-777) Remove the possibility to create new invoices through the "Advance Return" Wizard
+            if context.get('from_wizard') and context.get('from_wizard')['model'] == 'wizard.cash.return':
+                doc.set('hide_new_button', 'True')
             partner_string = _('Customer')
             if context.get('type', 'out_invoice') in ('in_invoice', 'in_refund'):
                 partner_string = _('Supplier')

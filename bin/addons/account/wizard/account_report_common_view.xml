@@ -8,6 +8,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Report Options">
+                  <field name="is_report_cross_fy" invisible="1" />
                   <label nolabel="1" string=""/>
                   <newline/>
                    <field name="chart_account_id" widget='selection'/>
@@ -17,8 +18,8 @@
                             <page string="Filters" name="filters">
                                 <field name="filter" on_change="onchange_filter(filter, fiscalyear_id)" colspan="4"/>
                                     <separator string="Dates" colspan="4"/>
-                                    <field name="date_from" attrs="{'readonly':[('filter', 'not in', ('filter_date', 'filter_date_doc'))], 'required':[('filter', 'in', ('filter_date', 'filter_date_doc'))]}" colspan="4"/>
-                                    <field name="date_to" attrs="{'readonly':[('filter', 'not in', ('filter_date', 'filter_date_doc'))], 'required':[('filter', 'in', ('filter_date', 'filter_date_doc'))]}"  colspan="4"/>
+                                    <field name="date_from" attrs="{'readonly':[('filter', 'not in', ('filter_date', 'filter_date_doc'))], 'required':[('is_report_cross_fy', '=', False), ('filter', 'in', ('filter_date', 'filter_date_doc'))]}" colspan="4"/>
+                                    <field name="date_to" attrs="{'readonly':[('filter', 'not in', ('filter_date', 'filter_date_doc'))], 'required':[('is_report_cross_fy', '=', False), ('filter', 'in', ('filter_date', 'filter_date_doc'))]}"  colspan="4"/>
                                     <separator string="Periods"  colspan="4"/>
                                     <field name="period_from"  domain="[('fiscalyear_id', '=', fiscalyear_id)]" attrs="{'readonly':[('filter','!=','filter_period')], 'required':[('filter', '=', 'filter_period')]}" colspan="4"/>
                                     <field name="period_to" domain="[('fiscalyear_id', '=', fiscalyear_id)]" attrs="{'readonly':[('filter','!=','filter_period')], 'required':[('filter', '=', 'filter_period')]}" colspan="4"/>

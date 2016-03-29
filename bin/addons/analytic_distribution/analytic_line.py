@@ -133,6 +133,9 @@ class analytic_line(osv.osv):
         ['|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28')]
         - January + February + March
         ['|', '|', '&', ('date', '>=', '2013-01-01'), ('date', '<=', '2013-01-31'), '&', ('date', '>=', '2013-02-01'), ('date', '<=', '2013-02-28'), '&', ('date', '>=', '2013-03-01'), ('date', '<=', '2013-03-31')]
+
+        (US-650) Management of "NOT IN". For example to exclude Jan 2016 and Oct 2015:
+        ['&', '|', ('date', '<', '2016-01-01'), ('date', '>', '2016-01-31'), '|', ('date', '<', '2015-10-01'), ('date', '>', '2015-10-31')]
         """
         # Checks
         if not context:
@@ -142,18 +145,26 @@ class analytic_line(osv.osv):
         new_args = []
         period_obj = self.pool.get('account.period')
         for arg in args:
-            if len(arg) == 3 and arg[1] in ['=', 'in']:
+            if len(arg) == 3 and arg[1] in ['=', 'in', 'not in']:
                 periods = arg[2]
                 if isinstance(periods, (int, long)):
                     periods = [periods]
                 if len(periods) > 1:
                     for _ in range(len(periods) - 1):
-                        new_args.append('|')
+                        if arg[1] == 'not in':
+                            new_args.append('&')
+                        else:
+                            new_args.append('|')
                 for p_id in periods:
                     period = period_obj.browse(cr, uid, [p_id])[0]
-                    new_args.append('&')
-                    new_args.append(('date', '>=', period.date_start))
-                    new_args.append(('date', '<=', period.date_stop))
+                    if arg[1] == 'not in':
+                        new_args.append('|')
+                        new_args.append(('date', '<', period.date_start))
+                        new_args.append(('date', '>', period.date_stop))
+                    else:
+                        new_args.append('&')
+                        new_args.append(('date', '>=', period.date_start))
+                        new_args.append(('date', '<=', period.date_stop))
         return new_args
 
     def _get_from_commitment_line(self, cr, uid, ids, field_name, args, context=None):

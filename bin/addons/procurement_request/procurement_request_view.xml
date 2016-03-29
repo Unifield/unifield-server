@@ -52,6 +52,7 @@
                     </group>
                     <notebook colspan="5">
                         <page string="Products">
+                            <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                             <field name="order_line" mode="tree,form" colspan="4" nolabel="1" context="{'date_planned': requested_date}" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}">
                                 <tree string="Products" editable="top" >
                                     <field name="product_id" on_change="requested_product_id_change(product_id, comment)" 

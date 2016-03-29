@@ -1014,7 +1014,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return result
 
-    def confirmLine(self, cr, uid, ids, context=None):
+    def confirmLine(self, cr, uid, ids, run_scheduler=False, context=None):
         """
         Set the line as confirmed and check if all lines
         of the FO/IR are confirmed. If yes, launch the
@@ -1023,6 +1023,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         :param cr: Cursor to the database
         :param uid: ID of the user that runs the method
         :param ids: List of IDs of sale.order.line to check
+        :param run_scheduler: If set to True, after all FO/IR are confirmed,
+                              run the Auto POs creation scheduler
         :param context: Context of the call
 
         :return Raise an error or True
@@ -1030,6 +1032,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         # Objects
         order_obj = self.pool.get('sale.order')
+        po_auto_obj = self.pool.get('po.automation.config')
 
         if context is None:
             context = {}
@@ -1121,13 +1124,22 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 _('You cannot confirm the sourcing of a line to an internal customer with an internal supplier.'),
             )
 
-        self.check_confirm_order(cr, uid, ids, context=context)
+        if not run_scheduler:
+            run_scheduler = po_auto_obj.get_po_automation(cr, uid, context=context)
+
+        self.check_confirm_order(cr, uid, ids, run_scheduler=run_scheduler, context=context)
 
         return True
 
-    def check_confirm_order(self, cr, uid, ids, context=None):
+    def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None):
         """
         Run the confirmation of the FO/IR if all lines are confirmed
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order.line to check
+        :param run_scheduler: If set to True, after all FO/IR are confirmed,
+                              run the Auto POs creation scheduler
+        :praam context: Context of the call
         """
         # Objects
         order_obj = self.pool.get('sale.order')
@@ -1198,12 +1210,16 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
                 for order_id in order_ids:
                     self.infolog(cr, uid, "All lines of the FO/IR id:%s have been sourced" % order_id)
-                thread = threading.Thread(target=self.confirmOrder, args=(cr, uid, order_ids, state_to_use, context))
+                thread = threading.Thread(
+                    target=self.confirmOrder,
+                    args=(cr, uid, order_ids, state_to_use, run_scheduler, context)
+                )
                 thread.start()
 
         return True
 
-    def confirmOrder(self, cr, uid, order_ids, state_to_use, context=None, new_cursor=True):
+    def confirmOrder(self, cr, uid, order_ids, state_to_use, run_scheduler=False,
+                     context=None, new_cursor=True):
         """
         Confirm the order specified in the parameter.
 
@@ -1211,6 +1227,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         :param uid: ID of the user that runs the method
         :param order_id: List of ID of the orders to confirm
         :param state_to_use: Determine if the order is an IR or a FO
+        :param run_scheduler: If set to True, after all FO/IR are confirmed,
+                              run the Auto POs creation scheduler
         :param context: Context of the call
         :param new_cursor: Use a new DB cursor or not
 
@@ -1219,7 +1237,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         """
         if not context:
             context = {}
-
+        wiz_obj = self.pool.get('procurement.purchase.compute.all')
         wf_service = netsvc.LocalService("workflow")
 
         if new_cursor:
@@ -1262,6 +1280,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 self.pool.get('sale.order.sourcing.progress').write(cr, uid, prog_ids, {
                     'error': misc.ustr(e),
                 }, context=context)
+
+        if run_scheduler:
+            # Run Auto POs creation scheduler
+            wiz_id = wiz_obj.create(cr, uid, {}, context=context)
+            wiz_obj.procure_calculation_purchase(cr, uid, wiz_id, context=context)
 
         if new_cursor:
             cr.commit()

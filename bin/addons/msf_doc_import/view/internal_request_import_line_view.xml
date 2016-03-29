@@ -10,7 +10,7 @@
             <field name="arch" type="xml">
                 <form>
                     <field name="to_correct_ok" invisible="1"/>
-					<field name="inactive_product" invisible="1" />
+                    <field name="inactive_product" invisible="1" />
                     <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
                             <html>
                                 <style>
@@ -68,12 +68,19 @@
             <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
             <field name="arch" type="xml">
                 <data>
+                    <xpath expr="/form" position="attributes">                                                                                                      
+                        <attribute name="noteditable">import_in_progress==True</attribute>                                                                          
+                    </xpath> 
+                    <xpath expr="/form//field" position="before">
+                        <field name="import_in_progress" invisible="1" />
+                    </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']/field[@name='product_uom']" position="before">
                     <field name="nomenclature_description" readonly="1"/>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree[@string='Products']" position="inside">
                     <field name="to_correct_ok" invisible="1"/>
-					<field name="inactive_product" invisible="1" />
+                    <field name="inactive_product" invisible="1" />
+                    <field name="soq_updated" invisible="1" readonly="1" />
                     <group attrs="{'invisible': [('text_error', '=', False), ('inactive_error', '=', False)]}">
                             <html>
                                 <style>
@@ -115,7 +122,7 @@
                        </group>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree" position="attributes" >
-                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True</attribute>
+                    <attribute name="colors">red:to_correct_ok == True or inactive_product == True;blue: soq_updated == True</attribute>
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Products']/field[@name='order_line']/tree/field[@name='product_id']" position="before" >
                     <button name="get_error" type="object" icon="gtk-dialog-warning" string="Show error" attrs="{'invisible': [('to_correct_ok', '=', False), ('inactive_product', '=', False)]}" />

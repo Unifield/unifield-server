@@ -29,9 +29,11 @@
                         <field name="analytic_distribution_id" invisible="1"/>
                     </group>
                     <group colspan="4">
-                        <field name='invoice_id' nolabel="1" domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), 
-                            ('currency_id', '=', currency_id)]"/>
-                        <button string='Add invoice' name='action_add_invoice' type='object' icon='gtk-add' />
+                        <field name='invoice_ids' nolabel="1"
+                           domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), ('currency_id', '=', currency_id)]"
+                           context="{ 'type': 'in_invoice', 'journal_type': 'purchase' }"
+                        />
+                        <button string='Add invoice(s)' name='action_add_invoice' type='object' icon='gtk-add' />
                     </group>
                     <newline />
                     <field name='invoice_line_ids' attrs="{'invisible':[('display_invoice', '!=', True)]}" nolabel="1" colspan="4" />

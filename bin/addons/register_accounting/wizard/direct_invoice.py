@@ -133,6 +133,9 @@ class wizard_account_invoice(osv.osv):
         Take information from wizard in order to create an invoice, invoice lines and to post a register line that permit to reconcile the invoice.
         """
         self.check_analytic_distribution(cr, uid, ids)
+        self.pool.get('account.invoice').check_accounts_for_partner(cr, uid,
+            ids, context=context, header_obj=self)
+
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
         for val in inv:
@@ -145,6 +148,7 @@ class wizard_account_invoice(osv.osv):
             elif inv[val]:
                 vals[val] = inv[val]
         vals['invoice_line'] = []
+
         amount = 0
         if inv['invoice_line']:
             for line in self.pool.get('wizard.account.invoice.line').read(cr, uid, inv['invoice_line'],

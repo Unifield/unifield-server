@@ -184,6 +184,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="shrink_entries_for_hq"/>
+                    <field name="is_child_of_coa" invisible="1" />
+                    <field name="display_in_reports" attrs="{'invisible': [('is_child_of_coa', '=', False)]}"  />
                 </xpath>
             </field>
         </record>

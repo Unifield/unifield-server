@@ -26801,8 +26801,8 @@ msgstr "Colis - Familles"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
-msgid "Please indicate an invoice date before approving the invoice:"
-msgstr "Veuillez indiquer une date de facture avant d'approuver cette facture:"
+msgid "Please indicate a date before approving the document:"
+msgstr "Veuillez indiquer une date avant d'approuver ce document:"
 
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:1664
@@ -55426,6 +55426,7 @@ msgstr "Brouillon Expédition"
 
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/import_invoice_on_registers.py:125
+#: code:addons/register_accounting/wizard/wizard_cash_return.py:669
 #, python-format
 msgid "This invoice: %s %s has already been added. Please choose another invoice."
 msgstr "Cette facture: %s %s a déjà été ajoutée. Veuillez choisir une autre facture."
@@ -61869,8 +61870,8 @@ msgstr "Prodlot Caché"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
-msgid "Please verify the price of the invoice ! The real total does not match the computed total:"
-msgstr "Veuillez vérifier le prix de cette facture ! Le total réel ne correspond pas au total calculé: "
+msgid "Please verify the price of the document ! The real total does not match the computed total:"
+msgstr "Veuillez vérifier le prix de ce document ! Le total réel ne correspond pas au total calculé: "
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/stock_partial_picking.py:753
@@ -73555,3 +73556,15 @@ msgstr "Une valeur négative n'est pas autorisée !"
 #, python-format
 msgid "Positive value is not allowed!"
 msgstr "Une valeur positive n'est pas autorisée !"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/down_payment.py:83
+#, python-format
+msgid "Amounts IN can't be higher than Amounts OUT for the selected PO."
+msgstr "Les montants entrants ne peuvent pas être supérieurs aux montants sortants pour le BC sélectionné."
+
+#. module: register_accounting
+#: code:addons/register_accounting/account_bank_statement.py:2394
+#, python-format
+msgid "You can't delete this line. Amounts IN can't be higher than Amounts OUT for the selected PO."
+msgstr "Vous ne pouvez pas supprimer cette ligne. Les montants entrants ne peuvent pas être supérieurs aux montants sortants pour le BC sélectionné."

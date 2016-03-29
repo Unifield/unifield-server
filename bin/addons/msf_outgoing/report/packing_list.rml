@@ -234,7 +234,7 @@
                                 <para style="ParcelLineTitle">DG</para>
                             </td>
                             <td>
-                                <para style="ParcelLineTitle">NP</para>
+                                <para style="ParcelLineTitle">CS</para>
                             </td>
                             <td>
                                 <para style="ParcelLineTitle">[[ pf.description_ppl or ' ' ]]</para>
@@ -264,13 +264,13 @@
                                 <para style="ParcelLineValue">[[ formatLang(m.prodlot_id.life_date, date=True) ]]</para>
                             </td>
                             <td>
-                                <para style="ParcelLineValue">[[ m.kc_check and 'X' or ' ' ]]</para>
+                                <para style="ParcelLineValue">[[ m.product_id.kc_txt or ' ' ]]</para>
                             </td>
                             <td>
-                                <para style="ParcelLineValue">[[ m.dg_check and 'X' or ' ' ]]</para>
+                                <para style="ParcelLineValue">[[ m.product_id.dg_txt or ' ' ]]</para>
                             </td>
                             <td>
-                                <para style="ParcelLineValue">[[ m.np_check and 'X' or ' ' ]]</para>
+                                <para style="ParcelLineValue">[[ m.product_id.cs_txt or ' ' ]]</para>
                             </td>
                             <td>
                                 <para style="ParcelLineValue"></para>
