@@ -34,11 +34,13 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Payroll Validation">
+                    <field name="check_result" invisible="1" />
                     <label string="This will validate all Payroll entries and create accounting entries. This will take a while." colspan="4" align="0.0"/>
                     <group colspan="4" col="2">
                         <button string="Cancel" special="cancel" icon="gtk-cancel"/>
-                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test"/>
+                        <button name="button_validate" type="object" string="Validate" icon="terp-camera_test" attrs="{'readonly': [('check_result', '=', False)]}"/>
                     </group>
+                    <field name="check_report" attrs="{'invisible': [('check_result', '=', True)]}"/>
                 </form>
             </field>
         </record>

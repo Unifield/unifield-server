@@ -339,6 +339,23 @@ class hq_entries_validation(osv.osv_memory):
             cc_account_change = []
             split_change = []
             current_date = strftime('%Y-%m-%d')
+
+            # US-672/2 account/partner compatible check pass
+            account_partner_not_compat_log = []
+            for line in self.pool.get('hq.entries').browse(cr, uid, active_ids,
+                context=context):
+                if not line.is_account_partner_compatible:
+                    entry_msg = "%s - %s: %s - %s / %s" % (
+                        line.name or '', line.ref or '',
+                        line.account_id.code, line.account_id.name or '',
+                        line.partner_txt or '')
+                    account_partner_not_compat_log.append(entry_msg)
+            if account_partner_not_compat_log:
+                account_partner_not_compat_log.insert(0,
+                    _('Following entries have account/partner not compatible:'))
+                raise osv.except_osv(_('Error'),
+                    "\n".join(account_partner_not_compat_log))
+
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
                 #UF-1956: interupt validation if currency is inactive
                 if line.currency_id.active is False:

@@ -786,6 +786,12 @@ class wizard_cash_return(osv.osv_memory):
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
 
+        # US-672/2
+        self.pool.get('account.invoice').check_accounts_for_partner(cr, uid,
+            ids, context=context,
+            header_obj=self, lines_field='advance_line_ids',
+            line_level_partner_type=True)
+
         advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
         if advance_settled_100_cash_return:
             """

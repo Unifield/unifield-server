@@ -58,8 +58,14 @@ class account_balance_report(osv.osv_memory):
         'initial_balance': False,
         'export_format': 'pdf',
         'account_type': 'all',
-        'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
+        'journal_ids': _get_journals,
     }
+
+    def default_get(self, cr, uid, fields, context=None):
+        if context is None:
+            context = {}
+        context['report_cross_fy'] = True
+        return super(account_balance_report, self).default_get(cr, uid, fields, context=context)
 
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:

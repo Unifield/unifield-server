@@ -324,7 +324,7 @@ class account_account(osv.osv):
                     for child in current.child_id:
                         # in context of report, if the current account is not
                         # displayed, it should no impact the total amount
-                        if display_only_checked_account and not account.display_in_reports:
+                        if display_only_checked_account and not child.display_in_reports:
                             continue
                         if child.company_id.currency_id.id == current.company_id.currency_id.id:
                             sums[current.id][fn] += sums[child.id][fn]
@@ -377,7 +377,7 @@ class account_account(osv.osv):
         res = {}
         msf_coa = self.search(cr, uid, [('parent_id','=', False)], context=context)
         if msf_coa:
-            id_list = self.search(cr, uid, [('parent_id','=', msf_coa),
+            id_list = self.search(cr, uid, [('parent_id', 'in', msf_coa),
                                             ('id', 'in', ids)], context=context)
             for account_id in ids:
                 res[account_id]=account_id in id_list

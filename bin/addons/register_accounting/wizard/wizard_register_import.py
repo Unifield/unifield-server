@@ -435,7 +435,7 @@ class wizard_register_import(osv.osv_memory):
                     if not restricted_ids and account_code != '10210':
                         errors.append(_('Line %s. G/L account %s is restricted.') % (current_line_num, account_code,))
                         continue
-                    account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted'], context)
+                    account = account_obj.read(cr, uid, r_account, ['type_for_register', 'is_analytic_addicted', 'code', 'name', ], context)
                     type_for_register = account.get('type_for_register', '')
 
                     # cheque_number
@@ -486,6 +486,17 @@ class wizard_register_import(osv.osv_memory):
                                 errors.append(_('Line %s. Third party not found: %s') % (current_line_num, line[cols['third_party']],))
                                 continue
                         r_partner = tp_ids[0]
+
+                        # US-672 TP compat with account
+                        tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
+                            cr, uid, [r_account],
+                            employee_id=partner_type == 'employee' and r_partner or False,
+                            transfer_journal_id=partner_type == 'journal' and r_partner or False,
+                            partner_id=partner_type == 'partner' and r_partner or False,
+                            context=context)[r_account]
+                        if not tp_check_res:
+                            errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
+                            continue
 
                     # free 1
                     if line[cols['free1']]:

@@ -180,8 +180,10 @@ class report_reception(report_sxw.rml_parse):
             'ed': 'exp_check',
         }
 
-        if opt in options and hasattr(line, options[opt]) and getattr(line, options[opt]) == True:
+        if opt in options and hasattr(line, options[opt]) and getattr(line, options[opt]) is True:
             return 'X'
+        elif opt in options and hasattr(line, options[opt]):
+            return getattr(line, options[opt])
 
         return ' '
 

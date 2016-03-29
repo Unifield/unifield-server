@@ -109,7 +109,8 @@
                                    domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
                             <button name="change_currency" string="Change currency" icon="terp-dolar" type="object" 
                                     attrs="{'invisible': ['|', ('no_line', '=', True), ('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
-                        </group>
+                            </group>
+                            <button colspan="4" string="Round Qty to SoQ" type="object" name="round_to_soq" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                     </xpath>
 
                     <xpath expr="/form//field[@name='order_line']" position="attributes">

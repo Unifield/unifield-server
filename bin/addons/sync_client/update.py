@@ -518,7 +518,7 @@ class update_received(osv.osv):
                 try:
                     res = secure_import_data(obj, import_fields, values)
                 except Exception, import_error:
-                    import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, str(import_error), "\n".join([str(v) for v in values]))
+                    import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, tools.ustr(import_error), "\n".join([tools.ustr(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self.write(cr, uid, update_ids, {
                         'execution_date': datetime.now(),

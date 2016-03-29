@@ -44,6 +44,9 @@ class account_move_line(osv.osv):
         company_clause = " "
         if context.get('company_id', False):
             company_clause = " AND " +obj+".company_id = %s" % context.get('company_id', False)
+        if context.get('report_cross_fy', False):
+            context['all_fiscalyear'] = True
+            context['fiscalyear'] = False
         if not context.get('fiscalyear', False):
             if context.get('all_fiscalyear', False):
                 #this option is needed by the aged balance report because otherwise, if we search only the draft ones, an open invoice of a closed fiscalyear won't be displayed
@@ -59,17 +62,33 @@ class account_move_line(osv.osv):
         where_move_state = ''
         where_move_lines_by_date = ''
 
-        if context.get('date_from', False) and context.get('date_to', False):
-            if context.get('date_fromto_docdate', False):
-                if initial_bal:
-                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date < '" +context['date_from']+"')"
+        if context.get('report_cross_fy', False):
+            # US-926 cross FY reporting
+            if context.get('date_from', False) or context.get('date_to', False):
+                field = 'document_date' \
+                    if context.get('date_fromto_docdate', False) else 'date'
+                from_to_contexts = [ ('date_from', '>='), ('date_to', '<='), ]
+                date_where = ''
+                for ft in from_to_contexts:
+                    if context.get(ft[0], False):
+                        date_where += "%s%s %s '%s'" % (
+                            ' AND ' if date_where else '',
+                            field, ft[1], context[ft[0]])
+                if date_where:
+                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE " + date_where + ")"
+        else:
+            # default behaviour (except US-926 cross FY reporting)
+            if context.get('date_from', False) and context.get('date_to', False):
+                if context.get('date_fromto_docdate', False):
+                    if initial_bal:
+                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date < '" +context['date_from']+"')"
+                    else:
+                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date >= '" +context['date_from']+"' AND document_date <= '"+context['date_to']+"')"
                 else:
-                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE document_date >= '" +context['date_from']+"' AND document_date <= '"+context['date_to']+"')"
-            else:
-                if initial_bal:
-                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date < '" +context['date_from']+"')"
-                else:
-                    where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date >= '" +context['date_from']+"' AND date <= '"+context['date_to']+"')"
+                    if initial_bal:
+                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date < '" +context['date_from']+"')"
+                    else:
+                        where_move_lines_by_date = " AND " +obj+".move_id IN (SELECT id FROM account_move WHERE date >= '" +context['date_from']+"' AND date <= '"+context['date_to']+"')"
 
         if state:
             if state.lower() not in ['all']:

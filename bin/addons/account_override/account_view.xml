@@ -19,6 +19,34 @@
                         </group>
                     </page>
                 </page>
+
+                <page string="Notes" position="before">
+                    <page string="Allowed Partner types">
+                        <group col="4" colspan="4">
+                            <group col="2" colspan="2">
+                                <field name="has_partner_type_internal" />
+                                <field name="has_partner_type_external" />
+                                <field name="has_partner_type_esc" />
+                                <newline />
+                                <field name="has_partner_type_local" />
+                                <field name="has_partner_type_ex" />
+                                <newline />
+                                <field name="has_partner_type_book" />
+                            </group>
+
+                            <group col="2" colspan="2">
+                                <field name="has_partner_type_intermission" />
+                                <field name="has_partner_type_section" />
+                                <label /><label />
+                                <newline />
+                                <label /><label />
+                                <label /><label />
+                                <newline />
+                                <label /><label />
+                            </group>
+                        </group>
+                    </page>
+                </page>
             </field>
         </record>
 

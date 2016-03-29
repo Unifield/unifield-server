@@ -6,7 +6,7 @@
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sale.order')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ['name', 'client_order_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date']
+        fields = ['name', 'client_order_ref', 'details', 'delivery_requested_date', 'delivery_confirmed_date', 'state_hidden_sale_order']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sale.order'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],

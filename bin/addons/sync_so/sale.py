@@ -394,10 +394,11 @@ class sale_order_sync(osv.osv):
                 if sol_ids:
                     generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner_name)
 
-            available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
-                    order='NO_ORDER', context=context)
-            if nfo_model_obj and nfo_rule and original_id in available_nfo_ids:
-                generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
+            if nfo_model_obj and nfo_rule:
+                available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
+                        order='NO_ORDER', context=context)
+                if original_id in available_nfo_ids:
+                    generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
             if vfo_model_obj and vfo_rule:
                 generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner_name)
 
