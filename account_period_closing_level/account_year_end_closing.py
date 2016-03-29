@@ -550,8 +550,13 @@ class account_year_end_closing(osv.osv):
             fy_rec.date_stop, ))
         if not cr.rowcount:
             return
-
-        balance = float(cr.fetchone()[0])
+        # US-1068: if no result, empty 1 row result is returned bc use of an
+        # aggregate function (sum() here)
+        row = cr.fetchone()
+        if row[0] is None:
+            return
+        
+        balance = float(row[0])
         if balance > 0:  # debit balance
             account = cpy_rec.ye_pl_pos_credit_account  # Credit Account for P&L>0 (Income account)
             cp_account = cpy_rec.ye_pl_pos_debit_account  # Debit Account for P&L>0 (B/S account)
@@ -687,7 +692,13 @@ class account_year_end_closing(osv.osv):
         cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
             fy_rec.date_stop, ))
         if cr.rowcount:
-            pl_balance = float(cr.fetchone()[0])
+            # US-1068: if no result, empty 1 row result is returned bc use of an
+            # aggregate function (sum() here)
+            row = cr.fetchone()
+            if row[0] is None:
+                return
+            
+            pl_balance = float(row[0])
             if pl_balance > 0:
                 # debit regular/equity result
                 re_account_rec = cpy_rec.ye_pl_pos_debit_account
