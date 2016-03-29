@@ -150,6 +150,7 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
         if origin_values and not compressed_values:
             print_file_and_screen('Objects type %s with sdref %s have no compressed_values : %r' %
                     (data_object.model, sdref, compressed_values))
+            continue
         # remove fields to ignore
         for field in FIELDS_TO_IGNORE:
             if field in compressed_values:
