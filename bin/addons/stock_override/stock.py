@@ -1653,7 +1653,7 @@ class stock_move(osv.osv):
             dest_id = loc_obj.browse(cr, uid, vals['location_dest_id'], context=context)
             if dest_id.usage == 'inventory' and not dest_id.virtual_location:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location and not dest_id.virtual_location:
+            if not vals.get('reason_type_id', False) and dest_id.scrap_location and not dest_id.virtual_location:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
             # if the source location and the destination location are the same, the state is done
             if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
