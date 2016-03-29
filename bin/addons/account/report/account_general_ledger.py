@@ -108,7 +108,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if (data['model'] == 'ir.ui.menu'):
             new_ids = [data['form']['chart_account_id']]
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
-        
+
         # output currency
         self.output_currency_id = 'output_currency' in data['form'] \
             and data['form']['output_currency']
@@ -120,11 +120,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                                             ['name'])
             if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
                 self.output_currency_code = ouput_cur_r[0]['name']
-                
+
         # proprietary instances filter
-        self.instance_ids = data['form']['instance_ids'] 
+        self.instance_ids = data['form']['instance_ids']
         if self.instance_ids:
-            # we add instance filter in clauses 'self.query/self.init_query' 
+            # we add instance filter in clauses 'self.query/self.init_query'
             instance_ids_in = "l.instance_id in(%s)" % (",".join(map(str, self.instance_ids)))
             if not self.query:
                 self.query = instance_ids_in
@@ -199,7 +199,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_tree_nodes': self._get_tree_nodes,
             'show_node_in_report': self._show_node_in_report,
         })
-        
+
         # company currency
         self.uid = uid
         self.currency_id = False
@@ -481,10 +481,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         elif self.sortby == 'sort_journal_partner':
             return 'Journal & Partner'
         return 'Date'
-        
+
     def _get_output_currency_code(self, data):
         return self.output_currency_code or self.currency_name
-        
+
     def _get_filter_info(self, data):
         """ get filter info
         _get_filter, _get_start_date, _get_end_date,
@@ -507,13 +507,13 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if line:
                 infos.append(line)
         return infos and ", \n".join(infos) or _('No Filter')
-        
+
     def _get_line_debit(self, line, booking=False):
         return self.__get_line_amount(line, 'debit', booking=booking)
-        
+
     def _get_line_credit(self, line, booking=False):
         return self.__get_line_amount(line, 'credit', booking=booking)
-        
+
     def _get_line_balance(self, line, booking=False):
         return self._currency_conv(
             self.__get_line_amount(line, 'debit', booking=booking, conv=False) \
@@ -524,7 +524,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if booking:
             key += '_currency'
         return (self._currency_conv(line[key]) if conv else line[key]) or 0.
-        
+
     def _is_company_currency(self):
         if not self.output_currency_id or not self.currency_id \
            or self.output_currency_id == self.currency_id:
@@ -533,7 +533,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             # is other currency
             return False
-        
+
     def _currency_conv(self, amount):
         if not amount or amount == 0.:
             return 0.
@@ -543,7 +543,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not amount or abs(amount) < 0.001:
             amount = 0.
         return amount
-        
+
     def _get_prop_instances(self, data):
         instances = []
         if data.get('form', False):
@@ -606,7 +606,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _get_initial_balance(self):
         return self.init_balance
-                                            
+
 #report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
 report_sxw.report_sxw('report.account.general.ledger_landscape_tb', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
