@@ -25,6 +25,7 @@ import pooler
 from report import report_sxw
 from account.report import account_profit_loss
 from common_report_header import common_report_header
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header):
@@ -57,6 +58,10 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             'get_end_date':self._get_end_date,
             'get_company':self._get_company,
             'get_target_move': self._get_target_move,
+            'get_display_info': self.get_display_info,
+            'get_filter_name': self._get_filter,
+            'get_filter_info': self.get_filter_info,
+            'get_prop_instances': self.get_prop_instances,
         })
         self.context = context
 
@@ -74,11 +79,21 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
     def sum_dr(self):
         if self.res_bl['type'] == _('Net Profit'):
             self.result_sum_dr += self.res_bl['balance']*-1
+        '''if self._deduce_accounts_data and self._deduce_accounts_data['debit']:
+            if self.result_sum_dr < 0:
+                self.result_sum_dr += self._deduce_accounts_data['debit']
+            else:
+                self.result_sum_dr -= self._deduce_accounts_data['debit']'''
         return self.result_sum_dr
 
     def sum_cr(self):
         if self.res_bl['type'] == _('Net Loss'):
             self.result_sum_cr += self.res_bl['balance']
+        '''if self._deduce_accounts_data and self._deduce_accounts_data['credit']:
+            if self.result_sum_cr < 0:
+                self.result_sum_cr += self._deduce_accounts_data['credit']
+            else:
+                self.result_sum_cr -= self._deduce_accounts_data['credit']'''
         return self.result_sum_cr
 
     def get_pl_balance(self):
@@ -100,21 +115,28 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             'asset'
         ]
 
+        # set context
         ctx = self.context.copy()
+        ctx['display_only_checked_account'] = True
         ctx['fiscalyear'] = data['form'].get('fiscalyear_id', False)
-
         if data['form']['filter'] == 'filter_period':
             ctx['periods'] = data['form'].get('periods', False)
         elif data['form']['filter'] == 'filter_date':
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] =  data['form'].get('date_to', False)
         ctx['state'] = data['form'].get('target_move', 'all')
+        if 'instance_ids' in data['form']:
+            ctx['instance_ids'] = data['form']['instance_ids']
+
         cal_list = {}
         pl_dict = {}
         account_dict = {}
         account_id = data['form'].get('chart_account_id', False)
         account_ids = account_pool._get_children_and_consol(cr, uid, account_id, context=ctx)
         accounts = account_pool.browse(cr, uid, account_ids, context=ctx)
+        
+        # US-227/6: accounts 8*, 9* are not displayed:
+        '''self._deduce_accounts_data = { 'debit': 0., 'credit': 0., }'''
 
         if not self.res_bl:
             self.res_bl['type'] = _('Net Profit')
@@ -133,6 +155,10 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         for typ in types:
             accounts_temp = []
             for account in accounts:
+                """ before US-227/1
+                PAY ATTENTION TO KEEP THIS COMMENTED AS OCA NEED TO DISCUSS
+                IF ALL THE WORK IS DONE COA SETTINGS LEVEL VS
+                US-227/1, breakdown in asset/liability below
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
                     account_dict = {
                         'id': account.id,
@@ -140,12 +166,75 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                         'name': account.name,
                         'level': account.level,
                         'balance':account.balance,
-                    }
+                    }"""
+                # US-227/1 starts from here
+                """
+                B/S report : display account Internal Type
+                 - Liquidity, Receivable under Assets (left side)
+                 - and account Internal type Payable under Liabilities (right side)
+                For the Regular internal type, some will be under Asset and some others under Liabilities
+                    - Regular/Cash, Regular/Asset, Regular/Stock are under Assets
+                    - Regular/Debt, Regular Equity are under Liabilities
+
+                Note US-227/7.1
+                - if account is linked to account type tax and is a Receivable internal type, display it in the Assets column
+                - if account is linked to account type tax and is a Payable internal type, display it in the Liability column
+                is already included in the following US-227/1 1st condition:
+                    display account Internal Type Liquidity, Receivable under Assets (left side)and account Internal type Payable under Liabilities (right side)
+                """
+                register_account = False
+
+                if typ == 'asset':
+                    # US-227/1, breakdown in asset:
+                    # - Internal Type Liquidity,
+                    # - Internal Type Receivable,
+                    # - Regular/Cash, Regular/Asset, Regular/Stock
+                    register_account = \
+                        account.type in ('liquidity', 'receivable', ) or \
+                        (account.type == 'other' \
+                            and account.user_type.code in (
+                                'cash',
+                                'asset',
+                                'stock',
+                                )) or False
+                elif  typ == 'liability':
+                    # US-227/1, breakdown in liability:
+                    # - Internal type Payable
+                    # - Regular/Debt, Regular/Equity
+                    register_account = \
+                        account.type == 'payable' or \
+                        (account.type == 'other' \
+                            and account.user_type.code in (
+                                'debt',
+                                'equity',
+                                )) or False
+                if register_account:
+                    account_dict = {
+                        'id': account.id,
+                        'code': account.code,
+                        'name': account.name,
+                        'level': account.level,
+                        'balance':account.balance,
+                    } # US-227/1 ends here
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
                     if typ == 'liability' and account.type <> 'view' and (account.debit <> account.credit):
                         self.result_sum_dr += account.balance
+                        '''if account.code.startswith('8') \
+                            or account.code.startswith('9'):
+                                # US-227/6: accounts 8*, 9* are not displayed
+                                self._deduce_accounts_data['debit'] += account.balance
+                                continue'''
                     if typ == 'asset' and account.type <> 'view' and (account.debit <> account.credit):
                         self.result_sum_cr += account.balance
+                        '''if account.code.startswith('8') \
+                            or account.code.startswith('9'):
+                                # US-227/6: accounts 8*, 9* are not displayed
+                                self._deduce_accounts_data['credit'] += account.balance
+                                continue'''
+                    '''if account.code.startswith('8') \
+                        or account.code.startswith('9'):
+                            # US-227/6: accounts 8*, 9* are not displayed
+                            continue'''
                     if data['form']['display_account'] == 'bal_movement':
                         if (not currency_pool.is_zero(self.cr, self.uid, currency, account.credit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.debit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.balance)):
                             accounts_temp.append(account_dict)
@@ -154,9 +243,19 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                             accounts_temp.append(account_dict)
                     else:
                         accounts_temp.append(account_dict)
-                    if account.id == data['form']['reserve_account_id']:
-                        pl_dict['level'] = account['level'] + 1
-                        accounts_temp.append(pl_dict)
+                    # US-227/2bis
+                    # Account from company configuration
+                    # "Debit Account for P&L>0 (B/S account)" or "Credit Account P&L<0 (B/S account)"
+                    if account.id == data['form']['bs_debit_account_id']:
+                        if pl_dict['balance'] >= 0:
+                            # register debit to result account
+                            pl_dict['level'] = account['level'] + 1
+                            accounts_temp.append(pl_dict)
+                    elif account.id == data['form']['bs_credit_account_id']:
+                        if pl_dict['balance'] < 0:
+                            # register credit to result account
+                            pl_dict['level'] = account['level'] + 1
+                            accounts_temp.append(pl_dict)
 
             self.result[typ] = accounts_temp
             cal_list[typ]=self.result[typ]
@@ -209,6 +308,59 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
     def get_lines_another(self, group):
         return self.result.get(group, [])
 
+    def get_display_info(self, data):
+        info_data = []
+        yes_str = _('Yes')
+        no_str = _('No')
+        all_str = _('All')
+
+        display_account = all_str
+        if 'display_account' in data['form']:
+            if data['form']['display_account'] == 'bal_all':
+                display_account = _('All')
+            elif data['form']['display_account'] == 'bal_movement':
+                display_account = _('With movements')
+            else:
+                display_account = _('With balance is not equal to 0')
+        info_data.append((_('Accounts'), display_account, ))
+
+        res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
+        return ', \n'.join(res)
+
+    def get_filter_info(self, data):
+        """ get filter info
+        _get_filter, _get_start_date, _get_end_date,
+        get_start_period, get_end_period
+        are from common_report_header
+        """
+        if not data.get('form', False):
+            return ''
+        infos = []
+
+        # date/period
+        if data.get('form', False) and data['form'].get('filter', False):
+            line = ''
+            if data['form']['filter'] in ('filter_date', ):
+                line = _('Posting')
+                line += " %s " % (_('Date'), )
+                line += self.formatLang(self._get_start_date(data), date=True) + ' - ' + self.formatLang(self._get_end_date(data), date=True)
+            elif data['form']['filter'] == 'filter_period':
+                line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
+            if line:
+                infos.append(line)
+        return infos and ", \n".join(infos) or _('No Filter')
+
+    def get_prop_instances(self, data):
+        instances = []
+        if data.get('form', False):
+            if data['form'].get('instance_ids', False):
+                self.cr.execute('select code from msf_instance where id IN %s',
+                    (tuple(data['form']['instance_ids']),))
+            else:
+                self.cr.execute('select code from msf_instance')
+            instances = [x for x, in self.cr.fetchall()]
+        return ', '.join(instances)
+
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',
     'addons/account/report/account_balance_sheet_horizontal.rml',parser=report_balancesheet_horizontal,
     header='internal landscape')
@@ -216,5 +368,21 @@ report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account
 report_sxw.report_sxw('report.account.balancesheet', 'account.account',
     'addons/account/report/account_balance_sheet.rml',parser=report_balancesheet_horizontal,
     header='internal')
+
+
+class balance_sheet_xls(SpreadsheetReport):
+    def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
+        header='external', store=False):
+        super(balance_sheet_xls, self).__init__(name, table, rml=rml,
+            parser=parser, header=header, store=store)
+
+    def create(self, cr, uid, ids, data, context=None):
+        #ids = getIds(self, cr, uid, ids, context)
+        a = super(balance_sheet_xls, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')
+
+balance_sheet_xls('report.account.balance.sheet_xls', 'account.account',
+    'addons/account/report/account_balance_sheet_xls.mako',
+    parser=report_balancesheet_horizontal, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -410,7 +410,7 @@ class po_follow_up_mixin(object):
 
     def yieldPoLines(self, po_line_ids):
         for pol_id in po_line_ids:
-            yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id)
+            yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id, context=self.localcontext)
 
         raise StopIteration
 

@@ -527,7 +527,7 @@
             <field name="model">sale.order.sourcing.progress</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Sourcing progress" colors="green: prepare_picking == 'Done'">
+                <tree string="Sourcing progress" colors="green: sourcing_stop != False; blue: end_date != False &amp; sourcing_stop == False">
                     <field name="order_id" />
                     <field name="start_date" />
                     <field name="end_date" />
@@ -535,6 +535,10 @@
                     <field name="check_data" />
                     <field name="line_completed" />
                     <field name="prepare_picking" />
+                    <field name="sourcing_completed" />
+                    <field name="sourcing_start" />
+                    <field name="sourcing_stop" />
+                    <field name="sourcing" />
                     <field name="error" attrs="{'invisible': [('error', '=', False)}" />
                 </tree>
             </field>

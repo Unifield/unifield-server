@@ -28,6 +28,7 @@ from tools.translate import _
 import time
 from lxml import etree
 
+
 class account_bank_statement_line(osv.osv):
     _name = "account.bank.statement.line"
     _inherit = "account.bank.statement.line"
@@ -45,6 +46,7 @@ class wizard_invoice_line(osv.osv_memory):
     A register line simulation containing some invoices.
     """
     _name = "wizard.invoice.line"
+
     _columns = {
         'document_date': fields.date(string='Document Date'),
         'reference': fields.char(string='Reference', size=64, required=False), # invoice.internal_number
@@ -57,6 +59,7 @@ class wizard_invoice_line(osv.osv_memory):
     }
 
 wizard_invoice_line()
+
 
 class wizard_advance_line(osv.osv_memory):
     """
@@ -278,8 +281,8 @@ class wizard_advance_line(osv.osv_memory):
                 'context': context,
         }
 
-
 wizard_advance_line()
+
 
 class wizard_cash_return(osv.osv_memory):
     """
@@ -323,7 +326,7 @@ class wizard_cash_return(osv.osv_memory):
             help="Add the invoices you want to link to the Cash Advance Return", required=False, readonly=True),
         'advance_line_ids': fields.one2many('wizard.advance.line', 'wizard_id', string="Advance Lines"),
         'total_amount': fields.float(string="Justified Amount", digits=(16,2), readonly=True),
-        'invoice_id': fields.many2one('account.invoice', string='Invoice', required=False),
+        'invoice_ids': fields.many2many('account.invoice', 'wizard_cash_return_invoice_rel', 'wizard_id', 'invoice_id', "Invoices"),
         'display_invoice': fields.boolean(string="Display Invoice"),
         'advance_st_line_id': fields.many2one('account.bank.statement.line', string='Advance Statement Line', required=True),
         'currency_id': fields.many2one('res.currency', string='Currency'),
@@ -364,7 +367,10 @@ class wizard_cash_return(osv.osv_memory):
 
     def create(self, cr, uid, values, context=None):
         w_id = super(wizard_cash_return, self).create(cr, uid, values, context=context)
-        if context and 'statement_line_id' in context:
+        if context is None:
+            context = {}
+
+        if 'statement_line_id' in context:
             """"
             UTP-482 if statment line of Operational Advance,
             is linked to a PO, automatically adding PO invoices
@@ -393,6 +399,11 @@ class wizard_cash_return(osv.osv_memory):
                             " Entering a 100% cash return (advance return amount = initial advance amount) you will be able to close this advance without linking it to an invoice."
                         values['comment'] = msg
                     self.write(cr, uid, [w_id], values, context=context)
+
+        context['from_wizard'] = {
+            'model': 'wizard.cash.return',
+            'res_id': w_id,
+        }
         return w_id
 
     def onchange_addl_amount(self, cr, uid, returned_amount, context=None):
@@ -601,20 +612,26 @@ class wizard_cash_return(osv.osv_memory):
             is linked to a PO, automatically adding PO invoices
             (force user to use invoices for this cash return)
             """
-            auto_add = True
             invoice_obj = self.pool.get('account.invoice')
-            invoice = invoice_obj.browse(cr, uid, context['po_op_advance_auto_add_invoice_id'], context)
+            invoice_rec = invoice_obj.browse(cr, uid,
+                context['po_op_advance_auto_add_invoice_id'], context)
             del context['po_op_advance_auto_add_invoice_id']
-            if not invoice:
+            if not invoice_rec:
                 return
+            auto_add = True
+            invoices = [invoice_rec]
         else:
             # default behaviour
+            if not wizard.invoice_ids:
+                return False
             auto_add = False
-            invoice = wizard.invoice_id
-        to_write = {}
+            invoices = wizard.invoice_ids
+
         new_lines = []
-        total = 0.0
-        if invoice:
+        total = wizard.returned_amount or 0.  # reuse current amount when adding new line
+        added_invoice_ids = [
+            wil.invoice_id.id for wil in wizard.invoice_line_ids ]
+        for invoice in invoices:
             # Verify that the invoice is in the same currency as those of the register
             inv_currency = invoice.currency_id.id
             if wizard.advance_st_line_id and wizard.advance_st_line_id.statement_id \
@@ -624,18 +641,10 @@ class wizard_cash_return(osv.osv_memory):
                 st_currency = False
             if st_currency and st_currency != inv_currency:
                 raise osv.except_osv(_('Error'), _('The choosen invoice is not in the same currency as those of the register.'))
-            # Make a list of invoices that have already been added in this wizard
-            if wizard.invoice_line_ids:
-                added_invoices = [x['invoice_id']['id'] for x in wizard.invoice_line_ids]
-            else:
-                added_invoices = []
+
             # Do operations only if our invoice is not in our list
-            if invoice.id not in added_invoices:
-                # Retrieve some variables
-                move_line_obj = self.pool.get('account.move.line')
-                account_id = invoice.account_id.id
+            if invoice.id not in added_invoice_ids:
                 # recompute the total_amount
-                total = wizard.returned_amount or 0
                 if wizard.invoice_line_ids:
                     for line in wizard.invoice_line_ids:
                         total += line.amount
@@ -644,21 +653,30 @@ class wizard_cash_return(osv.osv_memory):
                 partner_id = invoice.partner_id.id or False
                 account_id = invoice.account_id.id or False
                 date = invoice.document_date or False
-                new_lines.append((0, 0, {'document_date': date, 'reference': reference, 'communication': communication, 'partner_id': partner_id, \
-                        'account_id': account_id, 'amount': invoice.residual, 'invoice_id': invoice.id}))
+                line_vals = {
+                    'document_date': date,
+                    'reference': reference,
+                    'communication': communication,
+                    'partner_id': partner_id,
+                    'account_id': account_id,
+                    'amount': invoice.residual,
+                    'invoice_id': invoice.id,
+                }
+                new_lines.append((0, 0, line_vals))
                 # Add amount to total_amount
                 total += invoice.residual
-            # Change display_invoice to True in order to show invoice lines
-            if new_lines:
-                to_write['display_invoice'] = True
-                # Add lines to elements to be written
-                to_write['invoice_line_ids'] = new_lines
-                # Add total_amount to elements to be written
-                to_write['total_amount'] = total
-                # Delete content of invoice_id field
-                to_write['invoice_id'] = False
-                # write changes in the wizard
-                self.write(cr, uid, ids, to_write, context=context)
+            else:
+                raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(invoice.internal_number or '', invoice.residual))
+
+        if new_lines:
+            vals = {
+                # Change display_invoice to True in order to show invoice lines
+                'display_invoice': True,
+                'invoice_line_ids': new_lines,
+                'total_amount': total,
+                'invoice_ids': [(6, 0, [])],  # reset invoices picker
+            }
+            self.write(cr, uid, ids, vals, context=context)
 
         if not auto_add:
             return {
@@ -693,10 +711,16 @@ class wizard_cash_return(osv.osv_memory):
             display_invoice = False
         """
 
-        # Delete links to invoice_line_ids and inform wizard of that
-        self.write(cr, uid, ids, {'display_invoice': display_invoice, 'invoice_line_ids': [(5,)]}, context=context)
+        vals = {
+            'display_invoice': display_invoice,
+            'invoice_ids': [(6, 0, [])] ,  # reset invoices picker
+            'invoice_line_ids': [(5, )],  # reset to import invoices
+        }
+        self.write(cr, uid, ids, vals, context=context)
+
         # Update total amount
         self.compute_total_amount(cr, uid, ids, context=context)
+
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'wizard.cash.return',
@@ -761,6 +785,12 @@ class wizard_cash_return(osv.osv_memory):
         if context is None:
             context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
+
+        # US-672/2
+        self.pool.get('account.invoice').check_accounts_for_partner(cr, uid,
+            ids, context=context,
+            header_obj=self, lines_field='advance_line_ids',
+            line_level_partner_type=True)
 
         advance_settled_100_cash_return = self._is_advance_settled_100_cash_return(wizard)
         if advance_settled_100_cash_return:

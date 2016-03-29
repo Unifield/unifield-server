@@ -1437,22 +1437,22 @@ class FinanceTest(UnifieldTest):
                 "Partner %s not found" % (str(domain), )
             )
             partner_id = partner_id[0]
-            vals['partner_id'] = partner_id
+        vals['partner_id'] = partner_id
 
-            res = ai_obj.onchange_partner_id(
-                False,  # ids
-                itype,  # invoice type
-                partner_id,
-                False,  # date_invoice
-                False,  # payment_term
-                False,  # partner_bank_id
-                False,  # company_id
-                False,  #  is_inkind_donation
-                False,  # is_intermission
-                False,  # is_debit_note
-                False)  # is_direct_invoice
-            if res and res['value']:
-                vals.update(res['value'])
+        res = ai_obj.onchange_partner_id(
+            False,  # ids
+            itype,  # invoice type
+            partner_id,
+            False,  # date_invoice
+            False,  # payment_term
+            False,  # partner_bank_id
+            False,  # company_id
+            False,  #  is_inkind_donation
+            False,  # is_intermission
+            False,  # is_debit_note
+            False)  # is_direct_invoice
+        if res and res['value']:
+            vals.update(res['value'])
 
         if ccy_code:
             # specific ccy instead of partner one
@@ -1474,15 +1474,24 @@ class FinanceTest(UnifieldTest):
 
         # save lines
         if lines_accounts:
-            line_vals = [
-                (0, 0, {
-                    'account_id': self.get_account_from_code(db, a),
-                    'name': FINANCE_TEST_MASK['invoice_line'] % (tag, id, i + 1,
-                        a, ),
-                    'price_unit': float(randrange(1, 10)),
-                    'quantity': float(randrange(10, 100)),
-                }) for i, a in list(enumerate(lines_accounts))
-            ]
+            line_vals = []
+            for i, a in list(enumerate(lines_accounts)):
+                if isinstance(a, (list, tuple)):
+                    acc = a[0]
+                    quantity = 1
+                    price_unit = a[1]
+                else:
+                    acc = a
+                    price_unit = float(randrange(1, 10))
+                    quantity =  float(randrange(10, 100))
+                line_vals.append((0, 0, {
+                        'account_id': self.get_account_from_code(db, acc),
+                        'name': FINANCE_TEST_MASK['invoice_line'] % (tag, id, i + 1,
+                            acc, ),
+                        'price_unit': price_unit,
+                        'quantity': quantity,
+                    }
+                ))
 
             if lines_breakdown_data:
                 for i in lines_breakdown_data:
