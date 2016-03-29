@@ -1197,9 +1197,9 @@ class product_attributes(osv.osv):
 
         if 'heat_sensitive_item' in vals:
             if not vals.get('heat_sensitive_item'):
-                heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, user, 'product_attributes', 'heat_no')[1]
+                heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
                 vals['heat_sensitive_item'] = heat2_id
-            vals.update(self.onchange_heat(cr, user, False, vals['heat_sensitive_item'], context=context).get('value', {}))
+            vals.update(self.onchange_heat(cr, uid, False, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
