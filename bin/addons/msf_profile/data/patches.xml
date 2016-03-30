@@ -25,5 +25,9 @@
             <field name="method">update_volume_patch</field>
         </record>
 
+        <record id="reset_res_partner_default_lang" model="patch.scripts">
+            <field name="method">reset_res_partner_default_lang</field>
+        </record>
+
     </data>
 </openerp>

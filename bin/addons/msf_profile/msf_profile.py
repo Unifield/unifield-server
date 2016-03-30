@@ -51,6 +51,12 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def reset_res_partner_default_lang(self, cr, uid, *a, **b):
+        # to solve the en_US not run problem on partner it is required to
+        # delete the default language on res.partner
+        cr.execute("""DELETE FROM ir_values
+                   WHERE name='lang' AND model='res.partner'""")
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:

@@ -248,6 +248,10 @@ class res_partner(osv.osv):
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'lang': lambda obj, cr, uid, c: obj.pool.get('res.lang').search(cr, uid,
+            [
+                ('translatable', '=', True),
+                ('code', '=', 'en_MF')]) and 'en_MF' or False
     }
 
     def check_pricelists_vals(self, cr, uid, vals, context=None):
