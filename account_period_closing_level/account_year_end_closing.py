@@ -679,7 +679,7 @@ class account_year_end_closing(osv.osv):
 
         # P/L accounts BAL TOTAL in functional ccy
         # date inclusion to have period 0/1-15/16
-        re_account_id = False
+        re_account_rec = False  # default no P&L result
         pl_balance = 0.
         sql = '''select (sum(ml.debit) - sum(ml.credit)) as bal
             from account_move_line ml
@@ -695,16 +695,14 @@ class account_year_end_closing(osv.osv):
             # US-1068: if no result, empty 1 row result is returned bc use of an
             # aggregate function (sum() here)
             row = cr.fetchone()
-            if row[0] is None:
-                return
-            
-            pl_balance = float(row[0])
-            if pl_balance > 0:
-                # debit regular/equity result
-                re_account_rec = cpy_rec.ye_pl_pos_debit_account
-            else:
-                # credit regular/equity result
-                re_account_rec = cpy_rec.ye_pl_ne_credit_account
+            if row[0] is not None:
+                pl_balance = float(row[0])
+                if pl_balance > 0:
+                    # debit regular/equity result
+                    re_account_rec = cpy_rec.ye_pl_pos_debit_account
+                else:
+                    # credit regular/equity result
+                    re_account_rec = cpy_rec.ye_pl_ne_credit_account
 
         # compute B/S balance in BOOKING breakdown in BOOKING/account
         # date inclusion to have periods 0/1-15/16
@@ -746,20 +744,21 @@ class account_year_end_closing(osv.osv):
                 account_id=account_id, account_code=account_code,
                 balance_currency=balance_currency, balance=balance, je_id=je_id)
 
-        # Regular/Equity account result entry for P&L
-        # => invert balance amount to debit or credit amount after account dispatch
-        je_id = je_by_acc_ccy.get(
-            (re_account_rec.id, cpy_rec.currency_id.id, ), False)
-        if not je_id:
-            je_id = create_journal_entry(ccy_id=ccy_id,
+        if re_account_rec:
+            # Regular/Equity account result entry for P&L
+            # => invert balance amount to debit or credit amount after account dispatch
+            je_id = je_by_acc_ccy.get(
+                (re_account_rec.id, cpy_rec.currency_id.id, ), False)
+            if not je_id:
+                je_id = create_journal_entry(ccy_id=ccy_id,
+                    ccy_code=cpy_rec.currency_id.name,
+                    account_id=re_account_rec.id,
+                    account_code=re_account_rec.code)
+            create_journal_item(ccy_id=cpy_rec.currency_id.id,
                 ccy_code=cpy_rec.currency_id.name,
-                account_id=re_account_rec.id,
-                account_code=re_account_rec.code)
-        create_journal_item(ccy_id=cpy_rec.currency_id.id,
-            ccy_code=cpy_rec.currency_id.name,
-            account_id=re_account_rec.id, account_code=re_account_rec.code,
-            balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
-            name="P&L Result report / Previous Fiscal Year")
+                account_id=re_account_rec.id, account_code=re_account_rec.code,
+                balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
+                name="P&L Result report / Previous Fiscal Year")
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
         def hq_close_post_entries(period_ids):
