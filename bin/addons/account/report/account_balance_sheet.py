@@ -79,21 +79,11 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
     def sum_dr(self):
         if self.res_bl['type'] == _('Net Profit'):
             self.result_sum_dr += self.res_bl['balance']*-1
-        '''if self._deduce_accounts_data and self._deduce_accounts_data['debit']:
-            if self.result_sum_dr < 0:
-                self.result_sum_dr += self._deduce_accounts_data['debit']
-            else:
-                self.result_sum_dr -= self._deduce_accounts_data['debit']'''
         return self.result_sum_dr
 
     def sum_cr(self):
         if self.res_bl['type'] == _('Net Loss'):
             self.result_sum_cr += self.res_bl['balance']
-        '''if self._deduce_accounts_data and self._deduce_accounts_data['credit']:
-            if self.result_sum_cr < 0:
-                self.result_sum_cr += self._deduce_accounts_data['credit']
-            else:
-                self.result_sum_cr -= self._deduce_accounts_data['credit']'''
         return self.result_sum_cr
 
     def get_pl_balance(self):
@@ -134,9 +124,6 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         account_id = data['form'].get('chart_account_id', False)
         account_ids = account_pool._get_children_and_consol(cr, uid, account_id, context=ctx)
         accounts = account_pool.browse(cr, uid, account_ids, context=ctx)
-        
-        # US-227/6: accounts 8*, 9* are not displayed:
-        '''self._deduce_accounts_data = { 'debit': 0., 'credit': 0., }'''
 
         if not self.res_bl:
             self.res_bl['type'] = _('Net Profit')
@@ -219,22 +206,8 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
                     if typ == 'liability' and account.type <> 'view' and (account.debit <> account.credit):
                         self.result_sum_dr += account.balance
-                        '''if account.code.startswith('8') \
-                            or account.code.startswith('9'):
-                                # US-227/6: accounts 8*, 9* are not displayed
-                                self._deduce_accounts_data['debit'] += account.balance
-                                continue'''
                     if typ == 'asset' and account.type <> 'view' and (account.debit <> account.credit):
                         self.result_sum_cr += account.balance
-                        '''if account.code.startswith('8') \
-                            or account.code.startswith('9'):
-                                # US-227/6: accounts 8*, 9* are not displayed
-                                self._deduce_accounts_data['credit'] += account.balance
-                                continue'''
-                    '''if account.code.startswith('8') \
-                        or account.code.startswith('9'):
-                            # US-227/6: accounts 8*, 9* are not displayed
-                            continue'''
                     if data['form']['display_account'] == 'bal_movement':
                         if (not currency_pool.is_zero(self.cr, self.uid, currency, account.credit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.debit)) or (not currency_pool.is_zero(self.cr, self.uid, currency, account.balance)):
                             accounts_temp.append(account_dict)
