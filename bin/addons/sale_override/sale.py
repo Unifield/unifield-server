@@ -193,6 +193,7 @@ class sale_order_sourcing_progress(osv.osv):
         order_obj = self.pool.get('sale.order')
         sol_obj = self.pool.get('sale.order.line')
         src_doc_obj = self.pool.get('procurement.request.sourcing.document')
+        src_doc_mem = self.pool.get('procurement.request.sourcing.document.mem')
 
         if context is None:
             context = {}
@@ -223,19 +224,43 @@ class sale_order_sourcing_progress(osv.osv):
             ('order_id', 'in', order_ids),
         ], count=True, order='NO_ORDER', context=context)
 
-        # Get number of sourced lines by type (MTS or MTO) 
-        cr.execute('''
-            SELECT count(*) AS nb_line, sol.type AS type
-            FROM sale_order_line sol
-                LEFT JOIN sale_line_sourcing_doc_rel slsdr
-                ON slsdr.sale_line_id = sol.id
-            WHERE
-                slsdr.document_id IN %s
-            GROUP BY sol.type
-        ''', (tuple(src_doc_ids),))
-        res = cr.dictfetchall()
         mem_fsl_nb = 0
         mem_ool_nb = 0
+
+        mem_sol_ids = []
+        src_doc_mem_ids = src_doc_mem.search(cr, uid, [
+            ('order_id', 'in', order_ids),
+        ], context=context)
+        for mem_doc in src_doc_mem.browse(cr, uid, src_doc_mem_ids, context=context):
+            for l in mem_doc.sourcing_lines:
+                if l.id not in mem_sol_ids:
+                    mem_sol_ids.append(l.id)
+                    if l.type == 'make_to_stock':
+                        mem_fsl_nb += 1
+                    elif l.type == 'make_to_order':
+                        mem_ool_nb += 1
+
+        # Get number of sourced lines by type (MTS or MTO)
+        res = []
+        if src_doc_ids:
+            where_sql = ''
+            where_params = [tuple(src_doc_ids)]
+            if mem_sol_ids:
+                where_sql = ' AND sol.id NOT IN %s'
+                where_params.append(tuple(mem_sol_ids))
+            sql = '''
+                SELECT count(*) AS nb_line, sol.type AS type
+                FROM sale_order_line sol
+                    LEFT JOIN sale_line_sourcing_doc_rel slsdr
+                    ON slsdr.sale_line_id = sol.id
+                WHERE
+                    slsdr.document_id IN %%s
+                    %s
+                GROUP BY sol.type
+            ''' % where_sql
+            cr.execute(sql, where_params)
+            res = cr.dictfetchall()
+
         for r in res:
             if r.get('type') == 'make_to_stock':
                 mem_fsl_nb += r.get('nb_line', 0)

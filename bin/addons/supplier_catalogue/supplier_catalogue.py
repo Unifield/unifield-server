@@ -1012,6 +1012,26 @@ class supplier_catalogue_line(osv.osv):
 
         return res
 
+    def change_soq_quantity(self, cr, uid, ids, soq, uom_id, context=None):
+        """
+        When the SoQ quantity is changed, check if the new quantity is consistent
+        with rounding value of the UoM of the catalogue line.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.product on which the SoQ quantity is changed
+        :param soq: New value for SoQ Quantity
+        :param uom_id: ID of the product.uom linked to the product
+        :param context: Context of the call
+        :return: A dictionary that contains a warning message and the SoQ quantity
+        rounded with the UoM rounding value
+        """
+        res = self.pool.get('product.product').change_soq_quantity(cr, uid, [], soq, uom_id, context=context)
+
+        if res.get('value', {}).get('soq_quantity', False):
+            res['value']['rounding'] = res['value'].pop('soq_quantity')
+
+        return res
+
     def onChangeSearchNomenclature(self, cr, uid, line_id, position, line_type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
         Method to fill nomenclature fields in search view

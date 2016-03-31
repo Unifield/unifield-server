@@ -162,6 +162,8 @@ class procurement_request_sourcing_document(osv.osv):
         """
         Check if a same record already exist. If not, create a new record.
         """
+        mem_obj = self.pool.get('procurement.request.sourcing.document.mem')
+
         if context is None:
             context = {}
 
@@ -183,6 +185,7 @@ class procurement_request_sourcing_document(osv.osv):
             if vals.get('line_ids'):
                 create_data['sourcing_lines'] = [(6, 0, (vals.get('line_ids'),))]
             self.create(cr, uid, create_data, context=context)
+            mem_obj.create(cr, uid, create_data, context=context)
         elif vals.get('line_ids'):
             for chk in self.browse(cr, uid, chk_ids, context=context):
                 sourcing_lines = [vals.get('line_ids')]
@@ -198,9 +201,19 @@ class procurement_request_sourcing_document(osv.osv):
                 'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
 
+        if self._name != 'procurement.request.sourcing.document.mem':
+            mem_obj.chk_create(cr, uid, vals, context=context)
+
         return True
 
 procurement_request_sourcing_document()
+
+
+class procurement_request_sourcing_document_mem(osv.osv_memory):
+    _name = 'procurement.request.sourcing.document.mem'
+    _inherit = 'procurement.request.sourcing.document'
+
+procurement_request_sourcing_document_mem()
 
 
 class procurement_request(osv.osv):
