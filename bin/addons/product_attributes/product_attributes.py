@@ -1114,6 +1114,39 @@ class product_attributes(osv.osv):
 #        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
 #    ]
 
+    def change_soq_quantity(self, cr, uid, ids, soq, uom_id, context=None):
+        """
+        When the SoQ quantity is changed, check if the new quantity is consistent
+        with rounding value of the product UoM
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.product on which the SoQ quantity is changed
+        :param soq: New value for SoQ Quantity
+        :param uom_id: ID of the product.uom linked to the product
+        :param context: Context of the call
+        :return: A dictionary that contains a warning message and the SoQ quantity
+                 rounded with the UoM rounding value
+        """
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if not soq or not uom_id:
+            return {}
+
+        res = {}
+        rd_soq = uom_obj._compute_qty(cr, uid, uom_id, soq, uom_id)
+        if rd_soq != soq:
+            res['warning'] = {
+                'title': _('Warning'),
+                'message': _('''SoQ quantity value (%s) is not consistent with UoM rounding value.
+                The SoQ quantity has been automatically rounded to consistent value (%s)''') % (soq, rd_soq),
+            }
+
+        res['value'] = {'soq_quantity': rd_soq}
+        return res
+
     def _on_change_restriction_error(self, cr, uid, ids, *args, **kwargs):
         '''
         Update the message on on_change of product
