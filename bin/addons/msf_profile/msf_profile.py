@@ -127,10 +127,10 @@ class patch_scripts(osv.osv):
                 # change sdref ZMW to base_ZMW
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='base_ZMW' "
-                           "WHERE sdref='base_ZMK'")
+                           "WHERE sdref='base_ZMK' AND sent='f'")
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
-                           "WHERE sdref='ZMK'")
+                           "WHERE sdref='ZMK' AND sent='f'")
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
