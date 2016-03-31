@@ -1214,6 +1214,14 @@ class product_attributes(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1252,6 +1260,22 @@ class product_attributes(osv.osv):
                 heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
+
+        if context.get('sync_update_execution') and not context.get('bypass_sync_update', False):
+#            stopped_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
+#            phase_out_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
+            if vals.get('active', None) is False:
+                if self.deactivate_product(cr, uid, ids, context=context) is not True:
+                    vals.update({
+                        'active': True,
+#                        'state': stopped_status,
+                    })
+#            elif vals.get('active', None) is True and vals.get('state') == stopped_status:
+            elif vals.get('active', None) is True:
+                vals.update({
+                    'active': True,
+#                    'state': phase_out_status,
+                })
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1295,6 +1319,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1528,6 +1553,13 @@ class product_attributes(osv.osv):
                                                         'doc_ref': invoice.invoice_id.number,
                                                         'doc_id': invoice.invoice_id.id}, context=context)
 
+                if context.get('sync_update_execution', False):
+                    context['bypass_sync_update'] = True
+                self.write(cr, uid, product.id, {
+                    'active': True,
+#                    'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1],
+                }, context=context)
+
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
                         'view_type': 'form',
@@ -1573,6 +1605,8 @@ class product_attributes(osv.osv):
                 orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
                     context=context)
 
+        if context.get('sync_update_execution', False):
+            context['bypass_sync_update'] = True
         self.write(cr, uid, ids, {'active': False}, context=context)
 
         return True
