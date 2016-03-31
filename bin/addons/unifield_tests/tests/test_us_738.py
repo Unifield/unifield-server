@@ -71,6 +71,17 @@ class US738Test(ResourcingTest, FinanceTest):
             self.proc_in_obj.copy_all([proc_id])
         self.proc_in_obj.do_incoming_shipment([proc_id])
 
+    def import_invoice(self, invoice, register_id):
+        '''
+        Import the SI in the register, and hardpost
+        '''
+        account_move = invoice.move_id
+        aml_ids = self.aml_obj.search([('move_id', '=', account_move.id), ('ready_for_import_in_register', '=', True)])
+        wiz_id = self.import_inv.create({'statement_id': register_id, 'line_ids': [(6, 0, aml_ids)]})
+        self.import_inv.single_import([wiz_id], {})
+        statement_line_id = self.import_inv.action_confirm([wiz_id]).get('st_line_ids')
+        self.absl_obj.posting(statement_line_id, 'hard')
+
     def test_uc1(self):
         """
         USE CASE N°1
@@ -195,12 +206,106 @@ class US738Test(ResourcingTest, FinanceTest):
                           msg="The residual amount isn't correct (%s instead of 50)" % second_inv.residual)
 
         # import SI in register and hard post
-        account_move = second_inv.move_id
-        aml_ids = self.aml_obj.search([('move_id', '=', account_move.id), ('ready_for_import_in_register', '=', True)])
-        wiz_id = self.import_inv.create({'statement_id': register_id, 'line_ids': [(6, 0, aml_ids)]})
-        self.import_inv.single_import([wiz_id], {})
-        statement_line_id = self.import_inv.action_confirm([wiz_id]).get('st_line_ids')
-        self.absl_obj.posting(statement_line_id, 'hard')
+        self.import_invoice(second_inv, register_id)
+
+        # SI must be paid and PO invoiced
+        second_inv = self.acc_inv_obj.browse(second_inv_id)
+        self.assertEquals(second_inv.state, 'paid', msg="The second invoice isn't paid")
+        po = self.po_obj.browse(po_id)
+        self.assertTrue(po.invoiced, "The PO isn't invoiced")
+
+    def test_uc4(self):
+        '''
+        USE CASE N°4
+        PO amount 100
+        DP OUT amount 50
+        DP IN amount 20
+        Process all IN
+        Validate SI: residual must be 70
+        Import SI in register, hard post: SI must be paid and PO invoiced
+        '''
+        # Create, validate and confirm the PO
+        self.used_db = self.db
+        po_id = ResourcingTest.create_po_from_scratch(self)
+        po = self.po_obj.browse(po_id)
+        self.create_order_line(po_id)  # amount 100
+        self._validate_po(self.db, [po_id])
+        self._confirm_po(self.db, [po_id])
+
+        # create the bank register
+        register_id = self.create_and_open_bank_register()
+
+        # create and hardpost a DP OUT 50, and a DP IN 20
+        self.create_and_hard_post_downpayment(register_id, po_id, -50.00)
+        self.create_and_hard_post_downpayment(register_id, po_id, 20.00)
+
+        # process all IN
+        self.process_incoming_shipment(po_id)
+
+        # validate the invoice, and check the residual amount
+        inv_id = self.acc_inv_obj.search([('origin', 'like', '%' + po.name), ('state', '=', 'draft')])[0]
+        FinanceTest.invoice_validate(self, self.db, inv_id)
+        inv = self.acc_inv_obj.browse(inv_id)
+        self.assertEquals(inv.residual, 70.0,
+                          msg="The residual amount isn't correct (%s instead of 70)" % inv.residual)
+
+        # import SI in register and hard post
+        self.import_invoice(inv, register_id)
+
+        # SI must be paid and PO invoiced
+        inv = self.acc_inv_obj.browse(inv_id)
+        self.assertEquals(inv.state, 'paid', msg="The invoice isn't paid")
+        po = self.po_obj.browse(po_id)
+        self.assertTrue(po.invoiced, "The PO isn't invoiced")
+
+    def test_uc5(self):
+        """
+        USE CASE N°5
+        PO amount 100
+        DP OUT amount 50
+        DP IN amount 20
+        Process partial IN: 30
+        Validate SI: SI must be paid
+        Process remaining IN
+        Validate SI: residual must be 70
+        Import SI in register, hard post: SI must be paid and PO invoiced
+        """
+        # Create, validate and confirm the PO
+        self.used_db = self.db
+        po_id = ResourcingTest.create_po_from_scratch(self)
+        po = self.po_obj.browse(po_id)
+        self.create_order_line(po_id)  # amount 100
+        self._validate_po(self.db, [po_id])
+        self._confirm_po(self.db, [po_id])
+
+        # create the bank register
+        register_id = self.create_and_open_bank_register()
+
+        # create and hardpost a DP OUT 50, and a DP IN 20
+        self.create_and_hard_post_downpayment(register_id, po_id, -50.00)
+        self.create_and_hard_post_downpayment(register_id, po_id, 20.00)
+
+        # process partial IN: amount 30
+        self.process_incoming_shipment(po_id, True, 3)
+
+        # validate the invoice: the invoice must be paid
+        inv_id = self.acc_inv_obj.search([('origin', 'like', '%' + po.name), ('state', '=', 'draft')])[0]
+        FinanceTest.invoice_validate(self, self.db, inv_id)
+        inv = self.acc_inv_obj.browse(inv_id)
+        self.assertEquals(inv.state, 'paid', msg="The first invoice isn't paid")
+
+        # process remaining IN
+        self.process_incoming_shipment(po_id)
+
+        # validate the second SI, and check the residual amount
+        second_inv_id = self.acc_inv_obj.search([('origin', 'like', '%' + po.name), ('state', '=', 'draft')])[0]
+        FinanceTest.invoice_validate(self, self.db, second_inv_id)
+        second_inv = self.acc_inv_obj.browse(second_inv_id)
+        self.assertEquals(second_inv.residual, 70.0,
+                          msg="The residual amount isn't correct (%s instead of 70)" % second_inv.residual)
+
+        # import SI in register and hard post
+        self.import_invoice(second_inv, register_id)
 
         # SI must be paid and PO invoiced
         second_inv = self.acc_inv_obj.browse(second_inv_id)
