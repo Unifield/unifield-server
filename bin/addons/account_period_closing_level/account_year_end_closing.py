@@ -406,11 +406,11 @@ class account_year_end_closing(osv.osv):
             inner join account_account a on a.id = ml.account_id
             inner join res_currency c on c.id = ml.currency_id
             where ml.instance_id in %s and a.include_in_yearly_move = 't'
-            and ml.date >= '%s' and ml.date <= '%s' and m.period_id != %d
+            and ml.date >= %s and ml.date <= %s and m.period_id != %s
             group by ml.account_id, ml.currency_id
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop,
-            period_id)
-        cr.execute(sql)
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, period_id, ))
         if not cr.rowcount:
             return
 
@@ -544,13 +544,19 @@ class account_year_end_closing(osv.osv):
             inner join account_account_type t on t.id = a.user_type
             where ml.instance_id in %s
             and t.report_type in ('income', 'expense')
-            and ml.date >= '%s' and ml.date <= '%s'
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
-        cr.execute(sql)
+            and ml.date >= %s and ml.date <= %s
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, ))
         if not cr.rowcount:
             return
-
-        balance = float(cr.fetchone()[0])
+        # US-1068: if no result, empty 1 row result is returned bc use of an
+        # aggregate function (sum() here)
+        row = cr.fetchone()
+        if row[0] is None:
+            return
+        
+        balance = float(row[0])
         if balance > 0:  # debit balance
             account = cpy_rec.ye_pl_pos_credit_account  # Credit Account for P&L>0 (Income account)
             cp_account = cpy_rec.ye_pl_pos_debit_account  # Debit Account for P&L>0 (B/S account)
@@ -673,7 +679,7 @@ class account_year_end_closing(osv.osv):
 
         # P/L accounts BAL TOTAL in functional ccy
         # date inclusion to have period 0/1-15/16
-        re_account_id = False
+        re_account_rec = False  # default no P&L result
         pl_balance = 0.
         sql = '''select (sum(ml.debit) - sum(ml.credit)) as bal
             from account_move_line ml
@@ -681,17 +687,22 @@ class account_year_end_closing(osv.osv):
             inner join account_account_type t on t.id = a.user_type
             where ml.instance_id in %s
             and t.report_type in ('income', 'expense')
-            and ml.date >= '%s' and ml.date <= '%s'
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
-        cr.execute(sql)
+            and ml.date >= %s and ml.date <= %s
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, ))
         if cr.rowcount:
-            pl_balance = float(cr.fetchone()[0])
-            if pl_balance > 0:
-                # debit regular/equity result
-                re_account_rec = cpy_rec.ye_pl_pos_debit_account
-            else:
-                # credit regular/equity result
-                re_account_rec = cpy_rec.ye_pl_ne_credit_account
+            # US-1068: if no result, empty 1 row result is returned bc use of an
+            # aggregate function (sum() here)
+            row = cr.fetchone()
+            if row[0] is not None:
+                pl_balance = float(row[0])
+                if pl_balance > 0:
+                    # debit regular/equity result
+                    re_account_rec = cpy_rec.ye_pl_pos_debit_account
+                else:
+                    # credit regular/equity result
+                    re_account_rec = cpy_rec.ye_pl_ne_credit_account
 
         # compute B/S balance in BOOKING breakdown in BOOKING/account
         # date inclusion to have periods 0/1-15/16
@@ -706,10 +717,11 @@ class account_year_end_closing(osv.osv):
             inner join res_currency c on c.id = ml.currency_id
             where ml.instance_id in %s
             and t.report_type in ('asset', 'liability')
-            and ml.date >= '%s' and ml.date <= '%s'
+            and ml.date >= %s and ml.date <= %s
             group by ml.account_id, ml.currency_id
-        ''' % (tuple(instance_ids), fy_rec.date_start, fy_rec.date_stop, )
-        cr.execute(sql)
+        '''
+        cr.execute(sql, (tuple(instance_ids), fy_rec.date_start,
+            fy_rec.date_stop, ))
         if not cr.rowcount:
             return
 
@@ -732,20 +744,21 @@ class account_year_end_closing(osv.osv):
                 account_id=account_id, account_code=account_code,
                 balance_currency=balance_currency, balance=balance, je_id=je_id)
 
-        # Regular/Equity account result entry for P&L
-        # => invert balance amount to debit or credit amount after account dispatch
-        je_id = je_by_acc_ccy.get(
-            (re_account_rec.id, cpy_rec.currency_id.id, ), False)
-        if not je_id:
-            je_id = create_journal_entry(ccy_id=ccy_id,
+        if re_account_rec:
+            # Regular/Equity account result entry for P&L
+            # => invert balance amount to debit or credit amount after account dispatch
+            je_id = je_by_acc_ccy.get(
+                (re_account_rec.id, cpy_rec.currency_id.id, ), False)
+            if not je_id:
+                je_id = create_journal_entry(ccy_id=ccy_id,
+                    ccy_code=cpy_rec.currency_id.name,
+                    account_id=re_account_rec.id,
+                    account_code=re_account_rec.code)
+            create_journal_item(ccy_id=cpy_rec.currency_id.id,
                 ccy_code=cpy_rec.currency_id.name,
-                account_id=re_account_rec.id,
-                account_code=re_account_rec.code)
-        create_journal_item(ccy_id=cpy_rec.currency_id.id,
-            ccy_code=cpy_rec.currency_id.name,
-            account_id=re_account_rec.id, account_code=re_account_rec.code,
-            balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
-            name="P&L Result report / Previous Fiscal Year")
+                account_id=re_account_rec.id, account_code=re_account_rec.code,
+                balance_currency=pl_balance, balance=pl_balance, je_id=je_id,
+                name="P&L Result report / Previous Fiscal Year")
 
     def update_fy_state(self, cr, uid, fy_id, reopen=False, context=None):
         def hq_close_post_entries(period_ids):
