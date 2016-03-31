@@ -190,7 +190,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_line_balance': self._get_line_balance,
             'currency_conv': self._currency_conv,
             'get_prop_instances': self._get_prop_instances,
-            'get_currencies': self.get_currencies,
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
@@ -239,122 +238,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if 'all_journals' in data['form']:
             return _('All Journals')
         return ', '.join(self._get_journal(data))
-
-    def get_currencies(self, account=False, include_with_ib=False):
-        res = []
-
-        sql = """
-            SELECT DISTINCT(l.currency_id)
-            FROM account_move_line AS l
-            WHERE %s
-        """ % (self.query)
-        if account:
-            sql += " and l.account_id=%d" % (account.id, )
-        self.cr.execute(sql)
-        rows = self.cr.fetchall() or []
-
-        if include_with_ib and self.init_balance:
-            sql = """
-                SELECT DISTINCT(l.currency_id)
-                FROM account_move_line AS l
-            WHERE %s
-            """ % (self.init_query)
-            if account:
-                sql += " and l.account_id=%d" % (account.id, )
-            self.cr.execute(sql)
-            ib_rows = self.cr.fetchall() or []
-            if ib_rows:
-                rows += ib_rows
-                rows = list(set(rows))
-
-        if rows:
-            rc_obj = self.pool.get('res.currency')
-            ordered_ids = rc_obj.search(self.cr, self.uid, [
-                ('id', 'in', [ r[0] for r in rows ]),
-            ], order='name')
-            res = rc_obj.browse(self.cr, self.uid, ordered_ids)
-
-        return res
-
-    def get_currencies_account_subtotals(self, account):
-        ccy_brs = self.get_currencies(account=account, include_with_ib=True)
-        res = []
-
-        if ccy_brs:
-            for ccy in ccy_brs:
-                line = {
-                    'account_code': account and account.code or '',
-                    'ccy_name': ccy.name or ccy.code or '',
-                    'debit': self._sum_debit_account(account, ccy=ccy,
-                        booking=True, is_sub_total=True),
-                    'credit': self._sum_credit_account(account, ccy=ccy,
-                        booking=True, is_sub_total=True),
-                    'bal': self._sum_balance_account(account, ccy=ccy,
-                        booking=True, is_sub_total=True),
-                }
-                # append the line if amount (and compute functional bal)
-                if line['debit'] or line['credit'] or line['bal']:
-                    line['bal_func'] = self._sum_balance_account(account,
-                        ccy=ccy, booking=False, is_sub_total=True),
-                    res.append(line)
-        return res
-
-    def get_children_accounts(self, account, ccy=False):
-        res = []
-        currency_obj = self.pool.get('res.currency')
-         
-        ids_acc = self.pool.get('account.account')._get_children_and_consol(self.cr, self.uid, account.id)
-        currency = account.currency_id and account.currency_id or account.company_id.currency_id
-        for child_account in self.pool.get('account.account').browse(self.cr, self.uid, ids_acc, context=self.context):
-            if child_account.code.startswith('8') or child_account.code.startswith('9'):
-                # UF-1714: exclude accounts '8*'/'9*'
-                continue
-            if self.account_report_types:
-                # filter by B/S P&L report type
-                if child_account.user_type \
-                    and child_account.user_type.report_type:
-                    do_filtering = True
-                    if 'asset' in self.account_report_types \
-                        or 'liability' in self.account_report_types:
-                        if child_account.user_type \
-                            and child_account.user_type.code == 'tax':
-                            # since US-227/7.1 we display tax account when
-                            # BS acccounts are asked
-                            do_filtering = False
-                    if do_filtering and child_account.user_type.report_type \
-                        not in self.account_report_types:
-                        continue
-            if self.unreconciled_filter:
-                if child_account.id in self.unreconciliable_accounts:
-                    # unreconciliable filter:
-                    # do not display unreciliable account
-                    continue
-            if self.account_ids and child_account.id not in self.account_ids:
-                    continue  # filtered account
-
-            sql = """
-                SELECT count(id)
-                FROM account_move_line AS l
-                WHERE %s AND l.account_id = %%s
-            """ % (self.query)
-            if ccy:
-                sql += " and l.currency_id = %d" % (ccy.id, )
-            self.cr.execute(sql, (child_account.id,))
-            num_entry = self.cr.fetchone()[0] or 0
-            sold_account = self._sum_balance_account(child_account)
-            self.sold_accounts[child_account.id] = sold_account
-            if self.display_account == 'bal_movement':
-                if child_account.type != 'view' and num_entry <> 0:
-                    res.append(child_account)
-            elif self.display_account == 'bal_solde':
-                if child_account.type != 'view' and num_entry <> 0:
-                    if not currency_obj.is_zero(self.cr, self.uid, currency, sold_account):
-                        res.append(child_account)
-            else:
-                if not ccy or (ccy and num_entry > 0):
-                    res.append(child_account)
-
-        return res or [account]
 
     def lines(self, node, initial_balance_mode=False):
         res = []
