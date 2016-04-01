@@ -468,6 +468,28 @@ class patch_scripts(osv.osv):
                 if res_id:
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
         return True
+
+    def clean_far_lines(self, cr, uid, *a, **b):
+        '''
+        US-1148: generate updates for valid FAR lines:
+            ie: not for is_keep_cool and prodlot_ids on product
+        '''
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+        if level_current == 'section':
+            cr.execute('''update ir_model_data set
+                last_modification=NOW(),
+                touched='[''field_name'']'
+                where
+                module='sd' and
+                model='msf_field_access_rights.field_access_rule_line' and
+                res_id not in (select id from msf_field_access_rights_field_access_rule_line where field_name in ('prodlot_ids', 'is_keep_cool'))
+                ''')
 patch_scripts()
 
 
