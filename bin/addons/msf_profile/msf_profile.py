@@ -63,13 +63,13 @@ class patch_scripts(osv.osv):
             day_count = 120
             cr.execute("""DELETE FROM sync_client_update_received
                        WHERE create_date < CURRENT_DATE - integer '%s' AND
-                       execution_date IS NOT NULL AND run='t'""", %s day_count)
+                       execution_date IS NOT NULL AND run='t'""" % day_count)
 
         if self.pool.get('sync.client.update_to_send'):
             # delete old update_to_send
             cr.execute("""DELETE FROM sync_client_update_to_send
             WHERE create_date < CURRENT_DATE - integer '%s'
-            AND sent_date IS NOT NULL""", %s day_count)
+            AND sent_date IS NOT NULL""" % day_count)
 
 
     def us_898_patch(self, cr, uid, *a, **b):
