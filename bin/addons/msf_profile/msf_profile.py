@@ -52,14 +52,24 @@ class patch_scripts(osv.osv):
             self.write(cr, uid, [ps['id']], {'run': True})
 
     def us_790_patch(self, cr, uid, *a, **b):
+        '''
+        This patch will remove all update received that are older than
+        day_count and that have already been executed and run='t'
+        And all update to send that have already been sent (and older than
+        day_count)
+        '''
         if self.pool.get('sync.client.update_received'):
-            # delete old update received
+            # remove updates olders than day_count matching the criteria
+            day_count = 120
             cr.execute("""DELETE FROM sync_client_update_received
-            WHERE create_date < '2016-01-01' AND execution_date IS NOT NULL""")
+                       WHERE create_date < CURRENT_DATE - integer '%s' AND
+                       execution_date IS NOT NULL AND run='t'""", %s day_count)
 
+        if self.pool.get('sync.client.update_to_send'):
             # delete old update_to_send
             cr.execute("""DELETE FROM sync_client_update_to_send
-            WHERE create_date < '2016-01-01' AND sent_date IS NOT NULL""")
+            WHERE create_date < CURRENT_DATE - integer '%s'
+            AND sent_date IS NOT NULL""", %s day_count)
 
 
     def us_898_patch(self, cr, uid, *a, **b):
