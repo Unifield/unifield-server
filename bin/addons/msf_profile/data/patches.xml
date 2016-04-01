@@ -25,8 +25,8 @@
             <field name="method">update_volume_patch</field>
         </record>
 
-        <record id="clean_far_lines" model="patch.scripts">
-            <field name="method">clean_far_lines</field>
+        <record id="clean_far_updates" model="patch.scripts">
+            <field name="method">clean_far_updates</field>
         </record>
 
     </data>

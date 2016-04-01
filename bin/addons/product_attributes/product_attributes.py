@@ -913,11 +913,6 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'prodlot_ids': fields.one2many(
-            'stock.production.lot',
-            'product_id',
-            string='Batch Numbers',
-        ),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
