@@ -44,14 +44,11 @@ def check_validated(f):
         if not entity.hardware_id or entity.hardware_id != hw_id:
             logging.getLogger('sync.server').warn('Hardware id mismatch: instance %s, db hw_id: %s, hw_id sent: %s' % (entity.name, entity.hardware_id, hw_id))
             return (False, 'Error 17: Authentification Failed, please contact the support')
-        if entity.state == 'updated':
-            return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
         if not entity.state == 'validated':
-            return (False, "The instance has not yet been validated by its parent")
+            return (False, "The instance has not yet been validated on the SYNC_SERVER")
         if not entity.user_id.id == int(uid):
             return (False, "You are not supposed to use this user to connect to the synchronization server")
         return f(self, cr, uid, entity, *args, **kargs)
-        
     return check
 
 class entity_group0(osv.osv):
