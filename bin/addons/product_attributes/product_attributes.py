@@ -622,6 +622,13 @@ class product_attributes(osv.osv):
 
         return res
 
+    def do_not_migrate(self, cr, ids):
+        """
+        Don't compute this fields.function because values are already set with execute_migration method
+        and patch.
+        """
+        return True
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -638,6 +645,7 @@ class product_attributes(osv.osv):
         'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
         'is_ssl': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is Short Shelf Life ?',
@@ -649,6 +657,7 @@ class product_attributes(osv.osv):
         ),
         'ssl_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -695,6 +704,7 @@ class product_attributes(osv.osv):
 
         'is_kc': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is Keep Cool ?',
@@ -706,6 +716,7 @@ class product_attributes(osv.osv):
         ),
         'kc_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -766,6 +777,7 @@ class product_attributes(osv.osv):
         ),
         'is_dg': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is a Dangerous Goods ?',
@@ -777,6 +789,7 @@ class product_attributes(osv.osv):
         ),
         'dg_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -839,6 +852,7 @@ class product_attributes(osv.osv):
         ),
         'is_cs': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is Controlled subst.',
@@ -850,6 +864,7 @@ class product_attributes(osv.osv):
         ),
         'cs_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
