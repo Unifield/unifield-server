@@ -26,6 +26,8 @@ from osv.orm import except_orm
 import tools
 
 class ir_attachment(osv.osv):
+    _order = 'create_date DESC'
+
     def check(self, cr, uid, ids, mode, context=None, values=None):
         """Restricts the access to an ir.attachment, according to referred model
         In the 'document' module, it is overriden to relax this hard rule, since
@@ -122,8 +124,8 @@ class ir_attachment(osv.osv):
 
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
-        if 'datas' in vals:
-            vals['size']=self.get_size(vals['datas'])
+        if 'datas' in values:
+            values['size']=self.get_size(values['datas'])
         return super(ir_attachment, self).create(cr, uid, values, context)
 
     def action_get(self, cr, uid, context=None):
