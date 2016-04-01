@@ -112,11 +112,12 @@ class analytic_distribution_wizard(osv.osv_memory):
         ana_obj = self.pool.get('account.analytic.line')
         period_obj = self.pool.get('account.period')
         aa_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%distrib_line_id), ('is_reversal', '=', False), ('is_reallocated', '=', False)], context=context)
+        closed = []
         if aa_ids:
             for ana in ana_obj.browse(cr, uid, aa_ids, context=context):
                 if ana.period_id and ana.period_id.state in ('done', 'mission-closed'):
-                    return True
-        return False
+                    closed.append(ana.id)
+        return closed
 
     def do_analytic_distribution_changes(self, cr, uid, wizard_id, distrib_id, context=None):
         """
@@ -249,9 +250,12 @@ class analytic_distribution_wizard(osv.osv_memory):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
-            if self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id):
+            to_reverse_ids = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id)
+            if to_reverse_ids:
                 # reverse the line
-                to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
+                #to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
+                if period.state != 'draft':
+                    raise osv.except_osv(_('Error'), _('Period (%s) is not open.') % (period.name,))
                 reversed_ids = ana_obj.reverse(cr, uid, to_reverse_ids, posting_date=wizard.date)
                 # Set initial lines as non correctible
                 ana_obj.write(cr, uid, to_reverse_ids, {'is_reallocated': True})
@@ -267,7 +271,7 @@ class analytic_distribution_wizard(osv.osv_memory):
 
         keep_seq_and_corrected = False
         period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
-        if period_closed and to_create and to_override + to_delete:
+        if period_closed and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
                 for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id']):
