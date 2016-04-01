@@ -46,17 +46,6 @@ def print_file_and_screen(string):
     if PRINT_SCREEN:
         print string
 
-def update_progress(progress, deleted):
-    '''Displays or updates a console progress bar
-    '''
-    bar_length = 50  # Modify this to change the length of the progress bar
-    block = int(round(bar_length * progress))
-    progress = round(progress, 3)
-    text = "\rProgress: [{0}] {1}% ({2} deleted)".format("#"*block +
-            "-"*(bar_length - block), progress * 100, deleted)
-    sys.stdout.write(text)
-    sys.stdout.flush()
-
 def print_time_elapsed(start_time, stop_time=None, step=''):
     ''' print elapsed time in a human readable format
     '''
@@ -105,7 +94,7 @@ def delete_no_master():
     cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
     no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
     cr2.execute("""SELECT id FROM sync_server_update
-                WHERE sequence < %s and rule_id IN %s
+                WHERE sequence < %s AND rule_id IN %s
                 AND create_date < %s""",
                 (smallest_last_sequence, tuple(no_master_data_active_rules), NOT_DELETE_DATE))
     while True:
@@ -149,8 +138,8 @@ def delete_inactive_rules():
         if not multiple_updates:
             break
         chunk_update_inactive_rules = [x[0] for x in multiple_updates]
-        cr3.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                    (tuple(chunk_update_inactive_rules),))
+        cr3.execute('DELETE FROM sync_server_update WHERE id IN %s AND create_date < %s',
+                    (tuple(chunk_update_inactive_rules), NOT_DELETE_DATE))
         conn.commit()
         update_count += len(chunk_update_inactive_rules)
         update_inactive_rules = update_inactive_rules.union(chunk_update_inactive_rules)
