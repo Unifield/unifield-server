@@ -475,7 +475,7 @@ class patch_scripts(osv.osv):
         delete FAR line update related to this old fields
         '''
         if self.pool.get('sync.server.update'):
-            cr.execute("delete from from sync_server_update where values like '%msf_outgoing.field_product_product_is_keep_cool%' and model='msf_field_access_rights.field_access_rule_line'")
+            cr.execute("delete from sync_server_update where values like '%msf_outgoing.field_product_product_is_keep_cool%' and model='msf_field_access_rights.field_access_rule_line'")
 
 patch_scripts()
 
