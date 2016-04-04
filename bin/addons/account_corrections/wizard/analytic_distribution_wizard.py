@@ -275,9 +275,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         if period_closed and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
-                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id']):
+                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date']):
                     if ana['entry_sequence'] and ana['last_corrected_id']:
-                        keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0])
+                        keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'])
                         break
         #####
         ## FP: TO CREATE
@@ -303,6 +303,8 @@ class analytic_distribution_wizard(osv.osv_memory):
             period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
             if period_closed:
                 create_date = wizard.date
+                if keep_seq_and_corrected:
+                    create_date = keep_seq_and_corrected[2]
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
