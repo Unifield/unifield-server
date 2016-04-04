@@ -275,9 +275,9 @@ class analytic_distribution_wizard(osv.osv_memory):
         if period_closed and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
-                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date']):
+                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref']):
                     if ana['entry_sequence'] and ana['last_corrected_id']:
-                        keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'])
+                        keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'], ana['ref'])
                         break
         #####
         ## FP: TO CREATE
@@ -313,8 +313,8 @@ class analytic_distribution_wizard(osv.osv_memory):
                 sql_to_cor = ['journal_id=%s']
                 sql_data = [correction_journal_id]
                 if keep_seq_and_corrected:
-                    sql_to_cor += ['entry_sequence=%s', 'last_corrected_id=%s']
-                    sql_data += [keep_seq_and_corrected[0], keep_seq_and_corrected[1]]
+                    sql_to_cor += ['entry_sequence=%s', 'last_corrected_id=%s', 'ref=%s']
+                    sql_data += [keep_seq_and_corrected[0], keep_seq_and_corrected[1], keep_seq_and_corrected[3] or '']
                 sql_data += [created_analytic_line_ids[new_distrib_line]]
                 cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',
                     sql_data)
