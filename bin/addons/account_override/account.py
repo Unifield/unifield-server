@@ -797,8 +797,59 @@ class account_move(osv.osv):
         """
         Check that we can write on this if we come from web menu or synchronisation.
         """
-        if not context:
+        def check_update_sequence(rec, new_journal_id, new_period_id):
+            """
+            returns new sequence move vals (sequence_id, name) or None
+            :rtype : dict/None
+            """
+            if m.state != 'draft':
+                return None
+
+            period_obj = self.pool.get('account.period')
+            period_rec = False
+            do_update = False
+
+            # journal or FY has changed ?
+            if new_journal_id and m.journal_id.id != new_journal_id:
+                do_update = True
+            if new_period_id and m.period_id.id != new_period_id:
+                period_rec = period_obj.browse(cr, uid, new_period_id)
+                do_update = period_rec.fiscalyear_id.id \
+                    != m.period_id.fiscalyear_id.id  # FY changed
+            if not do_update:
+                return None
+
+            # get instance and journal/period
+            instance_rec = self.pool.get('res.users').browse(cr, uid, uid,
+                context).company_id.instance_id
+            if not instance_rec.move_prefix:
+                raise osv.except_osv(_('Warning'),
+                    _('No move prefix found for this instance!' \
+                        ' Please configure it on Company view.'))
+            journal_rec = self.pool.get('account.journal').browse(cr, uid,
+                new_journal_id or m.journal_id.id)
+            period_rec = period_rec or m.period_id
+            if period_rec.state == 'created':
+                raise osv.except_osv(_('Error !'),
+                    _("Period '%s' is not open!' \
+                     ' No Journal Entry is updated") % (period_rec.name, ))
+
+            # get new sequence number and return related vals
+            sequence_number = self.pool.get('ir.sequence').get_id(
+                cr, uid, journal_rec.sequence_id.id,
+                context={ 'fiscalyear_id': period_rec.fiscalyear_id.id })
+            if instance_rec and journal_rec and sequence_number:
+                return {
+                    'sequence_id': journal_rec.sequence_id.id,
+                    'name': "%s-%s-%s" % (instance_rec.move_prefix,
+                        journal_rec.code, sequence_number, ),
+                }
+            return None
+
+        if context is None:
             context = {}
+        new_sequence_vals_by_move_id = {}
+
         if context.get('from_web_menu', False) or context.get('sync_update_execution', False):
             # by default, from synchro, we just need to update period_id and journal_id
             fields = ['journal_id', 'period_id']
@@ -811,6 +862,20 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                     if m.journal_id.type == 'system':
                         raise osv.except_osv(_('Warning'), _('You can not edit a Journal Entry on a system journal'))
+
+                if context.get('from_web_menu', False) \
+                    and not context.get('sync_update_execution', False):
+                    # US-932: journal or FY changed ?
+                    # typical UC: manual JE from UI: journal/period changed
+                    # after a duplicate.
+                    # check sequence and update it if needed. (we do not update
+                    # it during on_change() to prevent sequence jumps)
+                    new_seq = check_update_sequence(m,
+                        vals.get('journal_id', False),
+                        vals.get('period_id', False))
+                    if new_seq:
+                        new_sequence_vals_by_move_id[m.id] = new_seq
+
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
                 ml_vals = {}
@@ -818,15 +883,24 @@ class account_move(osv.osv):
                     if el in vals:
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
+
                 # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
                 if 'manual_name' in vals:
                     ml_vals.update({'name': vals.get('manual_name', '')})
+
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
                     self.pool.get('account.move.line').write(cr, uid,
                             ml_id_list, ml_vals, context, False, False)
-        res = super(account_move, self).write(cr, uid, ids, vals, context=context)
+
+        res = super(account_move, self).write(cr, uid, ids, vals,
+            context=context)
+        if new_sequence_vals_by_move_id:
+            for id in new_sequence_vals_by_move_id:
+                osv.osv.write(self, cr, uid, id,
+                    new_sequence_vals_by_move_id[id], context=context)  # US-932
+
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
         return res
@@ -888,7 +962,7 @@ class account_move(osv.osv):
             'state': 'draft',
             'document_date': je.document_date,
             'date': je.date,
-            'name': ''
+            'name': '',
         }
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
