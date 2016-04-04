@@ -10,7 +10,6 @@ start_time = time.time()
 intermediate_time = start_time
 
 DB_NAME = 'SYNC_SERVER-20160321-163301-zip_2'   # replace with your own DB
-DB_PORT = '11031'
 
 DELETE_NO_MASTER = True
 DELETE_INACTIVE_RULES = True
@@ -22,12 +21,6 @@ UPDATE_TO_FETCH = 10000
 
 # updates with mast_data='f' and active_rule after this date will not been deleted
 NOT_DELETE_DATE = '2016-01-01'
-
-# we will delete all the pulled update which are not master data and use
-# active rule but it is safer to keep some safety margin by keeping some more
-# updates this is redondant with NOT_DELETE_DATE. Both rules will be applied,
-# so the more restrive will win
-SAFE_MARGIN_SEQUENCE_TO_KEEP = 2000
 
 RULE_TYPE = {
     'USB': 1,
@@ -74,6 +67,19 @@ result_file = open(file_name, "a")
 
 PRINT_SCREEN = True
 PRINT_FILE = True
+
+# we will delete all the pulled update which are not master data and use
+# active rule but it is safer to keep some safety margin by keeping some more
+# updates this is redondant with NOT_DELETE_DATE. Both rules will be applied,
+# so the more restrive will win
+SAFE_MARGIN_SEQUENCE_TO_KEEP = 2000
+
+# get the smallest last sequence pulled
+cr2.execute("""SELECT MIN(last_sequence) FROM sync_server_entity
+            WHERE last_sequence !=0""", ())
+SMALLEST_LAST_SEQUENCE = cr2.fetchone()[0]
+SMALLEST_LAST_SEQUENCE -= SAFE_MARGIN_SEQUENCE_TO_KEEP
+
 def print_file_and_screen(string):
     if PRINT_FILE:
         result_file.write(string+'\n')
@@ -105,18 +111,26 @@ def print_time_elapsed(start_time, stop_time=None, step=''):
 def delete_related_entity_rel(update_id_list, step=''):
     '''delete all sync_server_entity_rel object related to the update_id
     in parameter'''
-    if DELETE_ENTITY_REL and update_id_list:
-        intermediate_time = time.time()
-        print_file_and_screen('%s/6 Start deleting of the related sync_server_entity_rel...' % step)
+    intermediate_time = time.time()
+    print_file_and_screen('%s/4 Start deleting of the related sync_server_entity_rel...' % step)
+    chunk_size = 1000
+    i = 0
+    entity_count = 0
+    while i < len(update_id_list)+chunk_size:
+        chunk = update_id_list[i-chunk_size:i]
+        if not chunk:
+            i += chunk_size
+            continue
         cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cr3.execute("""DELETE FROM sync_server_entity_rel
         WHERE id IN
         (SELECT id FROM sync_server_entity_rel WHERE update_id IN %s)""",
-                    (tuple(update_id_list),))
-        entity_count = cr3.rowcount
-        print_file_and_screen('%s/6 sync_server_entity_rel deleted : %s' % (step, locale.format('%d', entity_count, 1)))
-        print_time_elapsed(intermediate_time, step='%s/6' % step)
+            (tuple(chunk),))
+        entity_count += cr3.rowcount
         conn.commit()
+        i += chunk_size
+    print_file_and_screen('%s/4 sync_server_entity_rel deleted : %s' % (step, locale.format('%d', entity_count, 1)))
+    print_time_elapsed(intermediate_time, step='%s/4' % step)
 
 def delete_no_master():
     '''Delete updates that have active rule and no master_data if all instances
@@ -131,18 +145,15 @@ def delete_no_master():
     cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     intermediate_time = time.time()
-    cr2.execute("""SELECT MIN(last_sequence) FROM sync_server_entity
-                WHERE last_sequence !=0""", ())
-    smallest_last_sequence = cr2.fetchone()[0]
-    smallest_last_sequence -= SAFE_MARGIN_SEQUENCE_TO_KEEP
-    print_file_and_screen('1/6 Start deleting updates with active rules and not master_data'
-          ' where sequence is < %s ...' % smallest_last_sequence)
+    print_file_and_screen('1/4 Start deleting updates with active rules and not master_data'
+          ' where sequence is < %s and create_date > %s ...' %
+          (SMALLEST_LAST_SEQUENCE, NOT_DELETE_DATE))
     cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
     no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
     cr2.execute("""SELECT id FROM sync_server_update
-                WHERE sequence < %s and rule_id IN %s
+                WHERE sequence < %s AND rule_id IN %s
                 AND create_date < %s""",
-                (smallest_last_sequence, tuple(no_master_data_active_rules), NOT_DELETE_DATE))
+                (SMALLEST_LAST_SEQUENCE, tuple(no_master_data_active_rules), NOT_DELETE_DATE))
     while True:
         multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
         if not multiple_updates:
@@ -174,23 +185,24 @@ def delete_inactive_rules():
     cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     intermediate_time = time.time()
-    print_file_and_screen('3/6 Start deleting the updates related to inactive rules...')
+    print_file_and_screen('3/4 Start deleting the updates related to inactive rules...')
     cr2.execute("""SELECT id FROM sync_server_update
                 WHERE rule_id IN
-                (SELECT id FROM sync_server_sync_rule WHERE active='f')""")
+                (SELECT id FROM sync_server_sync_rule WHERE active='f') AND
+                sequence < %s""", (SMALLEST_LAST_SEQUENCE,))
     update_inactive_rules_count = cr2.rowcount
     while True:
         multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
         if not multiple_updates:
             break
         chunk_update_inactive_rules = [x[0] for x in multiple_updates]
-        cr3.execute('DELETE FROM sync_server_update WHERE id IN %s',
-                    (tuple(chunk_update_inactive_rules),))
+        cr3.execute('DELETE FROM sync_server_update WHERE id IN %s AND create_date < %s',
+                    (tuple(chunk_update_inactive_rules), NOT_DELETE_DATE))
         conn.commit()
         update_count += len(chunk_update_inactive_rules)
         update_inactive_rules = update_inactive_rules.union(chunk_update_inactive_rules)
-    print_file_and_screen('3/6 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1))
-    print_time_elapsed(intermediate_time, step='3/6')
+    print_file_and_screen('3/4 %s updates related to inactive rules deleted.' % locale.format('%d', update_inactive_rules_count, 1))
+    print_time_elapsed(intermediate_time, step='3/4')
     delete_related_entity_rel(list(update_inactive_rules), step='4')
     del chunk_update_inactive_rules
     del update_inactive_rules
@@ -244,9 +256,10 @@ def compact_updates():
     cr = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cr.execute("""
     SELECT * FROM sync_server_update
-    WHERE model NOT IN %s
+    WHERE model NOT IN %s AND
+    sequence < %s AND create_date < %s
     ORDER BY sequence, id
-    """, (tuple(MODEL_TO_EXCLUDE),))
+    """, (tuple(MODEL_TO_EXCLUDE), SMALLEST_LAST_SEQUENCE, NOT_DELETE_DATE))
     total_updates = cr.rowcount
     multiple_updates = cr.fetchall()
     cr.close()
