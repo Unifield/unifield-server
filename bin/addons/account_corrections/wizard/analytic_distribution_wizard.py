@@ -271,7 +271,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 to_delete.append(wiz_line)
 
         keep_seq_and_corrected = False
-        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
+        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
         if period_closed and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
@@ -300,7 +300,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
-            period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or False
             if period_closed:
                 create_date = wizard.date
                 if keep_seq_and_corrected:
