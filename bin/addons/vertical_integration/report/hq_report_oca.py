@@ -31,7 +31,9 @@ from tools.translate import _
 
 from report import report_sxw
 
+
 ZERO_CELL_CONTENT = "0.0"
+
 
 class hq_report_oca(report_sxw.report_sxw):
 
@@ -268,7 +270,7 @@ class hq_report_oca(report_sxw.report_sxw):
                     if is_cur_adj_entry or is_rev_entry:
                         output_debit = move_line.debit
                         output_credit = move_line.credit
-                        output_rate = 1
+                        output_rate = 1.
                         output_curr = func_currency and func_currency.name or "0"
                     else:
                         output_debit = move_line.debit_currency
@@ -387,17 +389,28 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
                 # Add to second report (expenses only)
-                custom_rate = False
+                up_exp_ccy = currency
+                up_exp_rate = rate
+                up_exp_amount = analytic_line.amount_currency
+
                 if period.number in (12, 13, 14, 15, 1, ) \
                     and 'Revaluation - FY' in analytic_line.name:
-                        # US-953 Yearly revaluation entries are build with
-                        # an external ccy table: compute back rate instead of
-                        # using exported period rate
-                        if currency == func_currency:
-                            custom_rate = 1.
-                        elif analytic_line.amount_currency != 0.:
-                            custom_rate = round(1 / (abs(analytic_line.amount_currency) \
-                                / abs(analytic_line.amount)), 8)
+                    # US-953 Yearly revaluation entries are build with
+                    # an external ccy table: compute back rate instead of
+                    # using exported period rate
+                    if currency == func_currency:
+                        up_exp_rate = 1.
+                    elif analytic_line.amount_currency != 0.:
+                        up_exp_rate = round(1 / (abs(analytic_line.amount_currency) \
+                            / abs(analytic_line.amount)), 8)
+                elif is_analytic_rev_entry:
+                    # US-1008 for up_expenses (file 2), match REV AJIs to JIs:
+                    # display AJIs booked on REV journal in func ccy and rate 1
+                    # as already done here for JIs of up_balances (file 3)
+                    up_exp_ccy = func_currency
+                    up_exp_rate = 1.
+                    up_exp_amount = analytic_line.amount
+
                 other_formatted_data = [integration_ref ,
                                         analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         "0",
@@ -405,10 +418,10 @@ class hq_report_oca(report_sxw.report_sxw):
                                         analytic_line.cost_center_id and analytic_line.cost_center_id.code or "0",
                                         "1",
                                         account and account.code + " " + account.name or "0",
-                                        currency and currency.name or "0",
-                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
+                                        up_exp_ccy and up_exp_ccy.name or "0",
+                                        up_exp_amount and round(-up_exp_amount, 2) or ZERO_CELL_CONTENT,
                                         "0",
-                                        custom_rate or rate,
+                                        up_exp_rate,
                                         analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         analytic_line.entry_sequence or "0",
                                         "0",
