@@ -38,7 +38,9 @@ class button_access_rule(osv.osv):
         res = dict.fromkeys(ids, '')
         records = self.browse(cr, uid, ids)
         for record in records:
-            res[record.id] = ', '.join([g.name for g in record.group_ids])
+            group_name_list = [g.name for g in record.group_ids]
+            group_name_list.sort()
+            res[record.id] = ', '.join(group_name_list)
         return res
 
     _columns = {
