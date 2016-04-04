@@ -275,9 +275,10 @@ class analytic_distribution_wizard(osv.osv_memory):
         if period_closed and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
-                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref']):
+                for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref', 'reversal_origin']):
                     if ana['entry_sequence'] and ana['last_corrected_id']:
-                        keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'], ana['ref'])
+                        rev_name = ana['reversal_origin'] and ana['reversal_origin'][1] or ana['last_corrected_id'] and ana['last_corrected_id'][1] or False
+                        keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'], ana['ref'], rev_name)
                         break
         #####
         ## FP: TO CREATE
@@ -302,9 +303,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             name = False
             if period_closed:
                 create_date = wizard.date
+                name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
                     create_date = keep_seq_and_corrected[2]
-                name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
+                    if keep_seq_and_corrected[4]:
+                        name = self.pool.get('account.analytic.line').join_without_redundancy(keep_seq_and_corrected[4], 'COR')
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             # Set right analytic correction journal to these lines
