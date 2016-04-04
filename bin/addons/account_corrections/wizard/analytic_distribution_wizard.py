@@ -246,6 +246,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         if abs(match_amount_diff) > 0.001:
             greater_amount['gap_amount'] = match_amount_diff
 
+        to_reverse_ids = []
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
@@ -315,7 +316,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 sql_data += [created_analytic_line_ids[new_distrib_line]]
                 cr.execute('update account_analytic_line set '+','.join(sql_to_cor)+' where id = %s',
                     sql_data)
-                have_been_created.append(created_analytic_line_ids[new_distrib_line])
+            have_been_created.append(created_analytic_line_ids[new_distrib_line])
             if created_analytic_line_ids and greater_amount['gap_amount'] and greater_amount['wl'] and greater_amount['wl'].id == line.id:
                 greater_amount['aji_id'] = created_analytic_line_ids[created_analytic_line_ids.keys()[0]]
                 greater_amount['date'] = create_date
@@ -333,7 +334,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         #####
         ## FP: TO REVERSE
         ###
-        to_reverse_ids = []
         for line in to_reverse:
             # reverse the line
             to_reverse_ids = self.pool.get('account.analytic.line').search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%line.distribution_line_id.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
