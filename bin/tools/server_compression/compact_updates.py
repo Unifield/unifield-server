@@ -9,7 +9,7 @@ import oerplib
 start_time = time.time()
 intermediate_time = start_time
 
-DB_NAME = 'SYNC_SERVER-20160321-163301-zip'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160321-163301-zip_2'   # replace with your own DB
 DB_PORT = '11031'
 
 DELETE_NO_MASTER = True
@@ -50,6 +50,16 @@ MODEL_TO_EXCLUDE = [
     # synchronization, the write is ignored. This lead to somes problems in
     # compactation as many writes are compacted in only one create
     'financing.contract.format.line',
+
+
+    # This is due to the create method of res.partner.address which delete
+    # empty address before adding new one. This behaviour is difficult to
+    # handle with compaction because many creation/modification of one
+    # res.partner.address will result in only one update but the res_id might
+    # not be consistent with not compacted server.
+    # in final for SYNC_SERVER-20160321-163301, this exclusion mean 1510 more
+    # updates than without the exclusion which is not so much.
+    'res.partner.address',
 ]
 
 locale.setlocale(locale.LC_ALL, '')
