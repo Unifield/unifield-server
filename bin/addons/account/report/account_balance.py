@@ -121,7 +121,8 @@ class account_balance(report_sxw.rml_parse, common_report_header):
             ctx['date_to'] =  form['date_to']
         ctx['state'] = form['target_move']
         parents = ids
-        child_ids = obj_account._get_children_and_consol(self.cr, self.uid, ids, ctx)
+        child_ids = obj_account._get_children_and_consol(self.cr, self.uid,
+                ids, context=ctx)
         if child_ids:
             ids = child_ids
         accounts = obj_account.read(self.cr, self.uid, ids, ['type','code','name','debit','credit','balance','parent_id','level','child_id'], ctx)

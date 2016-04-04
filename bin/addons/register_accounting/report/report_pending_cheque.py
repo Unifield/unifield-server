@@ -39,17 +39,15 @@ class report_pending_cheque(report_sxw.rml_parse):
         import pooler
         pool = pooler.get_pool(self.cr.dbname)
         aml_obj = pool.get('account.move.line')
-        # Search previous registers
-        registers = [register]
-        previous = register.prev_reg_id or False
-        if previous:
-            registers.append(previous)
-            while previous != False:
-                previous = previous.prev_reg_id or False
-                if previous:
-                    registers.append(previous)
+
+        # Search for all registers with the same Journal, and the same period or a previous period
+        period_ids = self.pool.get('account.period').\
+            search(self.cr, self.uid, [('date_start', '<=', register.period_id.date_start)])
+        registers_ids = self.pool.get('account.bank.statement').\
+            search(self.cr, self.uid, ['&', ('journal_id', '=', journal.id), ('period_id', 'in', period_ids)])
+
         # Search register lines
-        aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', 'in', [x.id for x in registers]), ('is_reconciled', '=', False), ('account_id', 'in', account_ids), ('journal_id', '=', journal.id)])
+        aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', 'in', registers_ids), ('is_reconciled', '=', False), ('account_id', 'in', account_ids),], order='date DESC')
         if isinstance(aml_ids, (int, long)):
             aml_ids = [aml_ids]
         return aml_obj.browse(self.cr, self.uid, aml_ids)

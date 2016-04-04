@@ -887,13 +887,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
 
             product = line.imp_product_id or line.move_product_id
-            res[line.id] = {'lot_check': product.batch_management,
-                            'exp_check': product.perishable,
-                            'kc_check': product.heat_sensitive_item and True or False,
-                            'dg_check': product.dangerous_goods,
-                            'np_check': product.narcotic,
-                            'move_price_unit': price_unit,
-                            'move_currency_id': curr_id, }
+            res[line.id] = {
+                'lot_check': product.batch_management,
+                'exp_check': product.perishable,
+                'kc_check': product.kc_txt,
+                'dg_check': product.dg_txt,
+                'np_check': product.cs_txt,
+                'move_price_unit': price_unit,
+                'move_currency_id': curr_id,
+            }
 
         return res
 
@@ -975,17 +977,59 @@ class wizard_import_in_line_simulation_screen(osv.osv):
         'message_esc1': fields.char(size=256, string='Message ESC 1', readonly=True),
         'message_esc2': fields.char(size=256, string='Message ESC 2', readonly=True),
         # Computed fields
-        'lot_check': fields.function(_get_values, method=True, type='boolean',
-                                     string='B.Num', readonly=True, store=False, multi='computed'),
-        'exp_check': fields.function(_get_values, method=True, type='boolean',
-                                     string='Exp', readonly=True, store=False, multi='computed'),
-        'kc_check': fields.function(_get_values, method=True, type='boolean',
-                                     string='KC', readonly=True, store=False, multi='computed'),
-        'dg_check': fields.function(_get_values, method=True, type='boolean',
-                                     string='DG', readonly=True, store=False, multi='computed'),
-        'np_check': fields.function(_get_values, method=True, type='boolean',
-                                     string='NP', readonly=True, store=False, multi='computed'),
-        'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
+        'lot_check': fields.function(
+            _get_values,
+            method=True,
+            type='boolean',
+            string='B.Num',
+            readonly=True,
+            store=False,
+            multi='computed',
+        ),
+        'exp_check': fields.function(
+            _get_values,
+            method=True,
+            type='boolean',
+            string='Exp',
+            readonly=True,
+            store=False,
+            multi='computed',
+        ),
+        'kc_check': fields.function(
+            _get_values,
+            method=True,
+            type='char',
+            size=8,
+            string='KC',
+            readonly=True,
+            store=False,
+            multi='computed',
+        ),
+        'dg_check': fields.function(
+            _get_values,
+            method=True,
+            type='char',
+            size=8,
+            string='DG',
+            readonly=True,
+            store=False,
+            multi='computed',
+        ),
+        'np_check': fields.function(
+            _get_values,
+            method=True,
+            type='char',
+            size=8,
+            string='CS',
+            readonly=True,
+            store=False,
+            multi='computed',
+        ),
+        'integrity_status': fields.selection(
+            selection=INTEGRITY_STATUS_SELECTION,
+            string=' ',
+            readonly=True,
+        ),
     }
 
     _defaults = {

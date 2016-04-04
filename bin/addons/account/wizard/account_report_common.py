@@ -29,6 +29,17 @@ class account_common_report(osv.osv_memory):
     _name = "account.common.report"
     _description = "Account Common Report"
 
+    def _get_is_report_cross_fy(self, cr, uid, ids, field_names, args,
+        context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = context and context.get('report_cross_fy', False) or False
+        return res
+
     _columns = {
         'chart_account_id': fields.many2one('account.account', 'Chart of account', help='Select Charts of Accounts', required=True, domain = [('parent_id','=',False)]),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', help='Keep empty for all open fiscal year'),
@@ -41,8 +52,38 @@ class account_common_report(osv.osv_memory):
         'target_move': fields.selection([('posted', 'All Posted Entries'),
                                          ('all', 'All Entries'),
                                         ], 'Target Moves', required=True),
+        'is_report_cross_fy': fields.function(_get_is_report_cross_fy, type='boolean', method=True, string='Is report cross FY')
+    }
 
-        }
+    def _get_account(self, cr, uid, context=None):
+        accounts = self.pool.get('account.account').search(cr, uid, [('parent_id', '=', False)], limit=1)
+        return accounts and accounts[0] or False
+
+    def _get_fiscalyear(self, cr, uid, context=None):
+        if context and context.get('report_cross_fy', False):
+            return False
+
+        now = time.strftime('%Y-%m-%d')
+        fiscalyears = self.pool.get('account.fiscalyear').search(cr, uid, [
+            ('date_start', '<', now),
+            ('date_stop', '>', now)
+        ], limit=1 )
+        return fiscalyears and fiscalyears[0] or False
+
+    def _get_default_is_report_cross_fy(self, cr, uid, context=None):
+        return context and context.get('report_cross_fy', False) or False
+
+    def _get_all_journal(self, cr, uid, context=None):
+        return self.pool.get('account.journal').search(cr, uid ,[])
+
+    _defaults = {
+        'fiscalyear_id': _get_fiscalyear,
+        'journal_ids': _get_all_journal,
+        'filter': 'filter_no',
+        'chart_account_id': _get_account,
+        'target_move': 'posted',
+        'is_report_cross_fy': _get_default_is_report_cross_fy,
+    }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         res = super(account_common_report, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=False)
@@ -98,26 +139,6 @@ class account_common_report(osv.osv_memory):
 
             res['value'] = {'period_from': start_period, 'period_to': end_period, 'date_from': False, 'date_to': False}
         return res
-
-    def _get_account(self, cr, uid, context=None):
-        accounts = self.pool.get('account.account').search(cr, uid, [('parent_id', '=', False)], limit=1)
-        return accounts and accounts[0] or False
-
-    def _get_fiscalyear(self, cr, uid, context=None):
-        now = time.strftime('%Y-%m-%d')
-        fiscalyears = self.pool.get('account.fiscalyear').search(cr, uid, [('date_start', '<', now), ('date_stop', '>', now)], limit=1 )
-        return fiscalyears and fiscalyears[0] or False
-
-    def _get_all_journal(self, cr, uid, context=None):
-        return self.pool.get('account.journal').search(cr, uid ,[])
-
-    _defaults = {
-            'fiscalyear_id': _get_fiscalyear,
-            'journal_ids': _get_all_journal,
-            'filter': 'filter_no',
-            'chart_account_id': _get_account,
-            'target_move': 'posted',
-    }
 
     def _build_contexts(self, cr, uid, ids, data, context=None):
         if context is None:

@@ -220,7 +220,6 @@ class account_mcdb(osv.osv):
         """
         Validate current forms and give result
         """
-
         # Some verifications
         if not context:
             context = {}
@@ -375,12 +374,13 @@ class account_mcdb(osv.osv):
             #+ 3/ amount FROM is filled in but NOT amount TO
             #+ 4/ amount TO is filled in but NOT amount FROM
             #+
+            # NB: on US-650 we agree that the "From" value is always the smallest and the "To" value is the biggest,
+            # no matter if amounts are positive or negative
             #+ For each case, here is what domain should be look like:
             #+ 1/ FROM is 0.0, TO is 0,0. Domain is []
-            #+ 2/ FROM is 400, TO is 600. Domain is
-            #+ ['|', '&', ('balance', '>=', -600), ('balance', '<=', -400), '&', ('balance', '>=', 400), ('balance', '<=', '600')]
-            #+ 3/ FROM is 400, TO is 0.0. Domain is ['|', ('balance', '<=', -400), ('balance', '>=', 400)]
-            #+ 4/ FROM is 0.0, TO is 600. Domain is ['&', ('balance', '>=', -600), ('balance', '<=', 600)]
+            #+ 2/ FROM is 400, TO is 600. Domain is ['&', (balance, '>=', 400), ('balance', '<=', 600)]
+            #+ 3/ FROM is 400, TO is 0.0. Domain is [('balance', '>=', 400)]
+            #+ 4/ FROM is 0.0, TO is 600. Domain is [('balance', '<=', 600)]
 
             # prepare tuples that would be processed
             booking = ('amount_book_from', 'amount_book_to', 'amount_currency')
@@ -389,25 +389,25 @@ class account_mcdb(osv.osv):
                 # Prepare some values
                 mnt_from = getattr(wiz, curr[0]) or False
                 mnt_to = getattr(wiz, curr[1]) or False
+                # display a warning when amount FROM > amount TO
+                if mnt_from and mnt_to and mnt_from > mnt_to:
+                    raise osv.except_osv(_('Warning'),
+                                         _('In the amount selector (from-to), the "from" value must be the smallest one.'))
                 field = curr[2]
                 # specific behaviour for functional in analytic MCDB
                 if field == 'balance' and res_model == 'account.analytic.line':
                     field = 'amount'
-                abs_from = abs(mnt_from)
-                min_from = -1 * abs_from
-                abs_to = abs(mnt_to)
-                min_to = -1 * abs_to
                 # domain elements initialisation
                 domain_elements = []
                 if mnt_from and mnt_to:
-                    if min_from == min_to:
-                        domain_elements = ['|', (field, '=', min_to), (field, '=', abs_from)]
+                    if mnt_from == mnt_to:
+                        domain_elements = [(field, '=', mnt_from)]
                     else:
-                        domain_elements = ['|', '&', (field, '>=', min_to), (field, '<=', min_from), '&', (field, '>=', abs_from), (field, '<=', abs_to)]
+                        domain_elements = ['&', (field, '>=', mnt_from), (field, '<=', mnt_to)]
                 elif mnt_from:
-                    domain_elements = ['|', (field, '<=', min_from), (field, '>=', abs_from)]
+                    domain_elements = [(field, '>=', mnt_from)]
                 elif mnt_to:
-                    domain_elements = ['&', (field, '>=', min_to), (field, '<=', abs_to)]
+                    domain_elements = [(field, '<=', mnt_to)]
                 # Add elements to domain which would be use for filtering
                 for el in domain_elements:
                     domain.append(el)

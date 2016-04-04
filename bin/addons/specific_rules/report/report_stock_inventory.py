@@ -268,6 +268,7 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             self.cr,
             self.uid,
             self.datas['lines'],
+            context=self.localcontext
         ):
             if not line.product_id.default_code in res:
                 res[line.product_id.default_code] = {

@@ -887,7 +887,7 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         res = {}
         sql = """
-            SELECT absl.id, CASE WHEN absl.amount < 0 AND a.type_for_register = 'down_payment' THEN true ELSE false END AS res
+            SELECT absl.id, CASE WHEN a.type_for_register = 'down_payment' THEN true ELSE false END AS res
             FROM account_bank_statement_line AS absl, account_account AS a
             WHERE absl.account_id = a.id
             AND absl.id IN %s
@@ -1755,15 +1755,22 @@ class account_bank_statement_line(osv.osv):
         res_ml_ids = []
         process_invoice_move_line_ids = []
         total_payment = True
-        if st_line.first_move_line_id.amount_currency != total_amount:
+        diff = st_line.first_move_line_id.amount_currency - total_amount
+        if abs(diff) > 0.001:
             # multi unpartial payment
             total_payment = False
             # Delete them
             #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
             move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
             for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
-                if abs(invoice_move_line.amount_currency) <= amount:
-                    amount_to_write = sign * abs(invoice_move_line.amount_currency)
+                amount_currency = invoice_move_line.amount_currency
+
+                if invoice_move_line.reconcile_partial_id:
+                    amount_currency = 0
+                    for line in invoice_move_line.reconcile_partial_id.line_partial_ids:
+                        amount_currency += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
+                if abs(amount_currency) <= amount:
+                    amount_to_write = sign * abs(amount_currency)
                 else:
                     amount_to_write = sign * amount
                 # create a new move_line corresponding to this invoice move line
@@ -1888,6 +1895,9 @@ class account_bank_statement_line(osv.osv):
                 for row in cr.dictfetchall():
                     msg = _('This cheque number has already been used')
                     raise osv.except_osv(_('Info'), (msg))
+
+        self._check_account_partner_compat(cr, uid, values, context=context)
+
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
         return absl
@@ -1921,6 +1931,7 @@ class account_bank_statement_line(osv.osv):
         # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
             return False
+        self._check_account_partner_compat(cr, uid, values, context=context)
 
         # Then update analytic distribution
         res = []
@@ -2193,8 +2204,8 @@ class account_bank_statement_line(osv.osv):
 
                     for inv_move_line in absl.imported_invoice_line_ids:
                         imported_total_amount += inv_move_line.amount_currency
-                    if absl.amount_out > abs(imported_total_amount) or\
-                            absl.amount_in > abs(imported_total_amount):
+                    if absl.amount_out - abs(imported_total_amount) > 0.001 or \
+                        absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                             _('You can not hard post with an amount greater'
                                 ' than total of imported invoices'))
@@ -2377,6 +2388,20 @@ class account_bank_statement_line(osv.osv):
         """
         # We browse all ids
         for st_line in self.browse(cr, uid, ids):
+            # if trying to delete a down payment, check that amounts IN won't be higher than remaining amounts OUT on the PO
+            if st_line.account_id and st_line.account_id.type_for_register == 'down_payment' and st_line.down_payment_id:
+                args = [('down_payment_id', '=', st_line.down_payment_id.id)]
+                lines_ids = self.search(cr, uid, args, context=context)
+                lines_amount = 0
+                # browse all lines of the PO
+                for line in self.read(cr, uid, lines_ids, ['id', 'amount'], context=context):
+                    if st_line.id != line['id']:
+                        lines_amount += line['amount']
+
+                if lines_amount > 0:
+                    raise osv.except_osv(_('Error'),
+                                         _("You can't delete this line. Amounts IN can't be higher than Amounts OUT for the selected PO."))
+
             # if the line have a link to a move we have to make some treatments
             if st_line.move_ids:
                 # in case of hard posting line : do nothing (because not allowed to change an entry which was posted!
@@ -2812,6 +2837,15 @@ class account_bank_statement_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         return self.unlink(cr, uid, ids, context=context)
+
+    def _check_account_partner_compat(self, cr, uid, vals, context=None):
+        # US-672/2
+        if not context.get('sync_update_execution', False) \
+            and vals.get('account_id', False) \
+            and vals.get('partner_type', False):
+            self.pool.get('account.account').is_allowed_for_thirdparty(
+                cr, uid, vals['account_id'], partner_type=vals['partner_type'],
+                from_vals=True, raise_it=True, context=context)
 
 account_bank_statement_line()
 

@@ -147,7 +147,7 @@
               <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and translate('Specific Information:') or ' ' ]]</para>
             </td>
             <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and translate('N') or ' ' ]]</para>
+              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and translate('CS') or ' ' ]]</para>
             </td>
           </tr>
         </blockTable>

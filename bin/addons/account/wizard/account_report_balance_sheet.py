@@ -32,60 +32,66 @@ class account_bs_report(osv.osv_memory):
     _inherit = "account.common.account.report"
     _description = 'Account Balance Sheet Report'
 
-    def _get_def_reserve_account(self, cr, uid, context=None):
-        chart_id = self._get_account(cr, uid, context=context)
-        res = self.onchange_chart_id(cr, uid, [], chart_id, context=context)
-        if not res:
-            return False
-        return res['value']['reserve_account_id']
-
     _columns = {
-        'display_type': fields.boolean("Landscape Mode"),
-        'reserve_account_id': fields.many2one('account.account', 'Reserve & Profit/Loss Account',
-                                      required=True,
-                                      help='This Account is used for transfering Profit/Loss ' \
-                                           '(Profit: Amount will be added, Loss: Amount will be duducted), ' \
-                                           'which is calculated from Profilt & Loss Report',
-                                      #domain = [('type','=','payable')]),
-                                      domain = ['|',('type','=','payable'),'&',('type','=','other'),('user_type_code','=','equity')]),
+        'export_format': fields.selection([('xls', 'Excel'), ('pdf', 'PDF')], string="Export format", required=True),
+        'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
     }
 
     _defaults={
-        'display_type': True,
+        'export_format': 'pdf',
         'journal_ids': [],
-        'reserve_account_id': _get_def_reserve_account,
     }
 
-    def onchange_chart_id(self, cr, uid, ids, chart_id, context=None):
-        if not chart_id:
-            return {}
-        account = self.pool.get('account.account').browse(cr, uid, chart_id , context=context)
-        if not account.company_id.property_reserve_and_surplus_account:
-            return {'value': {'reserve_account_id': False}}
-        return {'value': {'reserve_account_id': account.company_id.property_reserve_and_surplus_account.id}}
+    def _check(self, cr, uid, context=None, data=None):
+        # US-227/2bis: check cpy year closing B/S account are set
+        cpy_rec = self.pool.get('res.users').browse(cr, uid, [uid],
+            context=context)[0].company_id
+        bs_accounts_ko = []
+        if not cpy_rec.ye_pl_pos_debit_account:
+            bs_accounts_ko.append(_('Debit Account for P&L>0 (B/S account)'))
+        if not cpy_rec.ye_pl_ne_credit_account:
+            bs_accounts_ko.append(_('Credit Account P&L<0 (B/S account)'))
+        if bs_accounts_ko:
+            raise osv.except_osv(_('Warning'),
+                _('You must set following company account(s)'
+                    ' to use this report: %s') % (', '.join(bs_accounts_ko), ))
 
+        if data and 'form' in data:
+            data['form'].update({
+                'bs_debit_account_id': cpy_rec.ye_pl_pos_debit_account.id,
+                'bs_credit_account_id': cpy_rec.ye_pl_ne_credit_account.id,
+            })
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
-        data['form'].update(self.read(cr, uid, ids, ['display_type','reserve_account_id'])[0])
-        if not data['form']['reserve_account_id']:
-            raise osv.except_osv(_('Warning'),_('Please define the Reserve and Profit/Loss account for current user company !'))
+        self._check(cr, uid, context=context, data=data)
+
+        update_fields = [
+            'export_format',
+            'instance_ids',
+        ]
+
+        data['form'].update(self.read(cr, uid, ids, update_fields)[0])
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         instance = self.pool.get('ir.sequence')._get_instance(cr, uid)
         data['target_filename'] = _('Balance Sheet_%s_%s') % (instance, time.strftime('%Y%m%d'))
-        if data['form']['display_type']:
+
+        if data['form']['export_format'] \
+           and data['form']['export_format'] == 'xls':
+            # US-227: excel version
             return {
                 'type': 'ir.actions.report.xml',
-                'report_name': 'account.balancesheet.horizontal',
+                'report_name': 'account.balance.sheet_xls',
                 'datas': data,
             }
-        else:
-            return {
-                'type': 'ir.actions.report.xml',
-                'report_name': 'account.balancesheet',
-                'datas': data,
-            }
+
+        # PDF version (portrait version 'account.balancesheet' not used now)
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'account.balancesheet.horizontal',
+            'datas': data,
+        }
 
 account_bs_report()
 

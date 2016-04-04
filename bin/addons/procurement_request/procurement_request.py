@@ -19,6 +19,8 @@
 #
 ##############################################################################
 
+import time
+
 from osv import osv, fields
 from tools.translate import _
 import decimal_precision as dp
@@ -88,6 +90,22 @@ class procurement_request_sourcing_document(osv.osv):
             readonly=True,
             store=False,
         ),
+        'first_date': fields.datetime(
+            string='Start date',
+            readonly=True,
+        ),
+        'last_date': fields.datetime(
+            string='Last date',
+            readonly=True,
+        ),
+        'sourcing_lines': fields.many2many(
+            'sale.order.line',
+            'sale_line_sourcing_doc_rel',
+            'document_id',
+            'sale_line_id',
+            'Sourced lines',
+            readonly=True,
+        ),
     }
 
     def go_to_document(self, cr, uid, ids, context=None):
@@ -144,6 +162,8 @@ class procurement_request_sourcing_document(osv.osv):
         """
         Check if a same record already exist. If not, create a new record.
         """
+        mem_obj = self.pool.get('procurement.request.sourcing.document.mem')
+
         if context is None:
             context = {}
 
@@ -154,16 +174,46 @@ class procurement_request_sourcing_document(osv.osv):
         ], context=context)
 
         if not chk_ids:
-            self.create(cr, uid, {
+            create_data = {
                 'order_id': vals.get('order_id'),
                 'sourcing_document_id': vals.get('sourcing_document_id'),
                 'sourcing_document_model': vals.get('sourcing_document_model'),
                 'sourcing_document_type': vals.get('sourcing_document_type'),
+                'first_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+            }
+            if vals.get('line_ids'):
+                create_data['sourcing_lines'] = [(6, 0, (vals.get('line_ids'),))]
+            self.create(cr, uid, create_data, context=context)
+            mem_obj.create(cr, uid, create_data, context=context)
+        elif vals.get('line_ids'):
+            for chk in self.browse(cr, uid, chk_ids, context=context):
+                sourcing_lines = [vals.get('line_ids')]
+                for sl in chk.sourcing_lines:
+                    sourcing_lines.append(sl.id)
+
+                self.write(cr, uid, [chk.id], {
+                    'sourcing_lines': [(6, 0, sourcing_lines)],
+                    'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                }, context=context)
+        else:
+            self.write(cr, uid, chk_ids, {
+                'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
+
+        if self._name != 'procurement.request.sourcing.document.mem':
+            mem_obj.chk_create(cr, uid, vals, context=context)
 
         return True
 
 procurement_request_sourcing_document()
+
+
+class procurement_request_sourcing_document_mem(osv.osv_memory):
+    _name = 'procurement.request.sourcing.document.mem'
+    _inherit = 'procurement.request.sourcing.document'
+
+procurement_request_sourcing_document_mem()
 
 
 class procurement_request(osv.osv):
@@ -466,11 +516,16 @@ class procurement_request(osv.osv):
         uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         nb_lines = 0
         line_ids = []
+        reset_soq = []
         for req in self.browse(cr, uid, ids, context=context):
             if len(req.order_line) <= 0:
                 raise osv.except_osv(_('Error'), _('You cannot validate an Internal request with no lines !'))
             for line in req.order_line:
                 line_ids.append(line.id)
+
+                if line.soq_updated:
+                    reset_soq.append(line.id)
+
                 if line.nomen_manda_0.id == nomen_manda_0 \
                 or line.nomen_manda_1.id == nomen_manda_1 \
                 or line.nomen_manda_2.id == nomen_manda_2 \
@@ -483,6 +538,7 @@ class procurement_request(osv.osv):
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
             self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)
         line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
+        line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
         return True

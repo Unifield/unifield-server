@@ -63607,7 +63607,7 @@ msgstr "Free 1/Free 2"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
-msgid "Please verify the price of the invoice ! The real total does not match the computed total:"
+msgid "Please verify the price of the document ! The real total does not match the computed total:"
 msgstr "¡Por favor, verifique el importe de la factura! El total real no coincide con el total calculado:"
 
 #. module: account
@@ -66262,7 +66262,7 @@ msgstr "No lines…"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
-msgid "Please indicate an invoice date before approving the invoice:"
+msgid "Please indicate a date before approving the document:"
 msgstr "Por favor, indique una fecha de factura antes de aprobar la factura:"
 
 #. module: base

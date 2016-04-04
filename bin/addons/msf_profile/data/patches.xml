@@ -5,49 +5,33 @@
             <field name="method">update_us_963_negative_rule_seq</field>
         </record>
 
-        <record id="us_133_patch" model="patch.scripts">
-            <field name="method">update_us_133</field>
+        <record id="another_translation_fix" model="patch.scripts">
+            <field name="method">another_translation_fix</field>
         </record>
+
         <record id="us_918_patch" model="patch.scripts">
             <field name="method">us_918_patch</field>
         </record>
-        <record id="us_489_patch" model="patch.scripts">
-            <field name="method">update_parent_budget_us_489</field>
-        </record>
-        <record id="us_435_patch_2" model="patch.scripts">
-            <field name="method">update_us_435_2</field>
+
+        <record id="us_750_patch" model="patch.scripts">
+            <field name="method">us_750_patch</field>
         </record>
 
-        <record id="us_394_2_patch" model="patch.scripts">
-            <field name="method">us_394_2_patch</field>
+        <record id="uftp_144_patch" model="patch.scripts">
+            <field name="method">uftp_144_patch</field>
         </record>
 
-        <record id="us_394_3_patch" model="patch.scripts">
-            <field name="method">us_394_3_patch</field>
+        <record id="update_volume_patch" model="patch.scripts">
+            <field name="method">update_volume_patch</field>
         </record>
 
-        <record id="us_651_patch" model="patch.scripts">
-            <field name="method">disable_crondoall</field>
+        <record id="clean_far_updates" model="patch.scripts">
+            <field name="method">clean_far_updates</field>
         </record>
 
-        <record id="us_332_patch" model="patch.scripts">
-            <field name="method">us_332_patch</field>
+        <record id="update_sp_222" model="patch.scripts">
+            <field name="method">update_sp_222</field>
         </record>
 
-        <record id="us_898_patch" model="patch.scripts">
-            <field name="method">us_898_patch</field>
-        </record>
-
-        <record id="us_822_patch" model="patch.scripts">
-            <field name="method">us_822_patch</field>
-        </record>
-
-        <record id="us_908_patch" model="patch.scripts">
-            <field name="method">us_908_patch</field>
-        </record>
-
-        <record id="bar_action_patch" model="patch.scripts">
-            <field name="method">bar_action_patch</field>
-        </record>
     </data>
 </openerp>

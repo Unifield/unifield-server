@@ -26,6 +26,8 @@ ACCOUNT_RESTRICTED_AREA = {
     'register_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '!=', True),
+        ('code', 'not like', '8%'),  # US-791 exclude 8 accounts
+        ('code', 'not like', '9%'),  # US-791 exclude 9 accounts
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
@@ -137,6 +139,8 @@ ACCOUNT_RESTRICTED_AREA = {
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
         ('type', 'not in', ['view', 'consolidation', 'closed']),
+        ('code', 'not like', '8%'),  # US-791 exclude 8 accounts
+        ('code', 'not like', '9%'),  # US-791 exclude 9 accounts
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         ('is_not_hq_correctible', '=', False),
     ],
@@ -187,7 +191,8 @@ ACCOUNT_RESTRICTED_AREA = {
     'correction_wizard': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False), # Do not allow user to select accounts with "Not HQ correctible" set to True
-        ('code', '<', '80000'),  # UTP-1187 exclude 8/9 accounts
+        ('code', 'not like', '8%'),  # UTP-1187 exclude 8/9 accounts
+        ('code', 'not like', '9%'),  # UTP-1187 exclude 8/9 accounts
         ('code', 'not in', ['10100', '10200', '10210']),  # UTP-1187 exclude liquidity / cash (10100, 10200, 10210) accounts
         ('is_not_hq_correctible', '!=', True)  # UTP-1187 exclude with the "Can not be corrected on HQ entries" attribute set to "True" accounts
     ],

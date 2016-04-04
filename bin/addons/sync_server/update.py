@@ -81,11 +81,11 @@ class puller_ids_rel(osv.osv):
     _logger = logging.getLogger('sync.server')
 
     _columns = {
-        'update_id': fields.many2one('sync.server.update',
-                                     required=True, string="Update", select=1),
-        'entity_id': fields.many2one('sync.server.entity',
-                                     required=True, string="Instance"),
-        'create_date': fields.datetime('Pull Date'),
+        'update_id' : fields.many2one('sync.server.update',
+            required=True, string="Update", select=1),
+        'entity_id' : fields.many2one('sync.server.entity',
+            required=True, string="Instance"),
+        'create_date' : fields.datetime('Pull Date'),
     }
 
     def create(self, cr, uid, vals, context=None):
@@ -208,7 +208,6 @@ class update(osv.osv):
             @return : True or raise an error
         """
         self._logger.info("::::::::[%s] is pushing %s updates + %s delete" % (entity.name, len(packet['load']), len(packet['unload'])))
-
         def safe_create(data):
             cr.execute("SAVEPOINT update_creation")
             try:

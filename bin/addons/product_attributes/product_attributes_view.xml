@@ -61,13 +61,13 @@
                             <separator string="Codes" colspan="2"/>
                             <field name="default_code" required="1" string="Code"  on_change="onchange_code(default_code)" 
                             attrs="{'readonly':[('duplicate_ok','=',False)]}" />
-                            <field name="old_code"/>
+                            <field name="new_code"/>
                             <field name="duplicate_ok" invisible="1"/>
                         </group>
                         <group colspan="4" col="2">
                             <separator string="Description" colspan="2"/>
                             <field name="name" string="Description"/>
-                            <field name="new_code"/>
+                            <field name="old_code"/>
                             <field name="sale_ok" invisible="1" />
                             <field name="purchase_ok" invisible="1" />
                         </group>
@@ -94,6 +94,7 @@
                             <group colspan="2" col="2">
                                 <separator string="Weights" colspan="2"/>
                                 <field name="volume" attrs="{'readonly':[('type','=','service')]}"/>
+                                <field name="volume_updated" invisible="1" />
                                 <field name="soq_volume" attrs="{'readonly':[('type','=','service')]}"/>
                                 <field name="weight" attrs="{'readonly':[('type','=','service')]}"/>
                                 <field name="soq_weight" attrs="{'readonly':[('type','=','service')]}"/>
@@ -106,7 +107,9 @@
                                 <separator string="Status" colspan="3"/>
                                 <field name="categ_id" readonly="1" colspan="3"/>
                                 <field name="international_status" required="1" widget="selection" colspan="3" />
+                                <field name="standard_ok" colspan="3" />
                                 <field name="state" colspan="3" widget="selection" />
+                                <field name="state_ud" colspan="3" />
                                 <field name="active" readonly="1"/>
                                 <group colspan="1" col="1">
                                    <button name="deactivate_product" icon="gtk-execute" string="De-activate product" type="object" attrs="{'invisible': [('active', '=', False)]}" />
@@ -119,6 +122,7 @@
                                 <field name="perishable"/>
                                 <field name="batch_management" on_change="onchange_batch_management(batch_management)" />
                                 <separator string="UOM" colspan="2"/>
+                                <field name="soq_quantity" on_change="change_soq_quantity(soq_quantity, uom_id)" />
                                 <field name="uom_id" on_change="onchange_uom(uom_id,uom_po_id)" domain="[('compatible_product_id', '=', active_id)]" />
                                 <field name="uom_po_id" string="Exchangeable Unit of Measure" domain="[('compatible_product_id', '=', active_id)]" />
                             </group>
@@ -131,27 +135,25 @@
                                 <field name="cold_chain" colspan="2" attrs="{'invisible': [('show_cold_chain','=',False)]}"  widget="selection"/>
                                 <field name="sterilized" colspan="2"/>
                                 <field name="single_use" colspan="2"/>
-                                <field name="narcotic" colspan="2"/>
                                 <field name="controlled_substance" colspan="2"/>
+                                <separator string="Transport" colspan="2"/>
+                                <field name="dangerous_goods" colspan="2"/>
+                                <field name="un_code" colspan="2"/>
+                                <separator string="Import restrictions" colspan="4"/>
+                                <field name="restricted_country" colspan="2"/>
+                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Diffusion" colspan="2"/>
-                                <field name="standard_ok" colspan="2" />
-                                <field name="justification_code_id" colspan="2" widget="selection" />
+                                <field name="justification_code_id" colspan="2" />
                                 <!-- uf-1544
                                 <field name="med_device_class" colspan="2" />
                                 <field name="gmdn_code" colspan="2" />
                                 <field name="gmdn_description" colspan="2" />
                                  -->
                                 <field name="closed_article" colspan="2"/>
-                                <separator string="Import restrictions" colspan="4"/>
-                                <field name="restricted_country" colspan="2"/>
-                                <field name="country_restriction" colspan="2" widget="selection" attrs="{'readonly':[('restricted_country','=',False)]}"/>
-                            </group>
-                            <group colspan="2" col="2">
-                                <separator string="Transport" colspan="2"/>
-                                <field name="dangerous_goods" colspan="2"/>
-                                <field name="un_code" colspan="2"/>
+                                <field name="manufacturer_ref" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
+                                <field name="manufacturer_txt" attrs="{'invisible': [('closed_article', '=', 'no')]}" />
                             </group>
                             <group colspan="2" col="2">
                                 <separator string="Form" colspan="2" />
@@ -265,7 +267,7 @@
                             <separator string="Description"/>
                             <!-- uf-1544 invisible-->
                             <field name="product_catalog_page" invisible="1"/>
-                            <field name="product_catalog_path"/>
+                            <field name="product_catalog_path" widget="url"/>
                             <separator string="Description"/>
                             <field colspan="4" name="description" nolabel="1"/>
                             <field colspan="4" name="description2" nolabel="1"/>
@@ -368,7 +370,7 @@
             <field name="arch" type="xml">
                 <page string="Specific info" position="before">
                     <page string="Dates">
-                        <field name="life_time" />
+                        <field name="life_time" attrs="{'required': [('short_shelf_life', '=', 'True')]}" />
                         <field name="short_shelf_life" />
                         <field name="use_time" />
                         <field name="alert_time" />
@@ -752,6 +754,18 @@
                   action="product_cold_chain_action"
                   parent="purchase.menu_product_in_config_purchase" />
 
+        <record id="product_justification_code_form_view" model="ir.ui.view">
+            <field name="name">product.justification.code.form</field>
+            <field name="model">product.justification.code</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Justification Code">
+                    <field name="code" readonly="True"/>
+                    <field name="description" readonly="True"/>
+                </form>
+            </field>
+        </record>
+
         <record id="product_justification_code_tree_view" model="ir.ui.view">
             <field name="name">product.justification.code.tree</field>
             <field name="model">product.justification.code</field>
@@ -813,7 +827,7 @@
                     </group>
                     <separator string="Actions" colspan="4" />
                     <label colspan="3"> </label>
-                    <button special="cancel" string="Close window" icon="gtk-cancel" />
+                    <button type="object" name="return_to_product" string="Close window" icon="gtk-cancel" />
               </form>
            </field>
        </record>

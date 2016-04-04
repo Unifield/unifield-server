@@ -24,6 +24,9 @@ from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 from tools.translate import _
 import netsvc
 import time
+import threading
+import logging
+import pooler
 from mx.DateTime import Parser
 from mx.DateTime import RelativeDateTime
 from time import strftime
@@ -162,6 +165,9 @@ class purchase_order(osv.osv):
         default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
+
+        if not 'date_confirm' in default:
+            default['date_confirm'] = False
 
         return super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
 
@@ -401,6 +407,10 @@ class purchase_order(osv.osv):
             type='boolean',
             store=False,
         ),
+        'update_in_progress': fields.boolean(
+            string='Update in progress',
+            readonly=True,
+        ),
     }
 
     _defaults = {
@@ -420,6 +430,7 @@ class purchase_order(osv.osv):
         'canceled_end': False,
         'split_po': False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'update_in_progress': False,
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -1056,6 +1067,7 @@ stock moves which are already processed : '''
             ids = [ids]
 
         todo = []
+        reset_soq = []
 
         for po in self.browse(cr, uid, ids, context=context):
             line_error = []
@@ -1086,6 +1098,8 @@ stock moves which are already processed : '''
             for line in po.order_line:
                 if line.state=='draft':
                     todo.append(line.id)
+                if line.soq_updated:
+                    reset_soq.append(line.id)
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
@@ -1093,6 +1107,7 @@ stock moves which are already processed : '''
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 
         po_line_obj.action_confirm(cr, uid, todo, context)
+        po_line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
 
         self.write(cr, uid, ids, {'state' : 'confirmed',
                                   'validator' : uid,
@@ -2395,6 +2410,121 @@ stock moves which are already processed : '''
 
         return {'type': 'ir.actions.act_window_close'}
 
+    def round_to_soq(self, cr, uid, ids, context=None):
+        """
+        Create a new thread to check for each line of the order if the quantity
+        is compatible with the SoQ rounding of the supplier catalogue or
+        product. If not compatible, update the quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :return: True
+        """
+        th = threading.Thread(
+            target=self._do_round_to_soq,
+            args=(cr, uid, ids, context, True),
+        )
+        th.start()
+        th.join(5.0)
+
+        return True
+
+    def _do_round_to_soq(self, cr, uid, ids, context=None, use_new_cursor=False):
+        """
+        Check for each line of the order if the quantity is compatible
+        with the SoQ rounding of the supplier catalogue or product. If
+        not compatible, update the quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :param use_new_cursor: True if this method is called into a new thread
+        :return: True
+        """
+        pol_obj = self.pool.get('purchase.order.line')
+        uom_obj = self.pool.get('product.uom')
+        sup_obj = self.pool.get('product.supplierinfo')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if use_new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
+
+        try:
+            self.write(cr, uid, ids, {
+                'update_in_progress': True,
+            }, context=context)
+            if use_new_cursor:
+                cr.commit()
+
+            pol_ids = pol_obj.search(cr, uid, [
+                ('order_id', 'in', ids),
+                ('product_id', '!=', False),
+            ], context=context)
+
+            to_update = {}
+            for pol in pol_obj.browse(cr, uid, pol_ids, context=context):
+                # Check only products with defined SoQ quantity
+                sup_ids = sup_obj.search(cr, uid, [
+                    ('name', '=', pol.order_id.partner_id.id),
+                    ('product_id', '=', pol.product_id.id),
+                ], context=context)
+                if not sup_ids and not pol.product_id.soq_quantity:
+                    continue
+
+                # Get SoQ value
+                soq = pol.product_id.soq_quantity
+                soq_uom = pol.product_id.uom_id
+                if sup_ids:
+                    for sup in sup_obj.browse(cr, uid, sup_ids, context=context):
+                        for pcl in sup.pricelist_ids:
+                            if pcl.rounding and pcl.min_quantity <= pol.product_qty:
+                                soq = pcl.rounding
+                                soq_uom = pcl.uom_id
+
+                if not soq:
+                    continue
+
+                # Get line quantity in SoQ UoM
+                line_qty = pol.product_qty
+                if pol.product_uom.id != soq_uom.id:
+                    line_qty = uom_obj._compute_qty_obj(cr, uid, pol.product_uom, pol.product_qty, soq_uom, context=context)
+
+                good_quantity = 0
+                if line_qty % soq:
+                    good_quantity = (line_qty - (line_qty % soq)) + soq
+
+                if good_quantity and pol.product_uom.id != soq_uom.id:
+                    good_quantity = uom_obj._compute_qty_obj(cr, uid, soq_uom, good_quantity, pol.product_uom, context=context)
+
+                if good_quantity:
+                    to_update.setdefault(good_quantity, [])
+                    to_update[good_quantity].append(pol.id)
+
+            for qty, line_ids in to_update.iteritems():
+                pol_obj.write(cr, uid, line_ids, {
+                    'product_qty': qty,
+                    'soq_updated': True,
+                }, context=context)
+        except Exception as e:
+            logger = logging.getLogger('purchase.order.round_to_soq')
+            logger.error(e)
+        finally:
+            self.write(cr, uid, ids, {
+                'update_in_progress': False,
+            }, context=context)
+
+        if use_new_cursor:
+            cr.commit()
+            cr.close()
+
+        return True
+
 purchase_order()
 
 
@@ -2931,6 +3061,10 @@ class purchase_order_line(osv.osv):
                     order='NO_ORDER', context=context)
             exp_sol_obj.unlink(cr, uid, exp_sol_ids, context=context)
 
+        # Remove SoQ updated flag in case of manual modification
+        if not 'soq_updated' in vals:
+            vals['soq_updated'] = False
+
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             # check qty
@@ -3449,6 +3583,10 @@ class purchase_order_line(osv.osv):
             string='Linked FO line',
             store=False,
         ),
+        'soq_updated': fields.boolean(
+            string='SoQ updated',
+            readonly=True,
+        ),
     }
 
     _defaults = {
@@ -3458,6 +3596,7 @@ class purchase_order_line(osv.osv):
         'change_price_ok': lambda *a: True,
         'is_line_split': False, # UTP-972: by default not a split line
         'from_fo': lambda self, cr, uid, c: not c.get('rfq_ok', False) and c.get('from_fo', False),
+        'soq_updated': False,
     }
 
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
@@ -3870,7 +4009,7 @@ class product_product(osv.osv):
 
         if display_message:
             return 'Warning you are about to add a product which does not conform to this' \
-                ' PO’s order category, do you wish to proceed ?'
+                ' order category, do you wish to proceed ?'
         else:
             return False
 

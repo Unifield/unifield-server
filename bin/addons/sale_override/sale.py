@@ -29,9 +29,11 @@ from mx.DateTime import *
 import time
 from tools.translate import _
 import logging
+import threading
 from workflow.wkf_expr import _eval_expr
 
 import decimal_precision as dp
+import pooler
 
 from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
@@ -102,42 +104,253 @@ class sale_order_sourcing_progress(osv.osv):
     _name = 'sale.order.sourcing.progress'
     _rec_name = 'order_id'
 
+    def _get_nb_lines_by_type(self, cr, uid, order_id=None, context=None):
+        """
+        Returns the number of FO/IR lines numbers by type of sourcing.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param order: ID of a sale.order to get number of line
+        :param context: Context of the call
+        :return: A tuple with number of FO/IR lines form stock and number of FO/IR lines on order
+        """
+        sol_obj = self.pool.get('sale.order.line')
+
+        if context is None:
+            context = {}
+
+        # No order given
+        if not order_id:
+            return (0, 0)
+
+        # Get number of 'make_to_stock' lines
+        fsl_nb = sol_obj.search(cr, uid, [
+            ('order_id', '=', order_id),
+            ('type', '=', 'make_to_stock'),
+        ], count=True, order='NO_ORDER', context=context)
+        # Get number of 'make_to_order' lines
+        ool_nb = sol_obj.search(cr, uid, [
+            ('order_id', '=', order_id),
+            ('type', '!=', 'make_to_stock'),
+        ], count=True, order='NO_ORDER', context=context)
+
+        return (fsl_nb, ool_nb)
+
+    def _get_line_completed(self, mem_res, fsl_nb=0, ool_nb=0):
+        """
+        Computes the 'Source lines' status
+        :param mem_res: A dictionnary with the number of 'from stock' and 'on order' completed lines
+        :param fsl_nb: The number of 'From stock' lines in the sale.order
+        :param ool_nb: The number of 'On order' lines in the sale.order
+        :return: A string containing the status of the 'Source lines' field
+        """
+        mem_fsl_nb = mem_res['line_from_stock_completed']
+        mem_ool_nb = mem_res['line_on_order_completed']
+
+        fs_state = fsl_nb and _('Not started') or _('Nothing to do') # From stock lines state
+        oo_state = ool_nb and _('Not started') or _('Nothing to do') # On order lines state
+
+        # No lines to complete
+        if fsl_nb == ool_nb == 0:
+            return _('Nothing to do')
+
+        # No line completed
+        if mem_fsl_nb == mem_ool_nb == 0:
+            return _('Not started (0/%s)') % (fsl_nb + ool_nb,)
+
+        def build_state():
+            """
+            Build the status message to return
+            """
+            return _('From stock: %s (%s/%s)\nOn order: %s (%s/%s)') % (
+                fs_state, mem_fsl_nb, fsl_nb,
+                oo_state, mem_ool_nb, ool_nb,
+            )
+
+        def cmp_lines(mem_nb, nb, state):
+            """
+            Return the status of the line
+            """
+            if not nb:
+                return state
+            elif mem_nb == nb:
+                return _('Done')
+            else:
+                return _('In Progress')
+
+        fs_state = cmp_lines(mem_fsl_nb, fsl_nb, fs_state)
+        oo_state = cmp_lines(mem_ool_nb, ool_nb, oo_state)
+
+        return build_state()
+
+    def _compute_sourcing_value(self, cr, uid, order, context=None):
+        """
+        Computes the sourcing value for the sourcing progress line.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param order: browse_record of the sale.order of the line
+        :param context: Context of the call
+        """
+        order_obj = self.pool.get('sale.order')
+        sol_obj = self.pool.get('sale.order.line')
+        src_doc_obj = self.pool.get('procurement.request.sourcing.document')
+        src_doc_mem = self.pool.get('procurement.request.sourcing.document.mem')
+
+        if context is None:
+            context = {}
+
+        order_ids = order_obj.search(cr, uid, [
+            '|',
+            ('original_so_id_sale_order', '=', order.id),
+            '&',
+            ('procurement_request', '=', True),
+            ('id', '=', order.id),
+        ], context=context)
+
+        # Get min and max date of the documents that source the FO/IR lines
+        cr.execute('''
+            SELECT min(first_date), max(last_date)
+            FROM procurement_request_sourcing_document
+            WHERE order_id IN %s
+        ''', (tuple(order_ids),))
+        min_date, max_date = cr.fetchone()
+
+        # All documents that source the FO/IR lines
+        src_doc_ids = src_doc_obj.search(cr, uid, [
+            ('order_id', 'in', order_ids),
+        ], context=context)
+
+        # Number of lines in the FO
+        nb_all_lines = sol_obj.search(cr, uid, [
+            ('order_id', 'in', order_ids),
+        ], count=True, order='NO_ORDER', context=context)
+
+        mem_fsl_nb = 0
+        mem_ool_nb = 0
+
+        mem_sol_ids = []
+        src_doc_mem_ids = src_doc_mem.search(cr, uid, [
+            ('order_id', 'in', order_ids),
+        ], context=context)
+        for mem_doc in src_doc_mem.browse(cr, uid, src_doc_mem_ids, context=context):
+            for l in mem_doc.sourcing_lines:
+                if l.id not in mem_sol_ids:
+                    mem_sol_ids.append(l.id)
+                    if l.type == 'make_to_stock':
+                        mem_fsl_nb += 1
+                    elif l.type == 'make_to_order':
+                        mem_ool_nb += 1
+
+        # Get number of sourced lines by type (MTS or MTO)
+        res = []
+        if src_doc_ids:
+            where_sql = ''
+            where_params = [tuple(src_doc_ids)]
+            if mem_sol_ids:
+                where_sql = ' AND sol.id NOT IN %s'
+                where_params.append(tuple(mem_sol_ids))
+            sql = '''
+                SELECT count(*) AS nb_line, sol.type AS type
+                FROM sale_order_line sol
+                    LEFT JOIN sale_line_sourcing_doc_rel slsdr
+                    ON slsdr.sale_line_id = sol.id
+                WHERE
+                    slsdr.document_id IN %%s
+                    %s
+                GROUP BY sol.type
+            ''' % where_sql
+            cr.execute(sql, where_params)
+            res = cr.dictfetchall()
+
+        for r in res:
+            if r.get('type') == 'make_to_stock':
+                mem_fsl_nb += r.get('nb_line', 0)
+            elif r.get('type') == 'make_to_order':
+                mem_ool_nb += r.get('nb_line', 0)
+
+        # Build message by sourcing document
+        sourcing = ''
+        for src_doc in src_doc_obj.browse(cr, uid, src_doc_ids, context=context):
+            sourcing += _('%s line%s sourced on %s.\n') % (
+                len(src_doc.sourcing_lines),
+                len(src_doc.sourcing_lines) > 1 and 's' or '',
+                src_doc.sourcing_document_name,
+            )
+
+        fsl_nb = 0
+        ool_nb = 0
+        for order_id in order_ids:
+            # Save number of lines in the sale.order records
+            on_stock_nb_lines, on_order_nb_lines = self._get_nb_lines_by_type(cr, uid, order_id, context=context)
+            fsl_nb += on_stock_nb_lines
+            ool_nb += on_order_nb_lines
+
+        mem_res = {
+            'line_from_stock_completed': mem_fsl_nb,
+            'line_on_order_completed': mem_ool_nb,
+        }
+
+        sourcing_ok = fsl_nb + ool_nb >= nb_all_lines
+        sourcing_completed = self._get_line_completed(mem_res, fsl_nb, ool_nb)
+        return {
+            'sourcing': sourcing,
+            'sourcing_completed': sourcing_completed,
+            'sourcing_start': min_date,
+            'sourcing_stop': sourcing_ok and max_date or False,
+        }
+
+
     def _get_percent(self, cr, uid, ids, field_name, args, context=None):
-        '''
-        Returns the percentage of sourced lines
-        '''
+        """
+        Returns the different percentage of sourced lines
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order.sourcing.progress to compute
+        :param field_name: List of fields to compute
+        :param args: Extra arguments
+        :param context: Context of the call
+        :return: A dictionnary with ID of sale.order.sourcing.progress as keys
+                 and a dictionnary with computed field values as values.
+        """
         mem_obj = self.pool.get('sale.order.sourcing.progress.mem')
-        res = {}
+
+        if context is None:
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        f_to_read = [
+            'line_from_stock_completed',
+            'line_on_order_completed',
+            'split_order',
+            'check_data',
+            'prepare_picking',
+        ]
+
+        res = {}
         for sp in self.browse(cr, uid, ids, context=context):
-            nb_lines = sp.order_id and len(sp.order_id.order_line) or 0
-            res[sp.id] = {
-                'line_completed': '/',
-                'split_order': '/',
-                'check_data': '/',
-                'prepare_picking': '/',
-            }
-            if sp.order_id and sp.order_id.sourcing_trace_ok:
-                mem_id = mem_obj.search(cr, uid, [
+            res[sp.id] = {}
+
+            # Save number of lines in the sale.order record
+            on_stock_nb_lines, on_order_nb_lines = self._get_nb_lines_by_type(cr, uid, sp.order_id.id, context=context)
+            nb_lines = on_stock_nb_lines + on_order_nb_lines
+
+            if not sp.order_id:
+                continue
+
+            # Confirmation of the order in progress
+            if sp.order_id.sourcing_trace_ok:
+                mem_ids = mem_obj.search(cr, uid, [
                     ('order_id', '=', sp.order_id.id),
                 ], context=context)
-                if mem_id:
-                    f_to_read = [
-                        'line_completed',
-                        'split_order',
-                        'check_data',
-                        'prepare_picking',
-                    ]
-                    mem_res = mem_obj.read(cr, uid, mem_id, f_to_read, context=context)[0]
-                    res[sp.id] = {
-                        'line_completed': mem_res['line_completed'] or 'Not started (0/%s)' % nb_lines,
-                        'split_order': mem_res['split_order'],
-                        'check_data': mem_res['check_data'],
-                        'prepare_picking': mem_res['prepare_picking'],
-                    }
+                if mem_ids:
+                    for mem_res in mem_obj.read(cr, uid, mem_ids, f_to_read, context=context):
+                        res[sp.id] = {
+                            'line_completed': self._get_line_completed(mem_res, on_stock_nb_lines, on_order_nb_lines),
+                            'split_order': mem_res['split_order'],
+                            'check_data': mem_res['check_data'],
+                            'prepare_picking': mem_res['prepare_picking'],
+                        }
                 elif sp.order_id.sourcing_trace and sp.order_id.sourcing_trace != _('Sourcing in progress'):
                     res[sp.id] = {
                         'line_completed': _('Error'),
@@ -152,15 +365,19 @@ class sale_order_sourcing_progress(osv.osv):
                         'check_data': _('Not started'),
                         'prepare_picking': _('Not started'),
                     }
-            elif sp.order_id and \
-                 (sp.order_id.state_hidden_sale_order in 'split_so' or \
+            elif (sp.order_id.state_hidden_sale_order in 'split_so' or \
                  (sp.order_id.procurement_request and sp.order_id.state in ('manual', 'progress'))):
+                line_completed = _('From stock: %s (%s/%s)\nOn order: %s (%s/%s)') % (
+                    _('Done'), on_stock_nb_lines, on_stock_nb_lines,
+                    _('Done'), on_order_nb_lines, on_order_nb_lines,
+                )
                 res[sp.id] = {
-                    'line_completed': _('Done (%s/%s)') % (nb_lines, nb_lines),
+                    'line_completed': line_completed,
                     'split_order': _('Done (%s/%s)') % (nb_lines, nb_lines),
                     'check_data': _('Done'),
                     'prepare_picking': _('Done'),
                 }
+                res[sp.id].update(self._compute_sourcing_value(cr, uid, sp.order_id, context=context))
 
         return res
 
@@ -173,7 +390,7 @@ class sale_order_sourcing_progress(osv.osv):
         'line_completed': fields.function(
             _get_percent,
             method=True,
-            type='char',
+            type='text',
             size=64,
             string='Source lines',
             readonly=True,
@@ -210,6 +427,45 @@ class sale_order_sourcing_progress(osv.osv):
             store=False,
             multi='memory',
         ),
+        'sourcing': fields.function(
+            _get_percent,
+            method=True,
+            type='text',
+            string='Sourcing Result',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'sourcing_completed': fields.function(
+            _get_percent,
+            method=True,
+            type='text',
+            size=64,
+            string='Sourcing status',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'sourcing_start': fields.function(
+            _get_percent,
+            method=True,
+            type='datetime',
+            size=64,
+            string='Sourcing start date',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
+        'sourcing_stop': fields.function(
+            _get_percent,
+            method=True,
+            type='datetime',
+            size=64,
+            string='Sourcing end date',
+            readonly=True,
+            store=False,
+            multi='memory',
+        ),
         'start_date': fields.datetime(
             string='Start date',
             readonly=True,
@@ -228,7 +484,10 @@ class sale_order_sourcing_progress(osv.osv):
         'split_order': '/',
         'check_data': '/',
         'prepare_picking': '/',
+        'sourcing': '/',
         'end_date': False,
+        'sourcing_start': False,
+        'sourcing_stop': False,
     }
 
 sale_order_sourcing_progress()
@@ -244,8 +503,13 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
             string='Order',
             required=True,
         ),
-        'line_completed': fields.char(
-            string='Source lines',
+        'line_from_stock_completed': fields.integer(
+            string='Source lines from stock',
+            size=64,
+            readonly=True,
+        ),
+        'line_on_order_completed': fields.integer(
+            string='Source lines on order',
             size=64,
             readonly=True,
         ),
@@ -267,7 +531,8 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
     }
 
     _defaults = {
-        'line_completed': '/',
+        'line_from_stock_completed': 0,
+        'line_on_order_completed': 0,
         'split_order': '/',
         'check_data': '/',
         'prepare_picking': '/',
@@ -456,6 +721,88 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             res[sale.id] = sale.order_type != 'regular' or sale.partner_id.partner_type == 'internal'
         return res
 
+    def add_audit_line(self, cr, uid, order_id, old_state, new_state, context=None):
+        """
+        If state_hidden_sale_order is modified, add an audittrail.log.line
+        @param cr: Cursor to the database
+        @param uid: ID of the user that change the state
+        @param order_id: ID of the sale.order on which the state is modified
+        @param new_state: The value of the new state
+        @param context: Context of the call
+        @return: True
+        """
+        audit_line_obj = self.pool.get('audittrail.log.line')
+        audit_seq_obj = self.pool.get('audittrail.log.sequence')
+        fld_obj = self.pool.get('ir.model.fields')
+        model_obj = self.pool.get('ir.model')
+        rule_obj = self.pool.get('audittrail.rule')
+        log = 1
+
+        if context is None:
+            context = {}
+
+        domain = [
+            ('model', '=', 'sale.order'),
+            ('res_id', '=', order_id),
+        ]
+
+        object_id = model_obj.search(cr, uid, [('model', '=', 'sale.order')], context=context)[0]
+        # If the field 'state_hidden_sale_order' is not in the fields to trace, don't trace it.
+        fld_ids = fld_obj.search(cr, uid, [
+            ('model', '=', 'sale.order'),
+            ('name', '=', 'state_hidden_sale_order'),
+        ], context=context)
+        rule_domain = [('object_id', '=', object_id)]
+        if not old_state:
+            rule_domain.append(('log_create', '=', True))
+        else:
+            rule_domain.append(('log_write', '=', True))
+        rule_ids = rule_obj.search(cr, uid, rule_domain, context=context)
+        if fld_ids and rule_ids:
+            for fld in rule_obj.browse(cr, uid, rule_ids[0], context=context).field_ids:
+                if fld.id == fld_ids[0]:
+                    break
+            else:
+                return
+
+        log_sequence = audit_seq_obj.search(cr, uid, domain)
+        if log_sequence:
+            log_seq = audit_seq_obj.browse(cr, uid, log_sequence[0]).sequence
+            log = log_seq.get_id(code_or_id='id')
+
+        # Get readable value
+        new_state_txt = False
+        old_state_txt = False
+        for st in SALE_ORDER_STATE_SELECTION:
+            if new_state_txt and old_state_txt:
+                break
+            if new_state == st[0]:
+                new_state_txt = st[1]
+            if old_state == st[0]:
+                old_state_txt = st[1]
+
+        vals = {
+            'user_id': uid,
+            'method': 'write',
+            'name': _('State'),
+            'object_id': object_id,
+            'res_id': order_id,
+            'fct_object_id': False,
+            'fct_res_id': False,
+            'sub_obj_name': '',
+            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+            'field_description': _('State'),
+            'trans_field_description': _('State'),
+            'new_value': new_state,
+            'new_value_text': new_state_txt or new_state,
+            'new_value_fct': False,
+            'old_value': old_state,
+            'old_value_text': old_state_txt or old_state,
+            'old_value_fct': '',
+            'log': log,
+        }
+        audit_line_obj.create(cr, uid, vals, context=context)
+
     def _vals_get_sale_override(self, cr, uid, ids, fields, arg, context=None):
         '''
         get function values
@@ -470,6 +817,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             result[obj.id]['state_hidden_sale_order'] = obj.state
             if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
+
+            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order']:
+                self.add_audit_line(cr, uid, obj.id,
+                                    obj.state_hidden_sale_order,
+                                    result[obj.id]['state_hidden_sale_order'],
+                                    context=context)
 
         return result
 
@@ -806,6 +1159,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not values:
             return prog_id
 
+        for fld in ['line_on_order_completed', 'line_from_stock_completed']:
+            if fld in values:
+                line_completed = prog_obj.read(cr, uid, [prog_id], [fld], context=context)[0][fld]
+                line_completed += values[fld]
+                values[fld] = line_completed
+
         prog_obj.write(cr, uid, [prog_id], values, context=context)
 
         return prog_id
@@ -897,6 +1256,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         order_brw_list = self.browse(cr, uid, ids, context=context)
+        reset_soq = []
 
         # 1/ Check validity of analytic distribution
         self.analytic_distribution_checks(cr, uid, order_brw_list)
@@ -905,6 +1265,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_ids = []
             for line in order.order_line:
                 line_ids.append(line.id)
+                if line.soq_updated:
+                    reset_soq.append(line.id)
             no_price_lines = []
             if order.order_type == 'regular':
                 cr.execute('SELECT line_number FROM sale_order_line WHERE (price_unit*product_uom_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (order.id,))
@@ -945,6 +1307,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if not order.procurement_request and order.split_type_sale_order == 'original_sale_order':
                 line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
+
+        line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
 
         self.write(cr, uid, ids, {
             'state': 'validated',
@@ -999,7 +1363,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             created_line = []
             for line in so.order_line:
                 line_done += 1
-                prog_id = self.update_sourcing_progress(cr, uid, so, prog_id, {
+                prog_id = self.update_sourcing_progress(cr, uid, so, False, {
                     'split_order': _('In Progress (%s/%s)') % (line_done, line_total),
                 }, context=context)
                 # check that each line must have a supplier specified
@@ -1058,7 +1422,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
             # the sale order is treated, we process the workflow of the new so
-            prog_id = self.update_sourcing_progress(cr, uid, so, prog_id, {
+            prog_id = self.update_sourcing_progress(cr, uid, so, False, {
                'split_order': _('Done'),
                'check_data': _('In Progress'),
             }, context=context)
@@ -1597,7 +1961,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             line_done = 0
             prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                'check_data': _('Done'),
-                'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
             }, context=context)
             for line in order.order_line:
                 proc_id = False
@@ -1626,12 +1989,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                     if order.procurement_request:
                         move_obj.action_confirm(cr, uid, [move_id], context=context)
-                        prsd_obj.chk_create(cr, uid, {
-                            'order_id': order.id,
-                            'sourcing_document_id': picking_id,
-                            'sourcing_document_model': 'stock.picking',
-                            'sourcing_document_type': picking_data.get('type'),
-                        }, context=context)
+
+                    prsd_obj.chk_create(cr, uid, {
+                        'order_id': order.id,
+                        'sourcing_document_id': picking_id,
+                        'sourcing_document_model': 'stock.picking',
+                        'sourcing_document_type': picking_data.get('type'),
+                        'line_ids': line.id,
+                    }, context=context)
 
                     """
                     We update the procurement and the purchase orders if we are treating o FO which is
@@ -1711,14 +2076,19 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                 proc_obj.write(cr, uid, [proc_id], values, context=context)
 
                     wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
+                    if line.type == 'make_to_stock':
+                        prog_id = self.update_sourcing_progress(cr, uid, order, False, {
+                           'line_from_stock_completed': 1,
+                        }, context=context)
+                    else:
+                        prog_id = self.update_sourcing_progress(cr, uid, order, False, {
+                            'line_on_order_completed': 1,
+                        }, context=context)
 
                 if line.type == 'make_to_stock' and line.procurement_id:
                     wf_service.trg_validate(uid, 'procurement.order', line.procurement_id.id, 'button_check', cr)
 
                 line_done += 1
-                prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
-                   'line_completed': _('In progress (%s/%s)') % (line_done, line_total),
-                }, context=context)
                 if line.type == 'make_to_stock':
                     msg = 'The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the stock.move id:%s' % (
                             line.id,
@@ -1727,8 +2097,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     )
                     self.infolog(cr, uid, msg)
 
-            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
-               'line_completed': _('Done (%s/%s)') % (line_done, line_total),
+            prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                'prepare_picking': _('In Progress'),
             }, context=context)
 
@@ -1793,7 +2162,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             self.write(cr, uid, [order.id], val)
 
-            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+            prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                'prepare_picking': _('Done'),
             }, context=context)
             prog_obj = self.pool.get('sale.order.sourcing.progress')
@@ -2038,11 +2407,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # flag to prevent the display of the sale order log message
             # if the method is called after po update, we do not display log message
             display_log = True
-            line_total = len(order.order_line)
             line_done = 0
-            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
+            prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                'check_data': _('Done'),
-               'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
             }, context=context)
             for line in order.order_line:
                 # these lines are valid for all types (stock and order)
@@ -2087,10 +2454,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if line.created_by_po:
                         proc_obj.write(cr, uid, [proc_id], {'state': 'running'}, context=context)
 
-                line_done += 1
-                prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
-                    'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
-                }, context=context)
+                    line_done += 1
+                    if line.type == 'make_to_stock':
+                        prog_id = self.update_sourcing_progress(cr, uid, order, False, {
+                            'line_from_stock_completed': 1,
+                        }, context=context)
+                    else:
+                        prog_id = self.update_sourcing_progress(cr, uid, order, False, {
+                            'line_on_order_completed': 1,
+                        }, context=context)
 
             # the Fo is sourced we set the state (keep the IR in confirmed state)
             if not order.procurement_request:
@@ -2100,8 +2472,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 if display_log:
                     self.log(cr, uid, order.id, _('The split \'%s\' is sourced.') % (order.name))
 
-            prog_id = self.update_sourcing_progress(cr, uid, order, prog_id, {
-                'line_completed': _('In Progress (%s/%s)') % (line_done, line_total),
+            prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                 'prepare_picking': _('Done'),
             }, context=context)
             prog_obj = self.pool.get('sale.order.sourcing.progress')
@@ -2245,6 +2616,103 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def _manual_create_sync_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         return
 
+    def round_to_soq(self, cr, uid, ids, context=None):
+        """
+        Create a new thread to check for each line of the order if the quantity
+        is compatible with SoQ rounding of the product. If not compatible,
+        update the quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :return: True
+        """
+        th = threading.Thread(
+            target=self._do_round_to_soq,
+            args=(cr, uid, ids, context, True),
+        )
+        th.start()
+        th.join(5.0)
+
+        return True
+
+    def _do_round_to_soq(self, cr, uid, ids, context=None, use_new_cursor=False):
+        """
+        Check for each line of the order if the quantity is compatible
+        with SoQ rounding of the product. If not compatible, update the
+        quantity to match with SoQ rounding.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of sale.order to check and update
+        :param context: Context of the call
+        :param use_new_cursor: True if this method is called into a new thread
+        :return: True
+        """
+        sol_obj = self.pool.get('sale.order.line')
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if use_new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
+
+        try:
+            self.write(cr, uid, ids, {
+                'import_in_progress': True,
+            }, context=context)
+            if use_new_cursor:
+                cr.commit()
+
+            sol_ids = sol_obj.search(cr, uid, [
+                ('order_id', 'in', ids),
+                ('product_id', '!=', False),
+            ], context=context)
+
+            to_update = {}
+            for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
+                # Check only products with defined SoQ quantity
+                if not sol.product_id.soq_quantity:
+                    continue
+
+                # Get line quantity in product UoM
+                line_qty = sol.product_uom_qty
+                if sol.product_uom.id != sol.product_id.uom_id.id:
+                    line_qty = uom_obj._compute_qty_obj(cr, uid, sol.product_uom, sol.product_uom_qty, sol.product_id.uom_id, context=context)
+
+                good_quantity = 0
+                if line_qty % sol.product_id.soq_quantity:
+                    good_quantity = (line_qty - (line_qty % sol.product_id.soq_quantity)) + sol.product_id.soq_quantity
+
+                if good_quantity and sol.product_uom.id != sol.product_id.uom_id.id:
+                    good_quantity = uom_obj._compute_qty_obj(cr, uid, sol.product_id.uom_id, good_quantity, sol.product_uom, context=context)
+
+                if good_quantity:
+                    to_update.setdefault(good_quantity, [])
+                    to_update[good_quantity].append(sol.id)
+
+            for qty, line_ids in to_update.iteritems():
+                sol_obj.write(cr, uid, line_ids, {
+                    'product_uom_qty': qty,
+                    'soq_updated': True,
+                }, context=context)
+        except Exception as e:
+            logger = logging.getLogger('sale.order.round_to_soq')
+            logger.error(e)
+        finally:
+            self.write(cr, uid, ids, {
+                'import_in_progress': False,
+            }, context=context)
+
+        if use_new_cursor:
+            cr.commit()
+            cr.close()
+
+        return True
+
 sale_order()
 
 
@@ -2297,11 +2765,16 @@ class sale_order_line(osv.osv):
                     help='If the line has been canceled/removed on the splitted FO',
                 ),
                 'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+                'soq_updated': fields.boolean(
+                    string='SoQ updated',
+                    readonly=True,
+                ),
                 }
 
     _defaults = {
         'is_line_split': False,  # UTP-972: By default set False, not split
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
+        'soq_updated': False,
     }
 
     def ask_unlink(self, cr, uid, ids, context=None):
@@ -2354,7 +2827,7 @@ class sale_order_line(osv.osv):
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
 
         if lines_to_check:
-            self.check_confirm_order(cr, uid, lines_to_check, context=context)
+            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context)
 
         return res
 
@@ -2888,6 +3361,10 @@ class sale_order_line(osv.osv):
             vals.update({'cost_price': vals.get('cost_price', False)})
 
         self.check_empty_line(cr, uid, ids, vals, context=context)
+
+        # Remove SoQ updated flag in case of manual modification
+        if not 'soq_updated' in vals:
+            vals['soq_updated'] = False
 
         res = super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 

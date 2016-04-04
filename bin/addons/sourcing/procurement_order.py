@@ -281,8 +281,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             sol = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
             if sol.order_id:
                 categ = sol.order_id.categ
-                if sol.order_id.procurement_request:
-                    ir_to_link = sol.order_id.id
+                ir_to_link = sol.order_id.id
 
             if sol.analytic_distribution_id:
                 new_analytic_distribution_id = self.pool.get('analytic.distribution').copy(
@@ -345,6 +344,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                         'sourcing_document_model': 'purchase.order',
                         'sourcing_document_type': 'po',
                         'sourcing_document_id': purchase_ids[0],
+                        'line_ids': sol and sol.id or False,
                     }, context=context)
 
             if line:
@@ -378,6 +378,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                         'sourcing_document_model': 'purchase.order',
                         'sourcing_document_type': 'po',
                         'sourcing_document_id': purchase_id,
+                        'line_ids': sol and sol.id or False,
                     }, context=context)
 
             if line:
