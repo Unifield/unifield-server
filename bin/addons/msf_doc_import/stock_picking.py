@@ -148,5 +148,4 @@ class stock_move(osv.osv):
         })
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
-
 stock_move()

@@ -15,6 +15,7 @@
         % for l in o.move_lines:
             <record>
                 <field name="line_number">${l.line_number or ''}</field>
+                <field name="external_ref">${l.purchase_line_id and l.purchase_line_id.external_ref or ''}</field>
                 <field name="product_id" key="default_code,name">
                     <field name="product_code">${l.product_id and l.product_id.default_code or ''}</field>
                     <field name="product_name">${l.product_id and l.product_id.name or ''}</field>
