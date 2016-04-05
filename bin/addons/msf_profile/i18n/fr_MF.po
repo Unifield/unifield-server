@@ -9851,6 +9851,8 @@ msgstr "Enchaînement des Piquages internes à partir des IN (entrées)"
 #: selection:account.report.general.ledger,display_account:0
 #: report:pl.account.horizontal:0
 #: report:pl.account:0
+#: code:addons/account/report/account_profit_loss.py:224
+#, python-format
 msgid "With balance is not equal to 0"
 msgstr "Avec un solde qui n'est pas égal à 0"
 
@@ -24580,6 +24582,8 @@ msgstr "Délai d'Expédition"
 #: selection:account.report.general.ledger,display_account:0
 #: report:pl.account.horizontal:0
 #: report:pl.account:0
+#: code:addons/account/report/account_profit_loss.py:222
+#, python-format
 msgid "With movements"
 msgstr "Avec écritures"
 
@@ -62208,6 +62212,8 @@ msgstr "Africa/Asmera"
 #: selection:account.bank.statement,display_type:0
 #: report:pl.account.horizontal:0
 #: report:pl.account:0
+#: code:addons/account/report/account_profit_loss.py:0
+#, python-format
 msgid "All"
 msgstr "Tous(tes)"
 
@@ -62505,6 +62511,8 @@ msgstr "Total Project - Actuals"
 #: view:account.journal:0
 #: view:account.mcdb:0
 #: field:account.analytic.account,destination_ids:0
+#: code:addons/account/report/account_profit_loss.py:225
+#, python-format
 msgid "Accounts"
 msgstr "Comptes"
 
@@ -66948,8 +66956,10 @@ msgstr "Litige"
 msgid "Base price for computing the customer price. Sometimes called the catalog price."
 msgstr "Prix de base pour le calcul du prix client. Parfois appelé prix catalogue."
 
-#. module: account_mcdb
+#. modules: account_mcdb, account
 #: field:account.mcdb,analytic_axis:0
+#: report:pl.account.horizontal:0
+#: report:pl.account:0
 msgid "Display"
 msgstr "Afficher"
 
@@ -73568,3 +73578,9 @@ msgstr "Les montants entrants ne peuvent pas être supérieurs aux montants sort
 #, python-format
 msgid "You can't delete this line. Amounts IN can't be higher than Amounts OUT for the selected PO."
 msgstr "Vous ne pouvez pas supprimer cette ligne. Les montants entrants ne peuvent pas être supérieurs aux montants sortants pour le BC sélectionné."
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:395
+#, python-format
+msgid "In the amount selector (from-to), the \"from\" value must be the smallest one."
+msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la plus petite."

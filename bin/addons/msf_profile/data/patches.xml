@@ -17,12 +17,20 @@
             <field name="method">us_750_patch</field>
         </record>
 
+        <record id="uftp_144_patch" model="patch.scripts">
+            <field name="method">uftp_144_patch</field>
+        </record>
+
         <record id="update_volume_patch" model="patch.scripts">
             <field name="method">update_volume_patch</field>
         </record>
 
         <record id="pas_patch" model="patch.scripts">
             <field name="method">pas_patch</field>
+        </record>
+        
+        <record id="clean_far_updates" model="patch.scripts">
+            <field name="method">clean_far_updates</field>
         </record>
 
     </data>

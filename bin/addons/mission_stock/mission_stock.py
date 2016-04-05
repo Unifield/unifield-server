@@ -687,10 +687,23 @@ class stock_mission_report_line(osv.osv):
 
         return res
 
+    def xmlid_code_migration(self, cr, ids):
+        cr.execute('UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)')
+        print 'UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)'
+        print cr.statusmessage
+        return True
+
+    def is_migration(self, cr, ids):
+        cr.execute('UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)')
+        print 'UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)'
+        print cr.statusmessage
+
+        return True
+
     _columns = {
-        'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade"),
+        'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False),
-        'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False),
+        'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False, _fnct_migrate=xmlid_code_migration),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
@@ -713,6 +726,7 @@ class stock_mission_report_line(osv.osv):
             string='International status',
             store=True,
             write_relate=False,
+            _fnct_migrate=is_migration,
         ),
         # mandatory nomenclature levels
         'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),

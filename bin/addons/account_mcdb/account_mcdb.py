@@ -389,6 +389,10 @@ class account_mcdb(osv.osv):
                 # Prepare some values
                 mnt_from = getattr(wiz, curr[0]) or False
                 mnt_to = getattr(wiz, curr[1]) or False
+                # display a warning when amount FROM > amount TO
+                if mnt_from and mnt_to and mnt_from > mnt_to:
+                    raise osv.except_osv(_('Warning'),
+                                         _('In the amount selector (from-to), the "from" value must be the smallest one.'))
                 field = curr[2]
                 # specific behaviour for functional in analytic MCDB
                 if field == 'balance' and res_model == 'account.analytic.line':
