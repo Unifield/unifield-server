@@ -66,6 +66,119 @@ class stock_production_lot(osv.osv):
         self.write(cr, uid, [obj.id], self.default_get(cr, uid, towrite, context=context))
         return newid
 
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        force writing of expired_date which is readonly for batch management products
+        '''
+        self.migrate_dup_batch(cr, uid, context)
+        
+        return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
+    
+    #US-838: migrate all the duplicated batch into single batch
+    def migrate_dup_batch(self, cr, uid, context=None):
+        '''
+        Step to do:
+        
+        1. Search list of dup batches, that have the same name + product + xmlname values.
+        2. Go through this list, for each element do the following:
+            2.1. Get the 2 batch id of the same name, order by id ---> the smaller id will be kept, the other will be set as inactive
+            2.2. Search all tables that refer to the bigger_id, then map them to the smaller_id
+            2.3. Set the non-lead batches to become inactive
+            2.4. Update ir_model_data
+        3. Modify the unique constraint to be prod + xmlname, and no more name + partner_name, because we will not use partner_name anymore  
+        
+        4. For the messages in the pipeline ---> treated in sync message
+        
+        '''
+        
+        cr.execute('''select id, name from stock_production_lot where name in  
+                (select name from (select name, count(name) as amount_bn from stock_production_lot group by name) as foo where amount_bn>1) order by name, id;''')
+        lead_id = 0 # This id will be used as the main batch id
+        same_name = None 
+        for r in cr.dictfetchall():
+            if lead_id == 0:
+                print "*******Lead BN = ", r['name']," id= ",r['id']
+                same_name = r['name']
+                lead_id = r['id']
+            else:
+                if same_name == r['name']: # same batch --> replace in all table to the lead_id
+                    # Do step 2.2, search the following tables to replace the link to the
+                    print "___REMAP for ID = ", r['id'] 
+                    self.remap_reference_tables(cr, uid, r['id'], lead_id, context)
+                    
+                    # 2.3: Set this batch to become inactive
+                    
+                else:
+                    lead_id = r['id'] # when the name change --> replace by the new lead_id
+                    same_name = r['name'] 
+                    print "*******Lead BN = ", r['name']," id= ",r['id'] 
+                
+        return True
+    
+    def remap_reference_tables(self, cr, uid, wrong_id, lead_id, context=None):
+        '''
+        -- with fkey = prodlot_id (total=13)
+            TABLE "create_picking_move_processor" CONSTRAINT "create_picking_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "export_report_stock_inventory" CONSTRAINT "export_report_stock_inventory_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "export_report_stock_move" CONSTRAINT "export_report_stock_move_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "internal_move_processor" CONSTRAINT "internal_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "outgoing_delivery_move_processor" CONSTRAINT "outgoing_delivery_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "ppl_move_processor" CONSTRAINT "ppl_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "real_average_consumption_line" CONSTRAINT "real_average_consumption_line_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "return_ppl_move_processor" CONSTRAINT "return_ppl_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "stock_move_in_processor" CONSTRAINT "stock_move_in_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "stock_move_processor" CONSTRAINT "stock_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "stock_move" CONSTRAINT "stock_move_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "unconsistent_stock_report_line" CONSTRAINT "unconsistent_stock_report_line_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE CASCADE
+            TABLE "validate_move_processor" CONSTRAINT "validate_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+        
+        -- with fkey = lot_id (2)
+            TABLE "stock_production_lot_revision" CONSTRAINT "stock_production_lot_revision_lot_id_fkey" FOREIGN KEY (lot_id) REFERENCES stock_production_lot(id) ON DELETE CASCADE
+            TABLE "product_likely_expire_report_item_line" CONSTRAINT "product_likely_expire_report_item_line_lot_id_fkey" FOREIGN KEY (lot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+        
+        -- with fkey = prod_lot_id (2)
+            TABLE "stock_inventory_line" CONSTRAINT "stock_inventory_line_prod_lot_id_fkey" FOREIGN KEY (prod_lot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "initial_stock_inventory_line" CONSTRAINT "initial_stock_inventory_line_prod_lot_id_fkey" FOREIGN KEY (prod_lot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+        
+        -- with fkey = no common name (3)
+            TABLE "claim_product_line" CONSTRAINT "claim_product_line_lot_id_claim_product_line_fkey" FOREIGN KEY (lot_id_claim_product_line) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "composition_kit" CONSTRAINT "composition_kit_composition_lot_id_fkey" FOREIGN KEY (composition_lot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
+            TABLE "wizard_import_in_line_simulation_screen" CONSTRAINT "wizard_import_in_line_simulation_screen_imp_batch_id_fkey" FOREIGN KEY (imp_batch_id) REFERENCES stock_production_lot(id) ON DELETE SET 
+        '''
+        # Tables with foreign key prodlot_id (total 13 tables) 
+        self.update_table(cr, uid, 'create_picking_move_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'export_report_stock_inventory', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'export_report_stock_move', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'internal_move_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'outgoing_delivery_move_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'ppl_move_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'real_average_consumption_line', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'return_ppl_move_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'stock_move_in_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'stock_move_processor', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'stock_move', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'unconsistent_stock_report_line', 'prodlot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'validate_move_processor', 'prodlot_id', wrong_id, lead_id)
+
+        # Tables with foreign key lot_id (total 2) 
+        self.update_table(cr, uid, 'stock_production_lot_revision', 'lot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'product_likely_expire_report_item_line', 'lot_id', wrong_id, lead_id)
+        
+        # Tables with foreign key prod_lot_id (total 2) 
+        self.update_table(cr, uid, 'stock_inventory_line', 'prod_lot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'initial_stock_inventory_line', 'prod_lot_id', wrong_id, lead_id)
+
+        # Tables with foreign keys have no common pattern (total 3) 
+        self.update_table(cr, uid, 'claim_product_line', 'lot_id_claim_product_line', wrong_id, lead_id)
+        self.update_table(cr, uid, 'composition_kit', 'composition_lot_id', wrong_id, lead_id)
+        self.update_table(cr, uid, 'wizard_import_in_line_simulation_screen', 'imp_batch_id', wrong_id, lead_id)
+        
+        
+    def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id):
+        #cr.execute("update %s set %s=%s where prodlot_id=%s", (table_name, field_id, lead_id, wrong_id,))
+        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;', (wrong_id,))
+        print "---------Table=", table_name, " has ", cr.dictfetchall() 
+
     _defaults = {
         'life_date': _get_date('life_time'),
         'use_date': _get_date('use_time'),
