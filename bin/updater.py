@@ -12,6 +12,7 @@ from base64 import b64decode
 from StringIO import StringIO
 import logging
 import time
+from osv import osv
 
 if sys.version_info >= (2, 6, 6):
     from zipfile import ZipFile, ZipInfo
@@ -441,7 +442,7 @@ def do_upgrade(cr, pool):
             try:
                 dump_db(cr, pool)
             except Exception, e:
-                logger.error('Can\'t create backup before patching: %s' % (unicode(e),))
+                raise osv.except_osv(_("Error!"), _("Can\'t create backup before patching: %s") % (unicode(e),))
             import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
@@ -452,7 +453,7 @@ def do_upgrade(cr, pool):
         try:
             dump_db(cr, pool)
         except Exception, e:
-            logger.error('Can\'t create backup before patching: %s' % (unicode(e),))
+            raise osv.except_osv(_("Error!"), _("Can\'t create backup before patching: %s") % (unicode(e),))
         base_module_upgrade(cr, pool, upgrade_now=True)
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
