@@ -134,6 +134,12 @@ class BackupConfig(osv.osv):
                 raise osv.except_osv(_('Error! Cannot perform the backup'), error)
 
             res = tools.pg_dump(cr.dbname, outfile)
+
+            # check the backup file
+            if not os.path.isfile(outfile):
+                raise osv.except_osv(_('Error! The backup file could not be found on the disk with path %s.', outfile))
+            if not os.stat(outfile) > 0:
+                raise osv.except_osv(_('Error! The backup file should be bigger that 0 (actually size=%s bytes)'), os.stat(outfile))
             if res:
                 raise Exception, "Couldn't dump database"
             return "Backup done"
