@@ -84,6 +84,9 @@ class upgrade(osv.osv_memory):
 
     def do_upgrade(self, cr, uid, ids, context=None):
         """Actualy, prepare the upgrade to be done at server restart"""
+        # backup before patching
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid,
+                'beforepatching', context=context)
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         if next_state != 'need-install':

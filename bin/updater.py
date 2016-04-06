@@ -403,14 +403,6 @@ def do_prepare(cr, revision_ids):
     logger.info("Server update prepared. Need to restart to complete the upgrade.")
     return ('success', 'Restart required', {})
 
-def dump_db(cr, pool):
-    bck_obj = pool.get('backup.config')
-    if bck_obj:
-        # test if column exists
-        cr.execute("SELECT attr.attname FROM pg_attribute attr, pg_class class WHERE attr.attrelid = class.oid AND class.relname = 'backup_config' AND attr.attname='beforepatching'")
-        if cr.fetchall():
-            bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
-
 def test_do_upgrade(cr):
     cr.execute("select count(1) from pg_class where relkind='r' and relname='sync_client_version'")
     if not cr.fetchone()[0]:
@@ -439,10 +431,6 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
-            try:
-                dump_db(cr, pool)
-            except Exception, e:
-                raise osv.except_osv(_("Error!"), _("Can\'t create backup before patching: %s") % (unicode(e),))
             import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
@@ -450,10 +438,6 @@ def do_upgrade(cr, pool):
             return False
 
     elif db_lack_versions:
-        try:
-            dump_db(cr, pool)
-        except Exception, e:
-            raise osv.except_osv(_("Error!"), _("Can\'t create backup before patching: %s") % (unicode(e),))
         base_module_upgrade(cr, pool, upgrade_now=True)
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
