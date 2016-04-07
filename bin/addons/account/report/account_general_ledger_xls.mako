@@ -246,7 +246,8 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row>
 % if get_show_move_lines():
-<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Entry Seq</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
@@ -301,7 +302,10 @@ ccy_sub_total_style_right_suffix = 'Right'
 
 % for line in lines(o, initial_balance_mode=True):
 <Row>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
+    <Data ss:Type="String">${(o.code or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
@@ -356,8 +360,11 @@ ccy_sub_total_style_right_suffix = 'Right'
 
 % for ccy in o.get_currencies():
 <Row>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}" ss:MergeAcross="2">
+    <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
     <Data ss:Type="String">${(ccy or '')|x}</Data>
