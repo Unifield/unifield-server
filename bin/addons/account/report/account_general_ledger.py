@@ -226,12 +226,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _show_node_in_report(self, node):
         res = True
-        if self.account_ids or self.unreconciled_filter:
-            # hide if zero bal and any by account or unreconciled filter on
-            bal = node.data.get('*', {}).get('debit', 0.) \
-                - node.data.get('*', {}).get('credit', 0.)
-            if bal == 0.:
-                res = False
+        if self.account_ids or self.account_report_types \
+            or self.unreconciled_filter:
+            res = not node.skip
+            if res:
+                # hide if zero bal and any by account or unreconciled filter on
+                bal = node.data.get('*', {}).get('debit', 0.) \
+                    - node.data.get('*', {}).get('credit', 0.)
+                if bal == 0.:
+                    res = False
+
         return res
 
     def _get_journals_str(self, data):
