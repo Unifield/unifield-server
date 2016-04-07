@@ -337,7 +337,7 @@
               <para style="terp_default_9_Right">[[ line['move'] or '' ]]</para>
             </td>
             <td>
-                <para style="terp_def114.0,80.0,92.0,60.0,110.0,110.0,110.0,110.0ault_9_Right">[[ line['currency_name'] or '' ]]</para>
+                <para style="terp_default_9_Right">[[ line['currency_name'] or '' ]]</para>
             </td>
             <td>
               <para style="terp_default_9_Right">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
