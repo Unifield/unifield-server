@@ -329,9 +329,11 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             if data['form'].get('instance_ids', False):
                 self.cr.execute('select code from msf_instance where id IN %s',
                     (tuple(data['form']['instance_ids']),))
+                instances = [x for x, in self.cr.fetchall()]
             else:
-                self.cr.execute('select code from msf_instance')
-            instances = [x for x, in self.cr.fetchall()]
+                # US-1166: mission only instances if none provided
+                instances = self._get_instances(get_code=True,
+                    mission_filter=True)
         return ', '.join(instances)
 
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',
