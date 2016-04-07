@@ -66,6 +66,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 'show_period_0': 1,
                 'state_agnostic': 1,
             })
+            # US-1197/4: IB entries for yearly closing always in 1th Jan
+            # => get rid of regular period/dates filters for _query_get
+            # => if self.init_balance is True, note that filtering is OK
+            # validated at wizard report level
+            ib_local_context.update({
+                'date_from': False,
+                'date_to': False,
+                'date_fromto_docdate': False,
+                'period_from': False,
+                'period_to': False,
+                'periods': False,
+            })
             self.init_query = obj_move._query_get(self.cr, self.uid, obj='l',
                 context=ib_local_context)
         else:

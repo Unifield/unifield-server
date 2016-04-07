@@ -85,7 +85,7 @@ class AccountDrill(object):
         GROUP BY l.currency_id'''
 
     # initial balance move lines base query (from IB journal period 0)
-    _sql_ib = '''SELECT  sum(debit), sum(credit),
+    _sql_ib = '''SELECT sum(debit), sum(credit),
         sum(debit_currency), sum(credit_currency),
         max(c.name)
         FROM account_move_line l
@@ -190,7 +190,7 @@ class AccountDrill(object):
                                 # debit/credit with a zero balance
                                 n.zero_bal = True
                                 continue
-                    elif level == self._move_level -1:
+                    elif level == self._move_level - 1:
                         n.skip = not n.childs  # no entries due to filtering
 
                     parent = n.parent
