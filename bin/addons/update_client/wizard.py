@@ -89,11 +89,16 @@ class upgrade(osv.osv_memory):
                 'beforepatching', context=context)
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
+        connection = self.pool.get("sync.client.sync_server_connection")
         if next_state != 'need-install':
-            return self.write(cr, uid, ids, {
-                'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
-                'state' : next_state,
-            }, context=context)
+            if next_state == 'need-download' and \
+                    connection.is_automatic_patching_allowed(cr, uid):
+                ret = self.download(cr, uid, ids, context)
+            else:
+                return self.write(cr, uid, ids, {
+                    'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
+                    'state' : next_state,
+                }, context=context)
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
         ## Prepare
         (status, message, values) = do_prepare(cr, next_revisions)

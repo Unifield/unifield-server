@@ -30,6 +30,7 @@ import uuid
 import tools
 import sys
 import os
+import math
 import hashlib
 import traceback
 from psycopg2 import OperationalError
@@ -41,6 +42,9 @@ from threading import Thread, RLock, Lock
 import pooler
 
 import functools
+
+from datetime import datetime
+import updater
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -72,8 +76,11 @@ class BackgroundProcess(Thread):
             if hasattr(entity, 'upgrade'):
                 up_to_date = entity.upgrade(cr, uid, context=context)
                 if not up_to_date[0]:
-                    cr.commit()
-                    raise osv.except_osv(_('Error!'), _(up_to_date[1]))
+                    # check if patchs should be applied automatically
+                    connection = pool.get("sync.client.sync_server_connection")
+                    if not connection.is_automatic_patching_allowed(cr, uid):
+                        cr.commit()
+                        raise osv.except_osv(_('Error!'), _(up_to_date[1]))
         except BaseException, e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
@@ -191,10 +198,25 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
                             up_to_date = self.upgrade(cr, uid, context=context)
                             cr.commit()
-                            if not up_to_date[0]:
+
+                            # check if patchs should be applied automatically
+                            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+                            upgrade_module = self.pool.get('sync_client.upgrade')
+                            if not up_to_date[0] and not proxy.automatic_patching:
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
+                                # set up the current db_name in updater to be able to restart the server with -d on this db
+                                updater.db_name_after_restart = cr.dbname
+                                upgrade_module = self.pool.get('sync_client.upgrade')
+                                upgrade_id = upgrade_module.create(cr, uid, {})
+                                upgrade_module.do_upgrade(cr, uid,
+                                        [upgrade_id])
+
+                                # abort the synchronization, a restart is
+                                # needed after upgrade
+                                # XXX maybe this exception is not the good one
+                                raise BaseException
                     else:
                         context['offline_synchronization'] = True
 
@@ -1046,6 +1068,9 @@ class Connection(osv.osv):
         'timeout' : fields.float("Timeout"),
         'netrpc_retry' : fields.integer("NetRPC retry"),
         'xmlrpc_retry' : fields.integer("XmlRPC retry"),
+        'automatic_patching' : fields.boolean('Silent Upgrade', help="Enable this if you want to automatically install patch on synchronization during this hours."),
+        'automatic_patching_hour_from': fields.float('Upgrade from', size=8, help="Enable upgrade from this day time"),
+        'automatic_patching_hour_to': fields.float('Upgrade until', size=8, help="Enable upgrade unitl this day time"),
     }
 
     _defaults = {
@@ -1059,7 +1084,54 @@ class Connection(osv.osv):
         'timeout' : 600.0,
         'netrpc_retry' : 10,
         'xmlrpc_retry' : 10,
+        'automatic_patching': lambda *a: False,
     }
+
+    def on_change_upgrade_hour(self, cr, uid, ids, automatic_patching_hour_from, automatic_patching_hour_to):
+        """ Finds default stock location id for changed warehouse.
+        @param warehouse_id: Changed id of warehouse.
+        @return: Dictionary of values.
+        """
+        result = {'value': {}, 'warning': {}}
+        values_dict = {
+                'automatic_patching_hour_from':automatic_patching_hour_from,
+                'automatic_patching_hour_to':automatic_patching_hour_to
+        }
+        for name, value in values_dict.items():
+            if value < 0:
+                result.setdefault('value', {}).update({name: 0})
+            if value >= 24:
+                result.setdefault('value', {}).update({name: 23.98}) # 23.98 == 23h59
+        return result
+
+    def is_automatic_patching_allowed(self, cr, uid, context=None):
+        """
+        return True if the current time is in the range of hour_from, hour_to
+        False othewise
+        """
+        connection = self._get_connection_manager(cr, uid)
+        if not connection.automatic_patching:
+            return False
+
+        today = datetime.today()
+        hour_to_day = today.day
+        if connection.automatic_patching_hour_to < connection.automatic_patching_hour_from:
+            hour_to_day = today.day + 1
+
+        if connection.automatic_patching_hour_to == connection.automatic_patching_hour_from:
+            return False
+
+        hour_from = int(math.floor(abs(connection.automatic_patching_hour_from)))
+        min_from = int(round(abs(connection.automatic_patching_hour_from)%1+0.01,2) * 60)
+        hour_to = int(math.floor(abs(connection.automatic_patching_hour_to)))
+        min_to = int(round(abs(connection.automatic_patching_hour_to)%1+0.01,2) * 60)
+
+        from_date = datetime(today.year, today.month, today.day, hour_from, min_from)
+        to_date = datetime(today.year, today.month, hour_to_day, hour_to, min_to)
+
+        if today > from_date and today < to_date:
+            return True
+        return False
 
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)

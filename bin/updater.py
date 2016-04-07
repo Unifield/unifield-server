@@ -22,6 +22,7 @@ else:
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
 restart_required = False
+db_name_after_restart = ''
 if sys.platform == 'win32' and os.path.isdir(r'..\ServerLog'):
     log_file = r'..\ServerLog\updater.log'
 else:
@@ -42,6 +43,7 @@ logger = logging.getLogger('updater')
 def restart_server():
     """Restart OpenERP server"""
     global restart_required
+    global db_name_after_restart
     logger.info("Restaring OpenERP Server in %d seconds..." % restart_delay)
     restart_required = True
 

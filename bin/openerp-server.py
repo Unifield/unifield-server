@@ -109,6 +109,7 @@ import addons
 #----------------------------------------------------------
 
 import service.http_server
+import updater
 
 if not ( tools.config["stop_after_init"] or \
     tools.config["translate_in"] or \
@@ -219,7 +220,7 @@ for signum in SIGNALS:
 if os.name == 'posix':
     signal.signal(signal.SIGQUIT, dumpstacks)
 
-def quit(restart=False):
+def quit(restart=False, db_name=''):
     if restart:
         time.sleep(updater.restart_delay)
     netsvc.Agent.quit()
@@ -248,12 +249,16 @@ def quit(restart=False):
                         thread._Thread__stop()
                     except:
                         logger.info(str(thread.getName()) + ' could not be terminated')
+    db_name = updater.db_name_after_restart
+    arg_db = []
+    if db_name:
+        arg_db = ['--d %s' % db_name]
     if not restart:
         sys.exit(0)
     elif os.name == 'nt':
         sys.exit(1) # require service restart
     else:
-        os.execv(sys.executable, [sys.executable] + sys.argv)
+        os.execv(sys.executable, [sys.executable] + sys.argv + arg_db)
 
 #----------------------------------------------------------
 # manage some platform specific behaviour
@@ -282,6 +287,6 @@ logger.info('OpenERP server is running, waiting for connections...')
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
     mainthread_sleep(5)
 
-quit(restart=updater.restart_required)
+quit(restart=updater.restart_required, db_name=updater.db_name_after_restart)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
