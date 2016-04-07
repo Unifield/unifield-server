@@ -393,6 +393,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
             if line:
                 infos.append(line)
+
+            account_ids = list(set(self._get_data_form(data, 'account_ids')))
+            if account_ids:
+                # US-1197/2: display filtered accounts
+                account_obj = self.pool.get('account.account')
+                infos.append(', '.join(
+                        [ a.code for a in account_obj.browse(
+                            self.cr, self.uid, account_ids) \
+                            if a.type != 'view' ]
+                ))
+
         return infos and ", \n".join(infos) or _('No Filter')
         
     def _get_line_debit(self, line, booking=False):
