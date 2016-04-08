@@ -178,13 +178,16 @@ class msf_accrual_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long, )):
             ids = [ids]
-
+        if 'period_id' in vals:
+            # US-1178 set the posting date according to the selected period
+            # (by using the read-only field the new "date" value wasn't taken into account)
+            period = self.pool.get('account.period').browse(cr, uid, vals['period_id'], context)
+            vals['date'] = period.date_stop
+        posting_date = 'date' in vals and vals['date'] or self.read(cr, uid, ids, ['date', ], context=context)[0]['date']
         if 'document_date' in vals:
-            # US-192 check doc date reagarding post date
-            # => read date field (as readonly in form)
-            for r in self.read(cr, uid, ids, ['date', ], context=context):
-                self.pool.get('finance.tools').check_document_date(cr, uid,
-                    vals['document_date'], r['date'], context=context)
+            # US-192 check doc date regarding post date
+            self.pool.get('finance.tools').check_document_date(cr, uid,
+                vals['document_date'], posting_date, context=context)
 
         self._create_write_set_vals(cr, uid, vals, context=context)
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
