@@ -1014,7 +1014,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return result
 
-    def confirmLine(self, cr, uid, ids, run_scheduler=False, context=None):
+    def confirmLine(self, cr, uid, ids, context=None, run_scheduler=False):
         """
         Set the line as confirmed and check if all lines
         of the FO/IR are confirmed. If yes, launch the
