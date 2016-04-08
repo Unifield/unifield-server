@@ -187,21 +187,15 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-% if get_show_move_lines():
-<Column ss:AutoFitWidth="1" ss:Width="300" />
-% endif
-% if not get_show_move_lines():
-<Column ss:AutoFitWidth="1" ss:Width="150" />
-% endif
 <Column ss:AutoFitWidth="1" ss:Width="50" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="55" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:Width="90" />
+<Column ss:Width="90" />
+<Column ss:Width="90" />
+<Column ss:Width="90" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
@@ -253,7 +247,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 % if not get_show_move_lines():
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Account / CCY</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
 <Cell ss:StyleID="ssH" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
@@ -337,7 +331,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNoWrap">
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
@@ -390,7 +384,12 @@ ccy_sub_total_style_right_suffix = 'Right'
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14General Ledger"/>
+% if get_show_move_lines():
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14General Ledger"/>0
+% endif
+% if not get_show_move_lines():
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Trial Balance"/>0
+% endif
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>
