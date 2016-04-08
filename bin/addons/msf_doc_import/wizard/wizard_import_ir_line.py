@@ -280,7 +280,7 @@ Importation completed in %s!
                 wizard_vals.update(file_to_export)
             self.write(cr, uid, ids, wizard_vals, context=context)
             # we reset the state of the FO to draft (initial state)
-            sale_obj.write(cr, uid, fo_id, {'state': 'draft'}, context)
+            sale_obj.write(cr, uid, fo_id, {'state': 'draft', 'import_in_progress': Fals, 'import_in_progress': False}, context)
             if not context.get('yml_test', False):
                 cr.commit()
                 cr.close(True)
