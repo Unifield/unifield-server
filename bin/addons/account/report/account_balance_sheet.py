@@ -77,13 +77,9 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         return res
 
     def sum_dr(self):
-        if self.res_bl['type'] == _('Net Profit'):
-            self.result_sum_dr += self.res_bl['balance']*-1
         return self.result_sum_dr
 
     def sum_cr(self):
-        if self.res_bl['type'] == _('Net Loss'):
-            self.result_sum_cr += self.res_bl['balance']
         return self.result_sum_cr
 
     def get_pl_balance(self):
