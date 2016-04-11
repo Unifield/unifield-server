@@ -707,10 +707,8 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        period = self.browse(cr, uid, ids, context=context)[0]
         context.update({'search_default_partially_posted': 1,
-                        'search_default_draft': 0,
-                        'search_default_period_id': period.id})  # by default the period to be closed
+                        'search_default_draft': 0})
         return {
             'name': _('Accruals Management'),
             'type': 'ir.actions.act_window',
