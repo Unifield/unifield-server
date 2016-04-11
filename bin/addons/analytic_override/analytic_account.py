@@ -391,7 +391,6 @@ class analytic_account(osv.osv):
                 vals['destination_ids'] = [(6, 0, [])]
             if vals['category'] != 'FUNDING':
                 vals['tuple_destination_account_ids'] = [(6, 0, [])]
-                vals['instance_id'] = False
                 vals['cost_center_ids'] = [(6, 0, [])]
         return vals
 
