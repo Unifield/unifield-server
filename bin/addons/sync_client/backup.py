@@ -130,18 +130,22 @@ class BackupConfig(osv.osv):
                     error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
                 else:
                     error = "Backup Error: %s. Please provide the correct path or deactivate the backup feature." % e
-                self._logger.exception('Cannot perform the backup %s' % error)
-                raise osv.except_osv(_('Error! Cannot perform the backup'), error)
+                self._logger.exception('Cannot perform the backup %s.' % error)
+                raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
 
             res = tools.pg_dump(cr.dbname, outfile)
 
             # check the backup file
-            if not os.path.isfile(outfile):
-                raise osv.except_osv(_('Error! The backup file could not be found on the disk with path %s.', outfile))
-            if not os.stat(outfile) > 0:
-                raise osv.except_osv(_('Error! The backup file should be bigger that 0 (actually size=%s bytes)'), os.stat(outfile))
+            error = None
             if res:
-                raise Exception, "Couldn't dump database"
+                error = "Couldn't dump database : pg_dump return an error for path %s." % outfile
+            elif not os.path.isfile(outfile):
+                error = 'The backup file could not be found on the disk with path %s' % outfile
+            elif not os.stat(outfile).st_size > 0:
+                error = 'The backup file should be bigger that 0 (actually size=%s bytes)' % os.stat(outfile).st_size
+            if error:
+                self._logger.exception('Cannot perform the backup %s.' % error)
+                raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
             return "Backup done"
         raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")
 
