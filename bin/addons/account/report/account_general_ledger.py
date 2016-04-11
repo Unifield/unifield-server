@@ -414,7 +414,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if account_ids:
                 # US-1197/2: display filtered accounts
                 account_obj = self.pool.get('account.account')
-                infos.append(', '.join(
+                infos.append('Accounts: ' + ', '.join(
                         [ a.code for a in account_obj.browse(
                             self.cr, self.uid, account_ids) \
                             if a.type != 'view' ]
