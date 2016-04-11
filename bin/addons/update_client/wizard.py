@@ -87,13 +87,29 @@ class upgrade(osv.osv_memory):
         # backup before patching
         self.pool.get('backup.config').exp_dump_for_state(cr, uid,
                 'beforepatching', context=context)
+
+        # create a file to store the actual SYNC_SERVER connection credentials
+        # to be able to automatically reconnect to the SYNC_SERVER after an upgrade
+        connection_module = self.pool.get("sync.client.sync_server_connection")
+        proxy = connection_module.get_connection(cr, uid, "sync.server.sync_manager")
+        password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
+        connection_string = proxy.connection
+        import base64
+        password = base64.encodestring(password)
+        db_name = base64.encodestring(cr.dbname)
+        credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
+        f = open(credential_filepath, 'w')
+        f.write(db_name)
+        f.write(password)
+        f.close()
+
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         connection = self.pool.get("sync.client.sync_server_connection")
         if next_state != 'need-install':
             if next_state == 'need-download' and \
                     connection.is_automatic_patching_allowed(cr, uid):
-                ret = self.download(cr, uid, ids, context)
+                self.download(cr, uid, ids, context)
             else:
                 return self.write(cr, uid, ids, {
                     'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),

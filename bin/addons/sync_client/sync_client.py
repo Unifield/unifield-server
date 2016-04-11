@@ -200,14 +200,16 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                             cr.commit()
 
                             # check if patchs should be applied automatically
-                            proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
+                            connection_module = self.pool.get("sync.client.sync_server_connection")
                             upgrade_module = self.pool.get('sync_client.upgrade')
-                            if not up_to_date[0] and not proxy.automatic_patching:
+                            if not up_to_date[0] and not connection_module.is_automatic_patching_allowed(cr, uid):
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
                                 # set up the current db_name in updater to be able to restart the server with -d on this db
                                 updater.db_name_after_restart = cr.dbname
+
+
                                 upgrade_module = self.pool.get('sync_client.upgrade')
                                 upgrade_id = upgrade_module.create(cr, uid, {})
                                 upgrade_module.do_upgrade(cr, uid,
@@ -1156,7 +1158,7 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
-    def connect(self, cr, uid, ids=None, context=None):
+    def connect(self, cr, uid, ids=None, password=None, context=None):
         if getattr(self, '_uid', False):
             return True
         try:
@@ -1168,7 +1170,10 @@ class Connection(osv.osv):
             self._logger.info('Client \'%(client_name)s\' attempts to connect to sync. server \'%(server_name)s\'' % sync_args)
             connector = self.connector_factory(con)
             if not getattr(self, '_password', False):
-                self._password = con.login
+                if password is not None:
+                    self._password = password
+                else:
+                    self._password = con.login
             cnx = rpc.Connection(connector, con.database, con.login, self._password)
             if cnx.user_id:
                 self._uid = cnx.user_id

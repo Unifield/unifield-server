@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Unifield module to upgrade the instance to a next version of Unifield
 Beware that we expect to be in the bin/ directory to proceed!!
@@ -444,3 +445,31 @@ def do_upgrade(cr, pool):
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
     return True
+
+def reconnect_sync_server():
+    """Reconnect the connection manager to the SYNC_SERVER if needed"""
+
+    import base64
+    import pooler
+    from tools import config
+
+    # check password file existance
+    credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
+    if os.path.isfile(credential_filepath):
+        f = open(credential_filepath, 'r')
+        lines = f.readlines()
+        if lines:
+            try:
+                dbname = base64.decodestring(lines[0])
+                password = base64.decodestring(lines[1])
+                db, pool = pooler.get_db_and_pool(dbname, pooljobs=False)
+                cr = db.cursor()
+                # delete the credential file
+                os.remove(credential_filepath)
+                # reconnect to SYNC_SERVER
+                connection = pool.get("sync.client.sync_server_connection")
+                connection.connect(cr, 1, password=password)
+            except Exception as e:
+                message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file."
+                logger.error(message % (password, unicode(e)))
+
