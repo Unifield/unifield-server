@@ -823,8 +823,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order']:
                 real_uid = context.get('computed_for_uid', uid)
-                if hasattr(real_uid, 'realUid'):
-                    real_uid = real_uid.realUid
                 self.add_audit_line(cr, real_uid, obj.id,
                                     obj.state_hidden_sale_order,
                                     result[obj.id]['state_hidden_sale_order'],

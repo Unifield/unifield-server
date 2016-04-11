@@ -4173,8 +4173,12 @@ class orm(orm_template):
             val = todo[key]
             if key:
                 # uid == 1 for accessing objects having rules defined on store fields
-                context['computed_for_uid'] = uid
+                if hasattr(uid, 'realUid'):
+                    context['computed_for_uid'] = uid.realUid
+                else:
+                    context['computed_for_uid'] = uid
                 result = self._columns[val[0]].get(cr, self, ids, val, 1, context=context)
+                del context['computed_for_uid']
                 for id, value in result.items():
                     if field_flag:
                         for f in value.keys():
