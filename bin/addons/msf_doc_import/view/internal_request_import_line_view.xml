@@ -41,7 +41,7 @@
                                         font-weight: bold;
                                         text-transform: uppercase;
                                         padding: 5px;
-                                        width: 90%;
+                                        width: 90%%;
                                     }
 
                                     #error_message_unifield .grip
