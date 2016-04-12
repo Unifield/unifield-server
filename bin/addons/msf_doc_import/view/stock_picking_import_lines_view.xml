@@ -58,7 +58,7 @@
                                     color:red;
                                     font-weight: bold;
                                     text-transform: uppercase;
-                                    width: 98%%;
+                                    width: 98%;
                                 }
 
                                 #error_message_unifield p, #error_message_unifield span
