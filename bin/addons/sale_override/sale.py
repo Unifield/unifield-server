@@ -822,7 +822,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
 
             if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order'] and \
-                (not obj.original_so_id_sale_order or obj.state_hidden_sale_order not in (False, 'draft', 'validated')):
+                (not obj.original_so_id_sale_order or obj.state_hidden_sale_order not in (False, 'draft')):
                 real_uid = context.get('computed_for_uid', uid)
                 self.add_audit_line(cr, real_uid, obj.id,
                                     obj.state_hidden_sale_order,
