@@ -219,6 +219,8 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                 # needed after upgrade
                                 # XXX maybe this exception is not the good one
                                 raise BaseException
+                                raise osv.except_osv(_('Sync aborted'),
+                                        _("Current synchronzation has been aborted because there is some update to install ."))
                     else:
                         context['offline_synchronization'] = True
 
@@ -1159,6 +1161,7 @@ class Connection(osv.osv):
         return connector
 
     def connect(self, cr, uid, ids=None, password=None, context=None):
+        self._logger.info("parameters: self=%r, cr=%r, uid=%r, ids=%r, password=%r, context=%r" % (self, cr.__dict__, uid, ids, password, context))
         if getattr(self, '_uid', False):
             return True
         try:
@@ -1174,6 +1177,7 @@ class Connection(osv.osv):
                     self._password = password
                 else:
                     self._password = con.login
+            self._logger.info('connector=%s, con.database=%s, con.login=%s, self._password=%s' % (connector,con.database,con.login,self._password))
             cnx = rpc.Connection(connector, con.database, con.login, self._password)
             if cnx.user_id:
                 self._uid = cnx.user_id
