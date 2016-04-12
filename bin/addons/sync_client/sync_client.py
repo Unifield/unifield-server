@@ -1175,6 +1175,8 @@ class Connection(osv.osv):
             if not getattr(self, '_password', False):
                 if password is not None:
                     self._password = password
+                    con.password = password
+                    con._cache = {}
                 else:
                     self._password = con.login
             self._logger.info('connector=%s, con.database=%s, con.login=%s, self._password=%s' % (connector,con.database,con.login,self._password))

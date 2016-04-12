@@ -470,8 +470,8 @@ def reconnect_sync_server():
                     # delete the credential file
                     os.remove(credential_filepath)
                     # reconnect to SYNC_SERVER
-                    connection = pool.get("sync.client.sync_server_connection")
-                    connection.connect(cr, 1, password=password)
+                    connection_module = pool.get("sync.client.sync_server_connection")
+                    connection_module.connect(cr, 1, password=password)
 
                     # relaunch the sync
                     pool.get('sync.client.entity').sync_withbackup(cr, 1)
