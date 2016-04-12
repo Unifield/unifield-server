@@ -31,6 +31,7 @@
                                         background-color: #F0EBA4;
                                         font-weight: bold;
                                         text-transform: uppercase;
+                                        width: 90%%;
                                     }
 
                                     #error_message_unifield p, #error_message_unifield span
