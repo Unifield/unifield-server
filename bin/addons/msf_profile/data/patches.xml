@@ -29,5 +29,9 @@
             <field name="method">clean_far_updates</field>
         </record>
 
+        <record id="us_1185_patch" model="patch.scripts">
+            <field name="method">us_1185_patch</field>
+        </record>
+
     </data>
 </openerp>
