@@ -249,25 +249,13 @@ def quit(restart=False, db_name=''):
                         thread._Thread__stop()
                     except:
                         logger.info(str(thread.getName()) + ' could not be terminated')
-    db_name = updater.db_name_after_restart
-    arg_db = []
-    new_args = []
-    if db_name:
-        # check database argument is not already present
-        for cur_arg in sys.argv:
-            if cur_arg.startswith('--database=') or \
-                    cur_arg.startswith('-d'):
-                continue
-            new_args.append(cur_arg)
-        arg_db = ['--database=%s' % db_name]
-    else:
-        new_args = sys.argv
+
     if not restart:
         sys.exit(0)
     elif os.name == 'nt':
         sys.exit(1) # require service restart
     else:
-        os.execv(sys.executable, [sys.executable] + new_args + arg_db)
+        os.execv(sys.executable, [sys.executable] + sys.argv)
 
 #----------------------------------------------------------
 # manage some platform specific behaviour
