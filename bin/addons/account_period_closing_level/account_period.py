@@ -639,6 +639,10 @@ class account_period(osv.osv):
             'period_ids': [(6, 0, ids)]
         }
         res_id = self.pool.get('account.mcdb').create(cr, uid, vals, context=context)
+        module = 'account_mcdb'
+        view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
         return {
             'name': _('G/L Selector'),
             'type': 'ir.actions.act_window',
@@ -647,6 +651,7 @@ class account_period(osv.osv):
             'target': 'current',
             'view_mode': 'form,tree',
             'view_type': 'form',
+            'view_id': [view_id],
             'context': context,
         }
 
