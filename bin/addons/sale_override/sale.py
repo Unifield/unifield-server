@@ -808,6 +808,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         get function values
         '''
         result = {}
+        if context is None:
+            context = {}
+
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             for f in fields:
@@ -818,8 +821,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
 
-            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order']:
-                self.add_audit_line(cr, uid, obj.id,
+            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order'] and \
+                (not obj.original_so_id_sale_order or obj.state_hidden_sale_order not in (False, 'draft')):
+                real_uid = context.get('computed_for_uid', uid)
+                self.add_audit_line(cr, real_uid, obj.id,
                                     obj.state_hidden_sale_order,
                                     result[obj.id]['state_hidden_sale_order'],
                                     context=context)
