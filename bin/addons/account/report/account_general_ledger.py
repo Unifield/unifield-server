@@ -410,16 +410,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if line:
                 infos.append(line)
 
-            account_ids = list(set(self._get_data_form(data, 'account_ids')))
-            if account_ids:
-                # US-1197/2: display filtered accounts
-                account_obj = self.pool.get('account.account')
-                infos.append('Accounts: ' + ', '.join(
-                        [ a.code for a in account_obj.browse(
-                            self.cr, self.uid, account_ids) \
-                            if a.type != 'view' ]
-                ))
-
         return infos and ", \n".join(infos) or _('No Filter')
         
     def _get_line_debit(self, line, booking=False):
@@ -503,6 +493,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else:
                 display_account = _('With balance is not equal to 0')
         info_data.append((_('Accounts'), display_account, ))
+
+        account_ids = list(set(self._get_data_form(data, 'account_ids')))
+        if account_ids:
+            # US-1197/2: display filtered accounts
+            account_obj = self.pool.get('account.account')
+            info_data.append((_('Selected Accounts'), ', '.join(
+                    [ a.code for a in account_obj.browse(
+                        self.cr, self.uid, account_ids) \
+                        if a.type != 'view' ], )))
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
         return ', \n'.join(res)
