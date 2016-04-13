@@ -277,11 +277,11 @@ class stock_mission_report(osv.osv):
                 # Update all lines
                 self.update_lines(cr, uid, [report['id']])
 
+            self.write(cr, uid, [report['id']], {'export_ok': False}, context=context)
             logging.getLogger('MSR').info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             self._get_export_csv(cr, uid, report['id'], product_values, context=context)
             # Update the update date on report
-            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S'),
-                                              'export_ok': False}, context=context)
+            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
             logging.getLogger('MSR').info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             
 
