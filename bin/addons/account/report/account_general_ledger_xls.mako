@@ -357,8 +357,8 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}" ss:MergeAcross="2">
-    <Data ss:Type="String"></Data>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
+    <Data ss:Type="String">Sub Total</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
     <Data ss:Type="String">${(ccy or '')|x}</Data>

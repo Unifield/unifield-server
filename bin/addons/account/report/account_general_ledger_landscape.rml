@@ -400,7 +400,7 @@
               <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
           </td>
           <td>
-            <para style="terp_default_9_Right"></para>
+            <para style="terp_default_9_Right">Sub Total</para>
           </td>
           <td>
               <para style="terp_default_9_Right">[[ ccy ]]</para>
