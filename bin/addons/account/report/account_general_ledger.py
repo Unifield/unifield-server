@@ -238,6 +238,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _show_node_in_report(self, node):
         res = True
+        if node.parent is None:
+            return res  # always show root account MSF
         if self.account_ids or self.account_report_types \
             or self.unreconciled_filter:
             res = not node.skip
