@@ -128,7 +128,6 @@ class account_move_line(osv.osv):
         # rewrite update_check, to raise error *only if values to write and values in DB differ*
         for l in self.browse(cr, uid, ids):
             for f,typ in field_to_check.iteritems():
-                diff_val = False
                 if f in vals:
                     to_write_val = l[f]
                     if typ == 'm2o' and l[f]:
@@ -150,10 +149,60 @@ class account_move_line(osv.osv):
                             raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
                 t = (l.journal_id.id, l.period_id.id)
                 if t not in done:
-                    self._update_journal_check(cr, uid,
-                        l.journal_id.id, l.period_id.id, context=context,
-                        raise_hq_closed=diff_val)  # US-1214 during sync, raise that HQ is closed: only if 1 of above key field changed
+                    if not self._update_journal_check(cr, uid, l.journal_id.id,
+                        l.period_id.id, context=context, raise_hq_closed=False):
+                        # US 1214: HQ closed check more field not updated
+                        self._hook_call_update_check_hq_closed_rec(cr, uid, l,
+                            vals, context=context)
                     done[t] = True
+
+    def _hook_call_update_check_hq_closed_rec(self, cr, uid, ji_rec, vals,
+        context=None):
+        # US 1214: HQ closed tolerate update under certains conditions only
+        # Enable the sync on account.move.line field only if they are not : Dates / Journal / Sequence / Description / Reference / all field amounts / Third party / Currency / State
+        # http://jira.unifield.org/browse/US-1214?focusedCommentId=47237&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-47237
+
+        # => get field by field diff
+        fields_to_check = [
+            ('credit', 'float'),
+            ('credit_currency', 'float'),
+            ('currency_id', 'id'),
+            ('date', False),
+            ('debit', 'float'),
+            ('debit_currency', 'float'),
+            ('document_date', False),
+            ('employee_id', 'id'),
+            ('journal_id', 'id'),
+            ('move_id', 'id'),
+            ('partner_id', 'id'),
+            ('partner_txt', False),
+            ('period_id', 'id'),
+            ('ref', False),
+            ('state', False),
+            ('transfer_journal_id', 'id'),
+            ('transfer_amount', 'float'),
+        ]
+
+        for f, t in fields_to_check:
+            if f in vals:
+                if not hasattr(ji_rec, f):
+                    continue
+                rec_val = getattr(ji_rec, f)
+                val = vals[f]
+
+                if t == 'id':
+                    if rec_val:
+                        has_diff = not val or val != rec_val.id
+                    else:
+                        has_diff = True if val else False
+                elif t == 'float':
+                    has_diff = abs((val or 0.) - (rec_val or 0.)) > 10**-4
+                else:
+                    has_diff = val != rec_val
+
+            if has_diff:
+                raise osv.except_osv(_('Error !'),
+                    _('You can not modify entries in a HQ closed journal'))
 
 account_move_line()
 
