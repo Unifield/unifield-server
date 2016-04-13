@@ -1129,12 +1129,10 @@ class Connection(osv.osv):
 
             # case 2: the to_date is in the future
             # ex. it is 20h, from_date=19h, to_date=7h
-            if now > to_date:
+            elif now > to_date:
                 to_date = datetime(now.year, now.month, now.day + 1, hour_to, min_to)
 
-        if now > from_date and now < to_date:
-            return True
-        return False
+        return now > from_date and now < to_date
 
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
