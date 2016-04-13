@@ -208,17 +208,10 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
                                 # set up the current db_name in updater to be able to restart the server with -d on this db
                                 updater.db_name_after_restart = cr.dbname
-
-
                                 upgrade_module = self.pool.get('sync_client.upgrade')
                                 upgrade_id = upgrade_module.create(cr, uid, {})
                                 upgrade_module.do_upgrade(cr, uid,
                                         [upgrade_id])
-
-                                # abort the synchronization, a restart is
-                                # needed after upgrade
-                                # XXX maybe this exception is not the good one
-                                raise BaseException
                                 raise osv.except_osv(_('Sync aborted'),
                                         _("Current synchronzation has been aborted because there is some update to install ."))
                     else:
@@ -1117,23 +1110,29 @@ class Connection(osv.osv):
         if not connection.automatic_patching:
             return False
 
-        today = datetime.today()
-        hour_to_day = today.day
-        if connection.automatic_patching_hour_to < connection.automatic_patching_hour_from:
-            hour_to_day = today.day + 1
-
-        if connection.automatic_patching_hour_to == connection.automatic_patching_hour_from:
-            return False
+        now = datetime.today()
 
         hour_from = int(math.floor(abs(connection.automatic_patching_hour_from)))
         min_from = int(round(abs(connection.automatic_patching_hour_from)%1+0.01,2) * 60)
         hour_to = int(math.floor(abs(connection.automatic_patching_hour_to)))
         min_to = int(round(abs(connection.automatic_patching_hour_to)%1+0.01,2) * 60)
 
-        from_date = datetime(today.year, today.month, today.day, hour_from, min_from)
-        to_date = datetime(today.year, today.month, hour_to_day, hour_to, min_to)
+        from_date = datetime(now.year, now.month, now.day, hour_from, min_from)
+        to_date = datetime(now.year, now.month, now.day, hour_to, min_to)
 
-        if today > from_date and today < to_date:
+        # from_date and to_date are not the same day:
+        if from_date > to_date:
+            # case 1: the from date is in the past
+            # ex. it is 3h, from_date=19h, to_date=7h
+            if from_date > now:
+                from_date = datetime(now.year, now.month, now.day - 1, hour_from, min_from)
+
+            # case 2: the to_date is in the future
+            # ex. it is 20h, from_date=19h, to_date=7h
+            if now > to_date:
+                to_date = datetime(now.year, now.month, now.day + 1, hour_to, min_to)
+
+        if now > from_date and now < to_date:
             return True
         return False
 
@@ -1176,11 +1175,16 @@ class Connection(osv.osv):
                 if password is not None:
                     self._password = password
                     con.password = password
-                    con._cache = {}
                 else:
                     self._password = con.login
             self._logger.info('connector=%s, con.database=%s, con.login=%s, self._password=%s' % (connector,con.database,con.login,self._password))
             cnx = rpc.Connection(connector, con.database, con.login, self._password)
+            #con = self._get_connection_manager(cr, uid, context=context)
+            con._cache = {}
+            #self.write(cr, uid, con.id, {
+            #    'login': con.login,
+            #    'password': self._password})
+            #cr.commit()
             if cnx.user_id:
                 self._uid = cnx.user_id
             else:
