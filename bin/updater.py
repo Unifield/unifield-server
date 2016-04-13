@@ -448,7 +448,6 @@ def do_upgrade(cr, pool):
 
 def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if needed"""
-
     # automatically reconnect if password file exists
     import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
@@ -463,7 +462,8 @@ def reconnect_sync_server():
                 dbname = base64.decodestring(lines[0])
                 password = base64.decodestring(lines[1])
                 logger.info('dbname = %s' % dbname)
-                db, pool = pooler.get_db_and_pool(dbname, pooljobs=False)
+                db, pool = pooler.get_db_and_pool(dbname)
+                db, pool = pooler.restart_pool(dbname)
                 # do not execute this code on server side
                 if not pool.get("sync.server.entity"):
                     cr = db.cursor()
