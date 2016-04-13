@@ -128,6 +128,7 @@ class account_move_line(osv.osv):
         # rewrite update_check, to raise error *only if values to write and values in DB differ*
         for l in self.browse(cr, uid, ids):
             for f,typ in field_to_check.iteritems():
+                diff_val = False
                 if f in vals:
                     to_write_val = l[f]
                     if typ == 'm2o' and l[f]:
@@ -149,7 +150,9 @@ class account_move_line(osv.osv):
                             raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
                 t = (l.journal_id.id, l.period_id.id)
                 if t not in done:
-                    self._update_journal_check(cr, uid, l.journal_id.id, l.period_id.id, context)
+                    self._update_journal_check(cr, uid,
+                        l.journal_id.id, l.period_id.id, context=context,
+                        raise_hq_closed=diff_val)  # US-1214 during sync, raise that HQ is closed: only if 1 of above key field changed
                     done[t] = True
 
 account_move_line()
