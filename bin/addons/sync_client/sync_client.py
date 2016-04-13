@@ -1160,7 +1160,9 @@ class Connection(osv.osv):
         return connector
 
     def connect(self, cr, uid, ids=None, password=None, context=None):
-        self._logger.info("parameters: self=%r, cr=%r, uid=%r, ids=%r, password=%r, context=%r" % (self, cr.__dict__, uid, ids, password, context))
+        """
+        connect the instance to the SYNC_SERVER instance for synchronization
+        """
         if getattr(self, '_uid', False):
             return True
         try:
@@ -1177,14 +1179,8 @@ class Connection(osv.osv):
                     con.password = password
                 else:
                     self._password = con.login
-            self._logger.info('connector=%s, con.database=%s, con.login=%s, self._password=%s' % (connector,con.database,con.login,self._password))
             cnx = rpc.Connection(connector, con.database, con.login, self._password)
-            #con = self._get_connection_manager(cr, uid, context=context)
             con._cache = {}
-            #self.write(cr, uid, con.id, {
-            #    'login': con.login,
-            #    'password': self._password})
-            #cr.commit()
             if cnx.user_id:
                 self._uid = cnx.user_id
             else:

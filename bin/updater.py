@@ -447,8 +447,9 @@ def do_upgrade(cr, pool):
     return True
 
 def reconnect_sync_server():
-    """Reconnect the connection manager to the SYNC_SERVER if needed"""
-    # automatically reconnect if password file exists
+    """Reconnect the connection manager to the SYNC_SERVER if password file
+    exists
+    """
     import tools
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
@@ -463,7 +464,9 @@ def reconnect_sync_server():
                 password = base64.decodestring(lines[1])
                 logger.info('dbname = %s' % dbname)
                 db, pool = pooler.get_db_and_pool(dbname)
-                db, pool = pooler.restart_pool(dbname)
+                db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
+                                                       # strange behaviour with the connection on web interface
+
                 # do not execute this code on server side
                 if not pool.get("sync.server.entity"):
                     cr = db.cursor()
@@ -473,9 +476,10 @@ def reconnect_sync_server():
                     connection_module = pool.get("sync.client.sync_server_connection")
                     connection_module.connect(cr, 1, password=password)
 
-                    # relaunch the sync
+                    # relaunch the sync (as the sync that launch the silent upgrade was aborted to do the upgrade first)
                     pool.get('sync.client.entity').sync_withbackup(cr, 1)
                     cr.close()
             except Exception as e:
                 message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
                 logger.error(message % (unicode(e)))
+
