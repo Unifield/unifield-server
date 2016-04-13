@@ -1225,8 +1225,27 @@ class Connection(osv.osv):
         return {}
 
     def write(self, *args, **kwargs):
-        # reset connection flag when data changed
-        self._uid = False
+        # reset connection flag when connection data changed
+        connection_property_list = [
+                'database',
+                'host',
+                'login',
+                'max_size',
+                'netrpc_retry',
+                'password',
+                'port',
+                'protocol',
+                'timeout',
+                'xmlrpc_retry'
+        ]
+
+        new_values = args[3]
+        current_values = self.read(*args)[0]
+        for key, value in new_values.items():
+            if current_values[key] != value and \
+                    key in connection_property_list:
+                self._uid = False
+                break
         return super(Connection, self).write(*args, **kwargs)
 
     def change_host(self, cr, uid, ids, host, proto, context=None):
