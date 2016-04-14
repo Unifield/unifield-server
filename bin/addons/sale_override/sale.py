@@ -228,10 +228,10 @@ class sale_order_sourcing_progress(osv.osv):
         mem_ool_nb = 0
 
         mem_sol_ids = []
-        src_doc_mem_ids = src_doc_mem.search(cr, uid, [
+        src_doc_mem_ids = src_doc_mem.search(cr, 1, [
             ('order_id', 'in', order_ids),
         ], context=context)
-        for mem_doc in src_doc_mem.browse(cr, uid, src_doc_mem_ids, context=context):
+        for mem_doc in src_doc_mem.browse(cr, 1, src_doc_mem_ids, context=context):
             for l in mem_doc.sourcing_lines:
                 if l.id not in mem_sol_ids:
                     mem_sol_ids.append(l.id)
@@ -340,11 +340,11 @@ class sale_order_sourcing_progress(osv.osv):
 
             # Confirmation of the order in progress
             if sp.order_id.sourcing_trace_ok:
-                mem_ids = mem_obj.search(cr, uid, [
+                mem_ids = mem_obj.search(cr, 1, [
                     ('order_id', '=', sp.order_id.id),
                 ], context=context)
                 if mem_ids:
-                    for mem_res in mem_obj.read(cr, uid, mem_ids, f_to_read, context=context):
+                    for mem_res in mem_obj.read(cr, 1, mem_ids, f_to_read, context=context):
                         res[sp.id] = {
                             'line_completed': self._get_line_completed(mem_res, on_stock_nb_lines, on_order_nb_lines),
                             'split_order': mem_res['split_order'],
@@ -537,9 +537,6 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
         'check_data': '/',
         'prepare_picking': '/',
     }
-
-    def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
-        return super(sale_order_sourcing_progress_mem, self).search(cr, 1, args, offset=0, limit=limit, order=order, context=context, count=count)
 
 sale_order_sourcing_progress_mem()
 
@@ -1156,11 +1153,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             order_id = order.original_so_id_sale_order and order.original_so_id_sale_order.id or order.id
 
-            prog_ids = prog_obj.search(cr, uid, [('order_id', '=', order_id)], context=context)
+            prog_ids = prog_obj.search(cr, 1, [('order_id', '=', order_id)], context=context)
             if prog_ids:
                 prog_id = prog_ids[0]
             else:
-                prog_id = prog_obj.create(cr, uid, {
+                prog_id = prog_obj.create(cr, 1, {
                     'order_id': order_id,
                 }, context=context)
 
@@ -1169,11 +1166,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         for fld in ['line_on_order_completed', 'line_from_stock_completed']:
             if fld in values:
-                line_completed = prog_obj.read(cr, uid, [prog_id], [fld], context=context)[0][fld]
+                line_completed = prog_obj.read(cr, 1, [prog_id], [fld], context=context)[0][fld]
                 line_completed += values[fld]
                 values[fld] = line_completed
 
-        prog_obj.write(cr, uid, [prog_id], values, context=context)
+        prog_obj.write(cr, 1, [prog_id], values, context=context)
 
         return prog_id
 

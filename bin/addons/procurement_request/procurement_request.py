@@ -185,7 +185,7 @@ class procurement_request_sourcing_document(osv.osv):
             if vals.get('line_ids'):
                 create_data['sourcing_lines'] = [(6, 0, (vals.get('line_ids'),))]
             self.create(cr, uid, create_data, context=context)
-            mem_obj.create(cr, uid, create_data, context=context)
+            mem_obj.create(cr, 1, create_data, context=context)
         elif vals.get('line_ids'):
             for chk in self.browse(cr, uid, chk_ids, context=context):
                 sourcing_lines = [vals.get('line_ids')]
@@ -202,7 +202,7 @@ class procurement_request_sourcing_document(osv.osv):
             }, context=context)
 
         if self._name != 'procurement.request.sourcing.document.mem':
-            mem_obj.chk_create(cr, uid, vals, context=context)
+            mem_obj.chk_create(cr, 1, vals, context=context)
 
         return True
 
