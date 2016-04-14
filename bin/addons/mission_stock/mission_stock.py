@@ -871,6 +871,7 @@ class stock_mission_report_line(osv.osv):
                 if instance.parent_id.parent_id:
                     return instance.parent_id.parent_id.id
                 return instance.parent_id.id
+            return instance.id
 
         return False
 
