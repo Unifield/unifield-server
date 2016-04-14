@@ -184,6 +184,7 @@ class account_move_line(osv.osv):
         ]
 
         for f, t in fields_to_check:
+            has_diff = False
             if f in vals:
                 if not hasattr(ji_rec, f):
                     continue
