@@ -202,8 +202,6 @@ class AccountDrill(object):
                                     parent.data[ccy][f] = 0.
                             for f in fields:
                                 parent.data[ccy][f] += n.data[ccy].get(f, 0.)
-                        if n.skip:
-                            n.parent.skip = True
             level -= 1  # upper level (upper level by uper level)
 
         # uncomment to explore reduced nodes
