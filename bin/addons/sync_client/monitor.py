@@ -323,6 +323,10 @@ class sync_version_instance_monitor(osv.osv):
         'instance_id': _get_default_instance_id,
     }
 
+    _sql_constraints = [
+        ('instance_id_key', 'UNIQUE (instance_id)',  'You can not have two instances with the same id !')
+    ]
+
     def create(self, cr, uid, vals, context=None):
         if 'instance_id' not in vals:
             instance_id = self._get_default_instance_id(cr, uid, context=context)
