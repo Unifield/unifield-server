@@ -264,31 +264,40 @@ class stock_mission_report(osv.osv):
 
         for id in ids:
             # In-Pipe moves
-            cr.execute('''SELECT m.product_id, m.product_qty, m.product_uom, p.name, m.id
+            cr.execute('''SELECT m.product_id, m.product_qty, m.product_uom, p.name
                           FROM stock_move m
                               LEFT JOIN stock_picking s ON m.picking_id = s.id
                               LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')''')
+                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned') ORDER BY m.product_id''')
 
             in_pipe_moves = cr.fetchall()
+            current_product = None
+            line = None
+            vals = {}
             for product_id, qty, uom, partner, move_id in in_pipe_moves:
-                line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
-                                                    ('mission_report_id', '=', id)])
-                if line_id:
-                    line = line_obj.browse(cr, uid, line_id[0])
-                    if uom != line.product_id.uom_id.id:
-                        qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
-
+                if current_product != product_id:
+                    if line and vals:
+                        line_obj.write(cr, uid, [line.id], vals)
+                    line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
+                                                        ('mission_report_id', '=', id)])
                     vals = {'in_pipe_qty': 0.00,
                             'in_pipe_coor_qty': 0.00,
                             'updated': True}
+                    current_product = product_id
+                    if not line_id:
+                        continue
 
-                    vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
+                line = line_obj.browse(cr, uid, line_id[0])
+                if uom != line.product_id.uom_id.id:
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
-                    if partner == coordo_id:
-                        vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+                vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
 
-                    line_obj.write(cr, uid, line.id, vals)
+                if partner == coordo_id:
+                    vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+
+            if line and vals:
+                line_obj.write(cr, uid, [line.id], vals)
 
             # All other moves
             cr.execute('''
