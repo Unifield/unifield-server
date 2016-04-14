@@ -52195,6 +52195,12 @@ msgstr "Courriel de l'expéditeur"
 msgid "Line %s. Cost Center %s not found!"
 msgstr "Ligne %s. Centre de coût %s non trouvé !"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:420
+#, python-format
+msgid "Line %s. %s is a VIEW type Cost Center!"
+msgstr "Ligne %s. %s est un Centre de coût de type VUE !"
+
 #. module: stock
 #: view:stock.inventory.line.split:0
 #: view:stock.move.split:0
