@@ -331,6 +331,9 @@ class sync_rule(osv.osv):
             if model_ids:
                 values['model_ref'] = model_ids[0]
 
+        if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
+            values['included_fields'] = self._compute_included_field(cr, uid,
+                    [], values['included_fields_sel'][0][2], context)
         new_id = super(sync_rule, self).create(cr, uid, values, context=context)
         check = self.validate_rules(cr, uid, [new_id], context=context)
         if check['state'] != 'valid':
