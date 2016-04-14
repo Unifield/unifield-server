@@ -213,6 +213,10 @@ class procurement_request_sourcing_document_mem(osv.osv_memory):
     _name = 'procurement.request.sourcing.document.mem'
     _inherit = 'procurement.request.sourcing.document'
 
+    def _check_access(self, uid, object_id, mode):
+        # Bypass default _check_access method
+        return True
+
 procurement_request_sourcing_document_mem()
 
 

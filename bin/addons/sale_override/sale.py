@@ -538,6 +538,10 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
         'prepare_picking': '/',
     }
 
+    def _check_access(self, uid, object_id, mode):
+        # Bypass default _check_access method
+        return True
+
 sale_order_sourcing_progress_mem()
 
 class sale_order(osv.osv):
