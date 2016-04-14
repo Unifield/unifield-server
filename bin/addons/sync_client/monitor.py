@@ -272,5 +272,76 @@ class sync_monitor(osv.osv):
 
 sync_monitor()
 
+
+class sync_version_instance_monitor(osv.osv):
+    _name = "sync.version.instance.monitor"
+
+    def _get_default_instance_id(self, cr, uid, context=None):
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        return instance and instance.id
+
+    def _get_my_instance(self, cr, uid, ids, field_name, args, context=None):
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        if not instance:
+            return dict.fromkeys(ids, False)
+        ret = {}
+        for msg in self.read(cr, uid, ids, ['instance_id']):
+            ret[msg['id']] = msg['instance_id'] and msg['instance_id'][0] == instance.id
+
+        return ret
+
+    def _search_my_instance(self, cr, uid, obj, name, args, context=None):
+        res = []
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        if not instance:
+            return []
+
+        for arg in args:
+            if arg[1] not in ('=', '!='):
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s' % name))
+            cond = arg[2] in ('True', 't', '1', 1, True)
+            if arg[1] == '!=':
+                cond = not cond
+            if cond:
+                res += ['|',('instance_id', '=', instance.id),('instance_id', '=', False)]
+            else:
+                res.append(('instance_id', '!=', instance.id))
+
+        return res
+
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Instance', select=1),
+        'my_instance': fields.function(_get_my_instance, method=True, type='boolean', fnct_search=_search_my_instance, string="My Instance"),
+        'version': fields.char(size=128, string='Version', readonly=True),
+        'backup_path': fields.char('Backup Location', size=128),
+        'backup_date': fields.datetime("Backup Date", readonly=True,
+            required=True),
+    }
+
+    _defaults = {
+        'backup_date' : fields.datetime.now,
+        'instance_id': _get_default_instance_id,
+    }
+
+    def create(self, cr, uid, vals, context=None):
+        import pdb; pdb.set_trace()
+        if 'instance_id' not in vals:
+            instance_id = self._get_default_instance_id(cr, uid, context=context)
+        else:
+            instance_id = vals['instance_id']
+
+        # look for existing entrie for this instance
+        ids = self.search(cr, uid, [('instance_id', '=', instance_id)], limit=1)
+        if ids:
+            # update existing
+            if 'backup_date' not in vals:
+                vals.update({'backup_date': fields.datetime.now()})
+            return super(osv.osv, self).write(cr, uid, ids[0], vals)
+        else:
+            # create new entry
+            return super(osv.osv, self).create(cr, uid, vals)
+
+sync_version_instance_monitor()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
