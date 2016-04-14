@@ -25,7 +25,7 @@ from openerp.widgets import TinyWidget
 class Pager(TinyWidget):
 
     template = "/openerp/widgets/templates/pager.mako"
-    params = ['offset', 'limit', 'count', 'prev', 'next', 'page_info', 'pager_id', 'pager_options']
+    params = ['offset', 'limit', 'count', 'approximation', 'prev', 'next', 'page_info', 'pager_id', 'pager_options']
 
     page_info = None
     pager_id = 1
@@ -40,7 +40,12 @@ class Pager(TinyWidget):
 
         self.offset = offset or 0
         self.limit = limit or 50
-        self.count = count or 0
+        self.approximation = False
+        if isinstance(count, (str, unicode)) and count.startswith('~'):
+            self.count = int(count.strip('~'))
+            self.approximation = True
+        else:
+            self.count = count or 0
         self.pager_options = [20, 50, 100, 500]
 
         if self.limit != Pager.UNLIMITED and len(self.ids) > self.limit:

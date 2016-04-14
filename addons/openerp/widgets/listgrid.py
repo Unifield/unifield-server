@@ -191,7 +191,7 @@ class List(TinyWidget):
                 else:
                     self.count = len(ids)
             else:
-                self.count = proxy.search_count(search_param, context)
+                self.count = proxy.search_count(search_param, context, True)
 
         if not default_data and self.m2m:
             # prefilter datas for m2m
