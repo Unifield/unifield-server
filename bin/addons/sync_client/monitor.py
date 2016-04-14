@@ -324,7 +324,6 @@ class sync_version_instance_monitor(osv.osv):
     }
 
     def create(self, cr, uid, vals, context=None):
-        import pdb; pdb.set_trace()
         if 'instance_id' not in vals:
             instance_id = self._get_default_instance_id(cr, uid, context=context)
         else:
