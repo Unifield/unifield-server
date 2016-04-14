@@ -538,6 +538,9 @@ class sale_order_sourcing_progress_mem(osv.osv_memory):
         'prepare_picking': '/',
     }
 
+    def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
+        return super(sale_order_sourcing_progress_mem, self).search(cr, 1, args, offset=0, limit=limit, order=order, context=context, count=count)
+
 sale_order_sourcing_progress_mem()
 
 class sale_order(osv.osv):
