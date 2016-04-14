@@ -55,24 +55,24 @@ class msr_in_progress(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for id in ids:
-            super(msr_in_progress, self).create(cr, uid, {'report_id': id}, context=None)
+            super(msr_in_progress, self).create(cr, 1, {'report_id': id}, context=None)
         return
          
     def _already_processed(self, cr, uid, id, context=None):
-        report_ids = self.search(cr, uid, [('report_id', '=', id)], context=context)
+        report_ids = self.search(cr, 1, [('report_id', '=', id)], context=context)
         if report_ids:
             return True
         return False
 
     def _is_in_progress(self, cr, uid, context=None):
-        report_ids = self.search(cr, uid, [], context=context)
+        report_ids = self.search(cr, 1, [], context=context)
         if report_ids:
             return True
         return False
 
     def _delete_all(self, cr, uid, context=None):
-        report_ids = self.search(cr, uid, [], context=context)
-        self.unlink(cr, uid, report_ids, context)
+        report_ids = self.search(cr, 1, [], context=context)
+        self.unlink(cr, 1, report_ids, context)
         return
     
 msr_in_progress()    
@@ -189,9 +189,9 @@ class stock_mission_report(osv.osv):
             msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
             logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
-        except Exception:
+        except Exception as e:
             cr.rollback()
-            logging.getLogger('MSR').error("""____________________ Error while running the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
+            logging.getLogger('MSR').error("""____________________ Error while running the update process of MSR, at %s - Error: %s""" % (time.strftime('%Y-%m-%d %H:%M:%S'), str(e)))
             msr_in_progress._delete_all(cr, uid, context)
         finally:
             cr.close(True)
@@ -326,38 +326,43 @@ class stock_mission_report(osv.osv):
 
         for id in ids:
             # In-Pipe moves
-            cr.execute('''SELECT m.product_id, m.product_qty, m.product_uom, p.name, m.id
+            cr.execute('''SELECT m.product_id, sum(m.product_qty), m.product_uom, p.name
                           FROM stock_move m
                               LEFT JOIN stock_picking s ON m.picking_id = s.id
                               LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')''')
+                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
+                          GROUP BY m.product_id, m.product_uom, p.name
+                          ORDER BY m.product_id''')
 
             in_pipe_moves = cr.fetchall()
-            for product_id, qty, uom, partner, move_id in in_pipe_moves:
-                line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
-                                                    ('mission_report_id', '=', id)])
-                if line_id:
-                    must_write = False
-                    line = line_obj.browse(cr, uid, line_id[0])
-                    if uom != line.product_id.uom_id.id:
-                        qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
-                    
+            current_product = None
+            line = None
+            vals = {}
+            for product_id, qty, uom, partner in in_pipe_moves:
+                if current_product != product_id:
+                    if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
+                        line_obj.write(cr, uid, [line.id], vals)
+                    line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
+                                                        ('mission_report_id', '=', id)])
+
                     vals = {'in_pipe_qty': 0.00,
                             'in_pipe_coor_qty': 0.00,
                             'updated': True}
-                    
-                    vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
-                    if vals['in_pipe_qty'] != line.in_pipe_qty:
-                        must_write = True
+                    current_product = product_id
+                    if not line_id:
+                        continue
 
-                    if partner == coordo_id:
-                        vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
-                        if vals['in_pipe_coor_qty'] != line.in_pipe_coor_qty:
-                            must_write = True
-                    
-                    # US-1215: Code optimization: Only issue a write when needed
-                    if must_write:
-                        line_obj.write(cr, uid, line.id, vals)
+                line = line_obj.browse(cr, uid, line_id[0])
+                if uom != line.product_id.uom_id.id:
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
+
+                vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
+
+                if partner == coordo_id:
+                    vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+
+            if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
+                line_obj.write(cr, uid, [line.id], vals)
 
             # All other moves
             cr.execute('''
@@ -690,12 +695,10 @@ class stock_mission_report(osv.osv):
                 except Exception, e:
                     logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file. Data: \n %s""" % line)
 
-#            for data, field in [(ns_nv_data, 'ns_nv_vals'), (ns_v_data, 'ns_v_vals'), (s_nv_data, 's_nv_vals'), (s_v_data, 's_v_vals')]:
-#                self.write(cr, uid, [report_id], {field: data}, context=context)
+           for data, field in [(ns_nv_data, 'ns_nv_vals'), (ns_v_data, 'ns_v_vals'), (s_nv_data, 's_nv_vals'), (s_v_data, 's_v_vals')]:
+               self.write(cr, uid, [report_id], {field: data}, context=context)
 
-#            self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
-            # US-1218: Issue only one write for the whole report
-            self.write(cr, uid, [report_id], {'ns_nv_vals': ns_nv_data, 'ns_v_vals': ns_v_data, 's_nv_vals': s_nv_data, 's_v_vals': s_v_data, 'export_ok': True}, context=context)
+           self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
 
         return True
 
