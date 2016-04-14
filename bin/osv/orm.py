@@ -1803,9 +1803,17 @@ class orm_template(object):
 
     _view_look_dom_arch = __view_look_dom_arch
 
-    def search_count(self, cr, user, args, context=None):
+    def search_count(self, cr, user, args, context=None, approximation=False):
         if context is None:
             context = {}
+        if approximation and not args:
+            # do approximation with web client on big tables
+            cr.execute("""SELECT reltuples::BIGINT AS approximate_row_count
+            FROM pg_class WHERE relname = '%s'""" % self._table)
+            approximative_result = cr.fetchall()[0][0]
+            # check if approximative is big
+            if approximative_result > 100000:
+                return '~%s' % approximative_result
         res = self.search(cr, user, args, context=context, count=True)
         if isinstance(res, list):
             return len(res)
