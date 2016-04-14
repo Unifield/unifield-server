@@ -209,7 +209,7 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         msr_in_progress = self.pool.get('msr_in_progress')
 
-        report_ids = self.search(cr, uid, [('local_report', '=', True)], context=context)
+        report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
         
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
