@@ -407,8 +407,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                             errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
                             continue
                         # If necessary cast the CC into a string, otherwise the below search would crash
-                        if not isinstance(line[cols['Cost Centre']], str):
-                            line[cols['Cost Centre']] = str(line[cols['Cost Centre']])
+                        if not isinstance(line[cols['Cost Centre']], basestring):
+                            line[cols['Cost Centre']] = '%s' % (line[cols['Cost Centre']])
                         cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
                         if not cc_ids:
                             errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
