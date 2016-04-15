@@ -16,7 +16,7 @@
         </a>
         % endif
         <span class="pager_info" onclick="jQuery('[id=_${name+str(pager_id)}_link_span]').hide(); jQuery('[id=_${name+str(pager_id)}_limit_span]').show();">
-            ${page_info} ${_('of')} ${approximation and '~' or ''} ${count}
+            ${page_info} ${_('of')} ${approximation and '~' or ''}${count}
         </span>
         % if next:
         <a href="#next" action="next" relation="${name}" onclick="validate_action(this, pager_action); return false;">
