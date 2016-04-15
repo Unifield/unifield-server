@@ -1813,15 +1813,16 @@ class orm_template(object):
         or approximate.
         :return: (count, boolean) boolean is True in case of approximation
         """
-        cr.execute("""
-            SELECT reltuples::BIGINT AS approximate_row_count
-            FROM pg_class WHERE relname = '%s'
-        """ % self._table)
-        approximative_result = cr.fetchall()
-        approximative_result = approximative_result and approximative_result[0][0] or 0
-        # check if approximative is big
-        if approximative_result > 100000:
-            return int(approximative_result), True
+        if not args:
+            cr.execute("""
+                SELECT reltuples::BIGINT AS approximate_row_count
+                FROM pg_class WHERE relname = '%s'
+            """ % self._table)
+            approximative_result = cr.fetchall()
+            approximative_result = approximative_result and approximative_result[0][0] or 0
+            # check if approximative is big
+            if approximative_result > 100000:
+                return int(approximative_result), True
         return self.search_count(cr, user, args, context=context), False
 
 
