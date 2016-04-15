@@ -51,7 +51,8 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
-    def us_1030_patch(self, cr, uid, *a, **b):
+    # XXX do not remove this patch !!! XXX
+    def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
         '''
         create pricelist corresponding to currency that don't have yet
         '''

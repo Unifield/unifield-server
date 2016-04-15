@@ -13,8 +13,8 @@
             <field name="method">us_918_patch</field>
         </record>
 
-        <record id="us_1030_patch" model="patch.scripts">
-            <field name="method">us_1030_patch</field>
+        <record id="us_1030_create_pricelist_patch" model="patch.scripts">
+            <field name="method">us_1030_create_pricelist_patch</field>
         </record>
 
         <record id="us_750_patch" model="patch.scripts">
