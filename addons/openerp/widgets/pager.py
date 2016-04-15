@@ -31,7 +31,8 @@ class Pager(TinyWidget):
     pager_id = 1
     UNLIMITED = -1
 
-    def __init__(self, id=False, ids=[], offset=0, limit=50, count=0, view_type='tree'):
+    def __init__(self, id=False, ids=[], offset=0, limit=50, count=0,
+            view_type='tree', approximation=False):
         super(Pager, self).__init__()
 
         self.id = id
@@ -40,12 +41,8 @@ class Pager(TinyWidget):
 
         self.offset = offset or 0
         self.limit = limit or 50
-        self.approximation = False
-        if isinstance(count, (str, unicode)) and count.startswith('~'):
-            self.count = int(count.strip('~'))
-            self.approximation = True
-        else:
-            self.count = count or 0
+        self.approximation = approximation
+        self.count = count or 0
         self.pager_options = [20, 50, 100, 500]
 
         if self.limit != Pager.UNLIMITED and len(self.ids) > self.limit:
