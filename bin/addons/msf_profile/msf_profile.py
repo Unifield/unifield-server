@@ -51,6 +51,20 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    # XXX do not remove this patch !!! XXX
+    def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
+        '''
+        create pricelist corresponding to currency that don't have yet
+        '''
+        currency_module = self.pool.get('res.currency')
+        # Check if currencies has no associated pricelists
+        cr.execute("""SELECT id FROM res_currency
+                   WHERE id NOT IN (SELECT currency_id FROM product_pricelist)
+                   AND currency_table_id IS NULL""")
+        curr_ids = cr.fetchall()
+        for cur_id in curr_ids:
+            pricelist_ids = currency_module.create_associated_pricelist(cr, uid, cur_id[0]) 
+
     def update_sp_222(self, cr, uid, *a, **b):
         # to solve the en_US not run problem on partner, in addition with
         # SP-222 code, it is required to delete the default language on
