@@ -9,7 +9,7 @@ import oerplib
 start_time = time.time()
 intermediate_time = start_time
 
-DB_NAME = 'SYNC_SERVER-20160321-163301-zip_2'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160321-163301-zip_3'   # replace with your own DB
 
 DELETE_NO_MASTER = True
 DELETE_INACTIVE_RULES = True
@@ -146,7 +146,7 @@ def delete_no_master():
     cr3 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     intermediate_time = time.time()
     print_file_and_screen('1/4 Start deleting updates with active rules and not master_data'
-          ' where sequence is < %s and create_date > %s ...' %
+          ' where sequence is < %s and create_date < %s ...' %
           (SMALLEST_LAST_SEQUENCE, NOT_DELETE_DATE))
     cr2.execute("SELECT id FROM sync_server_sync_rule WHERE active='t' AND master_data='f'", ())
     no_master_data_active_rules = [x[0] for x in cr2.fetchall()]
@@ -189,7 +189,7 @@ def delete_inactive_rules():
     cr2.execute("""SELECT id FROM sync_server_update
                 WHERE rule_id IN
                 (SELECT id FROM sync_server_sync_rule WHERE active='f') AND
-                sequence < %s""", (SMALLEST_LAST_SEQUENCE,))
+                sequence < %s AND create_date < %s""", (SMALLEST_LAST_SEQUENCE, NOT_DELETE_DATE))
     update_inactive_rules_count = cr2.rowcount
     while True:
         multiple_updates = cr2.fetchmany(UPDATE_TO_FETCH)
@@ -354,6 +354,7 @@ def compact_updates():
     return update_count
 
 print_file_and_screen('Working on db %s' % DB_NAME)
+print_file_and_screen('All updates after %s OR with sequence < %s will be kept' % (NOT_DELETE_DATE, SMALLEST_LAST_SEQUENCE))
 if DELETE_NO_MASTER:
     total_update_count += delete_no_master()
 if DELETE_INACTIVE_RULES:

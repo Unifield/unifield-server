@@ -12,11 +12,11 @@ locale.setlocale(locale.LC_ALL, '')
 
 HOST_ORIGIN = 'localhost'
 PORT_ORIGIN = '11041'
-DB_ORIGIN = 'fm_sp_222_ocg_21_03_nc'
+DB_ORIGIN = 'fm_sp_222_ocg_21_03_nc3'
 
 HOST_COMPRESSED = 'localhost'
 PORT_COMPRESSED = '11031'
-DB_COMPRESSED = 'fm_sp_222_ocg_21_03'
+DB_COMPRESSED = 'fm_sp_222_ocg_21_03_10'
 
 FIELDS_TO_IGNORE = [
     'id',
@@ -165,7 +165,7 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
             else:
                 diff_result2 = set(compressed_values) - set(origin_values)
                 print_file_and_screen('Object type %s with sdref %s have different values on '
-                                      'compressed version : %r' % diff_result2)
+                                      'compressed version : %r' % (data_object.model, sdref, diff_result2))
     else:
         print_file_and_screen("Object with sdref %s doesn't exists on compressed db" % data_object.name)
 
