@@ -112,20 +112,18 @@
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
 
-<Table >
-<Column ss:Width="67.5"/>
-<Column ss:Width="73.5"/>
-<Column ss:Width="61.5"/>
-<Column ss:Width="75.75"/>
-<Column ss:Width="113.25"/>
-<Column ss:Width="100"/>
-<Column ss:Width="180.75"/>
-<Column ss:Width="70.5"/>
-<Column ss:AutoFitWidth="0" ss:Width="229.5"/>
-<Column ss:Width="57.75"/>
-<Column ss:Width="44.25"/>
-<Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
-
+<Table>
+  <Column ss:Width="67.5"/>
+  <Column ss:Width="73.5" ss:Span="1"/>
+  <Column ss:Width="75.75"/>
+  <Column ss:Width="113.25" ss:Span="1"/>
+  <Column ss:Width="180.75"/>
+  <Column ss:Width="70.5"/>
+  <Column ss:AutoFitWidth="0" ss:Width="229.5"/>
+  <Column ss:Width="60.75" ss:Span="1"/>
+  <Column ss:AutoFitWidth="0" ss:Width="60.75" ss:Span="1"/>
+  <Column ss:Width="45.25"/>
+  <Column ss:Width="55.25"/>
 
   <Row>
     <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('PENDING CHEQUE')}</Data></Cell>
