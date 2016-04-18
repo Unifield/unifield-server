@@ -2285,6 +2285,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'company_id': order.company_id.id,
             'supplier': line.supplier and line.supplier.id or False,
             'po_cft': line.po_cft or False,
+            'related_sourcing_id': line.related_sourcing_id and line.related_sourcing_id.id or False,
             'date_planned': rts_date,
             'from_yml_test': order.from_yml_test,
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
