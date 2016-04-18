@@ -113,8 +113,6 @@
 <ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
 
 <Table >
-<Column ss:Width="70.5" ss:Span="1"/>
-<Column ss:Index="3" ss:Width="72.75"/>
 <Column ss:Width="67.5"/>
 <Column ss:Width="73.5"/>
 <Column ss:Width="61.5"/>
@@ -200,6 +198,7 @@
 </Table>
 
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Header x:Margin="0.4921259845"/>
