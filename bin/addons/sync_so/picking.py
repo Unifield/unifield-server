@@ -97,7 +97,7 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+        product_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
         if not product_id:
             product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
             if not product_ids:
@@ -116,11 +116,32 @@ class stock_picking(osv.osv):
 
         # UF-1617: Handle batch and asset object
         batch_id = False
-        if data['prodlot_id']:
-            batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
+        if data['prodlot_id'] and product_id:
+            # us-838: WORK IN PROGRESS ..................................
+            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN 
+            prodlot_obj = self.pool.get('stock.production.lot')
+            prod = prod_obj.browse(cr, uid,product_id,context=context)
+            if prod.perishable and not prod.batch_management:
+                # In case it's a EP only product, then search for date and product, no need to search for batch name
+                if 'life_date' in data['prodlot_id']:
+                    # If name exists in the sync message, search by name and product, not by xmlid 
+                    life_date = data['prodlot_id']['life_date']
+                    batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', product_id),('life_date', '=', life_date)], context=context)
+                    if batch_ids:
+                        batch_id = batch_ids[0]
+            else:
+                if 'name' in data['prodlot_id']:
+                    # If name exists in the sync message, search by name and product, not by xmlid 
+                    batch_name = data['prodlot_id']['name']
+                    batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', product_id),('name', '=', batch_name)], context=context)
+                    if batch_ids:
+                        batch_id = batch_ids[0]
+            ################## TODO: Treat the case for Remote Warehouse: WORK IN PROGRESS BELOW!!!!!!!!!!
             if not batch_id:
-                raise Exception, "Batch Number %s not found for this sync data record" % data['prodlot_id']
-
+                batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
+                if not batch_id:
+                    raise Exception, "Batch Number %s not found for this sync data record" % data['prodlot_id']
+                
         expired_date = data['expired_date']
 
         # UTP-872: Add also the state into the move line, but if it is done, then change it to assigned (available)
