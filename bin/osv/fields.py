@@ -756,6 +756,11 @@ class function(_column):
         # custom fields
         self.computation = args.get('computation', False)
 
+        if args.get('_fnct_migrate', False):
+            self._fnct_migrate = args['_fnct_migrate']
+        else:
+            self._fnct_migrate = False
+
         self._fnct_inv_arg = fnct_inv_arg
         if not fnct_inv:
             self.readonly = 1
@@ -799,6 +804,14 @@ class function(_column):
             computation = self.digits_compute(cr, computation=True)
             self.computation = computation
 
+    def migrate(self, cr, ids):
+        """
+        Run migration of functional field the first time it is created
+        """
+        if not self._fnct_migrate:
+            return False
+        else:
+            return self._fnct_migrate(self._obj, cr, ids)
 
     def search(self, cr, uid, obj, name, args, context=None):
         if not self._fnct_search:

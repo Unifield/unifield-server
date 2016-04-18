@@ -71,7 +71,9 @@ class procurement_order(osv.osv):
 
             procurement_obj = self.pool.get('procurement.order')
             if not ids:
-                ids = procurement_obj.search(cr, uid, [], order="date_planned")
+                ids = procurement_obj.search(cr, uid, [('state', '=', 'exception')], order="date_planned")
+            # Put a lock on procurement.order
+            procurement_obj.write(cr, uid, ids, {}, context=context)
             for id in ids:
                 wf_service.trg_validate(uid, 'procurement.order', id, 'button_restart', cr)
             if use_new_cursor:
@@ -118,6 +120,8 @@ class procurement_order(osv.osv):
             while True:
                 report_ids = []
                 ids = procurement_obj.search(cr, uid, [('state', '=', 'confirmed'), ('procure_method', '=', 'make_to_stock')], offset=offset)
+                # Put a lock on procurement.order
+                procurement_obj.write(cr, uid, ids, {}, context=context)
                 for proc in procurement_obj.browse(cr, uid, ids):
                     if maxdate >= proc.date_planned:
                         wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)

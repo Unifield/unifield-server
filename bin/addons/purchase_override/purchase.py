@@ -4009,7 +4009,7 @@ class product_product(osv.osv):
 
         if display_message:
             return 'Warning you are about to add a product which does not conform to this' \
-                ' PO’s order category, do you wish to proceed ?'
+                ' order category, do you wish to proceed ?'
         else:
             return False
 

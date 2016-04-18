@@ -4466,6 +4466,14 @@ class wizard(osv.osv):
 
 wizard()
 
+class product_product(osv.osv):
+    _inherit = 'product.product'
+
+    _columns = {
+        'prodlot_ids': fields.one2many('stock.production.lot', 'product_id', string='Batch Numbers',),
+    }
+
+product_product()
 
 class stock_move(osv.osv):
     '''

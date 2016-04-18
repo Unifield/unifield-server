@@ -2606,7 +2606,12 @@ class orm(orm_template):
         update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])
         cr.execute('SELECT id FROM '+self._table)
         ids_lst = map(lambda x: x[0], cr.fetchall())
-        while ids_lst:
+
+        migrate = False
+        if self._columns[k]._fnct_migrate:
+            migrate = self._columns[k].migrate(cr, ids_lst)
+
+        while ids_lst and migrate == False:
             iids = ids_lst[:40]
             ids_lst = ids_lst[40:]
             res = f.get(cr, self, iids, k, 1, {})
@@ -4168,7 +4173,15 @@ class orm(orm_template):
             val = todo[key]
             if key:
                 # uid == 1 for accessing objects having rules defined on store fields
+                if hasattr(uid, 'realUid'):
+                    context['computed_for_uid'] = uid.realUid
+                else:
+                    context['computed_for_uid'] = uid
                 result = self._columns[val[0]].get(cr, self, ids, val, 1, context=context)
+                try:
+                    del context['computed_for_uid']
+                except KeyError:
+                    pass
                 for id, value in result.items():
                     if field_flag:
                         for f in value.keys():

@@ -2204,8 +2204,8 @@ class account_bank_statement_line(osv.osv):
 
                     for inv_move_line in absl.imported_invoice_line_ids:
                         imported_total_amount += inv_move_line.amount_currency
-                    if absl.amount_out > abs(imported_total_amount) or\
-                            absl.amount_in > abs(imported_total_amount):
+                    if absl.amount_out - abs(imported_total_amount) > 0.001 or \
+                        absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                             _('You can not hard post with an amount greater'
                                 ' than total of imported invoices'))

@@ -73578,3 +73578,9 @@ msgstr "Les montants entrants ne peuvent pas être supérieurs aux montants sort
 #, python-format
 msgid "You can't delete this line. Amounts IN can't be higher than Amounts OUT for the selected PO."
 msgstr "Vous ne pouvez pas supprimer cette ligne. Les montants entrants ne peuvent pas être supérieurs aux montants sortants pour le BC sélectionné."
+
+#. module: account_mcdb
+#: code:addons/account_mcdb/account_mcdb.py:395
+#, python-format
+msgid "In the amount selector (from-to), the \"from\" value must be the smallest one."
+msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la plus petite."
