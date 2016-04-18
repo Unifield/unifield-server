@@ -70,7 +70,7 @@ class stock_production_lot(osv.osv):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
-        self.migrate_dup_batch(cr, uid, context)
+        #DUY TEST !!!!!!!!!!  self.migrate_dup_batch(cr, uid, context)
         
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
     
@@ -85,14 +85,15 @@ class stock_production_lot(osv.osv):
             2.2. Search all tables that refer to the bigger_id, then map them to the smaller_id
             2.3. Set the non-lead batches to become inactive
             2.4. Update ir_model_data
-        3. Modify the unique constraint to be prod + xmlname, and no more name + partner_name, because we will not use partner_name anymore  
+        3. Modify the unique constraint to be prod + BN + ED, and no more partner_name involved, because we will not use partner_name anymore  
         
         4. For the messages in the pipeline ---> treated in sync message
         
         '''
         
         cr.execute('''select id, name from stock_production_lot where name in  
-                (select name from (select name, count(name) as amount_bn from stock_production_lot group by name) as foo where amount_bn>1) order by name, id;''')
+                (select name from (select name, product_id, life_date, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1) order by name, id;''')
+        
         lead_id = 0 # This id will be used as the main batch id
         same_name = None 
         for r in cr.dictfetchall():
@@ -112,7 +113,13 @@ class stock_production_lot(osv.osv):
                     lead_id = r['id'] # when the name change --> replace by the new lead_id
                     same_name = r['name'] 
                     print "*******Lead BN = ", r['name']," id= ",r['id'] 
-                
+     
+        
+        # 3. Now alter the constraint unique of this table: first drop the current constraint, then create a new one with name+prod+life_date
+        cr.execute('''ALTER TABLE stock_production_lot DROP CONSTRAINT stock_production_lot_batch_name_uniq,  
+                ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE , btree (name, product_id, life_date);''')
+        
+        
         return True
     
     def remap_reference_tables(self, cr, uid, wrong_id, lead_id, context=None):
@@ -175,7 +182,9 @@ class stock_production_lot(osv.osv):
         
         
     def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id):
+        # Set the references on the given table from wrong ID to the Lead ID of the batch 
         #cr.execute("update %s set %s=%s where prodlot_id=%s", (table_name, field_id, lead_id, wrong_id,))
+        
         cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;', (wrong_id,))
         print "---------Table=", table_name, " has ", cr.dictfetchall() 
 
