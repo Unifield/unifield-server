@@ -135,7 +135,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     elif supplier != temp:
                         supplier = False
 
-                if not line.related_sourcing_id:
+                if not line.related_sourcing_ok or not line.related_sourcing_id:
                     group = False
                 else:
                     temp = line.related_sourcing_id.id
@@ -171,6 +171,18 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res['company_id'] = user_obj.browse(cr, uid, uid, context=context).company_id.id
 
         return res
+
+    def _get_related_sourcing_id(self, wiz):
+        """
+        Return the ID of a related.sourcing record or False
+        :param wiz: browse_record of multiple.sourcing.wizard
+        :return: ID of a related.sourcing record or False
+        """
+        if wiz.related_sourcing_id and wiz.supplier_id and wiz.supplier_id.partner_type == 'esc' \
+           and wiz.supplier_id.split_po == 'yes':
+            return wiz.related_sourcing_id.id
+
+        return False
 
     def save_lines(self, cr, uid, ids, context=None):
         """
@@ -214,7 +226,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                             'type': wiz.type,
                             'po_cft': wiz.po_cft,
                             'supplier': wiz.supplier_id and wiz.supplier_id.id or False,
-                            'related_sourcing_id': wiz.related_sourcing_id and wiz.related_sourcing_id.id or False,
+                            'related_sourcing_id': self._get_related_sourcing_id(wiz),
                             'location_id': wiz.location_id.id and wiz.location_id.id or False,
                         }, context=context)
                     except osv.except_osv, e:

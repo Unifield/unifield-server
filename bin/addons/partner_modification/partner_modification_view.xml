@@ -31,6 +31,7 @@
 					<field name="lang" position="after">
 						<field name="zone" />
 						<field name="po_by_project" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '!=', False)]}" />
+						<field name="split_po" attrs="{'invisible': [('partner_type', '!=', 'esc')], 'required': [('partner_type', '=', 'esc')]}" />
 					</field>
 					<field name="user_id" position="replace"></field>
 					<!-- <field name="leadtime" position="replace"></field> -->
