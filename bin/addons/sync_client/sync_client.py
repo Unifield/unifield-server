@@ -901,6 +901,8 @@ class Entity(osv.osv):
     def sync(self, cr, uid, context=None):
         if context is None:
             context = {}
+        if not self.pool.get('update.client'):
+            raise osv.except_osv('Error', "update_client module is not installed ! You need to install it to be able to sync.")
         # US_394: force synchronization lang to en_US
         context['lang'] = 'en_US'
         logger = context.get('logger')
