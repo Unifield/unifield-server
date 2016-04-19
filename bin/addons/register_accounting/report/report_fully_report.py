@@ -31,6 +31,7 @@ class report_fully_report(report_sxw.rml_parse):
             'getAnalyticLines': self.getAnalyticLines,
             'getImportedMoveLines': self.getImportedMoveLines,
             'getRegRef': self.getRegRef,
+            'getFreeRef': self.getFreeRef,
         })
 
     def getRegRef(self, reg_line):
@@ -136,6 +137,26 @@ class report_fully_report(report_sxw.rml_parse):
         if al_ids:
             res = al_obj.browse(self.cr, self.uid, al_ids)
         return res
+
+    def getFreeRef(self, reg_line):
+        '''
+        Return the "manual" reference if it exists (field Reference in DI and Free Reference in SI)
+        '''
+        db = pooler.get_pool(self.cr.dbname)
+        acc_inv = db.get('account.invoice')
+        ref = False
+        inv_id = False
+        # Direct Invoice
+        if reg_line.direct_invoice_move_id:
+            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', reg_line.direct_invoice_move_id.id)])
+        # Supplier Invoice
+        elif reg_line.imported_invoice_line_ids and reg_line.imported_invoice_line_ids[0].move_id:
+            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', reg_line.imported_invoice_line_ids[0].move_id.id)])
+        if inv_id:
+            inv = acc_inv.browse(self.cr, self.uid, inv_id)
+            if inv:
+                ref = inv[0].reference
+        return ref or ''
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

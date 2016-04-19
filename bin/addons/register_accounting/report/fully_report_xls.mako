@@ -377,6 +377,7 @@
       <Column ss:Width="155"/>
       <Column ss:Width="135"/>
       <Column ss:Width="170"/>
+      <Column ss:Width="170"/>
       <Column ss:Width="55"/>
       <Column ss:Width="65"/>
       <Column ss:Width="60"/>
@@ -467,6 +468,9 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Ref</Data>
         </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free Ref</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="column_headers">
             <Data ss:Type="String">Chk num</Data>
@@ -519,6 +523,9 @@
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${getRegRef(line) or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String">${getFreeRef(line) or ''}</Data>
         </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="centre">
@@ -581,6 +588,9 @@
         </Cell>
         % endif
         <Cell ss:StyleID="left">
+          <Data ss:Type="String">${getFreeRef(line) or ''}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
@@ -607,9 +617,9 @@ endif
 %>
       <Row>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
-          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
         % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
