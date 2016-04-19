@@ -689,7 +689,7 @@ endif
 %>
       <Row>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
           <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
         % endif
