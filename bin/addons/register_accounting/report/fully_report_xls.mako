@@ -382,7 +382,7 @@
       <Column ss:Width="65"/>
       <Column ss:Width="60"/>
       <Column ss:Width="66"/>
-      <Column ss:Width="72" ss:Span="2"/>
+      <Column ss:Width="72" ss:Span="4"/>
       <Column ss:Width="36" ss:Span="1"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
@@ -498,6 +498,12 @@
           <Data ss:Type="String">FP</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free 1</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free 2</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Rec?</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
@@ -543,6 +549,12 @@
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_out or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String"></Data>
@@ -639,7 +651,15 @@ endif
           <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+          <Data ss:Type="String">${not ana_line.free_account and ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
