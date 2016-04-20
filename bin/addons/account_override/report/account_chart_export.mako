@@ -95,13 +95,13 @@
     </Cell>
   </Row>
 -->
-% for t in [(_('Fiscalyear'), 'fy'), (_('Move status'), 'target'), (_('Period from'), 'period_from'), (_('Period to'), 'period_to'), (_('Instances'), 'instances'), (_('Show inactive accounts?'), 'show_inactive'), (_('Filtering on currency'), 'currency_filtering')]:
+% for t in [(_('Fiscalyear'), 'fy'), (_('Move status'), 'target'), (_('Period from'), 'period_from'), (_('Period to'), 'period_to'), (_('Instances'), 'instances'), (_('Show inactive accounts?'), 'show_inactive'), (_('Filtering on currency'), 'currency_filtering'), (_('Initial Balance'), 'initial_balance'), ]:
   <Row ss:Height="12.6425">
     <Cell ss:StyleID="header_part">
       <Data ss:Type="String">${ t[0] or ''|x }</Data>
     </Cell>
     <Cell ss:StyleID="header_part_center">
-      <Data ss:Type="String">${( data.get('wiz_fields', False) and data.get('wiz_fields').get(t[1], False) and data.get('wiz_fields').get(t[1]) or '')|x}</Data>
+      <Data ss:Type="String">${( data.get('wiz_fields', False) and data.get('wiz_fields').get(t[1], None) and data.get('wiz_fields').get(t[1]) or '')|x}</Data>
     </Cell>
   </Row>
 % endfor
