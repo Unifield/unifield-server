@@ -26,6 +26,17 @@ from time import strftime
 
 class account_chart(osv.osv_memory):
     _inherit = "account.chart"
+
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
@@ -36,7 +47,32 @@ class account_chart(osv.osv_memory):
                                          ('draft', 'Unposted Entries'),
                                         ], 'Move status', required = True),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
+
+        'initial_balance': fields.boolean("Include initial balances",
+            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+        'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
     }
+
+    _defaults = {
+        'is_initial_balance_available': True,
+    }
+
+    def on_change_period(self, cr, uid, ids, period_from, period_to,
+        fiscalyear_id, context=None):
+        res = {}
+        ib_available = fiscalyear_id or False
+        if ib_available and fiscalyear_id and period_from:
+            # allow IB entries if a FY selected and period start = FY 1st period
+            fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
+                fiscalyear_id, context=context)
+            period_from_rec = self.pool.get('account.period').browse(cr,
+                uid, period_from, context=context)
+            ib_available = period_from_rec.date_start == fy_rec.date_start
+
+        res['value'] = {'is_initial_balance_available': ib_available, }
+        if not ib_available:
+            res['value']['initial_balance'] = False
+        return res
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
 
