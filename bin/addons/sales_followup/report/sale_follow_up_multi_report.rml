@@ -48,6 +48,10 @@
             <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="0,-1" />
             <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,0" stop="-1,-1" />
     	</blockTableStyle>
+    	<blockTableStyle id="Notes">
+    		<blockAlignment value="LEFT"/>
+            <lineStyle kind="OUTLINE" colorName="black" thickness="0.5" />
+    	</blockTableStyle>
 
         <initialize>
             <paraStyle name="all" alignment="justify"/>
@@ -60,6 +64,7 @@
 
         <!-- Lines font style -->
         <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="UnderLines" fontName="Helvetica-Bold" fontSize="6.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
         
     </stylesheet>
@@ -291,6 +296,16 @@
         <para style="LinesBlue">
             <font color="white"> </font>
         </para>
+
+        <blockTable colWidths="772.0" style="Notes">
+            [[ r.include_notes_ok or removeParentNode('blockTable') ]]
+            <tr>
+                <td>
+                    <para style="UnderLines">Notes :</para>
+                    <para style="Lines">[[ o.note ]]</para>
+                </td>
+            </tr>
+        </blockTable>
 
     </section>
         

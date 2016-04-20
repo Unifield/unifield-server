@@ -100,6 +100,9 @@ class sale_followup_multi_wizard(osv.osv_memory):
         'only_bo': fields.boolean(
             string='Pending order lines only (PDF)',
         ),
+        'include_notes_ok': fields.boolean(
+            string='Include order lines note (PDF)',
+        )
     }
 
     _defaults = {
