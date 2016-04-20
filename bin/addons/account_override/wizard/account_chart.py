@@ -57,8 +57,8 @@ class account_chart(osv.osv_memory):
         'is_initial_balance_available': True,
     }
 
-    def on_change_period(self, cr, uid, ids, period_from, period_to,
-        fiscalyear_id, context=None):
+    def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
+        context=None):
         res = {}
         ib_available = fiscalyear_id or False
         if ib_available and fiscalyear_id and period_from:
@@ -74,6 +74,13 @@ class account_chart(osv.osv_memory):
             res['value']['initial_balance'] = False
         return res
 
+    def _update_context(self, cr, uid, rec, context=None):
+        if isinstance(rec, (list, tuple, )):
+            rec = self.browse(cr, uid, rec[0], context=context)
+        if rec.initial_balance:
+            # include IB entries
+            context['period0'] = True
+
     def account_chart_open_window(self, cr, uid, ids, context=None):
 
         result = super(account_chart, self).account_chart_open_window(cr, uid, ids, context=context)
@@ -83,6 +90,7 @@ class account_chart(osv.osv_memory):
         context['filter_inactive_accounts'] = not data['show_inactive']
         if data['currency_id']:
             context['currency_id'] = data['currency_id']
+
         # Search regarding move state. Delete original 'state' one
         if 'state' in context:
             del context['state']
@@ -91,7 +99,10 @@ class account_chart(osv.osv_memory):
                 context['move_state'] = data['target_move']
         if data['output_currency_id']:
             context['output_currency_id'] = data['output_currency_id']
+
+        self._update_context(cr, uid, ids, context=context)
         result['context'] = unicode(context)
+
         # UF-1718: Add a link on each account to display linked journal items
         try:
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'balance_account_tree') or False
@@ -122,6 +133,7 @@ class account_chart(osv.osv_memory):
             args = [('active', '=', True)]
             if wiz.show_inactive == True:
                 args += [('active', 'in', [True, False])]
+
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
@@ -136,6 +148,8 @@ class account_chart(osv.osv_memory):
                 context['period_from'] = wiz.period_from.id
             if wiz.period_to:
                 context['period_to'] = wiz.period_to.id
+            self._update_context(cr, uid, wiz, context=context)
+
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
             # fetch target move value
             o = wiz
