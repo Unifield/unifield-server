@@ -531,7 +531,7 @@
           <Data ss:Type="String">${getRegRef(line) or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${getFreeRef(line) or ''}</Data>
+          <Data ss:Type="String">${getFreeRef(line) or ''|x}</Data>
         </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="centre">
@@ -600,7 +600,7 @@
         </Cell>
         % endif
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${getFreeRef(line) or ''}</Data>
+          <Data ss:Type="String">${getFreeRef(line) or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
@@ -691,7 +691,7 @@ endif
         % if o.journal_id.type == 'cheque':
           <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
-          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
         % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
@@ -720,6 +720,64 @@ endif
 % endfor
 % endif
 
+<!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
+<%
+a_lines = False
+if line.free_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+    a_lines = line.free_analytic_lines
+%>
+% if a_lines:
+% for ana_line in sorted(a_lines, key=lambda x: x.id):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <Row>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % endif
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
+% endfor
+% endif
 
 % endfor
     </Table>
