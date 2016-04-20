@@ -687,6 +687,7 @@ elif ana_line.last_corrected_id:
     line_color = 'red'
 endif
 %>
+% if not ana_line.free_account:
       <Row>
         % if o.journal_id.type == 'cheque':
           <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
@@ -717,6 +718,7 @@ endif
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
+% endif
 % endfor
 % endif
 
