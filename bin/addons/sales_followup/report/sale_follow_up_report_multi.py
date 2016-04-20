@@ -78,7 +78,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
         raise StopIteration
 
-    def _get_lines(self, order, grouped=False):
+    def _get_lines(self, order, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
@@ -103,6 +103,15 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
+                    bo_qty -= self.pool.get('product.uom')._compute_qty(
+                        self.cr,
+                        self.uid,
+                        move.product_uom.id,
+                        move.product_qty,
+                        line.product_uom.id,
+                    )
+                    if only_bo:
+                        continue
                     data = {
                         'po_name': po_name,
                         'cdd': cdd,
@@ -148,14 +157,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'rts': move.picking_id.min_date[0:10],
                             'shipment': packing,
                         })
-
-                    bo_qty -= self.pool.get('product.uom')._compute_qty(
-                        self.cr,
-                        self.uid,
-                        move.product_uom.id,
-                        move.product_qty,
-                        line.product_uom.id,
-                    )
 
                     if key in keys:
                         for rline in lines:

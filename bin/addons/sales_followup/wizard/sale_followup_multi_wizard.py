@@ -97,11 +97,15 @@ class sale_followup_multi_wizard(osv.osv_memory):
         'cancel_ok': fields.boolean(
             string='Cancel',
         ),
+        'only_bo': fields.boolean(
+            string='Pending order lines only (PDF)',
+        ),
     }
 
     _defaults = {
         'report_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
         'company_id': lambda self, cr, uid, ids, c={}: self.pool.get('res.users').browse(cr, uid, uid).company_id.id,
+        'only_bo': lambda *a: False,
     }
 
     def _get_state_domain(self, wizard):
