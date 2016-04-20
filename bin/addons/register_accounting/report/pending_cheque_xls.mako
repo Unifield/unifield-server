@@ -113,8 +113,8 @@
 <ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
 
 <Table>
-  <Column ss:Width="67.5"/>
   <Column ss:Width="73.5" ss:Span="1"/>
+  <Column ss:Width="67.5"/>
   <Column ss:Width="75.75"/>
   <Column ss:Width="113.25" ss:Span="1"/>
   <Column ss:Width="180.75"/>
@@ -155,9 +155,9 @@
   <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 	<Row>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Document Date')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
+		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cheque Number')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Sequence')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
@@ -175,9 +175,9 @@
 	</Row>
     % for line in getLines(o):
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.cheque_number and line.cheque_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.move_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
