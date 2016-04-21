@@ -993,7 +993,7 @@ You cannot choose this supplier because some destination locations are not avail
 
         return res
 
-    def is_invoice_needed(self, cr, uid, sp=None):
+    def is_invoice_needed(self, cr, uid, sp=None, invoice_type=None):
         """
         Check if invoice is needed. Cases where we do not need invoice:
         - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
@@ -1026,7 +1026,8 @@ You cannot choose this supplier because some destination locations are not avail
             res = False
 
         # (US-952) Move out on an external partner should not create a Stock Transfer Voucher
-        if sp.type == 'out' and sp.partner_id.partner_type == 'external':
+        # US-1212: but should create refund
+        if sp.type == 'out' and sp.partner_id.partner_type == 'external' and invoice_type != 'in_refund':
             res = False
 
         return res
@@ -1040,7 +1041,7 @@ You cannot choose this supplier because some destination locations are not avail
         invoice_type = self._get_invoice_type(stock_picking)
 
         # Check if no invoice needed
-        if not self.is_invoice_needed(cr, uid, stock_picking):
+        if not self.is_invoice_needed(cr, uid, stock_picking, invoice_type):
             return
 
         # we do not create invoice for procurement_request (Internal Request)
