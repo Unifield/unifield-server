@@ -97,7 +97,7 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+        product_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
         if not product_id:
             product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
             if not product_ids:
@@ -112,15 +112,34 @@ class stock_picking(osv.osv):
         # uom
         uom_id = uom_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_uom']['id']), context=context)
         if not uom_id:
-            raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_name
+            raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_id
 
         # UF-1617: Handle batch and asset object
         batch_id = False
-        if data['prodlot_id']:
-            batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
+        if data['prodlot_id'] and product_id:
+            # us-838: WORK IN PROGRESS ..................................
+            # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN 
+            prodlot_obj = self.pool.get('stock.production.lot')
+            prod = prod_obj.browse(cr, uid,product_id,context=context)
+            if prod.perishable and not prod.batch_management:
+                # In case it's a EP only product, then search for date and product, no need to search for batch name
+                if 'life_date' in data['prodlot_id']:
+                    # If name exists in the sync message, search by name and product, not by xmlid 
+                    life_date = data['prodlot_id']['life_date']
+                    # US-838: use different way to retrieve the EP object
+                    batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
+                    if not batch_id:
+                        raise Exception, "Error while retrieving or creating the expiry date %s for the product %s" % (data['prodlot_id'], prod.name)
+            else:
+                # US-838: for BN, retrieve it or create it, in the follwing method
+                batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, data['prodlot_id'], context) # return False if the batch object is not found, or cannot be created
+                
+            ################## TODO: Treat the case for Remote Warehouse: WORK IN PROGRESS BELOW!!!!!!!!!!
+            
+            
             if not batch_id:
                 raise Exception, "Batch Number %s not found for this sync data record" % data['prodlot_id']
-
+                
         expired_date = data['expired_date']
 
         # UTP-872: Add also the state into the move line, but if it is done, then change it to assigned (available)
@@ -697,42 +716,42 @@ class stock_picking(osv.osv):
         return message
 
 
+    #US-838: This method is no more use, the message will do nothing.
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
         self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s" % source)
-        so_po_common = self.pool.get('so.po.common')
-        batch_obj = self.pool.get('stock.production.lot')
 
-        batch_dict = out_info.to_dict()
-        error_message = "Create Batch Number: Something go wrong with this message, invalid instance reference"
-
-        batch_dict['partner_name'] = source
-
-        existing_bn = batch_obj.search(cr, uid, [('xmlid_name', '=', batch_dict['xmlid_name']), ('partner_name', '=', source)], context=context)
-        if existing_bn:  # existed already, then don't need to create a new one
-            message = "Create Batch Number: the given BN exists already at local instance, no new BN will be created"
-            self._logger.info(message)
-            error_message = False
-            return message
-
-        error_message = "Create Batch Number: Invalid reference to the product or product does not exist"
-        if batch_dict.get('product_id'):
-            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
-            if rec_id:
-                batch_dict['product_id'] = rec_id
-                error_message = False
-
-        # If error message exists --> cannot create the BN
-        if error_message:
-            self._logger.info(error_message)
-            raise Exception, error_message
-
-        batch_obj.create(cr, uid, batch_dict, context=context)
-        message = "The new BN " + batch_dict['name'] + ", " + source + " has been created"
+        message = "This method is no more used. To be removed"
         self._logger.info(message)
         return message
 
+    # US-838: Retrieve batch object, if not found then create new 
+    def retrieve_batch_number(self, cr, uid, product_id, batch_dict, context=None):
+        if not context:
+            context = {}
+        #self._logger.info("+++ Retrieve batch number for the SHIP/OUT from %s")
+        so_po_common = self.pool.get('so.po.common')
+        batch_obj = self.pool.get('stock.production.lot')
+        prod_obj = self.pool.get('product.product')
+        
+        if not ('name' in batch_dict and 'life_date' in batch_dict):
+            # Search for the batch object with the given data
+            return False, "Batch Number: Missing batch name or expiry date!" 
+        
+        existing_bn = batch_obj.search(cr, uid, [('name', '=', batch_dict['name']), ('product_id', '=', product_id), 
+                                                 ('life_date', '=', batch_dict['life_date'])], context=context)
+        if existing_bn:  # existed already, then don't need to create a new one
+            message = "Batch object exists in the current system. No new batch created."
+            self._logger.info(message)
+            return existing_bn[0], message
+
+        # If not exists, then create this new batch object
+        new_bn_vals = {'name': batch_dict['name'], 'product_id': product_id, 'life_date': batch_dict['life_date']}
+        message = "The new BN " + batch_dict['name'] + " has been created"
+        self._logger.info(message)
+        bn_id = batch_obj.create(cr, uid, new_bn_vals, context=context)
+        return bn_id, message
 
     def create_asset(self, cr, uid, source, out_info, context=None):
         if not context:
@@ -863,8 +882,10 @@ class stock_picking(osv.osv):
 
 
             # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
-            for item in list_batch:
-                so_po_common.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
+            
+            #US-838: THIS METHOD IS NO MORE USED, AS THE BN OBJECT WILL NOT BE SENT EXPLICITLY, BUT TOGETHER WITH THE MESSAGE!
+            #for item in list_batch:
+            #    so_po_common.create_message_with_object_and_partner(cr, uid, 1001, item, partner.name, context)
 
             # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:

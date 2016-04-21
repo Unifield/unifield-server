@@ -137,10 +137,16 @@ class stock_incoming_processor(osv.osv):
 
         # No batch found, create a new one
         if not lot_ids:
+            # US-838: Add the prefix as instance name of the current instance into the name of the EP object
+            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
+            prefix = ''
+            if company and company.partner_id:
+                prefix = company.partner_id.name + "_"
+            
             vals = {
                 'product_id': product_id,
                 'life_date': expiry_date,
-                'name': seq_obj.get(cr, uid, 'stock.lot.serial'),
+                'name': prefix + seq_obj.get(cr, uid, 'stock.lot.serial'),
                 'type': 'internal',
             }
             lot_id = lot_obj.create(cr, uid, vals, context)
@@ -215,7 +221,8 @@ class stock_incoming_processor(osv.osv):
                    and not line.prodlot_id \
                    and line.expiry_date:
                     if line.type_check == 'in':
-                        prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
+                        # US-838: The method has been moved to addons/stock_batch_recall/product_expiry.py
+                        prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
                     else:
                         # Should not be reached thanks to UI checks

@@ -787,6 +787,10 @@ class product_asset(osv.osv):
 
 product_asset()
 
+
+'''
+
+US-838: xmlid of batch number is no more used --- REMOVE THIS BLOCK OF CODE WHEN INTEGRATE THE TICKET!
 class batch_number(osv.osv):
     _inherit = "stock.production.lot"
 
@@ -794,9 +798,11 @@ class batch_number(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         batch = self.browse(cr, uid, res_id)
         #UF-2148: use the xmlid_name for building the xml for this object
-        return get_valid_xml_name('batch_numer', (batch.partner_name or 'no_partner'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
+        return get_valid_xml_name('batch_number', (batch.partner_name or 'no_partner'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
 
 batch_number()
+
+'''
 
 class ir_model_access(osv.osv):
     """
