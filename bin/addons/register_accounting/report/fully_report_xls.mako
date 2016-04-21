@@ -715,13 +715,13 @@ endif
           <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
-        </Cell>
-        <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
-        </Cell>
-        <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String"></Data>
         </Cell>
       </Row>
 % endif
