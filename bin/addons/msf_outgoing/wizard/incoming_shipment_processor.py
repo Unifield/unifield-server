@@ -221,11 +221,8 @@ class stock_incoming_processor(osv.osv):
                    and not line.prodlot_id \
                    and line.expiry_date:
                     if line.type_check == 'in':
-                        #prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
-                        
+                        # US-838: The method has been moved to addons/stock_batch_recall/product_expiry.py
                         prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
-                        
-                        
                         in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
                     else:
                         # Should not be reached thanks to UI checks
