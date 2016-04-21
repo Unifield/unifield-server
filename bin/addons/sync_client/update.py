@@ -655,33 +655,30 @@ class update_received(osv.osv):
             sdref_are_deleted = dict.fromkeys(sdref_update_ids.keys(), do_deletion)
             sdref_are_deleted.update(
                 obj.find_sd_ref(cr, uid, sdref_update_ids.keys(), field='is_deleted', context=context) )
-            deleted_update_ids = []
-            # check there is at least one deletetion before entering this loop
-            if True in sdref_are_deleted.values():
-                update_id_are_deleted = {}
-                for key in sdref_update_ids:
-                    update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
-                deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+            update_id_are_deleted = {}
+            for key in sdref_update_ids:
+                update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
+            deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
 
-                if deleted_update_ids:
-                    sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
-                    toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
-                        ('is_deleted', '=', False), ('run', '=', False)],
-                        order='NO_ORDER', context=context)
-                    if toSetRun_ids:
-                        self.write(cr, uid, toSetRun_ids, {
-                            'execution_date': datetime.now(),
-                            'editable' : False,
-                            'run' : True,
-                            'log' : 'Manually set to run by the system. Due to a delete',
-                        }, context=context)
-                    else:
-                        self.write(cr, uid, deleted_update_ids, {
-                            'execution_date': datetime.now(),
-                            'editable' : False,
-                            'run' : True,
-                            'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
-                        }, context=context)
+            if deleted_update_ids:
+                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
+                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
+                    ('is_deleted', '=', False), ('run', '=', False)],
+                    order='NO_ORDER', context=context)
+                if toSetRun_ids:
+                    self.write(cr, uid, toSetRun_ids, {
+                        'execution_date': datetime.now(),
+                        'editable' : False,
+                        'run' : True,
+                        'log' : 'Manually set to run by the system. Due to a delete',
+                    }, context=context)
+                else:
+                    self.write(cr, uid, deleted_update_ids, {
+                        'execution_date': datetime.now(),
+                        'editable' : False,
+                        'run' : True,
+                        'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
+                    }, context=context)
 
             updates = filter(lambda update: update.id not in deleted_update_ids or
                     (not do_deletion and force_recreation), updates)
@@ -791,6 +788,7 @@ class update_received(osv.osv):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         def check_xmlid(xmlid):
+            full_xmlid = xmlid
             module, sep, xmlid = xmlid.partition('.')
             assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % full_xmlid
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
