@@ -682,30 +682,6 @@ class update_received(osv.osv):
                             'run' : True,
                             'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
                         }, context=context)
-            update_id_are_deleted = {}
-            for key in sdref_update_ids:
-                update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
-            deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
-
-            if deleted_update_ids:
-                sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
-                toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
-                    ('is_deleted', '=', False), ('run', '=', False)],
-                    order='NO_ORDER', context=context)
-                if toSetRun_ids:
-                    self.write(cr, uid, toSetRun_ids, {
-                        'execution_date': datetime.now(),
-                        'editable' : False,
-                        'run' : True,
-                        'log' : 'Manually set to run by the system. Due to a delete',
-                    }, context=context)
-                else:
-                    self.write(cr, uid, deleted_update_ids, {
-                        'execution_date': datetime.now(),
-                        'editable' : False,
-                        'run' : True,
-                        'log' : "This update has been ignored because the record is marked as deleted or does not exists.",
-                    }, context=context)
 
             updates = filter(lambda update: update.id not in deleted_update_ids or
                     (not do_deletion and force_recreation), updates)
