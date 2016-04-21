@@ -69,9 +69,12 @@ class account_chart(osv.osv_memory):
                 uid, period_from, context=context)
             ib_available = period_from_rec.date_start == fy_rec.date_start
 
+        """
+        FIX ME: if no periods, is_initial_balance_available to False
+        (IB read only)
         res['value'] = {'is_initial_balance_available': ib_available, }
         if not ib_available:
-            res['value']['initial_balance'] = False
+            res['value']['initial_balance'] = False"""
         return res
 
     def _update_context(self, cr, uid, rec, context=None):
