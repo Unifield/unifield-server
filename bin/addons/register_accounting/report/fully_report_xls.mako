@@ -594,14 +594,14 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${getFreeRef(line) or ''|x}</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
         </Cell>
         % endif
-        <Cell ss:StyleID="left">
-          <Data ss:Type="String">${getFreeRef(line) or ''|x}</Data>
-        </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.account_id and inv_line.account_id.code + ' ' + inv_line.account_id.name or ''|x}</Data>
         </Cell>
