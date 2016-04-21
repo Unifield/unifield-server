@@ -48,9 +48,15 @@ class account_chart(osv.osv_memory):
                                         ], 'Move status', required = True),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
 
+        # US-1179 fields
         'initial_balance': fields.boolean("Include initial balances",
             help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
+        'account_type': fields.selection([
+            ('all', 'All'),
+            ('pl','Profit & Loss'),
+            ('bl','Balance Sheet'),
+        ], 'B/S / P&L account', required=True),
     }
 
     _defaults = {
@@ -80,9 +86,16 @@ class account_chart(osv.osv_memory):
     def _update_context(self, cr, uid, rec, context=None):
         if isinstance(rec, (list, tuple, )):
             rec = self.browse(cr, uid, rec[0], context=context)
+
         if rec.initial_balance:
             # include IB entries
             context['period0'] = True
+
+        if rec.account_type:
+            if rec.account_type == 'pl':
+                context['report_types'] = [ 'income', 'expense', ]
+            elif rec.account_type == 'bl':
+                context['report_types'] = [ 'asset', 'liability', ]
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
 

@@ -240,7 +240,33 @@ class account_account(osv.osv):
                 ids3.append(child.id)
         if ids3:
             ids3 = self._get_children_and_consol(cr, uid, ids3, context=context)
-        return ids2 + ids3
+        res = ids2 + ids3
+
+        # US-1179 report type filter
+        if context.get('report_types', False):
+            rt = context['report_types']
+            if not isinstance(rt, (list, tuple)):
+                rt = [rt, ]
+            elif isinstance(rt, tuple):
+                rt = list(rt)
+
+            domain = [
+                ('report_type', 'in' , rt),
+            ]
+            if 'asset' in rt or 'liability' in rt:
+                # US-227 include tax account for BS accounts selection
+                domain = [ '|', ('code', '=', 'tax') ] + domain
+            account_types_ids = self.pool.get('account.account.type').search(
+                cr, uid, domain)
+
+            if account_types_ids:
+                domain = [
+                    ('user_type', 'in', account_types_ids),
+                    ('id', 'in', res),
+                ]
+                res = self.search(cr, uid, domain, context=context)
+
+        return res
 
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
                   query='', query_params=()):
