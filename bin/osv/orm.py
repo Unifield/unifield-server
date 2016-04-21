@@ -2606,6 +2606,11 @@ class orm(orm_template):
         update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])
         cr.execute('SELECT id FROM '+self._table)
         ids_lst = map(lambda x: x[0], cr.fetchall())
+
+        migrate = False
+        if self._columns[k]._fnct_migrate:
+            migrate = self._columns[k].migrate(cr, ids_lst)
+
         while ids_lst and migrate == False:
             iids = ids_lst[:40]
             ids_lst = ids_lst[40:]
