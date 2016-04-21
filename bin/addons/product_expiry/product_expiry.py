@@ -54,6 +54,10 @@ class stock_production_lot(osv.osv):
     }
     # Assign dates according to products data
     def create(self, cr, uid, vals, context=None):
+        
+        if self.violate_ed_unique(cr, uid, False, vals, context):
+            raise osv.except_osv('Error', 'An expiry date with same date for this product exists already!.')        
+        
         newid = super(stock_production_lot, self).create(cr, uid, vals, context=context)
         obj = self.browse(cr, uid, newid, context=context)
         towrite = []
@@ -66,11 +70,37 @@ class stock_production_lot(osv.osv):
         self.write(cr, uid, [obj.id], self.default_get(cr, uid, towrite, context=context))
         return newid
 
+    # US-838: this method is to check if the expiry date values are valid    
+    def violate_ed_unique(self, cr, uid, ids, vals, context):
+        if not('product_id' in vals and 'life_date' in vals):
+            return False
+        
+        prod_obj = self.pool.get('product.product')
+        prod = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+        
+        # In case it's a EP only product, then search for date and product, no need to search for batch name
+        if prod.perishable and not prod.batch_management: 
+            search_arg = [('life_date', '=', vals['life_date']), ('type', '=', 'internal'), ('product_id', '=', prod.id)] 
+            if ids:
+                search_arg.append(('id', 'not in', ids))
+                
+            lot_ids = self.search(cr, uid, search_arg, context=context)
+            if lot_ids:
+                return True
+        return False
+
     def write(self, cr, uid, ids, vals, context=None):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
-        #DUY TEST !!!!!!!!!!  self.migrate_dup_batch(cr, uid, context)
+        #US-838 DUY: TO BE USED ONLY ON THE PATCH:    self.migrate_dup_batch(cr, uid, context)
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # US-838: Check if the values are in conflict with the existing data
+        if self.violate_ed_unique(cr, uid, ids, vals, context):
+            raise osv.except_osv('Error', 'A same expiry date for this product exists already!.')
         
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
     
@@ -92,9 +122,10 @@ class stock_production_lot(osv.osv):
         '''
         
         cr.execute('''select id, name from stock_production_lot where name in  
-                (select name from (select name, product_id, life_date, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1) order by name, id;''')
+                (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id) as foo_bn where amount_bn>1) order by name, id;''')
         
         lead_id = 0 # This id will be used as the main batch id
+        to_be_deleted = []
         same_name = None 
         for r in cr.dictfetchall():
             if lead_id == 0:
@@ -107,18 +138,20 @@ class stock_production_lot(osv.osv):
                     print "___REMAP for ID = ", r['id'] 
                     self.remap_reference_tables(cr, uid, r['id'], lead_id, context)
                     
-                    # 2.3: Set this batch to become inactive
-                    
+                    # 2.3: Add this wrong batch id into the list, then delete them at the end
+                    to_be_deleted.append(r['id'])
                 else:
                     lead_id = r['id'] # when the name change --> replace by the new lead_id
                     same_name = r['name'] 
                     print "*******Lead BN = ", r['name']," id= ",r['id'] 
-     
+
+        # 2.3 call to delete all the wrong batch objects
+        if to_be_deleted:
+            self.unlink(cr, uid, to_be_deleted, context=context)
         
         # 3. Now alter the constraint unique of this table: first drop the current constraint, then create a new one with name+prod+life_date
         cr.execute('''ALTER TABLE stock_production_lot DROP CONSTRAINT stock_production_lot_batch_name_uniq,  
-                ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE , btree (name, product_id, life_date);''')
-        
+                ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE (name, product_id, life_date);''')
         
         return True
     
@@ -183,10 +216,10 @@ class stock_production_lot(osv.osv):
         
     def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id):
         # Set the references on the given table from wrong ID to the Lead ID of the batch 
-        #cr.execute("update %s set %s=%s where prodlot_id=%s", (table_name, field_id, lead_id, wrong_id,))
+        #cr.execute("update " +  table_name + " set " + field_id + " =%s where " + field_id + "=%s", (lead_id, wrong_id,))
         
         cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;', (wrong_id,))
-        print "---------Table=", table_name, " has ", cr.dictfetchall() 
+        print "---------Table=", table_name, " has been re-mapped all " + field_id + " from the id %s to %s", (wrong_id, lead_id,)
 
     _defaults = {
         'life_date': _get_date('life_time'),
