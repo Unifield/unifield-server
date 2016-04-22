@@ -197,7 +197,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             lines[fl_index]['backordered_qty'] = bo_qty
 
             for line in lines:
-                if only_bo and not line.get('backordered_qty', False):
+                if only_bo and line.get('backordered_qty', 0.00) <= 0.00:
                     continue
                 elif only_bo:
                     line['delivered_qty'] = line['ordered_qty'] - line.get('backordered_qty', 0.00)
