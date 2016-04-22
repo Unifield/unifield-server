@@ -296,7 +296,7 @@ class stock_mission_report(osv.osv):
 
         return True
 
-    def update_lines(self, cr, uid, ids, context=None):
+    def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
         data_obj = self.pool.get('ir.model.data')
         line_obj = self.pool.get('stock.mission.report.line')
@@ -327,7 +327,7 @@ class stock_mission_report(osv.osv):
         if company.instance_id.level == 'project' and coordo:
             coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
 
-        for id in ids:
+        for report_id in report_ids:
             # In-Pipe moves
             cr.execute('''SELECT m.product_id, sum(m.product_qty), m.product_uom, p.name
                           FROM stock_move m
@@ -346,7 +346,7 @@ class stock_mission_report(osv.osv):
                     if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
                         line_obj.write(cr, uid, [line.id], vals)
                     line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
-                                                        ('mission_report_id', '=', id)])
+                                                        ('mission_report_id', '=', report_id)])
 
                     vals = {'in_pipe_qty': 0.00,
                             'in_pipe_coor_qty': 0.00,
@@ -373,13 +373,14 @@ class stock_mission_report(osv.osv):
                         FROM stock_move
                         WHERE state = 'done'
                         AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''' % (id))
+            ''' % (report_id))
             res = cr.fetchall()
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' % (id, move[0]))
+                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' %
+                        (report_id, move[0]))
                 product = product_obj.browse(cr, uid, move[1])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
-                                                    ('mission_report_id', '=', id)])
+                                                    ('mission_report_id', '=', report_id)])
                 if line_id:
                     line = line_obj.browse(cr, uid, line_id[0])
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
