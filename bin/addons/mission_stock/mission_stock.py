@@ -236,9 +236,10 @@ class stock_mission_report(osv.osv):
         if context.get('update_full_report'):
             report_ids = full_report_ids
 
-        product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
+        product_obj = self.pool.get('product.product')
+        product_ids = product_obj.search(cr, uid, [], context=context)
         product_values = {}
-        temp_prods = self.pool.get('product.product').read(cr, uid, product_ids, ['product_amc', 'reviewed_consumption'], context=context)
+        temp_prods = product_obj.read(cr, uid, product_ids, ['product_amc', 'reviewed_consumption'], context=context)
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(temp_prods), time.strftime('%Y-%m-%d %H:%M:%S')))
 
@@ -249,11 +250,14 @@ class stock_mission_report(osv.osv):
 
         # Check in each report if new products are in the database and not in the report
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
-            #self.write(cr, uid, [report.id], {'export_ok': False}, context=context)
             # Create one line by product
-            cr.execute('''SELECT id FROM product_product
-                        EXCEPT
-                          SELECT product_id FROM stock_mission_report_line WHERE mission_report_id = %s''' % report['id'])
+            cr.execute('''SELECT p.id from product_product p
+                          WHERE NOT EXISTS (
+                            SELECT product_id
+                            FROM
+                            stock_mission_report_line smrl WHERE mission_report_id = %s
+                            AND p.id = smrl.product_id)
+                        ''' % report['id'])
             for product in cr.fetchall():
                 line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report['id']}, context=context))
 
