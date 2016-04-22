@@ -271,8 +271,7 @@ class stock_mission_report(osv.osv):
             if context.get('update_full_report'):
                 full_view = self.search(cr, uid, [('full_view', '=', True)])
                 if full_view:
-                    line_ids = line_obj.search(cr, uid, [('mission_report_id', 'in', full_view)])
-                    line_obj.update_full_view_line(cr, uid, line_ids, context=context)
+                    line_obj.update_full_view_line(cr, uid, context=context)
             elif not report['full_view']:
                 # Update all lines
                 self.update_lines(cr, uid, [report['id']])
@@ -680,7 +679,8 @@ class stock_mission_report(osv.osv):
                  LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
                  LEFT JOIN product_uom pu ON pt.uom_id = pu.id
                  LEFT JOIN res_currency rc ON pp.currency_id = rc.id
-            WHERE l.mission_report_id = %s'''
+            WHERE l.mission_report_id = %s
+            ORDER BY l.default_code'''
 
             cr.execute(request, (report_id, ))
             res = cr.dictfetchall()
@@ -896,7 +896,7 @@ class stock_mission_report_line(osv.osv):
         'instance_id': _get_default_destination_instance_id,
     }
 
-    def update_full_view_line(self, cr, uid, ids, context=None):
+    def update_full_view_line(self, cr, uid, context=None):
         is_project = False
         if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
             is_project = True
@@ -936,12 +936,17 @@ class stock_mission_report_line(osv.osv):
         cr.execute(request)
 
         vals = cr.fetchall()
-        mission_report_id = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', True)], context=context)
+        mission_report_id = False
         for line in vals:
-            line_ids = self.search(cr, uid, [('mission_report_id.full_view', '=', True), ('product_id', '=', line[0])], context=context)
+            line_ids = self.search(cr, uid, [('full_view', '=', True), ('product_id', '=', line[0])],
+                    limit=1, order='NO_ORDER', context=context)
             if not line_ids:
                 if not mission_report_id:
-                    continue
+                    mission_report_id = self.pool.get('stock.mission.report').search(cr, uid,
+                            [('full_view', '=', True)], limit=1,
+                            order='NO_ORDER', context=context)
+                    if not mission_report_id:
+                        continue
                 line_id = self.create(cr, uid, {'mission_report_id': mission_report_id[0],
                                                 'product_id': line[0]}, context=context)
             else:
@@ -951,16 +956,12 @@ class stock_mission_report_line(osv.osv):
             if not is_project:
                 in_pipe = (line[7] or 0.00) - (line[8] or 0.00)
 
-            self.write(cr, uid, [line_id], {'internal_qty': line[1] or 0.00,
-                                            'internal_val': line[9] or 0.00,
-                                            'stock_qty': line[2] or 0.00,
-                                            'central_qty': line[3] or 0.00,
-                                            'cross_qty': line[4] or 0.00,
-                                            'secondary_qty': line[5] or 0.00,
-                                            'cu_qty': line[6] or 0.00,
-                                            'in_pipe_qty': line[7] or 0.00,
-                                            'in_pipe_coor_qty': line[8] or 0.00,}, context=context)
-
+            cr.execute("""UPDATE stock_mission_report_line SET
+                    internal_qty=%s, stock_qty=%s,
+                    central_qty=%s, cross_qty=%s, secondary_qty=%s,
+                    cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s
+                    WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
+                        line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, line_id))
         return True
 
 stock_mission_report_line()
