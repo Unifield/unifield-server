@@ -359,10 +359,10 @@ class stock_mission_report(osv.osv):
                 if uom != line.product_id.uom_id.id:
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
-                vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
+                vals['in_pipe_qty'] += qty
 
                 if partner == coordo_id:
-                    vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+                    vals['in_pipe_coor_qty'] += qty
 
             if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
                 line_obj.write(cr, uid, [line.id], vals)
@@ -393,34 +393,33 @@ class stock_mission_report(osv.osv):
                             'updated': True}
 
                     if move[4] in internal_loc:
-                        vals['internal_qty'] = vals['internal_qty'] - qty
+                        vals['internal_qty'] -= qty
                     if move[4] in stock_loc:
-                        vals['stock_qty'] = vals['stock_qty'] - qty
+                        vals['stock_qty'] -= qty
                     if move[4] in central_loc:
-                        vals['central_qty'] = vals['central_qty'] - qty
+                        vals['central_qty'] -= qty
                     if move[4] in cross_loc:
-                        vals['cross_qty'] = vals['cross_qty'] - qty
+                        vals['cross_qty'] -= qty
                     if move[4] in secondary_location_ids:
-                        vals['secondary_qty'] = vals['secondary_qty'] - qty
+                        vals['secondary_qty'] -= qty
                     if move[4] in cu_loc:
-                        vals['cu_qty'] = vals['cu_qty'] - qty
+                        vals['cu_qty'] -= qty
 
                     if move[5] in internal_loc:
-                        vals['internal_qty'] = vals['internal_qty'] + qty
+                        vals['internal_qty'] += qty
                     if move[5] in stock_loc:
-                        vals['stock_qty'] = vals['stock_qty'] + qty
+                        vals['stock_qty'] += qty
                     if move[5] in central_loc:
-                        vals['central_qty'] = vals['central_qty'] + qty
+                        vals['central_qty'] += qty
                     if move[5] in cross_loc:
-                        vals['cross_qty'] = vals['cross_qty'] + qty
+                        vals['cross_qty'] += qty
                     if move[5] in secondary_location_ids:
-                        vals['secondary_qty'] = vals['secondary_qty'] + qty
+                        vals['secondary_qty'] += qty
                     if move[5] in cu_loc:
-                        vals['cu_qty'] = vals['cu_qty'] + qty
+                        vals['cu_qty'] += qty
 
                     vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
                     line_obj.write(cr, uid, line.id, vals)
-
         return True
 
     def _get_export_csv(self, cr, uid, ids, product_values, context=None):
