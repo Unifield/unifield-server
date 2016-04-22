@@ -145,7 +145,7 @@
 			<field name="type">tree</field>
 			<field name="arch" type="xml">
 				<tree colors="blue:state in ('draft') and min_date &gt;= current_date;grey:state in ('cancel');red:state not in ('cancel', 'done') and min_date &lt; current_date"
-                    string="Picking Tickets" hide_new_button="1" hide_delete_button="1">
+                    string="Picking Tickets" hide_new_button="1">
 					<field name="name" />
 					<field name="partner_id2" />
 					<field name="backorder_id" />
