@@ -31,7 +31,8 @@ class report_fully_report(report_sxw.rml_parse):
             'getAnalyticLines': self.getAnalyticLines,
             'getImportedMoveLines': self.getImportedMoveLines,
             'getRegRef': self.getRegRef,
-            'getFreeRef': self.getFreeRef,
+            'getFreeRefRegLine': self.getFreeRefRegLine,
+            'getFreeRefAccountMove': self.getFreeRefAccountMove,
         })
 
     def getRegRef(self, reg_line):
@@ -138,20 +139,30 @@ class report_fully_report(report_sxw.rml_parse):
             res = al_obj.browse(self.cr, self.uid, al_ids)
         return res
 
-    def getFreeRef(self, reg_line):
+    def getFreeRefRegLine(self, reg_line):
         '''
-        Return the "manual" reference if it exists (field Reference in DI and Free Reference in SI)
+        Return the "manual" reference for the register line if it exists (field Reference in DI and Free Reference in SI)
+        '''
+        acc_move = False
+        # Direct Invoice
+        if reg_line.direct_invoice_move_id:
+            acc_move = reg_line.direct_invoice_move_id
+        # Supplier Invoice
+        elif reg_line.imported_invoice_line_ids and reg_line.imported_invoice_line_ids[0].move_id:
+            acc_move = reg_line.imported_invoice_line_ids[0].move_id
+        return self.getFreeRefAccountMove(acc_move)
+
+    def getFreeRefAccountMove(self, acc_move):
+        '''
+        Return the "manual" reference associated with the account move if it exists
+        (field Reference in DI and Free Reference in SI)
         '''
         db = pooler.get_pool(self.cr.dbname)
         acc_inv = db.get('account.invoice')
         ref = False
         inv_id = False
-        # Direct Invoice
-        if reg_line.direct_invoice_move_id:
-            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', reg_line.direct_invoice_move_id.id)])
-        # Supplier Invoice
-        elif reg_line.imported_invoice_line_ids and reg_line.imported_invoice_line_ids[0].move_id:
-            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', reg_line.imported_invoice_line_ids[0].move_id.id)])
+        if acc_move:
+            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
         if inv_id:
             inv = acc_inv.browse(self.cr, self.uid, inv_id)
             if inv:

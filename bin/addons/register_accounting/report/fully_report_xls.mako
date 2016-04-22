@@ -531,7 +531,7 @@
           <Data ss:Type="String">${getRegRef(line) or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
-          <Data ss:Type="String">${getFreeRef(line) or ''|x}</Data>
+          <Data ss:Type="String">${getFreeRefRegLine(line) or ''|x}</Data>
         </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="centre">
@@ -595,7 +595,7 @@
           <Data ss:Type="String">${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${getFreeRef(line) or ''|x}</Data>
+          <Data ss:Type="String">${inv_line.move_id and getFreeRefAccountMove(inv_line.move_id) or ''|x}</Data>
         </Cell>
         % if o.journal_id.type == 'cheque':
         <Cell ss:StyleID="left">
