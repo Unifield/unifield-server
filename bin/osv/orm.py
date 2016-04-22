@@ -4147,11 +4147,12 @@ class orm(orm_template):
         field_flag = False
         field_dict = {}
         if self._log_access:
-            cr.execute('select id,write_date from '+self._table+' where id IN %s', (tuple(ids),))
+            cr.execute('SELECT id, write_date FROM '+self._table+' WHERE id IN %s', (tuple(ids),))
             res = cr.fetchall()
             for r in res:
                 if r[1]:
                     field_dict.setdefault(r[0], [])
+                    field_dict_append = field_dict[r[0]].append
                     res_date = time.strptime((r[1])[:19], '%Y-%m-%d %H:%M:%S')
                     write_date = datetime.datetime.fromtimestamp(time.mktime(res_date))
                     for i in self.pool._store_function.get(self._name, []):
@@ -4159,14 +4160,16 @@ class orm(orm_template):
                             up_write_date = write_date + datetime.timedelta(hours=i[5])
                             if datetime.datetime.now() < up_write_date:
                                 if i[1] in fields:
-                                    field_dict[r[0]].append(i[1])
+                                    field_dict_append(i[1])
                                     if not field_flag:
                                         field_flag = True
         todo = {}
         keys = []
+        keys_append = keys.append
+
         for f in fields:
             if self._columns[f]._multi not in keys:
-                keys.append(self._columns[f]._multi)
+                keys_append(self._columns[f]._multi)
             todo.setdefault(self._columns[f]._multi, [])
             todo[self._columns[f]._multi].append(f)
         for key in keys:
@@ -4188,7 +4191,9 @@ class orm(orm_template):
                             if f in field_dict[id]:
                                 value.pop(f)
                     upd0 = []
+                    upd0_append = upd0.append
                     upd1 = []
+                    upd1_append = upd1.append
                     for v in value:
                         if v not in val:
                             continue
@@ -4197,15 +4202,20 @@ class orm(orm_template):
                                 value[v] = value[v][0]
                             except:
                                 pass
-                        upd0.append('"'+v+'"='+self._columns[v]._symbol_set[0])
-                        upd1.append(self._columns[v]._symbol_set[1](value[v]))
-                    upd1.append(id)
+                        upd0_append('"'+v+'"='+self._columns[v]._symbol_set[0])
+                        upd1_append(self._columns[v]._symbol_set[1](value[v]))
+                    upd1_append(id)
                     if upd0 and upd1:
                         query = ''.join(('UPDATE "', self._table, '" SET ',
                             ','.join(upd0), ' WHERE id = %s'))
                         cr.execute(query, upd1)
 
             else:
+                query_list = ['UPDATE "%s" SET' % self._table,]
+                update_value_list = []
+                update_value_list_append = update_value_list.append
+                execute_param_list = []
+                execute_param_list_append = execute_param_list.append
                 for f in val:
                     # uid == 1 for accessing objects having rules defined on store fields
                     result = self._columns[f].get(cr, self, ids, f, 1, context=context)
@@ -4220,8 +4230,15 @@ class orm(orm_template):
                                 value = value[0]
                             except:
                                 pass
-                        cr.execute('update "' + self._table + '" set ' + \
-                            '"'+f+'"='+self._columns[f]._symbol_set[0] + ' where id = %s', (self._columns[f]._symbol_set[1](value), id))
+                        current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
+                        update_value_list_append(current_value)
+                        execute_param_list_append(self._columns[f]._symbol_set[1](value))
+                query_list.append(', '.join(update_value_list))
+                query_list.append('WHERE id = %s')
+                execute_param_list_append(id)
+                final_query = ' '.join(query_list)
+                cr.execute(final_query, tuple(execute_param_list))
+
         return True
 
     #
