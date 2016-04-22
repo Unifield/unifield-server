@@ -3138,7 +3138,7 @@ class orm(orm_template):
 
         # Load manual fields
 
-        cr.execute("SELECT id FROM ir_model_fields WHERE name=%s AND model=%s", ('state', 'ir.model.fields'))
+        cr.execute("SELECT id FROM ir_model_fields WHERE name=%s AND model=%s LIMIT 1", ('state', 'ir.model.fields'))
         if cr.fetchone():
             cr.execute('SELECT * FROM ir_model_fields WHERE model=%s AND state=%s', (self._name, 'manual'))
             for field in cr.dictfetchall():
@@ -4147,7 +4147,7 @@ class orm(orm_template):
         field_flag = False
         field_dict = {}
         if self._log_access:
-            cr.execute('SELECT id, write_date FROM '+self._table+' WHERE id IN %s', (tuple(ids),))
+            cr.execute('SELECT id, write_date FROM '+self._table+' WHERE id IN %s AND write_date IS NOT NULL', (tuple(ids),))
             res = cr.fetchall()
             for r in res:
                 if r[1]:
@@ -4211,11 +4211,7 @@ class orm(orm_template):
                         cr.execute(query, upd1)
 
             else:
-                query_list = ['UPDATE "%s" SET' % self._table,]
-                update_value_list = []
-                update_value_list_append = update_value_list.append
-                execute_param_list = []
-                execute_param_list_append = execute_param_list.append
+                id_param_dict = {}
                 for f in val:
                     # uid == 1 for accessing objects having rules defined on store fields
                     result = self._columns[f].get(cr, self, ids, f, 1, context=context)
@@ -4231,13 +4227,20 @@ class orm(orm_template):
                             except:
                                 pass
                         current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
-                        update_value_list_append(current_value)
-                        execute_param_list_append(self._columns[f]._symbol_set[1](value))
-                query_list.append(', '.join(update_value_list))
-                query_list.append('WHERE id = %s')
-                execute_param_list_append(id)
-                final_query = ' '.join(query_list)
-                cr.execute(final_query, tuple(execute_param_list))
+                        id_param_dict.setdefault(id, {})
+                        param_list = id_param_dict[id].setdefault('param_list', [])
+                        param_list.append((self._columns[f]._symbol_set[1](value)))
+                        update_list = id_param_dict[id].setdefault('update_list', [])
+                        update_list.append(current_value)
+
+                query_list = ['UPDATE "%s" SET' % self._table,]
+                for id, param_dict in id_param_dict.items():
+                    current_query = copy.copy(query_list)
+                    current_query.append(', '.join(param_dict['update_list']))
+                    current_query.append('WHERE id = %s')
+                    param_dict['param_list'].append(id)
+                    final_query = ' '.join(current_query)
+                    cr.execute(final_query, tuple(param_dict['param_list']))
 
         return True
 
