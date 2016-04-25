@@ -175,6 +175,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if first_line:
                 data = {
                     'line_number': line.line_number,
+                    'po_name': po_name,
                     'product_code': line.product_id.default_code,
                     'product_name': line.product_id.name,
                     'uom_id': line.product_uom.name,
