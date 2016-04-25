@@ -1103,6 +1103,9 @@ stock moves which are already processed : '''
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
+            self.infolog(cr, uid, "Purchase order id:%s (%s) is validated." % (
+                po.id, po.name,
+            ))
             # hook for corresponding Fo update
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 
@@ -1232,8 +1235,9 @@ stock moves which are already processed : '''
                 vals.update({'order_id': l.link_so_id.original_so_id_sale_order.id,
                              'state': 'done'})
                 sol_id = sol_obj.create(cr, uid, vals, context=context)
-                self.infolog(cr, uid, "The FO/IR line id:%s has been added from the PO line id:%s" % (
-                    sol_id, l.id,
+                self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been added from the PO line id:%s (line number: %s)" % (
+                    sol_id, sol_obj.read(cr, uid, sol_id, ['line_number'], context=context)['line_number'],
+                    l.id, l.line_number,
                 ))
             context['sale_id'] = tmp_sale_context
 
@@ -1261,8 +1265,9 @@ stock moves which are already processed : '''
                     pick_obj.action_confirm(cr, uid, pick_to_confirm, context=context)
 
             sol_ids.add(l.link_so_id.id)
-            self.infolog(cr, uid, "The FO/IR line id:%s has been added from the PO line id:%s" % (
-                new_line_id, l.id,
+            self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been added from the PO line id:%s (line number: %s)" % (
+                new_line_id, sol_obj.read(cr, uid, new_line_id, ['line_number'], context=context)['line_number'],
+                l.id, l.line_number,
             ))
 
         if sol_ids:
@@ -1325,7 +1330,7 @@ stock moves which are already processed : '''
             context['wait_order'] = True
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
             del context['wait_order']
-            self.infolog(cr, uid, "The PO id:%s has been confirmed" % po.id)
+            self.infolog(cr, uid, "The PO id:%s (%s) has been confirmed" % (po.id, po.name))
 
         return True
 
@@ -3387,8 +3392,10 @@ class purchase_order_line(osv.osv):
 
         res = super(purchase_order_line, self).unlink(cr, uid, ids, context=context)
 
-        for pol_id in ids:
-            self.infolog(cr, uid, "The PO/RfQ line id:%s has been deleted" % pol_id)
+        for pol in self.read(cr, uid, ids, ['line_number'], context=context):
+            self.infolog(cr, uid, "The PO/RfQ line id:%s (line number: %s) has been deleted" % (
+                pol['id'], pol['name'],
+            ))
 
         po_obj.wkf_confirm_trigger(cr, uid, order_ids, context=context)
 
