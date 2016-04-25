@@ -190,17 +190,18 @@ class browse_record(object):
             # if the field is a classic one or a many2one, we'll fetch all classic and many2one fields
             if col._prefetch:
                 # gen the list of "local" (ie not inherited) fields which are classic or many2one
-                fields_to_fetch = filter(lambda x: x[1]._classic_write and x[1]._prefetch, self._table._columns.items())
+                fields_to_fetch = [x for x in self._table._columns.items() if x[1]._classic_write and x[1]._prefetch]
                 # gen the list of inherited fields
-                inherits = map(lambda x: (x[0], x[1][2]), self._table._inherit_fields.items())
+                inherits = [(x[0], x[1][2]) for x in
+                        self._table._inherit_fields.items()]
                 # complete the field list with the inherited fields which are classic or many2one
-                fields_to_fetch += filter(lambda x: x[1]._classic_write and x[1]._prefetch, inherits)
+                fields_to_fetch += [x for x in inherits if x[1]._classic_write and x[1]._prefetch]
             # otherwise we fetch only that field
             else:
                 fields_to_fetch = [(name, col)]
-            ids = filter(lambda id: name not in self._data[id], self._data.keys())
+            ids = [x for x in self._data.keys() if name not in self._data[id]]
             # read the results
-            field_names = map(lambda x: x[0], fields_to_fetch)
+            field_names = [x[0] for x in fields_to_fetch]
             field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
 
             # TODO: improve this, very slow for reports
@@ -609,7 +610,7 @@ class orm_template(object):
             return r
 
         lines = []
-        data = map(lambda x: '', range(len(fields)))
+        data = [''] * len(fields)
         done = []
         for fpos in xrange(len(fields)):
             f = fields[fpos]
@@ -622,7 +623,8 @@ class orm_template(object):
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
                         data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
-                        data_ids = map(lambda ref_id: ref_id.id, filter(lambda ref: ref.module == 'sd', model_data.browse(cr, uid, data_ids))) or data_ids
+                        data_ids = [x.id for x in model_data.browse(cr, uid, data_ids) \
+                                if x.module == 'sd'] or data_ids
                         if len(data_ids):
                             d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
                             if d['module']:
@@ -653,8 +655,8 @@ class orm_template(object):
                         break
                     if isinstance(r, (browse_record_list, list)):
                         first = True
-                        fields2 = map(lambda x: (x[:i+1]==f[:i+1] and x[i+1:]) \
-                                or [], fields)
+                        fields2 = [(x[:i+1] == f[:i+1] and x[i+1:]) or [] \
+                                for x in fields]
                         if fields2 in done:
                             if [x for x in fields2 if x]:
                                 break
@@ -736,7 +738,7 @@ class orm_template(object):
         def fsplit(x):
             if x=='.id': return [x]
             return x.replace(':id','/id').replace('.id','/.id').split('/')
-        fields_to_export = map(fsplit, fields_to_export)
+        fields_to_export = [fsplit(x) for x in fields_to_export]
         fields_export = fields_to_export + []
         warning = ''
         warning_fields = []
@@ -778,7 +780,7 @@ class orm_template(object):
         def _replace_field(x):
             x = re.sub('([a-z0-9A-Z_])\\.id$', '\\1/.id', x)
             return x.replace(':id','/id').split('/')
-        fields = map(_replace_field, fields)
+        fields = [_replace_field(x) for x in fields]
         logger = netsvc.Logger()
         ir_model_data_obj = self.pool.get('ir.model.data')
 
@@ -971,7 +973,7 @@ class orm_template(object):
                 return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
 
             try:
-                id = ir_model_data_obj._update(cr, uid, self._name,
+                ir_model_data_obj._update(cr, uid, self._name,
                      current_module, res, mode=mode, xml_id=xml_id,
                      noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
@@ -1786,11 +1788,11 @@ class orm_template(object):
             resrelate = ir_values_obj.get(cr, user, 'action',
                     'client_action_relate', [(self._name, False)], False,
                     context)
-            resprint = map(clean, resprint)
-            resaction = map(clean, resaction)
-            resaction = filter(lambda x: not x.get('multi', False), resaction)
-            resprint = filter(lambda x: not x.get('multi', False), resprint)
-            resrelate = map(lambda x: x[2], resrelate)
+            resprint = [clean(x) for x in resprint]
+            resprint = [x for x in resprint if not x.get('multi', False)]
+            resaction = [clean(x) for x in resaction]
+            resaction = [x for x in resaction if not x.get('multi', False)]
+            resrelate = [x[2] for x in resrelate]
 
             for x in resprint + resaction + resrelate:
                 x['string'] = x['name']
@@ -2026,8 +2028,8 @@ class orm_template(object):
                     if frm[0] not in self._replace_exported_fields.keys():
                         fields.remove(frm)
 
-                sorted_rpl_flds = reversed(sorted(rpl_flds, key=lambda x: x[1]))
-                for rpl_fld in sorted_rpl_flds:
+                rpl_flds.sort(key=lambda x: x[1], reversed=True)
+                for rpl_fld in rpl_flds:
                     fields.insert(fld_index, rpl_fld[0])
 
                 fields.remove(fld_val)
@@ -2132,10 +2134,10 @@ class orm_memory(orm_template):
                 result.append(r)
                 if id in self.datas:
                     self.datas[id]['internal.date_access'] = time.time()
-            
+
             # all non inherited fields for which the attribute whose name is in load is False
-            fields_post = filter(lambda x: x in self._columns and not getattr(self._columns[x], load), fields_to_read)
-    
+            fields_post = [x for x in fields_to_read if x in self._columns and not getattr(self._columns[x], load)]
+
             # Compute POST fields
             todo = {}
             for f in fields_post:
@@ -2468,7 +2470,7 @@ class orm(orm_template):
             assert groupby_def and groupby_def._classic_write, "Fields in 'groupby' must be regular database-persisted fields (no function or related fields), or function fields with store=True"
 
         fget = self.fields_get(cr, uid, fields)
-        float_int_fields = filter(lambda x: fget[x]['type'] in ('float', 'integer'), fields)
+        float_int_fields = [x for x in fields if fget[x]['type'] in ('float', 'integer')]
         flist = ''
         group_count = group_by = groupby
         if groupby:
@@ -2515,8 +2517,8 @@ class orm(orm_template):
 
         data_ids = self.search(cr, uid, [('id', 'in', alldata.keys())], order=orderby or groupby, context=context)
         # the IDS of records that have groupby field value = False or '' should be sorted too
-        data_ids += filter(lambda x:x not in data_ids, alldata.keys())
         data = self.read(cr, uid, data_ids, groupby and [groupby] or ['id'], context=context)
+        data_ids = list(set(data.ids).union(alldata.keys()))
         # restore order of the search as read() uses the default _order (this is only for groups, so the size of data_read shoud be small):
         data.sort(lambda x,y: cmp(data_ids.index(x['id']), data_ids.index(y['id'])))
 
@@ -2606,7 +2608,7 @@ class orm(orm_template):
         ss = self._columns[k]._symbol_set
         update_query = 'UPDATE "%s" SET "%s"=%s WHERE id=%%s' % (self._table, k, ss[0])
         cr.execute('SELECT id FROM '+self._table)
-        ids_lst = map(lambda x: x[0], cr.fetchall())
+        ids_lst = [x[0] for x in cr.fetchall()]
 
         migrate = False
         if self._columns[k]._fnct_migrate:
@@ -2760,7 +2762,7 @@ class orm(orm_template):
                "WHERE c.relname=%s " \
                "AND c.oid=a.attrelid " \
                "AND a.atttypid=t.oid", (self._table,))
-            col_data = dict(map(lambda x: (x['attname'], x),cr.dictfetchall()))
+            col_data = dict((x['attname'], x) for x in cr.dictfetchall())
 
 
             for k in self._columns:
@@ -3324,7 +3326,7 @@ class orm(orm_template):
                     return 'length(%s) as "%s"' % (f_qual, f)
                 return f_qual
 
-            fields_pre2 = map(convert_field, fields_pre)
+            fields_pre2 = [convert_field(x) for x in fields_pre]
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
             query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
@@ -3373,7 +3375,7 @@ class orm(orm_template):
                     del record[col]
 
         # all fields which need to be post-processed by a simple function (symbol_get)
-        fields_post = filter(lambda x: x in self._columns and self._columns[x]._symbol_get, fields_to_read)
+        fields_post = [x for x in fields_to_read if x in self._columns and self._columns[x]._symbol_get]
         if fields_post:
             for r in res:
                 for f in fields_post:
@@ -3381,7 +3383,7 @@ class orm(orm_template):
         ids = [x['id'] for x in res]
 
         # all non inherited fields for which the attribute whose name is in load is False
-        fields_post = filter(lambda x: x in self._columns and not getattr(self._columns[x], load), fields_to_read)
+        fields_post = [x for x in fields_to_read if x in self._columns and not getattr(self._columns[x], load)]
 
         # Compute POST fields
         todo = {}
@@ -3597,7 +3599,7 @@ class orm(orm_template):
             if object != self._name:
                 obj = self.pool.get(object)
                 cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
-                rids = map(lambda x: x[0], cr.fetchall())
+                rids = [x[0] for x in cr.fetchall()]
                 if rids:
                     obj._store_set_values(cr, uid, rids, fields, context)
 
@@ -3715,7 +3717,7 @@ class orm(orm_template):
                 query = "SELECT id FROM %s WHERE id IN %%s AND (%s IS NOT NULL)" % \
                                 (self._table, self._parent_name)
                 cr.execute(query, (tuple(ids),))
-            parents_changed = map(operator.itemgetter(0), cr.fetchall())
+            parents_changed = [operator.itemgetter(0)[x] for x in cr.fetchall()]
 
         upd0 = []
         upd0_append = upd0.append
@@ -4132,7 +4134,8 @@ class orm(orm_template):
                 k2[tuple(fnct)].append(id)
             for fnct, id in k2.items():
                 function_dict.setdefault(fncts[fnct[0]][4], [])
-                function_dict[fncts[fnct[0]][4]].append((fncts[fnct[0]][4], object, id, map(lambda x: fncts[x][1], fnct)))
+                function_dict[fncts[fnct[0]][4]].append((fncts[fnct[0]][4],
+                    object, id, [fncts[x][1] for x in fnct]))
         result2 = []
         tmp = function_dict.keys()
         tmp.sort()
@@ -4367,7 +4370,7 @@ class orm(orm_template):
         src_table, src_field = qualified_field.replace('"','').split('.', 1)
         query.join((src_table, dest_model._table, src_field, 'id'), outer=True)
         qualify = lambda field: '"%s"."%s"' % (dest_model._table, field)
-        return map(qualify, m2o_order) if isinstance(m2o_order, list) else qualify(m2o_order)
+        return [qualify(x) for x in m2o_order] if isinstance(m2o_order, list) else qualify(m2o_order)
 
 
     def _generate_order_by(self, order_spec, query):
@@ -4668,7 +4671,7 @@ class orm(orm_template):
             for i in range(0, len(ids), cr.IN_MAX):
                 sub_ids_parent = ids_parent[i:i+cr.IN_MAX]
                 cr.execute(query, (tuple(sub_ids_parent),))
-                ids_parent2.extend(filter(None, map(lambda x: x[0], cr.fetchall())))
+                ids_parent2.extend(filter(None, [x[0] for x in cr.fetchall()]))
             ids_parent = ids_parent2
             for i in ids_parent:
                 if i in ids:
