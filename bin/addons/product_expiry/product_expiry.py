@@ -21,9 +21,12 @@
 import datetime
 from osv import fields, osv
 import pooler
+import logging
+
 
 class stock_production_lot(osv.osv):
     _inherit = 'stock.production.lot'
+    _logger = logging.getLogger('------US-838: Migrate duplicate BNs')
 
     def _get_date(dtype):
         """Return a function to compute the limit date for this type"""
@@ -80,8 +83,9 @@ class stock_production_lot(osv.osv):
         
         # In case it's a EP only product, then search for date and product, no need to search for batch name
         if prod.perishable and not prod.batch_management: 
-            search_arg = [('life_date', '=', vals['life_date']), ('type', '=', 'internal'), ('product_id', '=', prod.id)] 
-            if ids:
+            search_arg = [('life_date', '=', vals['life_date']), ('type', '=', 'internal'), ('product_id', '=', prod.id)]
+             
+            if ids: # in case it's a write call, then exclude the current ids
                 search_arg.append(('id', 'not in', ids))
                 
             lot_ids = self.search(cr, uid, search_arg, context=context)
@@ -93,18 +97,27 @@ class stock_production_lot(osv.osv):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
-        #US-838 DUY: TO BE USED ONLY ON THE PATCH:    self.migrate_dup_batch(cr, uid, context)
+        self.migrate_dup_batch(cr, uid, context)
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         # US-838: Check if the values are in conflict with the existing data
         if self.violate_ed_unique(cr, uid, ids, vals, context):
-            raise osv.except_osv('Error', 'A same expiry date for this product exists already!.')
+            raise osv.except_osv('Error', 'An expiry date with same date for this product exists already!')
         
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
     
     #US-838: migrate all the duplicated batch into single batch
+    '''
+    
+        US-838: The 3 following methods will be moved to the patch call, it is called only when a patch is applied.
+        Check the steps to be executed in the description, but basically it will migrate the references to the wrong BN in relevant objects
+        to the lead BN, then delete these wrong BNs, and finally redefine the unique constraint on the table BN 
+    
+        method to move: migrate_dup_batch, remap_reference_tables, update_table
+    
+    '''
     def migrate_dup_batch(self, cr, uid, context=None):
         '''
         Step to do:
@@ -121,6 +134,8 @@ class stock_production_lot(osv.osv):
         
         '''
         
+        self._logger.info("__________Start to migrate duplicate batch objects in instance: %s", cr.dbname)
+        
         cr.execute('''select id, name from stock_production_lot where name in  
                 (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id) as foo_bn where amount_bn>1) order by name, id;''')
         
@@ -129,33 +144,35 @@ class stock_production_lot(osv.osv):
         same_name = None 
         for r in cr.dictfetchall():
             if lead_id == 0:
-                print "*******Lead BN = ", r['name']," id= ",r['id']
                 same_name = r['name']
                 lead_id = r['id']
             else:
                 if same_name == r['name']: # same batch --> replace in all table to the lead_id
                     # Do step 2.2, search the following tables to replace the link to the
-                    print "___REMAP for ID = ", r['id'] 
-                    self.remap_reference_tables(cr, uid, r['id'], lead_id, context)
+                    self.remap_reference_tables(cr, uid, r['id'], lead_id, same_name, context)
                     
                     # 2.3: Add this wrong batch id into the list, then delete them at the end
                     to_be_deleted.append(r['id'])
                 else:
                     lead_id = r['id'] # when the name change --> replace by the new lead_id
                     same_name = r['name'] 
-                    print "*******Lead BN = ", r['name']," id= ",r['id'] 
 
         # 2.3 call to delete all the wrong batch objects
         if to_be_deleted:
+            self._logger.info("Delete all the duplicate batch objects (keep only the lead batch)")
             self.unlink(cr, uid, to_be_deleted, context=context)
+        else:
+            self._logger.info("No duplicate batch found for this instance %s.", cr.dbname)
         
+        self._logger.info("Last step: update the unique constraint for the table stock_production_lot.")
         # 3. Now alter the constraint unique of this table: first drop the current constraint, then create a new one with name+prod+life_date
         cr.execute('''ALTER TABLE stock_production_lot DROP CONSTRAINT stock_production_lot_batch_name_uniq,  
                 ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE (name, product_id, life_date);''')
         
+        self._logger.info("__________Finish the migration task on duplicate batch objects for instance: %s", cr.dbname)
         return True
     
-    def remap_reference_tables(self, cr, uid, wrong_id, lead_id, context=None):
+    def remap_reference_tables(self, cr, uid, wrong_id, lead_id, batch_name, context=None):
         '''
         -- with fkey = prodlot_id (total=13)
             TABLE "create_picking_move_processor" CONSTRAINT "create_picking_move_processor_prodlot_id_fkey" FOREIGN KEY (prodlot_id) REFERENCES stock_production_lot(id) ON DELETE SET NULL
@@ -186,40 +203,43 @@ class stock_production_lot(osv.osv):
             TABLE "wizard_import_in_line_simulation_screen" CONSTRAINT "wizard_import_in_line_simulation_screen_imp_batch_id_fkey" FOREIGN KEY (imp_batch_id) REFERENCES stock_production_lot(id) ON DELETE SET 
         '''
         # Tables with foreign key prodlot_id (total 13 tables) 
-        self.update_table(cr, uid, 'create_picking_move_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'export_report_stock_inventory', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'export_report_stock_move', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'internal_move_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'outgoing_delivery_move_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'ppl_move_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'real_average_consumption_line', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'return_ppl_move_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'stock_move_in_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'stock_move_processor', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'stock_move', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'unconsistent_stock_report_line', 'prodlot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'validate_move_processor', 'prodlot_id', wrong_id, lead_id)
-
-        # Tables with foreign key lot_id (total 2) 
-        self.update_table(cr, uid, 'stock_production_lot_revision', 'lot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'product_likely_expire_report_item_line', 'lot_id', wrong_id, lead_id)
+        self._logger.info("__ Migrating batch number:     %s", batch_name)
+        list_table_fields = [
+                             ('create_picking_move_processor', 'prodlot_id'),
+                             ('export_report_stock_inventory', 'prodlot_id'),
+                             ('export_report_stock_move', 'prodlot_id'),
+                             ('internal_move_processor', 'prodlot_id'),
+                             ('outgoing_delivery_move_processor', 'prodlot_id'),
+                             ('ppl_move_processor', 'prodlot_id'),
+                             ('real_average_consumption_line', 'prodlot_id'),
+                             ('return_ppl_move_processor', 'prodlot_id'),
+                             ('stock_move_in_processor', 'prodlot_id'),
+                             ('stock_move_processor', 'prodlot_id'),
+                             ('stock_move', 'prodlot_id'),
+                             ('unconsistent_stock_report_line', 'prodlot_id'),
+                             ('validate_move_processor', 'prodlot_id'),
+                             ('stock_production_lot_revision', 'lot_id'),
+                             ('product_likely_expire_report_item_line', 'lot_id'),
+                             ('stock_inventory_line', 'prod_lot_id'),
+                             ('initial_stock_inventory_line', 'prod_lot_id'),
+                             ('claim_product_line', 'lot_id_claim_product_line'),
+                             ('composition_kit', 'composition_lot_id'),
+                             ('wizard_import_in_line_simulation_screen', 'imp_batch_id')
+                             ]
+        for element in list_table_fields:
+            # Tables with foreign key prod_lot_id (total 2) 
+            self.update_table(cr, uid, element[0] , element[1], wrong_id, lead_id, batch_name)
         
-        # Tables with foreign key prod_lot_id (total 2) 
-        self.update_table(cr, uid, 'stock_inventory_line', 'prod_lot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'initial_stock_inventory_line', 'prod_lot_id', wrong_id, lead_id)
-
-        # Tables with foreign keys have no common pattern (total 3) 
-        self.update_table(cr, uid, 'claim_product_line', 'lot_id_claim_product_line', wrong_id, lead_id)
-        self.update_table(cr, uid, 'composition_kit', 'composition_lot_id', wrong_id, lead_id)
-        self.update_table(cr, uid, 'wizard_import_in_line_simulation_screen', 'imp_batch_id', wrong_id, lead_id)
         
-        
-    def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id):
-        # Set the references on the given table from wrong ID to the Lead ID of the batch 
-        #cr.execute("update " +  table_name + " set " + field_id + " =%s where " + field_id + "=%s", (lead_id, wrong_id,))
-        
-        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;', (wrong_id,))
-        print "---------Table=", table_name, " has been re-mapped all " + field_id + " from the id %s to %s", (wrong_id, lead_id,)
+    def update_table(self, cr, uid, table_name, field_id, wrong_id, lead_id, batch_name):
+        cr.execute('select count(*) as amount from ' + table_name + ' where ' + field_id + ' = %s;' %(wrong_id,))
+        count = cr.fetchone()[0]
+        if count > 0: # Only update the table if wrong bn exists
+            self._logger.info("Table %s has %s batch objects (%s) and will be-mapped." %(table_name, count, batch_name,))
+            sql_update = "update " + table_name + " set " + field_id + "=" + str(lead_id) + " where " + field_id + "=" + str(wrong_id)
+            cr.execute(sql_update)
+        else:
+            self._logger.info("Table %s has NO duplicate batch (%s)." %(table_name, batch_name,))
 
     _defaults = {
         'life_date': _get_date('life_time'),
