@@ -3,13 +3,14 @@ import psycopg2
 import locale
 import psycopg2.extras
 import time
+import datetime
 import sys
 import oerplib
 
 start_time = time.time()
 intermediate_time = start_time
 
-DB_NAME = 'SYNC_SERVER-20160321-163301-zip_3'   # replace with your own DB
+DB_NAME = 'SYNC_SERVER-20160425-zip'   # replace with your own DB
 
 DELETE_NO_MASTER = True
 DELETE_INACTIVE_RULES = True
@@ -20,7 +21,8 @@ DELETE_ENTITY_REL = True  # not recommanded to change it to False because it
 UPDATE_TO_FETCH = 10000
 
 # updates with mast_data='f' and active_rule after this date will not been deleted
-NOT_DELETE_DATE = '2016-01-01'
+NUMBER_OF_MONTH_TO_KEEP = 6
+NOT_DELETE_DATE = (datetime.date.today() - datetime.timedelta(365/12*NUMBER_OF_MONTH_TO_KEEP)).isoformat()
 
 RULE_TYPE = {
     'USB': 1,
