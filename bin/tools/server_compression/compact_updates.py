@@ -356,7 +356,7 @@ def compact_updates():
     return update_count
 
 print_file_and_screen('Working on db %s' % DB_NAME)
-print_file_and_screen('All updates after %s OR with sequence < %s will be kept' % (NOT_DELETE_DATE, SMALLEST_LAST_SEQUENCE))
+print_file_and_screen('All updates after %s OR with sequence > %s will be kept' % (NOT_DELETE_DATE, SMALLEST_LAST_SEQUENCE))
 if DELETE_NO_MASTER:
     total_update_count += delete_no_master()
 if DELETE_INACTIVE_RULES:
