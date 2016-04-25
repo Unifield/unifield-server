@@ -8953,6 +8953,12 @@ msgstr "Reversing accrual"
 msgid "The line '%s' is already partially posted!"
 msgstr "La ligne '%s' est déjà partiellement comptabilisée !"
 
+#. module: msf_accrual
+#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:43
+#, python-format
+msgid "The line '%s' is cancelled and can't be re-posted."
+msgstr "La ligne '%s' est annulée et ne peut pas être recomptabilisée."
+
 #. module: account
 #: field:account.report.general.ledger,sortby:0
 msgid "Sort By"
