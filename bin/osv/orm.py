@@ -4122,7 +4122,7 @@ class orm(orm_template):
             result.setdefault(fncts[fnct][0], {})
 
             # uid == 1 for accessing objects having rules defined on store fields
-            ids2 = fncts[fnct][2](self, cr, 1, ids, context)
+            ids2 = list(set((fncts[fnct][2](self, cr, 1, ids, context))))
             for id in filter(None, ids2):
                 result[fncts[fnct][0]].setdefault(id, [])
                 result[fncts[fnct][0]][id].append(fnct)
