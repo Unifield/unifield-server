@@ -128,7 +128,7 @@ class account_chart(osv.osv_memory):
         result['context'] = unicode(context)
 
         xmlid = 'balance_account_tree'
-        if data['granularity'] == 'account':
+        if data['granularity'] and data['granularity'] == 'account':
             # flat version, not drillable, only final accounts
             xmlid = 'balance_account_flat'
             result['domain'] = [ ('type', '!=', 'view'), ]
@@ -155,7 +155,9 @@ class account_chart(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids):
             args = [('active', '=', True)]
             if wiz.show_inactive == True:
-                args += [('active', 'in', [True, False])]
+                args.append(('active', 'in', [True, False]))
+            if wiz.granularity and wiz.granularity == 'account':
+                args.append(('type', '!=', 'view'))
 
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
