@@ -138,22 +138,28 @@ class report_fully_report(report_sxw.rml_parse):
             res = al_obj.browse(self.cr, self.uid, al_ids)
         return res
 
-    def getFreeRef(self, acc_move):
+    def getFreeRef(self, acc_move_line):
         '''
-        Return the "manual" reference associated with the account move if it exists
+        Return the "manual" invoice reference associated with the account move line if it exists
         (field Reference in DI and Free Reference in SI)
         '''
         db = pooler.get_pool(self.cr.dbname)
         acc_inv = db.get('account.invoice')
-        ref = False
-        inv_id = False
-        if acc_move:
-            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
-        if inv_id:
-            inv = acc_inv.browse(self.cr, self.uid, inv_id)
-            if inv:
-                ref = inv[0].reference
-        return ref or ''
+        free_ref = False
+        if acc_move_line:
+            acc_move = acc_move_line.move_id
+            if acc_move:
+                inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
+                if inv_id:
+                    inv = acc_inv.browse(self.cr, self.uid, inv_id)
+                    if inv:
+                        free_ref = inv[0].reference
+                if not free_ref:
+                    inv_ref = acc_move.name or hasattr(acc_move_line, 'reference') and acc_move_line.reference or ''
+                    # display the free ref if it is different from the "standard" ref
+                    if inv_ref != acc_move.ref:
+                        free_ref = acc_move.ref
+        return free_ref or ''
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

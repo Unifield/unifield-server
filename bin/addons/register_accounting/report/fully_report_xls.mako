@@ -595,7 +595,7 @@
           <Data ss:Type="String">${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="left">
-          <Data ss:Type="String">${inv_line.move_id and getFreeRef(inv_line.move_id) or ''|x}</Data>
+          <Data ss:Type="String">${getFreeRef(inv_line) or ''|x}</Data>
         </Cell>
         % if o.journal_id.type == 'cheque':
         <Cell ss:StyleID="left">
