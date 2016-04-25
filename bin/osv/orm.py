@@ -199,7 +199,7 @@ class browse_record(object):
             # otherwise we fetch only that field
             else:
                 fields_to_fetch = [(name, col)]
-            ids = [x for x in self._data.keys() if name not in self._data[id]]
+            ids = [x for x in self._data.keys() if name not in self._data[x]]
             # read the results
             field_names = [x[0] for x in fields_to_fetch]
             field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
