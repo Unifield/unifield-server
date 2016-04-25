@@ -436,7 +436,7 @@ class orm_template(object):
     def _field_create(self, cr, context=None):
         if context is None:
             context = {}
-        cr.execute("SELECT id FROM ir_model WHERE model=%s", (self._name,))
+        cr.execute("SELECT id FROM ir_model WHERE model=%s LIMIT 1", (self._name,))
         if not cr.rowcount:
             cr.execute('SELECT nextval(%s)', ('ir_model_id_seq',))
             model_id = cr.fetchone()[0]
@@ -499,7 +499,7 @@ class orm_template(object):
                 ))
                 if 'module' in context:
                     name1 = 'field_' + self._table + '_' + k
-                    cr.execute("select name from ir_model_data where name=%s", (name1,))
+                    cr.execute("select name from ir_model_data where name=%s LIMIT 1", (name1,))
                     if cr.fetchone():
                         name1 = name1 + "_" + str(id)
                     cr.execute("INSERT INTO ir_model_data (name,date_init,date_update,module,model,res_id) VALUES (%s, now(), now(), %s, %s, %s)", \
@@ -1658,7 +1658,7 @@ class orm_template(object):
             if view_ref and not view_id:
                 if '.' in view_ref:
                     module, view_ref = view_ref.split('.', 1)
-                    cr.execute("SELECT res_id FROM ir_model_data WHERE model='ir.ui.view' AND module=%s AND name=%s", (module, view_ref))
+                    cr.execute("SELECT res_id FROM ir_model_data WHERE model='ir.ui.view' AND module=%s AND name=%s LIMIT 1", (module, view_ref))
                     view_ref_res = cr.fetchone()
                     if view_ref_res:
                         view_id = view_ref_res[0]
@@ -1669,6 +1669,7 @@ class orm_template(object):
                 if model:
                     query += " AND model = %s"
                     params += (self._name,)
+                query += " LIMIT 1"
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
@@ -1679,7 +1680,7 @@ class orm_template(object):
                         model = %s AND
                         type=%s AND
                         inherit_id IS NULL
-                    ORDER BY priority''', (self._name, view_type))
+                    ORDER BY priority LIMIT 1''', (self._name, view_type))
 
             sql_res = cr.fetchone()
 
@@ -2772,7 +2773,7 @@ class orm(orm_template):
                 f = self._columns[k]
 
                 if isinstance(f, fields.one2many):
-                    cr.execute("SELECT relname FROM pg_class WHERE relkind='r' AND relname=%s", (f._obj,))
+                    cr.execute("SELECT relname FROM pg_class WHERE relkind='r' AND relname=%s LIMIT 1", (f._obj,))
 
                     if self.pool.get(f._obj):
                         if f._fields_id not in self.pool.get(f._obj)._columns.keys():
@@ -2780,7 +2781,7 @@ class orm(orm_template):
                                 raise except_orm('Programming Error', ("There is no reference field '%s' found for '%s'") % (f._fields_id, f._obj,))
 
                     if cr.fetchone():
-                        cr.execute("SELECT count(1) as c FROM pg_class c,pg_attribute a WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid", (f._obj, f._fields_id))
+                        cr.execute("SELECT count(1) as c FROM pg_class c,pg_attribute a WHERE c.relname=%s AND a.attname=%s AND c.oid=a.attrelid LIMIT 1", (f._obj, f._fields_id))
                         res = cr.fetchone()[0]
                         if not res:
                             cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY (%s) REFERENCES "%s" ON DELETE SET NULL' % (self._obj, f._fields_id, f._table))
@@ -2875,7 +2876,7 @@ class orm(orm_template):
                                         cr.execute("SELECT count(1) FROM pg_class c,pg_attribute a " \
                                             "WHERE c.relname=%s " \
                                             "AND a.attname=%s " \
-                                            "AND c.oid=a.attrelid ", (self._table, newname))
+                                            "AND c.oid=a.attrelid LIMIT 1", (self._table, newname))
                                         if not cr.fetchone()[0]:
                                             break
                                         i += 1
@@ -3025,7 +3026,7 @@ class orm(orm_template):
                 todo_end_append((order, self._update_store, (f, k)))
 
         else:
-            cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
+            cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s LIMIT 1", (self._table,))
             create = not bool(cr.fetchone())
         
         for t in to_migrate:
@@ -3504,7 +3505,7 @@ class orm(orm_template):
                     ids_to_check.extend([id, update_date])
             if not ids_to_check:
                 continue
-            cr.execute("SELECT id FROM %s WHERE %s" % (self._table, " OR ".join([check_clause]*(len(ids_to_check)/2))), tuple(ids_to_check))
+            cr.execute("SELECT id FROM %s WHERE %s LIMIT 1" % (self._table, " OR ".join([check_clause]*(len(ids_to_check)/2))), tuple(ids_to_check))
             res = cr.fetchone()
             if res:
                 # mention the first one only to keep the error message readable
@@ -3836,7 +3837,7 @@ class orm(orm_template):
                     clause, params = '%s IS NULL' % (self._parent_name,), ()
 
                 for current_id in parents_changed:
-                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s' % (self._table,), (current_id,))
+                    cr.execute('SELECT parent_left, parent_right FROM %s WHERE id=%%s LIMIT 1' % (self._table,), (current_id,))
                     pleft, pright = cr.fetchone()
                     distance = pright - pleft + 1
 
@@ -3860,7 +3861,7 @@ class orm(orm_template):
                             position = 1
                         else:
                             query = ''.join(('SELECT parent_left FROM ',
-                                self._table, ' WHERE id=%s'))
+                                self._table, ' WHERE id=%s LIMIT 1'))
                             cr.execute(query, (parent_val,))
                             position = cr.fetchone()[0] + 1
 
@@ -4053,11 +4054,11 @@ class orm(orm_template):
                             break
                         pleft_old = pleft
                     if not pleft_old:
-                        cr.execute('select parent_left from '+self._table+' where id=%s', (parent,))
+                        cr.execute('select parent_left from '+self._table+' where id=%s LIMIT 1', (parent,))
                         pleft_old = cr.fetchone()[0]
                     pleft = pleft_old
                 else:
-                    cr.execute('select max(parent_right) from '+self._table)
+                    cr.execute('select max(parent_right) from %s LIMIT 1' % self._table)
                     pleft = cr.fetchone()[0] or 0
                 cr.execute('update '+self._table+' set parent_left=parent_left+2 where parent_left>%s', (pleft,))
                 cr.execute('update '+self._table+' set parent_right=parent_right+2 where parent_right>%s', (pleft,))
@@ -4635,7 +4636,7 @@ class orm(orm_template):
         if type(ids) in (int, long):
             ids = [ids]
         query = 'SELECT count(1) FROM "%s"' % (self._table)
-        cr.execute(query + "WHERE ID IN %s", (tuple(ids),))
+        cr.execute(query + "WHERE ID IN %s LIMIT 1", (tuple(ids),))
         return cr.fetchone()[0] == len(ids)
 
     def check_recursion(self, cr, uid, ids, context=None, parent=None):
