@@ -3717,7 +3717,7 @@ class orm(orm_template):
                 query = "SELECT id FROM %s WHERE id IN %%s AND (%s IS NOT NULL)" % \
                                 (self._table, self._parent_name)
                 cr.execute(query, (tuple(ids),))
-            parents_changed = [operator.itemgetter(0)[x] for x in cr.fetchall()]
+            parents_changed = map(operator.itemgetter(0), cr.fetchall())
 
         upd0 = []
         upd0_append = upd0.append
