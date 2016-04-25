@@ -97,7 +97,6 @@ class stock_production_lot(osv.osv):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
-        self.migrate_dup_batch(cr, uid, context)
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -118,7 +117,7 @@ class stock_production_lot(osv.osv):
         method to move: migrate_dup_batch, remap_reference_tables, update_table
     
     '''
-    def migrate_dup_batch(self, cr, uid, context=None):
+    def us_838_migrate_dup_batch(self, cr, uid, *a, **b):
         '''
         Step to do:
         
@@ -139,6 +138,8 @@ class stock_production_lot(osv.osv):
         cr.execute('''select id, name from stock_production_lot where name in  
                 (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id) as foo_bn where amount_bn>1) order by name, id;''')
         
+        context = {}
+                    
         lead_id = 0 # This id will be used as the main batch id
         to_be_deleted = []
         same_name = None 
