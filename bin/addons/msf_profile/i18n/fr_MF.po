@@ -46305,10 +46305,12 @@ msgstr "Europe/Luxembourg"
 msgid "Analytic distribution is mandatory for this line: %s!"
 msgstr "Allocation Analytique obligatoire pour cette ligne: %s"
 
-#. module: msf_accrual
+#. modules: msf_accrual, account_period_closing_level
 #: model:ir.actions.act_window,name:msf_accrual.action_msf_accrual_line_tree
 #: model:ir.ui.menu,name:msf_accrual.menu_action_msf_accrual_line_tree
 #: view:msf.accrual.line:0
+#: code:addons/account_period_closing_level/account_period.py:716
+#, python-format
 msgid "Accruals Management"
 msgstr "Gestion des Régularisations"
 
