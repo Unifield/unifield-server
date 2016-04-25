@@ -133,17 +133,17 @@ class stock_production_lot(osv.osv):
         
         '''
         
-        self._logger.info("__________Start to migrate duplicate batch objects in instance: %s", cr.dbname)
-        
         cr.execute('''select id, name from stock_production_lot where name in  
                 (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id) as foo_bn where amount_bn>1) order by name, id;''')
+        all_dup_batches = cr.dictfetchall()
+        self._logger.info("__________Start to migrate duplicate batch objects in instance: %s - with total of %s duplicate batches!" % (cr.dbname, len(all_dup_batches)))
         
         context = {}
                     
         lead_id = 0 # This id will be used as the main batch id
         to_be_deleted = []
         same_name = None 
-        for r in cr.dictfetchall():
+        for r in all_dup_batches:
             if lead_id == 0:
                 same_name = r['name']
                 lead_id = r['id']
@@ -160,7 +160,7 @@ class stock_production_lot(osv.osv):
 
         # 2.3 call to delete all the wrong batch objects
         if to_be_deleted:
-            self._logger.info("Delete all the duplicate batch objects (keep only the lead batch)")
+            self._logger.info("Delete duplicate batch objects (%s batches - keep only the lead batch)" % len(to_be_deleted))
             self.unlink(cr, uid, to_be_deleted, context=context)
         else:
             self._logger.info("No duplicate batch found for this instance %s.", cr.dbname)
