@@ -620,6 +620,11 @@ class shipment(osv.osv):
 
                 add_line_obj.create(cr, uid, line_vals, context=context)
 
+            # US-803: point 9, add the ship description, then remove it from the context
+            description_ppl = context.get('description_ppl', False)
+            if context.get('description_ppl', False):
+                del context['description_ppl']
+
             for family in wizard.family_ids:
                 if not family.selected_number: # UTP-1015 fix from Quentin
                     continue
@@ -636,6 +641,7 @@ class shipment(osv.osv):
                     'backorder_id': picking.id,
                     'shipment_id': False,
                     'move_lines': [],
+                    'description_ppl': description_ppl, # US-803: added the description
                 }
                 # Update context for copy
                 context.update({
@@ -3459,6 +3465,11 @@ class stock_picking(osv.osv):
             if 'associate_pick_name' in context:
                 pick_name = context.get('associate_pick_name', False)
                 del context['associate_pick_name']
+                already_replicated = True
+            #US-803: Set the pick name that given from sync
+            elif 'rw_backorder_name' in context:
+                pick_name = context.get('rw_backorder_name', False)
+                del context['rw_backorder_name']
                 already_replicated = True
 
             # UF-2531: if not exist, then calculate the name as before
