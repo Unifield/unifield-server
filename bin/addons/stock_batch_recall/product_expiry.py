@@ -107,16 +107,11 @@ class stock_production_lot(osv.osv):
 
         # No batch found, create a new one
         if not lot_ids:
-            # US-838: Add the prefix as instance name of the current instance into the name of the EP object
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            prefix = ''
-            if company and company.partner_id:
-                prefix = company.partner_id.name + "_"
-            
+            seq_ed = seq_obj.get(cr, uid, 'stock.lot.serial')
             vals = {
                 'product_id': product_id,
                 'life_date': expiry_date,
-                'name': prefix + seq_obj.get(cr, uid, 'stock.lot.serial'),
+                'name': seq_ed,
                 'type': 'internal',
             }
             lot_id = self.create(cr, uid, vals, context)
