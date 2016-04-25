@@ -846,8 +846,11 @@ class Form(TinyInputWidget):
         # make editors
         if values and attrs.get('noteditable'):
             try:
-                if expr_eval(attrs.get('noteditable'), values):
+                new_values = values.copy()
+                new_values['__id'] = self.id
+                if expr_eval(attrs.get('noteditable'), new_values):
                     self.noteditable = True
+                    self.hide_button_save = True
             except:
                 pass
 
