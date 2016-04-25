@@ -4233,9 +4233,9 @@ class orm(orm_template):
                         update_list = id_param_dict[id].setdefault('update_list', [])
                         update_list.append(current_value)
 
-                query_list = ['UPDATE "%s" SET' % self._table,]
+                # do only one update request per object
                 for id, param_dict in id_param_dict.items():
-                    current_query = copy.copy(query_list)
+                    current_query = ['UPDATE "%s" SET' % self._table]
                     current_query.append(', '.join(param_dict['update_list']))
                     current_query.append('WHERE id = %s')
                     param_dict['param_list'].append(id)
