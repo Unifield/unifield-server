@@ -36,6 +36,31 @@ class account_chart(osv.osv_memory):
         for id in ids:
             res[id] = False
         return res
+        
+    def _get_instance_header(self, cr, uid, ids, field_names, args,
+        context=None):
+        def get_codes(instance_recs):
+            instance_obj = self.pool.get('msf.instance')
+            if not instance_recs:
+                # get mission instances
+                instance_ids = instance_obj.search(cr, uid, [
+                        ('instance_to_display_ids', '=', True),
+                    ], context=context)
+                if instance_ids:
+                    instance_recs = instance_obj.browse(cr, uid, instance_ids,
+                        context=context)
+                else:
+                    instance_recs = []
+            return [ i.code for i in instance_recs ]
+        
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for rec in self.browse(cr, uid, ids, context=context):
+            res[rec.id] = ', '.join(get_codes(rec.instance_ids))
+        return res
 
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
@@ -61,6 +86,7 @@ class account_chart(osv.osv_memory):
             ('account', 'By balance account'),
             ('parent', 'By parent account'),
         ], 'Granularity', required=True),
+        'instance_header': fields.function(_get_instance_header, type='string', method=True, string='Instances'),
     }
 
     _defaults = {
@@ -189,11 +215,15 @@ class account_chart(osv.osv_memory):
             wiz_fields = {
                 'fy': wiz.fiscalyear and wiz.fiscalyear.name or '',
                 'target': target_move or '',
+                'initial_balance': wiz.initial_balance,
                 'period_from': wiz.period_from and wiz.period_from.name or '',
                 'period_to': wiz.period_to and wiz.period_to.name or '',
-                'instances': wiz.instance_ids and ','.join([x.name for x in wiz.instance_ids]) or '',
-                'show_inactive': wiz.show_inactive and 'X' or '',
+                'instance_header': wiz.instance_header,
+                'show_inactive': wiz.show_inactive,
                 'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',
+                'account_type': wiz.account_type,
+                'granularity': wiz.granularity,
+                'instance_header': wiz.instance_header,
             }
         # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
         currency_name = _("No one specified")
