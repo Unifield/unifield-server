@@ -11,6 +11,14 @@ start_time = time.time()
 intermediate_time = start_time
 
 DB_NAME = 'SYNC_SERVER-20160425-zip'   # replace with your own DB
+DB_PORT = '11031'
+ADMIN_PWD = 'admin' # replace with the good password
+
+
+# first try to login to insure that the credential are OK
+oerp = oerplib.OERP('localhost', DB_NAME, protocol='netrpc',
+                           port=DB_PORT, timeout=300)
+oerp.login('admin', ADMIN_PWD, DB_NAME)
 
 DELETE_NO_MASTER = True
 DELETE_INACTIVE_RULES = True
@@ -226,8 +234,8 @@ def compact_updates():
     no_group_count = 0
     intermediate_time = time.time()
     oerp = oerplib.OERP('localhost', DB_NAME, protocol='netrpc',
-                               port='11031', timeout=300)
-    oerp.login('admin', 'admin', DB_NAME)
+                               port=DB_PORT, timeout=300)
+    oerp.login('admin', ADMIN_PWD, DB_NAME)
     cr2 = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     # build a dict of groups for each instances

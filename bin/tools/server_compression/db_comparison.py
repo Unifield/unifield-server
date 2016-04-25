@@ -12,11 +12,15 @@ locale.setlocale(locale.LC_ALL, '')
 
 HOST_ORIGIN = 'localhost'
 PORT_ORIGIN = '11041'
-DB_ORIGIN = 'fm_sp_222_ocg_21_03_nc3'
+DB_ORIGIN = 'SP_222_20160425_OCG_nc'
 
 HOST_COMPRESSED = 'localhost'
 PORT_COMPRESSED = '11031'
-DB_COMPRESSED = 'fm_sp_222_ocg_21_03_10'
+DB_COMPRESSED = 'SP_222_20160425_OCG_zip'
+
+# before to launch this script, ensure you have the right privileges on the origin db:
+# psql SP_222_20160425_OCG_nc
+#SP_222_20160425_OCG_nc=> GRANT ALL PRIVILEGES ON sync_client_update_received to "fm-sp-222-oca-zip";
 
 FIELDS_TO_IGNORE = [
     'id',
