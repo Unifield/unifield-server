@@ -80,7 +80,7 @@ class account_chart(osv.osv_memory):
         'account_type': fields.selection([
             ('all', 'All'),
             ('pl', 'Profit & Loss'),
-            ('bl', 'Balance Sheet'),
+            ('bs', 'Balance Sheet'),
         ], 'B/S / P&L account', required=True),
         'granularity': fields.selection([
             ('account', 'By balance account'),
@@ -220,7 +220,7 @@ class account_chart(osv.osv_memory):
                 'period_to': wiz.period_to and wiz.period_to.name or '',
                 'instance_header': wiz.instance_header,
                 'show_inactive': wiz.show_inactive,
-                'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',
+                'currency_filtering': wiz.currency_id and wiz.currency_id.name or _('All'),
                 'account_type': wiz.account_type,
                 'granularity': wiz.granularity,
                 'instance_header': wiz.instance_header,
