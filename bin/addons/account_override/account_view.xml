@@ -50,7 +50,7 @@
             </field>
         </record>
 
-    <!-- Tree view for Balance by Account result -->
+    <!-- Tree view for Balance by Account result: granularity by parent account -->
         <record model="ir.ui.view" id="balance_account_tree">
             <field name="name">balance.account.tree</field>
             <field name="model">account.account</field>
@@ -68,6 +68,26 @@
                     <field name="activation_date" invisible="1"/>
                     <field name="inactivation_date" invisible="1"/>
                     <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+        
+     <!-- Tree view for Balance by Account result: granularity by balance account -->
+        <record model="ir.ui.view" id="balance_account_flat">
+            <field name="name">balance.account.flat</field>
+            <field name="model">account.account</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree colors="blue:type in ('view');black:type in ('other','receivable','payable','consolidation');gray:type in ('closed')" string="Chart of accounts">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="note" invisible="1"/>
+                    <field name="type" invisible="1"/>
+                    <field name="user_type" invisible="1"/>
+                    <field name="balance"/>
+                    <field name="activation_date" invisible="1"/>
+                    <field name="inactivation_date" invisible="1"/>
                 </tree>
             </field>
         </record>

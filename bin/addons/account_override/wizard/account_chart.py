@@ -54,13 +54,21 @@ class account_chart(osv.osv_memory):
         'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
         'account_type': fields.selection([
             ('all', 'All'),
-            ('pl','Profit & Loss'),
-            ('bl','Balance Sheet'),
+            ('pl', 'Profit & Loss'),
+            ('bl', 'Balance Sheet'),
         ], 'B/S / P&L account', required=True),
+        'granularity': fields.selection([
+            ('account', 'By balance account'),
+            ('parent', 'By parent account'),
+        ], 'Granularity', required=True),
     }
 
     _defaults = {
+        'show_inactive': lambda *a: False,
+        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
         'is_initial_balance_available': True,
+        'account_type': 'all',
+        'axis': 'parent',
     }
 
     def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
@@ -98,8 +106,8 @@ class account_chart(osv.osv_memory):
                 context['report_types'] = [ 'asset', 'liability', ]
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
-
         result = super(account_chart, self).account_chart_open_window(cr, uid, ids, context=context)
+        
         # add 'active_test' to the result's context; this allows to show or hide inactive items
         data = self.read(cr, uid, ids, [], context=context)[0]
         context = eval(result['context'])
@@ -119,9 +127,13 @@ class account_chart(osv.osv_memory):
         self._update_context(cr, uid, ids, context=context)
         result['context'] = unicode(context)
 
-        # UF-1718: Add a link on each account to display linked journal items
+        xmlid = 'balance_account_tree'
+        if data['granularity'] == 'account':
+            # flat version, not drillable, only final accounts
+            xmlid = 'balance_account_flat'
+            result['domain'] = [ ('type', '!=', 'view'), ]
         try:
-            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'balance_account_tree') or False
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', xmlid) or False
         except:
             # Exception is for account tests that attempt to read balance_account_tree that doesn't exists
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_tree')
@@ -130,11 +142,6 @@ class account_chart(osv.osv_memory):
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
         return result
-
-    _defaults = {
-        'show_inactive': lambda *a: False,
-        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
-    }
 
     def button_export(self, cr, uid, ids, context=None):
         """

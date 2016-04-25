@@ -24,7 +24,9 @@
                     <xpath expr="/form/group[2]" position="before">
                         <separator string="Accounts" colspan="4"/>
                         <field name="show_inactive"/>
+                        <newline/>
                         <field name="account_type"/>
+                        <field name="granularity"/>
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>

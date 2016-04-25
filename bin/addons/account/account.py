@@ -266,8 +266,6 @@ class account_account(osv.osv):
                 ]
                 res = self.search(cr, uid, domain, context=context)
 
-        res = self.search(cr, uid, domain, context=context)
-
         return res
 
     def __compute(self, cr, uid, ids, field_names, arg=None, context=None,
