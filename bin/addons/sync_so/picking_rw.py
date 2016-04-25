@@ -279,27 +279,36 @@ class shipment(osv.osv):
         '''
         Create the shipment from an existing draft shipment, then perform the ship
         '''
+        if context is None:
+            context = {}
         # from the picking Id, search for the shipment
         ship = self.browse(cr, uid, ship_id, context=context)
-        
+
         # Objects
         ship_proc_obj = self.pool.get('shipment.processor')
         ship_proc_vals = {
             'shipment_id': ship.id,
             'address_id': ship.address_id.id,
         }
+        pack_families = ship_dict.get('pack_family_memory_ids', False)
+        if not pack_families:
+            raise Exception, "This Ship " + ship.name + " is empty!"
+
+        # US-803: point 9: If the ship contains description, add it to the context and will be added while creating the ship
+        # description is "cloned" to all ship lines, so just only get once
+        for line in pack_families:
+            if line['description_ppl']:
+                context['description_ppl'] = line['description_ppl']
+                break
+
         wizard_line_obj = self.pool.get('shipment.family.processor')
         proc_id = ship_proc_obj.create(cr, uid, ship_proc_vals, context=context)
         ship_proc_obj.create_lines(cr, uid, proc_id, context=context)
         wizard = ship_proc_obj.browse(cr, uid, proc_id, context=context)
 
-        pack_families = ship_dict.get('pack_family_memory_ids', False)
-        if not pack_families:
-            raise Exception, "This Ship " + ship.name + " is empty!"
-        
         for family in wizard.family_ids:
             wizard_line_obj.write(cr, uid, [family.id], {'selected_number': 0,}, context=context)
-        
+
         # Reset the selected packs for shipment, because by a wizard, it sets total pack!
         for family in wizard.family_ids:
             ppl_name = family.ppl_id and family.ppl_id.name or False
@@ -372,6 +381,49 @@ class stock_picking(osv.osv):
                  'for_shipment_replicate': False,
                  'rw_force_seq': -1,
                  }
+
+    #US-803: Tricky case: when saving the ship description, if the ship message has not been sent, this description must be completed into the message!
+    def change_description_save(self, cr, uid, ids, context=None):
+        # Check if there is any ship message UNSENT related to this picking
+        picks = self.browse(cr, uid, ids, context=context)
+        if picks and picks[0]:
+            # get the current pick which has been changed in description
+            pick = picks[0]
+            usb_entity = self._get_usb_entity_type(cr, uid)
+            if pick and pick.shipment_id and usb_entity == self.REMOTE_WAREHOUSE: # only special handle when it's in RW
+                # Now, check if there is any sync message UNSENT for this shipment
+                rule_obj = self.pool.get("sync.client.message_rule")
+                msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
+                remote_call = "shipment.usb_create_shipment"
+                # Get only the unsent ships, normal there should be a minimum numbers of msg unsent
+                shipmsgs = msg_to_send_obj.search(cr, uid, [('remote_call', '=', remote_call), ('sent', '=', False)], context=context)
+                for s in shipmsgs:
+                    identifier = msg_to_send_obj.read(cr, uid, s, ['identifier'])['identifier']
+                    # build the identifier for the given pick
+                    shipment_name = "shipment/" + str(pick.shipment_id.id) + "/RW_"
+                    if shipment_name in identifier:
+                        # if it's related to the current pick, then start to update the message 
+                        arguments = msg_to_send_obj.read(cr, uid, s, ['arguments'])['arguments']
+                        st = arguments.find('\'description_ppl\': False')
+                        if st >= 0: # if the original description is empty, normally on creation of the message, then search for text with False
+                            old_desc = '\'description_ppl\': False'
+                        else:
+                            # otherwise, search for the old desc 
+                            st = arguments.find('\'description_ppl\': ')
+                            ende = arguments.find('\',',st)
+                            old_desc = arguments[st:ende + 1]
+                        
+                        # build the new desc, if it's empty -> False
+                        new_desc = '\'description_ppl\': False'                        
+                        if pick.description_ppl:
+                            new_desc = '\'description_ppl\': \'' + pick.description_ppl + '\''
+                        
+                        # replace the desc in argument and save it into the message
+                        arguments = arguments.replace(old_desc, new_desc)
+                        msg_to_send_obj.write(cr, uid, s, {'arguments':arguments}, context=context)
+                        break # One pick is only valid for one ship, no need to go further
+        
+        return super(stock_picking, self).change_description_save(cr, uid, ids, context=context)
 
     def cancel_moves_before_process(self, cr, uid, pick_ids, context=None):
         if context is None:
@@ -521,6 +573,10 @@ class stock_picking(osv.osv):
         else:
             raise Exception, "Location cannot be empty"
 
+        # US-803: point 20. Added the price currency for IN line
+        if data['price_currency_id'] and data['price_currency_id']['id']:
+            price_currency_id = self.pool.get('res.currency').find_sd_ref(cr, uid, xmlid_to_sdref(data['price_currency_id']['id']), context=context)
+         
         if data['reason_type_id'] and data['reason_type_id']['id']:
             reason_type_id = self.pool.get('stock.reason.type').find_sd_ref(cr, uid, xmlid_to_sdref(data['reason_type_id']['id']), context=context)
         else:
@@ -1123,7 +1179,12 @@ class stock_picking(osv.osv):
                     self._logger.info(message)
                     return message
 
-                pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft'])], context=context)
+                condition = [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft'])]
+                #US-803 Add also the backorder if exist to the search condition for retrieving the correct PICK
+                if pick_dict['backorder_id'] and pick_dict['backorder_id']['name']:
+                    condition.append(('name', '=', pick_dict['backorder_id']['name']))
+                
+                pick_ids = self.search(cr, uid, condition, context=context)
                 if not pick_ids:
                     pick_ids = self.search(cr, uid, [('origin', '=', origin), ('subtype', '=', 'picking'), ('state', 'in', ['draft','confirmed', 'assigned'])], context=context)
                 if pick_ids:
