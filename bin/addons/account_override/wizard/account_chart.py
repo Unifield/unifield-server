@@ -76,7 +76,8 @@ class account_chart(osv.osv_memory):
         # US-1179 fields
         'initial_balance': fields.boolean("Include initial balances",
             help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
-        'is_initial_balance_available': fields.function(_get_fake, method=True, type='boolean', string="Is initial balance filter available ?"),
+        'is_initial_balance_available': fields.function(_get_fake, method=True,
+            type='boolean', string="Is initial balance filter available ?"),
         'account_type': fields.selection([
             ('all', 'All'),
             ('pl', 'Profit & Loss'),
@@ -86,7 +87,8 @@ class account_chart(osv.osv_memory):
             ('account', 'By balance account'),
             ('parent', 'By parent account'),
         ], 'Granularity', required=True),
-        'instance_header': fields.function(_get_instance_header, type='string', method=True, string='Instances'),
+        'instance_header': fields.function(_get_instance_header, type='string',
+            method=True, string='Instances'),
     }
 
     _defaults = {

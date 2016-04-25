@@ -26,6 +26,32 @@ from time import strftime
 
 class account_analytic_chart(osv.osv_memory):
     _inherit = "account.analytic.chart"
+    
+    def _get_instance_header(self, cr, uid, ids, field_names, args,
+        context=None):
+        def get_codes(instance_recs):
+            instance_obj = self.pool.get('msf.instance')
+            if not instance_recs:
+                # get mission instances
+                instance_ids = instance_obj.search(cr, uid, [
+                        ('instance_to_display_ids', '=', True),
+                    ], context=context)
+                if instance_ids:
+                    instance_recs = instance_obj.browse(cr, uid, instance_ids,
+                        context=context)
+                else:
+                    instance_recs = []
+            return [ i.code for i in instance_recs ]
+        
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for rec in self.browse(cr, uid, ids, context=context):
+            res[rec.id] = ', '.join(get_codes(rec.instance_ids))
+        return res
+    
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
@@ -33,6 +59,10 @@ class account_analytic_chart(osv.osv_memory):
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
         'period_from': fields.many2one('account.period', 'From'),  # UTP-1030/13
         'period_to': fields.many2one('account.period', 'To'),  # UTP-1030/13
+        
+        # US-1179 fields
+        'instance_header': fields.function(_get_instance_header, type='string',
+            method=True, string='Instances'),
     }
 
     _defaults = {
@@ -137,9 +167,11 @@ class account_analytic_chart(osv.osv_memory):
                 'to_period_header': wiz.period_to and wiz.period_to.name or False,
                 'from_date': wiz.period_from and wiz.period_from.date_start or '',
                 'to_date': wiz.period_to and wiz.period_to.date_stop or '',
-                'instances': wiz.instance_ids and ','.join([x.name for x in wiz.instance_ids]) or '',
-                'show_inactive': wiz.show_inactive and 'X' or '',
-                'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',
+                'show_inactive': wiz.show_inactive,
+                'currency_filtering': wiz.currency_id and wiz.currency_id.name or _('All'),
+                'account_type': wiz.account_type,
+                'granularity': wiz.granularity,
+                'instance_header': wiz.instance_header,
             }
         # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
         currency_name = _("No one specified")
