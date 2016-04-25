@@ -563,9 +563,9 @@ class procurement_request(osv.osv):
                         request_name = request.name
                         raise osv.except_osv(_('Error'), _('Please correct the line %s of the %s: the supplier is required for the procurement method "On Order" !') % (line_number, request_name))
                     # an Internal Request without product can only have Internal, Intersection or Intermission partners.
-                    elif line.supplier and not line.product_id and line.order_id.procurement_request and line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+                    elif line.supplier and not line.product_id and line.order_id.procurement_request and line.supplier.partner_type not in ['internal', 'section', 'intermission', 'esc']:
                         raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
-                        the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
+                        the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.
                         """))
             message = _("The internal request '%s' has been confirmed (nb lines: %s).") % (request.name, len(request.order_line))
             proc_view = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')

@@ -1373,7 +1373,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 }, context=context)
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
-                    if not line.product_id:
+                    if not line.product_id and line.supplier.partner_type != 'esc':
                         raise osv.except_osv(_('Warning'), _("""You can't confirm a Sale Order that contains
                         lines with procurement method 'On Order' and without product. Please check the line %s
                         """) % line.line_number)
@@ -2247,7 +2247,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
-    def _get_procurement_order_data(self, line, order, rts_date, context=None):
+    def _get_procurement_order_data(self, line, order, rts_date, product_id=False, context=None):
         """
         Get data for the  procurement order creation according to
         sale.order.line and sale.order values.
@@ -2310,8 +2310,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
-        if line.product_id:
-            proc_data['product_id'] = line.product_id.id
+        if not product_id and line.product_id:
+            product_id = line.product_id.id
+
+        if product_id:
+            proc_data['product_id'] = product_id
 
         return proc_data
 
@@ -2341,6 +2344,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
         tl_obj = self.pool.get('tender.line')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -2421,9 +2425,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
+                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id):
+                    if not line.product_id and order.procurement_request:
+                        continue
+
+                    product_id = line.product_id.id
+                    if not order.procurement_request and not line.product_id and line.comment:
+                        product_id = \
+                            data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+
                     rts = self._get_date_planned(order, line, prep_lt, db_date_format)
-                    proc_data = self._get_procurement_order_data(line, order, rts, context=context)
+                    proc_data = self._get_procurement_order_data(line, order, rts, product_id=product_id, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
