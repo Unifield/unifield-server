@@ -700,7 +700,7 @@ class audittrail_rule(osv.osv):
                             if not new_value and tr_ids:
                                 old_value = self.pool.get('ir.translation').read(cr, uid, tr_ids[0], ['value'])['value']
 
-                            if not tr_ids:
+                            if context.get('translate_fields') and not tr_ids:
                                 continue
 
                         if old_value != new_value:
@@ -720,6 +720,8 @@ class audittrail_rule(osv.osv):
                               'old_value': old_value,
                             })
                             log_line_obj.create(cr, uid, line)
+
+        context['translate_fields'] = True
 
     def get_sequence(self, cr, uid, obj_name, res_id, context=None):
         log_seq_obj = self.pool.get('audittrail.log.sequence')
