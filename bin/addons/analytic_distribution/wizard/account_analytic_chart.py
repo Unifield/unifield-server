@@ -61,6 +61,10 @@ class account_analytic_chart(osv.osv_memory):
         'period_to': fields.many2one('account.period', 'To'),  # UTP-1030/13
         
         # US-1179 fields
+        'granularity': fields.selection([
+            ('account', 'By analytic account'),
+            ('parent', 'By parent account'),
+        ], 'Granularity', required=True),
         'instance_header': fields.function(_get_instance_header, type='string',
             method=True, string='Instances'),
     }
@@ -169,7 +173,6 @@ class account_analytic_chart(osv.osv_memory):
                 'to_date': wiz.period_to and wiz.period_to.date_stop or '',
                 'show_inactive': wiz.show_inactive,
                 'currency_filtering': wiz.currency_id and wiz.currency_id.name or _('All'),
-                'account_type': wiz.account_type,
                 'granularity': wiz.granularity,
                 'instance_header': wiz.instance_header,
             }

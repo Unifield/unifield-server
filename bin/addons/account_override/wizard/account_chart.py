@@ -96,7 +96,7 @@ class account_chart(osv.osv_memory):
         'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
         'is_initial_balance_available': True,
         'account_type': 'all',
-        'axis': 'parent',
+        'granularity': 'parent',
     }
 
     def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,

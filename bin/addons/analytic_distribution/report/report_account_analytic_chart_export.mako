@@ -102,6 +102,7 @@ header_fields = [
     (_('To'), 'to_period_header'),
     (_('Instances'), 'instance_header'),
     (_('Show inactive accounts?'), 'show_inactive', 'boolean'),
+    (_('Granularity'), 'granularity', 'selection', {'account': _('By analytic account'), 'parent': _('By parent account'), }),
     (_('Filtering on currency'), 'currency_filtering'),
 ]
 %>
@@ -120,7 +121,7 @@ header_fields = [
       <Data ss:Type="String">${ t[0] or ''|x }</Data>
     </Cell>
     <Cell ss:StyleID="header_part_center">
-      <Data ss:Type="String">${( data.get('wiz_fields', False) and data.get('wiz_fields').get(t[1], False) and data.get('wiz_fields').get(t[1]) or '')|x}</Data>
+      <Data ss:Type="String">${header_val|x}</Data>
     </Cell>
   </Row>
 % endfor
