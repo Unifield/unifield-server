@@ -652,6 +652,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 )
             period_ids = [form.period_id.id]
         else:
+            # NOTE: for the end year reval, IB entries of period 0 will be
+            # included
             period_ids = []
             for period in form.fiscalyear_id.period_ids:
                 if period.number < 13:
@@ -664,7 +666,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Check periods state
         periods_not_field_closed = []
         for period in period_obj.browse(cr, uid, period_ids, context=context):
-            if period.state in ['created', 'draft']:
+            if period.number != 0 and period.state in ['created', 'draft']:
                 periods_not_field_closed.append(period.name)
 
         # check if revaluation has already been run for this period
