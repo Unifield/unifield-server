@@ -102,21 +102,22 @@ class account_chart(osv.osv_memory):
     def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
         context=None):
         res = {}
-        ib_available = fiscalyear_id or False
-        if ib_available and fiscalyear_id and period_from:
-            # allow IB entries if a FY selected and period start = FY 1st period
-            fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
-                fiscalyear_id, context=context)
-            period_from_rec = self.pool.get('account.period').browse(cr,
-                uid, period_from, context=context)
-            ib_available = period_from_rec.date_start == fy_rec.date_start
 
-        """
-        FIX ME: if no periods, is_initial_balance_available to False
-        (IB read only)
+        ib_available = fiscalyear_id
+        if ib_available:
+            if period_from:
+                # allow IB entries if a FY selected and period start = FY 1st period
+                fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
+                    fiscalyear_id, context=context)
+                period_from_rec = self.pool.get('account.period').browse(cr,
+                    uid, period_from, context=context)
+                ib_available = period_from_rec.date_start == fy_rec.date_start
+            else:
+                ib_available = False
+
         res['value'] = {'is_initial_balance_available': ib_available, }
         if not ib_available:
-            res['value']['initial_balance'] = False"""
+            res['value']['initial_balance'] = False
         return res
 
     def _update_context(self, cr, uid, rec, context=None):
