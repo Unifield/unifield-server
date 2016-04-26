@@ -134,7 +134,7 @@ class stock_production_lot(osv.osv):
         '''
         
         cr.execute('''select id, name from stock_production_lot where name in  
-                (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id) as foo_bn where amount_bn>1) order by name, id;''')
+                (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1) order by name, id;''')
         all_dup_batches = cr.dictfetchall()
         self._logger.info("__________Start to migrate duplicate batch objects in instance: %s - with total of %s duplicate batches!" % (cr.dbname, len(all_dup_batches)))
         
