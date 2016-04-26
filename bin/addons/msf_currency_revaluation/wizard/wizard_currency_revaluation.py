@@ -652,11 +652,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 )
             period_ids = [form.period_id.id]
         else:
-            # NOTE: for the end year reval, IB entries of period 0 will be
-            # included
+            # NOTE: US-1251 exclude IB entries period 0 for monthly and yearly
             period_ids = []
             for period in form.fiscalyear_id.period_ids:
-                if period.number < 13:
+                if 0 < period.number < 13:
                     period_ids.append(period.id)
         if not period_ids:
             raise osv.except_osv(
