@@ -51,7 +51,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
     def _sale_ustr(self, string):
         return tools.ustr(string)
 
-    def _get_orders(self, report):
+    def _get_orders(self, report, grouped=False, only_bo=False):
         orders = []
         for order_id in report.order_ids:
             if self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)]):
@@ -60,6 +60,13 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         self._nb_orders = len(orders)
 
         for order in orders:
+            if only_bo:
+                for line in self._get_lines(order, grouped=grouped, only_bo=only_bo):
+                    # A line existe, just break the second loop
+                    break
+                else:
+                    # No line exist for this order, go to the next one
+                    continue
             yield self.pool.get('sale.order').browse(self.cr, self.uid, order)
 
         raise StopIteration
@@ -78,7 +85,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
         raise StopIteration
 
-    def _get_lines(self, order, grouped=False, only_bo=False):
+    def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
@@ -87,7 +94,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         if only_bo:
             grouped = True
 
-        for line in self._get_order_line(order.id):
+        if not isinstance(order_id, int):
+            order_id = order_id.id
+
+        for line in self._get_order_line(order_id):
             if not grouped:
                 keys = []
             lines = []
