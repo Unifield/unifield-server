@@ -196,8 +196,23 @@ class hr_payroll_employee_import(osv.osv_memory):
         Check that:
         - no more than 1 employee exist for "missioncode + staff_id + uniq_id"
         - only one employee have this staffcode
+        :return (ok, what_changed)
+        :rtype tuple
         """
-        # Some verifications
+        def changed(mission1, mission2, staff1, staff2, unique1, unique2):
+            res = None
+            if mission1 != mission2:
+                res = 'mission'
+            elif staff1 != staff2:
+                res = 'staff'
+            elif unique1 != unique2:
+                res = 'unique'
+            return res
+
+        res = False
+        what_changed = None
+
+        # Checks
         if not staffcode or not missioncode or not staff_id or not uniq_id:
             name = employee_name or _('Nonamed Employee')
             message = _('Unknown error for employee %s') % name
@@ -210,24 +225,16 @@ class hr_payroll_employee_import(osv.osv_memory):
             elif not uniq_id:
                 message = _('No "id_unique" found for employee %s!') % (name,)
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
-            return False
+            return (res, what_changed)
+
         # Check employees
         search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
         if search_ids and len(search_ids) > 1:
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': _("Database have more than one employee with the unique code of this employee: %s") % (employee_name,)})
-            return False
+            return (res, what_changed)
+
         # Check staffcode
         staffcode_ids = self.pool.get('hr.employee').search(cr, uid, [('identification_id', '=', staffcode)])
-        what_changed = None
-        def changed(mission1, mission2, staff1, staff2, unique1, unique2):
-            res = None
-            if mission1 != mission2:
-                res = 'mission'
-            elif staff1 != staff2:
-                res = 'staff'
-            elif unique1 != unique2:
-                res = 'unique'
-            return res
         if staffcode_ids:
             message = "Several employee have the same ID code: "
             employee_error_list = []
@@ -241,8 +248,10 @@ class hr_payroll_employee_import(osv.osv_memory):
             if employee_error_list:
                 message += ' ; '.join([employee_name] + employee_error_list)
                 self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
-                return False, what_changed
-        return True, what_changed
+                return (res, what_changed)
+
+        res = True
+        return (res, what_changed)
 
     def read_employee_infos(self, cr, uid, line='', context=None):
         """
