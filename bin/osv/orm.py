@@ -4639,7 +4639,7 @@ class orm(orm_template):
         if type(ids) in (int, long):
             ids = [ids]
         query = 'SELECT count(1) FROM "%s"' % (self._table)
-        cr.execute(query + "WHERE ID IN %s LIMIT 1", (tuple(ids),))
+        cr.execute(query + "WHERE ID IN %s", (tuple(ids),))
         return cr.fetchone()[0] == len(ids)
 
     def check_recursion(self, cr, uid, ids, context=None, parent=None):
@@ -4671,7 +4671,7 @@ class orm(orm_template):
             for i in range(0, len(ids), cr.IN_MAX):
                 sub_ids_parent = ids_parent[i:i+cr.IN_MAX]
                 cr.execute(query, (tuple(sub_ids_parent),))
-                ids_parent2.extend(filter(None, [x[0] for x in cr.fetchall()]))
+                ids_parent2.extend([x[0] for x in cr.fetchall() if x[0] is not None])
             ids_parent = ids_parent2
             for i in ids_parent:
                 if i in ids:
