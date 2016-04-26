@@ -71,6 +71,7 @@ class account_analytic_chart(osv.osv_memory):
 
     _defaults = {
         'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
+        'granularity': 'parent',
     }
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
