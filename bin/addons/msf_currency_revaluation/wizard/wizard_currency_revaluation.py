@@ -635,7 +635,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                   "Please check 'Included in revaluation' "
                   "for at least one account in account form."))
 
-        special_period_ids = [p.id for p in form.fiscalyear_id.period_ids if p.special == True]
+        special_period_ids = [ p.id for p in form.fiscalyear_id.period_ids \
+            if p.special == True and p.number != 0 ]
         if not special_period_ids:
             raise osv.except_osv(_('Error!'),
                                  _('No special period found for the fiscalyear %s') %
