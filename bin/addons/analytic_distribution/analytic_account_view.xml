@@ -170,6 +170,24 @@
             </field>
         </record>
 
+    <!-- Flat list view for Balance by analytic accounts -->
+        <record id="balance_analytic_flat" model="ir.ui.view">
+            <field name="name">balance.analytic.flat</field>
+            <field name="model">account.analytic.account</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="25"/>
+            <field name="arch" type="xml">
+                <tree string="Analytic account">
+                    <field name="category"/>
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="type"/>
+                    <field name="balance"/>
+                    <field name="parent_id" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
     <!-- Tree view for Default analytic account tree view -->
         <record id="view_account_analytic_account_tree_inherit" model="ir.ui.view">
             <field name="name">account.analytic.account.tree.inherit</field>

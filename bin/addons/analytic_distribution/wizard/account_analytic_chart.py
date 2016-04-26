@@ -124,9 +124,13 @@ class account_analytic_chart(osv.osv_memory):
         # Display FP on result
         context['display_fp'] = True
         result['context'] = unicode(context)
-        # UF-1718: Add a link on each account to display linked analytic items
+        xmlid = 'balance_analytic_tree'
+        if wiz.granularity and wiz.granularity == 'account':
+            # flat version, not drillable, only final accounts
+            xmlid = 'balance_analytic_flat'
+            result['domain'] = [ ('type', '!=', 'view'), ]
         try:
-            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'balance_analytic_tree')
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', xmlid)
         except:
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_analytic_account_tree')
         finally:
@@ -147,6 +151,9 @@ class account_analytic_chart(osv.osv_memory):
             args = [('filter_active', '=', True)]
             if wiz.show_inactive == True:
                 args += [('filter_active', 'in', [True, False])]
+            if wiz.granularity and wiz.granularity == 'account':
+                args.append(('type', '!=', 'view'))
+
             if wiz.period_from and wiz.period_to and \
                 wiz.period_from.date_start > wiz.period_to.date_start:
                 raise osv.except_osv(_("Warning"),

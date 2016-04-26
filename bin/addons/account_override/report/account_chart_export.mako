@@ -105,7 +105,7 @@ header_fields = [
     (_('Instances'), 'instance_header'),
     (_('Show inactive accounts ?'), 'show_inactive', 'boolean'),
     (_('B/S / P&L account'), 'account_type', 'selection', {'all': _('All'), 'pl': _('Profit & Loss'), 'bs': _('Balance Sheet'), }), 
-    (_('Granularity'), 'granularity', 'selection', {'account': _('By balance account'), 'parent': _('By parent account'), }),
+    (_('Granularity'), 'granularity', 'selection', {'account': _('By account'), 'parent': _('By parent account'), }),
     (_('Filtering on currency'), 'currency_filtering'),
 ]
 %>

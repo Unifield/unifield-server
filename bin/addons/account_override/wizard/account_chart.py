@@ -84,7 +84,7 @@ class account_chart(osv.osv_memory):
             ('bs', 'Balance Sheet'),
         ], 'B/S / P&L account', required=True),
         'granularity': fields.selection([
-            ('account', 'By balance account'),
+            ('account', 'By account'),
             ('parent', 'By parent account'),
         ], 'Granularity', required=True),
         'instance_header': fields.function(_get_instance_header, type='string',
