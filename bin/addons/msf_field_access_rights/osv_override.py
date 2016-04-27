@@ -84,7 +84,6 @@ def create(self, cr, uid, vals, context=None):
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
     if context.get('sync_update_execution'):
-        
         # create the record. we will sanitize it later based on domain search check
         create_result = super_create(self, cr, uid, vals, context)
 
@@ -101,9 +100,7 @@ def create(self, cr, uid, vals, context=None):
                 rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
                 if not rules_pool:
                     return create_result
-                    
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
-                
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
@@ -118,12 +115,9 @@ def create(self, cr, uid, vals, context=None):
 
                     # for each rule, check the record against the rule domain.
                     for rule in rules:
-
                         is_match = True
-
                         if rule.domain_text:
                             is_match = _record_matches_domain(self, cr, create_result, rule.domain_text)
-                        
                         if is_match:
                             # record matches the domain so modify values based on rule lines
                             for line in rule.field_access_rule_line_ids:
@@ -142,9 +136,7 @@ def create(self, cr, uid, vals, context=None):
                 return create_result
         else:
             return False
-    else:
-        res = super_create(self, cr, uid, vals, context)
-        return res
+    return super_create(self, cr, uid, vals, context)
 
 orm.orm.create = create
 
@@ -270,7 +262,6 @@ def write(self, cr, uid, ids, vals, context=None):
         return super_write(self, cr, uid, ids, vals, context=context)
 
     # get rules for this model
-    model_name = self._name
     user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
     groups = [x.id for x in user.groups_id]
 
@@ -381,7 +372,6 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
             return fields_view
 
         # get rules for this model
-        model_name = self._name
         user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
         groups = [x.id for x in user.groups_id]
 

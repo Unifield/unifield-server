@@ -218,9 +218,9 @@ class NetRPC:
         #self._logger.debug("rpc message : %s", msg)
         msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
-            raw_size = len(msg)
+            #raw_size = len(msg)
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
-            gzipped_size = len(msg)
+            #gzipped_size = len(msg)
             #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
             #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         size = len(msg)
@@ -253,9 +253,9 @@ class NetRPC:
                 raise RuntimeError, "socket connection broken"
             msg = msg + chunk
         if msg.startswith(GZIP_MAGIC):
-            gzipped_size = len(msg)
+            #gzipped_size = len(msg)
             msg = zlib.decompress(msg)
-            raw_size = len(msg)
+            #raw_size = len(msg)
             #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
             #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)

@@ -739,9 +739,6 @@ class orm_template(object):
             if x=='.id': return [x]
             return x.replace(':id','/id').replace('.id','/.id').split('/')
         fields_to_export = [fsplit(x) for x in fields_to_export]
-        fields_export = fields_to_export + []
-        warning = ''
-        warning_fields = []
         datas = []
         for row in self.browse(cr, uid, ids, context):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
@@ -959,7 +956,6 @@ class orm_template(object):
 
         if config.get('import_partial', False) and filename:
             data = pickle.load(file(config.get('import_partial')))
-            original_value = data.get(filename, 0)
 
         from osv import except_osv
         position = 0
@@ -4153,13 +4149,15 @@ class orm(orm_template):
         if self._log_access:
             cr.execute('SELECT id, write_date FROM '+self._table+' WHERE id IN %s AND write_date IS NOT NULL', (tuple(ids),))
             res = cr.fetchall()
+            if res:
+                store_function_get_self_name = self.pool._store_function.get(self._name, [])
             for r in res:
                 if r[1]:
                     field_dict.setdefault(r[0], [])
                     field_dict_append = field_dict[r[0]].append
                     res_date = time.strptime((r[1])[:19], '%Y-%m-%d %H:%M:%S')
                     write_date = datetime.datetime.fromtimestamp(time.mktime(res_date))
-                    for i in self.pool._store_function.get(self._name, []):
+                    for i in store_function_get_self_name:
                         if i[5]:
                             up_write_date = write_date + datetime.timedelta(hours=i[5])
                             if datetime.datetime.now() < up_write_date:
@@ -4172,10 +4170,14 @@ class orm(orm_template):
         keys_append = keys.append
 
         for f in fields:
-            if self._columns[f]._multi not in keys:
-                keys_append(self._columns[f]._multi)
-            todo.setdefault(self._columns[f]._multi, [])
-            todo[self._columns[f]._multi].append(f)
+            key = self._columns[f]._multi
+            if key not in keys:
+                keys_append(key)
+        todo = dict((k, []) for k in keys)
+        for f in fields:
+            key = self._columns[f]._multi
+            todo[key].append(f)
+
         for key in keys:
             val = todo[key]
             if key:
@@ -4219,18 +4221,19 @@ class orm(orm_template):
                 for f in val:
                     # uid == 1 for accessing objects having rules defined on store fields
                     result = self._columns[f].get(cr, self, ids, f, 1, context=context)
-                    for r in result.keys():
-                        if field_flag:
+                    if field_flag:
+                        for r in result.keys():
                             if r in field_dict.keys():
                                 if f in field_dict[r]:
                                     result.pop(r)
+                    if result:
+                        current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
                     for id, value in result.items():
                         if self._columns[f]._type in ('many2one', 'one2one'):
                             try:
                                 value = value[0]
                             except:
                                 pass
-                        current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
                         id_param_dict.setdefault(id, {})
                         param_list = id_param_dict[id].setdefault('param_list', [])
                         param_list.append((self._columns[f]._symbol_set[1](value)))

@@ -143,7 +143,6 @@ class product_history_consumption(osv.osv):
             context = {}
 
         obj = self.browse(cr, uid, ids[0], context=context)
-        products = []
         product_ids = []
 
         # Update the locations in context
@@ -154,8 +153,6 @@ class product_history_consumption(osv.osv):
             context.update({'location_id': location_ids})
 
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
-        nb_months = len(months)
-        total_consumption = {}
 
         if not months:
             raise osv.except_osv(_('Error'), _('You have to choose at least one month for consumption history'))
@@ -163,8 +160,7 @@ class product_history_consumption(osv.osv):
         if obj.nomen_manda_0:
             for report in self.browse(cr, uid, ids, context=context):
                 product_ids = []
-                products = []
-    
+
                 nom = False
                 # Get all products for the defined nomenclature
                 if report.nomen_manda_3:
@@ -181,12 +177,6 @@ class product_history_consumption(osv.osv):
                     field = 'nomen_manda_0'
                 if nom:
                     product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
-                    
-            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
-                # Check if the product is not already on the report
-                if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
 
         if obj.sublist_id:
             context.update({'search_default_list_ids': obj.sublist_id.id})
@@ -550,7 +540,8 @@ class product_product(osv.osv):
                                         ('consumption_id', '=', obj_id)]
                     if context.get('amc') == 'AMC':
                         cons_prod_domain.append(('cons_type', '=', 'amc'))
-                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                        cons_id = cons_prod_obj.search(cr, uid,
+                                cons_prod_domain, context=context)
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:
@@ -562,7 +553,8 @@ class product_product(osv.osv):
                                                            'value': consumption}, context=context)
                     else:
                         cons_prod_domain.append(('cons_type', '=', 'fmc'))
-                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                        cons_id = cons_prod_obj.search(cr, uid,
+                                cons_prod_domain, context=context)
                         if cons_id:
                             consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
                         else:

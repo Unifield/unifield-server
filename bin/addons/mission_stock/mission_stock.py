@@ -213,7 +213,6 @@ class stock_mission_report(osv.osv):
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
 
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        line_ids = []
 
         # Create a local report if no exist
         if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
@@ -259,7 +258,7 @@ class stock_mission_report(osv.osv):
                             AND p.id = smrl.product_id)
                         ''' % report['id'])
             for product in cr.fetchall():
-                line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report['id']}, context=context))
+                line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report['id']}, context=context)
 
             # Don't update lines for full view or non local reports
             if not report['local_report']:
@@ -286,7 +285,6 @@ class stock_mission_report(osv.osv):
             # Update the update date on report
             self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
             logging.getLogger('MSR').info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
@@ -955,10 +953,6 @@ class stock_mission_report_line(osv.osv):
                                                 'product_id': line[0]}, context=context)
             else:
                 line_id = line_ids[0]
-
-            in_pipe = line[7] or 0.00
-            if not is_project:
-                in_pipe = (line[7] or 0.00) - (line[8] or 0.00)
 
             cr.execute("""UPDATE stock_mission_report_line SET
                     internal_qty=%s, stock_qty=%s,

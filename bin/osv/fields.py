@@ -919,7 +919,6 @@ class related(function):
     def _fnct_read(self, obj, cr, uid, ids, field_name, args, context=None):
         self._field_get2(cr, uid, obj, context)
         if not ids: return {}
-        relation = obj._name
         if self._type in ('one2many', 'many2many'):
             res = dict([(i, []) for i in ids])
         else:
@@ -930,10 +929,7 @@ class related(function):
             if not data:
                 continue
             t_data = data
-            relation = obj._name
             for i in range(len(self.arg)):
-                field_detail = self._relations[i]
-                relation = field_detail['object']
                 try:
                     if not t_data[self.arg[i]]:
                         t_data = False
@@ -941,6 +937,7 @@ class related(function):
                 except:
                     t_data = False
                     break
+                field_detail = self._relations[i]
                 if field_detail['type'] in ('one2many', 'many2many') and i != len(self.arg) - 1:
                     t_data = t_data[self.arg[i]][0]
                 elif t_data:
@@ -978,16 +975,18 @@ class related(function):
         if self._relations:
             return
         obj_name = obj._name
-        for i in range(len(self._arg)):
-            f = obj.pool.get(obj_name).fields_get(cr, uid, [self._arg[i]], context=context)[self._arg[i]]
-            self._relations.append({
-                'object': obj_name,
-                'type': f['type']
+        fields_get = obj.pool.get(obj_name).fields_get
+        self._relations_append = self._relations.append
 
+        field_dict = fields_get(cr, uid, self._arg, context=context)
+        for field_id, field in field_dict.items():
+            self._relations_append({
+                'object': obj_name,
+                'type': field['type']
             })
-            if f.get('relation',False):
-                obj_name = f['relation']
-                self._relations[-1]['relation'] = f['relation']
+            if field.get('relation', False):
+                obj_name = field['relation']
+                self._relations[-1]['relation'] = field['relation']
 
 # ---------------------------------------------------------
 # Dummy fields

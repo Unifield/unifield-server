@@ -784,6 +784,7 @@ class update_received(osv.osv):
         ir_model_data_obj = self.pool.get('ir.model.data')
 
         def check_xmlid(xmlid):
+            full_xmlid = xmlid
             module, sep, xmlid = xmlid.partition('.')
             assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % full_xmlid
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)

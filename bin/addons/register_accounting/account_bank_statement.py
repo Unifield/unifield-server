@@ -566,7 +566,7 @@ class account_bank_statement(osv.osv):
         # Prepare some values
         domain = [('journal_id.type', '=', st_type)]
         user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
-        instance_id = user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
+        #instance_id = user.company_id and user.company_id.instance_id and user.company_id.instance_id.id or False
         context.update({
             'journal_type': st_type,
             'search_default_open': 1,
@@ -1012,7 +1012,6 @@ class account_bank_statement_line(osv.osv):
 
         res = {}
         aal_obj = self.pool.get('account.analytic.line')
-        aml_obj = self.pool.get('account.move.line')
         for absl in self.browse(cr, uid, ids, context=context):
             # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines). So we keep only analytic lines with the same "name" than register line
             aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)), ('account_id.category', '=', 'FUNDING'), ('name', '=ilike', '%%%s' % absl.name)])
