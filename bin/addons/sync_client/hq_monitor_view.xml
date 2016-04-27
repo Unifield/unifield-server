@@ -51,6 +51,33 @@
         <menuitem id="sync_hq_monitor_menu" name="Synchronisation Instances Monitor"
             parent="hq_monitor_main_menu" sequence="10" action="sync_hq_monitor_action"/>
 
+        <record id="sync_hq_instance_version_tree" model="ir.ui.view">
+            <field name="name">sync.instance.version.tree</field>
+            <field name="model">sync.version.instance.monitor</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="200" />
+            <field name="arch" type="xml">
+                <tree hide_edit_button="1" hide_delete_button="1">
+                    <field name="instance_id" />
+                    <field name="version" />
+                    <field name="backup_date" />
+                    <field name="backup_path" />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="sync_hq_instance_version_action">
+            <field name="name">Version Instances Monitor</field>
+            <field name="res_model">sync.version.instance.monitor</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            <field name="domain">[('my_instance', '=', False)]</field>
+            <field name="view_id" ref="sync_hq_instance_version_tree" />
+        </record>
+
+        <menuitem id="sync_hq_instance_version_menu" name="Version Instances Monitor"
+            parent="hq_monitor_main_menu" sequence="10" action="sync_hq_instance_version_action"/>
+
 
     <record model="ir.ui.view" id="hq_monitor_configuration_tree_view">
         <field name="name">hq.monitor.tree</field>
