@@ -129,7 +129,7 @@ class account_analytic_chart(osv.osv_memory):
         if wiz.granularity and wiz.granularity == 'account':
             # flat version, not drillable, only final accounts
             xmlid = 'balance_analytic_flat'
-            result['domain'] = [ ('type', '!=', 'view'), ]
+            result['domain'] = "[ ('type', '!=', 'view'), ]"
         try:
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', xmlid)
         except:
