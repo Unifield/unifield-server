@@ -154,7 +154,7 @@ class account_chart(osv.osv_memory):
         self._update_context(cr, uid, ids, context=context)
         result['context'] = unicode(context)
 
-        domain = []
+        domain_tuples_str = []
         if data['account_type']:
             if data['account_type'] == 'pl':
                 rt = [ 'income', 'expense', ]
@@ -179,13 +179,15 @@ class account_chart(osv.osv_memory):
                         ], context=context)
                     if account_ids:
                         is_flat_view = True  # disable tree mode
-                        domain.append(('id', 'in', account_ids))
+                        domain_tuples_str.append("('id', 'in', [%s])" % (
+                            ','.join(map(str, account_ids)), ))
 
         xmlid = 'balance_account_tree'
         if is_flat_view:
             # flat version, not drillable, only final accounts
             xmlid = 'balance_account_flat'
-            domain.append(('type', '!=', 'view'))
+            domain_tuples_str.append("('type', '!=', 'view')")
+            result['domain'] = ''  # cancel drillable tree view start domain
         try:
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', xmlid) or False
         except:
@@ -195,8 +197,10 @@ class account_chart(osv.osv_memory):
             tree_view_id = tree_view_id and tree_view_id[1] or False
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
-        if domain:
-            result['domain'] = domain
+        if domain_tuples_str:
+           if not is_flat_view:
+                domain_tuples_str.insert(0, "('parent_id','=',False)")
+           result['domain'] = "[%s]" % (', '.join(domain_tuples_str), )
         return result
 
     def button_export(self, cr, uid, ids, context=None):
