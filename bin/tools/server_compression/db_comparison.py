@@ -153,6 +153,9 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
             values.pop('id')
 
             for field, value in values.items():
+                if field in ('menu_access', 'group_ids') and isinstance(value, list):
+                    # some list need to be sorted to be compared
+                    values[field] = sorted(values)
                 if isinstance(value, tuple) and len(value)==2:
                     # this is a many2one field
                     model = current_obj.__osv__['columns'][field].osv._name
