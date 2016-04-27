@@ -128,14 +128,10 @@ class account_chart(osv.osv_memory):
             # include IB entries
             context['period0'] = True
 
-        if rec.account_type:
-            if rec.account_type == 'pl':
-                context['report_types'] = [ 'income', 'expense', ]
-            elif rec.account_type == 'bl':
-                context['report_types'] = [ 'asset', 'liability', ]
-
     def account_chart_open_window(self, cr, uid, ids, context=None):
         result = super(account_chart, self).account_chart_open_window(cr, uid, ids, context=context)
+
+        account_obj = self.pool.get('account.account')
         
         # add 'active_test' to the result's context; this allows to show or hide inactive items
         data = self.read(cr, uid, ids, [], context=context)[0]
@@ -152,15 +148,44 @@ class account_chart(osv.osv_memory):
                 context['move_state'] = data['target_move']
         if data['output_currency_id']:
             context['output_currency_id'] = data['output_currency_id']
+        is_flat_view = data['granularity'] \
+            and data['granularity'] == 'account' or False
 
         self._update_context(cr, uid, ids, context=context)
         result['context'] = unicode(context)
 
+        domain = []
+        if data['account_type']:
+            if data['account_type'] == 'pl':
+                rt = [ 'income', 'expense', ]
+            elif data['account_type'] == 'bs':
+                rt = [ 'asset', 'liability', ]
+            else:
+                rt = False
+
+            if rt:
+                at_domain = [
+                    ('report_type', 'in' , rt),
+                ]
+                if 'asset' in rt or 'liability' in rt:
+                    # US-227 include tax account for BS accounts selection
+                    at_domain = [ '|', ('code', '=', 'tax') ] + at_domain
+                account_types_ids = self.pool.get(
+                    'account.account.type').search(cr, uid, at_domain,
+                        context=context)
+                if account_types_ids:
+                    account_ids = account_obj.search(cr, uid, [
+                            ('user_type', 'in', account_types_ids),
+                        ], context=context)
+                    if account_ids:
+                        is_flat_view = True  # disable tree mode
+                        domain.append(('id', 'in', account_ids))
+
         xmlid = 'balance_account_tree'
-        if data['granularity'] and data['granularity'] == 'account':
+        if is_flat_view:
             # flat version, not drillable, only final accounts
             xmlid = 'balance_account_flat'
-            result['domain'] = [ ('type', '!=', 'view'), ]
+            domain.append(('type', '!=', 'view'))
         try:
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', xmlid) or False
         except:
@@ -170,6 +195,8 @@ class account_chart(osv.osv_memory):
             tree_view_id = tree_view_id and tree_view_id[1] or False
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
+        if domain:
+            result['domain'] = domain
         return result
 
     def button_export(self, cr, uid, ids, context=None):
