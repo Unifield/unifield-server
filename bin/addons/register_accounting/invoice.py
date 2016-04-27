@@ -81,19 +81,17 @@ class account_invoice(osv.osv):
             context = {}
         res = {}
         acc_ml_obj = self.pool.get('account.move.line')
-        inv_obj = self.pool.get('account.invoice')
         acc_obj = self.pool.get('account.account')
+        acc_list = acc_obj.search(cr, uid, [('type', 'in', ['payable', 'receivable'])])
         for inv in self.browse(cr, uid, ids, context):
             res[inv.id] = 'none'
             if inv.move_id:
                 absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])], context=context)
-                account = inv_obj.browse(cr, uid, inv.id, context).account_id
-                if absl_ids and account:
+                account = inv.account_id
+                if absl_ids and account and (account.id in acc_list):
                     res[inv.id] = 'imported'
-                    acc_list = acc_obj.search(cr, uid, [('type', 'in', ['payable', 'receivable'])])
-                    acc_ml_id = acc_ml_obj.search(cr, uid, [('account_id', 'in', acc_list),
+                    acc_ml_id = acc_ml_obj.search(cr, uid, [('account_id', '=', account.id),
                                                             ('is_counterpart', '=', True),
-                                                            ('account_id', '=', inv.account_id.id),
                                                             ('move_id', '=', inv.move_id.id)], context=context)
                     acc_ml = acc_ml_obj.browse(cr, uid, acc_ml_id, context)
                     if acc_ml:
