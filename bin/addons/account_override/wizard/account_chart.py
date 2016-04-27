@@ -128,6 +128,32 @@ class account_chart(osv.osv_memory):
             # include IB entries
             context['period0'] = True
 
+    def _get_account_type_ids(self, cr, uid, account_type_val, context=None):
+        """
+        return filtered account type according to wizard 'account_type' field
+        """
+        res = []
+
+        if account_type_val:
+            if account_type_val == 'pl':
+                rt = [ 'income', 'expense', ]
+            elif account_type_val == 'bs':
+                rt = [ 'asset', 'liability', ]
+            else:
+                rt = False
+
+            if rt:
+                domain = [
+                    ('report_type', 'in' , rt),
+                ]
+                if 'asset' in rt or 'liability' in rt:
+                    # US-227 include tax account for BS accounts selection
+                    domain = [ '|', ('code', '=', 'tax') ] + domain
+                res = self.pool.get('account.account.type').search(cr, uid,
+                    domain, context=context)
+
+        return res
+
     def account_chart_open_window(self, cr, uid, ids, context=None):
         result = super(account_chart, self).account_chart_open_window(cr, uid, ids, context=context)
 
@@ -155,35 +181,19 @@ class account_chart(osv.osv_memory):
         result['context'] = unicode(context)
 
         domain_tuples_str = []
-        if data['account_type']:
-            if data['account_type'] == 'pl':
-                rt = [ 'income', 'expense', ]
-            elif data['account_type'] == 'bs':
-                rt = [ 'asset', 'liability', ]
-            else:
-                rt = False
-
-            if rt:
-                at_domain = [
-                    ('report_type', 'in' , rt),
-                ]
-                if 'asset' in rt or 'liability' in rt:
-                    # US-227 include tax account for BS accounts selection
-                    at_domain = [ '|', ('code', '=', 'tax') ] + at_domain
-                account_types_ids = self.pool.get(
-                    'account.account.type').search(cr, uid, at_domain,
-                        context=context)
-                if account_types_ids:
-                    account_ids = account_obj.search(cr, uid, [
-                            ('user_type', 'in', account_types_ids),
-                        ], context=context)
-                    if account_ids:
-                        is_flat_view = True  # disable tree mode
-                        """if not is_flat_view:
-                            account_ids = account_obj._get_parent_of(cr, uid,
-                                account_ids, context=context)"""
-                        domain_tuples_str.append("('id', 'in', [%s])" % (
-                            ','.join(map(str, account_ids)), ))
+        account_type_ids = self._get_account_type_ids(cr, uid,
+            data['account_type'], context=context)
+        if account_type_ids:
+            account_ids = account_obj.search(cr, uid, [
+                    ('user_type', 'in', account_type_ids),
+                ], context=context)
+            if account_ids:
+                is_flat_view = True  # disable tree mode
+                """if not is_flat_view:
+                    account_ids = account_obj._get_parent_of(cr, uid,
+                        account_ids, context=context)"""
+                domain_tuples_str.append("('id', 'in', [%s])" % (
+                    ','.join(map(str, account_ids)), ))
 
         xmlid = 'balance_account_tree'
         if is_flat_view:
@@ -221,6 +231,10 @@ class account_chart(osv.osv_memory):
                 args.append(('active', 'in', [True, False]))
             if wiz.granularity and wiz.granularity == 'account':
                 args.append(('type', '!=', 'view'))
+            account_type_ids = self._get_account_type_ids(cr, uid,
+                wiz.account_type, context=context)
+            if account_type_ids:
+                args.append(('user_type', 'in', account_type_ids))
 
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
