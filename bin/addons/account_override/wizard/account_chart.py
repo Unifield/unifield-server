@@ -179,6 +179,9 @@ class account_chart(osv.osv_memory):
                         ], context=context)
                     if account_ids:
                         is_flat_view = True  # disable tree mode
+                        """if not is_flat_view:
+                            account_ids = account_obj._get_parent_of(cr, uid,
+                                account_ids, context=context)"""
                         domain_tuples_str.append("('id', 'in', [%s])" % (
                             ','.join(map(str, account_ids)), ))
 
