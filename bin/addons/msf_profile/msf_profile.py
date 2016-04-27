@@ -503,6 +503,26 @@ class patch_scripts(osv.osv):
                     'display_in_reports': False,
                 })
 
+    def us_1263_patch(self, cr, uid, *a, **b):
+        touched = "['internal_qty']"
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE
+                          model = 'stock.mission.report.line'
+                          AND
+                          res_id IN (SELECT l.id
+                                     FROM stock_mission_report_line l
+                                       LEFT JOIN stock_mission_report r ON r.id = l.mission_report_id
+                                     WHERE internal_qty != 0.00
+                                       OR stock_qty != 0.00
+                                       OR central_qty != 0.00
+                                       OR cross_qty != 0.00
+                                       OR secondary_qty != 0.00
+                                       OR cu_qty != 0.00
+                                       OR in_pipe_qty != 0.00
+                                       OR in_pipe_coor_qty != 0.00)''', (touched,))
+        return True
+
 patch_scripts()
 
 
