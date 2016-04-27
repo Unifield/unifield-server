@@ -22,23 +22,6 @@ DB_COMPRESSED = 'SP_222_20160425_OCG_zip'
 # psql SP_222_20160425_OCG_nc
 #SP_222_20160425_OCG_nc=> GRANT ALL PRIVILEGES ON sync_client_update_received to "fm-sp-222-oca-zip";
 
-FIELDS_TO_IGNORE = [
-    'id',
-    'partner_id',
-    'group_ids',
-    'field_access_rule_line_ids',
-    'date',
-    'res_id',
-    'field_access_rule_model_id',
-    'model_access',  # model_acess fields is an id on res_group and may vary according to the creation order
-    'rule_groups', # same thing
-    'currency_id',
-    'product_ids',
-    'catalogue_ids',
-    'catalogue_id',
-    'account_destination_ids',
-]
-
 SDREF_TO_IGNORE = [
     'module_meta_information',
     '_Prodcuts_List_filter_by_creator',  # wrong domain of the rule making the
@@ -106,6 +89,7 @@ object_not_synchronized_count = 0
 data_id_list = oerp_origin.search('ir.model.data',
                                   [('model', 'in', tuple(synchronized_model)),
                                    ('name', 'not in', tuple(SDREF_TO_IGNORE)),
+                                   ('module', '=', 'sd')
                                    ])
 data_count = len(data_id_list)
 counter = 0
@@ -149,18 +133,47 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
         compressed_data_obj = oerp_compressed.browse('ir.model.data',
                                                      compressed_data_obj_id[0])
         compressed_local_id = compressed_data_obj.res_id
+        compressed_obj = oerp_compressed.browse(data_object.model, compressed_local_id)
         compressed_values = oerp_compressed.read(compressed_data_obj.model, compressed_local_id)
         origin_values = oerp_origin.read(data_object.model, origin_obj.id)
         if origin_values and not compressed_values:
             print_file_and_screen('Objects type %s with sdref %s have no compressed_values : %r' %
                     (data_object.model, sdref, compressed_values))
             continue
-        # remove fields to ignore
-        for field in FIELDS_TO_IGNORE:
-            if field in compressed_values:
-                compressed_values.pop(field)
-            if field in origin_values:
-                origin_values.pop(field)
+
+        compressed_instance_id = oerp_compressed.read('sync.client.entity', 1, ['identifier'])['identifier']
+        origin_instance_id = oerp_origin.read('sync.client.entity', 1, ['identifier'])['identifier']
+
+        def set_xmlid_for_many2one(current_obj, eoerp, values, instance_id):
+            '''
+            replace the id of the many2one fields by their corresponding xml_id
+            to be able to compare it with the compressed values as the id might differ
+            '''
+            # remove id:
+            values.pop('id')
+
+            for field, value in values.items():
+                if isinstance(value, tuple) and len(value)==2:
+                    # this is a many2one field
+                    model = current_obj.__osv__['columns'][field].osv._name
+                    imd_id = eoerp.search('ir.model.data',
+                        [('model', '=', model),
+                         ('res_id', '=' , value[0])])
+                    if imd_id:
+                        imd_obj = eoerp.browse('ir.model.data', imd_id[0])
+                        xml_id = imd_obj.name
+                        if xml_id:
+                            if xml_id.startswith(instance_id):
+                                xml_id = xml_id.split(instance_id)[1]
+                            # replace the id of the many2one with the correponding xml_id
+                            values[field] = (xml_id, values[field][1])
+                    else:
+                        pass
+            return values
+
+        origin_values = set_xmlid_for_many2one(origin_obj, oerp_origin, origin_values, origin_instance_id)
+        compressed_values = set_xmlid_for_many2one(compressed_obj, oerp_compressed, compressed_values, compressed_instance_id)
+
         if origin_values != compressed_values:
             diff_result = diff(origin_values, compressed_values)
             if diff_result:
