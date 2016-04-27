@@ -112,22 +112,18 @@
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
 
-<Table >
-<Column ss:Width="70.5" ss:Span="1"/>
-<Column ss:Index="3" ss:Width="72.75"/>
-<Column ss:Width="67.5"/>
-<Column ss:Width="73.5"/>
-<Column ss:Width="61.5"/>
-<Column ss:Width="75.75"/>
-<Column ss:Width="113.25"/>
-<Column ss:Width="100"/>
-<Column ss:Width="180.75"/>
-<Column ss:Width="70.5"/>
-<Column ss:AutoFitWidth="0" ss:Width="229.5"/>
-<Column ss:Width="57.75"/>
-<Column ss:Width="44.25"/>
-<Column ss:Index="16" ss:AutoFitWidth="0" ss:Width="51"/>
-
+<Table>
+  <Column ss:Width="73.5" ss:Span="1"/>
+  <Column ss:Width="67.5"/>
+  <Column ss:Width="75.75"/>
+  <Column ss:Width="113.25" ss:Span="1"/>
+  <Column ss:Width="180.75"/>
+  <Column ss:Width="70.5"/>
+  <Column ss:AutoFitWidth="0" ss:Width="229.5"/>
+  <Column ss:Width="60.75" ss:Span="1"/>
+  <Column ss:AutoFitWidth="0" ss:Width="60.75" ss:Span="1"/>
+  <Column ss:Width="45.25"/>
+  <Column ss:Width="55.25"/>
 
   <Row>
     <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('PENDING CHEQUE')}</Data></Cell>
@@ -144,15 +140,24 @@
     <Cell ss:StyleID="title"><Data ss:Type="String">${_('State:')}</Data></Cell>
     <Cell ss:StyleID="title"><Data ss:Type="String">${(o.state and getSel(o, 'state') or '')|x}</Data></Cell>
   </Row>
+  <Row>
+    <Cell ss:StyleID="title"><Data ss:Type="String">${_('Register name:')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Journal Code')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${(o.journal_id and o.journal_id.code or '')|x}</Data></Cell>
+  </Row>
+  <Row>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
+    <Cell ss:StyleID="title" ><Data ss:Type="String">${(o.journal_id and o.journal_id.currency and o.journal_id.currency.name or '')|x}</Data></Cell>
+  </Row>
   <Row><Cell><Data ss:Type="String"></Data></Cell></Row>
 
 	<Row>
-        	<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Proprietary Instance')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Register Name')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Journal Code')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Document Date')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Posting Date')}</Data></Cell>
+		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Period')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cheque Number')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Sequence')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Description')}</Data></Cell>
@@ -161,7 +166,6 @@
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Third Parties')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount In')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Amount Out')}</Data></Cell>
-		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Currency')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. In')}</Data></Cell>
 		<Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. Out')}</Data></Cell>
     <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Func. CCY')}</Data></Cell>
@@ -171,12 +175,9 @@
 	</Row>
     % for line in getLines(o):
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.instance_id and line.statement_id.instance_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.journal_id and line.statement_id.journal_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.document_date|n}T00:00:00.000</Data></Cell>
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date|n}T00:00:00.000</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.statement_id and line.statement_id.period_id and line.statement_id.period_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.cheque_number and line.cheque_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.move_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.name and line.name or '')|x}</Data></Cell>
@@ -185,7 +186,6 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.partner_txt or '')|x}</Data></Cell>
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.debit_currency and line.debit_currency or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.credit_currency and line.credit_currency or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.currency_id and line.currency_id.name or '')|x}</Data></Cell>
 
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.debit and line.debit or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="lineN" ><Data ss:Type="Number">${(line.credit and line.credit or 0.00)|x}</Data></Cell>
@@ -196,6 +196,7 @@
 </Table>
 
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Header x:Margin="0.4921259845"/>
