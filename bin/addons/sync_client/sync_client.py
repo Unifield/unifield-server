@@ -902,8 +902,9 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         # is sync modules installed ?
-        for module in ['sync_client.version', 'sync_so']:
-            if not self.pool.get(module):
+        for sql_table, module in [('sync_client.version', 'update_client'),
+                       ('so.po.common', 'sync_so')]:
+            if not self.pool.get(sql_table):
                 raise osv.except_osv('Error', "%s module is not installed ! You need to install it to be able to sync." % module)
         # US_394: force synchronization lang to en_US
         context['lang'] = 'en_US'
