@@ -98,7 +98,7 @@ class account_invoice(osv.osv):
                         residual = acc_ml[0].amount_residual_import_inv
                         if residual and abs(residual - inv.amount_total) < 0.001:
                             res[inv.id] = 'not'
-                        elif residual and residual < inv.amount_total:
+                        elif residual and residual < inv.amount_total and residual > 0.001:
                             res[inv.id] = 'partial'
                     else:
                         res[inv.id] = 'not'
