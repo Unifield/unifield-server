@@ -256,6 +256,45 @@
    </blockTable>
    </section>
 
+   <!-- TOTAL -->
+   <blockTable colWidths="33.0,100.0,100.0,80.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0" style="ProductList">
+        <tr>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="InformationHeader">Total:</para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="InformationHeader">[[ formatLang(get_total_amount()) or '0.0' ]]</para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+            <td>
+                <para style="Information"></para>
+            </td>
+        </tr>
+   </blockTable>
+
     <para style="Standard">
       <font color="white"> </font>
     </para>

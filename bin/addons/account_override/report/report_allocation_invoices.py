@@ -33,7 +33,10 @@ class allocation_invoice_report(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'get_data': self.get_data,
+            'get_total_amount': self.get_total_amount,
         })
+
+        self.total_amount = 0
 
     def get_data(self, invoice_id):
         self._cr.execute("""SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, ROUND(percentage, 2) as percentage, ROUND(price_subtotal*percentage/100, 2) as sub_total, y.name as currency, n1.code as destination, n2.code as cost_center, n3.code as funding_pool
@@ -69,9 +72,12 @@ class allocation_invoice_report(report_sxw.rml_parse):
             WHERE s.id=%s and is_analytic_addicted = False
             ORDER BY line_number, destination, cost_center, funding_pool
             """, (invoice_id, invoice_id, invoice_id))
+        res = self._cr.fetchall()
+        self.total_amount = sum([line[7] or 0.0 for line in res])
+        return res
 
-        return self._cr.fetchall()
-
+    def get_total_amount(self):
+        return self.total_amount
 
 report_sxw.report_sxw('report.allocation.invoices.report',
                       'account.invoice',
