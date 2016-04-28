@@ -975,18 +975,16 @@ class related(function):
         if self._relations:
             return
         obj_name = obj._name
-        fields_get = obj.pool.get(obj_name).fields_get
-        self._relations_append = self._relations.append
-
-        field_dict = fields_get(cr, uid, self._arg, context=context)
-        for field_id, field in field_dict.items():
-            self._relations_append({
+        for i in range(len(self._arg)):
+            f = obj.pool.get(obj_name).fields_get(cr, uid, [self._arg[i]], context=context)[self._arg[i]]
+            self._relations.append({
                 'object': obj_name,
-                'type': field['type']
+                'type': f['type']
+
             })
-            if field.get('relation', False):
-                obj_name = field['relation']
-                self._relations[-1]['relation'] = field['relation']
+            if f.get('relation',False):
+                obj_name = f['relation']
+                self._relations[-1]['relation'] = f['relation']
 
 # ---------------------------------------------------------
 # Dummy fields
