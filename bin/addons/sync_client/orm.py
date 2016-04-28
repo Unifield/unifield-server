@@ -174,9 +174,7 @@ sql_params)
         if not ids: return {} if result_iterable else False
 
         model_data_obj = self.pool.get('ir.model.data')
-        sdref_ids = model_data_obj.search(cr, uid,
-                [('model','=',self._name),('res_id','in',ids),('module','=','sd')],
-                order='NO_ORDER')
+        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
             result = RejectingDict((data.res_id, get_fields(data))
                 for data in model_data_obj.browse(cr, uid, sdref_ids))
@@ -190,8 +188,7 @@ sql_params)
                     model_data_obj.search(cr, uid,
                         [('model','=',self._name),('res_id','in',missing_ids),
                          '!',('module','in',['sd','__export__']),
-                         '!','&',('module','=','base'),('name','=like','main_%')],
-                        order='NO_ORDER')))
+                         '!','&',('module','=','base'),('name','=like','main_%')])))
             now = fields.datetime.now()
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             for res_id in missing_ids:
@@ -481,7 +478,12 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
     def create(self, original_create, cr, uid, values, context=None):
         if context is None: context = {}
         id = original_create(self, cr, uid, values, context=context)
+
         audit_rule_ids = self.check_audit(cr, uid, 'create')
+        audit_obj = self.pool.get('audittrail.rule')
+        funct_field = []
+        if audit_rule_ids:
+            funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
             self._name not in MODELS_TO_IGNORE and
@@ -489,10 +491,10 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
              not context.get('sync_update_creation')))
 
         if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
-            current_values = {id: values}
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
 
         if audit_rule_ids:
-            self.pool.get('audittrail.rule').audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
+            audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
 
         if to_be_synchronized:
             self.touch(cr, uid, [id], None,

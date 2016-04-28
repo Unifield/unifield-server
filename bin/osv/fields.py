@@ -919,6 +919,7 @@ class related(function):
     def _fnct_read(self, obj, cr, uid, ids, field_name, args, context=None):
         self._field_get2(cr, uid, obj, context)
         if not ids: return {}
+        relation = obj._name
         if self._type in ('one2many', 'many2many'):
             res = dict([(i, []) for i in ids])
         else:
@@ -929,7 +930,10 @@ class related(function):
             if not data:
                 continue
             t_data = data
+            relation = obj._name
             for i in range(len(self.arg)):
+                field_detail = self._relations[i]
+                relation = field_detail['object']
                 try:
                     if not t_data[self.arg[i]]:
                         t_data = False
@@ -937,7 +941,6 @@ class related(function):
                 except:
                     t_data = False
                     break
-                field_detail = self._relations[i]
                 if field_detail['type'] in ('one2many', 'many2many') and i != len(self.arg) - 1:
                     t_data = t_data[self.arg[i]][0]
                 elif t_data:
