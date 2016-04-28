@@ -66,7 +66,10 @@ class account_account(osv.osv):
             'balance': "COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance",
             'debit': "COALESCE(SUM(l.debit), 0) as debit",
             'credit': "COALESCE(SUM(l.credit), 0) as credit",
-            'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"}
+            # US-1251: booking balance mapping: use directly booking balance vs JI amount_currency as we have discrepedencies
+            'foreign_balance': "COALESCE(SUM(l.debit_currency),0) - COALESCE(SUM(l.credit_currency), 0) as foreign_balance"
+            #'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"
+    }
 
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
         query = ("SELECT l.account_id as id, l.currency_id, " +
