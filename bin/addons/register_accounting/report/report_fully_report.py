@@ -142,6 +142,8 @@ class report_fully_report(report_sxw.rml_parse):
         '''
         Return the "manual" invoice reference associated with the account move line if it exists
         (field Reference in DI and Free Reference in SI)
+        Note: for Supplier Refund and SI with Source Doc that are synched from Project to Coordo,
+        the free ref will appear in Project only (US-970)
         '''
         db = pooler.get_pool(self.cr.dbname)
         acc_inv = db.get('account.invoice')
