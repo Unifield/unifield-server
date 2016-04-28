@@ -148,17 +148,14 @@ class report_fully_report(report_sxw.rml_parse):
         free_ref = False
         if acc_move_line:
             acc_move = acc_move_line.move_id
-            if acc_move:
-                inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
-                if inv_id:
-                    inv = acc_inv.browse(self.cr, self.uid, inv_id)
-                    if inv:
-                        free_ref = inv[0].reference
-                if not free_ref:
-                    inv_ref = acc_move.name or hasattr(acc_move_line, 'reference') and acc_move_line.reference or ''
-                    # display the free ref if it is different from the "standard" ref
-                    if inv_ref != acc_move.ref:
-                        free_ref = acc_move.ref
+            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
+            if inv_id:
+                inv = acc_inv.browse(self.cr, self.uid, inv_id)
+                free_ref = inv and inv[0].reference
+            if not free_ref:
+                # display the free ref if it is different from the "standard" ref
+                if acc_move.name != acc_move.ref:
+                    free_ref = acc_move.ref
         return free_ref or ''
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
