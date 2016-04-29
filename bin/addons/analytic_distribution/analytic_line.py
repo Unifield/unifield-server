@@ -338,7 +338,7 @@ class analytic_line(osv.osv):
                 self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)
         return True
 
-    def check_analytic_account(self, cr, uid, ids, account_id, wiz_date, context=None):
+    def check_analytic_account(self, cr, uid, ids, account_id, context=None):
         """
         Analytic distribution validity verification with given account for given ids.
         Return all valid ids.
@@ -372,14 +372,6 @@ class analytic_line(osv.osv):
             # since US-711 date_stop is to be excluded itself as a frontier
             # => >= date_stop vs > date_stop
             # => http://jira.unifield.org/browse/US-711?focusedCommentId=45744&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-45744
-            if account_type in ['OC', 'DEST']:
-                if aline.journal_id.type == 'hq' or aline.period_id and aline.period_id.state in ['done', 'mission-closed']:
-                    aline_cmp_date = wiz_date
-                    # these lines will be reverted, check if the reverted line is active
-                    oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
-                    oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
-                    if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
-                        expired_date_ids.append(aline.id)
             if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type

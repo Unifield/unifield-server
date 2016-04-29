@@ -627,28 +627,22 @@ You cannot choose this supplier because some destination locations are not avail
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
         res = super(stock_picking, self).force_assign(cr, uid, ids)
-        for pick in self.read(cr, uid, ids, ['name'], context=context):
-            self.infolog(cr, uid, 'Force availability ran on stock.picking id:%s (%s)' % (
-                pick['id'], pick['name'],
-            ))
+        for pick_id in ids:
+            self.infolog(cr, uid, 'Force availability ran on stock.picking id:%s' % pick_id)
         return res
 
     @check_cp_rw
     def action_assign(self, cr, uid, ids, context=None):
         res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
-        for pick in self.read(cr, uid, ids, ['name'], context=context):
-            self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
-                pick['id'], pick['name'],
-            ))
+        for pick_id in ids:
+            self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s' % pick_id)
         return res
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
         res = super(stock_picking, self).cancel_assign(cr, uid, ids)
-        for pick in self.read(cr, uid, ids, ['name']):
-            self.infolog(cr, uid, 'Cancel availability ran on stock.picking id:%s (%s)' % (
-                pick['id'], pick['name'],
-            ))
+        for pick_id in ids:
+            self.infolog(cr, uid, 'Cancel availability ran on stock.picking id:%s' % pick_id)
         return res
 
  
@@ -999,7 +993,7 @@ You cannot choose this supplier because some destination locations are not avail
 
         return res
 
-    def is_invoice_needed(self, cr, uid, sp=None, invoice_type=None):
+    def is_invoice_needed(self, cr, uid, sp=None):
         """
         Check if invoice is needed. Cases where we do not need invoice:
         - OUT from scratch (without purchase_id and sale_id) AND stock picking type in internal, external or esc
@@ -1032,8 +1026,7 @@ You cannot choose this supplier because some destination locations are not avail
             res = False
 
         # (US-952) Move out on an external partner should not create a Stock Transfer Voucher
-        # US-1212: but should create refund
-        if sp.type == 'out' and sp.partner_id.partner_type == 'external' and invoice_type != 'in_refund':
+        if sp.type == 'out' and sp.partner_id.partner_type == 'external':
             res = False
 
         return res
@@ -1047,7 +1040,7 @@ You cannot choose this supplier because some destination locations are not avail
         invoice_type = self._get_invoice_type(stock_picking)
 
         # Check if no invoice needed
-        if not self.is_invoice_needed(cr, uid, stock_picking, invoice_type):
+        if not self.is_invoice_needed(cr, uid, stock_picking):
             return
 
         # we do not create invoice for procurement_request (Internal Request)
@@ -1231,7 +1224,6 @@ You cannot choose this supplier because some destination locations are not avail
 
         return True
 
-    @check_cp_rw
     def change_all_location(self, cr, uid, ids, context=None):
         '''
         Launch the wizard to change all destination location of stock moves
@@ -1483,9 +1475,7 @@ class stock_move(osv.osv):
             if move.product_id.id == product_tbd and move.from_wkf_line:
                 ids.pop(ids.index(move.id))
             else:
-                self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                    move.line_number, move.id, move.picking_id.id, move.picking_id.name,
-                ))
+                self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s' % (move.line_number, move.id, move.picking_id.id))
 
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
@@ -1938,6 +1928,8 @@ class stock_move(osv.osv):
 
     def check_assign(self, cr, uid, ids, context=None):
         res = super(stock_move, self).check_assign(cr, uid, ids, context=context)
+        for move_id in ids:
+            self.infolog(cr, uid, 'Check availability ran on stock.move id:%s' % move_id)
         return res
 
     @check_cp_rw
@@ -1952,12 +1944,10 @@ class stock_move(osv.osv):
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
 
-            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
+            self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s' % (
                 move_data['line_number'],
                 move_data['id'],
-                move_data['picking_id'][0],
-                self.pool.get('stock.picking').read(cr, uid, move_data['picking_id'][0], ['name'], context=context)['name'],
-            ))
+                move_data['picking_id'][0]))
 
             for f in fields_to_read:
                 if f in ('product_qty', 'product_uos_qty'):
@@ -2536,17 +2526,9 @@ class stock_move_cancel_wizard(osv.osv_memory):
             move_ids = move_obj.search(cr, uid, [('id', '=', wiz.move_id.id)],
                     limit=1, order='NO_ORDER', context=context)
             if move_ids and  wiz.move_id.has_to_be_resourced:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled and resourced" % (
-                    move_id,
-                    picking_id,
-                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-                ))
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled and resourced" % (move_id, picking_id))
             else:
-                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s (%s) has been canceled" % (
-                    move_id,
-                    picking_id,
-                    pick_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
-                ))
+                self.infolog(cr, uid, "The stock.move id:%s of the picking id:%s has been canceled" % (move_id, picking_id))
 
             if move_ids and wiz.move_id.picking_id:
                 lines = wiz.move_id.picking_id.move_lines
@@ -2602,23 +2584,9 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         '''
         Just call the cancel of the stock.picking
         '''
-        msg_type = {
-            'in': 'Incoming Shipment',
-            'internal': 'Internal Picking',
-            'out': {
-                'standard': 'Delivery Order',
-                'picking': 'Picking Ticket',
-            }
-        }
-
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.browse(cr, uid, ids, context=context):
             wf_service.trg_validate(uid, 'stock.picking', wiz.picking_id.id, 'button_cancel', cr)
-            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled%s." % (
-                wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
-                wiz.picking_id.id,
-                wiz.picking_id.has_to_be_resourced and ' and resourced' or '',
-            ))
 
         return {'type': 'ir.actions.act_window_close'}
 

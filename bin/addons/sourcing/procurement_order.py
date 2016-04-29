@@ -348,11 +348,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     }, context=context)
 
             if line:
-                self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been sourced on order to the PO line id:%s (line number: %s) of the PO id:%s (%s)" % (
-                    line.id, line.line_number,
-                    pol_id, self.pool.get('purchase.order.line').read(cr, uid, pol_id, ['line_number'], context=context)['line_number'],
-                    purchase_ids[0], self.pool.get('purchase.order').read(cr, uid, purchase_ids[0], ['name'], context=context)['name'],
-                ))
+                self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to the PO line id:%s of the PO id:%s" % (line.id, pol_id, purchase_ids[0]))
 
             return purchase_ids[0]
         else:
@@ -386,10 +382,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     }, context=context)
 
             if line:
-                self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been sourced on order to the PO id:%s (%s)" % (
-                    line.id, line.line_number,
-                    purchase_id, self.pool.get('purchase.order').read(cr, uid, purchase_id, ['name'], context=context)['name'],
-                ))
+                self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to the PO id:%s" % (
+                    line.id, purchase_id))
 
             return purchase_id
 

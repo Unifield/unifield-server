@@ -31,7 +31,6 @@
                                         background-color: #F0EBA4;
                                         font-weight: bold;
                                         text-transform: uppercase;
-                                        width: 90%%;
                                     }
 
                                     #error_message_unifield p, #error_message_unifield span
@@ -42,7 +41,6 @@
                                         font-weight: bold;
                                         text-transform: uppercase;
                                         padding: 5px;
-                                        width: 90%%;
                                     }
 
                                     #error_message_unifield .grip
@@ -53,7 +51,7 @@
 
                                 <div id="error_message_unifield">
 									<field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" readonly="1" />
-									<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" colspan="4" />
+									<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" string="Error" />
                                 </div>
                            </html>
                        </group>

@@ -20,7 +20,7 @@
 ##############################################################################
 
 name = 'openerp-server'
-version = 'UF2.1-2dev'
+version = 'UF2.1-1dev'
 major_version = '6.0'
 description = 'OpenERP Server'
 long_desc = '''OpenERP is a complete ERP and CRM. The main features are accounting (analytic
@@ -41,3 +41,4 @@ license = 'AGPL-3'
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
+version = "UF2.1-1rc2-20160405-085815"

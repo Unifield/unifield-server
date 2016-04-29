@@ -65,11 +65,10 @@
                                     {
                                         height: 1em;
                                         min-height: 1em;
-                                        color: red;
+                                            color: red;
                                         font-weight: bold;
                                         text-transform: uppercase;
                                         padding: 5px;
-                                        width: 90%%;
                                     }
                                 </style>
 

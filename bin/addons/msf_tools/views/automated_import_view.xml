@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="automated_import_search_view" model="ir.ui.view">
+            <field name="name">automated.import.search.view</field>
+            <field name="model">automated.import</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Automated imports">
+                    <filter name="active" domain="[('active', '=', False)]" string="Inactive" icon="gtk-undo" />
+                    <field name="name" />
+                    <field name="function_id" />
+                </search>
+            </field>
+        </record>
+
+        <record id="automated_import_tree_view" model="ir.ui.view">
+            <field name="name">automated.import.tree.view</field>
+            <field name="model">automated.import</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Automated imports">
+                    <field name="name" />
+                    <field name="function_id" />
+                    <field name="start_time" />
+                    <field name="interval" />
+                    <field name="interval_unit" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="automated_import_form_view" model="ir.ui.view">
+            <field name="name">automated.import.form.view</field>
+            <field name="model">automated.import</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Automated import">
+                    <separator colspan="4" string="General configuration" />
+                    <field name="name" />
+                    <field name="function_id" widget="selection" />
+                    <field name="active" />
+                    <button name="run_job" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
+                    <separator colspan="4" string="Paths configuration" />
+                    <field name="src_path" colspan="4" />
+                    <field name="dest_path" colspan="4" />
+                    <field name="report_path" colspan="4" />
+                    <separator colspan="4" string="Scheduler configuration" />
+                    <group colspan="4" col="6">
+                        <field name="interval" />
+                        <field name="interval_unit" />
+                        <field name="start_time" />
+                    </group>
+                    <separator colspan="4" string="Activation" />
+                    <group colspan="4" col="1">
+                        <button name="active_import" string="Activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', True)]}" />
+                        <button name="deactive_import" string="De-activate" colspan="1" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="automated_import_action" model="ir.actions.act_window">
+            <field name="name">Automated imports</field>
+            <field name="res_model">automated.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="automated_import_menu"
+            action="automated_import_action"
+            parent="object_query.menu_preferences" />
+
+    </data>
+</openerp>

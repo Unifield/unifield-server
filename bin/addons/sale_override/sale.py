@@ -635,13 +635,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
-        res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
-        for order in self.browse(cr, uid, ids, context=context):
-            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
-                order.procurement_request and  'Internal request' or 'Field order',
-                order.id, order.name,
-            ))
-        return res
+        return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
 
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -814,9 +808,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         get function values
         '''
         result = {}
-        if context is None:
-            context = {}
-
         for obj in self.browse(cr, uid, ids, context=context):
             result[obj.id] = {}
             for f in fields:
@@ -827,10 +818,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if obj.state == 'done' and obj.split_type_sale_order == 'original_sale_order' and not obj.procurement_request:
                 result[obj.id]['state_hidden_sale_order'] = 'split_so'
 
-            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order'] and \
-                (not obj.original_so_id_sale_order or obj.state_hidden_sale_order not in (False, 'draft')):
-                real_uid = context.get('computed_for_uid', uid)
-                self.add_audit_line(cr, real_uid, obj.id,
+            if obj.state_hidden_sale_order != result[obj.id]['state_hidden_sale_order']:
+                self.add_audit_line(cr, uid, obj.id,
                                     obj.state_hidden_sale_order,
                                     result[obj.id]['state_hidden_sale_order'],
                                     context=context)
@@ -1330,10 +1319,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for order in order_brw_list:
             if not order.procurement_request:
                 self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
-                self.infolog(cr, uid, "The Field order id:%s (%s) has been validated." % (order.id, order.name))
             else:
                 self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
-                self.infolog(cr, uid, "The Internal request id:%s (%s) has been validated." % (order.id, order.name))
 
         return True
 
@@ -1421,9 +1408,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.') % (selec_name, fo_name))
-                        self.infolog(cr, uid, "The %s split id:%s (%s) has been created." % (
-                            selec_name, split_id, fo_name,
-                        ))
                         split_fo_dic[fo_type] = split_id
                         # For loans, change the subflow
                         if fo_type == 'stock_split_sale_order':
@@ -1537,10 +1521,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
 
-        for order in self.read(cr, uid, ids, ['name'], context=context):
-            self.infolog(cr, uid, "The splitted FO id:%s (%s) has been closed" % (
-                order['id'], order['name'],
-            ))
+        for order_id in ids:
+            self.infolog(cr, uid, "The splitted FO id:%s has been closed" % order_id)
 
         return True
 
@@ -1958,15 +1940,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
 
-        msg_type = {
-            'in': 'Incoming shipment',
-            'internal': 'Internal picking',
-            'out': {
-                'standard': 'Delivery order',
-                'picking': 'Picking Ticket,'
-            }
-        }
-
         if context is None:
             context = {}
 
@@ -2004,14 +1977,6 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if not picking_id:
                         picking_data = self._get_picking_data(cr, uid, order)
                         picking_id = picking_obj.create(cr, uid, picking_data, context=context)
-                        self.infolog(cr, uid, "The %s id:%s (%s) has been created from %s id:%s (%s)." % (
-                            picking_data.get('type', '') == 'out' and \
-                                msg_type.get('out', {}).get(picking_data.get('subtype', ''), '') or \
-                                msg_type.get(picking_data.get('type', ''), ''),
-                            picking_id, picking_data.get('name', ''),
-                            order.procurement_request and 'Internal request' or 'Field order',
-                            order.id, order.name,
-                        ))
 
                     # Get move data and create the move
                     move_data = self._get_move_data(cr, uid, order, line, picking_id, context=context)
@@ -2125,9 +2090,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                 line_done += 1
                 if line.type == 'make_to_stock':
-                    msg = 'The line id:%s (line number: %s) of FO/IR id:%s (%s) has been sourced \'from stock\' with the stock.move id:%s' % (
-                            line.id, line.line_number,
-                            line.order_id.id, line.order_id.name,
+                    msg = 'The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the stock.move id:%s' % (
+                            line.id,
+                            line.order_id.id,
                             move_id,
                     )
                     self.infolog(cr, uid, msg)
@@ -2850,30 +2815,16 @@ class sale_order_line(osv.osv):
         lines_to_check = []
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        lines_to_log = []
-
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.read(cr, uid, ids, ['order_id'], context=context):
             ltc_ids = self.search(cr, uid, [
-                ('order_id', '=', line.order_id.id),
+                ('order_id', '=', line['order_id'][0]),
                 ('order_id.state', '=', 'validated'),
-                ('id', '!=', line.id),
+                ('id', '!=', line['id']),
             ], limit=1, context=context)
             if ltc_ids and ltc_ids[0] not in lines_to_check:
                 lines_to_check.append(ltc_ids[0])
 
-            lines_to_log.append((
-                line.id,
-                line.line_number,
-                line.order_id.procurement_request and 'Internal request' or 'Field orer',
-                line.order_id.id,
-                line.order_id.name,
-        ))
-
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
-
-        for ltl in lines_to_log:
-            self.infolog(cr, uid, "The line id:%s (line number: %s) of the %s id:%s (%s) has been deleted." % ltl)
 
         if lines_to_check:
             self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context)

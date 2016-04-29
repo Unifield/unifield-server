@@ -1240,32 +1240,24 @@ class account_move_line(osv.osv):
                         move_obj.write(cr, uid, [line.move_id.id], {'date': todo_date}, context=context)
         return result
 
-    def _hook_check_period_state(self, cr, uid, result=False, context=None, raise_hq_closed=True, *args, **kargs):
+    def _hook_check_period_state(self, cr, uid, result=False, context=None, *args, **kargs):
         """
         Check period state
         """
         if not result:
             return False
-        res = True
         for (state,) in result:
             if state == 'done':
-                if raise_hq_closed:
-                    raise osv.except_osv(_('Error !'), _('You can not add/modify entries in a closed journal.'))
-                res = False
-                break
-        return res
+                raise osv.except_osv(_('Error !'), _('You can not add/modify entries in a closed journal.'))
 
-    def _update_journal_check(self, cr, uid, journal_id, period_id,
-        context=None, raise_hq_closed=True):
+    def _update_journal_check(self, cr, uid, journal_id, period_id, context=None):
         journal_obj = self.pool.get('account.journal')
         period_obj = self.pool.get('account.period')
         jour_period_obj = self.pool.get('account.journal.period')
         cr.execute('SELECT state FROM account_journal_period WHERE journal_id = %s AND period_id = %s', (journal_id, period_id))
         result = cr.fetchall()
-        if result:
-            res = self._hook_check_period_state(cr, uid, result,
-                context=context, raise_hq_closed=raise_hq_closed)
-        else:
+        self._hook_check_period_state(cr, uid, result, context=context)
+        if not result:
             journal = journal_obj.browse(cr, uid, journal_id, context=context)
             period = period_obj.browse(cr, uid, period_id, context=context)
             jour_period_obj.create(cr, uid, {
@@ -1273,8 +1265,7 @@ class account_move_line(osv.osv):
                 'journal_id': journal.id,
                 'period_id': period.id
             })
-            res = True
-        return res
+        return True
 
     def _update_check(self, cr, uid, ids, context=None):
         done = {}

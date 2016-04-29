@@ -131,15 +131,6 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
-    def us_1061_patch(self, cr, uid, *a, **b):
-        '''setup the size on all attachment'''
-        attachment_obj = self.pool.get('ir.attachment')
-        attachment_ids = attachment_obj.search(cr, uid, [])
-        vals = {}
-        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
-            if attachment.datas and not attachment.size:
-                vals['size'] = attachment_obj.get_size(attachment.datas)
-                attachment_obj.write(cr, uid, attachment.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
@@ -485,23 +476,6 @@ class patch_scripts(osv.osv):
         '''
         if self.pool.get('sync.server.update'):
             cr.execute("delete from sync_server_update where values like '%msf_outgoing.field_product_product_is_keep_cool%' and model='msf_field_access_rights.field_access_rule_line'")
-
-    def us_1185_patch(self, cr, uid, *a, **b):
-        # AT HQ level: untick 8/9 top accounts for display in BS/PL report
-        user_rec = self.pool.get('res.users').browse(cr, uid, [uid])[0]
-        if user_rec.company_id and user_rec.company_id.instance_id \
-            and user_rec.company_id.instance_id.level == 'section':
-            account_obj = self.pool.get('account.account')
-            codes = ['8', '9', ]
-
-            ids = account_obj.search(cr, uid, [
-                ('type', '=', 'view'),
-                ('code', 'in', codes),
-            ])
-            if ids and len(ids) == len(codes):
-                account_obj.write(cr, uid, ids, {
-                    'display_in_reports': False,
-                })
 
 patch_scripts()
 

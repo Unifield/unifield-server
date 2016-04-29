@@ -469,7 +469,7 @@
                                 <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
-                                <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" context="{'from_button': True}" />
+                                <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>

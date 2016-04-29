@@ -248,7 +248,7 @@
       [[ get_show_move_lines() or removeParentNode('blockTable') ]]
       <tr>
         <td>
-          <para style="terp_tblheader_Details">Account/Entry Seq</para>
+          <para style="terp_tblheader_Details">Entry Seq</para>
         </td>
         <td>
           <para style="terp_tblheader_Details">Posting Date</para>
@@ -330,17 +330,14 @@
 
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
-        <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
+        <blockTable colWidths="286.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
           [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
           <tr>
-            <td>
-              <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
-            </td>
             <td>
               <para style="terp_default_9_Right">[[ line['move'] or '' ]]</para>
             </td>
             <td>
-                <para style="terp_default_9_Right">[[ line['currency_name'] or '' ]]</para>
+                <para style="terp_def114.0,80.0,92.0,60.0,110.0,110.0,110.0,110.0ault_9_Right">[[ line['currency_name'] or '' ]]</para>
             </td>
             <td>
               <para style="terp_default_9_Right">[[ formatLang(get_line_debit(line, booking=True), digits=get_digits(dp='Account')) ]]</para>
@@ -393,14 +390,11 @@
 
       <section>
       <para style="terp_default_8">[[ repeatIn(o.get_currencies(), 'ccy') ]]</para>
-      <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table8_subtotal_ccy">
+      <blockTable colWidths="286.0,60.0,110.0,110.0,110.0,110.0" style="Table8_subtotal_ccy">
         [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
         <tr>
           <td>
-              <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
-          </td>
-          <td>
-            <para style="terp_default_9_Right">Sub Total</para>
+            <para style="terp_default_9_Right">[[ o.code ]]</para>
           </td>
           <td>
               <para style="terp_default_9_Right">[[ ccy ]]</para>

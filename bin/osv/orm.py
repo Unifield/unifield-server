@@ -48,6 +48,7 @@ import re
 import time
 import traceback
 import types
+import csv
 
 import netsvc
 from lxml import etree
@@ -744,6 +745,34 @@ class orm_template(object):
         for row in self.browse(cr, uid, ids, context):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
+
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+        headers = []
+        list_data = []
+        with open(csv_file, 'r') as fcsv:
+            reader = csv.reader(fcsv, quotechar=quotechar, delimiter=delimiter)
+            for row in reader:
+                if not headers:
+                    headers = row
+                else:
+                    list_data.append(row)
+
+        rejected = []
+        processed = []
+        i = 1
+        for d in list_data:
+            i += 1
+            try:
+                res = self.import_data(cr, uid, headers, [d])
+                if res[0] == -1:
+                    rejected.append((i, d, res[2]))
+                else:
+                    processed.append((i, d))
+                    cr.commit()
+            except Exception as e:
+                rejected.append((i, d, str(e)))
+
+        return processed, rejected, headers
 
     def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
         """
@@ -4173,15 +4202,7 @@ class orm(orm_template):
             val = todo[key]
             if key:
                 # uid == 1 for accessing objects having rules defined on store fields
-                if hasattr(uid, 'realUid'):
-                    context['computed_for_uid'] = uid.realUid
-                else:
-                    context['computed_for_uid'] = uid
                 result = self._columns[val[0]].get(cr, self, ids, val, 1, context=context)
-                try:
-                    del context['computed_for_uid']
-                except KeyError:
-                    pass
                 for id, value in result.items():
                     if field_flag:
                         for f in value.keys():

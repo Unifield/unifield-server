@@ -31,8 +31,8 @@
                     <field name="transfer_journal_id" invisible="1"/>
                     <field name="partner_txt"/>
                     <field name="partner_type" invisible="1"/>
-                    <field name="debit_currency" sum="Total Booking Debit"/>
-                    <field name="credit_currency" sum="Total Booking Credit"/>
+                    <field name="debit_currency"/>
+                    <field name="credit_currency"/>
                     <field name="currency_id"/>
                     <field name="debit" sum="Total Functional Debit"/>
                     <field name="credit" sum="Total Functional Credit"/>
@@ -74,9 +74,9 @@
                     <field name="cost_center_id" string="Cost Center" invisible="not context.get('display_fp', False)"/>
                     <field name="account_id"/>
                     <field name="partner_txt"/>
-                    <field name="amount_currency" sum="Total Booking Amount"/>
+                    <field name="amount_currency"/>
                     <field name="currency_id"/>
-                    <field name="amount" sum="Total Functional Amount"/>
+                    <field name="amount"/>
                     <field name="functional_currency_id"/>
                     <field name="output_amount"/>
                     <field name="output_currency"/>

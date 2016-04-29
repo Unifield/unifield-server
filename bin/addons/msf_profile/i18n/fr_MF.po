@@ -8953,12 +8953,6 @@ msgstr "Reversing accrual"
 msgid "The line '%s' is already partially posted!"
 msgstr "La ligne '%s' est déjà partiellement comptabilisée !"
 
-#. module: msf_accrual
-#: code:addons/msf_accrual/wizard/wizard_accrual_validation.py:43
-#, python-format
-msgid "The line '%s' is cancelled and can't be re-posted."
-msgstr "La ligne '%s' est annulée et ne peut pas être recomptabilisée."
-
 #. module: account
 #: field:account.report.general.ledger,sortby:0
 msgid "Sort By"
@@ -46311,12 +46305,10 @@ msgstr "Europe/Luxembourg"
 msgid "Analytic distribution is mandatory for this line: %s!"
 msgstr "Allocation Analytique obligatoire pour cette ligne: %s"
 
-#. modules: msf_accrual, account_period_closing_level
+#. module: msf_accrual
 #: model:ir.actions.act_window,name:msf_accrual.action_msf_accrual_line_tree
 #: model:ir.ui.menu,name:msf_accrual.menu_action_msf_accrual_line_tree
 #: view:msf.accrual.line:0
-#: code:addons/account_period_closing_level/account_period.py:716
-#, python-format
 msgid "Accruals Management"
 msgstr "Gestion des Régularisations"
 
@@ -52202,12 +52194,6 @@ msgstr "Courriel de l'expéditeur"
 #, python-format
 msgid "Line %s. Cost Center %s not found!"
 msgstr "Ligne %s. Centre de coût %s non trouvé !"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:420
-#, python-format
-msgid "Line %s. %s is a VIEW type Cost Center!"
-msgstr "Ligne %s. %s est un Centre de coût de type VUE !"
 
 #. module: stock
 #: view:stock.inventory.line.split:0

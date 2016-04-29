@@ -1432,9 +1432,6 @@ class stock_picking(osv.osv):
             }
             # modify the list of views
             message = type_list.get(pick.type, _('Document')) + " '" + (pick.name or '?') + "' "
-            infolog_message = None
-            if pick.state == 'assigned':
-                infolog_message = type_list.get(pick.type, _('Document')) + " id:" + str(pick.id) or 'False' + " '" + (pick.name or '?') + "' "
             if pick.min_date:
                 msg= _(' for the ')+ datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format).decode('utf-8')
             state_list = {
@@ -1448,21 +1445,14 @@ class stock_picking(osv.osv):
             res = self._hook_picking_get_view(cr, uid, ids, context=context, pick=pick)
             context.update({'view_id': res and res[1] or False})
             message += state_list[pick.state]
-            if infolog_message:
-                infolog_message += state_list[pick.state]
             # modify the message to be displayed
             message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=message, pick=pick)
-            if infolog_message:
-                infolog_message = self._hook_log_picking_modify_message(cr, uid, ids, context=context, message=infolog_message, pick=pick)
             # conditional test for message log
             log_cond = self._hook_log_picking_log_cond(cr, uid, ids, context=context, pick=pick)
             if log_cond and log_cond != 'packing':
                 self.log(cr, uid, pick.id, message, context=context)
             elif not log_cond:
                 self._hook_custom_log(cr, uid, ids, context=context, message=message, pick=pick)
-
-            if infolog_message:
-                self.infolog(cr, uid, message)
         return True
 
 stock_picking()
@@ -2898,9 +2888,9 @@ class stock_inventory(osv.osv):
                          account_move_obj.unlink(cr, uid, [account_move['id']], context=context)
             self.write(cr, uid, [inv.id], {'state': 'cancel'}, context=context)
             if self._name == 'initial.stock.inventory':
-                self.infolog(cr, uid, "The Initial Stock inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
+                self.infolog(cr, uid, "The Initial Stock inventory id:%s has been canceled" % inv.id)
             else:
-                self.infolog(cr, uid, "The Physical inventory id:%s (%s) has been canceled" % (inv.id, inv.name))
+                self.infolog(cr, uid, "The Physical inventory id:%s has been canceled" % inv.id)
         return True
 
 stock_inventory()

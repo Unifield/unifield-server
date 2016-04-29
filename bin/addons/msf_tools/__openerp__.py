@@ -24,6 +24,7 @@
     "version": "1.0",
     "depends": ["base",
                 "product",
+                "object_query",
                 ],
     "author": "MSF, TeMPO Consulting",
     "website": "",
@@ -33,7 +34,12 @@
     """,
     "init_xml": [
     ],
-    'update_xml': ['security/ir.model.access.csv',],
+    'update_xml': [
+        'views/automated_import_view.xml',
+        'views/automated_import_function_view.xml',
+        'views/automated_import_job_view.xml',
+        'security/ir.model.access.csv',
+    ],
     'demo_xml': [
     ],
     'test': [# tests should be performed in base classes to avoid cyclic dependencies

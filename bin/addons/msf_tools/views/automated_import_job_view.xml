@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="automated_import_job_search_view" model="ir.ui.view">
+            <field name="name">automated.import.job.search.view</field>
+            <field name="model">automated.import.job</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Automated import jobs">
+                    <field name="import_id" />
+                    <field name="start_time" />
+                    <field name="end_time" />
+                </search>
+            </field>
+        </record>
+
+        <record id="automated_import_job_tree_view" model="ir.ui.view">
+            <field name="name">automated.import.job.tree.view</field>
+            <field name="model">automated.import.job</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Automated import jobs" noteditable="True" hide_new_button="True">
+                    <field name="import_id" />
+                    <field name="start_time" />
+                    <field name="end_time" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="automated_import_job_form_view" model="ir.ui.view">
+            <field name="name">automated.import.job.form.view</field>
+            <field name="model">automated.import.job</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Automated import job">
+                    <field name="import_id" />
+                    <field name="start_time" />
+                    <field name="end_time" />
+                    <separator colspan="4" string="Import file" />
+                    <field name="file_to_import" readonly="True" filename="filename" />
+                    <field name="filename" invisible="1" />
+                    <separator colspan="4" string="Import results" />
+                    <field name="nb_processed_records" />
+                    <field name="nb_rejected_records" />
+                    <field name="comment" colspan="4" />
+                </form>
+            </field>
+        </record>
+
+        <record id="automated_import_job_action" model="ir.actions.act_window">
+            <field name="name">Automated import jobs</field>
+            <field name="res_model">automated.import.job</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="automated_import_job_menu"
+            action="automated_import_job_action"
+            parent="automated_import_menu" />
+
+    </data>
+</openerp>

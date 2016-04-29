@@ -15,8 +15,11 @@
 #    GNU Affero General Public License for more details.
 #
 #    You should have received a copy of the GNU Affero General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#    along with this progrimport automated_import_job_progressam.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import msf_tools
+import automated_import_function
+import automated_import
+import automated_import_job

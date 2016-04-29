@@ -497,10 +497,8 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.pool.get('sale.order.line').write(cr, uid, line_ids, {'state': 'cancel'}, context=context)
 
-        for ir in self.read(cr, uid, ids, ['name'], context=context):
-            self.infolog(cr, uid, "The IR id:%s (%s) has been canceled" % (
-                ir['id'], ir['name'],
-            ))
+        for ir_id in ids:
+            self.infolog(cr, uid, "The IR id:%s has been canceled" % ir_id)
 
         return True
 
@@ -539,9 +537,6 @@ class procurement_request(osv.osv):
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
             self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)
-            self.infolog(cr, uid, "The internal request id:%s (%s) has been validated." % (
-                req.id, req.name,
-            ))
         line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
         line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)

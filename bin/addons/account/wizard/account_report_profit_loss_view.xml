@@ -20,7 +20,7 @@
                 <field name="display_account"/>
                 <field name="export_format"/>
                 <newline/>
-                <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
+                <field name="instance_ids">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                         <field name="code" />
                         <field name="name" />

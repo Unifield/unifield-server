@@ -41,7 +41,6 @@ class AccountDrillNode(object):
         # set during map/reduce
         self.data = {}
         self.zero_bal = False
-        self.skip = False
 
         # set during next_node() calls
         self.code = ''
@@ -81,11 +80,12 @@ class AccountDrill(object):
         JOIN res_currency c ON (c.id = l.currency_id)
         JOIN account_journal j on (l.journal_id=j.id)
         JOIN account_account a on (a.id=l.account_id)
-        WHERE l.account_id = %s{reconcile}{query}
+        JOIN account_account_type at on (at.id=a.user_type)
+        WHERE l.account_id = %s{reconcile}{options}{query}
         GROUP BY l.currency_id'''
 
     # initial balance move lines base query (from IB journal period 0)
-    _sql_ib = '''SELECT sum(debit), sum(credit),
+    _sql_ib = '''SELECT  sum(debit), sum(credit),
         sum(debit_currency), sum(credit_currency),
         max(c.name)
         FROM account_move_line l
@@ -112,28 +112,8 @@ class AccountDrill(object):
         self.query_ib = query_ib or ''
         self.move_states = move_states or [ 'draft', 'posted', ]
         self.include_accounts = include_accounts
-        self.account_report_types = account_report_types
         self.with_balance_only = with_balance_only
         self.reconcile_filter = reconcile_filter
-        if self.account_report_types and not self.include_accounts:
-            # deduce included accounts from report type filter
-            domain = [
-                ('report_type', 'in' , self.account_report_types),
-            ]
-            if 'asset' in self.account_report_types \
-                or 'liability' in self.account_report_types:
-                # US-227 include tax account for BS accounts selection
-                domain = [ '|', ('code', '=', 'tax') ] + domain
-            account_types_ids = self.pool.get('account.account.type').search(
-                self.cr, self.uid, domain, context=self.context)
-
-            if account_types_ids:
-                domain = [
-                    ('type', '!=', 'view'),
-                    ('user_type', 'in' , account_types_ids),
-                ]
-                self.include_accounts = self.pool.get('account.account').search(
-                    self.cr, self.uid, domain, context=self.context) or []
 
         # nodes
         self.root = None
@@ -145,6 +125,18 @@ class AccountDrill(object):
         # JI base query: constructed via _sql
         self.sql = self._sql
         self.sql = self.sql.replace('{reconcile}', self.reconcile_filter)
+        if account_report_types:
+            report_types = [ "'%s'" % (rt, ) for rt in account_report_types ]
+            options = " AND (at.report_type in (%s)" % (
+                ','.join(report_types), )
+            if 'asset' in account_report_types \
+                or 'liability' in account_report_types:
+                # US-227 include tax account for BS accounts selection
+                options += " OR at.code = 'tax'"
+            options += ')'
+        else:
+            options = ''
+        self.sql = self.sql.replace('{options}', options)
 
     def output(self):
         """
@@ -177,31 +169,28 @@ class AccountDrill(object):
 
         level = self._move_level
         while level > 0:
-            nodes = self.nodes_by_level.get(level)
-            if nodes:
-                for n in nodes:
-                    if level == self._move_level:
-                        if self.with_balance_only:
-                            bal = n.data.get('*', {}).get('debit', 0.) \
-                                - n.data.get('*', {}).get('credit', 0.)
-                            if bal == 0.:
-                                # JI level:
-                                # with only balance filter: do not agregate account
-                                # debit/credit with a zero balance
-                                n.zero_bal = True
-                                continue
-                    elif level == self._move_level - 1:
-                        n.skip = not n.childs  # no entries due to filtering
+            nodes = self.nodes_by_level[level]
+            for n in nodes:
+                if level == self._move_level:
+                    if self.with_balance_only:
+                        bal = n.data.get('*', {}).get('debit', 0.) \
+                            - n.data.get('*', {}).get('credit', 0.)
+                        if bal == 0.:
+                            # JI level:
+                            # with only balance filter: do not agregate account
+                            # debit/credit with a zero balance
+                            n.zero_bal = True
+                            continue
 
-                    parent = n.parent
-                    if parent:
-                        for ccy in n.data:
-                            if not ccy in parent.data:
-                                parent.data[ccy] = {}
-                                for f in fields:
-                                    parent.data[ccy][f] = 0.
+                parent = n.parent
+                if parent:
+                    for ccy in n.data:
+                        if not ccy in parent.data:
+                            parent.data[ccy] = {}
                             for f in fields:
-                                parent.data[ccy][f] += n.data[ccy].get(f, 0.)
+                                parent.data[ccy][f] = 0.
+                        for f in fields:
+                            parent.data[ccy][f] += n.data[ccy].get(f, 0.)
             level -= 1  # upper level (upper level by uper level)
 
         # uncomment to explore reduced nodes
@@ -222,13 +211,10 @@ class AccountDrill(object):
         child_ids = self._search(domain)
         if child_ids:
             for id in child_ids:
-                create = level < self._move_level \
-                    or not self.include_accounts or id in self.include_accounts
-                if create:
+                if not self.include_accounts or id in self.include_accounts:
                     node = self._create_node(parent=parent, level=level,
                         account_id=id)
-                    if node:
-                        self._map_dive(node, level + 1)
+                    self._map_dive(node, level + 1)
 
     def _create_node(self, parent=None, level=0, account_id=False):
         """

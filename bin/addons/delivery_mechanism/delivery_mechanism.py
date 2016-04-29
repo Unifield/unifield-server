@@ -1181,7 +1181,7 @@ class stock_picking(osv.osv):
                 # UTP-967
                 if move.state != 'cancel' and move.purchase_line_id and move.purchase_line_id.procurement_id:
                     proc = move.purchase_line_id.procurement_id
-                    if proc.move_id and proc.move_id.location_id.id == proc_loc_id:
+                    if proc.move_id and proc.move_id.location_id.id == proc_loc_id and count > 0.00:
                         if diff_qty > 0:
                             # REF-59: move of partial in,
                             # adapt proc order's move qty (for correct virtual stock)
