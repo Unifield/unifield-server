@@ -174,6 +174,7 @@ class supplier_catalogue(osv.osv):
         if context is None:
             context = {}
 
+        to_be_confirmed = False
         for catalogue in self.browse(cr, uid, ids, context=context):
 
             # Check if other catalogues need to be updated because they finished
@@ -185,7 +186,6 @@ class supplier_catalogue(osv.osv):
                                                                     vals.get('period_to', catalogue.period_to), context=context)
 
             current_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
-            to_be_confirmed = False
             if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
                 if vals['partner_id'] == current_partner_id:
                     # If the new partner is the instance partner, remove the supplier info
@@ -194,7 +194,7 @@ class supplier_catalogue(osv.osv):
                     supinfo_obj.unlink(cr, uid, supplierinfo_ids, context=context)
                 elif catalogue.partner_id.id == current_partner_id:
                     # If the catalogue was for teh instance partner, set it to False, then confirm it again
-                    to_be_confirmed = True
+                    to_be_confirmed.append(catalogue.id)
 
             # Update product pricelists only if the catalogue is confirmed
             if vals.get('state', catalogue.state) == 'confirmed' and not to_be_confirmed:
@@ -230,8 +230,8 @@ class supplier_catalogue(osv.osv):
 
         # Confirm the catalogue in case of partner change from instance partner to other partner
         if to_be_confirmed:
-            self.button_draft(cr, uid, ids, context=context)
-            self.button_confirm(cr, uid, ids, context=context)
+            self.button_draft(cr, uid, to_be_confirmed, context=context)
+            self.button_confirm(cr, uid, to_be_confirmed, context=context)
 
         return res
 
