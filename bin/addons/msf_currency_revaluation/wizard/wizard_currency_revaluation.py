@@ -635,7 +635,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                   "Please check 'Included in revaluation' "
                   "for at least one account in account form."))
 
-        special_period_ids = [p.id for p in form.fiscalyear_id.period_ids if p.special == True]
+        special_period_ids = [ p.id for p in form.fiscalyear_id.period_ids \
+            if p.special == True and p.number != 0 ]
         if not special_period_ids:
             raise osv.except_osv(_('Error!'),
                                  _('No special period found for the fiscalyear %s') %
@@ -651,9 +652,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 )
             period_ids = [form.period_id.id]
         else:
+            # NOTE: US-1251 exclude IB entries period 0 for monthly and yearly
             period_ids = []
             for period in form.fiscalyear_id.period_ids:
-                if period.number < 13:
+                if 0 < period.number < 13:
                     period_ids.append(period.id)
         if not period_ids:
             raise osv.except_osv(
@@ -663,7 +665,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Check periods state
         periods_not_field_closed = []
         for period in period_obj.browse(cr, uid, period_ids, context=context):
-            if period.state in ['created', 'draft']:
+            if period.number != 0 and period.state in ['created', 'draft']:
                 periods_not_field_closed.append(period.name)
 
         # check if revaluation has already been run for this period
