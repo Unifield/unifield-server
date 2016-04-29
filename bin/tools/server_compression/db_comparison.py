@@ -89,7 +89,7 @@ object_not_synchronized_count = 0
 data_id_list = oerp_origin.search('ir.model.data',
                                   [('model', 'in', tuple(synchronized_model)),
                                    ('name', 'not in', tuple(SDREF_TO_IGNORE)),
-                                   ('module', '=', 'sd')
+                                   ('module', '=', 'sd'),
                                    ])
 data_count = len(data_id_list)
 counter = 0
@@ -155,10 +155,14 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
             for field, value in values.items():
                 if field in ('menu_access', 'group_ids') and isinstance(value, list):
                     # some list need to be sorted to be compared
-                    values[field] = sorted(values)
-                if isinstance(value, tuple) and len(value)==2:
-                    # this is a many2one field
-                    model = current_obj.__osv__['columns'][field].osv._name
+                    values[field] = sorted(value)
+                field_type = None
+                if value and hasattr(current_obj.__osv__['columns'][field], 'type'):
+                    field_type = getattr(current_obj.__osv__['columns'][field], 'type', False)
+                else:
+                    continue
+                if field_type == 'many2one':
+                    model = current_obj.__osv__['columns'][field].relation
                     imd_id = eoerp.search('ir.model.data',
                         [('model', '=', model),
                          ('res_id', '=' , value[0])])
@@ -170,8 +174,23 @@ for data_object in oerp_origin.browse('ir.model.data', data_id_list):
                                 xml_id = xml_id.split(instance_id)[1]
                             # replace the id of the many2one with the correponding xml_id
                             values[field] = (xml_id, values[field][1])
-                    else:
-                        pass
+                elif field_type == 'many2many':
+                    model = current_obj.__osv__['columns'][field].relation
+                    imd_id_list = eoerp.search('ir.model.data',
+                        [('model', '=', model),
+                         ('res_id', 'in' , value)])
+                    if imd_id_list:
+                        imd_obj_list = eoerp.browse('ir.model.data', imd_id_list)
+                        value_list = []
+                        for imd_obj in imd_obj_list:
+                            xml_id = imd_obj.name
+                            if xml_id:
+                                if xml_id.startswith(instance_id):
+                                    xml_id = xml_id.split(instance_id)[1]
+                                # replace the id of the many2one with the correponding xml_id
+                                value_list.append(xml_id)
+                        value_list.sort()
+                        values[field] = value_list
             return values
 
         origin_values = set_xmlid_for_many2one(origin_obj, oerp_origin, origin_values, origin_instance_id)
