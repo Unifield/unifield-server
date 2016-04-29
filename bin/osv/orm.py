@@ -4228,17 +4228,18 @@ class orm(orm_template):
                                     result.pop(r)
                     if result:
                         current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
-                    for id, value in result.items():
-                        if self._columns[f]._type in ('many2one', 'one2one'):
-                            try:
-                                value = value[0]
-                            except:
-                                pass
-                        id_param_dict.setdefault(id, {})
-                        param_list = id_param_dict[id].setdefault('param_list', [])
-                        param_list.append((self._columns[f]._symbol_set[1](value)))
-                        update_list = id_param_dict[id].setdefault('update_list', [])
-                        update_list.append(current_value)
+                        column_type = self._columns[f]._type
+                        for id, value in result.items():
+                            if column_type in ('many2one', 'one2one'):
+                                try:
+                                    value = value[0]
+                                except:
+                                    pass
+                            id_param_dict.setdefault(id, {})
+                            param_list = id_param_dict[id].setdefault('param_list', [])
+                            param_list.append((self._columns[f]._symbol_set[1](value)))
+                            update_list = id_param_dict[id].setdefault('update_list', [])
+                            update_list.append(current_value)
 
                 # do only one update request per object
                 for id, param_dict in id_param_dict.items():
@@ -4674,7 +4675,7 @@ class orm(orm_template):
             for i in range(0, len(ids), cr.IN_MAX):
                 sub_ids_parent = ids_parent[i:i+cr.IN_MAX]
                 cr.execute(query, (tuple(sub_ids_parent),))
-                ids_parent2.extend([x[0] for x in cr.fetchall() if x[0] is not None])
+                ids_parent2.extend(filter(None, [x[0] for x in cr.fetchall()]))
             ids_parent = ids_parent2
             for i in ids_parent:
                 if i in ids:

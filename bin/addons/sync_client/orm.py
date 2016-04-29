@@ -174,7 +174,9 @@ sql_params)
         if not ids: return {} if result_iterable else False
 
         model_data_obj = self.pool.get('ir.model.data')
-        sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
+        sdref_ids = model_data_obj.search(cr, uid,
+                [('model','=',self._name),('res_id','in',ids),('module','=','sd')],
+                order='NO_ORDER')
         try:
             result = RejectingDict((data.res_id, get_fields(data))
                 for data in model_data_obj.browse(cr, uid, sdref_ids))

@@ -836,11 +836,9 @@ class cache(object):
             self.fun_default_values = dict(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3]))
 
         def cached_result(self2, cr, *args, **kwargs):
-            current_time = time.time()
-            time_timeout = current_time-int(self.timeout)
-            if time_timeout > self.lasttime:
-                self.lasttime = current_time
-                t = time_timeout
+            if time.time()-int(self.timeout) > self.lasttime:
+                self.lasttime = time.time()
+                t = time.time()-int(self.timeout)
                 old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
                 for key in old_keys:
                     self.cache.pop(key)
@@ -862,12 +860,12 @@ class cache(object):
                 result2 = fn(self2, cr, *args[:self.skiparg-2], **kwargs2)
                 if not self.multi:
                     key = notincache[None]
-                    self.cache[key] = (result2, current_time)
+                    self.cache[key] = (result2, time.time())
                     result[None] = result2
                 else:
                     for id in result2:
                         key = notincache[id]
-                        self.cache[key] = (result2[id], current_time)
+                        self.cache[key] = (result2[id], time.time())
                     result.update(result2)
 
             if not self.multi:
