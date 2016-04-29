@@ -28,13 +28,20 @@ class order_line_allocation(report_sxw.rml_parse):
         super(order_line_allocation, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
+            'get_total_amount': self.get_total_amount,
         })
-        
+
+    def get_total_amount(self, po):
+        total = 0.0
+        if po and po.allocation_report_lines:
+            total = sum([line.subtotal or 0.0 for line in po.allocation_report_lines])
+        return total
 
 report_sxw.report_sxw('report.purchase.order.allocation.report', 
                       'purchase.order.line.allocation.report', 
                       'addons/purchase_allocation_report/report/order_line_allocation.rml', 
                       parser=order_line_allocation, header="landscape")
+
 
 class po_line_allocation_report(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
@@ -42,7 +49,6 @@ class po_line_allocation_report(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
         })
-        
 
 report_sxw.report_sxw('report.po.line.allocation.report', 
                       'purchase.order', 
