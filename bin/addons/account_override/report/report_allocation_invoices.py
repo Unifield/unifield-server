@@ -34,6 +34,7 @@ class allocation_invoice_report(report_sxw.rml_parse):
             'time': time,
             'get_data': self.get_data,
             'get_total_amount': self.get_total_amount,
+            'get_journal_code': self.get_journal_code,
         })
 
         self.total_amount = 0.0
@@ -78,6 +79,24 @@ class allocation_invoice_report(report_sxw.rml_parse):
 
     def get_total_amount(self):
         return self.total_amount
+
+    def get_journal_code(self, inv):
+        '''
+        If the SI has been (partially or totally) imported in a register, return the Journal Code
+        It the SI has been partially imported in several registers, return : "code1 / code2 / code3"
+        '''
+        journal_code_list = []
+        if inv and inv.move_id:
+            absl_ids = self.pool.get('account.bank.statement.line').search(self.cr, self.uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
+            if absl_ids:
+                if isinstance(absl_ids, (int, long)):
+                    absl_ids = [absl_ids]
+                absl = self.pool.get('account.bank.statement.line').browse(self.cr, self.uid, absl_ids)
+                for i in range(len(absl)):
+                    journal_code_list.append(absl[i].journal_id and absl[i].journal_id.code or '')
+                    if i != len(absl) - 1:
+                        journal_code_list.append(' / ')
+        return ''.join(journal_code_list)
 
 report_sxw.report_sxw('report.allocation.invoices.report',
                       'account.invoice',

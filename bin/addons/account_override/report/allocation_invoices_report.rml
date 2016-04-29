@@ -76,7 +76,7 @@
                 <para style="InformationHeader">Type</para>
             </td>
             <td>
-                <para style="InformationHeader"></para>
+                <para style="InformationHeader">Journal Code</para>
             </td>
         </tr>
 
@@ -91,7 +91,7 @@
             	<para style="Information">[[ getSel(o, 'type') ]]</para>
             </td>
             <td>
-                <para style="Information"></para>
+                <para style="Information">[[ get_journal_code(o) ]]</para>
             </td>
         </tr>
     </blockTable>
