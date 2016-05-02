@@ -153,13 +153,13 @@ class hr_payroll_import(osv.osv_memory):
             if cc_ids and cc_ids[0]:
                 cost_center_id = cc_ids[0]
             else:
-                error_message = "Invalid CostCenter and will be ignored: " + project[0] + " "
+                error_message = "Invalid Cost Center [" + project[0] + "] will be ignored. "
         if axis1 and axis1[0]:
             dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'),('code', '=ilike', axis1[0]),], context=context)
             if dest_ids and dest_ids[0]:
                 destination_id = dest_ids[0]
             else:
-                error_message = error_message + "Invalid DEST and will be ignored: " + axis1[0]
+                error_message = error_message + "Invalid Destination [" + axis1[0] + "] will be ignored." 
         
         # Fetch DEBIT/CREDIT
         debit = 0.0
