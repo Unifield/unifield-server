@@ -270,6 +270,27 @@ automated import must be created for a same functionality. Please select an othe
             if vals.get(path[0]):
                 self.path_is_accessible(vals.get(path[0]), path[1])
 
+        src_path = vals.get('src_path')
+        dest_path = vals.get('dest_path')
+        report_path = vals.get('report_path')
+        if src_path:
+            if src_path == dest_path:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot have same directory for \'Source Path\' and \'Destination Path\''),
+                )
+            if src_path == report_path:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot have same directory for \'Source Path\' and \'Report Path\''),
+                )
+
+        if vals.get('active') and not (src_path and dest_path and report_path):
+            raise osv.except_osv(
+                _('Error'),
+                _('Before activation, the different paths should be set.')
+            )
+
         # Call the super create
         new_id = super(automated_import, self).create(cr, uid, vals, context=context)
 
@@ -313,6 +334,27 @@ automated import must be created for a same functionality. Please select an othe
             for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
                 if vals.get(path[0], import_brw[path[0]]):
                     self.path_is_accessible(vals.get(path[0], import_brw[path[0]]), path[1])
+
+            src_path = vals.get('src_path', import_brw.src_path)
+            dest_path = vals.get('dest_path', import_brw.dest_path)
+            report_path = vals.get('report_path', import_brw.report_path)
+            if src_path:
+                if src_path == dest_path:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You cannot have same directory for \'Source Path\' and \'Destination Path\''),
+                    )
+                if src_path == report_path:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You cannot have same directory for \'Source Path\' and \'Report Path\''),
+                    )
+
+            if vals.get('active', import_brw.active) and not (src_path and dest_path and report_path):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Before activation, the different paths should be set.')
+                )
 
             cron_vals = self._generate_ir_cron(import_brw)
             if import_brw.cron_id:

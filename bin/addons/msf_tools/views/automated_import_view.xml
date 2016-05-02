@@ -40,11 +40,11 @@
                     <field name="name" />
                     <field name="function_id" widget="selection" />
                     <field name="active" />
-                    <button name="run_job" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
+                    <button name="run_job" string="Run job manually" colspan="2" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
                     <separator colspan="4" string="Paths configuration" />
-                    <field name="src_path" colspan="4" />
-                    <field name="dest_path" colspan="4" />
-                    <field name="report_path" colspan="4" />
+                    <field name="src_path" colspan="4" attrs="{'required': [('active', '=', True)]}" />
+                    <field name="dest_path" colspan="4" attrs="{'required': [('active', '=', True)]}" />
+                    <field name="report_path" colspan="4" attrs="{'required': [('active', '=', True)]}" />
                     <separator colspan="4" string="Scheduler configuration" />
                     <group colspan="4" col="6">
                         <field name="interval" />
