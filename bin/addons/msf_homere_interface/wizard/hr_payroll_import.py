@@ -118,6 +118,22 @@ class hr_payroll_import(osv.osv_memory):
         else:
             accounting_code, description, second_description, third,  expense, receipt, project, financing_line, \
                 financing_contract, date, currency, axis1, analytic_line, axis2, analytic_line2 = zip(data)
+            
+            #US-671: ONLY APPLY FOR THE SAGA THAT CONTAINS Project and Axis1 columns: Retrieve DEST and CC from the Project and axis1 columns
+            if project and project[0]:
+                # check if the project value exists as a DEST in the local system
+                cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),('code', '=ilike', project[0]),], context=context)
+                if cc_ids and cc_ids[0]:
+                    cost_center_id = cc_ids[0]
+                else:
+                    error_message = "Invalid Cost Center [" + project[0] + "] will be ignored. "
+            if axis1 and axis1[0]:
+                dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'),('code', '=ilike', axis1[0]),], context=context)
+                if dest_ids and dest_ids[0]:
+                    destination_id = dest_ids[0]
+                else:
+                    error_message = error_message + "Invalid Destination [" + axis1[0] + "] will be ignored." 
+                
         # Check period
         if not date and not date[0]:
             raise osv.except_osv(_('Warning'), _('A date is missing!'))
@@ -145,21 +161,6 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('The accounting code \'%s\' doesn\'t exist!') % (ustr(accounting_code[0]),))
         if len(account_ids) > 1:
             raise osv.except_osv(_('Warning'), _('There is more than one account that have \'%s\' code!') % (ustr(accounting_code[0]),))
-        
-        #US-671: Retrieve DEST and CC from the Project and axis1 columns
-        if project and project[0]:
-            # check if the project value exists as a DEST in the local system
-            cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),('code', '=ilike', project[0]),], context=context)
-            if cc_ids and cc_ids[0]:
-                cost_center_id = cc_ids[0]
-            else:
-                error_message = "Invalid Cost Center [" + project[0] + "] will be ignored. "
-        if axis1 and axis1[0]:
-            dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'),('code', '=ilike', axis1[0]),], context=context)
-            if dest_ids and dest_ids[0]:
-                destination_id = dest_ids[0]
-            else:
-                error_message = error_message + "Invalid Destination [" + axis1[0] + "] will be ignored." 
         
         # Fetch DEBIT/CREDIT
         debit = 0.0
