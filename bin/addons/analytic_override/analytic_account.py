@@ -377,6 +377,23 @@ class analytic_account(osv.osv):
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
 
+    def remove_inappropriate_links(self, vals, context=None):
+        '''
+        Remove relations that are incoherent regarding the category selected. For instance an account with
+        category "Funding Pool" can have associated cost centers, whereas a "Destination" shouldn't.
+        (That would happen if the category is modified after that the relations have been created).
+        :return: corrected vals
+        '''
+        if context is None:
+            context = {}
+        if 'category' in vals:
+            if vals['category'] != 'DEST':
+                vals['destination_ids'] = [(6, 0, [])]
+            if vals['category'] != 'FUNDING':
+                vals['tuple_destination_account_ids'] = [(6, 0, [])]
+                vals['cost_center_ids'] = [(6, 0, [])]
+        return vals
+
     def _check_date(self, vals, context=None):
         if context is None:
             context = {}
@@ -414,6 +431,7 @@ class analytic_account(osv.osv):
         """
         self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
+        vals = self.remove_inappropriate_links(vals, context=context)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -426,6 +444,7 @@ class analytic_account(osv.osv):
             ids = [ids]
         self._check_date(vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
+        vals = self.remove_inappropriate_links(vals, context=context)
 
         ###### US-113: I have moved the block that sql updates on the name causing the problem of sync (touched not update). The block is now moved to after the write
 

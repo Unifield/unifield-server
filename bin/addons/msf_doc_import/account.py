@@ -406,11 +406,19 @@ class msf_doc_import_accounting(osv.osv_memory):
                         if not line[cols['Cost Centre']]:
                             errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
                             continue
+                        # If necessary cast the CC into a string, otherwise the below search would crash
+                        if not isinstance(line[cols['Cost Centre']], basestring):
+                            line[cols['Cost Centre']] = '%s' % (line[cols['Cost Centre']])
                         cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
                         if not cc_ids:
                             errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         r_cc = cc_ids[0]
+                        # Check Cost Center type
+                        cc = self.pool.get('account.analytic.account').browse(cr, uid, r_cc, context)
+                        if cc.type == 'view':
+                            errors.append(_('Line %s. %s is a VIEW type Cost Center!') % (current_line_num, line[cols['Cost Centre']]))
+                            continue
                         # Check Funding Pool (added since UTP-1082)
                         r_fp = msf_fp_id
                         if line[cols['Funding Pool']]:

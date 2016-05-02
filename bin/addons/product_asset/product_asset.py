@@ -407,7 +407,8 @@ class product_product(osv.osv):
             vals.update(subtype='single')
 
         #UF-2170: remove the standard price value from the list if the value comes from the sync
-        if 'standard_price' in vals and context.get('sync_update_execution', False):
+        #US-803: If the price comes from rw_sync, then take it
+        if 'standard_price' in vals and context.get('sync_update_execution', False) and not context.get('rw_sync', False):
             del vals['standard_price']
 
 #        if 'type' in vals and vals['type'] == 'consu':

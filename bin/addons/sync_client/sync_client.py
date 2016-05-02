@@ -69,6 +69,7 @@ class BackgroundProcess(Thread):
                 connected = False
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
             # Check for update
+
             if hasattr(entity, 'upgrade'):
                 up_to_date = entity.upgrade(cr, uid, context=context)
                 if not up_to_date[0]:

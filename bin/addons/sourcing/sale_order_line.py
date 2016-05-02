@@ -1203,6 +1203,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                     }, context=context)
 
+                    order = self.pool.get('sale.order').read(cr, uid, order_id, ['name'], context=context)
+                    self.infolog(cr, uid, "All lines of the FO/IR id:%s (%s) have been sourced" % (
+                        order['id'],
+                        order['name'],
+                    ))
+
                 self.pool.get('sale.order').write(cr, uid, order_ids, {
                     'sourcing_trace_ok': True,
                     'sourcing_trace': 'Sourcing in progress',

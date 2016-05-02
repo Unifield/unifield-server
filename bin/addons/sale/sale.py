@@ -615,6 +615,9 @@ class sale_order(osv.osv):
             message = _("The quotation '%s' has been converted to a sales order.") % (o.name,)
             message = self._hook_message_action_wait(cr, uid, order=o, message=message)
             self.log(cr, uid, o.id, message)
+            self.infolog(cr, uid, "The Field Order id:%s (%s) has been confirmed." % (
+                o.id, o.name,
+            ))
         return True
 
     def procurement_lines_get(self, cr, uid, ids, *args):
