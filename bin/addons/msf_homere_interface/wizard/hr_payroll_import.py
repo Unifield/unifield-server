@@ -281,7 +281,6 @@ class hr_payroll_import(osv.osv_memory):
         # Write payroll entry
         if wiz_state != 'simu':
             #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
-            
             ############################ UPDATE THE EMPLOYEE! AND PREPARE THE LOG FILE WITH WARNING!
             if to_update_employee and employee_id:
                 self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
@@ -583,7 +582,7 @@ class hr_payroll_import(osv.osv_memory):
             if error_msg:
                 error_msg = "Import can be processed but with the following warnings:\n-------------------- \n" + error_msg
             else:
-                error_msg = "No warning is found for this file. Import can be now processed."
+                error_msg = "No warning found for this file. Import can be now processed."
             
             self.write(cr, uid, [wiz.id], {'state': 'proceed', 'msg': error_msg})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
