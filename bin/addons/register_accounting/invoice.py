@@ -80,18 +80,30 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         res = {}
+        acc_ml_obj = self.pool.get('account.move.line')
+        acc_obj = self.pool.get('account.account')
+        acc_list = acc_obj.search(cr, uid, [('type', 'in', ['payable', 'receivable'])])
         for inv in self.browse(cr, uid, ids, context):
             res[inv.id] = 'none'
             if inv.move_id:
-                absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
-                if absl_ids:
+                absl_ids = self.pool.get('account.bank.statement.line').search(cr, uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])], context=context)
+                account = inv.account_id
+                if absl_ids and account and (account.id in acc_list):
                     res[inv.id] = 'imported'
-                    if isinstance(absl_ids, (int, long)):
-                        absl_ids = [absl_ids]
-                    if inv.amount_total != sum([x and abs(x.amount) or 0.0 for x in self.pool.get('account.bank.statement.line').browse(cr, uid, absl_ids)]):
-                        res[inv.id] = 'partial'
-                    continue
-                res[inv.id] = 'not'
+                    acc_ml_id = acc_ml_obj.search(cr, uid, [('account_id', '=', account.id),
+                                                            ('is_counterpart', '=', True),
+                                                            ('move_id', '=', inv.move_id.id)], context=context)
+                    acc_ml = acc_ml_obj.browse(cr, uid, acc_ml_id, context)
+                    if acc_ml:
+                        residual = acc_ml[0].amount_residual_import_inv
+                        if residual and abs(residual - inv.amount_total) < 0.001:
+                            res[inv.id] = 'not'
+                        elif residual and residual < inv.amount_total and residual > 0.001:
+                            res[inv.id] = 'partial'
+                    else:
+                        res[inv.id] = 'not'
+                else:
+                    res[inv.id] = 'not'
         return res
 
     def _get_down_payment_ids(self, cr, uid, ids, field_name=None, arg=None, context=None):
