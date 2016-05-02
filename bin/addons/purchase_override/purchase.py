@@ -1494,7 +1494,7 @@ stock moves which are already processed : '''
                     if (cond1 or (not so.procurement_request and cond2)) and cond3:
 
                         # In case of FO with not only no product lines, the picking tickes will be created with normal flow
-                        if not so.procurement_request and not sol.product_id:
+                        if not so.procurement_request and cond2:
                             if sol_obj.search(cr, uid, [('order_id', '=', so.id), ('product_id', '!=', False),
                                                         ('id', '!=', sol.id)], limit=1, context=context):
                                 continue
