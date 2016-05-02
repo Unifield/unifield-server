@@ -44,6 +44,30 @@ _SELECTION_PO_CFT = [
 ]
 
 
+def check_is_service_nomen(obj, cr, uid, nomen=False):
+    """
+    Return True if the nomenclature seleced on the line is a service nomenclature
+    @param cr: Cursor to the database
+    @param uid: ID of the res.users that calls this method
+    @param nomen: ID of the nomenclature to check
+    @return: True or False
+    """
+    nomen_obj = obj.pool.get('product.nomenclature')
+
+    if not nomen:
+        return False
+
+    nomen_srv = nomen_obj.search(cr, uid, [
+        ('name', '=', 'SRV'),
+        ('type', '=', 'mandatory'),
+        ('level', '=', 0),
+    ], limit=1)
+    if not nomen_srv:
+        return False
+
+    return nomen_srv[0] == nomen
+
+
 class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
@@ -679,6 +703,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 vals['po_cft'] = 'po'
             elif not ir and vals.get('po_cft', 'po') == 'po':
                 vals['po_cft'] = 'dpo'
+        elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
+            vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type', False):
@@ -792,6 +818,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         for line in self.browse(cr, uid, ids, context=context):
             clc = self._check_loan_conditions(cr, uid, line, context=context)
             if clc:
@@ -835,7 +862,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 )
 
             if line.product_id and \
-               line.product_id.type in ('service', 'service_recep') and \
+               (line.product_id.type in ('service', 'service_recep') or \
+               (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
                not line.order_id.procurement_request and \
                line.po_cft == 'po':
                 raise osv.except_osv(
@@ -1437,7 +1465,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
-                if line and line.product_id and line.product_id.type in ('service', 'service_recep') and line.order_id and not line.order_id.procurement_request:
+                if line and \
+                    ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
+                     (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
+                     line.order_id and not line.order_id.procurement_request:
                     po_cft = 'dpo'
 
             result['value'].update({
@@ -1489,7 +1520,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         line = self.browse(cr, uid, line_id, context=context)
 
-        if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request and po_cft == 'po':
+        cond1 = line.product_id.type in ('service', 'service_recep')
+        cond2 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
+        cond3 = not line.order_id.procurement_request and po_cft == 'po'
+
+        if (cond1 or cond2) and cond3:
             res['warning'] = {
                 'title': _('Warning'),
                 'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
