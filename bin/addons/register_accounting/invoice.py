@@ -37,36 +37,54 @@ class account_invoice(osv.osv):
         if args and args[0] and len(args[0]) == 3:
             if args[0][1] != '=':
                 raise osv.except_osv(_('Error'), _('Operator not supported yet!'))
-            # Search all imported invoice
-            sql = """SELECT INV_ID, INV_TOTAL, abs(SUM(absl.amount))
-                FROM (
-                    SELECT inv.id AS INV_ID, inv.amount_total AS INV_TOTAL, aml.id AS AML
-                    FROM account_invoice inv, account_move_line aml, account_move am
-                    WHERE inv.move_id = am.id
-                    AND aml.move_id = am.id
-                    AND inv.state = 'open'
-                    ORDER BY inv.id
-                ) AS move_lines, imported_invoice imp, account_bank_statement_line absl
-                WHERE imp.move_line_id = move_lines.AML
-                AND imp.st_line_id = absl.id
-                GROUP BY INV_ID, INV_TOTAL"""
             # Fetch second args (type of import)
             s = args[0][2]
-            # Complete SQL query if needed
-            if s == 'imported':
-                sql += """ HAVING INV_TOTAL = abs(SUM(absl.amount))"""
-            elif s == 'partial':
-                sql += """ HAVING INV_TOTAL != abs(SUM(absl.amount))"""
-            # finish SQL query
-            sql += """ ORDER BY INV_ID;"""
+            if s == 'not':
+                # (US-1275) Display only the invoices "draft", or "open" but not yet partially or fully imported
+                sql = """SELECT id FROM
+                    (
+                      SELECT id FROM account_invoice
+                      WHERE state = 'draft'
+                      UNION
+                        SELECT inv.id
+                        FROM account_invoice inv
+                        INNER JOIN account_move am ON inv.move_id = am.id
+                        INNER JOIN account_move_line aml ON aml.move_id = am.id
+                        WHERE inv.state = 'open'
+                        AND ABS(aml.amount_residual_import_inv - inv.amount_total) < 0.001
+                        AND aml.is_counterpart = 't'
+                        AND aml.account_id = inv.account_id
+                        AND aml.move_id = inv.move_id
+                    ) AS draft_and_not_imported
+                    ORDER BY id;"""
+            else:
+                # Search all imported invoices
+                sql = """SELECT INV_ID, INV_TOTAL, RESIDUAL
+                    FROM (
+                        SELECT inv.id AS INV_ID, inv.amount_total AS INV_TOTAL, aml.id AS AML, aml.amount_residual_import_inv AS RESIDUAL
+                        FROM account_invoice inv
+                        INNER JOIN account_move am ON inv.move_id = am.id
+                        INNER JOIN account_move_line aml ON aml.move_id = am.id
+                        WHERE inv.state = 'open'
+                        AND aml.is_counterpart = 't'
+                        AND aml.account_id = inv.account_id
+                        AND aml.move_id = inv.move_id
+                        ORDER BY inv.id
+                    ) AS move_lines, imported_invoice imp
+                    WHERE imp.move_line_id = move_lines.AML
+                    GROUP BY INV_ID, INV_TOTAL, RESIDUAL"""
+                # Complete SQL query if needed
+                having = ''
+                if s == 'imported':
+                    having = ' HAVING RESIDUAL <= 0.001'
+                elif s == 'partial':
+                    having = ' HAVING RESIDUAL > 0.001 AND RESIDUAL < INV_TOTAL'
+                # finish SQL query
+                sql = ''.join((sql, having, ' ORDER BY INV_ID;'))
             # execution
             cr.execute(sql)
             sql_res = cr.fetchall()
-            # process regarding second args
-            if s in ['partial', 'imported']:
-                res = [('id', 'in', [x and x[0] for x in sql_res])]
-            else:
-                res = [('id', 'not in', [x and x[0] for x in sql_res])]
+            res = [('id', 'in', [x and x[0] for x in sql_res])]
         return res
 
     def _get_imported_state(self, cr, uid, ids, field_name=None, arg=None, context=None):
