@@ -107,6 +107,11 @@ class hr_payroll_import(osv.osv_memory):
         name = ''
         ref = ''
         destination_id = False
+        cost_center_id = False
+        # US-671: This flag is used to indicate whether the DEST and CC of employee needs to be updated
+        to_update_employee = False 
+        error_message = ""
+                
         if len(data) == 13:
             accounting_code, description, second_description, third, expense, receipt, project, financing_line, \
                 financing_contract, date, currency, project, analytic_line = zip(data)
@@ -140,6 +145,22 @@ class hr_payroll_import(osv.osv_memory):
             raise osv.except_osv(_('Warning'), _('The accounting code \'%s\' doesn\'t exist!') % (ustr(accounting_code[0]),))
         if len(account_ids) > 1:
             raise osv.except_osv(_('Warning'), _('There is more than one account that have \'%s\' code!') % (ustr(accounting_code[0]),))
+        
+        #US-671: Retrieve DEST and CC from the Project and axis1 columns
+        if project and project[0]:
+            # check if the project value exists as a DEST in the local system
+            cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),('code', '=ilike', project[0]),], context=context)
+            if cc_ids and cc_ids[0]:
+                cost_center_id = cc_ids[0]
+            else:
+                error_message = "Invalid CostCenter and will be ignored: " + project[0] + " "
+        if axis1 and axis1[0]:
+            dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'),('code', '=ilike', axis1[0]),], context=context)
+            if dest_ids and dest_ids[0]:
+                destination_id = dest_ids[0]
+            else:
+                error_message = error_message + "Invalid DEST and will be ignored: " + axis1[0]
+        
         # Fetch DEBIT/CREDIT
         debit = 0.0
         credit = 0.0
@@ -199,7 +220,10 @@ class hr_payroll_import(osv.osv_memory):
             # US_263: get employee destination, if haven't get default destination
             if employee_id:
                 emp = self.pool.get('hr.employee').browse(cr, uid, employee_id, context=context)
-                if emp.destination_id:
+                if destination_id and destination_id !=  emp.destination_id.id:
+                    to_update_employee = True # turn the flag to update the employee
+                    
+                if not destination_id and emp.destination_id: # US-671: Only update if the destination from the import is not valid
                     destination_id = emp.destination_id.id
             if not destination_id:
                 if not account.default_destination_id:
@@ -241,21 +265,34 @@ class hr_payroll_import(osv.osv_memory):
         # Retrieve analytic distribution from employee
         if employee_id:
             employee_data = self.pool.get('hr.employee').read(cr, uid, employee_id, ['cost_center_id', 'funding_pool_id', 'free1_id', 'free2_id'])
+            #US-671: use the cost center from the import, if not retrieve from employee
+            temp_cc = employee_data and employee_data.get('cost_center_id', False) and employee_data.get('cost_center_id')[0] or False
+            if cost_center_id and cost_center_id != temp_cc:
+                to_update_employee =True
+            if not cost_center_id:
+                cost_center_id = temp_cc
             vals.update({
-                'cost_center_id': employee_data and employee_data.get('cost_center_id', False) and employee_data.get('cost_center_id')[0] or False,
+                'cost_center_id': cost_center_id,
                 'funding_pool_id': employee_data and employee_data.get('funding_pool_id', False) and employee_data.get('funding_pool_id')[0] or False,
                 'free1_id': employee_data and employee_data.get('free1_id', False) and employee_data.get('free1_id')[0] or False,
                 'free2_id': employee_data and employee_data.get('free2_id', False) and employee_data.get('free2_id')[0] or False,
             })
         # Write payroll entry
         if wiz_state != 'simu':
+            #US-671: In the process mode, update the employee cost center and destination, and use also this one for the payroll object.
+            
+            ############################ UPDATE THE EMPLOYEE! AND PREPARE THE LOG FILE WITH WARNING!
+            if to_update_employee and employee_id:
+                self.pool.get('hr.employee').write(cr, uid, [employee_id], {'cost_center_id': cost_center_id, 'destination_id': destination_id,}, context)
+
             res = self.pool.get('hr.payroll.msf').create(cr, uid, vals,
                 context={'from': 'import'})
             if res:
                 created += 1
         else:
             created += 1
-        return True, amount, created, vals, currency[0]
+            msg = 'Duy Test'
+        return True, amount, created, vals, currency[0], error_message
 
     def _get_homere_password(self, cr, uid, pass_type='payroll'):
         ##### UPDATE HOMERE.CONF FILE #####
@@ -477,9 +514,10 @@ class hr_payroll_import(osv.osv_memory):
                     res = True
                     res_amount = 0.0
                     amount = 0.0
+                    error_msg = ""
                     for line in reader:
                         processed += 1
-                        update, amount, nb_created, vals, ccy = self.update_payroll_entries(
+                        update, amount, nb_created, vals, ccy, msg = self.update_payroll_entries(
                             cr, uid, data=line, field=field,
                             date_format=wiz.date_format,
                             wiz_state=wiz.state)
@@ -490,6 +528,10 @@ class hr_payroll_import(osv.osv_memory):
                             header_vals = vals
                             header_vals['currency_code'] = ccy
                         created += nb_created
+                        
+                        if msg:
+                            error_msg += "Line " + str(processed) + ": " + msg + " \n"
+                        
                     # Check balance
                     res_amount_rounded = round(res_amount, 2)
                     if res_amount_rounded != 0.0:
@@ -536,7 +578,13 @@ class hr_payroll_import(osv.osv_memory):
 
         if wiz_state == 'simu' and ids:
             # US_201: if check raise no error, change state to process
-            self.write(cr, uid, [wiz.id], {'state': 'proceed'})
+            # US-671: Show message in the wizard if there was warning or not.
+            if error_msg:
+                error_msg = "Import can be processed but with the following warnings:\n-------------------- \n" + error_msg
+            else:
+                error_msg = "No warning is found for this file. Import can be now processed."
+            
+            self.write(cr, uid, [wiz.id], {'state': 'proceed', 'msg': error_msg})
             view_id = self.pool.get('ir.model.data').get_object_reference(cr,
                 uid, 'msf_homere_interface', 'payroll_import_wizard')
             view_id = view_id and view_id[1] or False
@@ -563,7 +611,7 @@ class hr_payroll_import(osv.osv_memory):
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
 
-        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll'}, context=context)
+        res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename,'created': created, 'total': processed, 'state': 'payroll',}, context=context)
 
         return {
             'name': 'Payroll Import Confirmation',
