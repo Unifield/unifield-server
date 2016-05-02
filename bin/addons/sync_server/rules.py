@@ -167,6 +167,10 @@ class sync_rule(osv.osv):
         return self.get_groups(cr, uid, children_list, context=context)
 
     def _get_rules_per_group(self, cr, uid, entity, context=None):
+        if not entity.group_ids:
+            raise osv.except_osv(_("Warning"), "Your instace does not belong "
+                    "to any group. Instance must be member of at least one "
+                    "group to be able to synchronize.")
         cr.execute("""SELECT g.id, array_agg(r.id)
                       FROM sync_server_entity_group g
                            JOIN sync_server_group_type t ON (g.type_id=t.id or t.name = 'USB')
