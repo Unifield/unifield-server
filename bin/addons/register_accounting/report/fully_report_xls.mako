@@ -377,11 +377,12 @@
       <Column ss:Width="155"/>
       <Column ss:Width="135"/>
       <Column ss:Width="170"/>
+      <Column ss:Width="170"/>
       <Column ss:Width="55"/>
       <Column ss:Width="65"/>
       <Column ss:Width="60"/>
       <Column ss:Width="66"/>
-      <Column ss:Width="72" ss:Span="2"/>
+      <Column ss:Width="72" ss:Span="4"/>
       <Column ss:Width="36" ss:Span="1"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
@@ -467,6 +468,9 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Ref</Data>
         </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free Ref</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="column_headers">
             <Data ss:Type="String">Chk num</Data>
@@ -492,6 +496,12 @@
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">FP</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free 1</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free 2</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Rec?</Data>
@@ -520,6 +530,9 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${getRegRef(line) or ''|x}</Data>
         </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="centre">
             <Data ss:Type="String">${line.cheque_number}</Data>
@@ -536,6 +549,12 @@
         </Cell>
         <Cell ss:StyleID="amount_bold">
           <Data ss:Type="Number">${line.amount_out or 0.0}</Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String"></Data>
@@ -575,6 +594,9 @@
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
         </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${getFreeRef(inv_line) or ''|x}</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
         <Cell ss:StyleID="left">
           <Data ss:Type="String"></Data>
@@ -607,9 +629,9 @@ endif
 %>
       <Row>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
-          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
         % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
@@ -629,7 +651,15 @@ endif
           <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+          <Data ss:Type="String">${not ana_line.free_account and ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
@@ -657,11 +687,12 @@ elif ana_line.last_corrected_id:
     line_color = 'red'
 endif
 %>
+% if not ana_line.free_account:
       <Row>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
-          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
         % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
@@ -684,12 +715,77 @@ endif
           <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
+% endif
+% endfor
+% endif
+
+<!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
+<%
+a_lines = False
+if line.free_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+    a_lines = line.free_analytic_lines
+%>
+% if a_lines:
+% for ana_line in sorted(a_lines, key=lambda x: x.id):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <Row>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % endif
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
 % endfor
 % endif
-
 
 % endfor
     </Table>
