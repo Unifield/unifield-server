@@ -47,8 +47,8 @@ class ir_translation(osv.osv):
         lang_obj = self.pool.get('res.lang')
         lang_ids = lang_obj.search(cr, uid, [],
                 context=context)
-        langs = lang_obj.browse(cr, uid, lang_ids, context=context)
-        res = [(lang.code, lang.name) for lang in langs]
+        langs = lang_obj.read(cr, uid, lang_ids, ['code', 'name'], context=context)
+        res = [(lang['code'], lang['name']) for lang in langs]
         for lang_dict in tools.scan_languages():
             if lang_dict not in res:
                 res.append(lang_dict)

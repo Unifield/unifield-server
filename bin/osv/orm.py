@@ -212,17 +212,18 @@ class browse_record(object):
             # TODO: improve this, very slow for reports
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
-                lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
-                if not lang_obj_ids:
-                    raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
-                lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
+                if lang != 'en_US':
+                    lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
+                    if not lang_obj_ids:
+                        raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
+                    lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
 
-                for field_name, field_column in fields_to_fetch:
-                    if field_column._type in self._fields_process:
-                        for result_line in field_values:
-                            result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
-                            if result_line[field_name]:
-                                result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
+                    for field_name, field_column in fields_to_fetch:
+                        if field_column._type in self._fields_process:
+                            for result_line in field_values:
+                                result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
+                                if result_line[field_name]:
+                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
 
             if not field_values:
                 # Where did those ids come from? Perhaps old entries in ir_model_dat?
@@ -633,8 +634,9 @@ class orm_template(object):
                     elif f[i] == 'id':
                         model_data = self.pool.get('ir.model.data')
                         data_ids = model_data.search(cr, uid, [('model', '=', r._table_name), ('res_id', '=', r['id'])])
-                        data_ids = [x.id for x in model_data.browse(cr, uid, data_ids) \
-                                if x.module == 'sd'] or data_ids
+                        data_ids = model_data.search(cr, uid, [('model', '=',
+                            r._table_name), ('res_id', '=', r['id']),
+                            ('module', '=', 'sd')]) or data_ids
                         if len(data_ids):
                             d = model_data.read(cr, uid, data_ids[0], ['name', 'module'])
                             if d['module']:
@@ -750,7 +752,7 @@ class orm_template(object):
             return x.replace(':id','/id').replace('.id','/.id').split('/')
         fields_to_export = [fsplit(x) for x in fields_to_export]
         datas = []
-        for row in self.browse(cr, uid, ids, context):
+        for row in self.browse(cr, uid, ids, context, fields_to_fetch=[x[0] for x in fields_to_export]):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
@@ -950,10 +952,11 @@ class orm_template(object):
                         ir_model_data_obj = self.pool.get('ir.model.data')
                         try:
                             ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
-                            ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
+                            ref_db_id = ir_model_data_obj.read(cr, uid,
+                                    ir_model_data_id, ['res_id'])
                         except:
                             ref_db_id = None
-                        res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
+                        res = model and ref_db_id and '%s,%s' % (str(model), str(ref_db_id['res_id'])) or ''
                     else:
                         res = 0
 
