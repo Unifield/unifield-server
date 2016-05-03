@@ -50,8 +50,8 @@ def move_to_process_path(file, src_path, dest_path):
     :return: return True
     """
     srcname = os.path.join(src_path, file)
-    dstname = os.path.join(dest_path, file)
-    shutil.move(srcname, dstname)
+    renamed = os.path.join(dest_path, '%s_%s' % (time.strftime('%Y%m%d_%H%M%S'), file))
+    shutil.move(srcname, renamed)
     return True
 
 
@@ -150,7 +150,10 @@ class automated_import_job(osv.osv):
             try:
                 latest_file = max(all_files_under(job.import_id.src_path), key=os.path.getmtime)
             except ValueError:
-                raise 'No file found'
+                raise osv.except_osv(
+                    _('Error'),
+                    _('No file found'),
+                )
             # Process import
             processed, rejected, headers = getattr(
                 self.pool.get(job.import_id.function_id.model_id.model),
@@ -162,10 +165,11 @@ class automated_import_job(osv.osv):
             if rejected:
                 nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
-            move_to_process_path(latest_file, job.import_id.src_path, job.import_id.dest_path)
+            filename = os.path.split(latest_file)[1]
+            move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
             self.write(cr, uid, [job.id], {
-                'filename': latest_file,
+                'filename': filename,
                 'start_time': start_time,
                 'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'nb_processed_records': nb_processed,
@@ -189,7 +193,7 @@ class automated_import_job(osv.osv):
         att_obj = self.pool.get('ir.attachment')
 
         filename = '%s_%s_%s.csv' % (
-            time.strftime('%Y_%m_%d'),
+            time.strftime('%Y%m%d_%H%M%S'),
             job_brw.import_id.function_id.model_id.model,
             rejected and 'rejected' or 'processed'
         )
@@ -214,7 +218,7 @@ class automated_import_job(osv.osv):
             'name': filename,
             'datas_fname': filename,
             'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
-            'res_model': self._name,
+            'res_model': 'automated.import.job',
             'res_id': job_brw.id,
             'datas': base64.encodestring(csvfile.read())
         })

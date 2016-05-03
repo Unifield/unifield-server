@@ -39,6 +39,7 @@
         'views/automated_import_function_view.xml',
         'views/automated_import_job_view.xml',
         'security/ir.model.access.csv',
+        'automated_import_data.xml',
     ],
     'demo_xml': [
     ],
