@@ -610,7 +610,7 @@
 
 <!-- if it is a Down Payment that has been partially or totally reversed -->
 <% dp_reversals_ml = getDownPaymentReversals(line) %>
-% for dp_reversal_ml in dp_reversals_ml:
+% for dp_reversal_ml in sorted(dp_reversals_ml, key=lambda x: x.move_id.name):
     <Row ss:Height="14.5134">
         <Cell ss:StyleID="grey_centre">
           <Data ss:Type="String">${_('REV - Down Payment')|x}</Data>
@@ -641,8 +641,8 @@
             <Data ss:Type="String"></Data>
           </Cell>
         % endif
-        <Cell ss:StyleID="grey_left_bold">
-          <Data ss:Type="String"></Data>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <Data ss:Type="String"></Data>
@@ -892,6 +892,73 @@ endif
 % endif
 
 % endfor
+
+<!-- DELETED ENTRIES -->
+% for deleted_line in sorted(o.deleted_line_ids, key=lambda x: x.sequence):
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('Deleted Entry')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${deleted_line.sequence or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+    </Row>
+% endfor
+
     </Table>
     <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
       <PageSetup>
