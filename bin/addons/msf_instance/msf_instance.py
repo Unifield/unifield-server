@@ -405,4 +405,13 @@ class res_users(osv.osv):
         current_user = self.browse(cr, uid, uid, context=context)
         return current_user and current_user.company_id and current_user.company_id.instance_id or False
 res_users()
+
+class account_bank_statement_line_deleted(osv.osv):
+    _inherit = 'account.bank.statement.line.deleted'
+    _name = 'account.bank.statement.line.deleted'
+    _columns = {
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+    }
+
+account_bank_statement_line_deleted()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

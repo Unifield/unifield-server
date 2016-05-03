@@ -142,7 +142,7 @@ class account_bank_statement(osv.osv):
         'line_ids': fields.one2many('account.bank.statement.line',
             'statement_id', 'Statement lines',
             states={'confirm':[('readonly', True)]}),
-        'deleted_line_ids': fields.one2many('deleted.account.bank.statement.line', 'statement_id', 'Statement lines'),
+        'deleted_line_ids': fields.one2many('account.bank.statement.line.deleted', 'statement_id', 'Statement lines'),
         'move_line_ids': fields.one2many('account.move.line', 'statement_id',
             'Entry lines', states={'confirm':[('readonly',True)]}),
         'state': fields.selection([('draft', 'Draft'),('confirm', 'Confirmed')],
@@ -480,19 +480,19 @@ class account_bank_statement_line(osv.osv):
 account_bank_statement_line()
 
 
-class deleted_account_bank_statement_line(osv.osv):
+class account_bank_statement_line_deleted(osv.osv):
     '''
     Used to keep track of the sequence number for the deleted register lines
     '''
 
     _order = "statement_id desc, sequence"
-    _name = "deleted.account.bank.statement.line"
+    _name = "account.bank.statement.line.deleted"
     _description = "Deleted Bank Statement Line"
     _columns = {
         'statement_id': fields.many2one('account.bank.statement', 'Statement', required=True),
         'sequence': fields.char('Sequence', size=64, required=True, help='Gives the old sequence of the deleted line.'),
     }
 
-deleted_account_bank_statement_line()
+account_bank_statement_line_deleted()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

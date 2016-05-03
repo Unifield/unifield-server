@@ -2436,12 +2436,13 @@ class account_bank_statement_line(osv.osv):
             elif st_line.direct_invoice and st_line.direct_invoice_move_id and not context.get('from_direct_invoice', False):
                 self.pool.get('account.move').unlink(cr, uid, [st_line.direct_invoice_move_id.id], context=context)
             # If a sequence number had been generated for the register line, keep track of it
-            if st_line.sequence_for_reference:
+            if st_line.sequence_for_reference and not context.get('sync_update_execution', False):
                 vals = {
                     'statement_id': st_line.statement_id.id,
                     'sequence': st_line.sequence_for_reference,
+                    'instance_id': st_line.instance_id.id,
                 }
-                self.pool.get('deleted.account.bank.statement.line').create(cr, uid, vals, context=context)
+                self.pool.get('account.bank.statement.line.deleted').create(cr, uid, vals, context=context)
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
     def button_advance(self, cr, uid, ids, context=None):
