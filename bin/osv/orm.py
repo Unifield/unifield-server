@@ -746,6 +746,19 @@ class orm_template(object):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
+    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+        import base64
+
+        import_obj = self.pool.get('import_data')
+        import_id = import_obj.create(cr, uid, {
+            'ignore': 1,
+            'file': base64.encodestring(open(csv_file, 'r').read()),
+            'object': self._name,
+            'import_mode': 'create',
+        })
+        processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
+        return processed, rejected, headers
+
     def import_data_from_csv(self, cr, uid, csv_file, quotechar="'", delimiter=","):
         headers = []
         list_data = []

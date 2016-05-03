@@ -147,34 +147,54 @@ class automated_import_job(osv.osv):
             nb_rejected = 0
             nb_processed = 0
             start_time = time.strftime('%Y-%m-%d %H:%M:%S')
+            no_file = False
             try:
                 latest_file = max(all_files_under(job.import_id.src_path), key=os.path.getmtime)
             except ValueError:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('No file found'),
-                )
+                no_file = True
+
+            if no_file:
+                self.write(cr, uid, [job.id], {
+                    'filename': False,
+                    'start_time': start_time,
+                    'end_time': False,
+                    'nb_processed_records': 0,
+                    'nb_rejected_records': 0,
+                    'comment': _('No file to import in %s !') % job.import_id.src_path,
+                }, context=context)
+                continue
+
             # Process import
-            processed, rejected, headers = getattr(
-                self.pool.get(job.import_id.function_id.model_id.model),
-                job.import_id.function_id.method_to_call
-            )(cr, uid, latest_file)
-            if processed:
-                nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
+            try:
+                processed, rejected, headers = getattr(
+                    self.pool.get(job.import_id.function_id.model_id.model),
+                    job.import_id.function_id.method_to_call
+                )(cr, uid, latest_file)
+                if processed:
+                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
 
-            if rejected:
-                nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
+                if rejected:
+                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
-            filename = os.path.split(latest_file)[1]
-            move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                filename = os.path.split(latest_file)[1]
+                #move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
-            self.write(cr, uid, [job.id], {
-                'filename': filename,
-                'start_time': start_time,
-                'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
-                'nb_processed_records': nb_processed,
-                'nb_rejected_records': nb_rejected,
-            }, context=context)
+                self.write(cr, uid, [job.id], {
+                    'filename': filename,
+                    'start_time': start_time,
+                    'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
+                    'nb_processed_records': nb_processed,
+                    'nb_rejected_records': nb_rejected,
+                }, context=context)
+            except Exception as e:
+                self.write(cr, uid, [job.id], {
+                    'filename': False,
+                    'start_time': start_time,
+                    'end_time': False,
+                    'nb_processed_records': 0,
+                    'nb_rejected_records': 0,
+                    'comment': str(e),
+                }, context=context)
 
         return True
 

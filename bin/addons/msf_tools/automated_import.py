@@ -375,12 +375,19 @@ automated import must be created for a same functionality. Please select an othe
         :return: True
         """
         cron_obj = self.pool.get('ir.cron')
+        job_obj = self.pool.get('automated.import.job')
 
         if context is None:
             context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if job_obj.search(cr, uid, [('import_id', 'in', ids)], limit=1, order='NO_ORDER', context=context):
+            raise osv.except_osv(
+                _('Error'),
+                _('Please delete the automated import jobs that are linked to the Automatic import you try to delete!'),
+            )
 
         for import_brw in self.browse(cr, uid, ids, context=context):
             if import_brw.cron_id:
