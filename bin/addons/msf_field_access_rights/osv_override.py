@@ -86,10 +86,12 @@ def create(self, cr, uid, vals, context=None):
     if context.get('sync_update_execution'):
         # create the record. we will sanitize it later based on domain search check
         create_result = super_create(self, cr, uid, vals, context)
-
         access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
-        if create_result and access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+        if create_result:
+            if not access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+                return create_result
             instance_level = _get_instance_level(self, cr, uid)
+
             if instance_level:
 
                 # get rules for this model, instance and user
@@ -102,7 +104,7 @@ def create(self, cr, uid, vals, context=None):
                     return create_result
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
 
-                # do we have rules that apply to this model?
+                # do we have rules that apply to this user and model?
                 if rules_search:
                     field_changed = False
                     line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
