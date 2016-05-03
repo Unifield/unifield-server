@@ -925,7 +925,9 @@ class related(function):
         else:
             res = {}.fromkeys(ids, False)
 
-        objlst = obj.browse(cr, 1, ids, context=context)
+        objlst = obj.browse(cr, 1, ids, context=context,
+                fields_to_fetch=self.arg)
+
         for data in objlst:
             if not data:
                 continue
@@ -949,6 +951,7 @@ class related(function):
                 res[data.id] = t_data.id
             elif t_data:
                 res[data.id] = t_data
+
         if self._type=='many2one':
             ids = filter(None, res.values())
             if ids:

@@ -128,7 +128,8 @@ class browse_record_list(list):
 
 class browse_record(object):
     logger = netsvc.Logger()
-    def __init__(self, cr, uid, id, table, cache, context=None, list_class=None, fields_process=None):
+    def __init__(self, cr, uid, id, table, cache, context=None,
+            list_class=None, fields_process=None, fields_to_fetch=None):
         '''
         table : the object (inherited from orm)
         context : dictionary with an optional context
@@ -147,6 +148,7 @@ class browse_record(object):
             'osv.browse_record.' + self._table_name)
         self._context = context
         self._fields_process = fields_process
+        self._fields_to_fetch = fields_to_fetch
 
         cache.setdefault(table._name, {})
         self._data = cache[table._name]
@@ -201,6 +203,9 @@ class browse_record(object):
                 fields_to_fetch = [(name, col)]
             ids = [x for x in self._data.keys() if name not in self._data[x]]
             # read the results
+            if self._fields_to_fetch:
+                fields_to_fetch = [x for x in fields_to_fetch if x[0] in
+                        self._fields_to_fetch]
             field_names = [x[0] for x in fields_to_fetch]
             field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
 
@@ -538,7 +543,8 @@ class orm_template(object):
         if not self._table:
             self._table = self._name.replace('.', '_')
 
-    def browse(self, cr, uid, select, context=None, list_class=None, fields_process=None):
+    def browse(self, cr, uid, select, context=None, list_class=None,
+            fields_process=None, fields_to_fetch=None):
         """Fetch records as objects allowing to use dot notation to browse fields and relations
 
         :param cr: database cursor
@@ -553,9 +559,13 @@ class orm_template(object):
         # need to accepts ints and longs because ids coming from a method
         # launched by button in the interface have a type long...
         if isinstance(select, (int, long)):
-            return browse_record(cr, uid, select, self, cache, context=context, list_class=self._list_class, fields_process=fields_process)
+            return browse_record(cr, uid, select, self, cache, context=context,
+                    list_class=self._list_class, fields_process=fields_process,
+                    fields_to_fetch=fields_to_fetch)
         elif isinstance(select, list):
-            return self._list_class([browse_record(cr, uid, id, self, cache, context=context, list_class=self._list_class, fields_process=fields_process) for id in select], context=context)
+            return self._list_class([browse_record(cr, uid, id, self, cache,
+                context=context, list_class=self._list_class,
+                fields_process=fields_process, fields_to_fetch=fields_to_fetch) for id in select], context=context)
         else:
             return browse_null()
 
@@ -1215,12 +1225,15 @@ class orm_template(object):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 
-                if field_col.string:
-                    res_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'field', context.get('lang', False) or 'en_US')
+                context_lang = context.get('lang', False) or 'en_US'
+                if field_col.string and context_lang != 'en_US':
+                    res_trans = translation_obj._get_source(cr, user,
+                            self._name + ',' + f, 'field', context_lang)
                     if res_trans:
                         res[f]['string'] = res_trans
-                if field_col.help:
-                    help_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'help', context.get('lang', False) or 'en_US')
+                if field_col.help and context_lang != 'en_US':
+                    help_trans = translation_obj._get_source(cr, user,
+                            self._name + ',' + f, 'help', context_lang)
                     if help_trans:
                         res[f]['help'] = help_trans
 
@@ -1233,12 +1246,15 @@ class orm_template(object):
                     # translate each selection option
                     sel2 = []
                     sel2_append = sel2.append
-                    for (key, val) in sel:
-                        val2 = None
-                        if val:
-                            val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                        sel2_append((key, val2 or val))
-                    sel = sel2
+                    if context_lang != 'en_US':
+                        for (key, val) in sel:
+                            val2 = None
+                            if val:
+                                val2 = translation_obj._get_source(cr, user,
+                                        self._name + ',' + f, 'selection',
+                                        context_lang, val)
+                            sel2_append((key, val2 or val))
+                    sel = sel2 or sel
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
@@ -3339,15 +3355,18 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-            for f in fields_pre:
-                if f == self.CONCURRENCY_CHECK_FIELD:
-                    continue
-                if self._columns[f].translate:
-                    ids = [x['id'] for x in res]
-                    #TODO: optimize out of this loop
-                    res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
-                    for r in res:
-                        r[f] = res_trans.get(r['id'], False) or r[f]
+            context_lang = context.get('lang', False) or 'en_US'
+            if context_lang != 'en_US':
+                for f in fields_pre:
+                    if f == self.CONCURRENCY_CHECK_FIELD:
+                        continue
+                    if self._columns[f].translate:
+                        ids = [x['id'] for x in res]
+                        #TODO: optimize out of this loop
+                        res_trans = self.pool.get('ir.translation')._get_ids(cr,
+                                user, self._name+','+f, 'model', context_lang, ids)
+                        for r in res:
+                            r[f] = res_trans.get(r['id'], False) or r[f]
         else:
             res = [{'id':x} for x in ids]
 
