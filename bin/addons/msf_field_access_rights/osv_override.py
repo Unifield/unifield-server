@@ -73,6 +73,73 @@ def _record_matches_domain(self, cr, record_id, domain):
 class _SetToDefaultFlag:
     pass
 
+super_create = orm.orm.create
+
+def create(self, cr, uid, vals, context=None):
+    """
+    If rules defined for current user and model, create each record then check domain for each record.
+    If domain matches, for each field with value_not_synchronized_on_create in the rule, update created field with default values.
+    """
+    context = context or {}
+
+    # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
+    if context.get('sync_update_execution'):
+        # create the record. we will sanitize it later based on domain search check
+        create_result = super_create(self, cr, uid, vals, context)
+
+        access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+        if create_result and access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+            instance_level = _get_instance_level(self, cr, uid)
+            if instance_level:
+
+                # get rules for this model, instance and user
+                model_name = self._name
+                user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
+                groups = [x.id for x in user.groups_id]
+
+                rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
+                if not rules_pool:
+                    return create_result
+                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+
+                # do we have rules that apply to this model?
+                if rules_search:
+                    field_changed = False
+                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
+                    if not line_ids:
+                        return create_result
+                    rules_search = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
+                    rules = rules_pool.browse(cr, 1, rules_search)
+                    defaults = self.pool.get(model_name)._defaults
+
+                    # for each rule, check the record against the rule domain.
+                    for rule in rules:
+                        is_match = True
+                        if rule.domain_text:
+                            is_match = _record_matches_domain(self, cr, create_result, rule.domain_text)
+                        if is_match:
+                            # record matches the domain so modify values based on rule lines
+                            for line in rule.field_access_rule_line_ids:
+                                if line.value_not_synchronized_on_create:
+                                    field_changed = True
+                                    default_value = defaults.get(line.field.name, None)
+                                    new_value = default_value if default_value and not hasattr(default_value, '__call__') else None
+                                    vals[line.field.name] = new_value
+
+                    # Then update the record
+                    if field_changed:
+                        self.write(cr, 1, create_result, vals, context=dict(context, sync_update_execution=False))
+
+                return create_result
+            else:
+                return create_result
+        else:
+            return False
+    return super_create(self, cr, uid, vals, context)
+
+orm.orm.create = create
+
+
 def infolog(self, cr, uid, message):
     logger = netsvc.Logger()
     logger.notifyChannel(
