@@ -177,7 +177,7 @@ class automated_import_job(osv.osv):
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
                 filename = os.path.split(latest_file)[1]
-                #move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,

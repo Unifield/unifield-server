@@ -63,7 +63,7 @@ class automated_import_function(osv.osv):
         if not hasattr(self.pool.get(model.model), method):
             raise osv.except_osv(
                 _('Error'),
-                _('The method \'%s\' of the model \'%s\' is not callable') % (model.model_name, method),
+                _('The method \'%s\' of the model \'%s\' is not callable') % (model.model, method),
             )
         return True
 

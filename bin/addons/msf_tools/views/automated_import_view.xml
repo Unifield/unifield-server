@@ -47,6 +47,7 @@
                     <field name="report_path" colspan="4" attrs="{'required': [('active', '=', True)]}" />
                     <separator colspan="4" string="Scheduler configuration" />
                     <group colspan="4" col="6">
+                        <field name="priority" />
                         <field name="interval" />
                         <field name="interval_unit" />
                         <field name="start_time" />

@@ -759,7 +759,7 @@ class orm_template(object):
         processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
         return processed, rejected, headers
 
-    def import_data_from_csv(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=','):
         headers = []
         list_data = []
         with open(csv_file, 'r') as fcsv:
