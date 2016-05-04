@@ -503,6 +503,13 @@ class patch_scripts(osv.osv):
                     'display_in_reports': False,
                 })
 
+    def us_1273_patch(self, cr, uid, *a, **b):
+        # Put all internal requests import_in_progress field to False
+        ir_obj = self.pool.get('sale.order')
+        ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)])
+        ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
+
 patch_scripts()
 
 
