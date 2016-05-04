@@ -51,6 +51,18 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def remove_en_US_translation(self, cr, uid, *a, **b):
+        """
+        en_US translation are useless because en_US is the default language
+        sotred in the DB. Delete all this translation.
+        """
+        logger = logging.getLogger('update')
+        translation_module = self.pool.get('ir.translation')
+        ids_to_delete = translation_module.search(cr, uid, [('lang', '=', 'en_US')])
+        translation_module.unlink(cr, uid, ids_to_delete)
+        logger.warn('delete %s en_US translations' %
+                (len(ids_to_delete),))
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:

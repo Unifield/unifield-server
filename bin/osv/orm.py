@@ -1977,6 +1977,8 @@ class orm_template(object):
         self.pool.get('ir.model.access').check(cr, uid, 'ir.translation', 'write', context=context)
         #FIXME: try to only call the translation in one SQL
         for lang in langs:
+            if lang == 'en_US':
+                continue
             for field in vals:
                 if field in self._columns:
                     src = self._columns[field].string

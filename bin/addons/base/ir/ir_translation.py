@@ -139,7 +139,7 @@ class ir_translation(osv.osv):
         # BKLG-52 Change delete/create for Update
         for obj_id in ids:
             if translation_dict[obj_id] is not None:
-                if not value or value==src:
+                if not value or value==src or lang=='en_US':
                     self.unlink(cr, uid,
                             translation_dict[obj_id]['ir_trans_id'],
                             clear=clear, context=context)

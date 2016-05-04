@@ -5,6 +5,10 @@
             <field name="method">update_us_963_negative_rule_seq</field>
         </record>
 
+        <record id="remove_en_US_translation" model="patch.scripts">
+            <field name="method">remove_en_US_translation</field>
+        </record>
+
         <record id="another_translation_fix" model="patch.scripts">
             <field name="method">another_translation_fix</field>
         </record>
