@@ -219,7 +219,7 @@ class automated_import_job(osv.osv):
         )
         pth_filename = os.path.join(job_brw.import_id.report_path, filename)
         delimiter = ','
-        quotechar = '\''
+        quotechar = '"'
 
         with open(pth_filename, 'wb') as csvfile:
             spamwriter = csv.writer(csvfile, delimiter=delimiter, quotechar=quotechar, quoting=csv.QUOTE_MINIMAL)
