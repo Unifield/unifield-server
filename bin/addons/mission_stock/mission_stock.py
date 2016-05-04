@@ -354,7 +354,7 @@ class stock_mission_report(osv.osv):
                         continue
 
                 line = line_obj.browse(cr, uid, line_id[0],
-                        fields_to_fetch['id', 'product_id'])
+                        fields_to_fetch=['id', 'product_id'])
                 if uom != line.product_id.uom_id.id:
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
