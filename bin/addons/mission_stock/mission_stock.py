@@ -22,6 +22,7 @@
 from osv import osv
 from osv import fields
 
+import tools
 from tools.translate import _
 
 import pooler
@@ -870,6 +871,7 @@ class stock_mission_report_line(osv.osv):
         ),
     }
 
+    @tools.cache(skiparg=2)
     def _get_default_destination_instance_id(self, cr, uid, context=None):
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         if instance:
