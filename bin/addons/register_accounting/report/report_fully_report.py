@@ -170,7 +170,7 @@ class report_fully_report(report_sxw.rml_parse):
         db = pooler.get_pool(self.cr.dbname)
         acc_move_line_obj = db.get('account.move.line')
         second_acc_move_line_id = False
-        if reg_line and reg_line.down_payment_id and reg_line.first_move_line_id and reg_line.first_move_line_id.move_id:
+        if reg_line and reg_line.account_id.type_for_register == 'down_payment' and reg_line.first_move_line_id and reg_line.first_move_line_id.move_id:
             acc_move = reg_line.first_move_line_id.move_id
             acc_move_line_id = acc_move_line_obj.search(self.cr, self.uid, [('move_id', '=', acc_move.id), ('id', '!=', reg_line.first_move_line_id.id)])
             acc_move_line = acc_move_line_obj.browse(self.cr, self.uid, acc_move_line_id)
