@@ -334,7 +334,7 @@
     </Style>
     <!-- Grey color for deleted entries and DP Reversals -->
     <Style ss:ID="grey_left_bold">
-      <Font ss:Bold="1"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
@@ -342,42 +342,39 @@
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
-      <Font ss:Color="#9E9E9E"/>
     </Style>
     <Style ss:ID="grey_centre">
       <Alignment ss:Horizontal="Center" ss:Indent="0"/>
-      <Font ss:Bold="1"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
-      <Font ss:Color="#9E9E9E"/>
     </Style>
     <Style ss:ID="grey_amount_bold">
       <Alignment ss:Horizontal="Right" ss:Indent="0"/>
       <NumberFormat ss:Format="Standard"/>
-      <Font ss:Bold="1"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
-      <Font ss:Color="#9E9E9E"/>
     </Style>
   </Styles>
   <Worksheet ss:Name="Info">
     <Table>
-      <Column ss:Width="105.1937"/>
-      <Column ss:Width="64.0063"/>
+      <Column ss:Width="101.1937"/>
+      <Column ss:Width="63.01"/>
       <Row ss:Height="12.1039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">REGISTER REPORT</Data>
         </Cell>
       </Row>
-      <Row ss:Height="12.8126">
+      <Row ss:Height="12.81">
         <Cell ss:Index="2"/>
       </Row>
       <Row ss:Height="12.1039">
@@ -407,7 +404,7 @@
       <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
     </Names>
     <Table>
-      <Column ss:Width="95.9527"/>
+      <Column ss:Width="105.9527"/>
       <Column ss:Width="70" ss:Span="1"/>
       <Column ss:Width="155"/>
       <Column ss:Width="135"/>
