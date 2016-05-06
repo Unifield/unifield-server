@@ -610,7 +610,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type == 'service_recep' and obj.type != 'make_to_order':
+            if (obj.product_id.type == 'service_recep' or (not obj.product_id and check_is_service_nomen(cr, uid, obj.nomen_manda_0.id))) \
+               and obj.type != 'make_to_order':
                 raise osv.except_osv(
                     _('Error'),
                     _('You must select on order procurement method for Service with Reception products.'),
@@ -861,11 +862,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
                 )
 
-            if line.product_id and \
-               (line.product_id.type in ('service', 'service_recep') or \
-               (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
-               not line.order_id.procurement_request and \
-               line.po_cft == 'po':
+            cond1 = not line.order_id.procurement and line.po_cft == 'po'
+            cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
+            cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
+            if cond1 and (cond2 or cond3):
                 raise osv.except_osv(
                     _('Warning'),
                     _("""'Purchase Order' is not allowed to source a 'Service' product."""),
