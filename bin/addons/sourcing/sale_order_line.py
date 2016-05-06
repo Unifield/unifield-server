@@ -862,7 +862,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
                 )
 
-            cond1 = not line.order_id.procurement and line.po_cft == 'po'
+            cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
             cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
             cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
             if cond1 and (cond2 or cond3):
