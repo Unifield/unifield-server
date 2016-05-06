@@ -616,10 +616,10 @@
           <Data ss:Type="String">${_('REV - Down Payment')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <!-- SEQUENCE -->
@@ -642,7 +642,7 @@
           </Cell>
         % endif
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <Data ss:Type="String"></Data>
@@ -654,13 +654,13 @@
           <Data ss:Type="Number">0.0</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
           <Data ss:Type="String"></Data>
@@ -900,20 +900,20 @@ endif
           <Data ss:Type="String">${_('Deleted Entry')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <!-- SEQUENCE -->
           <Data ss:Type="String">${deleted_line.sequence or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
           <Data ss:Type="String"></Data>
@@ -924,7 +924,7 @@ endif
           </Cell>
         % endif
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <Data ss:Type="String"></Data>
@@ -936,13 +936,13 @@ endif
           <Data ss:Type="Number">0.0</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
-          <Data ss:Type="String">0</Data>
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_centre">
           <Data ss:Type="String"></Data>
