@@ -49,6 +49,13 @@ class msr_in_progress(osv.osv_memory):
 
     _columns = {
         'report_id': fields.many2one('stock.mission.report', "Report"),
+        'done_ok': fields.boolean(string='Processing done'),
+        'start_date': fields.datetime(string='Start date'),
+    }
+
+    _defaults = {
+        'done_ok': lambda *a: False,
+        'start_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
     }
 
     def create(self, cr, uid, ids, context=None):
@@ -59,7 +66,7 @@ class msr_in_progress(osv.osv_memory):
         return
 
     def _already_processed(self, cr, uid, id, context=None):
-        report_ids = self.search(cr, 1, [('report_id', '=', id)], context=context)
+        report_ids = self.search(cr, 1, [('report_id', '=', id), ('done_ok', '=', True)], context=context)
         if report_ids:
             return True
         return False
@@ -236,6 +243,12 @@ class stock_mission_report(osv.osv):
         if context.get('update_full_report'):
             report_ids = full_report_ids
 
+        if not context.get('update_full_report'):
+            all_report_ids = report_ids + full_report_ids
+            for report_id in all_report_ids:
+                # register immediately this report id into the table temp
+                msr_in_progress.create(cr, uid, report_id, context)
+
         product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
         product_values = {}
         temp_prods = self.pool.get('product.product').read(cr, uid, product_ids, ['product_amc', 'reviewed_consumption'], context=context)
@@ -264,8 +277,6 @@ class stock_mission_report(osv.osv):
             #US-1218: If this report is previously processed, then do not redo it again for this transaction!
             if msr_in_progress._already_processed(cr, uid, report['id'], context):
                 continue
-            # register immediately this report id into the table temp
-            msr_in_progress.create(cr, uid, report['id'], context)
 
             logging.getLogger('MSR').info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             if context.get('update_full_report'):
@@ -277,13 +288,14 @@ class stock_mission_report(osv.osv):
                 # Update all lines
                 self.update_lines(cr, uid, [report['id']])
 
-            self.write(cr, uid, [report['id']], {'export_ok': False}, context=context)
+            msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
+            msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
+
             logging.getLogger('MSR').info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             self._get_export_csv(cr, uid, report['id'], product_values, context=context)
             # Update the update date on report
             self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
             logging.getLogger('MSR').info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
