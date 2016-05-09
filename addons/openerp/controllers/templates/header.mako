@@ -23,7 +23,11 @@ else:
 from openobject import release
 version = release.version
 %>
+% if cp.config('server.environment') == 'production':
+<td id="top_production" colspan="3">
+% else:
 <td id="top" colspan="3">
+% endif
     <p id="cmp_logo">
         <a href="/" target="_top">
             <img alt="UniField" id="company_logo" src="/openerp/static/images/unifield.png" height="60"/>

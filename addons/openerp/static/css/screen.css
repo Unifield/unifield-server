@@ -158,7 +158,15 @@ select {
     text-shadow: #333 0 1px 0;
 }
 
-#top, p#cmp_logo {
+#top_production {
+    background: url(../images/header-background-red.png) top left repeat-x;
+    color: #fff;
+    letter-spacing: 0.5px;
+    text-shadow: #333 0 1px 0;
+}
+
+#top, p#cmp_logo,
+#top_production, p#cmp_logo {
     height: auto;
 }
 
@@ -176,7 +184,8 @@ select {
     padding: 0;
 }
 
-#top table td {
+#top table td,
+#top_production, p#cmp_logo {
     padding: 0;
 }
 
@@ -475,10 +484,13 @@ p#cmp_logo {
     float: left;
     height: 34px;
     padding: 0 10px;
-    background: url(../images/top-logout-a.png) repeat-x;
     font-size: 1em;
     line-height: 34px;
     text-transform: uppercase;
+}
+
+#top #corner p.logout a {
+    background: url(../images/top-logout-a.png) repeat-x;
 }
 
 #corner p.logout a:hover,#corner p.logout a:focus,#corner p.logout a:active {
