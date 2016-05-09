@@ -85,10 +85,13 @@ class BackupConfig(osv.osv):
         if os.name == 'nt' and self._pg_psw_env_var_is_set:
             os.environ['PGPASSWORD'] = ''
 
-    def exp_dump_for_state(self, cr, uid, state, context=None):
+    def exp_dump_for_state(self, cr, uid, state, context=None, force=False):
         context = context or {}
         logger = context.get('logger')
-        bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
+        if not force:
+            bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
+        else:
+            bkp_ids = self.search(cr, uid, [], context=context)
 
         suffix = ''
         if state == 'beforepatching':
