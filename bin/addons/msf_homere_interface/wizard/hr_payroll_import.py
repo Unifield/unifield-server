@@ -119,16 +119,25 @@ class hr_payroll_import(osv.osv_memory):
             accounting_code, description, second_description, third,  expense, receipt, project, financing_line, \
                 financing_contract, date, currency, axis1, analytic_line, axis2, analytic_line2 = zip(data)
             
+            # get active cc and dest args before searching
+            aaa_obj = self.pool.get('account.analytic.account')
+            date_args = aaa_obj._search_filter_active(cr, uid, [], None,  [('filter_active', '=', True)], context=context) 
+            
             #US-671: ONLY APPLY FOR THE SAGA THAT CONTAINS Project and Axis1 columns: Retrieve DEST and CC from the Project and axis1 columns
             if project and project[0]:
-                # check if the project value exists as a DEST in the local system
-                cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),('code', '=ilike', project[0]),], context=context)
+                # check if the project value exists as a valid costcenter in the local system
+                condition = [('category', '=', 'OC'),('type', '!=', 'view'), ('state', '=', 'open'),('code', '=ilike', project[0]),]
+                condition.extend(date_args)
+                cc_ids = aaa_obj.search(cr, uid, condition, context=context)
                 if cc_ids and cc_ids[0]:
                     cost_center_id = cc_ids[0]
                 else:
                     error_message = "Invalid Cost Center [" + project[0] + "] will be ignored. "
             if axis1 and axis1[0]:
-                dest_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'),('code', '=ilike', axis1[0]),], context=context)
+                # check if the value exists as a valid DEST in the local system
+                condition = [('category', '=', 'DEST'),('type', '!=', 'view'),('code', '=ilike', axis1[0]),]
+                date_args.extend(condition)
+                dest_ids = aaa_obj.search(cr, uid, date_args, context=context)
                 if dest_ids and dest_ids[0]:
                     destination_id = dest_ids[0]
                 else:
