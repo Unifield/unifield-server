@@ -511,11 +511,13 @@ class patch_scripts(osv.osv):
         msl_touched = "['internal_qty']"
 
         ms_ids = ms_obj.search(cr, uid, [('local_report', '=', True)])
+        if not ms_ids:
+            return True
 
         # Touched Mission stock reports
         cr.execute('''UPDATE ir_model_data
                       SET touched = %s, last_modification = now()
-                      WHERE model =  'stock.mission.report' AND id in %s''', (ms_touched, tuple(ms_ids),))
+                      WHERE model =  'stock.mission.report' AND res_id in %s''', (ms_touched, tuple(ms_ids),))
         # Touched Mission stock report lines
         cr.execute('''UPDATE ir_model_data
                       SET touched = %s, last_modification = now()
