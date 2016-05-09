@@ -1632,6 +1632,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             value.update({
                 'po_cft': False,
                 'related_sourcing_ok': False,
+                'related_sourcing_id': False,
             })
 
             res = {'value': value, 'warning': message}
@@ -1656,7 +1657,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                     if error:
                         return res
         else:
-            value['related_sourcing_ok'] = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+            related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+            value['related_sourcing_ok'] = related_sourcing_ok
+            if not related_sourcing_ok:
+                value['related_sourcing_id'] = False
 
         return {'value': value, 'warning': message}
 
@@ -1691,6 +1695,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         }
 
         if not supplier:
+            result['value'].update({
+                'related_sourcing_id': False,
+                'related_sourcing_ok': False,
+            })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
                 result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
@@ -1711,10 +1719,13 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         estDeliveryDate = date.today() + relativedelta(days=int(delay))
 
+        related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
         result['value'].update({
             'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
-            'related_sourcing_ok': self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context),
+            'related_sourcing_ok': related_sourcing_ok,
         })
+        if not related_sourcing_ok:
+            result['value']['related_sourcing_id'] = False
 
         value = result['value']
         partner_id = 'supplier' in value and value['supplier'] or supplier
