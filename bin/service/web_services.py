@@ -457,7 +457,7 @@ class common(_ObjectService):
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])
-            logger.notifyChannel("web-service", netsvc.LOG_INFO,'Logout %s from database %s'%(login,db))
+            logger.notifyChannel("web-service", netsvc.LOG_INFO,'Logout %s from database %s' % (params[1], db))
             return True
         elif method in ['about', 'timezone_get', 'get_server_environment',
                         'login_message','get_stats', 'check_connectivity',
