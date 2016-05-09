@@ -981,6 +981,18 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'),
                     _("Invoice has no line to merge by account"))
 
+        def is_tax_included(inv_br):
+            '''
+            Returns True if ALL the invoice lines have an "included tax", else returns False
+            Note: a "tax included" and a "tax excluded" within the same line wouldn't make sense
+            '''
+            tax_included = True
+            for inv_line in inv_br.invoice_line:
+                if not inv_line.invoice_line_tax_id or not inv_line.invoice_line_tax_id[0].price_include:
+                    tax_included = False
+                    break
+            return tax_included
+
         def compute_merge(inv_br):
             """
             :result:
@@ -1023,8 +1035,17 @@ class account_invoice(osv.osv):
                     })
                     index += 1
 
-                # merge line
-                vals['price_unit'] += l.price_subtotal  # qty 1 and price
+                # merge lines
+                # if all the lines have a tax included price, the "base" used for computation must be "tax included"
+                # (if taxes are not the same for each line, the untaxed amount should be used)
+                if is_tax_included(inv_br):
+                    vals['price_unit'] += l.price_unit * l.quantity
+                    if l.invoice_id.currency_id.rounding:
+                        rounding = l.invoice_id.currency_id.rounding
+                        vals['price_unit'] = round(vals['price_unit'] / rounding) * rounding
+                else:
+                    vals['price_unit'] += l.price_subtotal  # qty 1 and price
+
                 if vals['invoice_line_tax_id'] is None:
                     vals['invoice_line_tax_id'] = l.invoice_line_tax_id \
                         and [ t.id for t in l.invoice_line_tax_id ] or False
