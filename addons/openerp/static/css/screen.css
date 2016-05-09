@@ -959,8 +959,7 @@ div.filter-a div.fields-a p label {
     margin: 0 0 1px;
 }
 
-div.footer-a,
-div.footer-b {
+div.footer-a {
     background: none repeat scroll 0 0 #CCCCCC;
     overflow: hidden;
     padding: 5px 0;
@@ -970,8 +969,7 @@ div.footer-b {
     box-shadow: inset 0px 3px 5px rgba(0, 0, 0, 0.4);
 }
 
-div.footer-a p,
-div.footer-b p {
+div.footer-a p {
     margin: 0;
     padding: 0 15px;
     font-size: 0.9em;
@@ -997,14 +995,8 @@ div.footer-a p.powered {
     text-align: center;
 }
 
-div.footer-b p.powered {
-    left: 50%;
-    color: #666666;
-    text-align: center;
-}
 
-div.footer-a p.powered a,
-div.footer-b p.powered a {
+div.footer-a p.powered a {
     color: #666666;
 }
 
