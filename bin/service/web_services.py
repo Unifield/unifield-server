@@ -72,7 +72,8 @@ class db(netsvc.ExportService):
             passwd = params[0]
             params = params[1:]
             security.check_super(passwd)
-        elif method in [ 'db_exist', 'list', 'list_lang', 'server_version', 'check_timezone' ]:
+        elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
+                'check_timezone', 'connected_to_prod_sync_server' ]:
             # params = params
             # No security check for these methods
             pass
@@ -337,6 +338,27 @@ class db(netsvc.ExportService):
             cr.close()
         res.sort()
         return res
+
+    def exp_connected_to_prod_sync_server(self, db_name):
+        """Return True if db_name is connected to a production SYNC_SERVER,
+        False otherwise"""
+
+        connection = sql_db.db_connect(db_name)
+        # it the db connnected to a sync_server ?
+        server_connecion_module = pooler.get_pool(db_name).get('sync.client.sync_server_connection')
+        if not server_connecion_module:
+            return False
+
+        if not getattr(server_connecion_module, '_uid', False):
+            return False
+
+        cr = connection.cursor()
+        cr.execute('''SELECT host, database
+        FROM sync_client_sync_server_connection''')
+        host, database = cr.fetchone()
+        if host and 'sync.unifield.net' in host and database == 'SYNC_SERVER':
+            return True
+        return False
 
     def exp_change_admin_password(self, new_password):
         tools.config['admin_passwd'] = new_password
