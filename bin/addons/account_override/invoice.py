@@ -993,6 +993,33 @@ class account_invoice(osv.osv):
                     break
             return tax_included
 
+        def check_tax_lines(inv_br, vals):
+            '''
+            Returns vals.
+            vals['invoice_line_tax_id'] will contain the tax lines to use for the whole invoice,
+            if all lines to merge have the same taxes.
+            Otherwise vals['invoice_line_tax_id'] will contain False
+            '''
+            for l in inv_br.invoice_line:
+                # get rid of the product tax line if <> between merged lines
+                if vals['invoice_line_tax_id'] is None:
+                    # first tax line browsed for the account
+                    if l.invoice_line_tax_id:
+                        vals['invoice_line_tax_id'] = [ t.id for t in l.invoice_line_tax_id ]
+                    else:
+                        vals['invoice_line_tax_id'] = False
+                elif vals['invoice_line_tax_id'] and l.invoice_line_tax_id:
+                    # track <> tax lines, if it's the case abort tax(es) in merge
+                    tax_ids = [ t.id for t in l.invoice_line_tax_id ]
+                    if cmp(vals['invoice_line_tax_id'], tax_ids) != 0:
+                        vals['invoice_line_tax_id'] = False
+                else:
+                    # no tax(es) for this line, abort tax(es) in merge
+                    vals['invoice_line_tax_id'] = False
+                if not vals['invoice_line_tax_id']:
+                   break
+            return vals
+
         def compute_merge(inv_br):
             """
             :result:
@@ -1035,37 +1062,22 @@ class account_invoice(osv.osv):
                     })
                     index += 1
 
-                # merge lines
-                # if all the lines have a tax included price, the "base" used for computation must be "tax included"
-                # (if taxes are not the same for each line, the untaxed amount should be used)
-                if is_tax_included(inv_br):
+                '''
+                There is only one case where the "base" used for computation must be "tax included":
+                when taxes are the same for ALL lines and that taxes are included in the price.
+                In all other cases, the untaxed amount should be used:
+                - if taxes are identical for each line and are excluded, the tax computation is based on the untaxed amount
+                - if taxes are different, only the untaxed amount is kept (the user has to review the tax amount and change it manually)
+                '''
+                if vals['invoice_line_tax_id'] is None:
+                    vals = check_tax_lines(inv_br, vals)
+                if vals['invoice_line_tax_id'] and is_tax_included(inv_br):
                     vals['price_unit'] += l.price_unit * l.quantity
                     if l.invoice_id.currency_id.rounding:
                         rounding = l.invoice_id.currency_id.rounding
                         vals['price_unit'] = round(vals['price_unit'] / rounding) * rounding
                 else:
                     vals['price_unit'] += l.price_subtotal  # qty 1 and price
-
-                if vals['invoice_line_tax_id'] is None:
-                    vals['invoice_line_tax_id'] = l.invoice_line_tax_id \
-                        and [ t.id for t in l.invoice_line_tax_id ] or False
-                else:
-                    # get rid of the product tax line if <> between merged lines
-                    if vals['invoice_line_tax_id'] is None:
-                        # first tax line browsed for the account
-                        if l.invoice_line_tax_id:
-                            vals['invoice_line_tax_id'] = [ 
-                                t.id for t in l.invoice_line_tax_id ]
-                        else:
-                            vals['invoice_line_tax_id'] = False
-                    elif vals['invoice_line_tax_id'] and l.invoice_line_tax_id:
-                        # track <> tax lines, if the case abort tax(es) in merge
-                        tax_ids = [ t.id for t in l.invoice_line_tax_id ]
-                        if cmp(vals['invoice_line_tax_id'], tax_ids) != 0:
-                            vals['invoice_line_tax_id'] = False
-                    else:
-                        # no tax(es) for this line,  abort tax(es) in merge
-                        vals['invoice_line_tax_id'] = False
 
                 # update merge line
                 by_account_vals[l.account_id.id] = vals
