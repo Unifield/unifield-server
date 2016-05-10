@@ -40,9 +40,10 @@ class report_pending_cheque(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         aml_obj = pool.get('account.move.line')
 
+        period_r = self.pool.get('account.period').read(self.cr, self.uid, register.period_id.id, ['date_start'])
         # Search for all registers with the same Journal, and the same period or a previous period
         period_ids = self.pool.get('account.period').\
-            search(self.cr, self.uid, [('date_start', '<=', register.period_id.date_start)])
+            search(self.cr, self.uid, [('date_start', '<=', period_r['date_start'])])
         registers_ids = self.pool.get('account.bank.statement').\
             search(self.cr, self.uid, ['&', ('journal_id', '=', journal.id), ('period_id', 'in', period_ids)])
 
