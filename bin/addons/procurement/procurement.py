@@ -179,6 +179,7 @@ class procurement_order(osv.osv):
             return c1 or c2
 
         return all(check_move(procurement) for procurement in self.browse(cr, uid, ids, context=context))
+
     #
     # This method may be overrided by objects that override procurement.order
     # for computing their own purpose

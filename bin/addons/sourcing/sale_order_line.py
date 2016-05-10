@@ -707,6 +707,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
             vals['po_cft'] = 'dpo'
 
+        if not product:
+            vals.update({
+                'type': 'make_to_order',
+                'po_cft': 'po',
+            })
+
         # If type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type', False):
             vals.update({
@@ -986,10 +992,19 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         product = False
 
+        srv_product = False
         if vals.get('product_id', False):
             product = product_obj.browse(cr, uid, vals['product_id'])
             if product.type in ('consu', 'service', 'service_recep'):
-                vals['type'] = 'make_to_order'
+                srv_product = True
+        elif vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+            srv_product = True
+
+        if srv_product:
+            vals.update({
+                'type': 'make_to_order',
+                'po_cft': 'dpo',
+            })
 
         if 'state' in vals and vals['state'] == 'cancel':
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)

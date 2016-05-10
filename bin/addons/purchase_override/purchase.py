@@ -1487,9 +1487,12 @@ stock moves which are already processed : '''
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
 
-                    cond1 = so.procurement_request and so.location_requestor_id.usage == 'customer'
                     cond2 = not sol.product_id or sol.product_id.id != line.procurement_id.product_id.id
+                    cond1 = so.procurement_request and so.location_requestor_id.usage == 'customer'
                     cond3 = bool(line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move)
+
+                    if cond2:
+                        proc_obj.write(cr, uid, [line.procurement_id.id], {'product_id': line.product_id.id})
 
                     if (cond1 or (not so.procurement_request and cond2)) and cond3:
 
@@ -1748,7 +1751,7 @@ stock moves which are already processed : '''
             if sol_obj.search(cr, uid,
                     [('order_id', 'in', all_so_ids),
                      ('type', '=', 'make_to_order'),
-                     ('product_id', '!=', False),
+                     #('product_id', '!=', False),
                      ('procurement_id.state', '!=', 'cancel'),
                      ('order_id.procurement_request', '=', False),
                      ('state', 'not in', ['confirmed', 'done'])],

@@ -2552,7 +2552,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Update the context to get IR lines
         context['procurement_request'] = True
 
-        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line'], context=context):
+        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line', 'procurement_request'], context=context):
             if not self._get_ready_to_cancel(cr, uid, [order['id']], order['order_line'], context=context)[order['id']]:
                 return False
 
@@ -2560,15 +2560,21 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if order['from_yml_test']:
                 continue
 
-            line_error = line_obj.search(cr, uid, [
+            domain = [
                 ('order_id', '=', order['id']),
-                ('product_id', '!=', False),
-                ('type', '=', 'make_to_order',),
+                ('type', '=', 'make_to_order'),
                 ('state', '!=', 'confirmed'),
+            ]
+            if order['procurement_request']:
+                domain.append(('product_id', '!=', False))
+
+            domain.extend([
                 '|',
                 ('procurement_id', '=', 'False'),
                 ('procurement_id.state', '!=', 'cancel'),
-            ], limit=1, order='NO_ORDER', context=context)
+            ])
+
+            line_error = line_obj.search(cr, uid, domain, limit=1, order='NO_ORDER', context=context)
 
             if line_error:
                 return False
