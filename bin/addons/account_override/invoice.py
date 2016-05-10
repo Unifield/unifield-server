@@ -1072,7 +1072,7 @@ class account_invoice(osv.osv):
                 if vals['invoice_line_tax_id'] is None:
                     vals = check_tax_lines(inv_br, vals)
                 if vals['invoice_line_tax_id'] and is_tax_included(inv_br):
-                    vals['price_unit'] += l.price_unit * l.quantity
+                    vals['price_unit'] += (l.price_unit * (1-(l.discount or 0.0)/100.0)) * l.quantity
                     if l.invoice_id.currency_id.rounding:
                         rounding = l.invoice_id.currency_id.rounding
                         vals['price_unit'] = round(vals['price_unit'] / rounding) * rounding
