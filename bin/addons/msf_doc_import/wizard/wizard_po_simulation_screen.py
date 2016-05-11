@@ -158,6 +158,14 @@ class wizard_import_po_simulation_screen(osv.osv):
                                    ('done', 'Done')],
                                    string='State',
                                    readonly=True),
+        'with_ad': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='File contains Analytic Distribution',
+            required=True,
+        ),
         # File information
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
@@ -258,6 +266,7 @@ class wizard_import_po_simulation_screen(osv.osv):
 
     _defaults = {
         'state': 'draft',
+        'with_ad': lambda *a: 'no',
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -369,6 +378,14 @@ class wizard_import_po_simulation_screen(osv.osv):
         rec_lines = []
         rec = False
 
+        ad_field_names = [
+            'analytic_distribution_id',
+            'ad_destination_name',
+            'ad_cost_center_name',
+            'ad_percentage',
+            'ad_subtotal',
+        ]
+
         index = 0
         for record in root:
             if record.tag == 'record':
@@ -390,9 +407,10 @@ class wizard_import_po_simulation_screen(osv.osv):
                 return index
 
         for field in rec:
-            if field.attrib['name'] != 'order_line':
+            ad_field = field.attrib['name'] in ad_field_names
+            if field.attrib['name'] != 'order_line' and not ad_field:
                 index = get_field_index(field, index)
-            else:
+            elif not ad_field:
                 index += 1
                 values[index] = ['line_number', 'external_ref',
                                  'product_code', 'product_name',
@@ -411,6 +429,8 @@ class wizard_import_po_simulation_screen(osv.osv):
             index += 1
             values[index] = []
             for fl in line:
+                if fl.attrib['name'] in ad_field_names:
+                    continue
                 if not fl.getchildren():
                     values[index].append(fl.text or '')
                 else:
@@ -481,6 +501,16 @@ class wizard_import_po_simulation_screen(osv.osv):
                                                    'state': 'draft'}, context=context)
                     continue
 
+                nb_file_header_lines = NB_OF_HEADER_LINES
+                nb_file_lines_columns = NB_LINES_COLUMNS
+                first_line_index = nb_file_header_lines + 1
+                if wiz.with_ad == 'yes' and wiz.filetype != 'exce':
+                    header_ad_lines = len(wiz.order_id.analytic_distribution_id.cost_center_lines) + 1
+                    max_ad_lines = max(len(line.analytic_distribution_id.cost_center_lines) for line in wiz.order_id.order_line if line.analytic_distribution_id) * 4
+                    nb_file_header_lines += header_ad_lines
+                    nb_file_lines_columns += max_ad_lines
+                    first_line_index = nb_file_header_lines + 3
+
                 for line in wiz.simu_line_ids:
                     # Put data in cache
                     if line.in_product_id:
@@ -538,28 +568,31 @@ class wizard_import_po_simulation_screen(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(1, NB_OF_HEADER_LINES+1):
-                    if len(values.get(x, [])) != 2:
+                for x in xrange(1, nb_file_header_lines+1):
+                    nb_to_check = 2
+                    if x > NB_OF_HEADER_LINES and x <= nb_file_header_lines:
+                        nb_to_check = 5
+                    if len(values.get(x, [])) != nb_to_check:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The header \
-    information must be on two columns : Column A for name of the field and column\
-     B for value.') % x
+information must be on two columns : Column A for name of the field and column\
+ B for value.') % x
                         file_format_errors.append(error_msg)
 
-                if len(values.get(NB_OF_HEADER_LINES+1, [])) != NB_LINES_COLUMNS:
-                    error_msg = _('Line 20 of the Excel file: This line is \
-    mandatory and must have %s columns. The values on this line must be the name \
-    of the field for PO lines.') % NB_LINES_COLUMNS
+                if len(values.get(nb_file_header_lines+1, [])) != nb_file_lines_columns:
+                    error_msg = _('Line %s of the Excel file: This line is \
+mandatory and must have %s columns. The values on this line must be the name \
+of the field for PO lines.') % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
-                for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
-                    if len(values.get(x, [])) != NB_LINES_COLUMNS:
+                for x in xrange(first_line_index, len(values)+1):
+                    if len(values.get(x, [])) != nb_file_lines_columns:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line \
-    information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
+information must be on %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
                         file_format_errors.append(error_msg)
 
-                nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
+                nb_file_lines = len(values) - nb_file_header_lines - 1
                 self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
 
                 if len(file_format_errors):
@@ -706,7 +739,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 new_po_lines = []
                 not_ok_file_lines = {}
                 # Loop on lines
-                for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+                for x in xrange(first_line_index+1, len(values)+1):
 
                     # Check mandatory fields
                     not_ok = False

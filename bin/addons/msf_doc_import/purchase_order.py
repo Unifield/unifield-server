@@ -219,8 +219,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        datas = {}
-        datas['ids'] = ids
+        datas = {
+            'ids': ids,
+            'need_ad': context.get('need_ad', False),
+        }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
             context=context)
         if file_name:
@@ -244,8 +246,10 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        datas = {}
-        datas['ids'] = ids
+        datas = {
+            'ids': ids,
+            'need_ad': context.get('need_ad', False),
+        }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
             context=context)
         if file_name:
@@ -491,8 +495,20 @@ class wizard_export_po_validated(osv.osv_memory):
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
+        'need_ad': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='Export AD',
+            required=True,
+        ),
         'file_type': fields.selection([('excel', 'Excel file'),
                                        ('xml', 'XML file')], string='File type', required=True),
+    }
+
+    _defaults = {
+        'need_ad': 'no',
     }
 
     def export_file(self, cr, uid, ids, context=None):
@@ -501,10 +517,15 @@ class wizard_export_po_validated(osv.osv_memory):
         '''
         order_obj = self.pool.get('purchase.order')
 
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
+
+        context['need_ad'] = wiz.need_ad == 'yes'
 
         if wiz.file_type == 'xml':
             return order_obj.export_xml_po_integration(cr, uid, wiz.order_id.id, context=context)
