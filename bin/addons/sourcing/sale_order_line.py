@@ -712,6 +712,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'type': 'make_to_order',
                 'po_cft': 'po',
             })
+            if vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+                vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
         if not vals.get('type', False):
