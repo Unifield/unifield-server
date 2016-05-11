@@ -827,12 +827,8 @@ class Form(TinyInputWidget):
 
             elif not self.nodefault: # default
                 defaults = self.get_defaults(fields, domain, self.context)
-
-            elif 'state' in fields: # if nodefault and state get state only
-                defaults = proxy.default_get(['state'], self.context)
-
-            elif 'x_state' in fields: # if nodefault and x_state get x_state only (for custom objects)
-                defaults = proxy.default_get(['x_state'], self.context)
+            else:
+                defaults = proxy.default_get(fields.keys(), self.context)
 
         except Exception,e:
             raise common.warning(e)
