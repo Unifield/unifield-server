@@ -248,10 +248,21 @@
 
       <Row>
         <Cell ss:StyleID="s25b" >
-          <Data ss:Type="String">${_('LIQUIDITY POSITION')} ${getPeriodName()}</Data>
+          <Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
+        </Cell>
+        <Cell ss:StyleID="s25b" >
+          <Data ss:Type="String">${getPeriod().name}</Data>
         </Cell>
       </Row>
       <Row ss:Height="13.5"/>
+      <Row>
+        <Cell>
+          <Data ss:Type="String">${_('Period end date:')}</Data>
+        </Cell>
+        <Cell ss:StyleID="short_date2">
+          <Data ss:Type="DateTime">${getPeriod().date_stop|n}T00:00:00.000</Data>
+        </Cell>
+      </Row>
       <Row>
         <Cell>
           <Data ss:Type="String">${_('Prop Instance: ')}</Data>
@@ -262,7 +273,7 @@
       </Row>
       <Row>
         <Cell>
-          <Data ss:Type="String">${_('Report edition date: ')}</Data>
+          <Data ss:Type="String">${_('Report date:')}</Data>
         </Cell>
         <Cell ss:StyleID="short_date2">
           <Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data>
@@ -273,7 +284,7 @@
       % for reg_type in getRegistersByType():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s34" >
-          <Data ss:Type="String">${ reg_type }</Data>
+          <Data ss:Type="String">${ reg_type.title() }</Data>
         </Cell>
       </Row>
       <Row  ss:AutoFitHeight="1" ss:StyleID="s35">
@@ -330,7 +341,7 @@
           <Data ss:Type="String">${ (reg['state']) }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (getPeriodName()) }</Data>
+          <Data ss:Type="String">${ (getPeriod().name) }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
           <Data ss:Type="Number">${ (formatLang(reg['opening_balance'], digits=2, grouping=True) or '0.00') }</Data>

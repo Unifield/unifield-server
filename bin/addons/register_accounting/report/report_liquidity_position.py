@@ -37,7 +37,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
         self.localcontext.update({
             'getRegistersByType': self.getRegistersByType,
-            'getPeriodName': self.getPeriodName,
+            'getPeriod': self.getPeriod,
             'getFuncCurrency': self.getFuncCurrency,
             'getFuncCurrencyId': self.getFuncCurrencyId,
             'getTotalCalc': self.getTotalCalc,
@@ -62,8 +62,8 @@ class report_liquidity_position3(report_sxw.rml_parse):
     def getFuncCurrencyId(self):
         return self.func_currency_id
 
-    def getPeriodName(self):
-        return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')}).name
+    def getPeriod(self):
+        return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
 
     def getConvert(self, cur_id, func_cur_id, amount):
         cur_ovj = self.pool.get('res.currency')
@@ -138,7 +138,8 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 'instance': reg.instance_id.name,
                 'journal_code': journal.code,
                 'journal_name': journal.name,
-                'state': reg.state,
+                # for the state, get the value from the selection field ("Closed" instead of "confirm", etc.):
+                'state': reg.state and dict(reg_obj._columns['state'].selection).get(reg.state) or '',
                 'calculated_balance': calc_bal,
                 'register_balance': reg_bal,
                 'opening_balance': reg.balance_start,
