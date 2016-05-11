@@ -247,7 +247,7 @@ class browse_record(object):
                                         # the target is not loaded yet.
                                         continue
                                     new_data[field_name] = browse_record(self._cr,
-                                        self._uid, value, obj, {},
+                                        self._uid, value, obj, self._cache,
                                         context=self._context,
                                         list_class=self._list_class,
                                         fields_process=self._fields_process)
@@ -274,7 +274,7 @@ class browse_record(object):
                                 ref_id = long(ref_id)
                                 if ref_id:
                                     obj = self._table.pool.get(ref_obj)
-                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id, obj, {}, context=self._context, list_class=self._list_class, fields_process=self._fields_process)
+                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id, obj, self._cache, context=self._context, list_class=self._list_class, fields_process=self._fields_process)
                                 else:
                                     new_data[field_name] = browse_null()
                         else:
