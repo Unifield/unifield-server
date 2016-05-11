@@ -1491,7 +1491,7 @@ stock moves which are already processed : '''
                     cond1 = so.procurement_request and so.location_requestor_id.usage == 'customer'
                     cond3 = bool(line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move)
 
-                    if cond2:
+                    if cond2 and line.product_id:
                         proc_obj.write(cr, uid, [line.procurement_id.id], {'product_id': line.product_id.id})
 
                     if (cond1 or (not so.procurement_request and cond2)) and cond3:
