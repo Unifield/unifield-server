@@ -22,7 +22,7 @@
                 <button name="update" string="Update (in background)" type="object" colspan="4" icon="gtk-remove" />
                 <button special="cancel" string="Close window" icon="gtk-cancel" />
                 <button name="open_xml_file" string="Open XML file" type="object" icon="gtk-print" colspan="1" attrs="{'readonly': ['|', ('processed_value', '!=', 'Done'), ('export_ok', '=', False)]}" />
-                <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" />
+                <button name="open_products_view" string="Open report" type="object" icon="gtk-go-forward" colspan="2" attrs="{'readonly': [('processed_value', '!=', 'Done')]}" />
             </form>
         </field>
     </record>
