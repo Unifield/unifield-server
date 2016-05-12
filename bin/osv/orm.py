@@ -208,17 +208,18 @@ class browse_record(object):
             # TODO: improve this, very slow for reports
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
-                lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
-                if not lang_obj_ids:
-                    raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
-                lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
+                if lang != 'en_US':
+                    lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
+                    if not lang_obj_ids:
+                        raise Exception(_('Language with code "%s" is not defined in your system !\nDefine it through the Administration menu.') % (lang,))
+                    lang_obj = self.pool.get('res.lang').browse(self._cr, self._uid, lang_obj_ids[0])
 
-                for field_name, field_column in fields_to_fetch:
-                    if field_column._type in self._fields_process:
-                        for result_line in field_values:
-                            result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
-                            if result_line[field_name]:
-                                result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
+                    for field_name, field_column in fields_to_fetch:
+                        if field_column._type in self._fields_process:
+                            for result_line in field_values:
+                                result_line[field_name] = self._fields_process[field_column._type](result_line[field_name])
+                                if result_line[field_name]:
+                                    result_line[field_name].set_value(self._cr, self._uid, result_line[field_name], self, field_column, lang_obj)
 
             if not field_values:
                 # Where did those ids come from? Perhaps old entries in ir_model_dat?
@@ -945,10 +946,11 @@ class orm_template(object):
                         ir_model_data_obj = self.pool.get('ir.model.data')
                         try:
                             ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
-                            ref_db_id = ir_model_data_obj.browse(cr, uid, ir_model_data_id).res_id
+                            ref_db_id = ir_model_data_obj.read(cr, uid,
+                                    ir_model_data_id, ['res_id'])
                         except:
                             ref_db_id = None
-                        res = model and ref_db_id and str(model) + "," + str(ref_db_id) or ''
+                        res = model and ref_db_id and '%s,%s' % (str(model), str(ref_db_id['res_id'])) or ''
                     else:
                         res = 0
 
@@ -1221,12 +1223,15 @@ class orm_template(object):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 
-                if field_col.string:
-                    res_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'field', context.get('lang', False) or 'en_US')
+                context_lang = context.get('lang', False) or 'en_US'
+                if field_col.string and context_lang != 'en_US':
+                    res_trans = translation_obj._get_source(cr, user,
+                            self._name + ',' + f, 'field', context_lang)
                     if res_trans:
                         res[f]['string'] = res_trans
-                if field_col.help:
-                    help_trans = translation_obj._get_source(cr, user, self._name + ',' + f, 'help', context.get('lang', False) or 'en_US')
+                if field_col.help and context_lang != 'en_US':
+                    help_trans = translation_obj._get_source(cr, user,
+                            self._name + ',' + f, 'help', context_lang)
                     if help_trans:
                         res[f]['help'] = help_trans
 
@@ -1239,12 +1244,15 @@ class orm_template(object):
                     # translate each selection option
                     sel2 = []
                     sel2_append = sel2.append
-                    for (key, val) in sel:
-                        val2 = None
-                        if val:
-                            val2 = translation_obj._get_source(cr, user, self._name + ',' + f, 'selection', context.get('lang', False) or 'en_US', val)
-                        sel2_append((key, val2 or val))
-                    sel = sel2
+                    if context_lang != 'en_US':
+                        for (key, val) in sel:
+                            val2 = None
+                            if val:
+                                val2 = translation_obj._get_source(cr, user,
+                                        self._name + ',' + f, 'selection',
+                                        context_lang, val)
+                            sel2_append((key, val2 or val))
+                    sel = sel2 or sel
                     res[f]['selection'] = sel
                 if res[f]['type'] in ('one2many', 'many2many', 'many2one', 'one2one'):
                     res[f]['relation'] = field_col._obj
@@ -1963,6 +1971,8 @@ class orm_template(object):
         self.pool.get('ir.model.access').check(cr, uid, 'ir.translation', 'write', context=context)
         #FIXME: try to only call the translation in one SQL
         for lang in langs:
+            if lang == 'en_US':
+                continue
             for field in vals:
                 if field in self._columns:
                     src = self._columns[field].string
@@ -3344,15 +3354,18 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-            for f in fields_pre:
-                if f == self.CONCURRENCY_CHECK_FIELD:
-                    continue
-                if self._columns[f].translate:
-                    ids = [x['id'] for x in res]
-                    #TODO: optimize out of this loop
-                    res_trans = self.pool.get('ir.translation')._get_ids(cr, user, self._name+','+f, 'model', context.get('lang', False) or 'en_US', ids)
-                    for r in res:
-                        r[f] = res_trans.get(r['id'], False) or r[f]
+            context_lang = context.get('lang', False) or 'en_US'
+            if context_lang != 'en_US':
+                for f in fields_pre:
+                    if f == self.CONCURRENCY_CHECK_FIELD:
+                        continue
+                    if self._columns[f].translate:
+                        ids = [x['id'] for x in res]
+                        #TODO: optimize out of this loop
+                        res_trans = self.pool.get('ir.translation')._get_ids(cr,
+                                user, self._name+','+f, 'model', context_lang, ids)
+                        for r in res:
+                            r[f] = res_trans.get(r['id'], False) or r[f]
         else:
             res = [{'id':x} for x in ids]
 
@@ -4210,22 +4223,38 @@ class orm(orm_template):
                         cr.execute(query, upd1)
 
             else:
+                id_param_dict = {}
                 for f in val:
                     # uid == 1 for accessing objects having rules defined on store fields
                     result = self._columns[f].get(cr, self, ids, f, 1, context=context)
-                    for r in result.keys():
-                        if field_flag:
+                    if field_flag:
+                        for r in result.keys():
                             if r in field_dict.keys():
                                 if f in field_dict[r]:
                                     result.pop(r)
-                    for id, value in result.items():
-                        if self._columns[f]._type in ('many2one', 'one2one'):
-                            try:
-                                value = value[0]
-                            except:
-                                pass
-                        cr.execute('update "' + self._table + '" set ' + \
-                            '"'+f+'"='+self._columns[f]._symbol_set[0] + ' where id = %s', (self._columns[f]._symbol_set[1](value), id))
+                    if result:
+                        current_value = '"%s"=%s' % (f, self._columns[f]._symbol_set[0])
+                        column_type = self._columns[f]._type
+                        for id, value in result.items():
+                            if column_type in ('many2one', 'one2one'):
+                                try:
+                                    value = value[0]
+                                except:
+                                    pass
+                            id_param_dict.setdefault(id, {})
+                            param_list = id_param_dict[id].setdefault('param_list', [])
+                            param_list.append((self._columns[f]._symbol_set[1](value)))
+                            update_list = id_param_dict[id].setdefault('update_list', [])
+                            update_list.append(current_value)
+
+                # do only one update request per object
+                for id, param_dict in id_param_dict.items():
+                    current_query = ['UPDATE "%s" SET' % self._table]
+                    current_query.append(', '.join(param_dict['update_list']))
+                    current_query.append('WHERE id = %s')
+                    param_dict['param_list'].append(id)
+                    final_query = ' '.join(current_query)
+                    cr.execute(final_query, tuple(param_dict['param_list']))
         return True
 
     #
