@@ -403,7 +403,9 @@ class stock_incoming_processor(osv.osv):
                                               'move_uom_id': move.product_uom and move.product_uom.id or False,
                                               'move_price_unit': move.price_unit or move.product_id.standard_price,
                                               'move_currency_id': move.price_currency_id and move.price_currency_id.id or False,
-                                              'line_number': move.line_number, }, context=context)
+                                              'line_number': move.line_number,
+                                              'external_ref': move.purchase_line_id and move.purchase_line_id.external_ref or False,
+                                              }, context=context)
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.in.simulation.screen',
