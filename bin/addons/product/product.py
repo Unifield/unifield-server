@@ -767,7 +767,7 @@ class product_supplierinfo(osv.osv):
     }
     def _check_uom(self, cr, uid, ids, context=None):
         for supplier_info in self.browse(cr, uid, ids, context=context,
-                fields_to_fetch=['product_uom'])
+                                         fields_to_fetch=['product_uom']):
             if supplier_info.product_uom and supplier_info.product_uom.category_id.id <> supplier_info.product_id.uom_id.category_id.id:
                 return False
         return True
