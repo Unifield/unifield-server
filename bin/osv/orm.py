@@ -744,9 +744,10 @@ class orm_template(object):
         def fsplit(x):
             if x=='.id': return [x]
             return x.replace(':id','/id').replace('.id','/.id').split('/')
-        fields_to_export = [fsplit(x)[0] for x in fields_to_export]
+        fields_to_export = [fsplit(x) for x in fields_to_export]
         datas = []
-        for row in self.browse(cr, uid, ids, context, fields_to_fetch=fields_to_export):
+        for row in self.browse(cr, uid, ids, context,
+                fields_to_fetch=[x[0] for x in fields_to_export]):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
