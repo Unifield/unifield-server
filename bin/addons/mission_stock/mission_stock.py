@@ -354,7 +354,8 @@ class stock_mission_report(osv.osv):
                     if not line_id:
                         continue
 
-                line = line_obj.browse(cr, uid, line_id[0])
+                line = line_obj.browse(cr, uid, line_id[0],
+                        fields_to_fetch=['id', 'product_id'])
                 if uom != line.product_id.uom_id.id:
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
@@ -377,7 +378,8 @@ class stock_mission_report(osv.osv):
             for move in res:
                 cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' %
                         (report_id, move[0]))
-                product = product_obj.browse(cr, uid, move[1])
+                product = product_obj.browse(cr, uid, move[1],
+                        fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
                                                     ('mission_report_id', '=', report_id)])
                 if line_id:
@@ -752,14 +754,16 @@ class stock_mission_report_line(osv.osv):
 
     def _get_wh_qty(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['id', 'stock_qty', 'central_qty']):
             res[line.id] = line.stock_qty + line.central_qty
 
         return res
 
     def _get_internal_val(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['id', 'internal_qty', 'cost_price']):
             res[line.id] = line.internal_qty * line.cost_price
 
         return res

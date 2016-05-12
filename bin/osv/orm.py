@@ -128,7 +128,8 @@ class browse_record_list(list):
 
 class browse_record(object):
     logger = netsvc.Logger()
-    def __init__(self, cr, uid, id, table, cache, context=None, list_class=None, fields_process=None):
+    def __init__(self, cr, uid, id, table, cache, context=None,
+            list_class=None, fields_process=None, fields_to_fetch=None):
         '''
         table : the object (inherited from orm)
         context : dictionary with an optional context
@@ -147,6 +148,7 @@ class browse_record(object):
             'osv.browse_record.' + self._table_name)
         self._context = context
         self._fields_process = fields_process
+        self._fields_to_fetch = fields_to_fetch
 
         cache.setdefault(table._name, {})
         self._data = cache[table._name]
@@ -537,7 +539,8 @@ class orm_template(object):
         if not self._table:
             self._table = self._name.replace('.', '_')
 
-    def browse(self, cr, uid, select, context=None, list_class=None, fields_process=None):
+    def browse(self, cr, uid, select, context=None, list_class=None,
+            fields_process=None, fields_to_fetch=None):
         """Fetch records as objects allowing to use dot notation to browse fields and relations
 
         :param cr: database cursor
@@ -552,9 +555,13 @@ class orm_template(object):
         # need to accepts ints and longs because ids coming from a method
         # launched by button in the interface have a type long...
         if isinstance(select, (int, long)):
-            return browse_record(cr, uid, select, self, cache, context=context, list_class=self._list_class, fields_process=fields_process)
+            return browse_record(cr, uid, select, self, cache, context=context,
+                    list_class=self._list_class, fields_process=fields_process,
+                    fields_to_fetch=fields_to_fetch)
         elif isinstance(select, list):
-            return self._list_class([browse_record(cr, uid, id, self, cache, context=context, list_class=self._list_class, fields_process=fields_process) for id in select], context=context)
+            return self._list_class([browse_record(cr, uid, id, self, cache,
+                context=context, list_class=self._list_class,
+                fields_process=fields_process, fields_to_fetch=fields_to_fetch) for id in select], context=context)
         else:
             return browse_null()
 
@@ -736,12 +743,9 @@ class orm_template(object):
         def fsplit(x):
             if x=='.id': return [x]
             return x.replace(':id','/id').replace('.id','/.id').split('/')
-        fields_to_export = map(fsplit, fields_to_export)
-        fields_export = fields_to_export + []
-        warning = ''
-        warning_fields = []
+        fields_to_export = [fsplit(x)[0] for x in fields_to_export]
         datas = []
-        for row in self.browse(cr, uid, ids, context):
+        for row in self.browse(cr, uid, ids, context, fields_to_fetch=fields_to_export):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
 
@@ -3592,13 +3596,13 @@ class orm(orm_template):
             if ir_value_ids:
                 pool_ir_values.unlink(cr, uid, ir_value_ids, context=context)
 
-        for order, object, store_ids, fields in result_store:
-            if object != self._name:
-                obj = self.pool.get(object)
+        for order, obj, store_ids, field_list in result_store:
+            if obj != self._name:
+                obj = self.pool.get(obj)
                 cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
-                    obj._store_set_values(cr, uid, rids, fields, context)
+                    obj._store_set_values(cr, uid, rids, field_list, context)
 
         return True
 
