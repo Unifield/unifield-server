@@ -142,8 +142,13 @@ class product_history_consumption(osv.osv):
         if not context:
             context = {}
 
-        obj = self.browse(cr, uid, ids[0], context=context)
-        products = []
+        obj = self.browse(cr, uid, ids[0],
+                          fields_to_fetch=['consumption_type',
+                                           'location_id',
+                                           'id',
+                                           'nomen_manda_0',
+                                           'sublist_id']
+                                           , context=context)
         product_ids = []
 
         # Update the locations in context
@@ -154,8 +159,6 @@ class product_history_consumption(osv.osv):
             context.update({'location_id': location_ids})
 
         months = self.pool.get('product.history.consumption.month').search(cr, uid, [('history_id', '=', obj.id)], order='date_from asc', context=context)
-        nb_months = len(months)
-        total_consumption = {}
 
         if not months:
             raise osv.except_osv(_('Error'), _('You have to choose at least one month for consumption history'))
