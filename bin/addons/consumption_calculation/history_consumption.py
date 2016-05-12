@@ -163,8 +163,6 @@ class product_history_consumption(osv.osv):
         if obj.nomen_manda_0:
             for report in self.browse(cr, uid, ids, context=context):
                 product_ids = []
-                products = []
-    
                 nom = False
                 # Get all products for the defined nomenclature
                 if report.nomen_manda_3:
@@ -181,12 +179,6 @@ class product_history_consumption(osv.osv):
                     field = 'nomen_manda_0'
                 if nom:
                     product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
-                    
-            for product in self.pool.get('product.product').browse(cr, uid, product_ids, context=context):
-                # Check if the product is not already on the report
-                if product.id not in products:
-                    batch_mandatory = product.batch_management or product.perishable
-                    date_mandatory = not product.batch_management and product.perishable
 
         if obj.sublist_id:
             context.update({'search_default_list_ids': obj.sublist_id.id})

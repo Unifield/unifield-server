@@ -925,7 +925,8 @@ class related(function):
         else:
             res = {}.fromkeys(ids, False)
 
-        objlst = obj.browse(cr, 1, ids, context=context)
+        objlst = obj.browse(cr, 1, ids, context=context,
+                fields_to_fetch=self.ar
         for data in objlst:
             if not data:
                 continue
@@ -1069,11 +1070,11 @@ class property(function):
             company = obj.pool.get('res.company')
             cid = company._company_default_get(cr, uid, obj._name, def_id,
                                                context=context)
-            propdef = obj.pool.get('ir.model.fields').browse(cr, uid, def_id,
-                                                             context=context)
+            propdef = obj.pool.get('ir.model.fields').read(cr, uid, def_id,
+                    ['name'], context=context)
             prop = obj.pool.get('ir.property')
             return prop.create(cr, uid, {
-                'name': propdef.name,
+                'name': propdef['name'],
                 'value': id_val,
                 'res_id': obj._name+','+str(id),
                 'company_id': cid,
