@@ -44,6 +44,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getTotalReg': self.getTotalReg,
             'getReg': self.getRegisters,
             'getConvert': self.getConvert,
+            'getOpeningBalance': self.getOpeningBalance,
         })
         return
 
@@ -164,6 +165,13 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.total_func_calculated_balance = total_func_calculated_balance
         self.total_func_register_balance = total_func_register_balance
         return reg_types
+
+    def getOpeningBalance(self, reg_type, cur):
+        '''
+        Returns the TOTAL of opening balance for the register type and the currency in parameters
+        '''
+        reg_data = self.getRegisters()[reg_type]['registers']
+        return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
 
 SpreadsheetReport('report.liquidity.position.2', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position3)

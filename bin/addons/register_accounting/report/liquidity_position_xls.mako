@@ -246,12 +246,13 @@
       <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
       <Column ss:AutoFitWidth="0" ss:Width="70.75"/>
 
+      <% period = getPeriod() %>
       <Row>
         <Cell ss:StyleID="s25b" >
           <Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
         </Cell>
         <Cell ss:StyleID="s25b" >
-          <Data ss:Type="String">${getPeriod().name}</Data>
+          <Data ss:Type="String">${period.name}</Data>
         </Cell>
       </Row>
       <Row ss:Height="13.5"/>
@@ -260,7 +261,7 @@
           <Data ss:Type="String">${_('Period end date:')}</Data>
         </Cell>
         <Cell ss:StyleID="short_date2">
-          <Data ss:Type="DateTime">${getPeriod().date_stop|n}T00:00:00.000</Data>
+          <Data ss:Type="DateTime">${period.date_stop|n}T00:00:00.000</Data>
         </Cell>
       </Row>
       <Row>
@@ -341,7 +342,7 @@
           <Data ss:Type="String">${ (reg['state']) }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (getPeriod().name) }</Data>
+          <Data ss:Type="String">${ (period.name) }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
           <Data ss:Type="Number">${ (formatLang(reg['opening_balance'], digits=2, grouping=True) or '0.00') }</Data>
@@ -373,9 +374,11 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
-        <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">Subtotal ${ str(cur) }</Data>
+        </Cell>
+        <Cell ss:StyleID="s26">
+            <Data ss:Type="Number">${ formatLang(getOpeningBalance(reg_type, cur), digits=2, grouping=True) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
           <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' }</Data>

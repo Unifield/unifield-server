@@ -41,7 +41,6 @@
 
   <story>
 
-    
     <title style="text">Liquidity Position [[ getPeriod().name ]]</title>
     <para style="center">Period end date: [[ formatLang(getPeriod().date_stop, date=True) ]]</para>
     <para style="center">Report date: [[ formatLang(time.strftime("%Y-%m-%d"), date=True) ]]</para>
@@ -86,9 +85,10 @@
 
       <section>
         [[ repeatIn(getReg()[reg_type]['currency_amounts'], 'cur') ]]
-        <blockTable htmlSpans="1" style="table" colWidths="116mm,30mm,30mm,10mm,30mm,30mm,10mm">
+        <blockTable htmlSpans="1" style="table" colWidths="86mm,30mm,30mm,30mm,10mm,30mm,30mm,10mm">
           <tr>
             <td><para style="right">Subtotal [[ str(cur) ]]</para></td>
+            <td><para style="right">[[ formatLang(getOpeningBalance(reg_type, cur), digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="text">[[ str(cur) ]]</para></td>
