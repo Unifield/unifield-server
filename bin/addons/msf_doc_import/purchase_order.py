@@ -221,7 +221,7 @@ class purchase_order(osv.osv):
 
         datas = {
             'ids': ids,
-            'need_ad': context.get('need_ad', False),
+            'need_ad': context.get('need_ad', True),
         }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
             context=context)
@@ -248,7 +248,7 @@ class purchase_order(osv.osv):
 
         datas = {
             'ids': ids,
-            'need_ad': context.get('need_ad', False),
+            'need_ad': context.get('need_ad', True),
         }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
             context=context)
@@ -508,7 +508,7 @@ class wizard_export_po_validated(osv.osv_memory):
     }
 
     _defaults = {
-        'need_ad': 'no',
+        'need_ad': 'yes',
     }
 
     def export_file(self, cr, uid, ids, context=None):

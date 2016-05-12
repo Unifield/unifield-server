@@ -266,7 +266,7 @@ class wizard_import_po_simulation_screen(osv.osv):
 
     _defaults = {
         'state': 'draft',
-        'with_ad': lambda *a: 'no',
+        'with_ad': lambda *a: 'yes',
     }
 
     def write(self, cr, uid, ids, vals, context=None):

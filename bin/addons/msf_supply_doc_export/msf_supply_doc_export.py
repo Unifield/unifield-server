@@ -130,7 +130,7 @@ class validated_purchase_order_report_xls(report_sxw.rml_parse):
 
     def set_context(self, objects, data, ids, report_type = None):
         super(validated_purchase_order_report_xls, self).set_context(objects, data, ids, report_type=report_type)
-        self.localcontext['need_ad'] = data.get('need_ad', False)
+        self.localcontext['need_ad'] = data.get('need_ad', True)
 
     def get_max_ad_lines(self, order):
         max_ad_lines = 0
@@ -154,7 +154,7 @@ class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
 
     def set_context(self, objects, data, ids, report_type = None):
         super(parser_validated_purchase_order_report_xml, self).set_context(objects, data, ids, report_type=report_type)
-        self.localcontext['need_ad'] = data.get('need_ad', False)
+        self.localcontext['need_ad'] = data.get('need_ad', True)
 
     def get_max_ad_lines(self, order):
         max_ad_lines = 0
