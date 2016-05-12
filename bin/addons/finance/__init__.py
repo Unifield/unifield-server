@@ -23,6 +23,7 @@ import stock
 import account
 import invoice
 import account_voucher
+import board_account
 import purchase
 import report
 import wizard

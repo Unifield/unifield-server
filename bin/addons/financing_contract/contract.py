@@ -22,6 +22,8 @@ import datetime
 from osv import fields, osv
 from tools.translate import _
 import netsvc
+import time
+
 
 class financing_contract_funding_pool_line(osv.osv):
     _name = "financing.contract.funding.pool.line"
@@ -118,6 +120,7 @@ class financing_contract_funding_pool_line(osv.osv):
         return res
 
 financing_contract_funding_pool_line()
+
 
 class financing_contract_contract(osv.osv):
 
@@ -295,6 +298,71 @@ class financing_contract_contract(osv.osv):
         instance_level = self.__get_instance_level(cr, uid, context=context)[1]
         return dict((id, instance_level) for id in ids)
 
+    def _calc_elapsed_time(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for contract_id in ids:
+            contracts = self.browse(cr, uid, [contract_id], context=context)
+            for contract in contracts:
+                time_s = time.mktime(datetime.
+                                     datetime.strptime(contract['eligibility_from_date'], "%Y-%m-%d").timetuple())
+                time_e = time.mktime(datetime.
+                                     datetime.strptime(contract['eligibility_to_date'], "%Y-%m-%d").timetuple())
+                time_n = time.mktime(datetime.datetime.now().timetuple())
+                time_elapsed = ((time_n - time_s) / (time_e - time_s)) * 100
+                res[contract_id] = str(round(time_elapsed, 1)) + "%"
+        return res
+
+    def _calc_total_project(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for contract_id in ids:
+            contract = self.browse(cr, uid, contract_id, context=context)
+            context.update({'reporting_currency': contract.reporting_currency.id,
+                            'reporting_type': contract.reporting_type,
+                            'currency_table_id': contract.currency_table_id.id,
+                            'active_id': ids[0],
+                            'active_ids': ids,
+                            'display_fp': True})
+
+            if contract['reporting_type'] in ['all', 'project']:
+                project_real = 0
+                project_budget = 0
+                for line in contract['actual_line_ids']:
+                    project_real += line['project_real']
+                    project_budget += line['project_budget']
+
+                if project_budget != 0:
+                    res[contract_id] = str(round((project_real / project_budget) * 100, 1)) + "%"
+                else:
+                    res[contract_id] = "-"
+            else:
+                res[contract_id] = "- n/a -"
+        return res
+
+    def _calc_board_grant(self, cr, uid, ids, field_name, arg, context=None):
+        res = {}
+        for c_id in ids:
+            contract = self.browse(cr, uid, c_id, context=context)
+            context.update({'reporting_currency': contract.reporting_currency.id,
+                            'reporting_type': contract.reporting_type,
+                            'currency_table_id': contract.currency_table_id.id,
+                            'active_id': ids[0],
+                            'active_ids': ids,
+                            'display_fp': True})
+            if contract['reporting_type'] in ['all', 'allocated']:
+                alloc_real = 0
+                alloc_budget = 0
+                for line in contract['actual_line_ids']:
+                    alloc_real += line['allocated_real']
+                    alloc_budget += line['allocated_budget']
+
+                if alloc_budget != 0:
+                    res[c_id] = str(round((alloc_real / alloc_budget) * 100, 1)) + "%"
+                else:
+                    res[c_id] = "-"
+            else:
+                res[c_id] = "- n/a -"
+        return res
+
     _columns = {
         'name': fields.char('Financing contract name', size=64, required=True),
         'code': fields.char('Financing contract code', size=16, required=True),
@@ -318,6 +386,12 @@ class financing_contract_contract(osv.osv):
         'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
         'fp_added_flag': fields.boolean('Flag when new FP is added'),
         'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
+        'board_time_elapsed': fields.function(_calc_elapsed_time, method=True,
+                                              type='str', string='Percent Time elapsed', readonly=True),  # UF-1097
+        'board_total_project': fields.function(_calc_total_project, method=True,
+                                               type='str', string='Alloc/total project', readonly=True),  # UF-1097
+        'board_grant': fields.function(_calc_board_grant, method=True,
+                                       type='str', string='Alloc/grant', readonly=True),  # UF-1097
     }
 
     _defaults = {
@@ -440,6 +514,7 @@ class financing_contract_contract(osv.osv):
     def menu_interactive_report(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
+
         # we update the context with the contract reporting type
         contract = self.browse(cr, uid, ids[0], context=context)
         context.update({'reporting_currency': contract.reporting_currency.id,
