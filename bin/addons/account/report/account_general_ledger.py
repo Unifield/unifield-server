@@ -150,7 +150,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
-
         if self.account_ids:
             # add parent(s) of filtered accounts
             self.account_ids += self.pool.get('account.account')._get_parent_of(
@@ -259,8 +258,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def lines(self, node, initial_balance_mode=False):
         res = []
-        if not node.is_move_level:
-            return res
+        #if not node.is_move_level:
+        #    return res
 
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
