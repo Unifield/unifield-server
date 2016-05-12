@@ -160,6 +160,7 @@ class purchase_order(osv.osv):
         for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
             export_line_obj.create(cr, uid, {'po_line_id': l.id,
                                              'in_line_number': l.line_number,
+                                             'in_ext_ref': l.external_ref,
                                              'simu_id': export_id}, context=context)
 
         return {'type': 'ir.actions.act_window',

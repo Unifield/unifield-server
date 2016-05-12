@@ -47,6 +47,8 @@ UOM_NAME_ID = {}
 CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
+LN_BY_EXT_REF = {}
+EXT_REF_BY_LN = {}
 
 """
 UF-2538 optional 4nd tuple item: list of states for mandatory check
@@ -486,6 +488,8 @@ class wizard_import_po_simulation_screen(osv.osv):
             global UOM_NAME_ID
             global CURRENCY_NAME_ID
             global SIMU_LINES
+            global LN_BY_EXT_REF
+            global EXT_REF_BY_LN
 
             if context is None:
                 context = {}
@@ -524,6 +528,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     First of all, we build a cache for simulation screen lines
                     '''
                     l_num = line.in_line_number
+                    l_ext_ref = line.in_ext_ref
                     l_prod = line.in_product_id and line.in_product_id.id or False
                     l_uom = line.in_uom and line.in_uom.id or False
                     # By simulation screen
@@ -545,6 +550,12 @@ class wizard_import_po_simulation_screen(osv.osv):
                     # By Qty
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault(line.in_qty, [])
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.in_qty].append(line.id)
+
+                    LN_BY_EXT_REF.setdefault(wiz.id, {})
+                    EXT_REF_BY_LN.setdefault(wiz.id, {})
+                    if line.in_ext_ref:
+                        LN_BY_EXT_REF[wiz.id][line.in_ext_ref] = l_num
+                        EXT_REF_BY_LN[wiz.id][l_num] = line.in_ext_ref
 
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
@@ -777,6 +788,19 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                         values_line_errors.append(err)
                         file_line_error.append(err1)
 
+                    if line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys() and LN_BY_EXT_REF[wiz.id][ext_ref] != line_number:
+                        not_ok = True
+                        err1 = _('No PO line with the line number \'%s\' and the external ref \'%s\' found in database') % (line_number, ext_ref)
+                        err = _('Line %s of the file: %s') % (x, err1)
+                        values_line_errors.append(err)
+                        file_line_error.append(err1)
+
+                    if not line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys():
+                        line_number = LN_BY_EXT_REF[wiz.id][ext_ref]
+
+                    if not ext_ref and line_number and line_number in EXT_REF_BY_LN[wiz.id].keys():
+                        ext_ref = EXT_REF_BY_LN[wiz.id][line_number]
+
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
 
@@ -809,7 +833,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if vals[4]:
                         qty = float(vals[4])
 
-                    file_lines[x] = (line_number or ext_ref, product_id, uom_id, qty)
+                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref)
 
                 '''
                 Get the best matching line :
@@ -950,6 +974,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     vals = values.get(po_line, [])
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
                                                         'in_line_number': values.get(po_line, [])[0] and int(values.get(po_line, [])[0]) or False,
+                                                        'in_ext_ref': values.get(po_line, [])[1] or False,
                                                         'simu_id': wiz.id}, context=context)
                     err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                     if po_line in not_ok_file_lines:
@@ -1099,7 +1124,7 @@ wizard_import_po_simulation_screen()
 
 class wizard_import_po_simulation_screen_line(osv.osv):
     _name = 'wizard.import.po.simulation.screen.line'
-    _order = 'is_new_line, in_line_number, in_product_id, id'
+    _order = 'is_new_line, in_line_number, in_ext_ref, in_product_id, id'
     _rec_name = 'in_line_number'
 
     def _get_line_info(self, cr, uid, ids, field_name, args, context=None):
@@ -1120,6 +1145,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'in_dcd': False,
                             'in_price': 0.00,
                             'in_currency': False,
+                            'in_ext_ref': False,
                             'imp_discrepancy': 0.00,
                             'change_ok': False}
 
@@ -1134,6 +1160,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 res[line.id]['in_dcd'] = l.confirmed_delivery_date
                 res[line.id]['in_price'] = l.price_unit
                 res[line.id]['in_currency'] = l.currency_id and l.currency_id.id or False
+                res[line.id]['in_ext_ref'] = l.external_ref or False
                 if line.type_change != 'del':
                     if line.imp_qty and line.imp_price:
                         disc = (line.imp_qty*line.imp_price)-(line.in_qty*line.in_price)
@@ -1218,6 +1245,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'is_new_line': fields.function(_get_str_line_number, method=True, string='Is new line ?',
                                        type='boolean', readonly=True, multi='new_line',
                                        store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['in_line_number'], 20),}),
+        'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
                                          ('split', 'Split'), ('del', 'Del'),],
                                          string='CHG', readonly=True),
@@ -1276,12 +1304,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
-            if line.in_line_number and write_vals['imp_external_ref']:
-                errors.append(_('The line cannot have both Line no. and Ext Ref.'))
-                write_vals['in_line_number'] = False
-                write_vals['imp_external_ref'] = False
-                write_vals['type_change'] = 'error'
-            elif line.in_line_number:
+            if line.in_line_number:
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
                 if not pol_ids:
                     errors.append(_('Line no is not consistent with validated PO.'))
@@ -1465,6 +1488,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_treated = 0.00
         percent_completed = 0.00
         for line in self.browse(cr, uid, ids, context=context):
+            context['purchase_id'] = line.simu_id.order_id.id
             line_treated += 1
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
             if line.po_line_id and line.type_change != 'del' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
