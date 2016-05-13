@@ -203,6 +203,11 @@ class browse_record(object):
             ids = filter(lambda id: name not in self._data[id], self._data.keys())
             # read the results
             if self._fields_to_fetch:
+                if name not in self._fields_to_fetch:
+                    self.__logger.warn("fields_to_fetch has been defined in "
+                            "browse() for object %s, but field %s is not member "
+                            "of it" % (self, name))
+                    self._fields_to_fetch.append(name)
                 fields_to_fetch = [x for x in fields_to_fetch if x[0] in
                         self._fields_to_fetch]
             field_names = [x[0] for x in fields_to_fetch]
@@ -3615,9 +3620,9 @@ class orm(orm_template):
             if ir_value_ids:
                 pool_ir_values.unlink(cr, uid, ir_value_ids, context=context)
 
-        for order, obj, store_ids, field_list in result_store:
-            if obj != self._name:
-                obj = self.pool.get(obj)
+        for order, current_obj, store_ids, field_list in result_store:
+            if current_obj != self._name:
+                obj = self.pool.get(current_obj)
                 cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
@@ -4142,7 +4147,7 @@ class orm(orm_template):
             result.setdefault(fncts[fnct][0], {})
 
             # uid == 1 for accessing objects having rules defined on store fields
-            ids2 = fncts[fnct][2](self, cr, 1, ids, context)
+            ids2 = list(set((fncts[fnct][2](self, cr, 1, ids, context))))
             for id in filter(None, ids2):
                 result[fncts[fnct][0]].setdefault(id, [])
                 result[fncts[fnct][0]][id].append(fnct)
@@ -4187,11 +4192,16 @@ class orm(orm_template):
                                         field_flag = True
         todo = {}
         keys = []
+        keys_append = keys.append
         for f in fields:
-            if self._columns[f]._multi not in keys:
-                keys.append(self._columns[f]._multi)
-            todo.setdefault(self._columns[f]._multi, [])
-            todo[self._columns[f]._multi].append(f)
+            key = self._columns[f]._multi
+            if key not in keys:
+                keys_append(key)
+        todo = dict((k, []) for k in keys)
+        for f in fields:
+            key = self._columns[f]._multi
+            todo[key].append(f)
+
         for key in keys:
             val = todo[key]
             if key:
