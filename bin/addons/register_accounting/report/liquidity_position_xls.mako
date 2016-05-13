@@ -560,8 +560,7 @@
           <Data ss:Type="String">${_('Total Cheque:')}</Data>
         </Cell>
         <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(pending_cheques['total_cheque'], digits=2, grouping=True) or '0.00' }
-          </Data>
+          <Data ss:Type="Number">${ formatLang(pending_cheques['total_cheque'], digits=2, grouping=True) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s51">
           <Data ss:Type="String">${ getFuncCurrency() }</Data>
