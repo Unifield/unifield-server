@@ -45,6 +45,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getReg': self.getRegisters,
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
+            'getPendingCheques': self.getPendingCheques,
         })
         return
 
@@ -172,6 +173,74 @@ class report_liquidity_position3(report_sxw.rml_parse):
         '''
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
+
+    def getPendingCheques(self):
+        '''
+        Get the pending cheques data from the selected period AND the previous ones. Gives:
+        - one entry per journal: the pending cheques amounts are all added (the period displayed only indicates if
+        the register has been closed).
+        - the total amounts per currency in register and functional currency
+        '''
+        pending_cheques = {
+            'registers': {},
+            'currency_amounts': {},
+            }
+        pool = pooler.get_pool(self.cr.dbname)
+        reg_obj = pool.get('account.bank.statement')
+        aml_obj = pool.get('account.move.line')
+        journal_obj = pool.get('account.journal')
+        period_obj = pool.get('account.period')
+
+        # get the cheque registers for the selected period and previous ones
+        journal_ids = journal_obj.search(self.cr, self.uid, [('type', '=', 'cheque')])
+        period_ids = period_obj.search(self.cr, self.uid,
+                                       [('date_start', '<=', self.getPeriod().date_start)])
+        reg_ids = reg_obj.search(self.cr, self.uid, [('journal_id', 'in', journal_ids),
+                                                     ('period_id', 'in', period_ids)])
+        regs = reg_obj.browse(self.cr, self.uid, reg_ids, context={'lang': self.localcontext.get('lang')})
+
+        for reg in regs:
+            # Search register lines
+            journal = reg.journal_id
+            account_ids = [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
+            aml_ids = aml_obj.search(self.cr, self.uid, [('statement_id', '=', reg.id), ('is_reconciled', '=', False),
+                                                         ('account_id', 'in', account_ids),])
+            if isinstance(aml_ids, (int, long)):
+                aml_ids = [aml_ids]
+            lines = aml_obj.browse(self.cr, self.uid, aml_ids)
+
+            # Get the amounts in booking and functional currency
+            amount_reg_currency = sum([line.debit_currency - line.credit_currency or 0.0 for line in lines])
+            amount_func_currency = sum([line.debit - line.credit or 0.0 for line in lines])
+
+            # either create a new entry for this journal, or if it already exists (= there are pending cheques in several
+            # periods for this journal) add the amounts to the previous total
+            if journal.code not in pending_cheques['registers']:
+                pending_cheques['registers'][journal.code] = {
+                    'instance': reg.instance_id.name,
+                    'journal_name': journal.name,
+                    # for the state, get the value from the selection field ("Closed" instead of "confirm", etc.):
+                    'state': reg.state and dict(reg_obj._columns['state'].selection).get(reg.state) or '',
+                    'bank_journal_code': journal.bank_journal_id.code,
+                    'bank_journal_name': journal.bank_journal_id.name,
+                    'amount_reg_currency': amount_reg_currency,
+                    'reg_currency': journal.currency.name,
+                    'amount_func_currency': amount_func_currency,
+                }
+            else:
+                pending_cheques['registers'][journal.code]['amount_reg_currency'] += amount_reg_currency
+                pending_cheques['registers'][journal.code]['amount_func_currency'] += amount_func_currency
+
+            # Add amounts to get the total amounts per currency
+            if journal.currency.name not in pending_cheques['currency_amounts']:
+                pending_cheques['currency_amounts'][journal.currency.name] = {
+                    'total_amount_reg_currency': 0,
+                    'total_amount_func_currency': 0
+                }
+            pending_cheques['currency_amounts'][journal.currency.name]['total_amount_reg_currency'] += amount_reg_currency
+            pending_cheques['currency_amounts'][journal.currency.name]['total_amount_func_currency'] += amount_func_currency
+
+        return pending_cheques
 
 
 SpreadsheetReport('report.liquidity.position.2', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position3)
