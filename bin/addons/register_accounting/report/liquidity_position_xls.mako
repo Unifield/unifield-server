@@ -580,14 +580,12 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
-        <Cell ss:StyleID="s52">
+        <Cell ss:MergeAcross="1" ss:StyleID="s52">
           <Data ss:Type="String">Grand Total:</Data>
         </Cell>
         <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' }</Data>
-        </Cell>
-        <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(getTotalCalc(), digits=2, grouping=True) or '0.00' }</Data>
+          <!-- total of register balances + pendinq cheque amount in func. currency -->
+          <Data ss:Type="Number">${ formatLang(getTotalCalc() + pending_cheques['total_cheque'], digits=2, grouping=True) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s51">
           <Data ss:Type="String">${ getFuncCurrency() }</Data>

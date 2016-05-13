@@ -166,11 +166,11 @@
     </section>
 
     <!-- GRAND TOTAL -->
-    <blockTable htmlSpans="1" style="table_header" colWidths="186mm,30mm,30mm,10mm">
+    <blockTable htmlSpans="1" style="table_header" colWidths="186mm,60mm,10mm">
       <tr>
         <td><para style="right"><b>Grand Total:</b></para></td>
-        <td><para style="right">[[ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' ]]</para></td>
-        <td><para style="right">[[ formatLang(getTotalCalc(), digits=2, grouping=True) or '0.00' ]]</para></td>
+         <!-- total of register balances + pendinq cheque amount in func. currency -->
+        <td><para style="right">[[ formatLang(getTotalCalc() + getPendingCheques()['total_cheque'], digits=2, grouping=True) or '0.00' ]]</para></td>
         <td><para style="text">[[ getFuncCurrency() ]]</para></td>
       </tr>
     </blockTable>
