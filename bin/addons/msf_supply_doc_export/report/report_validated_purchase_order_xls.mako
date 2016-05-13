@@ -189,7 +189,7 @@
         % endfor
     % endif
 
-    % if need_ad:
+    % if need_ad and max_ad_lines:
     <Row>
         <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    
         <Cell ss:StyleID="line_wb" ><Data ss:Type="String"></Data></Cell>    

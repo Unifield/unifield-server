@@ -94,9 +94,9 @@
                 <field name="project_ref">${l.fnct_project_ref or ''|x}</field>
                 <field name="message_esc1"></field>
                 <field name="message_esc2"></field>
-                % if need_ad:
+                % if need_ad and l.analytic_distribution_id:
                 <field name="analytic_distribution_id">
-                    % for ccl in o.analytic_distribution_id.cost_center_lines:
+                    % for ccl in l.analytic_distribution_id.cost_center_lines:
                     <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
                     <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
                     <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
