@@ -203,6 +203,11 @@ class browse_record(object):
             ids = filter(lambda id: name not in self._data[id], self._data.keys())
             # read the results
             if self._fields_to_fetch:
+                if name not in self._fields_to_fetch:
+                    self.__logger.warn("fields_to_fetch has been defined in "
+                        "browse() for object %s, but field %s is not member "
+                        "of it" % (self, name))
+                    self._fields_to_fetch.append(name)
                 fields_to_fetch = [x for x in fields_to_fetch if x[0] in
                         self._fields_to_fetch]
             field_names = [x[0] for x in fields_to_fetch]
@@ -4142,7 +4147,7 @@ class orm(orm_template):
             result.setdefault(fncts[fnct][0], {})
 
             # uid == 1 for accessing objects having rules defined on store fields
-            ids2 = fncts[fnct][2](self, cr, 1, ids, context)
+            ids2 = list(set(fncts[fnct][2](self, cr, 1, ids, context)))
             for id in filter(None, ids2):
                 result[fncts[fnct][0]].setdefault(id, [])
                 result[fncts[fnct][0]][id].append(fnct)
