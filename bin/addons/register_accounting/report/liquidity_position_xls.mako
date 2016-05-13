@@ -205,7 +205,7 @@
     </Style>
 
     <Style ss:ID="s49">
-      <Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>
+      <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
         <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
@@ -235,6 +235,18 @@
       </Borders>
       <Font x:Family="Swiss" ss:Bold="1"/>
     </Style>
+
+    <Style ss:ID="s52">
+      <Alignment ss:Horizontal="Center" ss:Vertical="Bottom"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2"/>
+      </Borders>
+      <Font x:Family="Swiss" ss:Bold="1"/>
+    </Style>
+
   </Styles>
 
   <Worksheet ss:Name="Liquidity position">
@@ -407,9 +419,12 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
 
-        <Cell ss:MergeAcross="3" ss:StyleID="s49">
-          <Data ss:Type="String">Total ${ reg_type }:</Data>
+        <Cell ss:StyleID="s49">
+          <Data ss:Type="String">Total ${ reg_type.title() }:</Data>
         </Cell>
         <Cell ss:StyleID="s50">
           <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['func_amount_calculated'], digits=2, grouping=True) or '0.00' }</Data>
@@ -422,27 +437,6 @@
         </Cell>
       </Row>
       % endfor
-      <Row></Row>
-      <Row></Row>
-      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
-        <Cell ss:StyleID="s25c"/>
-        <Cell ss:StyleID="s25c"/>
-        <Cell ss:StyleID="s25c"/>
-        <Cell ss:StyleID="s25c"/>
-        <Cell ss:StyleID="s25c"/>
-        <Cell ss:MergeAcross="3" ss:StyleID="s49">
-          <Data ss:Type="String">Grand Total:</Data>
-        </Cell>
-        <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' }</Data>
-        </Cell>
-        <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(getTotalCalc(), digits=2, grouping=True) or '0.00' }</Data>
-        </Cell>
-        <Cell ss:StyleID="s51">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
-        </Cell>
-      </Row>
 
       <!-- PENDING CHEQUES -->
       <Row ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
@@ -551,6 +545,54 @@
         </Cell>
       </Row>
       % endfor
+
+      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+
+        <Cell ss:MergeAcross="1" ss:StyleID="s49">
+          <Data ss:Type="String">${_('Total Cheque:')}</Data>
+        </Cell>
+        <Cell ss:StyleID="s50">
+          <Data ss:Type="Number">${ formatLang(pending_cheques['total_cheque'], digits=2, grouping=True) or '0.00' }
+          </Data>
+        </Cell>
+        <Cell ss:StyleID="s51">
+          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+        </Cell>
+      </Row>
+
+      <!-- GRAND TOTAL -->
+      <Row></Row>
+      <Row></Row>
+      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s52">
+          <Data ss:Type="String">Grand Total:</Data>
+        </Cell>
+        <Cell ss:StyleID="s50">
+          <Data ss:Type="Number">${ formatLang(getTotalReg(), digits=2, grouping=True) or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s50">
+          <Data ss:Type="Number">${ formatLang(getTotalCalc(), digits=2, grouping=True) or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s51">
+          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+        </Cell>
+      </Row>
 
     </Table>
 

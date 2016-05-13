@@ -180,10 +180,12 @@ class report_liquidity_position3(report_sxw.rml_parse):
         - one entry per journal: the pending cheques amounts are all added (the period displayed only indicates if
         the register has been closed).
         - the total amounts per currency in register and functional currency
+        - the global total in functional currency
         '''
         pending_cheques = {
             'registers': {},
             'currency_amounts': {},
+            'total_cheque': 0.0,
             }
         pool = pooler.get_pool(self.cr.dbname)
         reg_obj = pool.get('account.bank.statement')
@@ -239,6 +241,9 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 }
             pending_cheques['currency_amounts'][journal.currency.name]['total_amount_reg_currency'] += amount_reg_currency
             pending_cheques['currency_amounts'][journal.currency.name]['total_amount_func_currency'] += amount_func_currency
+
+            # Add amount to get the "global" Total for all currencies (in functional currency)
+            pending_cheques['total_cheque'] += amount_func_currency
 
         return pending_cheques
 
