@@ -1226,48 +1226,70 @@ class stock_move(osv.osv):
             ids = [ids]
         # objects
         item_obj = self.pool.get('composition.item')
-        
         result = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {}
+        product_ids = set()
+        read_result = self.read(cr, uid, ids, ['product_id', 'product_qty',
+                                               'state', 'lot_check',
+                                               'exp_check',
+                                               'kit_creation_id_stock_move',], context=context)
+
+        for read_dict in read_result:
+            product_ids.add(read_dict['product_id'][0])
+
+        product_list_dict = self.pool.get('product.product').read(cr, uid,
+                                                             list(product_ids),
+                                                             ['perishable',
+                                                              'type',
+                                                              'subtype',],
+                                                             context=context)
+        product_dict = dict([(x['id'], x) for x in product_list_dict])
+
+        for stock_move_dict in read_result:
+            stock_move_id = stock_move_dict['id']
+            product_id = stock_move_dict['product_id'][0]
+            product = product_dict[product_id]
+            result[stock_move_id] = {}
             # assigned qty
             assigned_qty = 0.0
             # if the product is perishable (or batch management), we gather assigned qty from kit items
 
-            if obj.product_id.perishable:
-                item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', obj.id)], context=context)
+            if product['perishable']:
+                item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', stock_move_id)], context=context)
                 if item_ids:
                     data = item_obj.read(cr, uid, item_ids, ['item_qty'], context=context)
                     for value in data:
                         assigned_qty += value['item_qty']
-            
+
             # when the state is assigned or done, the assigned qty is set to product_qty
-            elif obj.state in ['assigned', 'done']:
-                assigned_qty = obj.product_qty
-            result[obj.id].update({'assigned_qty_stock_move': assigned_qty})
+            elif stock_move_dict['state'] in ['assigned', 'done']:
+                assigned_qty = stock_move_dict['product_qty']
+            result[stock_move_id].update({'assigned_qty_stock_move': assigned_qty})
             # hidden_state
-            result[obj.id].update({'hidden_state': obj.state})
+            result[stock_move_id].update({'hidden_state': stock_move_dict['state']})
             # hidden_prodlot_id
-            result[obj.id].update({'hidden_prodlot_id': obj.lot_check})
+            result[stock_move_id].update({'hidden_prodlot_id': stock_move_dict['lot_check']})
             # hidden_exp_check
-            result[obj.id].update({'hidden_exp_check': obj.exp_check})
+            result[stock_move_id].update({'hidden_exp_check': stock_move_dict['exp_check']})
             # hidden_asset_check
             hidden_asset_check = False
-            if obj.product_id.type == 'product' and obj.product_id.subtype == 'asset':
+            if product['type'] == 'product' and product['subtype'] == 'asset':
                 hidden_asset_check = True
-            result[obj.id].update({'hidden_asset_check': hidden_asset_check})
-            
+            result[stock_move_id].update({'hidden_asset_check': hidden_asset_check})
+
             hidden_creation_state = False
             hidden_creation_qty_stock_move = 0
-            if obj.kit_creation_id_stock_move:
-                hidden_creation_state = obj.kit_creation_id_stock_move.state
-                hidden_creation_qty_stock_move = obj.kit_creation_id_stock_move.qty_kit_creation
+            if stock_move_dict['kit_creation_id_stock_move']:
+                kit_creation = self.pool.get('kit.creation').read(cr, uid,
+                                                   stock_move_dict['kit_creation_id_stock_move'],
+                                                   ['state', 'qty_kit_creation'], context=context)
+                hidden_creation_state = kit_creation['state']
+                hidden_creation_qty_stock_move = kit_creation['qty_kit_creation']
             # hidden_creation_state
-            result[obj.id].update({'hidden_creation_state': hidden_creation_state})
+            result[stock_move_id].update({'hidden_creation_state': hidden_creation_state})
             # hidden_creation_qty_stock_move
-            result[obj.id].update({'hidden_creation_qty_stock_move': hidden_creation_qty_stock_move})
+            result[stock_move_id].update({'hidden_creation_qty_stock_move': hidden_creation_qty_stock_move})
         return result
-    
+
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
                 'to_consume_id_stock_move': fields.many2one('kit.creation.to.consume', string='To Consume Line', readonly=True),# link to to consume line - is not deleted anymore ! but colored
                 'original_from_process_stock_move': fields.boolean(string='Original', readonly=True),
