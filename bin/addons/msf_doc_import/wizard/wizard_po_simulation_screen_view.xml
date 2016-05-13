@@ -84,7 +84,7 @@
                         <page string="Details">
                             <!-- LINES -->
                             <field name="simu_line_ids" nolabel="1" colspan="4">
-                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change == 'error'; orange: change_ok==True and type_change not in ('del', 'error'); blue: type_change=='split'; green: type_change=='new'">
+                                <tree string="Lines" colors="grey: type_change == 'del'; red: type_change == 'error'; orange: change_ok==True and type_change not in ('del', 'ignore', 'error'); blue: type_change=='split'; green: type_change=='new'">
                                     <field name="in_product_id" />
                                     <field name="in_nomen" />
                                     <field name="in_comment" />

@@ -63,6 +63,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
+                 (14, _('Comment'), 'optionnal'),
                  (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['confirmed'])),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
@@ -418,7 +419,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                                  'product_code', 'product_name',
                                  'product_qty', 'product_uom',
                                  'price_unit', 'currency_id',
-                                 'origin', 'date_planned',
+                                 'origin', 'comment', 'date_planned',
                                  'confirmed_delivery_date',
                                  'nomen_manda_0', 'nomen_manda_1',
                                  'nomen_manda_2', 'comment',
@@ -510,7 +511,8 @@ class wizard_import_po_simulation_screen(osv.osv):
                 first_line_index = nb_file_header_lines + 1
                 if wiz.with_ad == 'yes' and wiz.filetype != 'exce':
                     header_ad_lines = len(wiz.order_id.analytic_distribution_id.cost_center_lines) + 1
-                    max_ad_lines = max(len(line.analytic_distribution_id.cost_center_lines) for line in wiz.order_id.order_line if line.analytic_distribution_id) * 4
+                    ad_lines = [len(line.analytic_distribution_id.cost_center_lines) for line in wiz.order_id.order_line if line.analytic_distribution_id]
+                    max_ad_lines = ad_lines and max(ad_lines) * 4 or 0
                     nb_file_header_lines += header_ad_lines
                     nb_file_lines_columns += max_ad_lines
                     first_line_index = nb_file_header_lines + 3
@@ -989,7 +991,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                 # Lines to delete
                 for po_line in SIMU_LINES[wiz.id]['line_ids']:
-                    wl_obj.write(cr, uid, po_line, {'type_change': 'del'}, context=context)
+                    wl_obj.write(cr, uid, po_line, {'type_change': 'ignore'}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -1161,7 +1163,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 res[line.id]['in_price'] = l.price_unit
                 res[line.id]['in_currency'] = l.currency_id and l.currency_id.id or False
                 res[line.id]['in_ext_ref'] = l.external_ref or False
-                if line.type_change != 'del':
+                if line.type_change != '':
                     if line.imp_qty and line.imp_price:
                         disc = (line.imp_qty*line.imp_price)-(line.in_qty*line.in_price)
                         res[line.id]['imp_discrepancy'] = disc
@@ -1175,8 +1177,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     price_change = not(res[line.id]['in_price'] == line.imp_price)
                     drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
                     dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
+                    to_delete = line.imp_comment == '[DELETE]'
 
-                    if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change):
+                    if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change or to_delete):
                         res[line.id]['change_ok'] = True
                 elif line.type_change == 'del':
                     res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
@@ -1247,7 +1250,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                                        store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['in_line_number'], 20),}),
         'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
-                                         ('split', 'Split'), ('del', 'Del'),],
+                                         ('split', 'Split'), ('del', 'Del'),
+                                         ('ignore', 'Ignore')],
                                          string='CHG', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
@@ -1262,6 +1266,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
+        'imp_comment': fields.text(string='Comment', readonly=True),
         'imp_external_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'imp_project_ref': fields.char(size=256, string='Project Ref.', readonly=True),
         'imp_origin': fields.char(size=256, string='Origin Ref.', readonly=True),
@@ -1446,6 +1451,11 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
 
+            # Comment
+            write_vals['imp_comment'] = values[14] and values[14].strip()
+            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
+                write_vals['type_change'] = 'del'
+
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
 
@@ -1491,13 +1501,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             context['purchase_id'] = line.simu_id.order_id.id
             line_treated += 1
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
-            if line.po_line_id and line.type_change != 'del' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
+            if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
 
-            if line.type_change in ('del', 'error'):
+            if line.type_change in ('ignore', 'error'):
                 # Don't do anything
-                # i.e. Skype conversation with Raffaelle (08.01.2014) : deletes will need to be done manually after import
                 continue
+            elif line.type_change == 'del' and line.po_line_id:
+                line_obj.unlink(cr, uid, [line.po_line_id.id], context=context)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
