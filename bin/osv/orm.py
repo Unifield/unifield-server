@@ -3365,7 +3365,7 @@ class orm(orm_template):
                 else:
                     cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
-            context_lang = context.get('lang', False) or 'en_US'
+            context_lang = context and context.get('lang', False) or 'en_US'
             if context_lang != 'en_US':
                 for f in fields_pre:
                     if f == self.CONCURRENCY_CHECK_FIELD:
@@ -3620,9 +3620,9 @@ class orm(orm_template):
             if ir_value_ids:
                 pool_ir_values.unlink(cr, uid, ir_value_ids, context=context)
 
-        for order, obj, store_ids, field_list in result_store:
-            if obj != self._name:
-                obj = self.pool.get(obj)
+        for order, object, store_ids, field_list in result_store:
+            if object != self._name:
+                obj = self.pool.get(object)
                 cr.execute('SELECT id from '+obj._table+' WHERE id IN %s', (tuple(store_ids),))
                 rids = map(lambda x: x[0], cr.fetchall())
                 if rids:
