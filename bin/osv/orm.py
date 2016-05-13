@@ -202,7 +202,10 @@ class browse_record(object):
                 fields_to_fetch = [(name, col)]
             ids = filter(lambda id: name not in self._data[id], self._data.keys())
             # read the results
-            field_names = map(lambda x: x[0], fields_to_fetch)
+            if self._fields_to_fetch:
+                fields_to_fetch = [x for x in fields_to_fetch if x[0] in
+                        self._fields_to_fetch]
+            field_names = [x[0] for x in fields_to_fetch]
             field_values = self._table.read(self._cr, self._uid, ids, field_names, context=self._context, load="_classic_write")
 
             # TODO: improve this, very slow for reports
