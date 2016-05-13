@@ -87,8 +87,10 @@ def create(self, cr, uid, vals, context=None):
         
         # create the record. we will sanitize it later based on domain search check
         create_result = super_create(self, cr, uid, vals, context)
-
+        access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
         if create_result:
+            if not access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+                return create_result
             instance_level = _get_instance_level(self, cr, uid)
 
             if instance_level:
@@ -108,7 +110,6 @@ def create(self, cr, uid, vals, context=None):
                 # do we have rules that apply to this user and model?
                 if rules_search:
                     field_changed = False
-                    access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
                     line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
                     if not line_ids:
                         return create_result

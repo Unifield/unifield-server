@@ -47,8 +47,8 @@ class ir_translation(osv.osv):
         lang_obj = self.pool.get('res.lang')
         lang_ids = lang_obj.search(cr, uid, [],
                 context=context)
-        langs = lang_obj.browse(cr, uid, lang_ids, context=context)
-        res = [(lang.code, lang.name) for lang in langs]
+        langs = lang_obj.read(cr, uid, lang_ids, ['code', 'name'], context=context)
+        res = [(lang['code'], lang['name']) for lang in langs]
         for lang_dict in tools.scan_languages():
             if lang_dict not in res:
                 res.append(lang_dict)
@@ -139,7 +139,7 @@ class ir_translation(osv.osv):
         # BKLG-52 Change delete/create for Update
         for obj_id in ids:
             if translation_dict[obj_id] is not None:
-                if not value or value==src:
+                if not value or value==src or lang=='en_US':
                     self.unlink(cr, uid,
                             translation_dict[obj_id]['ir_trans_id'],
                             clear=clear, context=context)
