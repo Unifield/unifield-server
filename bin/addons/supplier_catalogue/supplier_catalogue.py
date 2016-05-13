@@ -167,10 +167,14 @@ class supplier_catalogue(osv.osv):
         Update the supplierinfo and pricelist line according to the
         new values
         '''
+        supinfo_obj = self.pool.get('product.supplierinfo')
+        price_obj = self.pool.get('pricelist.partnerinfo')
+        user_obj = self.pool.get('res.users')
+
         if context is None:
             context = {}
 
-
+        to_be_confirmed = False
         for catalogue in self.browse(cr, uid, ids, context=context):
 
             # Check if other catalogues need to be updated because they finished
@@ -181,12 +185,21 @@ class supplier_catalogue(osv.osv):
                                                                     vals.get('partner_id', catalogue.partner_id.id),
                                                                     vals.get('period_to', catalogue.period_to), context=context)
 
-            # Update product pricelists only if the catalogue is confirmed
-            if vals.get('state', catalogue.state) == 'confirmed':
-                supinfo_obj = self.pool.get('product.supplierinfo')
-                price_obj = self.pool.get('pricelist.partnerinfo')
+            current_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
+            if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
+                if vals['partner_id'] == current_partner_id:
+                    # If the new partner is the instance partner, remove the supplier info
+                    supplierinfo_ids = supinfo_obj.search(cr, uid,
+                            [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
+                    supinfo_obj.unlink(cr, uid, supplierinfo_ids, context=context)
+                elif catalogue.partner_id.id == current_partner_id:
+                    # If the catalogue was for teh instance partner, set it to False, then confirm it again
+                    to_be_confirmed.append(catalogue.id)
 
+            # Update product pricelists only if the catalogue is confirmed
+            if vals.get('state', catalogue.state) == 'confirmed' and not to_be_confirmed:
                 new_supinfo_vals = {}
+
                 # Change the partner of all supplier info instances
                 if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
                     delay = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).default_delay
@@ -213,7 +226,14 @@ class supplier_catalogue(osv.osv):
                 supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
                 price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
-        return super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
+        res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
+
+        # Confirm the catalogue in case of partner change from instance partner to other partner
+        if to_be_confirmed:
+            self.button_draft(cr, uid, to_be_confirmed, context=context)
+            self.button_confirm(cr, uid, to_be_confirmed, context=context)
+
+        return res
 
     def button_confirm(self, cr, uid, ids, context=None):
         '''
@@ -772,9 +792,13 @@ class supplier_catalogue_line(osv.osv):
         cat_obj = self.pool.get('supplier.catalogue')
         price_obj = self.pool.get('pricelist.partnerinfo')
         prod_obj = self.pool.get('product.product')
+        user_obj = self.pool.get('res.users')
 
         tmpl_id = prod_obj.browse(cr, uid, vals['product_id'], context=context).product_tmpl_id.id
         catalogue = cat_obj.browse(cr, uid, vals['catalogue_id'], context=context)
+
+        if catalogue.partner_id.id == user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id:
+            return vals
 
         # Search if a product_supplierinfo exists for the catalogue, if not, create it !
         sup_ids = supinfo_obj.search(cr, uid, [('product_id', '=', tmpl_id),
