@@ -345,17 +345,23 @@ class wizard_import_po_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for wiz in self.browse(cr, uid, ids, context=context):
-            if wiz.filetype == 'excel':
-                xml_file = base64.decodestring(wiz.file_to_import)
-                excel_file = SpreadsheetXML(xmlstring=xml_file)
-                if not excel_file.getWorksheets():
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
-            else:
-                xml_file = base64.decodestring(wiz.file_to_import)
-                root = ET.fromstring(xml_file)
-                if root.tag != 'data':
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+        try:
+            for wiz in self.browse(cr, uid, ids, context=context):
+                if wiz.filetype == 'excel':
+                    xml_file = base64.decodestring(wiz.file_to_import)
+                    excel_file = SpreadsheetXML(xmlstring=xml_file)
+                    if not excel_file.getWorksheets():
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
+                else:
+                    xml_file = base64.decodestring(wiz.file_to_import)
+                    root = ET.fromstring(xml_file)
+                    if root.tag != 'data':
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+        except Exception as e:
+            raise osv.except_osv(
+                _('Error'),
+                _('Error during file to import parsing :: Error: %s') % e,
+            )
 
         self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
         cr.commit()
