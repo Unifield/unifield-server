@@ -51,6 +51,27 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_1244_update_received_patch(self, cr, uid, *a, **b):
+        '''
+        another patch related to us-918 : the not run update received also need
+        to be modified with the right currency
+        '''
+        update_module = self.pool.get('sync.client.update_received')
+        if update_module:
+            # some update where refering to the old currency with sdref=sd.ZMW
+            # as the reference changed, we need to modify all of this updates
+            # pointing to a wrong reference (currency_rates, ...)
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.ZMW%'),
+                          ('run', '=', False),])
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.ZMW' in update_values:
+                    index = update_values.index('sd.ZMW')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:
