@@ -191,7 +191,6 @@ class kit_creation(osv.osv):
         confirm the internal picking
         '''
         # objects
-        pick_obj = self.pool.get('stock.picking')
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, 'stock.picking', pick_id, 'button_confirm', cr)
         return True
@@ -216,7 +215,6 @@ class kit_creation(osv.osv):
         create internal picking object
         '''
         # objects
-        kit_obj = self.pool.get('composition.kit')
         pick_obj = self.pool.get('stock.picking')
         # we create the internal picking object
         data = self.read(cr, uid, ids, ['name'], context=context)[0]
@@ -281,8 +279,6 @@ class kit_creation(osv.osv):
         start production - change the state and create internal picking and corresponding kits
         '''
         # objects
-        pick_obj = self.pool.get('stock.picking')
-        kit_obj = self.pool.get('composition.kit')
         data_tools_obj = self.pool.get('data.tools')
         # load data into the context
         data_tools_obj.load_common_data(cr, uid, ids, context=context)
@@ -423,7 +419,6 @@ class kit_creation(osv.osv):
         cancel availability for moves in 'assigned' (Available) state
         '''
         # objects
-        pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         
         for obj in self.browse(cr, uid, ids, context=context):
@@ -440,7 +435,6 @@ class kit_creation(osv.osv):
         validate all lines in 'assigned' state
         '''
         # objects
-        pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
         
         for obj in self.browse(cr, uid, ids, context=context):
@@ -866,7 +860,6 @@ class kit_creation(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         # objects
-        loc_obj = self.pool.get('stock.location')
         
         result = {}
         for obj in self.browse(cr, uid, ids, context=context):
@@ -1060,7 +1053,6 @@ class kit_creation_to_consume(osv.osv):
             ids = [ids]
         # objects
         loc_obj = self.pool.get('stock.location')
-        prod_obj = self.pool.get('product.product')
         
         result = {'value': {'batch_check_kit_creation_to_consume': False,
                             'expiry_check_kit_creation_to_consume': False,
