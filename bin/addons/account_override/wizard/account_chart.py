@@ -226,9 +226,8 @@ class account_chart(osv.osv_memory):
         wiz_fields = {}
         target_move = ''
         for wiz in self.browse(cr, uid, ids):
-            args = [('active', '=', True)]
-            if wiz.show_inactive == True:
-                args.append(('active', 'in', [True, False]))
+            args = []
+            context['filter_inactive_accounts'] = not wiz.show_inactive
             if wiz.granularity and wiz.granularity == 'account':
                 args.append(('type', '!=', 'view'))
             account_type_ids = self._get_account_type_ids(cr, uid,
