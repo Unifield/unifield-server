@@ -131,11 +131,8 @@ class account_move_line(osv.osv):
             domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
         period0_ids = fiscalperiod_obj.search(cr, uid, domain, context={'show_period_0': 1})
         if period0_ids:
-            if context.get('period0', False):
-                # US-1179
-                query += ' OR %s.period_id in (%s)' % (obj, ','.join(map(str, period0_ids)), )
-            else:
-                # US-822: by default in reports always not include period 0 (IB journals)
+            if not context.get('period0', False):
+                # US-822: by default in reports exclude period 0 (IB journals)
                 query += ' AND %s.period_id not in (%s)' % (obj, ','.join(map(str, period0_ids)), )
 
         if context.get('state_agnostic', False):
