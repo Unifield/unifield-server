@@ -145,7 +145,7 @@ header_fields = [
       <Data ss:Type="String">${o.name or ''|x}</Data>
     </Cell>
     <Cell ss:StyleID="number">
-      <Data ss:Type="Number">${o.balance or '0.0'|x}</Data>
+      <Data ss:Type="Number">${get_balance(o, objects) or '0.0'|x}</Data>
     </Cell>
   </Row>
 % endfor
