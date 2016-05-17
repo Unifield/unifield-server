@@ -220,13 +220,18 @@ class account_move_line(osv.osv):
         if not args:
             return []
 
+        # US-1031: consider reconciled only if full reconcile.
+        # but kept _get_is_reconciled() behaviour: reconciled if full or partial for no firther impact
         if args[0][2] and args[0][2] == True:
-            return ['|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)]
+            return [ ('reconcile_id', '!=', False), ]
         elif args[0] and args[0][2] in [False, 0]:
             # Add account_id.reconcile in #BKLG-70
-            return [('reconcile_id', '=', False),
-                    ('account_id.reconcile', '!=', False)
-                    ]
+            return [
+                ('account_id.reconcile', '!=', False),
+                '|',
+                ('reconcile_id', '=', False),
+                ('reconcile_partial_id', '!=', False),    
+            ]
 
         return []
 
