@@ -154,11 +154,15 @@ class automated_import_job(osv.osv):
             nb_processed = 0
             start_time = time.strftime('%Y-%m-%d %H:%M:%S')
             no_file = False
-            md5 = None
+            md5 = False
             error = None
+            data64 = None
+            filename = False
             try:
                 oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
-                md5 = hashlib.md5(open(oldest_file)).hexdigest()
+                filename = os.path.split(oldest_file)[1]
+                md5 = hashlib.md5(open(oldest_file).read()).hexdigest()
+                data64 = base64.encodestring(open(oldest_file).read())
             except ValueError:
                 no_file = True
 
@@ -169,12 +173,14 @@ class automated_import_job(osv.osv):
 
             if error:
                 self.write(cr, uid, [job.id], {
-                    'filename': False,
+                    'filename': filename,
+                    'file_to_import': data64,
                     'start_time': start_time,
                     'end_time': False,
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
                     'comment': error,
+                    'file_sum': md5,
                 }, context=context)
                 continue
 
@@ -190,7 +196,6 @@ class automated_import_job(osv.osv):
                 if rejected:
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
-                filename = os.path.split(oldest_file)[1]
                 move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
                 self.write(cr, uid, [job.id], {
@@ -199,6 +204,8 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
+                    'file_sum': md5,
+                    'file_to_import': data64,
                 }, context=context)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
@@ -208,6 +215,8 @@ class automated_import_job(osv.osv):
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
                     'comment': str(e),
+                    'file_sum': md5,
+                    'file_to_import': data64,
                 }, context=context)
 
         return True
