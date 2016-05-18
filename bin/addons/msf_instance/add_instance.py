@@ -61,6 +61,27 @@ class account_analytic_journal(osv.osv):
                 return False
         return True
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Check there is only one account.analytic.journal with a couple (type, instance_id) during automated import
+        """
+        if context is None:
+            context = {}
+
+        new_id = super(account_analytic_journal, self).create(cr, uid, vals, context=context)
+
+        if not context.get('update_mode') == 'init':
+            return new_id
+
+        journal = self.browse(cr, uid, new_id, context=context)
+        if self.search(cr, uid, [('type', '=', journal.type), ('instance_id', '=', journal.instance_id.id)], limit=1, context=context):
+            raise osv.except_osv(
+                _('Error'),
+                _('A same analytic journal already exists with this type and for this instance!'),
+            )
+
+        return new_id
+
     _constraints = [
         (_check_engagement_count, 'You cannot have more than one engagement journal per instance!', ['type', 'instance_id']),
     ]
