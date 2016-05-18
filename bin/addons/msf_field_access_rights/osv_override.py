@@ -89,14 +89,15 @@ def create(self, cr, uid, vals, context=None):
         create_result = super_create(self, cr, uid, vals, context)
 
         if create_result:
+            if not access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+                return create_result
             instance_level = _get_instance_level(self, cr, uid)
 
             if instance_level:
 
                 # get rules for this model, instance and user
                 model_name = self._name
-                user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-                groups = [x.id for x in user.groups_id]
+                groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
 
                 rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
                 if not rules_pool:
@@ -271,69 +272,62 @@ def write(self, cr, uid, ids, vals, context=None):
 
     # get rules for this model
     model_name = self._name
-    user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-    groups = [x.id for x in user.groups_id]
-
     rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
     if not rules_pool:
         return super_write(self, cr, uid, ids, vals, context=context)
-    
+    access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+
+    update_execution = context.get('sync_update_execution')
+    # do not do unecessary work : return in some condition
+    if uid == 1 or update_execution and \
+       not access_line_obj.search(cr, uid, [('value_not_synchronized_on_write', '=', True)]):
+        return super_write(self, cr, uid, ids, vals, context=context)
+
+    groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
     rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
 
     # if have rules
     if rules_search:
-
-        # get rules for this object, the current records values, the names of all parent classes (recursively) and columns for the whole family
-        rules = rules_pool.browse(cr, 1, rules_search, context=context)
-        current_records = self.read(cr, 1, ids, context=context)
+        old_values_list = self.read(cr, 1, ids, vals.keys(), context=context)
+        new_values = vals.copy()
         family = _get_family_names(self, cr, rules_pool, instance_level, groups)
         columns = reduce(lambda x, y: dict(x.items() + y.items()), [self.pool.get(model)._columns for model in family])
-        
         fields_blacklist = [
-            'nomenclature_description'
+            'nomenclature_description',
         ]
 
-        # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
-        if uid != 1:
-            for record in current_records:
-                for rule in rules:
-                    if _record_matches_domain(self, cr, record['id'], rule.domain_text):
-    
-                        # rule applies for this record so throw exception if we are trying to edit a field without write_access
-                        # for each rule
-                        for line in rule.field_access_rule_line_ids:
-                            # that has write_access denied
-                            if not line.write_access:
-                                # check field name blacklist
-                                if line.field.name not in fields_blacklist:
-                                
-                                    # and whose field name is in the new values list
-                                    if line.field.name in vals:
-                                        
-                                        # (accommodate bug where a disabled reference field in web returns a list instead of a comma separated string:)
-                                        if line.field.name in columns and columns[line.field.name]._type == 'reference':
-                                            if isinstance(vals[line.field.name], (list, tuple)):
-                                                if vals[line.field.name][0]:
-                                                    vals[line.field.name] = vals[line.field.name][1] + ',' + vals[line.field.name][0]
-                                                else:
-                                                    vals[line.field.name] = ''
-                                            elif vals[line.field.name] and ',' not in vals[line.field.name]:
-                                                vals[line.field.name] = record[line.field.name]
-                                        
-                                        # and whose current value is different from the new value in the new values list
-                                        if not _values_equate(columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
-                                            # throw access denied error
-                                            raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % line.field.name)
+        for old_values in old_values_list:
+            # keep only the property that changes between old an new values
+            dict_diff = dict([(key, value) for key, value in new_values.items() if old_values[key] != value])
+            diff_properties = dict_diff.keys()
+
+            # remove the blacklisted fields
+            diff_properties = list(set(diff_properties).difference(fields_blacklist))
+
+            # get the fields with write_access=False
+            cr.execute("""SELECT DISTINCT field_name
+                          FROM msf_field_access_rights_field_access_rule_line
+                          WHERE write_access='f' AND
+                          field_access_rule in %s AND
+                          field_name in %s
+                    """, (tuple(rules_search), tuple(diff_properties)))
+            no_write_access_fields = [x[0] for x in cr.fetchall()]
+
+            for field_name in no_write_access_fields:
+                if not _values_equate(columns[field_name]._type, old_values[field_name], new_values[field_name]):
+                    # throw access denied error
+                    raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
-        if context.get('sync_update_execution'):
-            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+        if update_execution:
             line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_write', '=', True)])
             if not line_ids:
                 return super_write(self, cr, uid, ids, vals, context=context)
+
+            # TODO this following code is not used yet as there is no value_not_synchronized_on_write
             rule_ids = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
             rules = rules_pool.browse(cr, 1, rule_ids)
-            # iterate over current records 
+            # iterate over current records
             for record in current_records:
                 new_values = copy.deepcopy(vals)
 
