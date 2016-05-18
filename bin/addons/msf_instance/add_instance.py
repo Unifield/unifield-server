@@ -74,7 +74,7 @@ class account_analytic_journal(osv.osv):
             return new_id
 
         journal = self.browse(cr, uid, new_id, context=context)
-        if self.search(cr, uid, [('type', '=', journal.type), ('instance_id', '=', journal.instance_id.id)], limit=1, context=context):
+        if self.search(cr, uid, [('type', '=', journal.type), ('instance_id', '=', journal.instance_id.id), ('id', '!=', new_id)], limit=1, context=context):
             raise osv.except_osv(
                 _('Error'),
                 _('A same analytic journal already exists with this type and for this instance!'),
