@@ -24,6 +24,7 @@ import csv
 import time
 import shutil
 import base64
+import hashlib
 
 from osv import osv
 from osv import fields
@@ -104,6 +105,11 @@ class automated_import_job(osv.osv):
             string='Name of the file to import',
             readonly=True,
         ),
+        'file_sum': fields.char(
+            string='Check sum',
+            size=256,
+            readonly=True,
+        ),
         'start_time': fields.datetime(
             string='Start time',
             readonly=True,
@@ -128,7 +134,7 @@ class automated_import_job(osv.osv):
 
     def process_import(self, cr, uid, ids, context=None):
         """
-        First, browse the source path, then select the latest file and run import on this file.
+        First, browse the source path, then select the oldest file and run import on this file.
         After the processing of import, generate a report and move the processed file to the
         processed folder.
         :param cr: Cursor to the database
@@ -148,19 +154,27 @@ class automated_import_job(osv.osv):
             nb_processed = 0
             start_time = time.strftime('%Y-%m-%d %H:%M:%S')
             no_file = False
+            md5 = None
+            error = None
             try:
-                latest_file = max(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+                oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+                md5 = hashlib.md5(open(oldest_file)).hexdigest()
             except ValueError:
                 no_file = True
 
             if no_file:
+                error = _('No file to import in %s !') % job.import_id.src_path
+            elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
+                error = _('A file with same checksum has been already imported !')
+
+            if error:
                 self.write(cr, uid, [job.id], {
                     'filename': False,
                     'start_time': start_time,
                     'end_time': False,
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
-                    'comment': _('No file to import in %s !') % job.import_id.src_path,
+                    'comment': error,
                 }, context=context)
                 continue
 
@@ -169,14 +183,14 @@ class automated_import_job(osv.osv):
                 processed, rejected, headers = getattr(
                     self.pool.get(job.import_id.function_id.model_id.model),
                     job.import_id.function_id.method_to_call
-                )(cr, uid, latest_file)
+                )(cr, uid, oldest_file)
                 if processed:
                     nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
 
                 if rejected:
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
-                filename = os.path.split(latest_file)[1]
+                filename = os.path.split(oldest_file)[1]
                 move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
                 self.write(cr, uid, [job.id], {
