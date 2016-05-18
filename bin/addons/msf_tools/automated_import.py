@@ -193,6 +193,46 @@ automated import must be created for a same functionality. Please select an othe
 
         return True
 
+    def run_job_manually(self, cr, uid, ids, context=None, params=None):
+        """
+        Create a new job with automated import parameters and display a view
+        to add a file to import. Then, run it if user clicks on Run or delete
+        it if user clicks on Cancel
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of automated.import that must be ran
+        :param context: Context of the call
+        :param params: Manual parameters in case of manual customized run
+        :return: An action to go to the view of automated.import.job to add a file to import
+        """
+        job_obj = self.pool.get('automated.import.job')
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if params is None:
+            params = {}
+
+        for import_id in ids:
+            params['import_id'] = import_id
+            job_id = job_obj.create(cr, uid, params, context=context)
+
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': job_obj._name,
+            'res_id': job_id,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
+            'target': 'new',
+            'context': context,
+        }
+
+
     def run_job(self, cr, uid, ids, context=None, params=None):
         """
         Create a new job with automated import parameters and run it
@@ -201,7 +241,7 @@ automated import must be created for a same functionality. Please select an othe
         :param ids: List of ID of automated.import that must be ran
         :param context: Context of the call
         :param params: Manual parameters in case of manual customized run
-        :return: True
+        :return: An action to go to the view of automated.import.job
         """
         job_obj = self.pool.get('automated.import.job')
 
@@ -218,10 +258,10 @@ automated import must be created for a same functionality. Please select an othe
             params['import_id'] = import_id
             job_id = job_obj.create(cr, uid, params, context=context)
             cr.commit()
-            job_obj.process_import(cr, uid, [job_id], context=context)
+            res = job_obj.process_import(cr, uid, [job_id], context=context)
             cr.commit()
 
-        return True
+        return res
 
     def _generate_ir_cron(self, import_brw):
         """

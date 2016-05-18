@@ -40,7 +40,7 @@
                     <field name="name" />
                     <field name="function_id" widget="selection" />
                     <field name="active" />
-                    <button name="run_job" string="Run job manually" colspan="2" type="object" icon="gtk-execute" attrs="{'invisible': [('active', '=', False)]}" />
+                    <button name="run_job_manually" string="Run job manually" colspan="2" type="object" icon="gtk-execute" />
                     <separator colspan="4" string="Paths configuration" />
                     <field name="src_path" colspan="4" attrs="{'required': [('active', '=', True)]}" />
                     <field name="dest_path" colspan="4" attrs="{'required': [('active', '=', True)]}" />

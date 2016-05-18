@@ -103,7 +103,6 @@ class automated_import_job(osv.osv):
         'filename': fields.char(
             size=128,
             string='Name of the file to import',
-            readonly=True,
         ),
         'file_sum': fields.char(
             string='Check sum',
@@ -158,31 +157,40 @@ class automated_import_job(osv.osv):
             error = None
             data64 = None
             filename = False
-            try:
-                oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
-                filename = os.path.split(oldest_file)[1]
-                md5 = hashlib.md5(open(oldest_file).read()).hexdigest()
-                data64 = base64.encodestring(open(oldest_file).read())
-            except ValueError:
-                no_file = True
+            if not job.file_to_import:
+                try:
+                    oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
+                    filename = os.path.split(oldest_file)[1]
+                    md5 = hashlib.md5(open(oldest_file).read()).hexdigest()
+                    data64 = base64.encodestring(open(oldest_file).read())
+                except ValueError:
+                    no_file = True
 
-            if no_file:
-                error = _('No file to import in %s !') % job.import_id.src_path
-            elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
-                error = _('A file with same checksum has been already imported !')
+                if no_file:
+                    error = _('No file to import in %s !') % job.import_id.src_path
+                elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
+                    error = _('A file with same checksum has been already imported !')
 
-            if error:
-                self.write(cr, uid, [job.id], {
-                    'filename': filename,
-                    'file_to_import': data64,
-                    'start_time': start_time,
-                    'end_time': False,
-                    'nb_processed_records': 0,
-                    'nb_rejected_records': 0,
-                    'comment': error,
-                    'file_sum': md5,
-                }, context=context)
-                continue
+                if error:
+                    self.write(cr, uid, [job.id], {
+                        'filename': filename,
+                        'file_to_import': data64,
+                        'start_time': start_time,
+                        'end_time': False,
+                        'nb_processed_records': 0,
+                        'nb_rejected_records': 0,
+                        'comment': error,
+                        'file_sum': md5,
+                    }, context=context)
+                    continue
+            else:
+                oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
+                oldest_file.write(base64.decodestring(job.file_to_import))
+                oldest_file.close()
+                md5 = hashlib.md5(job.file_to_import).hexdigest()
+                oldest_file = os.path.join(job.import_id.src_path, job.filename)
+                filename = job.filename
+                data64 = base64.encodestring(job.file_to_import)
 
             # Process import
             try:
@@ -219,7 +227,16 @@ class automated_import_job(osv.osv):
                     'file_to_import': data64,
                 }, context=context)
 
-        return True
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'target': 'current',
+            'context': context,
+        }
+
 
     def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False):
         """
@@ -267,6 +284,43 @@ class automated_import_job(osv.osv):
         })
 
         return len(data_lines)
+
+    def cancel_file_import(self, cr, uid, ids, context=None):
+        """
+        Delete the automated.import.job and close the wizard.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of automated.import.job to delete
+        :param context: Context of the call
+        :return: The action to close the wizard
+        """
+        self.unlink(cr, uid, ids, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+    def onchange_import_file(self, cr, uid, ids, file_to_import, context=None):
+        """
+        Check if an other automated.import.job has imported the same file.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of automated.import.job to delete
+        :param file_to_import: The file to import to check
+        :param context: Context of the call
+        :return: A dictionary with a warning message if needed
+        """
+        if not file_to_import:
+            return {}
+
+        md5 = hashlib.md5(file_to_import).hexdigest()
+        if self.search(cr, uid, [('id', 'not in', ids), ('file_sum', '=', md5)], order='NO_ORDER', limit=1, context=context):
+            return {
+                'warning': {
+                    'title': _('Warning'),
+                    'message': _('This file has been already imported in another import'),
+                },
+            }
+
+        return {}
+
 
 automated_import_job()
 

@@ -48,6 +48,23 @@
             </field>
         </record>
 
+        <record id="automated_import_job_file_view" model="ir.ui.view">
+            <field name="name">automated.import.job.file.view</field>
+            <field name="model">automated.import.job</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Automated import job">
+                    <separator colspan="4" string="Import file" />
+                    <field name="file_to_import" filename="filename" on_change="onchange_import_file(file_to_import)" />
+                    <field name="filename" invisible="1" />
+                    <separator colspan="4" string="Actions" />
+                    <button name="cancel_file_import" type="object" string="Cancel" icon="gtk-cancel" colspan="2" />
+                    <button name="process_import" type="object" string="Run job" icon="gtk-execute" colspan="2" />
+                </form>
+            </field>
+        </record>
+
         <record id="automated_import_job_action" model="ir.actions.act_window">
             <field name="name">Automated import jobs</field>
             <field name="res_model">automated.import.job</field>
