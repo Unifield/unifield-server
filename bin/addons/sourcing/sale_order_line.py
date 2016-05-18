@@ -1066,6 +1066,13 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
 
+        if vals.get('type') == 'make_to_stock':
+            vals['related_sourcing_id'] = False
+        elif vals.get('supplier'):
+            related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, vals.get('supplier'), vals.get('type'), context=context)
+            if not related_sourcing_ok:
+                vals['related_sourcing_id'] = False
+
         # UFTP-139: if make_to_stock and no location, put Stock as location
         if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
