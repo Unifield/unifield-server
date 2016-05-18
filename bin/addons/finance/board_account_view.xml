@@ -79,7 +79,7 @@
                     <field name="partner_id"/>
                     <field name="name"/>
                     <field name="date_due"/>
-                    <field name="origin"/>
+                    <!-- field name="origin"/-->
                     <field name="currency_id"/>
                     <field name="amount_to_pay"/>
                     <field name="amount_total"/>
@@ -139,7 +139,7 @@
             <field name="model">res.currency</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Latest FX rates">
+                <tree string="Latest FX rates"  limit="5">
                     <field name="name"/>
                     <field name="rate"/>
                     <field name="date"/>
@@ -153,6 +153,7 @@
 			<field name="view_mode">tree,form,calendar,graph</field>
 			<field ref="account_board_currency_view" name="view_id"/>
             <field name="context">{'board_view': True}</field>
+            <field name="limit">3</field>
 		</record>
 
         <record id="account_board_contract_view" model="ir.ui.view">
@@ -172,6 +173,7 @@
                 </tree>
             </field>
         </record>
+        
         <record id="account_board_contract" model="ir.actions.act_window">
 			<field name="name">Financing contract overview</field>
 			<field name="res_model">financing.contract.contract</field>
@@ -179,7 +181,72 @@
 			<field name="view_mode">tree,form,calendar,graph</field>
 			<field ref="account_board_contract_view" name="view_id"/>
             <field name="context">{'board_view': True}</field>
+		</record>        
+
+		<!-- Show HQ entries to be validated -->
+        <record id="account_hq_entries_view" model="ir.ui.view">
+            <field name="name">hq.entries</field>
+            <field name="model">hq.entries</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="HQ Entries to be validated" limit="5">
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="account_id" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
+                    <field name="partner_txt"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <!-- field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/ -->
+                </tree>
+            </field>
+        </record>
+        <record id="account_hq_entries" model="ir.actions.act_window">
+			<field name="name">HQ Entries to be validated</field>
+			<field name="res_model">hq.entries</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field ref="account_hq_entries_view" name="view_id"/>
+			<field name="domain">[('user_validated', '!=', 't')]</field>
+            <field name="context">{'board_view': True}</field>
+            <field name="limit">5</field>
 		</record>
+		<!-- End HQ Entries -->
+
+		<!-- Show the Payrolls entries to be validated -->
+        <record id="hr_payroll_board_view" model="ir.ui.view">
+            <field name="name">hr.payroll.msf</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payroll Entries to be validated" limit="5">
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="period_id"/>
+                    <field name="employee_id_number"/>
+                    <field name="account_id"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                    <field name="analytic_state"/>
+                </tree>
+            </field>
+        </record>
+        <record id="hr_payroll_board" model="ir.actions.act_window">
+			<field name="name">Payroll entries to be validated</field>
+			<field name="res_model">hr.payroll.msf</field>
+			<field name="view_type">form</field>
+			<field name="view_mode">tree,form,calendar,graph</field>
+			<field ref="hr_payroll_board_view" name="view_id"/>
+			<field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
+            <field name="context">{'board_view': True}</field>
+            <field name="limit">5</field>
+		</record>
+		<!-- End for Payroll -->
 
         <record id="account_board_budget_search_view" model="ir.ui.view">
             <field name="name">msf.budget.line</field>
@@ -230,13 +297,13 @@
                                 <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" />
+                                <!--  DON'T SHOW LIQUIDITY FOR NOW! action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" /-->
                             </child1>
 
                             <child1>
+                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" />
+                                <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_contract)d" string="Financing contract overview" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_budgets)d" string="Budgets" />
                             </child1>
                         </hpaned>
                     </form>
