@@ -25,7 +25,6 @@ from tools.translate import _
 import base64
 from msf_doc_import import GENERIC_MESSAGE
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
-from msf_doc_import import GENERIC_MESSAGE
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_product_list_import
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
 
@@ -46,7 +45,7 @@ class product_list(osv.osv):
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.product.list').create(cr, uid, {'file': file,
                                                                                  'filename_template': 'Product List template.xls',
-                                                                                 'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_product_list_import]), ),
+                                                                                 'message': """%s %s"""  % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_product_list_import]), ),
                                                                                  'filename': 'Lines_Not_Imported.xls',
                                                                                  'list_id': ids[0],
                                                                                  'state': 'draft',}, context)

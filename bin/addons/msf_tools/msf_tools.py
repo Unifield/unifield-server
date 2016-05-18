@@ -648,6 +648,8 @@ class ir_translation(osv.osv):
             domain.append('&')
             domain.append('&')
 
+            if vals.get('src'):
+                domain.append(('src', '=', vals['src']))
             if vals.get('lang'):
                 domain.append(('lang', '=', vals['lang']))
             if vals.get('name'):
