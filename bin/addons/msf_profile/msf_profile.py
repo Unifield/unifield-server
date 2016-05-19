@@ -158,7 +158,7 @@ class patch_scripts(osv.osv):
         attachment_ids = attachment_obj.search(cr, uid, [])
         vals = {}
         for attachment in attachment_obj.browse(cr, uid, attachment_ids):
-            if attachment.datas and not attachment.size:
+            if attachment.datas:
                 vals['size'] = attachment_obj.get_size(attachment.datas)
                 attachment_obj.write(cr, uid, attachment.id, vals)
 

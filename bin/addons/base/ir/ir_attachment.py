@@ -158,13 +158,18 @@ class ir_attachment(osv.osv):
         if not sz:
             return False
 
+        units = ('bytes', 'Kb', 'Mb', 'Gb')
         if isinstance(sz,basestring):
             sz=len(sz)
         s, i = float(sz), 0
-        while s >= 1024 and \
-                (i < len(units) or (unit and units(i) != unit)):
+        if unit and unit in units:
+            stop = units.index(unit)
+        else:
+            stop = len(units)
+        while s >= 1024 and i < stop:
             s = s / 1024
             i = i + 1
+
         return round(s)
 
     _name = 'ir.attachment'
