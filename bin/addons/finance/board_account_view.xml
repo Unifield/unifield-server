@@ -193,16 +193,12 @@
                 <tree string="HQ Entries to be validated" limit="5">
                     <field name="name"/>
                     <field name="ref"/>
-                    <field name="document_date"/>
                     <field name="date"/>
                     <field name="period_id"/>
-                    <field name="account_id" domain="[('type', '!=', 'view'), ('restricted_area', '=', 'hq_lines'), ('is_not_hq_correctible', '=', False)]"/>
+                    <field name="account_id"/>
                     <field name="partner_txt"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
-                    <!-- field name="destination_id" on_change="onchange_destination(destination_id, analytic_id, account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
-                    <field name="analytic_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/ -->
                 </tree>
             </field>
         </record>
@@ -232,8 +228,6 @@
                     <field name="account_id"/>
                     <field name="amount"/>
                     <field name="currency_id"/>
-                    <field name="state"/>
-                    <field name="analytic_state"/>
                 </tree>
             </field>
         </record>
