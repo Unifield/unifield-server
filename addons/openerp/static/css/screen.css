@@ -336,22 +336,6 @@ p#cmp_logo {
     text-shadow: #111 0 -1px 0;
 }
 
-#corner ul.tools li#clear_cache a.clear_cache {
-    float: left;
-    width: 26px;
-    height: 34px;
-    background: url(../images/clear_cache.png) no-repeat;
-}
-
-#corner ul.tools li#clear_cache a.clear_cache {
-    width: 24px;
-    background-position: 0 0;
-}
-
-#corner ul.tools li#clear_cache a.clear_cache:hover {
-    background-position: 0 -34px;
-}
-
 * html #corner ul.tools li span.inline {
     display: inline;
     zoom: 1;
