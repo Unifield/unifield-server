@@ -7,7 +7,12 @@
             <field name="model">automated.import.job</field>
             <field name="type">search</field>
             <field name="arch" type="xml">
-                <search string="Automated import jobs">
+                <search string="Import job requests">
+                    <filter icon="terp-document-new" string="Draft" name="draft" domain="[('state', '=', 'draft')]" help="Draft jobs" /> 
+                    <filter icon="terp-gnome-cpu-frequency-applet+" string="In progress" name="in_progress" domain="[('state', '=', 'in_progress')]" help="In progress jobs" /> 
+                    <filter icon="terp-dialog-close" string="Done" name="done" domain="[('state', '=', 'done')]" help="Done jobs" /> 
+                    <filter icon="terp-emblem-important" string="Exception" name="exceptions" domain="[('state', '=', 'error')]" help="Jobs with error" /> 
+                    <separator orientation="vertical" />
                     <field name="import_id" />
                     <field name="start_time" />
                     <field name="end_time" />
@@ -20,10 +25,11 @@
             <field name="model">automated.import.job</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Automated import jobs" noteditable="True" hide_new_button="True">
+                <tree string="Import job reports" noteditable="True" hide_new_button="True">
                     <field name="import_id" />
                     <field name="start_time" />
                     <field name="end_time" />
+                    <field name="state" />
                 </tree>
             </field>
         </record>
@@ -33,7 +39,7 @@
             <field name="model">automated.import.job</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Automated import job">
+                <form string="Import job report">
                     <field name="import_id" />
                     <field name="start_time" />
                     <field name="end_time" />
@@ -44,6 +50,9 @@
                     <field name="nb_processed_records" />
                     <field name="nb_rejected_records" />
                     <field name="comment" colspan="4" />
+                    <separator colspan="4" string="States" />
+                    <field name="state" />
+                    <button name="process_import" type="object" states="draft" string="Process import" icon="gtk-execute" />
                 </form>
             </field>
         </record>
@@ -67,7 +76,7 @@
         </record>
 
         <record id="automated_import_job_action" model="ir.actions.act_window">
-            <field name="name">Automated import jobs</field>
+            <field name="name">Import job reports</field>
             <field name="res_model">automated.import.job</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

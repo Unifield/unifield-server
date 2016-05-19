@@ -129,6 +129,21 @@ class automated_import_job(osv.osv):
             string='Comment',
             readonly=True,
         ),
+        'state': fields.selection(
+            selection=[
+                ('draft', 'Draft'),
+                ('in_progress', 'In progress'),
+                ('done', 'Done'),
+                ('error', 'Exception'),
+            ],
+            string='State',
+            readonly=True,
+            required=True,
+        ),
+    }
+
+    _defaults = {
+        'state': lambda *a: 'draft',
     }
 
     def process_import(self, cr, uid, ids, context=None):
@@ -142,6 +157,8 @@ class automated_import_job(osv.osv):
         :param context: Context of the call
         :return: True
         """
+        import_obj = self.pool.get('automated.import')
+
         if context is None:
             context = []
 
@@ -157,6 +174,16 @@ class automated_import_job(osv.osv):
             error = None
             data64 = None
             filename = False
+
+            try:
+                for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
+                    import_obj.path_is_accessible(job.import_id[path[0]], path[1])
+            except osv.except_osv as e:
+                error = str(e)
+                # In case of manual processing, raise the error
+                if job.file_to_import:
+                    raise e
+
             if not job.file_to_import:
                 try:
                     oldest_file = min(all_files_under(job.import_id.src_path), key=os.path.getmtime)
@@ -166,22 +193,24 @@ class automated_import_job(osv.osv):
                 except ValueError:
                     no_file = True
 
-                if no_file:
-                    error = _('No file to import in %s !') % job.import_id.src_path
-                elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
-                    error = _('A file with same checksum has been already imported !')
-                    move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                if not error:
+                    if no_file:
+                        error = _('No file to import in %s !') % job.import_id.src_path
+                    elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
+                        error = _('A file with same checksum has been already imported !')
+                        move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
                 if error:
                     self.write(cr, uid, [job.id], {
                         'filename': filename,
                         'file_to_import': data64,
                         'start_time': start_time,
-                        'end_time': False,
+                        'end_time': time.strftime('%Y-%m-%d'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,
                         'comment': error,
                         'file_sum': md5,
+                        'state': 'error',
                     }, context=context)
                     continue
             else:
@@ -213,17 +242,19 @@ class automated_import_job(osv.osv):
                     'nb_rejected_records': nb_rejected,
                     'file_sum': md5,
                     'file_to_import': data64,
+                    'state': 'done',
                 }, context=context)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
                     'filename': False,
                     'start_time': start_time,
-                    'end_time': False,
+                    'end_time': time.strftime('%Y-%m-%d'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
                     'comment': str(e),
                     'file_sum': md5,
                     'file_to_import': data64,
+                    'state': 'error',
                 }, context=context)
             finally:
                 move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)

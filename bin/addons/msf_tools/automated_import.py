@@ -54,7 +54,6 @@ class automated_import(osv.osv):
         ),
         'interval': fields.integer(
             string='Interval number',
-            required=True,
         ),
         'interval_unit': fields.selection(
             selection=[
@@ -63,10 +62,9 @@ class automated_import(osv.osv):
                 ('work_days', 'Work Days'),
                 ('days', 'Days'),
                 ('weeks', 'Weeks'),
-                ('months', 'Months'),
+               ('months', 'Months'),
             ],
             string='Interval Unit',
-            required=True,
         ),
         'function_id': fields.many2one(
             'automated.import.function',
@@ -218,7 +216,10 @@ automated import must be created for a same functionality. Please select an othe
             params = {}
 
         for import_id in ids:
-            params['import_id'] = import_id
+            params = {
+                'import_id': import_id,
+                'state': 'draft',
+            }
             job_id = job_obj.create(cr, uid, params, context=context)
 
         return {
@@ -255,7 +256,10 @@ automated import must be created for a same functionality. Please select an othe
             params = {}
 
         for import_id in ids:
-            params['import_id'] = import_id
+            params = {
+                'import_id': import_id,
+                'state': 'in_progress',
+            }
             job_id = job_obj.create(cr, uid, params, context=context)
             cr.commit()
             res = job_obj.process_import(cr, uid, [job_id], context=context)
@@ -269,13 +273,18 @@ automated import must be created for a same functionality. Please select an othe
         :param import_brw: automated.import browse_record
         :return: A dictionary with values for ir.cron
         """
+        # If no interval defined, stop the scheduled action
+        numbercall = -1
+        if not import_brw.interval:
+            numbercall = 0
+
         return {
             'name': _('[Automated import] %s') % import_brw.name,
             'user_id': 1,
             'active': import_brw.active,
-            'interval_number': import_brw.interval  ,
+            'interval_number': import_brw.interval,
             'interval_type': import_brw.interval_unit,
-            'numbercall': -1,
+            'numbercall': numbercall,
             'nextcall': import_brw.start_time or time.strftime('%Y-%m-%d %H:%M:%S'),
             'model': self._name,
             'function': 'run_job',
@@ -331,6 +340,12 @@ automated import must be created for a same functionality. Please select an othe
                 _('Before activation, the different paths should be set.')
             )
 
+        if vals.get('interval', 0.00) < 0:
+            raise osv.except_osv(
+                _('Error'),
+                _('Interval number cannot be negative !'),
+            )
+
         # Call the super create
         new_id = super(automated_import, self).create(cr, uid, vals, context=context)
 
@@ -367,6 +382,12 @@ automated import must be created for a same functionality. Please select an othe
 
         if vals.get('function_id', False):
             self.unique_import_by_function(cr, uid, vals.get('function_id', False), ids, context=context)
+
+        if vals.get('interval', 0.00) < 0:
+            raise osv.except_osv(
+                _('Error'),
+                _('Interval number cannot be negative !'),
+            )
 
         res = super(automated_import, self).write(cr, uid, ids, vals, context=context)
 

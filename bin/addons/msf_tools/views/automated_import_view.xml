@@ -48,7 +48,7 @@
                     <separator colspan="4" string="Scheduler configuration" />
                     <group colspan="4" col="6">
                         <field name="priority" />
-                        <field name="interval" />
+                        <field name="interval" attrs="{'required': [('interval_unit', '&gt;', 0)]}" />
                         <field name="interval_unit" />
                         <field name="start_time" />
                     </group>
