@@ -38,8 +38,11 @@ class analytic_account(osv.osv):
         if not default:
             default = {}
 
-        #US-348: Reset some values when duplicating an analytic account
-        default['tuple_destination_account_ids'] = []
+        # US-348: Reset some values when duplicating an analytic account
+        # But: duplication of funding pool should carry over the account codes (US-723)
+        account = self.browse(cr, uid, a_id, context=context)
+        if account.category != 'FUNDING':
+            default['tuple_destination_account_ids'] = []
         default['destination_ids'] = []
 
         # Copy analytic distribution

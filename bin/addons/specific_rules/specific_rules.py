@@ -55,10 +55,12 @@ class sale_order_line(osv.osv):
 
         for sol in self.browse(cr, uid, ids, context=context):
             if sol.product_id:
-                if sol.product_id.heat_sensitive_item:
-                    result[sol.id] = 'KC'
-                elif sol.product_id.dangerous_goods:
-                    result[sol.id] = 'DG'
+                if sol.product_id.kc_txt:
+                    result[sol.id] += sol.product_id.is_kc and 'KC' or 'KC ?'
+                if sol.product_id.dg_txt:
+                    if result[sol.id]:
+                        result[sol.id] += ' / '
+                    result[sol.id] += sol.product_id.is_dg and 'DG' or 'DG ?'
 
         return result
 
@@ -77,7 +79,7 @@ class sale_order_line(osv.osv):
         # if the product is short shelf life, display a warning
         if product:
             prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).short_shelf_life:
+            if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
                             'title': 'Short Shelf Life product',
                             'message': _(SHORT_SHELF_LIFE_MESS)
@@ -105,7 +107,7 @@ class sale_order(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.order_line:
                 # log the message
-                if line.product_id.short_shelf_life:
+                if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -130,30 +132,33 @@ class purchase_order_line(osv.osv):
 
         for pol in self.browse(cr, uid, ids, context=context):
             if pol.product_id:
-                if pol.product_id.heat_sensitive_item:
-                    result[pol.id] = 'KC'
-                elif pol.product_id.dangerous_goods:
-                    result[pol.id] = 'DG'
+                if pol.product_id.kc_txt:
+                    result[pol.id] += pol.product_id.is_kc and 'KC' or 'KC ?'
+                if pol.product_id.dg_txt:
+                    if result[pol.id]:
+                        result[pol.id] += ' / '
+                    result[pol.id] += pol.product_id.is_dg and 'DG' or 'DG ?'
 
         return result
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
 
-    def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
+    def product_id_on_change(self, cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
+            name=False, price_unit=False, notes=False, state=False, old_price_unit=0.00, nomen_manda_0=False,
+            comment='', context=None):
         '''
         if the product is short shelf life we display a warning
         '''
         # call to super
-        result = super(purchase_order_line, self).product_id_change(cr, uid, ids, pricelist, product, qty, uom,
+        result = super(purchase_order_line, self).product_id_on_change(cr, uid, ids, pricelist, product, qty, uom,
             partner_id, date_order, fiscal_position, date_planned,
-            name, price_unit, notes)
+            name, price_unit, notes, state, old_price_unit, nomen_manda_0, comment, context)
 
         # if the product is short shelf life, display a warning
         if product:
             prod_obj = self.pool.get('product.product')
-            if prod_obj.browse(cr, uid, product).short_shelf_life:
+            if prod_obj.browse(cr, uid, product).is_ssl:
                 warning = {
                             'title': 'Short Shelf Life product',
                             'message': _(SHORT_SHELF_LIFE_MESS)
@@ -183,7 +188,7 @@ class purchase_order(osv.osv):
         for obj in self.browse(cr, uid, ids, context=context):
             for line in obj.order_line:
                 # log the message
-                if line.product_id.short_shelf_life:
+                if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -276,7 +281,7 @@ class stock_warehouse_orderpoint(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
 
         return new_id
@@ -293,7 +298,7 @@ class stock_warehouse_orderpoint(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 for obj in self.browse(cr, uid, ids, context=context):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -525,7 +530,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
 
         return new_id
@@ -542,7 +547,7 @@ class stock_warehouse_automatic_supply(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 for obj in self.browse(cr, uid, ids, context=context):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -566,7 +571,7 @@ class stock_warehouse_order_cycle(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 self.log(cr, uid, new_id, _(SHORT_SHELF_LIFE_MESS))
 
         return new_id
@@ -586,7 +591,7 @@ class stock_warehouse_order_cycle(osv.osv):
         product_obj = self.pool.get('product.product')
         product_id = vals.get('product_id', False)
         if product_id:
-            if product_obj.browse(cr, uid, product_id, context=context).short_shelf_life:
+            if product_obj.browse(cr, uid, product_id, context=context).is_ssl:
                 for obj in self.browse(cr, uid, ids, context=context):
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
 
@@ -640,10 +645,12 @@ class stock_move(osv.osv):
 
         for move in self.browse(cr, uid, ids, context=context):
             if move.product_id:
-                if move.product_id.heat_sensitive_item:
-                    result[move.id] = 'KC'
-                elif move.product_id.dangerous_goods:
-                    result[move.id] = 'DG'
+                if move.product_id.kc_txt:
+                    result[move.id] += move.product_id.is_kc and 'KC' or 'KC ?'
+                if move.product_id.dg_txt:
+                    if result[move.id]:
+                        result[move.id] += ' / '
+                    result[move.id] += move.product_id.is_dg and 'DG' or 'DG ?'
 
         return result
 
@@ -751,17 +758,13 @@ class stock_move(osv.osv):
 
         for obj in self.browse(cr, uid, ids, context=context):
             # keep cool
-            if obj.product_id.heat_sensitive_item:
-                result[obj.id]['kc_check'] = True
+            result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
-            if obj.product_id.dangerous_goods:
-                result[obj.id]['dg_check'] = True
+            result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
-            if obj.product_id.narcotic:
-                result[obj.id]['np_check'] = True
+            result[obj.id]['np_check'] = obj.product_id.cs_txt
             # lot management
             if obj.product_id.batch_management:
                 result[obj.id]['lot_check'] = True
@@ -788,14 +791,75 @@ class stock_move(osv.osv):
         # if prodlot needs to be mandatory, add 'required': ['|', ('hidden_batch_management_mandatory','=',True), ('hidden_perishable_mandatory','=',True)] in attrs
         'hidden_batch_management_mandatory': fields.boolean(string='Hidden Flag for Batch Management product',),
         'hidden_perishable_mandatory': fields.boolean(string='Hidden Flag for Perishable product',),
-        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
-        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
-        'kit_check': fields.function(_get_checks_all, method=True, string='Kit', type='boolean', readonly=True, multi="m"),
-        'prodlot_id': fields.many2one('stock.production.lot', 'Batch', states={'done': [('readonly', True)]}, help="Batch number is used to put a serial number on the production", select=True),
+        'kc_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='KC',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'ssl_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='SSL',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'dg_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='DG',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'np_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='CS',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'lot_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'exp_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Exp',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'kit_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Kit',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'prodlot_id': fields.many2one(
+            'stock.production.lot',
+            'Batch',
+            states={
+                'done': [('readonly', True)],
+            },
+            help="Batch number is used to put a serial number on the production",
+            select=True,
+        ),
     }
 
     _constraints = [
@@ -1074,17 +1138,13 @@ class stock_production_lot(osv.osv):
 
         for obj in self.browse(cr, uid, ids, context=context):
             # keep cool
-            if obj.product_id.heat_sensitive_item:
-                result[obj.id]['kc_check'] = True
+            result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
-            if obj.product_id.dangerous_goods:
-                result[obj.id]['dg_check'] = True
+            result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
-            if obj.product_id.narcotic:
-                result[obj.id]['np_check'] = True
+            result[obj.id]['np_check'] = obj.product_id.cs_txt
             # lot management
             if obj.product_id.batch_management:
                 result[obj.id]['lot_check'] = True
@@ -1163,30 +1223,90 @@ class stock_production_lot(osv.osv):
 
         return res
 
-    _columns = {'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
-                # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
-                'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
-                #'expiry_date': fields.date('Expiry Date'),
-                'name': fields.char('Batch Number', size=1024, required=True, help="Unique batch number, will be displayed as: PREFIX/SERIAL [INT_REF]"),
-                'date': fields.datetime('Auto Creation Date', required=True),
-                'sequence_id': fields.many2one('ir.sequence', 'Batch Sequence', required=True,),
-                'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
-                                                 help="Current available quantity of products with this Batch Numbre Number in company warehouses",
-                                                 digits_compute=dp.get_precision('Product UoM'), readonly=True,
-                                                 fnct_search=_stock_search_virtual,),
-                'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
-                                                   help="Current real quantity of products with this Batch Number in company warehouses",
-                                                   digits_compute=dp.get_precision('Product UoM')),
-                'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
-                'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-                'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-                'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-                'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-                'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
-                'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
-                'delete_ok': fields.function(_get_delete_ok, method=True, string='Possible deletion ?', type='boolean', readonly=True),
-                'is_expired': fields.function(_is_expired, method=True, string='Expired ?', type='boolean', store=False, readonly=True),
-                }
+    _columns = {
+        'check_type': fields.function(_get_false, fnct_search=search_check_type, string='Check Type', type="boolean", readonly=True, method=True),
+        # readonly is True, the user is only allowed to create standard lots - internal lots are system-created
+        'type': fields.selection([('standard', 'Standard'),('internal', 'Internal'),], string="Type", readonly=True),
+        #'expiry_date': fields.date('Expiry Date'),
+        'name': fields.char('Batch Number', size=1024, required=True, help="Unique batch number, will be displayed as: PREFIX/SERIAL [INT_REF]"),
+        'date': fields.datetime('Auto Creation Date', required=True),
+        'sequence_id': fields.many2one('ir.sequence', 'Batch Sequence', required=True,),
+        'stock_virtual': fields.function(_get_stock_virtual, method=True, type="float", string="Available Stock", select=True,
+                                         help="Current available quantity of products with this Batch Numbre Number in company warehouses",
+                                         digits_compute=dp.get_precision('Product UoM'), readonly=True,
+                                         fnct_search=_stock_search_virtual,),
+        'stock_available': fields.function(_get_stock, fnct_search=_stock_search, method=True, type="float", string="Real Stock", select=True,
+                                           help="Current real quantity of products with this Batch Number in company warehouses",
+                                           digits_compute=dp.get_precision('Product UoM')),
+        'src_product_id': fields.function(_get_dummy, fnct_search=_src_product, method=True, type="boolean", string="By product"),
+        'kc_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='KC',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'ssl_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='SSL',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'dg_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='DG',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'np_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='CS',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'lot_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'exp_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Exp',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'delete_ok': fields.function(
+            _get_delete_ok,
+            method=True,
+            string='Possible deletion ?',
+            type='boolean',
+            readonly=True,
+        ),
+        'is_expired': fields.function(
+            _is_expired,
+            method=True,
+            string='Expired ?',
+            type='boolean',
+            store=False,
+            readonly=True,
+        ),
+    }
 
     _defaults = {'type': 'standard',
                  'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'stock.production.lot', context=c),
@@ -1535,10 +1655,10 @@ Expiry date. Only one line with same data is expected."""))
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The %s inventor%s %s ha%s been confirmed' % (
+        self.infolog(cr, uid, 'The %s inventor%s %s (%s) ha%s been confirmed' % (
             self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
             len(ids) > 1 and 'ies' or 'y',
-            ids,
+            ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
             len(ids) > 1 and 've' or 's',
         ))
 
@@ -1547,10 +1667,10 @@ Expiry date. Only one line with same data is expected."""))
     def action_cancel_draft(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_cancel_draft(cr, uid, ids, context=context)
 
-        for inv_id in ids:
-            self.infolog(cr, uid, "The %s inventory id:%s has been re-set to draft" % (
+        for inv in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, "The %s inventory id:%s (%s) has been re-set to draft" % (
                 self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
-                inv_id,
+                inv['id'], inv['name'],
             ))
 
         return res
@@ -1558,9 +1678,9 @@ Expiry date. Only one line with same data is expected."""))
     def action_done(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_done(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The Physical inventor%s %s ha%s been validated' % (
+        self.infolog(cr, uid, 'The Physical inventor%s %s (%s) ha%s been validated' % (
             len(ids) > 1 and 'ies' or 'y',
-            ids,
+            ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
             len(ids) > 1 and 've' or 's',
         ))
 
@@ -1705,9 +1825,9 @@ class stock_inventory_line(osv.osv):
         result.setdefault('value', {})['expiry_date'] = False
         result.setdefault('value', {})['lot_check'] = False
         result.setdefault('value', {})['exp_check'] = False
-        result.setdefault('value', {})['dg_check'] = False
-        result.setdefault('value', {})['kc_check'] = False
-        result.setdefault('value', {})['np_check'] = False
+        result.setdefault('value', {})['dg_check'] = ''
+        result.setdefault('value', {})['kc_check'] = ''
+        result.setdefault('value', {})['np_check'] = ''
         # reset the hidden flags
         result.setdefault('value', {})['hidden_batch_management_mandatory'] = False
         result.setdefault('value', {})['hidden_perishable_mandatory'] = False
@@ -1725,17 +1845,13 @@ class stock_inventory_line(osv.osv):
                 result.setdefault('value', {})['hidden_perishable_mandatory'] = True
                 result.setdefault('value', {})['exp_check'] = True
             # keep cool
-            if product_obj.heat_sensitive_item:
-                result.setdefault('value', {})['kc_check'] = True
+            result.setdefault('value', {})['kc_check'] = product_obj.kc_txt
             # ssl
-            if product_obj.short_shelf_life:
-                result.setdefault('value', {})['ssl_check'] = True
+            result.setdefault('value', {})['ssl_check'] = product_obj.ssl_txt
             # dangerous goods
-            if product_obj.dangerous_goods:
-                result.setdefault('value', {})['dg_check'] = True
+            result.setdefault('value', {})['dg_check'] = product_obj.dg_txt
             # narcotic
-            if product_obj.narcotic:
-                result.setdefault('value', {})['np_check'] = True
+            result.setdefault('value', {})['np_check'] = product_obj.cs_txt
             # if not product, result is 0.0 by super
             # compute qty
             result = self.common_on_change(cr, uid, ids, location_id, product, prod_lot_id, uom, to_date, result=result)
@@ -1802,17 +1918,13 @@ class stock_inventory_line(osv.osv):
 
         for obj in self.browse(cr, uid, ids, context=context):
             # keep cool
-            if obj.product_id.heat_sensitive_item:
-                result[obj.id]['kc_check'] = True
+            result[obj.id]['kc_check'] = obj.product_id.kc_txt
             # ssl
-            if obj.product_id.short_shelf_life:
-                result[obj.id]['ssl_check'] = True
+            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
             # dangerous goods
-            if obj.product_id.dangerous_goods:
-                result[obj.id]['dg_check'] = True
+            result[obj.id]['dg_check'] = obj.product_id.dg_txt
             # narcotic
-            if obj.product_id.narcotic:
-                result[obj.id]['np_check'] = True
+            result[obj.id]['np_check'] = obj.product_id.cs_txt
             # lot management
             if obj.product_id.batch_management:
                 result[obj.id]['lot_check'] = True
@@ -1924,15 +2036,77 @@ class stock_inventory_line(osv.osv):
         'prod_lot_id': fields.many2one('stock.production.lot', 'Batch', domain="[('product_id','=',product_id)]"),
         'expiry_date': fields.date(string='Expiry Date'),
         'type_check': fields.char(string='Type Check', size=1024,),
-        'kc_check': fields.function(_get_checks_all, method=True, string='KC', type='boolean', readonly=True, multi="m"),
-        'ssl_check': fields.function(_get_checks_all, method=True, string='SSL', type='boolean', readonly=True, multi="m"),
-        'dg_check': fields.function(_get_checks_all, method=True, string='DG', type='boolean', readonly=True, multi="m"),
-        'np_check': fields.function(_get_checks_all, method=True, string='NP', type='boolean', readonly=True, multi="m"),
-        'lot_check': fields.function(_get_checks_all, method=True, string='B.Num', type='boolean', readonly=True, multi="m"),
-        'exp_check': fields.function(_get_checks_all, method=True, string='Exp', type='boolean', readonly=True, multi="m"),
-        'has_problem': fields.function(_get_checks_all, method=True, string='Has problem', type='boolean', readonly=True, multi="m"),
-        'duplicate_line': fields.function(_get_checks_all, method=True, string='Duplicate line', type='boolean', readonly=True, multi="m"),
-        'dont_move': fields.boolean(string='Don\'t create stock.move for this line'),
+        'kc_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='KC',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'ssl_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='SSL',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'dg_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='DG',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'np_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='CS',
+            type='char',
+            size=8,
+            readonly=True,
+            multi="m",
+        ),
+        'lot_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='B.Num',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'exp_check': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Exp',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'has_problem': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Has problem',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'duplicate_line': fields.function(
+            _get_checks_all,
+            method=True,
+            string='Duplicate line',
+            type='boolean',
+            readonly=True,
+            multi="m",
+        ),
+        'dont_move': fields.boolean(
+            string='Don\'t create stock.move for this line',
+        ),
     }
 
     _defaults = {# in is used, meaning a new prod lot will be created if the specified expiry date does not exist

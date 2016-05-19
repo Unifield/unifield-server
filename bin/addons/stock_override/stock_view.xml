@@ -358,10 +358,10 @@
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
-                                    <field name="kc_check"/>
-                                    <field name="ssl_check" invisible="True"/>
-                                    <field name="dg_check"/>
-                                    <field name="np_check"/>
+                                    <field name="kc_check" widget="null_boolean" />
+                                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                    <field name="dg_check" widget="null_boolean" />
+                                    <field name="np_check" widget="null_boolean" />
                                     <field name="expired_lot" invisible="1" />
                                     <field name="inactive_product" invisible="1" />
                                     <field name="to_correct_ok" invisible="1" />
@@ -436,10 +436,10 @@
                                         <group colspan="4" col="10">
                                             <field name="lot_check" />
                                             <field name="exp_check" />
-                                            <field name="kc_check" />
-                                            <field name="ssl_check" invisible="True" />
-                                            <field name="dg_check" />
-                                            <field name="np_check" />
+                                            <field name="kc_check" widget="null_boolean" />
+                                            <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                            <field name="dg_check" widget="null_boolean" />
+                                            <field name="np_check" widget="null_boolean" />
                                         </group>
                                         <field name="reason_type_id" widget="selection"
                                                domain="[('internal_ok', '=', True)]" 
@@ -469,7 +469,7 @@
                                 <button name="draft_force_assign" states="draft,confirmed,assigned" string="Confirm" type="object" icon="gtk-apply" attrs="{'invisible': ['|', '&amp;', ('state', 'in', ['done', 'cancel', 'import']), ('state', '!=', 'draft'), ('has_draft_moves', '=', False)]}" />
                                 <button name="action_assign" states="confirmed,assigned" string="Check Availability" type="object" icon="gtk-find" context="{'from_button': True}"/>
                                 <button name="force_assign" states="confirmed,assigned" string="Force Availability" type="object" icon="gtk-jump-to" context="{'from_button': True}" />
-                                <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" />
+                                <button name="change_all_location" string="Change All destinations" icon="gtk-execute" type="object" states="draft,confirmed,assigned" context="{'from_button': True}" />
                                 <button name="action_process" states="assigned" string="Process" type="object" icon="gtk-go-forward" context="{'from_button': True}"/>
                                 <field name="certificate_donation" invisible="1"/>
                                 <button name="print_certificate" string="Print certificate" type="object" icon="gtk-print" attrs="{'invisible': [('certificate_donation', '=', False)]}"/>
@@ -609,10 +609,10 @@
                                     <button name="in_action_confirm" states="draft,confirmed" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
-                                    <field name="kc_check"/>
-                                    <field name="ssl_check" invisible="True"/>
-                                    <field name="dg_check"/>
-                                    <field name="np_check"/>
+                                    <field name="kc_check" widget="null_boolean" />
+                                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                    <field name="dg_check" widget="null_boolean" />
+                                    <field name="np_check" widget="null_boolean" />
                                     <field name="to_correct_ok" invisible="1" />
                                     <field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <field name="price_changed" invisible="1" />
@@ -676,10 +676,10 @@
                                         <group colspan="4" col="10">
                                             <field name="lot_check"/>
                                             <field name="exp_check"/>
-                                            <field name="kc_check"/>
-                                            <field name="ssl_check" invisible="True"/>
-                                            <field name="dg_check"/>
-                                            <field name="np_check"/>
+                                            <field name="kc_check" widget="null_boolean" />
+                                            <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                            <field name="dg_check" widget="null_boolean" />
+                                            <field name="np_check" widget="null_boolean" />
                                         </group>
                                         <field name="reason_type_id" widget="selection" attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"
                                             domain="[('incoming_ok', '=', True)]" />
@@ -902,10 +902,10 @@
                                     <button name="action_confirm" states="draft" string="Confirm" type="object" icon="gtk-apply"/>
                                     <field name="lot_check"/>
                                     <field name="exp_check"/>
-                                    <field name="kc_check"/>
-                                    <field name="ssl_check" invisible="True"/>
-                                    <field name="dg_check"/>
-                                    <field name="np_check"/>
+                                    <field name="kc_check" widget="null_boolean" />
+                                    <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                    <field name="dg_check" widget="null_boolean" />
+                                    <field name="np_check" widget="null_boolean" />
                                     <field name="inactive_product" invisible="1" />
                     				<field name="inactive_error" attrs="{'invisible': [('inactive_product', '=', False)]}" />
                                     <button name="%(stock.action_partial_move_server)d" string="Process" type="action" states="confirmed,assigned" icon="gtk-go-forward" invisible="1"/>
@@ -967,10 +967,10 @@
                                         <group colspan="4" col="10">
                                             <field name="lot_check"/>
                                             <field name="exp_check"/>
-                                            <field name="kc_check"/>
-                                            <field name="ssl_check" invisible="True"/>
-                                            <field name="dg_check"/>
-                                            <field name="np_check"/>
+                                            <field name="kc_check" widget="null_boolean" />
+                                            <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                            <field name="dg_check" widget="null_boolean" />
+                                            <field name="np_check" widget="null_boolean" />
                                         </group>
                                         <field name="reason_type_id" widget="selection"
                                                domain="[('outgoing_ok', '=', True)]" 
@@ -1095,10 +1095,10 @@
                                 <field name="type_check" invisible="True" />
                                 <field name="lot_check" />
                                 <field name="exp_check" />
-                                <field name="kc_check" />
-                                <field name="ssl_check" invisible="True" />
-                                <field name="dg_check" />
-                                <field name="np_check" />
+                                <field name="kc_check" widget="null_boolean" />
+                                <field name="ssl_check" invisible="True" widget="null_boolean" />
+                                <field name="dg_check" widget="null_boolean" />
+                                <field name="np_check" widget="null_boolean" />
                                 <field name="comment" />
                                 <button name="btn_dl" type="object" string="Line is duplicated" icon="gtk-dialog-warning" attrs="{'invisible': [('duplicate_line', '=', False)]}" />
                                 <field name="duplicate_line" invisible="True" />  

@@ -308,6 +308,35 @@ class stock_location(osv.osv):
         'internal_dest': fields.function(_get_dummy, fnct_search=_dest_int, method=True, string='Internal Picking Dest. Loc.', type='boolean',
                                          help='Returns the available locations for destination location of an internal picking according to the product.'),
     }
+
+    def create(self, cr, uid, vals=None, context=None):
+        """
+        Remove the whitespaces before and after the name of the location
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param vals: Values to be put on the new location
+        :param context: Context of the call
+        :return: Result of the super() call
+        """
+        if vals and vals.get('name'):
+            vals['name'] = vals.get('name', '').strip()
+
+        return super(stock_location, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals=None, context=None):
+        """
+        Remove the whitespaces before and after the name of the location
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of stock.location ID to be updated
+        :param vals: Values to be put on the new location
+        :param context: Context of the call
+        :return: Result of the super() call
+        """
+        if vals and vals.get('name'):
+            vals['name'] = vals.get('name', '').strip()
+
+        return super(stock_location, self).write(cr, uid, ids, vals, context=context)
     
 stock_location()
 

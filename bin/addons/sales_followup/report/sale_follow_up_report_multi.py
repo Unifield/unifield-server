@@ -51,7 +51,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
     def _sale_ustr(self, string):
         return tools.ustr(string)
 
-    def _get_orders(self, report):
+    def _get_orders(self, report, grouped=False, only_bo=False):
         orders = []
         for order_id in report.order_ids:
             if self.pool.get('sale.order.line').search(self.cr, self.uid, [('order_id', '=', order_id)]):
@@ -60,6 +60,13 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         self._nb_orders = len(orders)
 
         for order in orders:
+            if only_bo:
+                for line in self._get_lines(order, grouped=grouped, only_bo=only_bo):
+                    # A line existe, just break the second loop
+                    break
+                else:
+                    # No line exist for this order, go to the next one
+                    continue
             yield self.pool.get('sale.order').browse(self.cr, self.uid, order)
 
         raise StopIteration
@@ -78,12 +85,19 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
         raise StopIteration
 
-    def _get_lines(self, order, grouped=False):
+    def _get_lines(self, order_id, grouped=False, only_bo=False):
         '''
         Get all lines with OUT/PICK for an order
         '''
         keys = []
-        for line in self._get_order_line(order.id):
+
+        if only_bo:
+            grouped = True
+
+        if not isinstance(order_id, int):
+            order_id = order_id.id
+
+        for line in self._get_order_line(order_id):
             if not grouped:
                 keys = []
             lines = []
@@ -103,6 +117,13 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                 s_out = move.picking_id.subtype == 'standard' and move.state == 'done' and move.location_dest_id.usage == 'customer'
 
                 if m_type and (ppl or s_out):
+                    bo_qty -= self.pool.get('product.uom')._compute_qty(
+                        self.cr,
+                        self.uid,
+                        move.product_uom.id,
+                        move.product_qty,
+                        line.product_uom.id,
+                    )
                     data = {
                         'po_name': po_name,
                         'cdd': cdd,
@@ -129,11 +150,11 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         data.update({
                             'packing': packing,
                             'shipment': shipment,
-                            'delivered_qty': move.product_qty,
-                            'delivered_uom': move.product_uom.name,
-                            'rts': move.picking_id.shipment_id.shipment_expected_date[0:10],
-                            'eta': move.picking_id.shipment_id.planned_date_of_arrival,
-                            'transport': move.picking_id.shipment_id.transport_type,
+                            'delivered_qty': not only_bo and move.product_qty or 0.00,
+                            'delivered_uom': not only_bo and move.product_uom.name or 0.00,
+                            'rts': not only_bo and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
+                            'eta': not only_bo and move.picking_id.shipment_id.planned_date_of_arrival or '',
+                            'transport': not only_bo and move.picking_id.shipment_id.transport_type or '',
                         })
                     else:
                         packing = move.picking_id.name
@@ -141,21 +162,14 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             key = (packing, False, move.product_uom.name)
                         else:
                             key = (packing, False, move.product_uom.name, line.line_number)
-                        data.update({
-                            'packing': '',
-                            'delivered_qty': move.product_qty,
-                            'delivered_uom': move.product_uom.name,
-                            'rts': move.picking_id.min_date[0:10],
-                            'shipment': packing,
-                        })
-
-                    bo_qty -= self.pool.get('product.uom')._compute_qty(
-                        self.cr,
-                        self.uid,
-                        move.product_uom.id,
-                        move.product_qty,
-                        line.product_uom.id,
-                    )
+                        if not only_bo:
+                            data.update({
+                                'packing': '',
+                                'delivered_qty': move.product_qty,
+                                'delivered_uom': move.product_uom.name,
+                                'rts': move.picking_id.min_date[0:10],
+                                'shipment': packing,
+                            })
 
                     if key in keys:
                         for rline in lines:
@@ -193,6 +207,10 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             lines[fl_index]['backordered_qty'] = bo_qty
 
             for line in lines:
+                if only_bo and line.get('backordered_qty', 0.00) <= 0.00:
+                    continue
+                elif only_bo:
+                    line['delivered_qty'] = line['ordered_qty'] - line.get('backordered_qty', 0.00)
                 yield line
 
         self._order_iterator += 1

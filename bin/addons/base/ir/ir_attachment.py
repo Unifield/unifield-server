@@ -27,7 +27,7 @@ import tools
 
 
 class ir_attachment(osv.osv):
-    _order = 'create_date DESC'
+    _order = 'create_date DESC, id'
 
     def check(self, cr, uid, ids, mode, context=None, values=None):
         """Restricts the access to an ir.attachment, according to referred model
@@ -158,7 +158,6 @@ class ir_attachment(osv.osv):
         if not sz:
             return False
 
-        units = ('bytes', 'Kb', 'Mb', 'Gb')
         if isinstance(sz,basestring):
             sz=len(sz)
         s, i = float(sz), 0
@@ -167,7 +166,6 @@ class ir_attachment(osv.osv):
             s = s / 1024
             i = i + 1
         return round(s)
-        return "%0.2f %s" % (s, units[i])
 
     _name = 'ir.attachment'
     _columns = {

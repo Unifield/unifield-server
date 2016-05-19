@@ -71,6 +71,87 @@ class patch_scripts(osv.osv):
             WHERE create_date < CURRENT_DATE - integer '%s'
             AND sent_date IS NOT NULL""" % day_count)
 
+    def us_918_patch(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # if this script is exucuted on server side, update the first delete
+            # update of ZMK to be executed before the creation of ZMW (sequence
+            # 4875). Then if ZMK is correctly deleted, ZMW can be added
+            cr.execute("UPDATE sync_server_update "
+                       "SET sequence=4874 "
+                       "WHERE id=2222677")
+
+            # change sdref ZMW to base_ZMW
+            cr.execute("UPDATE sync_server_update "
+                       "SET sdref='base_ZMW' "
+                       "WHERE model='res.currency' AND sdref='ZMW'")
+
+            # remove the ZMK creation update
+            cr.execute("DELETE FROM sync_server_update WHERE id=52325;")
+            cr.commit()
+
+            # some update where refering to the old currency with sdref=sd.ZMW
+            # as the reference changed, we need to modify all of this updates
+            # pointing to a wrong reference (currency_rates, ...)
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.ZMW%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.ZMW' in update_values:
+                    index = update_values.index('sd.ZMW')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+
+            # do the same for sdref=sd.base_ZMK
+            updates_to_modify = update_module.search(
+                cr, uid, [('values', 'like', '%sd.base_ZMK%')],)
+            for update in update_module.browse(cr, uid, updates_to_modify):
+                update_values = eval(update.values)
+                if 'sd.base_ZMK' in update_values:
+                    index = update_values.index('sd.base_ZMK')
+                    update_values[index] = 'sd.base_ZMW'
+                vals = {'values': update_values,}
+                update_module.write(cr, uid, update.id, vals)
+        else:
+            # change the sdref on the client that use the wrong ZMK
+            cr.execute("""UPDATE ir_model_data
+            SET name='ZMW' WHERE name='ZMK'""")
+
+            cr.execute("""UPDATE ir_model_data
+            SET name='base_ZMW' WHERE name='base_ZMK'""")
+            cr.commit()
+
+            # check if the currency related to sd.base_ZMW exist, if not,
+            # delete the ir_model_data base_ZMW entry and change the ZMW entry to base_ZMW
+            cr.execute("""SELECT res_id FROM ir_model_data
+            WHERE module='sd' and name='base_ZMW'""")
+            res_id = cr.fetchone()
+            if res_id and res_id[0]:
+                cr.execute("""SELECT id FROM res_currency
+                WHERE id=%s""", (res_id[0], ))
+                currency_exists = cr.fetchone()
+                if not currency_exists:
+                    # delete the entry
+                    cr.execute("""DELETE FROM ir_model_data
+                    WHERE module='sd' AND name='base_ZMW'""")
+                    cr.commit()
+
+            # modify the ZMW to base_ZMW
+            cr.execute("""UPDATE ir_model_data SET name='base_ZMW'
+            WHERE module='sd' AND name='ZMW'""")
+
+            # check if some updates with wrong sdref were ready to be sent and if yes, fix them
+            update_module = self.pool.get('sync.client.update_to_send')
+            if update_module:
+                # change sdref ZMW to base_ZMW
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='base_ZMW' "
+                           "WHERE sdref='base_ZMK'")
+                cr.execute("UPDATE sync_client_update_to_send "
+                           "SET sdref='ZMW' "
+                           "WHERE sdref='ZMK'")
+
     def us_1061_patch(self, cr, uid, *a, **b):
         '''setup the size on all attachment'''
         attachment_obj = self.pool.get('ir.attachment')
@@ -335,6 +416,69 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def update_volume_patch(self, cr, uid, *a, **b):
+        """
+        Update the volume from dm³ to m³ for OCB databases
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param a: Unnamed parameters
+        :param b: Named parameters
+        :return: True
+        """
+        instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+        if instance:
+            while instance.level != 'section':
+                if not instance.parent_id:
+                    break
+                instance = instance.parent_id
+
+        if instance and instance.name != 'OCBHQ':
+            cr.execute("""
+                UPDATE product_template
+                SET volume_updated = True
+                WHERE volume_updated = False
+            """)
+        else:
+            cr.execute("""
+                UPDATE product_template
+                SET volume = volume*1000,
+                    volume_updated = True
+                WHERE volume_updated = False
+            """)
+
+    def us_750_patch(self, cr, uid, *a, **b):
+        """
+        Update the heat_sensitive_item field of product.product
+        to 'Yes' if there is a value already defined by de-activated.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Non-named parameters
+        :param b: Named parameters
+        :return: True
+        """
+        prd_obj = self.pool.get('product.product')
+        phs_obj = self.pool.get('product.heat_sensitive')
+        data_obj = self.pool.get('ir.model.data')
+
+        heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
+        no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
+
+        phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
+        prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
+        if prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s, is_kc = True, kc_txt = 'X', show_cold_chain = True WHERE id IN %s
+            """, (heat_id, tuple(prd_ids),))
+
+        no_prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '=', False), ('active', 'in', ['t', 'f'])])
+        if no_prd_ids:
+            cr.execute("""
+                UPDATE product_product SET heat_sensitive_item = %s, is_kc = False, kc_txt = '', show_cold_chain = False WHERE id IN %s
+            """, (no_heat_id, tuple(no_prd_ids),))
+
+        cr.execute('ALTER TABLE product_product ALTER COLUMN heat_sensitive_item SET NOT NULL')
+
+        return True
 
     def update_us_963_negative_rule_seq(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
@@ -354,6 +498,67 @@ class patch_scripts(osv.osv):
                 if res_id:
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
         return True
+
+    def clean_far_updates(self, cr, uid, *a, **b):
+        '''
+        US-1148: is_keep_cool has been removed on product
+        delete FAR line update related to this old fields
+        '''
+        if self.pool.get('sync.server.update'):
+            cr.execute("delete from sync_server_update where values like '%msf_outgoing.field_product_product_is_keep_cool%' and model='msf_field_access_rights.field_access_rule_line'")
+
+    def us_1185_patch(self, cr, uid, *a, **b):
+        # AT HQ level: untick 8/9 top accounts for display in BS/PL report
+        user_rec = self.pool.get('res.users').browse(cr, uid, [uid])[0]
+        if user_rec.company_id and user_rec.company_id.instance_id \
+            and user_rec.company_id.instance_id.level == 'section':
+            account_obj = self.pool.get('account.account')
+            codes = ['8', '9', ]
+
+            ids = account_obj.search(cr, uid, [
+                ('type', '=', 'view'),
+                ('code', 'in', codes),
+            ])
+            if ids and len(ids) == len(codes):
+                account_obj.write(cr, uid, ids, {
+                    'display_in_reports': False,
+                })
+
+    def us_1263_patch(self, cr, uid, *a, **b):
+        ms_obj = self.pool.get('stock.mission.report')
+        msl_obj = self.pool.get('stock.mission.report.line')
+
+        ms_touched = "['name']"
+        msl_touched = "['internal_qty']"
+
+        ms_ids = ms_obj.search(cr, uid, [('local_report', '=', True)])
+        if not ms_ids:
+            return True
+
+        # Touched Mission stock reports
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE model =  'stock.mission.report' AND res_id in %s''', (ms_touched, tuple(ms_ids),))
+        # Touched Mission stock report lines
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE
+                          model = 'stock.mission.report.line'
+                          AND
+                          res_id IN (SELECT l.id
+                                     FROM stock_mission_report_line l
+                                     WHERE
+                                       l.mission_report_id IN %s
+                                       AND (l.internal_qty != 0.00
+                                       OR l.stock_qty != 0.00
+                                       OR l.central_qty != 0.00
+                                       OR l.cross_qty != 0.00
+                                       OR l.secondary_qty != 0.00
+                                       OR l.cu_qty != 0.00
+                                       OR l.in_pipe_qty != 0.00
+                                       OR l.in_pipe_coor_qty != 0.00))''', (msl_touched, tuple(ms_ids)))
+        return True
+
 patch_scripts()
 
 

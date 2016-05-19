@@ -1020,6 +1020,23 @@ class account_bank_statement_line(osv.osv):
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
 
+    def _get_free_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Get analytic lines Free 1 and Free 2 linked to the given register lines
+        """
+        if not context:
+            context = {}
+        res = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        for absl in self.browse(cr, uid, ids, context=context):
+            # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines).
+            # So we keep only analytic lines with the same "name" than register line
+            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)),
+                                                                              ('account_id.category', 'in', ['FREE1', 'FREE2']), ('name', '=ilike', '%%%s' % absl.name)])
+            # Then retrieve all corrections/reversals from them
+            res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
+        return res
+
     def _check_red_on_supplier(self, cr, uid, ids, name, arg, context=None):
         result = {}
         for id in ids:
@@ -1076,6 +1093,7 @@ class account_bank_statement_line(osv.osv):
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
+        'free_analytic_lines': fields.function(_get_free_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines Free 1 and Free 2 linked to the given register line(s). Correction(s) included."),
         'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
         'direct_invoice_move_id': fields.many2one('account.move', 'Direct Invoice Move', readonly=True, help="This field have been added to get the move that comes from the direct invoice because after synchronization some lines lost the direct invoice link. And so we can't see which move have been linked to the invoice in case the register line is temp posted."),
@@ -2204,8 +2222,8 @@ class account_bank_statement_line(osv.osv):
 
                     for inv_move_line in absl.imported_invoice_line_ids:
                         imported_total_amount += inv_move_line.amount_currency
-                    if absl.amount_out > abs(imported_total_amount) or\
-                            absl.amount_in > abs(imported_total_amount):
+                    if absl.amount_out - abs(imported_total_amount) > 0.001 or \
+                        absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                             _('You can not hard post with an amount greater'
                                 ' than total of imported invoices'))

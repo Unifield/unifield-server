@@ -162,6 +162,8 @@ class procurement_request_sourcing_document(osv.osv):
         """
         Check if a same record already exist. If not, create a new record.
         """
+        mem_obj = self.pool.get('procurement.request.sourcing.document.mem')
+
         if context is None:
             context = {}
 
@@ -183,6 +185,7 @@ class procurement_request_sourcing_document(osv.osv):
             if vals.get('line_ids'):
                 create_data['sourcing_lines'] = [(6, 0, (vals.get('line_ids'),))]
             self.create(cr, uid, create_data, context=context)
+            mem_obj.create(cr, uid, create_data, context=context)
         elif vals.get('line_ids'):
             for chk in self.browse(cr, uid, chk_ids, context=context):
                 sourcing_lines = [vals.get('line_ids')]
@@ -198,9 +201,19 @@ class procurement_request_sourcing_document(osv.osv):
                 'last_date': time.strftime('%Y-%m-%d %H:%M:%S'),
             }, context=context)
 
+        if self._name != 'procurement.request.sourcing.document.mem':
+            mem_obj.chk_create(cr, uid, vals, context=context)
+
         return True
 
 procurement_request_sourcing_document()
+
+
+class procurement_request_sourcing_document_mem(osv.osv_memory):
+    _name = 'procurement.request.sourcing.document.mem'
+    _inherit = 'procurement.request.sourcing.document'
+
+procurement_request_sourcing_document_mem()
 
 
 class procurement_request(osv.osv):
@@ -484,8 +497,10 @@ class procurement_request(osv.osv):
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.pool.get('sale.order.line').write(cr, uid, line_ids, {'state': 'cancel'}, context=context)
 
-        for ir_id in ids:
-            self.infolog(cr, uid, "The IR id:%s has been canceled" % ir_id)
+        for ir in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, "The IR id:%s (%s) has been canceled" % (
+                ir['id'], ir['name'],
+            ))
 
         return True
 
@@ -524,6 +539,9 @@ class procurement_request(osv.osv):
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
             self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)
+            self.infolog(cr, uid, "The internal request id:%s (%s) has been validated." % (
+                req.id, req.name,
+            ))
         line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
         line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)

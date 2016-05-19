@@ -1014,7 +1014,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return result
 
-    def confirmLine(self, cr, uid, ids, run_scheduler=False, context=None):
+    def confirmLine(self, cr, uid, ids, context=None, run_scheduler=False):
         """
         Set the line as confirmed and check if all lines
         of the FO/IR are confirmed. If yes, launch the
@@ -1202,6 +1202,12 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                         'order_id': order_id,
                         'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                     }, context=context)
+
+                    order = self.pool.get('sale.order').read(cr, uid, order_id, ['name'], context=context)
+                    self.infolog(cr, uid, "All lines of the FO/IR id:%s (%s) have been sourced" % (
+                        order['id'],
+                        order['name'],
+                    ))
 
                 self.pool.get('sale.order').write(cr, uid, order_ids, {
                     'sourcing_trace_ok': True,
