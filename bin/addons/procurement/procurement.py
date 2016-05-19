@@ -172,7 +172,14 @@ class procurement_order(osv.osv):
         """
         if not context:
             context = {}
-        return all(not procurement.move_id or procurement.move_id.state == 'done' for procurement in self.browse(cr, uid, ids, context=context))
+
+        def check_move(proc):
+            c1 = not proc.move_id or proc.move_id.state == 'done'
+            c2 = proc.po_cft == 'dpo' and proc.move_id.state == 'hidden'
+            return c1 or c2
+
+        return all(check_move(procurement) for procurement in self.browse(cr, uid, ids, context=context))
+
     #
     # This method may be overrided by objects that override procurement.order
     # for computing their own purpose
