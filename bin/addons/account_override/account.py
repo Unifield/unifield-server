@@ -621,11 +621,31 @@ class account_journal(osv.osv):
                         res = [('instance_id', 'not in', forbid_instance_ids)]
         return res
 
+    def _search_journal_type_filter(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns a domain with:
+        - from a Supplier Invoice: journal type PUR (purchase)
+        - from a Supplier Refund: journal type PUF (purchase_refund)
+        """
+        domain = []
+        if args and args[0][0] == 'journal_type_filter' and context and \
+                context.get('type', False) and context.get('journal_type', False):
+            doc_type = context.get('type')
+            journal_type = context.get('journal_type')
+            if (doc_type == 'in_invoice' and journal_type == 'purchase') or \
+                    (doc_type == 'in_refund' and journal_type == 'purchase_refund'):
+                domain = [('type', '=', journal_type)]
+        return domain
+
     _columns = {
         # BKLG-19/7: journals instance filter 
         'instance_filter': fields.function(
             _get_fake, fnct_search=_search_instance_filter,
             method=True, type='boolean', string='Instance filter'
+        ),
+        'journal_type_filter': fields.function(
+            _get_fake, fnct_search=_search_journal_type_filter,
+            method=True, type='boolean', string='Journal Type Filter', readonly='True'
         ),
     }
 
