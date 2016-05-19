@@ -134,6 +134,7 @@
             <field name="context">{'board_view': True}</field>
 		</record>
 
+		<!-- Show the Currency rates -->
         <record id="account_board_currency_view" model="ir.ui.view">
             <field name="name">res.currency</field>
             <field name="model">res.currency</field>
@@ -156,30 +157,30 @@
             <field name="limit">3</field>
 		</record>
 
-        <record id="account_board_contract_view" model="ir.ui.view">
-            <field name="name">financing.contract.contract</field>
-            <field name="model">financing.contract.contract</field>
+		<!-- Show the XXX -->	
+        <record id="account_board_period_view" model="ir.ui.view">
+            <field name="name">account.period.board</field>
+            <field name="model">account.period</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Latest FX rates">
+                <tree string="Account periods" limit="5">
                     <field name="name"/>
-                    <field name="grant_amount"/>
-                    <field name="reporting_currency"/>
-                    <field name="eligibility_from_date"/>
-                    <field name="eligibility_to_date"/>
-                    <field name="board_time_elapsed"/>
-                    <field name="board_grant"/>
-                    <field name="board_total_project"/>
+                    <field name="code"/>
+                    <field name="date_start"/>
+                    <field name="date_stop"/>
+                    <field name="fiscalyear_id"/>
+                    <field name="state"/>
                 </tree>
             </field>
         </record>
         
-        <record id="account_board_contract" model="ir.actions.act_window">
-			<field name="name">Financing contract overview</field>
-			<field name="res_model">financing.contract.contract</field>
+        <record id="account_board_period" model="ir.actions.act_window">
+			<field name="name">Account Periods</field>
+            <field name="res_model">account.period</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="account_board_contract_view" name="view_id"/>
+			<field ref="account_board_period_view" name="view_id"/>
+			<field name="domain">[('state', '=', 'draft'), ('special', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
 		</record>        
 
@@ -211,7 +212,7 @@
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
 			<field ref="account_hq_entries_view" name="view_id"/>
-			<field name="domain">[('user_validated', '!=', 't')]</field>
+			<field name="domain">[('user_validated', '!=', True)]</field>
             <field name="context">{'board_view': True}</field>
             <field name="limit">5</field>
 		</record>
@@ -303,6 +304,7 @@
                             <child1>
                                 <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" />
                                 <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
                             </child1>
                         </hpaned>
