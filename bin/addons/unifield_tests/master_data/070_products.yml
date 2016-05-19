@@ -4,7 +4,7 @@
   Create Product PL1
 -
   !record {model: product.product, id: prod_log_1}:
-    default_code: PL1 (Test)
+    default_code: PL1_Test
     name: PL1 (Test)
     supply_method: buy
     type: product
@@ -18,7 +18,7 @@
   Create Product PL2
 -
   !record {model: product.product, id: prod_log_2}:
-    default_code: PL2 (Test)
+    default_code: PL2_Test
     name: PL2 (Test)
     supply_method: buy
     type: product
@@ -32,7 +32,7 @@
   Create Product PL3
 -
   !record {model: product.product, id: prod_log_3}:
-    default_code: PL3 (Test)
+    default_code: PL3_Test
     name: PL3 (Test)
     supply_method: buy
     type: product
@@ -46,7 +46,7 @@
   Create Product PL4
 -
   !record {model: product.product, id: prod_log_4}:
-    default_code: PL4 (Test)
+    default_code: PL4_Test
     name: PL4 (Test)
     supply_method: buy
     type: product
@@ -60,7 +60,7 @@
   Create Product PL5
 -
   !record {model: product.product, id: prod_log_5}:
-    default_code: PL5 (Test)
+    default_code: PL5_Test
     name: PL5 (Test)
     supply_method: buy
     type: product
@@ -76,7 +76,7 @@
   Create Product PM1
 -
   !record {model: product.product, id: prod_med_1}:
-    default_code: PM1 (Test)
+    default_code: PM1_Test
     name: PM1 (Test)
     supply_method: buy
     type: product
@@ -90,7 +90,7 @@
   Create Product PM
 -
   !record {model: product.product, id: prod_med_2}:
-    default_code: PM2 (Test)
+    default_code: PM2_Test
     name: PM2 (Test)
     supply_method: buy
     type: product
@@ -104,7 +104,7 @@
   Create Product PM3
 -
   !record {model: product.product, id: prod_med_3}:
-    default_code: PM3 (Test)
+    default_code: PM3_Test
     name: PM3 (Test)
     supply_method: buy
     type: product
@@ -118,7 +118,7 @@
   Create Product PM4
 -
   !record {model: product.product, id: prod_med_4}:
-    default_code: PM4 (Test)
+    default_code: PM4_Test
     name: PM4 (Test)
     supply_method: buy
     type: product
@@ -132,7 +132,7 @@
   Create Product PM5
 -
   !record {model: product.product, id: prod_med_5}:
-    default_code: PM5 (Test)
+    default_code: PM5_Test
     name: PM5 (Test)
     supply_method: buy
     type: product

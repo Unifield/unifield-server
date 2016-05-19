@@ -113,49 +113,42 @@ class account_invoice(osv.osv):
         'down_payment_ids': fields.function(_get_down_payment_ids, type="one2many", obj='account.move.line', method=True, string='Down payments'),
     }
 
-    def create_down_payments(self, cr, uid, ids, amount, context=None):
+    def create_down_payments(self, cr, uid, ids, context=None):
         """
         Create down payments for given invoices
         """
         # Some verifications
         if isinstance(ids, (int, long)):
             ids = [ids]
-        if not amount:
-            raise osv.except_osv(_('Warning'), _('Amount for Down Payment is missing!'))
-        # Prepare some values
         res = []
-        # Browse all elements
         for inv in self.browse(cr, uid, ids):
-            # some verification
-            if amount > inv.amount_total:
-                raise osv.except_osv(_('Error'), _('Given down payment amount is superior to given invoice. Please check both.'))
-            # prepare some values
-            total = 0.0
+            remaining_amount = inv.amount_total
             to_use = [] # should contains tuple with: down payment line id, amount
 
             # Create down payment until given amount is reached
             # browse all invoice purchase, then all down payment attached to purchases
             for po in inv.purchase_ids:
                 # Order by id all down payment in order to have them in creation order
-                dp_ids = self.pool.get('account.move.line').search(cr, uid, [('down_payment_id', '=', po.id), ('reconcile_id', '=', False)], order='date ASC, id ASC')
+                dp_ids = self.pool.get('account.move.line').search(cr, uid, [('down_payment_id', '=', po.id), ('reconcile_id', '=', False)], order='amount_currency, date ASC, id ASC')
                 for dp in self.pool.get('account.move.line').browse(cr, uid, dp_ids):
                     # verify that total is not superior to demanded amount
-                    if total >= amount:
-                        continue
-                    diff = 0.0
-                    # Take only line that have a down_payment_amount not superior or equal to line amount
+                    if remaining_amount <= 0:
+                        break
+
                     # down_payment_amount: amount already allocated on an invoice
                     # amount_currency: down payment amount
-                    if dp.down_payment_amount < dp.amount_currency:
-                        if amount > (abs(dp.amount_currency) - abs(dp.down_payment_amount)):
-                            diff = (abs(dp.amount_currency) - abs(dp.down_payment_amount))
+                    if abs(abs(dp.amount_currency) - abs(dp.down_payment_amount)) > 0.001:
+
+                        # compute remaining amount on this dp
+                        if remaining_amount > dp.amount_currency - dp.down_payment_amount:
+                            allocated = dp.amount_currency - dp.down_payment_amount
                         else:
-                            diff = amount
-                        diff = diff - total
+                            allocated = remaining_amount
+
                         # Have a tuple containing line id and amount to use for create a payment on invoice
-                        to_use.append((dp.id, diff))
-                    # Increment processed total
-                    total += diff
+                        to_use.append((dp.id, allocated))
+
+                        remaining_amount -= allocated
             # Create counterparts and reconcile them
             for el in to_use:
                 # create down payment counterpart on dp account
@@ -175,16 +168,19 @@ class account_invoice(osv.osv):
                     'move_id': move_id,
                     'partner_type_mandatory': True,
                     'currency_id': inv.currency_id.id,
+                    # US-738/UC4: check note below
                     'name': 'Down payment for ' + ':'.join(['%s' % (x.name or '') for x in inv.purchase_ids]),
+                    'is_downpayment': True,  # US-738/UC4
                     'document_date': inv.document_date,
                 })
+
                 # create dp counterpart line
                 dp_account = dp_info and dp_info.account_id and dp_info.account_id.id or False
                 debit = 0.0
                 credit = el[1]
-                if amount < 0:
+                if el[1] < 0:
                     credit = 0.0
-                    debit = el[1]
+                    debit = abs(el[1])
                 vals.update({
                     'account_id': dp_account or False,
                     'debit_currency': debit,
@@ -235,18 +231,7 @@ class account_invoice(osv.osv):
             st_lines = self.pool.get('account.bank.statement.line').search(cr, uid, [('state', 'in', ['draft', 'temp']), ('down_payment_id', 'in', [x.id for x in inv.purchase_ids])])
             if st_lines:
                 raise osv.except_osv(_('Warning'), _('You cannot validate the invoice because some related down payments are not hard posted.'))
-            for po in inv.purchase_ids:
-                for dp in po.down_payment_ids:
-                    if abs(dp.down_payment_amount) < abs(dp.amount_currency):
-                        total_payments += (dp.amount_currency - dp.down_payment_amount)
-            if total_payments == 0.0:
-                continue
-            elif (inv.amount_total - total_payments) > 0.0:
-                # Attach a down payment to this invoice
-                self.create_down_payments(cr, uid, inv.id, total_payments)
-            elif (inv.amount_total - total_payments) <= 0.0:
-                # In this case, down payment permits to pay entirely invoice, that's why the down payment equals invoice total
-                self.create_down_payments(cr, uid, inv.id, inv.amount_total)
+            self.create_down_payments(cr, uid, inv.id)
         return True
 
     def _direct_invoice_updated(self, cr, uid, ids, context=None):

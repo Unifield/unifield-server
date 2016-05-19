@@ -27,6 +27,8 @@ import tools
 
 
 class ir_attachment(osv.osv):
+    _order = 'create_date DESC'
+
     def check(self, cr, uid, ids, mode, context=None, values=None):
         """Restricts the access to an ir.attachment, according to referred model
         In the 'document' module, it is overriden to relax this hard rule, since

@@ -379,6 +379,16 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
+    def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
+        # US-672/2
+        if context and context.get('from_web_menu', False) \
+            and vals.get('account_id', False) \
+            and vals.get('partner_type', False):
+
+            self.pool.get('account.account').is_allowed_for_thirdparty(
+                cr, uid, vals['account_id'], partner_type=vals['partner_type'],
+                from_vals=True, raise_it=True, context=context)
+
     def create(self, cr, uid, vals, context=None, check=True):
         """
         Filled in 'document_date' if we come from tests.
@@ -416,6 +426,7 @@ class account_move_line(osv.osv):
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
+        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
@@ -450,6 +461,7 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
+        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):

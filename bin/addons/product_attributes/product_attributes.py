@@ -451,6 +451,7 @@ class product_attributes(osv.osv):
         'standard_ok': fields.boolean(string='Standard'),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
+        'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
     }
 
@@ -675,6 +676,44 @@ class product_attributes(osv.osv):
                 return False
         return True
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        Ignore the leading whitespaces on the product default_code
+        At product.product creation, create a standard.price.track.changes
+        record with the standard price as new value and None as old value.
+        :param cr: Cursor to the database
+        :param uid: ID of the user that creates the record
+        :param vals: Values of the new product.product to create
+        :param context: Context of the call
+        :return: The ID of the new product.template record
+        """
+        sptc_obj = self.pool.get('standard.price.track.changes')
+
+        if context is None:
+            context = {}
+
+        if 'default_code' in vals:
+            vals['default_code'] = vals['default_code'].strip()
+            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('White spaces are not allowed in product code'),
+                )
+        if 'xmlid_code' in vals:
+            if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('White spaces are not allowed in XML ID code'),
+                )
+
+        res = super(product_attributes, self).create(cr, uid, vals,
+                                                     context=context)
+
+        sptc_obj.track_change(cr, uid, res, _('Product creation'), vals,
+                              context=context)
+
+        return res
+
     def write(self, cr, uid, ids, vals, context=None):
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
@@ -686,7 +725,17 @@ class product_attributes(osv.osv):
             if vals['default_code'] == 'XXX':
                 vals.update({'duplicate_ok': True})
             else:
-                vals.update({'duplicate_ok': False})
+                vals.update({
+                    'duplicate_ok': False,
+                    'default_code': vals['default_code'].strip(),
+                })
+            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
+                # Check if the old code was 'XXX'
+                if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('White spaces are not allowed in product code'),
+                    )
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1061,26 +1110,6 @@ class product_attributes(osv.osv):
     _constraints = [
         (_check_gmdn_code, 'Warning! GMDN code must be digits!', ['gmdn_code'])
     ]
-
-    def create(self, cr, user, vals, context=None):
-        """
-        At product.product creation, create a standard.price.track.changes
-        record with the standard price as new value and None as old value.
-        :param cr: Cursor to the database
-        :param user: ID of the user that creates the record
-        :param vals: Values of the new product.product to create
-        :param context: Context of the call
-        :return: The ID of the new product.template record
-        """
-        sptc_obj = self.pool.get('standard.price.track.changes')
-
-        res = super(product_attributes, self).create(cr, user, vals,
-                                                     context=context)
-
-        sptc_obj.track_change(cr, user, res, _('Product creation'), vals,
-                              context=context)
-
-        return res
 
 product_attributes()
 

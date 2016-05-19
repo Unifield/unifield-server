@@ -12,5 +12,8 @@
             <field name="method">another_translation_fix</field>
         </record>
 
+        <record id="us_1061_patch" model="patch.scripts">
+            <field name="method">us_1061_patch</field>
+        </record>
     </data>
 </openerp>
