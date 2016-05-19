@@ -215,9 +215,14 @@ automated import must be created for a same functionality. Please select an othe
         if params is None:
             params = {}
 
-        for import_id in ids:
+        for import_brw in self.browse(cr, uid, ids, context=context):
+            if not import_brw.src_path or not import_brw.dest_path or not import_brw.report_path:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You should define all paths before run manually this job !'),
+                )
             params = {
-                'import_id': import_id,
+                'import_id': import_brw.id,
                 'state': 'draft',
             }
             job_id = job_obj.create(cr, uid, params, context=context)
