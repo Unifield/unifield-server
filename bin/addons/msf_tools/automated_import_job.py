@@ -170,6 +170,7 @@ class automated_import_job(osv.osv):
                     error = _('No file to import in %s !') % job.import_id.src_path
                 elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
                     error = _('A file with same checksum has been already imported !')
+                    move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
                 if error:
                     self.write(cr, uid, [job.id], {
@@ -204,8 +205,6 @@ class automated_import_job(osv.osv):
                 if rejected:
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
-                move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
-
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
                     'start_time': start_time,
@@ -226,6 +225,8 @@ class automated_import_job(osv.osv):
                     'file_sum': md5,
                     'file_to_import': data64,
                 }, context=context)
+            finally:
+                move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
         return {
             'type': 'ir.actions.act_window',
