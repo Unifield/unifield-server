@@ -25,6 +25,7 @@ from osv import fields,osv
 from osv.orm import except_orm
 import tools
 
+
 class ir_attachment(osv.osv):
     def check(self, cr, uid, ids, mode, context=None, values=None):
         """Restricts the access to an ir.attachment, according to referred model
@@ -88,7 +89,12 @@ class ir_attachment(osv.osv):
 
             # filter ids according to what access rules permit
             target_ids = targets.keys()
-            allowed_ids = self.pool.get(model).search(cr, uid, [('id', 'in', target_ids)], context=context)
+            if 'active' in self.pool.get(model)._columns:
+                allowed_ids = self.pool.get(model).search(cr, uid, [
+                    ('id', 'in', target_ids),
+                    ('active', 'in', ('t', 'f'))], context=context)
+            else:
+                allowed_ids = self.pool.get(model).search(cr, uid, [('id', 'in', target_ids)], context=context)
             disallowed_ids = set(target_ids).difference(allowed_ids)
             for res_id in disallowed_ids:
                 for attach_id in targets[res_id]:
@@ -103,6 +109,8 @@ class ir_attachment(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         self.check(cr, uid, ids, 'write', context=context, values=vals)
+        if 'datas' in vals:
+            vals['size']=self.get_size(vals['datas'])
         return super(ir_attachment, self).write(cr, uid, ids, vals, context)
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -115,6 +123,8 @@ class ir_attachment(osv.osv):
 
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
+        if 'datas' in values:
+            values['size']=self.get_size(values['datas'])
         return super(ir_attachment, self).create(cr, uid, values, context)
 
     def action_get(self, cr, uid, context=None):
@@ -133,11 +143,29 @@ class ir_attachment(osv.osv):
                 if res_name:
                     field = self._columns.get('res_name',False)
                     if field and len(res_name) > field.size:
-                        res_name = res_name[:field.size-3] + '...' 
+                        res_name = res_name[:field.size-3] + '...'
                 data[attachment.id] = res_name
             else:
                 data[attachment.id] = False
         return data
+
+    def get_size(self, sz, unit='Kb'):
+        """
+        Return the size in a human readable format or in unit format.
+        """
+        if not sz:
+            return False
+
+        units = ('bytes', 'Kb', 'Mb', 'Gb')
+        if isinstance(sz,basestring):
+            sz=len(sz)
+        s, i = float(sz), 0
+        while s >= 1024 and \
+                (i < len(units) or (unit and units(i) != unit)):
+            s = s / 1024
+            i = i + 1
+        return round(s)
+        return "%0.2f %s" % (s, units[i])
 
     _name = 'ir.attachment'
     _columns = {
@@ -159,6 +187,7 @@ class ir_attachment(osv.osv):
         'create_date': fields.datetime('Date Created', readonly=True),
         'create_uid':  fields.many2one('res.users', 'Owner', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', change_default=True),
+        'size': fields.float('Size of the file (in Kb)'),
     }
 
     _defaults = {
