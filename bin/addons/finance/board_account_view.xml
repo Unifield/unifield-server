@@ -46,12 +46,11 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Statement" limit="5">
-                    <field name="date"/>
                     <field name="name"/>
+                    <field name="date"/>
                     <field name="partner_id"/>
                     <field name="purchase_id"/>
                     <field name="currency_id"/>
-                    <field name="type"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -73,13 +72,11 @@
             <field name="type">tree</field>
             <field name="arch" type="xml">
                 <tree string="Statement" limit="5">
-                    <field name="document_date"/>
-                    <field name="date_invoice"/>
                     <field name="number"/>
-                    <field name="partner_id"/>
                     <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="date_invoice"/>
                     <field name="date_due"/>
-                    <!-- field name="origin"/-->
                     <field name="currency_id"/>
                     <field name="amount_to_pay"/>
                     <field name="amount_total"/>
