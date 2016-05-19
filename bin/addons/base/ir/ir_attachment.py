@@ -63,6 +63,12 @@ class ir_attachment(osv.osv):
         ids = super(ir_attachment, self).search(cr, uid, args, offset=offset,
                                                 limit=limit, order=order,
                                                 context=context, count=False)
+        if uid == 1:
+            if count:
+                return len(ids)
+            else:
+                return ids
+
         if not ids:
             if count:
                 return 0
@@ -198,6 +204,7 @@ class ir_attachment(osv.osv):
     _defaults = {
         'type': 'binary',
         'company_id': lambda s,cr,uid,c: s.pool.get('res.company')._company_default_get(cr, uid, 'ir.attachment', context=c),
+        'size': lambda *a: 0,
     }
 
     def _auto_init(self, cr, context=None):

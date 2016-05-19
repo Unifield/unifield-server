@@ -160,7 +160,9 @@ class patch_scripts(osv.osv):
         for attachment in attachment_obj.browse(cr, uid, attachment_ids):
             if attachment.datas:
                 vals['size'] = attachment_obj.get_size(attachment.datas)
-                attachment_obj.write(cr, uid, attachment.id, vals)
+            else:
+                vals['size'] = 0
+            attachment_obj.write(cr, uid, attachment.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
