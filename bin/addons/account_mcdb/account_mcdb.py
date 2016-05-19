@@ -428,6 +428,10 @@ class account_mcdb(osv.osv):
             view_id = view_id and view_id[1] or False
             search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
             search_view_id = search_view_id and search_view_id[1] or False
+            
+            if res_model == 'account.move.line':
+                # US-1290: JI export search result always exclude IB entries
+                domain = [ ('period_id.number', '>', 0), ] + domain
 
             context['target_filename_prefix'] = name
 
