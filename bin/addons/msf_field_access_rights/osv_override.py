@@ -376,15 +376,14 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
 
         # get rules for this model
         model_name = self._name
-        user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-        groups = [x.id for x in user.groups_id]
+        groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
 
         rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
         if not rules_pool:
             return fields_view
-        
+
         rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
-    
+
         # if have rules
         if rules_search:
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
