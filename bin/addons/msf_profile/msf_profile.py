@@ -538,6 +538,15 @@ class patch_scripts(osv.osv):
                                        OR l.in_pipe_coor_qty != 0.00))''', (msl_touched, tuple(ms_ids)))
         return True
 
+    def us_1273_patch(self, cr, uid, *a, **b):
+        # Put all internal requests import_in_progress field to False
+        ir_obj = self.pool.get('sale.order')
+        context = {'procurement_request': True}
+        ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
+        if ir_ids:
+            ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
+
 patch_scripts()
 
 
