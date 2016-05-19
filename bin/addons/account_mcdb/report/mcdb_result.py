@@ -36,7 +36,11 @@ def getIds(self, cr, uid, ids, limit=5000, context=None):
         context = {}
     if context.get('from_domain') and 'search_domain' in context and not context.get('export_selected'):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=limit)
+        domain = context.get('search_domain')
+        if table_obj._name == 'account.move.line':
+            # US-1290: JI export search result always exclude IB entries
+            domain = [ ('period_id.number', '>', 0), ] + domain
+        ids = table_obj.search(cr, uid, domain, limit=limit)
     return ids
 
 def getObjects(self, cr, uid, ids, context):
