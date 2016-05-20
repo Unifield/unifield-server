@@ -136,8 +136,8 @@ class account_line_csv_export(osv.osv_memory):
                             csv_line.append(0.0)
                     #output currency
                     csv_line.append(currency_name.encode('utf-8') or '')
-                    #reconcile_total_partial_id
-                    csv_line.append(ml.reconcile_total_partial_id and ml.reconcile_total_partial_id.name and ml.reconcile_total_partial_id.name.encode('utf-8') or '')
+                    #reconcile
+                    csv_line.append(ml.reconcile_txt and ml.reconcile_txt.encode('utf-8') or '')
                     #state
                     csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
                     # Write line
