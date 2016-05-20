@@ -183,6 +183,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                                 'cash',
                                 'asset',
                                 'stock',
+                                'receivables',  # added US-1318
                                 )) or False
                 elif  typ == 'liability':
                     # US-227/1, breakdown in liability:
@@ -194,6 +195,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                             and account.user_type.code in (
                                 'debt',
                                 'equity',
+                                'payables',  # added US-1318
                                 )) or False
                 if register_account:
                     account_dict = {
