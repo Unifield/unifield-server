@@ -360,6 +360,7 @@ class users(osv.osv):
     def write(self, cr, uid, ids, values, context=None):
         if not hasattr(ids, '__iter__'):
             ids = [ids]
+        self.read.clear_cache(cr.dbname, ids=ids)
         if ids == [uid]:
             for key in values.keys():
                 if not (key in self.SELF_WRITEABLE_FIELDS or key.startswith('context_')):
@@ -372,9 +373,6 @@ class users(osv.osv):
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
-        # clear the cache if groups_id changes
-        if 'groups_id' in values:
-            self.read.clear_cache(cr.dbname, ids=ids, fields=('groups_id',))
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
