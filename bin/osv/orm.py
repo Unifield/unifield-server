@@ -3326,36 +3326,32 @@ class orm(orm_template):
             fields_pre2 = map(convert_field, fields_pre)
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
+            one_id = False
             if len(ids) == 1:
-                query = 'SELECT %s FROM %s WHERE %s.id = %%s' % (select_fields, ','.join(tables), self._table)
                 one_id = hasattr(ids, '__iter__') and ids[0] or ids
+            query = 'SELECT %s FROM %s WHERE %s.id %s %%s' % (select_fields,
+                    ','.join(tables), self._table, one_id and '=' or 'IN')
+            if rule_clause:
+                query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
+
+            def execute_request(res, query, rule_clause, local_ids,
+                    one_id=False):
                 if rule_clause:
-                    query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
-                    cr.execute(query, [one_id] + rule_params)
-                    if cr.rowcount != 1:
+                    cr.execute(query, [one_id and local_ids or tuple(local_ids)] + rule_params)
+                    if cr.rowcount != len(local_ids):
                         raise except_orm(_('AccessError'),
                                          _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
                                          % (self._description,))
                 else:
-                    cr.execute(query, (one_id,))
-                    res = cr.dictfetchall()
-            else:
-                query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
-                if rule_clause:
-                    query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
+                    cr.execute(query, (one_id and local_ids or tuple(sub_ids),))
+                res.extend(cr.dictfetchall())
+
+            if not one_id:
                 query = ''.join((query, ' ORDER BY ', order_by))
                 for sub_ids in cr.split_for_in_conditions(ids):
-                    if rule_clause:
-                        cr.execute(query, [tuple(sub_ids)] + rule_params)
-                        if cr.rowcount != len(sub_ids):
-                            raise except_orm(_('AccessError'),
-                                             _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
-                                             % (self._description,))
-                    else:
-                        cr.execute(query, (tuple(sub_ids),))
-                    res.extend(cr.dictfetchall())
-
-
+                    execute_request(res, query, rule_clause, sub_ids)
+            else:
+                execute_request(res, query, rule_clause, one_id, one_id=True)
 
             for f in fields_pre:
                 if f == self.CONCURRENCY_CHECK_FIELD:
