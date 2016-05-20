@@ -758,7 +758,7 @@ class cache(object):
 
     __caches = []
 
-    def __init__(self, timeout=None, skiparg=2, multi=None, size=8192, skip_context=False):
+    def __init__(self, timeout=None, skiparg=2, multi=None, size=8192):
         assert skiparg >= 2 # at least self and cr
         if timeout is None:
             self.timeout = config['cache_timeout']
@@ -766,7 +766,6 @@ class cache(object):
             self.timeout = timeout
         self.skiparg = skiparg
         self.multi = multi
-        self.skip_context = skip_context
         self.lasttime = time.time()
         self.cache = LRU(size)      # TODO take size from config
         self.fun = None
@@ -805,9 +804,6 @@ class cache(object):
         kwargs2 = self.fun_default_values.copy()
         kwargs2.update(kwargs)
         kwargs2.update(dict(zip(self.fun_arg_names, args[self.skiparg-2:])))
-        if self.skip_context and 'context' in kwargs2:
-            kwargs2.pop('context')
-
         return kwargs2
 
     def clear(self, dbname, *args, **kwargs):
