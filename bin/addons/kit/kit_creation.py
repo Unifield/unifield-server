@@ -1240,11 +1240,9 @@ class stock_move(osv.osv):
             stock_move_id = stock_move_dict['id']
             product_id = stock_move_dict['product_id'][0]
             product = product_dict[product_id]
-            result[stock_move_id] = {}
-            # assigned qty
             assigned_qty = 0.0
-            # if the product is perishable (or batch management), we gather assigned qty from kit items
 
+            # if the product is perishable (or batch management), we gather assigned qty from kit items
             if product['perishable']:
                 item_ids = item_obj.search(cr, uid, [('item_stock_move_id', '=', stock_move_id)], context=context)
                 if item_ids:
@@ -1255,18 +1253,10 @@ class stock_move(osv.osv):
             # when the state is assigned or done, the assigned qty is set to product_qty
             elif stock_move_dict['state'] in ['assigned', 'done']:
                 assigned_qty = stock_move_dict['product_qty']
-            result[stock_move_id].update({'assigned_qty_stock_move': assigned_qty})
-            # hidden_state
-            result[stock_move_id].update({'hidden_state': stock_move_dict['state']})
-            # hidden_prodlot_id
-            result[stock_move_id].update({'hidden_prodlot_id': stock_move_dict['lot_check']})
-            # hidden_exp_check
-            result[stock_move_id].update({'hidden_exp_check': stock_move_dict['exp_check']})
-            # hidden_asset_check
+
             hidden_asset_check = False
             if product['type'] == 'product' and product['subtype'] == 'asset':
                 hidden_asset_check = True
-            result[stock_move_id].update({'hidden_asset_check': hidden_asset_check})
 
             hidden_creation_state = False
             hidden_creation_qty_stock_move = 0
@@ -1276,10 +1266,17 @@ class stock_move(osv.osv):
                                                    ['state', 'qty_kit_creation'], context=context)
                 hidden_creation_state = kit_creation['state']
                 hidden_creation_qty_stock_move = kit_creation['qty_kit_creation']
-            # hidden_creation_state
-            result[stock_move_id].update({'hidden_creation_state': hidden_creation_state})
-            # hidden_creation_qty_stock_move
-            result[stock_move_id].update({'hidden_creation_qty_stock_move': hidden_creation_qty_stock_move})
+
+            result[stock_move_id] = {
+                    'assigned_qty_stock_move': assigned_qty,
+                    'hidden_state': stock_move_dict['state'],
+                    'hidden_prodlot_id': stock_move_dict['lot_check'],
+                    'hidden_exp_check': stock_move_dict['exp_check'],
+                    'hidden_asset_check': hidden_asset_check,
+                    'hidden_creation_state': hidden_creation_state,
+                    'hidden_creation_qty_stock_move': hidden_creation_qty_stock_move,
+                    }
+
         return result
 
     _columns = {'kit_creation_id_stock_move': fields.many2one('kit.creation', string='Kit Creation', readonly=True),
