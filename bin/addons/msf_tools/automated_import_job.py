@@ -158,6 +158,7 @@ class automated_import_job(osv.osv):
         :return: True
         """
         import_obj = self.pool.get('automated.import')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = []
@@ -218,6 +219,21 @@ class automated_import_job(osv.osv):
                 oldest_file.write(base64.decodestring(job.file_to_import))
                 oldest_file.close()
                 md5 = hashlib.md5(job.file_to_import).hexdigest()
+
+                if job.file_sum != md5:
+                    if self.search(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], limit=1, order='NO_ORDER', context=context):
+                        self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
+                        return {
+                            'type': 'ir.actions.act_window',
+                            'res_model': self._name,
+                            'res_id': ids[0],
+                            'view_type': 'form',
+                            'view_mode': 'form,tree',
+                            'target': 'new',
+                            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
+                            'context': context,
+                        }
+
                 oldest_file = os.path.join(job.import_id.src_path, job.filename)
                 filename = job.filename
                 data64 = base64.encodestring(job.file_to_import)
@@ -328,31 +344,6 @@ class automated_import_job(osv.osv):
         """
         self.unlink(cr, uid, ids, context=context)
         return {'type': 'ir.actions.act_window_close'}
-
-    def onchange_import_file(self, cr, uid, ids, file_to_import, context=None):
-        """
-        Check if an other automated.import.job has imported the same file.
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls this method
-        :param ids: List of automated.import.job to delete
-        :param file_to_import: The file to import to check
-        :param context: Context of the call
-        :return: A dictionary with a warning message if needed
-        """
-        if not file_to_import:
-            return {}
-
-        md5 = hashlib.md5(file_to_import).hexdigest()
-        if self.search(cr, uid, [('id', 'not in', ids), ('file_sum', '=', md5)], order='NO_ORDER', limit=1, context=context):
-            return {
-                'warning': {
-                    'title': _('Warning'),
-                    'message': _('This file has been already imported in another import'),
-                },
-            }
-
-        return {}
-
 
 automated_import_job()
 

@@ -4,7 +4,7 @@
 
         <record id="auto_import_fnct_res_partner" model="automated.import.function">
             <field name="name">Import Suppliers</field>
-            <field name="model_id" model="ir.model" search="[('model', '=', 'res_partner')]" />
+            <field name="model_id" model="ir.model" search="[('model', '=', 'res.partner')]" />
             <field name="method_to_call">import_data_from_csv</field>
         </record>
 
