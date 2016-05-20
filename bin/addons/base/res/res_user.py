@@ -360,7 +360,6 @@ class users(osv.osv):
     def write(self, cr, uid, ids, values, context=None):
         if not hasattr(ids, '__iter__'):
             ids = [ids]
-        self.read.clear_cache(cr.dbname, ids=ids)
         if ids == [uid]:
             for key in values.keys():
                 if not (key in self.SELF_WRITEABLE_FIELDS or key.startswith('context_')):
@@ -372,7 +371,7 @@ class users(osv.osv):
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
-
+        self.read.clear_cache(cr.dbname, ids=ids)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
