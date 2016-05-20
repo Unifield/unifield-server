@@ -425,29 +425,40 @@ class product_product(osv.osv):
         return res
 
     def _get_partner_code(self, cr, uid, ids, partner_id, context=None):
+        '''
+        Get partner code for each product id in ids.
+        @param ids: Ids of product.
+        @param partner_id: Id of partner.
+        :return: dict with ids in keys and partner codes as values
+        '''
         res = {}
         if ids is not None:
             read_result = self.read(cr, uid, ids, ['default_code', 'seller_ids'], context=context)
             res = dict([(x['id'], x['default_code']) for x in read_result])
-            # TODO if supplierinfo is not used, we can do
-            # res = dict([(x['id'], x['default_code']) for x in read_result])
-            # and delete the next for loop (and remove seller_ids, from the previous read)
+            if not partner_id:
+                return dict([(x['id'], x['default_code']) for x in read_result])
             for elem in read_result:
                 if not elem['seller_ids']:
                     res[elem['id']] = elem['default_code']
                 else:
                     supplierinfo_module = self.pool.get('product.supplierinfo')
-                    for seller_id in elem['seller_ids']:
-                        if seller_id == partner_id:
-                            res[elem['id']] = supplierinfo_module.read(cr, uid, seller_id, ['product_code']['product_code'], context=context)
+                    if partner_id in elem['seller_ids']:
+                        res[elem['id']] = supplierinfo_module.read(cr, uid, partner_id, ['product_code'], context=context)['product_code'] or elem['default_code']
         return res
 
     def _get_partner_code_name(self, cr, uid, ids, partner_id, context=None):
+        '''
+        Get partner code, name and variants for each product id in ids.
+        @param ids: Ids of product.
+        @param partner_id: Id of partner.
+        :return: dict with ids in keys and a dict with code, name and variants
+        as values
+        '''
         res = {}
         if ids is not None:
             read_result = self.read(cr, uid, ids, ['seller_ids', 'default_code', 'name', 'variants'], context=context)
             for elem in read_result:
-                if not elem['seller_ids']:
+                if not elem['seller_ids'] or not partner_id:
                     res[elem['id']] = {
                         'code': elem['default_code'],
                         'name': elem['name'],
@@ -457,9 +468,10 @@ class product_product(osv.osv):
                     supplierinfo_module = self.pool.get('product.supplierinfo')
                     for seller_id in elem['seller_ids']:
                         if seller_id == partner_id:
+                            supplierinfo = supplierinfo_module.read(cr, uid, seller_id, ['product_code', 'product_name'], context=context)
                             res[elem['id']] = {
-                                'code': supplierinfo_module.read(cr, uid, seller_id, ['product_code']['product_code'], context=context),
-                                'name': elem['name'],
+                                'code': supplierinfo and supplierinfo['product_code'] or elem['default_code'],
+                                'name': supplierinfo and supplierinfo['product_name'] or elem['name'],
                                 'variants': elem['variants'],
                             }
         return res
@@ -467,31 +479,15 @@ class product_product(osv.osv):
     def _product_code(self, cr, uid, ids, name, arg, context=None):
         if context is None:
             context = {}
-        res = {}
         partner_id = context.get('partner_id', None)
-        if ids is not None:
-            read_result = self.read(cr, uid, ids, ['default_code', 'seller_ids'], context=context)
-            res = dict([(x['id'], x['default_code']) for x in read_result])
-            if not partner_id:
-                return dict([(x['id'], x['default_code']) for x in read_result])
-            # TODO if supplierinfo is not used, we can do
-            # res = dict([(x['id'], x['default_code']) for x in read_result])
-            # and delete the next for loop (and remove seller_ids, from the previous read)
-            for elem in read_result:
-                if not elem['seller_ids']:
-                    res[elem['id']] = elem['default_code']
-                else:
-                    supplierinfo_module = self.pool.get('product.supplierinfo')
-                    for seller_id in elem['seller_ids']:
-                        if seller_id == partner_id:
-                            res[elem['id']] = supplierinfo_module.read(cr, uid, seller_id, ['product_code']['product_code'], context=context)
-        return res
+        return self._get_partner_code(cr, uid, ids, partner_id, context=context)
 
     def _product_partner_ref(self, cr, uid, ids, name, arg, context=None):
         res = {}
         if context is None:
             context = {}
-        code_names_dict = self._get_partner_code_name(cr, uid, ids, context.get('partner_id', None), context=context)
+        partner_id = context.get('partner_id', None)
+        code_names_dict = self._get_partner_code_name(cr, uid, ids, partner_id, context=context)
         for product_id, data in code_names_dict.items():
             res[product_id] = (data['code'] and ('['+data['code']+'] ') or '') + \
                     (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
