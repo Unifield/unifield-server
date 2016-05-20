@@ -305,7 +305,8 @@ class stock_move(osv.osv):
         so_line_obj = self.pool.get('sale.order.line')
 
         res = {}
-        for obj in self.browse(cr, uid, ids, context=context):
+        for obj in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['picking_id', 'purchase_line_id', 'id'):
             res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
@@ -999,7 +1000,12 @@ class stock_picking(osv.osv):
                 average_values = {}
                 move_sptc_values = []
 
-                for line in move_proc_obj.browse(cr, uid, proc_ids, context=context):
+                for line in move_proc_obj.browse(cr, uid, proc_ids,
+                        context=context, fields_to_fetch=[
+                            'product_id',
+                            'uom_id',
+                            'quantity',]
+                            ):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if not values.get('product_qty', 0.00):
                         continue
@@ -1007,7 +1013,6 @@ class stock_picking(osv.osv):
                     # Check if we must re-compute the price of the product
                     compute_average = picking.type == 'in' and line.product_id.cost_method
                     if values.get('location_dest_id', False):
-                        dest_loc = loc_obj.browse(cr, uid, values['location_dest_id'], context=context)
                         compute_average = picking.type == 'in' and line.product_id.cost_method == 'average'
 
                     if compute_average:
