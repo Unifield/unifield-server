@@ -2,6 +2,12 @@
 <openerp>
     <data>
 
+        <record id="auto_import_fnct_res_partner" model="automated.import.function">
+            <field name="name">Import Suppliers</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'res_partner')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
         <record id="auto_import_fnct_account_account" model="automated.import.function">
             <field name="name">Import G/L Accounts</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'account.account')]" />
