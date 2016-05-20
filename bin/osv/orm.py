@@ -3329,29 +3329,30 @@ class orm(orm_template):
             one_id = False
             if len(ids) == 1:
                 one_id = hasattr(ids, '__iter__') and ids[0] or ids
-            query = 'SELECT %s FROM %s WHERE %s.id %s %%s' % (select_fields,
-                    ','.join(tables), self._table, one_id and '=' or 'IN')
+            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,
+                    ','.join(tables), self._table)
             if rule_clause:
                 query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
 
-            def execute_request(res, query, rule_clause, local_ids,
-                    one_id=False):
+            def execute_request(res, query, rule_clause, local_ids):
                 if rule_clause:
-                    cr.execute(query, [one_id and local_ids or tuple(local_ids)] + rule_params)
+                    cr.execute(query, [tuple(local_ids)] + rule_params)
                     if cr.rowcount != len(local_ids):
                         raise except_orm(_('AccessError'),
                                          _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
                                          % (self._description,))
                 else:
-                    cr.execute(query, (one_id and local_ids or tuple(sub_ids),))
+                    cr.execute(query, (tuple(sub_ids),))
                 res.extend(cr.dictfetchall())
 
-            if not one_id:
+            if one_id:
+                # ~ 70% of the requests are done with only one id (20/05/2016)
+                execute_request(res, query, rule_clause, one_id)
+            else:
+                # order only when there is more than one id in ids
                 query = ''.join((query, ' ORDER BY ', order_by))
                 for sub_ids in cr.split_for_in_conditions(ids):
                     execute_request(res, query, rule_clause, sub_ids)
-            else:
-                execute_request(res, query, rule_clause, one_id, one_id=True)
 
             for f in fields_pre:
                 if f == self.CONCURRENCY_CHECK_FIELD:
