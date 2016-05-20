@@ -816,16 +816,6 @@ class cache(object):
         """
         if not args and not kwargs:
             keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
-        elif not args and isinstance(kwargs, dict) and kwargs.keys() == ['ids']:
-            # in case there is only ids in kwargs, clear corresponding cache
-            # whatever the other kwargs are (fields, ...)
-            keys_to_del = []
-            for key in self.cache.keys():
-                key_dict = dict(key)
-                if 'ids' in key_dict.keys():
-                    if hasattr(key_dict['ids'], '__iter__') and key_dict['ids'] == kwargs['ids'] or\
-                            [key_dict['ids']] == kwargs['ids']:
-                        keys_to_del.append(key)
         else:
             kwargs2 = self._unify_args(*args, **kwargs)
             keys_to_del = [key for key, _ in self._generate_keys(dbname, kwargs2) if key in self.cache.keys()]

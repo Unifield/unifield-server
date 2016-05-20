@@ -258,7 +258,6 @@ class users(osv.osv):
                 }
         }
 
-    @tools.cache(skiparg=3, skip_context=True)
     def read(self,cr, uid, ids, fields=None, context=None, load='_classic_read'):
         def override_password(o):
             if 'password' in o and ( 'id' not in o or o['id'] != uid ):
@@ -371,7 +370,6 @@ class users(osv.osv):
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
-        self.read.clear_cache(cr.dbname, ids=ids)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
