@@ -306,7 +306,7 @@ class stock_move(osv.osv):
 
         res = {}
         for obj in self.browse(cr, uid, ids, context=context,
-                fields_to_fetch=['picking_id', 'purchase_line_id', 'id'):
+                fields_to_fetch=['picking_id', 'purchase_line_id', 'id']):
             res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
