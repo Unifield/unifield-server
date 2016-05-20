@@ -3326,9 +3326,6 @@ class orm(orm_template):
             fields_pre2 = map(convert_field, fields_pre)
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
-            one_id = False
-            if len(ids) == 1:
-                one_id = hasattr(ids, '__iter__') and ids[0] or ids
             query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,
                     ','.join(tables), self._table)
             if rule_clause:
@@ -3342,12 +3339,12 @@ class orm(orm_template):
                                          _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
                                          % (self._description,))
                 else:
-                    cr.execute(query, (tuple(sub_ids),))
+                    cr.execute(query, (tuple(local_ids),))
                 res.extend(cr.dictfetchall())
 
-            if one_id:
+            if len(ids) == 1:
                 # ~ 70% of the requests are done with only one id (20/05/2016)
-                execute_request(res, query, rule_clause, one_id)
+                execute_request(res, query, rule_clause, ids)
             else:
                 # order only when there is more than one id in ids
                 query = ''.join((query, ' ORDER BY ', order_by))
