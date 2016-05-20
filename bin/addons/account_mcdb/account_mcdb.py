@@ -419,14 +419,16 @@ class account_mcdb(osv.osv):
             # Return result in a search view
             view = 'account_move_line_mcdb_search_result'
             search_view = 'mcdb_view_account_move_line_filter'
+            search_model = 'account_mcdb'
             name = _('Selector - G/L')
             if res_model == 'account.analytic.line':
                 view = 'account_analytic_line_mcdb_search_result'
                 search_view = 'view_account_analytic_line_filter'
+                search_model = 'account'
                 name = _('Selector - Analytic')
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
             view_id = view_id and view_id[1] or False
-            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', search_view)
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, search_model, search_view)
             search_view_id = search_view_id and search_view_id[1] or False
 
             context['target_filename_prefix'] = name
