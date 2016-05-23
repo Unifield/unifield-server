@@ -289,7 +289,7 @@
             else
                 setTimeout(doSubmit, 10); // this lets dom updates render
 
-            var domCheckCount = 100;
+            var domCheckCount = 10;
 
             function cb() {
                 if (cbInvoked)
@@ -313,7 +313,8 @@
                             setTimeout(cb, 250);
                             return;
                         }
-                        log('Could not access iframe DOM after 100 tries.');
+                        log('Could not access iframe DOM after 10 tries.');
+                        if (g && ! --$.active) $.event.trigger("ajaxStop");
                         return;
                     }
 
