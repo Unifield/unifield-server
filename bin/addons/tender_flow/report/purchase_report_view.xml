@@ -26,8 +26,8 @@
                     <field name="nbr" sum="# of Lines"/>
                     <field name="quantity" />
                     <field name="product_uom" />
-                    <field name="price_average" sum="Average Price" invisible="1" />
-                    <field name="price_total" sum="Subtotal" string="Subtotal"/>
+                    <field name="price_average" invisible="1" />
+                    <field name="price_total" string="Subtotal"/>
                     <field name="currency_id" />
                     <!-- <field name="price_standard" sum="Products Value" invisible="0"/>
                     <field name="negociation" widget="progressbar"/> -->

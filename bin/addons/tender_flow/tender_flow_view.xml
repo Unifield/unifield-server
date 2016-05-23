@@ -400,7 +400,7 @@
                     <field name="partner_id" />
                     <field name="delivery_requested_date" />
                     <field name="origin" />
-                    <field name="amount_total" sum="Total amount" />
+                    <field name="amount_total" />
                     <field name="state" />
                 </tree>
             </field>

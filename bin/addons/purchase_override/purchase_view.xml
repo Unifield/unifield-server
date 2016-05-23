@@ -186,7 +186,7 @@
                       <field name="dest_partner_names" />
                       <field name="shipped_rate" widget="progressbar" />
                       <field name="invoiced_rate" widget="progressbar" />
-                      <field name="amount_total" sum="Total amount" />
+                      <field name="amount_total" />
                       <field name="pricelist_id" string="Currency" />
                       <field name="state" />
                 </tree>
