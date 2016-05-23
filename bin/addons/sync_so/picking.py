@@ -116,29 +116,49 @@ class stock_picking(osv.osv):
 
         # UF-1617: Handle batch and asset object
         batch_id = False
-        if data['prodlot_id'] and product_id:
+        batch_values = data['prodlot_id']
+        if batch_values and product_id:
             # us-838: WORK IN PROGRESS ..................................
             # US-838: check first if this product is EP-only? if yes, treat differently, here we treat only for BN 
             prodlot_obj = self.pool.get('stock.production.lot')
             prod = prod_obj.browse(cr, uid,product_id,context=context)
-            if prod.perishable and not prod.batch_management:
-                # In case it's a EP only product, then search for date and product, no need to search for batch name
-                if 'life_date' in data['prodlot_id']:
-                    # If name exists in the sync message, search by name and product, not by xmlid 
-                    life_date = data['prodlot_id']['life_date']
-                    # US-838: use different way to retrieve the EP object
-                    batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
-                    if not batch_id:
-                        raise Exception, "Error while retrieving or creating the expiry date %s for the product %s" % (data['prodlot_id'], prod.name)
+            
+            '''
+            US-838: The following block is for treating the sync message in pipeline!
+            If the sync message was made with old message rule, then in the message it contains ONLY the xmlid of the batch, NO life_date.
+            For this case, we have to retrieve the batch name from this xmlid, by using the double product_code in the search.
+            From this batch name + product_id, we can find the batch object in the system. There should only be one batch name for the same product 
+            since the migration has already done, which merged all dup batch name into one.
+            
+            The old sync message has the following xmlid format: sd.batch_numer_se_HQ1C1_DORADIDA15T_DORADIDA15T_MSFBN/000005
+            '''
+            xmlid = batch_values['id']
+            if 'life_date' not in batch_values and 'batch_numer' in xmlid: # it must have the 'batch_numer' as prefix
+                prod_code = "_" + prod.default_code + "_" + prod.default_code + "_" # This is how the old xmlid has been made: using double prod.default_code
+                indexOfProdCode = xmlid.find(prod_code) + len(prod_code)
+                batch_name = xmlid[indexOfProdCode:]
+                existing_bn = prodlot_obj.search(cr, uid, [('name', '=', batch_name), ('product_id', '=', product_id)], context=context)
+                if existing_bn:
+                    batch_id = existing_bn[0]
             else:
-                # US-838: for BN, retrieve it or create it, in the follwing method
-                batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, data['prodlot_id'], context) # return False if the batch object is not found, or cannot be created
+                if prod.perishable and not prod.batch_management:
+                    # In case it's a EP only product, then search for date and product, no need to search for batch name
+                    if 'life_date' in batch_values:
+                        # If name exists in the sync message, search by name and product, not by xmlid 
+                        life_date = batch_values['life_date']
+                        # US-838: use different way to retrieve the EP object
+                        batch_id = prodlot_obj._get_prodlot_from_expiry_date(cr, uid, life_date, product_id, context=context)
+                        if not batch_id:
+                            raise Exception, "Error while retrieving or creating the expiry date %s for the product %s" % (batch_values, prod.name)
+                else:
+                    # US-838: for BN, retrieve it or create it, in the follwing method
+                    batch_id, msg = self.retrieve_batch_number(cr, uid, product_id, batch_values, context) # return False if the batch object is not found, or cannot be created
                 
             ################## TODO: Treat the case for Remote Warehouse: WORK IN PROGRESS BELOW!!!!!!!!!!
             
             
             if not batch_id:
-                raise Exception, "Batch Number %s not found for this sync data record" % data['prodlot_id']
+                raise Exception, "Batch Number %s not found for this sync data record" % batch_values
                 
         expired_date = data['expired_date']
 
@@ -720,9 +740,37 @@ class stock_picking(osv.osv):
     def create_batch_number(self, cr, uid, source, out_info, context=None):
         if not context:
             context = {}
-        self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s" % source)
+        self._logger.info("+++ Create batch number that comes with the SHIP/OUT from %s - This message is deprecated." % source)
 
-        message = "This method is no more used. To be removed"
+        so_po_common = self.pool.get('so.po.common')
+        batch_obj = self.pool.get('stock.production.lot')
+
+        batch_dict = out_info.to_dict()
+        error_message = "Create Batch Number: Something go wrong with this message, invalid instance reference"
+
+        batch_dict['partner_name'] = source
+
+        existing_bn = batch_obj.search(cr, uid, [('xmlid_name', '=', batch_dict['xmlid_name']), ('partner_name', '=', source)], context=context)
+        if existing_bn:  # existed already, then don't need to create a new one
+            message = "Create Batch Number: the given BN exists already at local instance, no new BN will be created"
+            self._logger.info(message)
+            error_message = False
+            return message
+
+        error_message = "Create Batch Number: Invalid reference to the product or product does not exist"
+        if batch_dict.get('product_id'):
+            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+            if rec_id:
+                batch_dict['product_id'] = rec_id
+                error_message = False
+
+        # If error message exists --> cannot create the BN
+        if error_message:
+            self._logger.info(error_message)
+            raise Exception, error_message
+
+        batch_obj.create(cr, uid, batch_dict, context=context)
+        message = "The new BN " + batch_dict['name'] + ", " + source + " has been created"
         self._logger.info(message)
         return message
 
