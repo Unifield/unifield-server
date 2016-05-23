@@ -31,6 +31,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.period_id = context.get('period_id', None)
         self.registers = {}
         self.func_currency = {}
+        self.pending_cheques = {}
         self.func_currency_id = 0
         self.total_func_calculated_balance = 0
         self.total_func_register_balance = 0
@@ -185,6 +186,8 @@ class report_liquidity_position3(report_sxw.rml_parse):
         - the total amounts per currency in register and functional currency
         - the global total in functional currency
         '''
+        if self.pending_cheques:
+            return self.pending_cheques
         pending_cheques = {
             'registers': {},
             'currency_amounts': {},
@@ -247,7 +250,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
             # Add amount to get the "global" Total for all currencies (in functional currency)
             pending_cheques['total_cheque'] += amount_func_currency
-
+        self.pending_cheques = pending_cheques
         return pending_cheques
 
 
