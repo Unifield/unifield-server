@@ -89,14 +89,9 @@ class allocation_invoice_report(report_sxw.rml_parse):
         if inv and inv.move_id:
             absl_ids = self.pool.get('account.bank.statement.line').search(self.cr, self.uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
             if absl_ids:
-                if isinstance(absl_ids, (int, long)):
-                    absl_ids = [absl_ids]
-                absl = self.pool.get('account.bank.statement.line').browse(self.cr, self.uid, absl_ids)
-                for i in range(len(absl)):
-                    journal_code_list.append(absl[i].journal_id and absl[i].journal_id.code or '')
-                    if i != len(absl) - 1:
-                        journal_code_list.append(' / ')
-        return ''.join(journal_code_list)
+                for absl in self.pool.get('account.bank.statement.line').browse(self.cr, self.uid, absl_ids):
+                    journal_code_list.append(absl.journal_id and absl.journal_id.code or '')
+        return ' / '.join(journal_code_list)
 
 report_sxw.report_sxw('report.allocation.invoices.report',
                       'account.invoice',
