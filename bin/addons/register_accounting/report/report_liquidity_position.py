@@ -39,7 +39,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getRegistersByType': self.getRegistersByType,
             'getPeriod': self.getPeriod,
             'getFuncCurrency': self.getFuncCurrency,
-            'getFuncCurrencyId': self.getFuncCurrencyId,
             'getTotalCalc': self.getTotalCalc,
             'getTotalReg': self.getTotalReg,
             'getReg': self.getRegisters,
@@ -61,17 +60,25 @@ class report_liquidity_position3(report_sxw.rml_parse):
     def getFuncCurrency(self):
         return self.func_currency
 
-    def getFuncCurrencyId(self):
-        return self.func_currency_id
-
     def getPeriod(self):
         return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
 
-    def getConvert(self, cur_id, func_cur_id, amount):
-        cur_ovj = self.pool.get('res.currency')
-        conv = cur_ovj.compute(self.cr, self.uid, cur_id,
-                               func_cur_id, amount or 0.0, round=True)
-        return float(conv)
+    def getConvert(self, cur_id, amount):
+        '''
+        Returns the amount converted from the currency whose id is in parameter into the functional currency
+        '''
+        currency = self.pool.get('res.currency').browse(self.cr, self.uid, cur_id)
+        rate = 1
+        # get the correct exchange rate according to the report period
+        self.cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s "
+                        "ORDER BY name DESC LIMIT 1", (cur_id, self.getPeriod().date_stop))
+        if self.cr.rowcount != 0:
+            rate = self.cr.fetchone()[0]
+        converted_amount = amount / rate
+        rounding = currency.rounding or False
+        if rounding:
+            converted_amount = round(converted_amount / rounding) * rounding
+        return converted_amount
 
     def getRegistersByType(self):
         reg_types = {}
@@ -122,18 +129,14 @@ class report_liquidity_position3(report_sxw.rml_parse):
             # Calcul amounts
             reg_bal = 0
             calc_bal = reg.msf_calculated_balance
-            func_calc_bal = self.getConvert(currency.id,
-                                            journal.company_id.currency_id.id,
-                                            calc_bal)
+            func_calc_bal = self.getConvert(currency.id, calc_bal)
             if reg.journal_id.type == 'bank':
                 reg_bal = reg.balance_end_real
 
             elif reg.journal_id.type == 'cash':
                 reg_bal = reg.balance_end_cash
 
-            func_reg_bal = self.getConvert(currency.id,
-                                           journal.company_id.currency_id.id,
-                                           reg_bal)
+            func_reg_bal = self.getConvert(currency.id, reg_bal)
 
             # Add register to list
             reg_types[journal.type]['registers'].append({

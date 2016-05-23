@@ -402,10 +402,10 @@
           <Data ss:Type="String">${ str(cur) }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
           <Data ss:Type="String">${ getFuncCurrency() }</Data>
