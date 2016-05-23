@@ -170,7 +170,7 @@
           <para style="P3">[[ o.output_currency and o.output_currency.name or '' ]]</para>
         </td>
         <td>
-          <para style="P3">[[ o.reconcile_total_partial_id and o.reconcile_total_partial_id.name or '' ]]</para>
+          <para style="P3">[[ o.reconcile_txt and o.reconcile_txt or '' ]]</para>
         </td>
         <td>
           <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>
