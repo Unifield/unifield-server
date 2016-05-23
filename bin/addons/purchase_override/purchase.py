@@ -168,6 +168,8 @@ class purchase_order(osv.osv):
 
         if not 'date_confirm' in default:
             default['date_confirm'] = False
+        if not default.get('related_sourcing_id', False):
+            default['related_sourcing_id'] = False
 
         return super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
 

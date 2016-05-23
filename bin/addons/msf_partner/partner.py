@@ -192,6 +192,13 @@ class res_partner(osv.osv):
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
+        'split_po': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='Split PO ?',
+        ),
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
@@ -247,6 +254,7 @@ class res_partner(osv.osv):
         'manufacturer': lambda *a: False,
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
+        'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 

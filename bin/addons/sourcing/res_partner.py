@@ -151,6 +151,9 @@ class res_partner(osv.osv):
                    or not isinstance(arg[2]['partner_id'], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
                 order_type = arg[2]['order_type']
+                split_po = arg[2]['split_po']
+                if split_po:
+                    newargs.append(('split_po', '=', 'yes'))
                 # Added by UF-1660 to filter partners
                 # do nothing on partner_type for loan
                 p_list = []

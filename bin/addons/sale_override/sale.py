@@ -2277,6 +2277,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
+    def _get_related_sourcing_id(self, line):
+        """
+        Return the ID of the related.sourcing document if any
+        :param line: browse_record of FO/IR line
+        :return: ID of a related.sourcing record or False
+        """
+        if line.related_sourcing_ok and line.related_sourcing_id:
+            return line.related_sourcing_id.id
+
+        return False
+
     def _get_procurement_order_data(self, line, order, rts_date, product_id=False, context=None):
         """
         Get data for the  procurement order creation according to
@@ -2315,6 +2326,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'company_id': order.company_id.id,
             'supplier': line.supplier and line.supplier.id or False,
             'po_cft': line.po_cft or False,
+            'related_sourcing_id': self._get_related_sourcing_id(line),
             'date_planned': rts_date,
             'from_yml_test': order.from_yml_test,
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
