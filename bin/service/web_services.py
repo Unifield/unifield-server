@@ -356,7 +356,8 @@ class db(netsvc.ExportService):
         cr.execute('''SELECT host, database
         FROM sync_client_sync_server_connection''')
         host, database = cr.fetchone()
-        if host and 'sync.unifield.net' in host and database == 'SYNC_SERVER':
+        cr.close()
+        if host and 'localhost' in host and database == 'fm-us-959_SYNC_SERVER':
             return True
         return False
 
