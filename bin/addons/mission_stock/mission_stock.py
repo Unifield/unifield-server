@@ -383,6 +383,7 @@ class stock_mission_report(osv.osv):
             no_pipe_line_ids = line_obj.search(cr, uid, [
                 ('product_id', 'not in', list(in_pipe_products)),
                 ('mission_report_id', '=', id),
+                '|', ('in_pipe_qty', '!=', 0.00), ('in_pipe_coor_qty', '!=', 0.00),
             ], order='NO_ORDER', context=context)
             line_obj.write(cr, uid, no_pipe_line_ids, {
                 'in_pipe_qty': 0.00,
