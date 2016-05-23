@@ -74,6 +74,7 @@ class Attachment(SecuredController):
 
         attachment_id = rpc.RPCProxy('ir.attachment').create({
             'name': datas.filename,
+            'datas_fname': datas.filename,
             'datas': base64.encodestring(datas.file.read()),
         }, ctx)
         return {'id': attachment_id, 'name': datas.filename}
