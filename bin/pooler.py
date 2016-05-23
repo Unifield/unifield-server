@@ -23,7 +23,8 @@ import updater
 
 pool_dic = {}
 
-def get_db_and_pool(db_name, force_demo=False, status=None, update_module=False, pooljobs=True):
+def get_db_and_pool(db_name, force_demo=False, status=None,
+        update_module=False, pooljobs=True, upgrade_modules=True):
     if not status:
         status={}
 
@@ -47,10 +48,11 @@ def get_db_and_pool(db_name, force_demo=False, status=None, update_module=False,
         try:
             pool.init_set(cr, False)
             pool.get('ir.actions.report.xml').register_all(cr)
-            if not updater.do_upgrade(cr, pool):
-                pool_dic.pop(db_name)
-                # please do not change "updater.py" in the message, or change unifield-web/addons/openerp/utils/rpc.py accordingly
-                raise Exception("updater.py told us that OpenERP version doesn't match database version!")
+            if upgrade_modules:
+                if not updater.do_upgrade(cr, pool):
+                    pool_dic.pop(db_name)
+                    # please do not change "updater.py" in the message, or change unifield-web/addons/openerp/utils/rpc.py accordingly
+                    raise Exception("updater.py told us that OpenERP version doesn't match database version!")
             cr.commit()
         finally:
             cr.close()
@@ -81,8 +83,10 @@ def get_db(db_name):
     return get_db_and_pool(db_name)[0]
 
 
-def get_pool(db_name, force_demo=False, status=None, update_module=False):
-    pool = get_db_and_pool(db_name, force_demo, status, update_module)[1]
+def get_pool(db_name, force_demo=False, status=None, update_module=False,
+        upgrade_modules=True):
+    pool = get_db_and_pool(db_name, force_demo, status, update_module,
+            upgrade_modules=upgrade_modules)[1]
     return pool
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

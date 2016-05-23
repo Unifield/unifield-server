@@ -345,7 +345,7 @@ class db(netsvc.ExportService):
 
         connection = sql_db.db_connect(db_name)
         # it the db connnected to a sync_server ?
-        server_connecion_module = pooler.get_pool(db_name).get('sync.client.sync_server_connection')
+        server_connecion_module = pooler.get_pool(db_name, upgrade_modules=False).get('sync.client.sync_server_connection')
         if not server_connecion_module:
             return False
 
