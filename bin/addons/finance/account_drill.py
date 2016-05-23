@@ -30,8 +30,6 @@ class AccountDrillNode(object):
     """
     def __init__(self, drill, parent=None, level=0, account_id=False):
         super(AccountDrillNode, self).__init__()
-        # set during maping
-        self.drill = drill
 
         self.parent = parent
         self.childs = []
@@ -39,6 +37,7 @@ class AccountDrillNode(object):
         self.account_id = account_id
 
         # set during map
+        self.drill = drill  # AccountDrill instance
         self.data = {}
         self.is_view = True
         # set during reduce (note that reduce update data too)
@@ -49,6 +48,9 @@ class AccountDrillNode(object):
         self.code = ''
         self.name = ''
         self.obj = None
+        
+        # set by report parser rendering
+        self.displayed = True
 
     def get_currencies(self):
         if not self.data:

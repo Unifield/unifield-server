@@ -236,9 +236,9 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return res
 
     def _show_node_in_report(self, node):
-        res = True
+        node.displayed = True
         if node.parent is None:
-            return res  # always show root account MSF
+            return node.displayed  # always show root account MSF
             
         if node.is_zero \
                 and (self.account_ids
@@ -247,13 +247,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     or self.display_account == 'bal_movement'):
             # hide zero amounts for above filters on 
             # no movements <=> no amount
-            res = False
+            node.displayed = False
             
-        if res and node.is_zero_bal and self.display_account == 'bal_solde':
+        if node.displayed \
+            and node.is_zero_bal and self.display_account == 'bal_solde':
             # to filter zero balance
-            res = False
+            node.displayed = False
 
-        return res
+        return node.displayed
 
     def _get_journals_str(self, data):
         if 'all_journals' in data['form']:
