@@ -81,6 +81,7 @@ class account_report_general_ledger(osv.osv_memory):
         'account_type': 'all',
         'unreconciled': False,
         'is_initial_balance_available': False,  # as no FY selection, not available by default US-926 point 7)
+        'display_account': 'bal_movement',  # by default only result with JIs
     }
     
     def default_get(self, cr, uid, fields, context=None):
