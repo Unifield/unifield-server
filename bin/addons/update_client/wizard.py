@@ -91,22 +91,25 @@ class upgrade(osv.osv_memory):
 
         connection_module = self.pool.get("sync.client.sync_server_connection")
         proxy = connection_module.get_connection(cr, uid, "sync.server.sync_manager")
-        # create a file to store the actual SYNC_SERVER connection credentials
-        # to be able to automatically reconnect to the SYNC_SERVER after an upgrade
-        password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
-        password = base64.encodestring(password)
-        db_name = base64.encodestring(cr.dbname)
-        credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
-        f = open(credential_filepath, 'w')
-        f.write(db_name)
-        f.write(password)
-        f.close()
+        # in case of automatic patching,  create a file to store the actual
+        # SYNC_SERVER connection credentials to be able to automatically
+        # reconnect to the SYNC_SERVER after an upgrade
+        automatic_patching = sync_type=='automatic' and\
+                connection_module.is_automatic_patching_allowed(cr, uid)
+        if automatic_patching:
+            password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
+            password = base64.encodestring(password)
+            db_name = base64.encodestring(cr.dbname)
+            credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
+            f = open(credential_filepath, 'w')
+            f.write(db_name)
+            f.write(password)
+            f.close()
 
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         if next_state != 'need-install':
-            if next_state == 'need-download' and sync_type=='automatic' and\
-                    connection_module.is_automatic_patching_allowed(cr, uid):
+            if next_state == 'need-download' and automatic_patching:
                 self.download(cr, uid, ids, context)
             else:
                 return self.write(cr, uid, ids, {
