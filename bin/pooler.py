@@ -25,6 +25,18 @@ pool_dic = {}
 
 def get_db_and_pool(db_name, force_demo=False, status=None,
         update_module=False, pooljobs=True, upgrade_modules=True):
+    '''
+    Return the db and pool.
+
+    :param db_name: database name
+    :param force_demo: load demo data
+    :param status: status dictionary for keeping track of progress
+    :param update_module: update the list of available modules
+    :pooljobs: restart the cron job
+    :upgrade_modules: start the modules upgrade process ('-u base') if needed
+    :rtype: list of two object: (dabase, pool)
+
+    '''
     if not status:
         status={}
 
