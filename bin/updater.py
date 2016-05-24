@@ -23,7 +23,6 @@ else:
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
 restart_required = False
-db_name_after_restart = ''
 if sys.platform == 'win32' and os.path.isdir(r'..\ServerLog'):
     log_file = r'..\ServerLog\updater.log'
 else:
@@ -44,7 +43,6 @@ logger = logging.getLogger('updater')
 def restart_server():
     """Restart OpenERP server"""
     global restart_required
-    global db_name_after_restart
     logger.info("Restaring OpenERP Server in %d seconds..." % restart_delay)
     restart_required = True
 
@@ -476,8 +474,10 @@ def reconnect_sync_server():
                     connection_module = pool.get("sync.client.sync_server_connection")
                     connection_module.connect(cr, 1, password=password)
 
-                    # relaunch the sync (as the sync that launch the silent upgrade was aborted to do the upgrade first)
-                    pool.get('sync.client.entity').sync_withbackup(cr, 1)
+                    # in caes of automatic patching, relaunch the sync
+                    # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
+                    if connection_module.is_automatic_patching_allowed(cr, 1):
+                        pool.get('sync.client.entity').sync_withbackup(cr, 1)
                     cr.close()
             except Exception as e:
                 message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"

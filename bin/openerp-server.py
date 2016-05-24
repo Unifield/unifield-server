@@ -285,6 +285,6 @@ updater.reconnect_sync_server()
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
     mainthread_sleep(5)
 
-quit(restart=updater.restart_required, db_name=updater.db_name_after_restart)
+quit(restart=updater.restart_required)
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -206,8 +206,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
-                                # set up the current db_name in updater to be able to restart the server with -d on this db
-                                updater.db_name_after_restart = cr.dbname
                                 upgrade_module = self.pool.get('sync_client.upgrade')
                                 upgrade_id = upgrade_module.create(cr, uid, {})
                                 upgrade_module.do_upgrade(cr, uid,
