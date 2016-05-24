@@ -483,7 +483,7 @@ class update_received(osv.osv):
             # TODO: skip updates not preparable
             for update in updates:
                 if self.search(cr, uid, [('sdref', '=', update.sdref), ('is_deleted', '=', False), ('run', '=', False),
-                        ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)]):
+                        ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)], limit=1, order='NO_ORDER'):
                     # previous not run on the same (sdref, rule_sequence): do not execute
                     self.write(cr, uid, [update.id], {
                         'execution_date': datetime.now(),
