@@ -200,7 +200,6 @@ class stock_picking(osv.osv):
             context = {}
 
         context.update({'for_dpo': True})
-
         return self.partial_shipped_fo_updates_in_po(cr, uid, source, out_info, context=context)
 
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
@@ -222,6 +221,8 @@ class stock_picking(osv.osv):
 
         if context.get('for_dpo'):
             pick_dict = self.picking_data_update_in(cr, uid, source, pick_dict, context=context)
+            #US-1352: Reset this flag immediately, otherwise it will impact on other normal shipments!
+            context.update({'for_dpo': False})
 
         # objects
         so_po_common = self.pool.get('so.po.common')
