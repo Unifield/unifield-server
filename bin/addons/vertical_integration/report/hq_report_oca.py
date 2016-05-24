@@ -314,7 +314,7 @@ class hq_report_oca(report_sxw.report_sxw):
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         # US-817: search period from JI (VI from HQ so AJI always with its JI)
         # (AJI period_id is a field function always deduced from date since UTP-943)
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('move_id.period_id', '=', data['form']['period_id']),
+        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
                                                                                ('account_id.category', 'not in', ['FREE1', 'FREE2']),
