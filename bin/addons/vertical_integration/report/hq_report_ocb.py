@@ -471,7 +471,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               )
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
-                AND aml.period_id = %s
+                AND ((not a.is_analytic_addicted and aml.period_id = %s) or (a.is_analytic_addicted and al.date >= %s and al.date <= %s))
                 AND j.type not in %s
                 AND al.exported in %s
                 AND al.instance_id in %s;
@@ -623,7 +623,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
                 'fnct_params': 'account.analytic.line',
-                'query_params': (period_id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_params': (period_id, period.date_start, period.date_stop, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
