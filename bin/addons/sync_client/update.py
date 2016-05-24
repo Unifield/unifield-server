@@ -291,11 +291,11 @@ class update_received(osv.osv):
         'source': fields.char('Source Instance', size=128, readonly=True),
         'owner': fields.char('Owner Instance', size=128, readonly=True),
         'model' : fields.char('Model', size=64, readonly=True, select=True),
-        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True, select=1),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True, group_operator='count'),
-        'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
+        'rule_sequence' : fields.integer('Rule Sequence', readonly=True, select=1),
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'fields' : fields.text("Fields"),
@@ -482,6 +482,15 @@ class update_received(osv.osv):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
+                if self.search(cr, uid, [('sdref', '=', update.sdref), ('is_deleted', '=', False), ('run', '=', False),
+                        ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)]):
+                    # previous not run on the same (sdref, rule_sequence): do not execute
+                    self.write(cr, uid, [update.id], {
+                        'execution_date': datetime.now(),
+                        'run' : False,
+                        'log' : "Cannot execute due to previous not run on the same record/rule."
+                    }, context=context)
+                    continue
 
                 row = eval(update.values)
 
