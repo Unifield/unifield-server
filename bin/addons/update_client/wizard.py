@@ -83,7 +83,7 @@ class upgrade(osv.osv_memory):
             'state' : 'need-install',
         }, context=context)
 
-    def do_upgrade(self, cr, uid, ids, context=None):
+    def do_upgrade(self, cr, uid, ids, context=None, sync_type='manual'):
         """Actualy, prepare the upgrade to be done at server restart"""
         # backup before patching
         self.pool.get('backup.config').exp_dump_for_state(cr, uid,
@@ -105,7 +105,7 @@ class upgrade(osv.osv_memory):
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         if next_state != 'need-install':
-            if next_state == 'need-download' and \
+            if next_state == 'need-download' and sync_type=='automatic' and\
                     connection_module.is_automatic_patching_allowed(cr, uid):
                 self.download(cr, uid, ids, context)
             else:

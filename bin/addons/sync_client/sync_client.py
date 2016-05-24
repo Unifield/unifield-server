@@ -78,7 +78,10 @@ class BackgroundProcess(Thread):
                 if not up_to_date[0]:
                     # check if patchs should be applied automatically
                     connection = pool.get("sync.client.sync_server_connection")
-                    if not connection.is_automatic_patching_allowed(cr, uid):
+                    sync_type = context and context.get('sync_type', 'manual')
+                    automatic_patching = sync_type == 'automatic' and\
+                            connection.is_automatic_patching_allowed(cr, uid)
+                    if not automatic_patching:
                         cr.commit()
                         raise osv.except_osv(_('Error!'), _(up_to_date[1]))
         except BaseException, e:
@@ -202,14 +205,18 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                             # check if patchs should be applied automatically
                             connection_module = self.pool.get("sync.client.sync_server_connection")
                             upgrade_module = self.pool.get('sync_client.upgrade')
-                            if not up_to_date[0] and not connection_module.is_automatic_patching_allowed(cr, uid):
+
+                            sync_type = context.get('sync_type', 'manual')
+                            automatic_patching = sync_type == 'automatic' and\
+                                    connection_module.is_automatic_patching_allowed(cr, uid)
+                            if not up_to_date[0] and not automatic_patching:
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
                                 upgrade_module = self.pool.get('sync_client.upgrade')
                                 upgrade_id = upgrade_module.create(cr, uid, {})
                                 upgrade_module.do_upgrade(cr, uid,
-                                        [upgrade_id])
+                                        [upgrade_id], sync_type=context.get('sync_type', 'manual'))
                                 raise osv.except_osv(_('Sync aborted'),
                                         _("Current synchronzation has been aborted because there is some update to install ."))
                     else:
@@ -861,12 +868,18 @@ class Entity(osv.osv):
         """
             SYNC process : usefull for scheduling
         """
+        if context is None:
+            context = {}
+        context['sync_type'] = 'automatic'
         BackgroundProcess(cr, uid,
             ('sync_recover_withbackup' if recover else 'sync_withbackup'),
             context).start()
         return True
 
     def sync_manual_threaded(self, cr, uid, recover=False, context=None):
+        if context is None:
+            context = {}
+        context['sync_type'] = 'manual'
         BackgroundProcess(cr, uid,
             ('sync_manual_recover_withbackup' if recover else 'sync_manual_withbackup'),
             context).start()
