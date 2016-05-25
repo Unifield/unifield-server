@@ -3804,6 +3804,7 @@ msgstr "Adresse de livraison :"
 
 #. module: stock_override
 #: report:internal.move:0
+#: report:delivery.order:0
 msgid "Reason type :"
 msgstr "Type de raison :"
 
