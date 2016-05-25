@@ -19275,7 +19275,6 @@ msgstr "Standard"
 
 #. module: stock_override
 #: report:delivery.order:0
-torekeeper
 msgid "Logistics / Supply :"
 msgstr "Logistique / Appro. :"
 
