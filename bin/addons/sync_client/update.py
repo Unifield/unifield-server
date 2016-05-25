@@ -747,7 +747,7 @@ class update_received(osv.osv):
             if not updates:
                 continue
             elif do_deletion:
-                group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates))
+                group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates if update.id not in duplicates))
                 deleted += len(updates)
             else:
                 error_message += group_import_update_execution(obj, updates)
