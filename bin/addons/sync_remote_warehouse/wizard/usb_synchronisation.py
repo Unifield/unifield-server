@@ -267,7 +267,7 @@ class usb_synchronisation(osv.osv_memory):
         finally:
             self.write(cr, uid, ids, {'in_progress': False, 'usb_sync_step': self._get_entity(cr, uid, context).usb_sync_step})
             cr.commit()
-            cr.close()
+            cr.close(True)
 
 
     def pull_continue(self, cr, uid, ids, context=None):

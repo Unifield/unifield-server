@@ -2714,7 +2714,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if use_new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 
