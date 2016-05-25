@@ -623,8 +623,7 @@ class update_received(osv.osv):
                 'log' : '',
             }, context=context)
             sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
-                ('is_deleted', '=', False)], order='NO_ORDER', context=context)
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False)], order='NO_ORDER', context=context)
             if toSetRun_ids:
                 self.write(cr, uid, toSetRun_ids, {
                     'editable' : False,
