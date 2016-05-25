@@ -2382,10 +2382,11 @@ stock moves which are already processed : '''
                   'confirmed_delivery_date', 'nomenclature_description', 'default_code',
                   'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
                   'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
-                  'to_correct_ok', 'text_error',
+                  'to_correct_ok', 'text_error', 'select_fo', 'project_ref', 'external_ref',
                   'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4',
                   'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
-                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id']
+                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id',
+                  'link_so_id', 'from_fo', 'sale_order_line_id', 'tender_line_id', 'dest_partner_id']
 
         for field in fields:
             field_val = getattr(order_line, field)
