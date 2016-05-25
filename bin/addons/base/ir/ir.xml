@@ -600,7 +600,7 @@
                         <field name="name"/>
                         <field name="res_model"/>
                         <field name="view_type"/>
-                        <field name="groups_id" />
+                        <field name="groups_id" widget="many2one" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By" colspan="4">
