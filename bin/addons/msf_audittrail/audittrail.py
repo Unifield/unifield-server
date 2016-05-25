@@ -1022,12 +1022,15 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             if values:
                 fct_object = model_pool.browse(cr, uid, model.id, context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
-                res = dict(sel[field['name']]['selection']).get(values)
-                name = '%s,%s' % (fct_object, field['name'])
-                # Search translation
-                res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
-                if res_tr_ids:
-                    res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
+                if field['name'] in sel:
+                    res = dict(sel[field['name']]['selection']).get(values)
+                    name = '%s,%s' % (fct_object, field['name'])
+                    # Search translation
+                    res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
+                    if res_tr_ids:
+                        res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
+                else:
+                    res = values
             return res
 
     return values
