@@ -51843,7 +51843,7 @@ msgstr "Code du compte - Code Destination"
 #: field:stock.card.wizard,uom_id:0
 #, python-format
 msgid "UoM"
-msgstr "UoM"
+msgstr "UdM"
 
 #. module: base
 #: view:res.config:0
