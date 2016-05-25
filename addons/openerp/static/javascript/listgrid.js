@@ -1069,11 +1069,24 @@ MochiKit.Base.update(ListView.prototype, {
         }
         ids = '[' + ids.join(',') + ']';
         var search_data_field = openobject.dom.get('_terp_search_data')
+
+        // (US-1290) JI and JE export: always exclude Initial Balance entries
+        var domain = openobject.dom.get('_terp_search_domain').value;
+        if(this.model == 'account.move.line' || this.model == 'account.move') {
+            if(domain != "None") {
+                domain = domain.substring(0, domain.length-1);  // remove the last "]"
+                domain += ", ('period_id.number', '>', 0), ]";
+            }
+            else {
+                domain = "[('period_id.number', '>', 0), ]";
+            }
+        }
+
         jQuery.frame_dialog({src:openobject.http.getURL('/openerp/impex/exp', {
             _terp_model: this.model,
             _terp_source: this.name,
             _terp_context: openobject.dom.get('_terp_context').value,
-            _terp_search_domain: openobject.dom.get('_terp_search_domain').value,
+            _terp_search_domain: domain,
             _terp_search_data: search_data_field && search_data_field.value || '',
             _terp_ids: ids,
             _terp_view_ids : this.view_ids,
