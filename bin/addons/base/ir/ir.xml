@@ -527,6 +527,7 @@
                     <field name="view_type"/>
                     <field name="view_id"/>
                     <field name="domain"/>
+                    <field name="groups_txt" />
                 </tree>
             </field>
         </record>
@@ -599,6 +600,7 @@
                         <field name="name"/>
                         <field name="res_model"/>
                         <field name="view_type"/>
+                        <field name="groups_id" />
                     </group>
                     <newline/>
                     <group expand="0" string="Group By" colspan="4">

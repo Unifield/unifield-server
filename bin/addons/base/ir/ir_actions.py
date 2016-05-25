@@ -151,6 +151,11 @@ class act_window(osv.osv):
     _table = 'ir_act_window'
     _sequence = 'ir_actions_id_seq'
     _order = 'name'
+    _replace_exported_fields = {
+        'groups_txt': [
+            (['groups_id', 'Groups'], 10)
+        ],
+    }
 
     def _check_model(self, cr, uid, ids, context=None):
         for action in self.browse(cr, uid, ids, context):
@@ -238,6 +243,30 @@ class act_window(osv.osv):
         activate_tips = self.pool.get('res.users').browse(cr, uid, uid).menu_tips
         return dict([(id, activate_tips) for id in ids])
 
+    def _get_groups_txt(self, cr, uid, ids, name, arg, context=None):
+        """
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of ir.actions.act_window to compute values
+        :param name: Name of the field to compute
+        :param arg: Extra parameters
+        :param context: Context of the call
+        :return: A dictionary with ID of ir.actions.act_window as keys and
+                 computed values for these lise of ID as values.
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for act_brw in self.browse(cr, uid, ids, context=context):
+            res[act_brw.id] = ''
+            res[act_brw.id] = ', '.join(group.name for group in act_brw.groups_id)
+
+        return res
+
     _columns = {
         'name': fields.char('Action Name', size=64, translate=True),
         'type': fields.char('Action Type', size=32, required=True),
@@ -275,6 +304,14 @@ class act_window(osv.osv):
             help='It gives the status if the tip has to be displayed or not when a user executes an action'),
         'multi': fields.boolean('Action on Multiple Doc.', help="If set to true, the action will not be displayed on the right toolbar of a form view"),
         'empty_ids': fields.boolean('For action: is selection of records needed ?'),
+        'groups_txt': fields.function(
+            _get_groups_txt,
+            method=True,
+            type='text',
+            readonly=True,
+            string='Groups',
+            store=False,
+        ),
     }
 
     _defaults = {
