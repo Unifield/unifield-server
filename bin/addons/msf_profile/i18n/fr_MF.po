@@ -67729,6 +67729,12 @@ msgstr "Le fichier donné n'est pas un fichier ZIP!"
 msgid "Assets"
 msgstr "Biens"
 
+#. module: stock_override
+#: report:delivery.order:0                                                                                                                                      
+#: report:internal.move:0
+msgid "Asset"
+msgstr "Bien"
+
 #. module: kit
 #: code:addons/kit/kit_creation.py:138
 #: code:addons/kit/kit_creation.py:167
