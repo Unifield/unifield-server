@@ -473,6 +473,11 @@ class Entity(osv.osv):
             res = proxy.receive_package(entity.identifier, self._hardware_id, packet, context)
             if not res[0]:
                 raise Exception, res[1]
+            #### DEBUG US-1301 #####
+            if hasattr(uid, 'realUid'):
+                if self.pool.get('res.users').read(cr, uid, uid.realUid, ['name'])['name'] == 'nosync':
+                    raise Exception('FAILED')
+            #########
             updates.write(cr, uid, ids, {'sent' : True}, context=context)
             return (len(packet['load']), len(packet['unload']))
 
