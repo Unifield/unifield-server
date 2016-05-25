@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 class msf_instance(osv.osv):
     _name = 'msf.instance'
@@ -226,6 +227,27 @@ class msf_instance(osv.osv):
                                                                                 'parent_id': line_to_copy.id}, context=context)
         return res_id
         
+    # US-972: Check and show warning message if any costcenter not assigned as target in any instances
+    def check_cc_not_target(self, cr, uid, ids, context):
+        target_obj = self.pool.get('account.target.costcenter')
+        not_target_cc = ''
+        for instance in self.browse(cr, uid, ids, context=context):
+            for cc in instance.target_cost_center_ids:
+                if not target_obj.search(cr, uid, [('cost_center_id', '=', cc.cost_center_id.id), ('is_target', '=', True)]):
+                    not_target_cc = not_target_cc + "%s, " %(cc.cost_center_id.name)
+        
+        if not_target_cc:
+            not_target_cc = not_target_cc[:len(not_target_cc) - 2]
+            msg = "Warning: The following cost centers have not been set as target: %s"%not_target_cc     
+            self.log(cr, uid, ids[0], msg)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'code' in vals: #US-972: If the user clicks on Save button, then perform this check
+            self.check_cc_not_target(cr, uid, ids, context)
+        res = super(msf_instance, self).write(cr, uid, ids, vals, context=context)
+        return res
 
     def _check_name_code_unicity(self, cr, uid, ids, context=None):
         if not context:
