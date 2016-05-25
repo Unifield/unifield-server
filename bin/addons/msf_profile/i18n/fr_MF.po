@@ -35494,7 +35494,7 @@ msgstr "Poids net"
 msgid "Point of Sales"
 msgstr "Point de Ventes"
 
-#. modules: product, msf_outgoing, supplier_catalogue, product_asset, kit, mission_stock, return_claim
+#. modules: product, msf_outgoing, supplier_catalogue, product_asset, kit, mission_stock, return_claim, 
 #: field:composition.item,hidden_asset_mandatory:0
 #: field:composition.item,item_asset_id:0
 #: field:substitute.item,asset_id_substitute_item:0
@@ -35512,6 +35512,9 @@ msgstr "Point de Ventes"
 #: field:stock.move.memory.in,asset_id:0
 #: field:stock.move.memory.out,asset_id:0
 #: field:claim.product.line,asset_id_claim_product_line:0
+#: code:addons/msf_doc_import/wizard/__init__.py:68
+#: code:addons/msf_doc_import/wizard/__init__.py:73
+#: code:addons/msf_doc_import/wizard/__init__.py:78
 #: view:return.claim:0
 #: view:supplier.catalogue.line:0
 msgid "Asset"
