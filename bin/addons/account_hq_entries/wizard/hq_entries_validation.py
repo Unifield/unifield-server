@@ -219,6 +219,8 @@ class hq_entries_validation(osv.osv_memory):
             raise osv.except_osv(_('Error'), _('No correction journal found!'))
         od_journal_id = od_journal_ids[0]
         all_lines = set()
+        pure_ad_cor_ji_ids = []
+        
         # Split lines into 2 groups:
         #+ original ones
         #+ split ones
@@ -251,6 +253,7 @@ class hq_entries_validation(osv.osv_memory):
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
             new_expense_ml_ids = new_res_move.values()
+            pure_ad_cor_ji_ids += new_expense_ml_ids
             corr_name = 'COR1 - ' + original_move.name
             aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name }, context=context, check=False, update_check=False)
 
@@ -302,6 +305,13 @@ class hq_entries_validation(osv.osv_memory):
             # also write the OD entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
             cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
+        
+        # US-1333/1 - BKLG-12 pure AD correction flag marker for splitted lines
+        # (do this bypassing model write)
+        if pure_ad_cor_ji_ids:
+            osv.osv.write(aml_obj, cr, uid, list(set(pure_ad_cor_ji_ids)),
+                {'last_cor_was_only_analytic': True,})
+        
         # Mark ALL lines as user_validated
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
         return original_move_ids
@@ -339,6 +349,7 @@ class hq_entries_validation(osv.osv_memory):
             cc_account_change = []
             split_change = []
             current_date = strftime('%Y-%m-%d')
+            pure_ad_cor_ji_ids = []
 
             # US-672/2 account/partner compatible check pass
             account_partner_not_compat_log = []
@@ -463,6 +474,9 @@ class hq_entries_validation(osv.osv_memory):
                     cr.execute('UPDATE account_analytic_line SET entry_sequence = %s WHERE id = %s', (entry_seq, ana_line.id))
                 # update old ana lines
                 ana_line_obj.write(cr, uid, fp_old_lines, {'is_reallocated': True})
+                
+                # register pure AD
+                pure_ad_cor_ji_ids.append(all_lines[line.id])
 
             for line in cc_account_change:
                 # call correct_account with a new arg: new_distrib
@@ -484,6 +498,14 @@ class hq_entries_validation(osv.osv_memory):
                             })]
                     })
                 self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
+            
+            # US-1333/1 - BKLG-12 pure AD correction flag marker
+            # (do this bypassing model write)
+            if pure_ad_cor_ji_ids:
+                osv.osv.write(self.pool.get('account.move.line'), cr, uid,
+                    list(set(pure_ad_cor_ji_ids)),
+                    {'last_cor_was_only_analytic': True,})
+            
             # Do split lines process
             original_move_ids = self.process_split(cr, uid, split_change, context=context)
 
