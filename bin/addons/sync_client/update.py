@@ -623,7 +623,8 @@ class update_received(osv.osv):
                 'log' : '',
             }, context=context)
             sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
-            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False)], order='NO_ORDER', context=context)
+            toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
+                ('is_deleted', '=', False)], order='NO_ORDER', context=context)
             if toSetRun_ids:
                 self.write(cr, uid, toSetRun_ids, {
                     'editable' : False,
@@ -641,7 +642,20 @@ class update_received(osv.osv):
             obj, do_deletion, force_recreation = self.pool.get(updates[0].model), updates[0].is_deleted, updates[0].force_recreation
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
             # Remove updates about deleted records in the list
-            sdref_update_ids = dict((update.sdref, update.id) for update in updates)
+            duplicates = []
+            sdref_update_ids = {}
+            for update in updates:
+                if do_deletion and update.sdref in sdref_update_ids:
+                    duplicates.append(update.id)
+                else:
+                    sdref_update_ids[update.sdref] = update.id
+            if duplicates:
+                self.write(cr, uid, duplicates, {
+                    'execution_date': datetime.now(),
+                    'editable' : False,
+                    'run' : True,
+                    'log' : "This update has been ignored because it is duplicated.",
+                }, context=context)
             # For bi-private rules, it is possible that the sdref doesn't exists /!\
             # - In case of import update, if sdref doesn't exists, the initial
             #   value is False in order to keep it for group execution
@@ -654,6 +668,7 @@ class update_received(osv.osv):
             for key in sdref_update_ids:
                 update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
             deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+
 
             if deleted_update_ids:
                 sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
