@@ -22,6 +22,7 @@
 from report import report_sxw
 import pooler
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 
 class report_liquidity_position3(report_sxw.rml_parse):
@@ -178,6 +179,24 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
+    def getRegisterState(self, reg):
+        '''
+        Returns the register state (String) for the period of the report.
+        If the register doesn't exist for this period, returns 'Not Created'.
+        '''
+        pool = pooler.get_pool(self.cr.dbname)
+        reg_obj = pool.get('account.bank.statement')
+        reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('name', '=', reg.name),
+                                                                        ('period_id', '=', self.period_id)])
+        if reg_for_selected_period_id:
+            reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
+            # get the value from the selection field ("Closed" instead of "confirm", etc.)
+            state = reg_for_selected_period.state and \
+                    dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state) or ''
+        else:
+            state = _('Not Created')
+        return state
+
     def getPendingCheques(self):
         '''
         Get the pending cheques data from the selected period AND the previous ones. Gives:
@@ -227,8 +246,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 pending_cheques['registers'][journal.code] = {
                     'instance': reg.instance_id.name,
                     'journal_name': journal.name,
-                    # for the state, get the value from the selection field ("Closed" instead of "confirm", etc.):
-                    'state': reg.state and dict(reg_obj._columns['state'].selection).get(reg.state) or '',
+                    'state': self.getRegisterState(reg),
                     'bank_journal_code': journal.bank_journal_id.code,
                     'bank_journal_name': journal.bank_journal_id.name,
                     'amount_reg_currency': amount_reg_currency,

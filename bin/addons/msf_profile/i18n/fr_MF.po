@@ -73598,3 +73598,9 @@ msgstr "Vous ne pouvez pas supprimer cette ligne. Les montants entrants ne peuve
 #, python-format
 msgid "In the amount selector (from-to), the \"from\" value must be the smallest one."
 msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la plus petite."
+
+#. module: register_accounting
+#: code:addons/register_accounting/report/report_liquidity_position.py:197
+#, python-format
+msgid "Not Created"
+msgstr "Non Créé"
