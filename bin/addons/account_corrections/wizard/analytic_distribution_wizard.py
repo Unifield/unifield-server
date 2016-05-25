@@ -205,11 +205,19 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if old_line:
                     #US-714: For HQ Entries, always create the COR and REV even the period is closed
                     original_al_id = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+                    
                     is_HQ_entries = False
                     if original_al_id and len(original_al_id) == 1:
                         original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
                         if original_al.journal_id.type == 'hq':
                             is_HQ_entries = True
+                        else:
+                            if original_al.move_id and \
+                                original_al.move_id.journal_id.type == 'hq':
+                                # added behaviour for US-714
+                                # US-1343/2: from a HQ JI chain, always use OD
+                                # journal for sequence
+                                is_HQ_entries = True
 
                     # In case it's an HQ entries, just generate the REV and COR
                     if is_HQ_entries:
