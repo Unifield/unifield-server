@@ -171,6 +171,7 @@ class List(TinyWidget):
         
         default_data = kw.get('default_data', [])
         search_text = terp_params.get('_terp_search_text', False)
+        approximation = False
         if not self.source:
             self.source = terp_params.get('_terp_source', None)
         if not default_data and not self.o2m and not self.m2m:
@@ -191,7 +192,7 @@ class List(TinyWidget):
                 else:
                     self.count = len(ids)
             else:
-                self.count = proxy.search_count(search_param, context)
+                self.count, approximation = proxy.approximate_search_count(search_param, context)
 
         if not default_data and self.m2m:
             # prefilter datas for m2m
@@ -250,7 +251,9 @@ class List(TinyWidget):
         self.columns += (self.buttons or 0) and 1
 
         if self.pageable:
-            self.pager = Pager(ids=self.ids, offset=self.offset, limit=self.limit, count=self.count)
+            self.pager = Pager(ids=self.ids, offset=self.offset,
+                    limit=self.limit, count=self.count,
+                    approximation=approximation)
             self.pager._name = self.name
            
         if self.editable and context.get('set_editable'):#Treeview editable by default or set_editable in context

@@ -16,7 +16,7 @@
         </a>
         % endif
         <span class="pager_info" onclick="jQuery('[id=_${name+str(pager_id)}_link_span]').hide(); jQuery('[id=_${name+str(pager_id)}_limit_span]').show();">
-            ${page_info} ${_('of')} ${count}
+            ${page_info} ${_('of')} ${approximation and '~' or ''}${count}
         </span>
         % if next:
         <a href="#next" action="next" relation="${name}" onclick="validate_action(this, pager_action); return false;">
@@ -24,10 +24,10 @@
         <span class="next nav${' ' if next else ' inactive'}">${_("Next >")}</span>
         % if next:
         </a>
-        <a href="#last" action="last" relation="${name}" onclick="validate_action(this, pager_action); return false;">
         % endif
+        % if not approximation:
+        <a href="#last" action="last" relation="${name}" onclick="validate_action(this, pager_action); return false;">
         <span class="last nav ${' ' if next else ' inactive'}">${_("Last >>")}</span>
-        % if next:
         </a>
         % endif
     </p>
@@ -45,7 +45,6 @@
             % for k in pager_options:
                 <option value="${k}" ${py.selector(limit=='${k]}')}>${k}</option>
             % endfor
-            <option value="-1" ${py.selector(limit==-1)}>unlimited</option>
         </select>
     </div>
 </div>
