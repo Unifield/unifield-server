@@ -213,12 +213,14 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
-                                upgrade_module = self.pool.get('sync_client.upgrade')
-                                upgrade_id = upgrade_module.create(cr, uid, {})
-                                upgrade_module.do_upgrade(cr, uid,
-                                        [upgrade_id], sync_type=context.get('sync_type', 'manual'))
-                                raise osv.except_osv(_('Sync aborted'),
-                                        _("Current synchronzation has been aborted because there is some update to install ."))
+                                if automatic_patching:
+                                    upgrade_module = self.pool.get('sync_client.upgrade')
+                                    upgrade_id = upgrade_module.create(cr, uid, {})
+                                    upgrade_module.do_upgrade(cr, uid,
+                                            [upgrade_id], sync_type=context.get('sync_type', 'manual'))
+                                elif not up_to_date[0]:
+                                    raise osv.except_osv(_('Sync aborted'),
+                                            _("Current synchronzation has been aborted because there is some update to install ."))
                     else:
                         context['offline_synchronization'] = True
 
