@@ -45,7 +45,7 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
 
         # view_id == 0 if view generated on fly by openerp because no custom view specified, therefore we will have no rules
         if view_id:
-            search_ids = rules_pool.get_family_ids(cr, view_id)
+            search_ids = rules_pool.get_family_ids(cr, uid, view_id)
         else:
             return super_view_look_dom_arch(self, cr, uid, node, view_id, context)
 
