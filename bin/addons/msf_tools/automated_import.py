@@ -143,12 +143,12 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         (
             'import_function_id_uniq',
             'unique(function_id)',
-            _('Another Automated import with same functionalilyt already exists (maybe inactive). Only one automated import must be created for a '\
+            _('Another Automated import with same functionality already exists (maybe inactive). Only one automated import must be created for a '\
               'same functionality. Please select an other functionality.'),
         ),
         (
             'import_positive_interval',
-            'interval >= 0',
+            'CHECK(interval >= 0)',
             _('Interval number cannot be negative !'),
         ),
     ]
