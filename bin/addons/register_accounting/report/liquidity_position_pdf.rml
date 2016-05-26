@@ -92,8 +92,8 @@
             <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="right">[[ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="text">[[ str(cur) ]]</para></td>
-            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' ]]</para></td>
-            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getFuncCurrencyId(), getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' ]]</para></td>
+            <td><para style="right">[[ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' ]]</para></td>
             <td><para style="text">[[ getFuncCurrency() ]]</para></td>
           </tr>
         </blockTable>

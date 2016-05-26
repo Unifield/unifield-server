@@ -22,6 +22,7 @@
 from report import report_sxw
 import pooler
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+from tools.translate import _
 
 
 class report_liquidity_position3(report_sxw.rml_parse):
@@ -31,6 +32,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.period_id = context.get('period_id', None)
         self.registers = {}
         self.func_currency = {}
+        self.pending_cheques = {}
         self.func_currency_id = 0
         self.total_func_calculated_balance = 0
         self.total_func_register_balance = 0
@@ -39,7 +41,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getRegistersByType': self.getRegistersByType,
             'getPeriod': self.getPeriod,
             'getFuncCurrency': self.getFuncCurrency,
-            'getFuncCurrencyId': self.getFuncCurrencyId,
             'getTotalCalc': self.getTotalCalc,
             'getTotalReg': self.getTotalReg,
             'getReg': self.getRegisters,
@@ -61,17 +62,25 @@ class report_liquidity_position3(report_sxw.rml_parse):
     def getFuncCurrency(self):
         return self.func_currency
 
-    def getFuncCurrencyId(self):
-        return self.func_currency_id
-
     def getPeriod(self):
         return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
 
-    def getConvert(self, cur_id, func_cur_id, amount):
-        cur_ovj = self.pool.get('res.currency')
-        conv = cur_ovj.compute(self.cr, self.uid, cur_id,
-                               func_cur_id, amount or 0.0, round=True)
-        return float(conv)
+    def getConvert(self, cur_id, amount):
+        '''
+        Returns the amount converted from the currency whose id is in parameter into the functional currency
+        '''
+        currency = self.pool.get('res.currency').browse(self.cr, self.uid, cur_id)
+        rate = 1
+        # get the correct exchange rate according to the report period
+        self.cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s "
+                        "ORDER BY name DESC LIMIT 1", (cur_id, self.getPeriod().date_stop))
+        if self.cr.rowcount != 0:
+            rate = self.cr.fetchone()[0]
+        converted_amount = amount / rate
+        rounding = currency.rounding or False
+        if rounding:
+            converted_amount = round(converted_amount / rounding) * rounding
+        return converted_amount
 
     def getRegistersByType(self):
         reg_types = {}
@@ -122,18 +131,14 @@ class report_liquidity_position3(report_sxw.rml_parse):
             # Calcul amounts
             reg_bal = 0
             calc_bal = reg.msf_calculated_balance
-            func_calc_bal = self.getConvert(currency.id,
-                                            journal.company_id.currency_id.id,
-                                            calc_bal)
+            func_calc_bal = self.getConvert(currency.id, calc_bal)
             if reg.journal_id.type == 'bank':
                 reg_bal = reg.balance_end_real
 
             elif reg.journal_id.type == 'cash':
                 reg_bal = reg.balance_end_cash
 
-            func_reg_bal = self.getConvert(currency.id,
-                                           journal.company_id.currency_id.id,
-                                           reg_bal)
+            func_reg_bal = self.getConvert(currency.id, reg_bal)
 
             # Add register to list
             reg_types[journal.type]['registers'].append({
@@ -174,6 +179,24 @@ class report_liquidity_position3(report_sxw.rml_parse):
         reg_data = self.getRegisters()[reg_type]['registers']
         return sum([line['opening_balance'] or 0.0 for line in reg_data if line['currency'] == cur])
 
+    def getRegisterState(self, reg):
+        '''
+        Returns the register state (String) for the period of the report.
+        If the register doesn't exist for this period, returns 'Not Created'.
+        '''
+        pool = pooler.get_pool(self.cr.dbname)
+        reg_obj = pool.get('account.bank.statement')
+        reg_for_selected_period_id = reg_obj.search(self.cr, self.uid, [('name', '=', reg.name),
+                                                                        ('period_id', '=', self.period_id)])
+        if reg_for_selected_period_id:
+            reg_for_selected_period = reg_obj.browse(self.cr, self.uid, reg_for_selected_period_id)[0]
+            # get the value from the selection field ("Closed" instead of "confirm", etc.)
+            state = reg_for_selected_period.state and \
+                    dict(reg_obj._columns['state'].selection).get(reg_for_selected_period.state) or ''
+        else:
+            state = _('Not Created')
+        return state
+
     def getPendingCheques(self):
         '''
         Get the pending cheques data from the selected period AND the previous ones. Gives:
@@ -182,6 +205,8 @@ class report_liquidity_position3(report_sxw.rml_parse):
         - the total amounts per currency in register and functional currency
         - the global total in functional currency
         '''
+        if self.pending_cheques:
+            return self.pending_cheques
         pending_cheques = {
             'registers': {},
             'currency_amounts': {},
@@ -221,8 +246,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
                 pending_cheques['registers'][journal.code] = {
                     'instance': reg.instance_id.name,
                     'journal_name': journal.name,
-                    # for the state, get the value from the selection field ("Closed" instead of "confirm", etc.):
-                    'state': reg.state and dict(reg_obj._columns['state'].selection).get(reg.state) or '',
+                    'state': self.getRegisterState(reg),
                     'bank_journal_code': journal.bank_journal_id.code,
                     'bank_journal_name': journal.bank_journal_id.name,
                     'amount_reg_currency': amount_reg_currency,
@@ -244,7 +268,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
             # Add amount to get the "global" Total for all currencies (in functional currency)
             pending_cheques['total_cheque'] += amount_func_currency
-
+        self.pending_cheques = pending_cheques
         return pending_cheques
 
 
