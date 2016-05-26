@@ -241,22 +241,28 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return res
 
     def _show_node_in_report(self, node):
-        res = True
+        node.displayed = True
         if node.parent is None:
-            return res  # always show root account MSF
-        if self.account_ids or self.account_report_types \
-            or self.unreconciled_filter:
-            res = not node.skip
-            if res:
-                # hide if zero bal and any by account or unreconciled filter on
-                bal = node.data.get('*', {}).get('debit', 0.) \
-                    - node.data.get('*', {}).get('credit', 0.)
-                if bal == 0.:
-                    res = False
+            return node.displayed  # always show root account MSF
 
-        return res
+        if node.is_zero \
+                and (self.account_ids
+                    or self.account_report_types
+                    or self.unreconciled_filter
+                    or self.display_account == 'bal_movement'):
+            # hide zero amounts for above filters on
+            # no movements <=> no amount
+            node.displayed = False
+
+        if node.displayed \
+            and node.is_zero_bal and self.display_account == 'bal_solde':
+            # to filter zero balance
+            node.displayed = False
+
+        return node.displayed
 
     def lines(self, node, initial_balance_mode=False):
+        """ display final account node entries (JIs)"""
         res = []
         #if not node.is_move_level:
         #    return res
@@ -264,11 +270,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
-        if self.display_account in ('bal_solde', 'bal_movement') \
-            and node.zero_bal:
-            # - do not display JIs of a zero balance account if no zero bal
-            #   filter is active (note: debit/credit is not aggregated too)
-            # - do not display with no movement too (so bal 0)
+        if self.display_account == 'bal_solde' and node.is_zero_bal:
+            # balance filter: do not display JIs of a zero balance account
+            return res
+        if self.display_account == 'bal_movement' and node.is_zero:
+            # - do not display with no movement
             return res
         account = node.obj
 

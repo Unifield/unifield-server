@@ -352,7 +352,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endfor
 
+% if o.displayed:
 % for ccy in o.get_currencies():
+## subtotals line
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
@@ -377,6 +379,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 </Row>
 % endfor
+% endif
 
 % endfor
 % endfor
