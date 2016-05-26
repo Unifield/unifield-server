@@ -25,7 +25,7 @@ class wizard_add_cost_centers(osv.osv_memory):
     _description = 'Add Cost Centers'
 
     _columns = {
-        'cost_center_ids': fields.many2many('account.analytic.account', 'wizard_add_cost_centers', 'wizard_id', 'cost_center_id', string='Cost Centers To Synchronize', domain="[('category', '=', 'OC')]", required=True),
+        'cost_center_ids': fields.many2many('account.analytic.account', 'wizard_add_cost_centers', 'wizard_id', 'cost_center_id', string='Cost Centers To Synchronize', domain="[('category', '=', 'OC'), ('is_instance_registered', '=', True)]", required=True),
     }
 
     def add_cost_centers(self, cr, uid, ids, context=None):
