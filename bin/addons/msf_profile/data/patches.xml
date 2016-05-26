@@ -48,5 +48,11 @@
         <record id="us-1273_patch" model="patch.scripts">
             <field name="method">us_1273_patch</field>
         </record>
+
+        <record id="us_838_patch" model="patch.scripts">
+            <field name="method">us_838_migrate_dup_batch</field>
+            <field name="model">stock.production.lot</field>
+        </record>
+
     </data>
 </openerp>
