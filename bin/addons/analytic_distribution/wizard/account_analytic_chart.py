@@ -112,7 +112,8 @@ class account_analytic_chart(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids):
             args = [('filter_active', '=', True)]
             if wiz.show_inactive == True:
-                args += [('filter_active', 'in', [True, False])]
+                args = [('filter_active', 'in', [True, False])]
+            context.update({'filter_inactive': not wiz.show_inactive})
             if wiz.period_from and wiz.period_to and \
                 wiz.period_from.date_start > wiz.period_to.date_start:
                 raise osv.except_osv(_("Warning"),

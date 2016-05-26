@@ -128,9 +128,7 @@ class account_report_general_ledger(osv.osv_memory):
             fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
                 fiscalyear_id, context=context)
             if filter in ('filter_date_doc', 'filter_date', ):
-                ib_available = date_from and date_to \
-                    and date_from == fy_rec.date_start \
-                    and date_to <= fy_rec.date_stop
+                ib_available = date_from and date_from == fy_rec.date_start
             elif filter in 'filter_period':
                 if not period_from or not period_to:
                     ib_available = False

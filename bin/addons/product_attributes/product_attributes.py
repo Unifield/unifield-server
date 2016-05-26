@@ -845,6 +845,7 @@ class product_attributes(osv.osv):
                 ('P1', 'P1 - Psychotrop 1'),
                 ('P3', 'P3 - Psychotrop 3'),
                 ('P4', 'P4 - Psychotrop 4'),
+                ('DP', 'DP - Drug Precursor'),
                 ('Y', 'Y - Kit or module with controlled substance'),
                 ('True', 'CS / NP - Controlled Substance / Narcotic / Psychotropic')
             ],

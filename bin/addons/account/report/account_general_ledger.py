@@ -66,6 +66,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 'show_period_0': 1,
                 'state_agnostic': 1,
             })
+            # US-1197/4: IB entries for yearly closing always in 1th Jan
+            # => get rid of regular period/dates filters for _query_get
+            # => if self.init_balance is True, note that filtering is OK
+            # validated at wizard report level
+            ib_local_context.update({
+                'date_from': False,
+                'date_to': False,
+                'date_fromto_docdate': False,
+                'period_from': False,
+                'period_to': False,
+                'periods': False,
+            })
             self.init_query = obj_move._query_get(self.cr, self.uid, obj='l',
                 context=ib_local_context)
         else:
@@ -138,7 +150,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
-
         if self.account_ids:
             # add parent(s) of filtered accounts
             self.account_ids += self.pool.get('account.account')._get_parent_of(
@@ -226,12 +237,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _show_node_in_report(self, node):
         res = True
-        if self.account_ids or self.unreconciled_filter:
-            # hide if zero bal and any by account or unreconciled filter on
-            bal = node.data.get('*', {}).get('debit', 0.) \
-                - node.data.get('*', {}).get('credit', 0.)
-            if bal == 0.:
-                res = False
+        if node.parent is None:
+            return res  # always show root account MSF
+        if self.account_ids or self.account_report_types \
+            or self.unreconciled_filter:
+            res = not node.skip
+            if res:
+                # hide if zero bal and any by account or unreconciled filter on
+                bal = node.data.get('*', {}).get('debit', 0.) \
+                    - node.data.get('*', {}).get('credit', 0.)
+                if bal == 0.:
+                    res = False
+
         return res
 
     def _get_journals_str(self, data):
@@ -241,8 +258,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def lines(self, node, initial_balance_mode=False):
         res = []
-        if not node.is_move_level:
-            return res
+        #if not node.is_move_level:
+        #    return res
 
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
@@ -393,6 +410,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
             if line:
                 infos.append(line)
+
         return infos and ", \n".join(infos) or _('No Filter')
         
     def _get_line_debit(self, line, booking=False):
@@ -478,6 +496,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else:
                 display_account = _('With balance is not equal to 0')
         info_data.append((_('Accounts'), display_account, ))
+
+        account_ids = list(set(self._get_data_form(data, 'account_ids')))
+        if account_ids:
+            # US-1197/2: display filtered accounts
+            account_obj = self.pool.get('account.account')
+            info_data.append((_('Selected Accounts'), ', '.join(
+                    [ a.code for a in account_obj.browse(
+                        self.cr, self.uid, account_ids) \
+                        if a.type != 'view' ], )))
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
         return ', \n'.join(res)

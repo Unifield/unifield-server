@@ -131,6 +131,15 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
+    def us_1061_patch(self, cr, uid, *a, **b):
+        '''setup the size on all attachment'''
+        attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = attachment_obj.search(cr, uid, [])
+        vals = {}
+        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            if attachment.datas and not attachment.size:
+                vals['size'] = attachment_obj.get_size(attachment.datas)
+                attachment_obj.write(cr, uid, attachment.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
@@ -493,6 +502,50 @@ class patch_scripts(osv.osv):
                 account_obj.write(cr, uid, ids, {
                     'display_in_reports': False,
                 })
+
+    def us_1263_patch(self, cr, uid, *a, **b):
+        ms_obj = self.pool.get('stock.mission.report')
+        msl_obj = self.pool.get('stock.mission.report.line')
+
+        ms_touched = "['name']"
+        msl_touched = "['internal_qty']"
+
+        ms_ids = ms_obj.search(cr, uid, [('local_report', '=', True)])
+        if not ms_ids:
+            return True
+
+        # Touched Mission stock reports
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE model =  'stock.mission.report' AND res_id in %s''', (ms_touched, tuple(ms_ids),))
+        # Touched Mission stock report lines
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE
+                          model = 'stock.mission.report.line'
+                          AND
+                          res_id IN (SELECT l.id
+                                     FROM stock_mission_report_line l
+                                     WHERE
+                                       l.mission_report_id IN %s
+                                       AND (l.internal_qty != 0.00
+                                       OR l.stock_qty != 0.00
+                                       OR l.central_qty != 0.00
+                                       OR l.cross_qty != 0.00
+                                       OR l.secondary_qty != 0.00
+                                       OR l.cu_qty != 0.00
+                                       OR l.in_pipe_qty != 0.00
+                                       OR l.in_pipe_coor_qty != 0.00))''', (msl_touched, tuple(ms_ids)))
+        return True
+
+    def us_1273_patch(self, cr, uid, *a, **b):
+        # Put all internal requests import_in_progress field to False
+        ir_obj = self.pool.get('sale.order')
+        context = {'procurement_request': True}
+        ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
+        if ir_ids:
+            ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
 
 patch_scripts()
 

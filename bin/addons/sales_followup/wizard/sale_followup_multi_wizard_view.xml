@@ -24,6 +24,9 @@
                         <field name="closed_ok" />
                         <field name="cancel_ok" />
                     </group>
+                    <separator colspan="4" string="Report parameters" />
+                    <field name="only_bo" />
+                    <field name="include_notes_ok" />
                     <separator colspan="4" string="Actions" />
                     <button name="print_excel" string="Excel report" icon="gtk-print" type="object" colspan="2" />
                     <button name="print_pdf" string="PDF report" icon="gtk-print" type="object" colspan="2" />

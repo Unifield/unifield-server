@@ -632,7 +632,7 @@ receivable, item have not been corrected, item have not been reversed and accoun
                             # we informs new move line that it have correct a statement line
                             self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)
                             break
-                    else:
+                    elif not st_line.from_cash_return: #US-1044: only update the account on line if the regline is not cash return!
                         #US-303: If not the case, then we inform the new move line that it has corrected a statement line
                         absl_obj.write(cr, uid, [st_line.id], {'account_id': account_id}, context=context)
                         self.write(cr, uid, corrected_line_ids, {'corrected_st_line_id': st_line.id}, context=context)

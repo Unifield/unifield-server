@@ -635,7 +635,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
-        return super(sale_order, self).action_cancel(cr, uid, ids, context=context)
+        res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
+        for order in self.browse(cr, uid, ids, context=context):
+            self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
+                order.procurement_request and  'Internal request' or 'Field order',
+                order.id, order.name,
+            ))
+        return res
 
     #@@@override sale.sale_order._invoiced
     def _invoiced(self, cr, uid, ids, name, arg, context=None):
@@ -1324,8 +1330,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         for order in order_brw_list:
             if not order.procurement_request:
                 self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
+                self.infolog(cr, uid, "The Field order id:%s (%s) has been validated." % (order.id, order.name))
             else:
                 self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
+                self.infolog(cr, uid, "The Internal request id:%s (%s) has been validated." % (order.id, order.name))
 
         return True
 
@@ -1373,7 +1381,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 }, context=context)
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
-                    if not line.product_id:
+                    if not line.product_id and line.supplier.partner_type != 'esc':
                         raise osv.except_osv(_('Warning'), _("""You can't confirm a Sale Order that contains
                         lines with procurement method 'On Order' and without product. Please check the line %s
                         """) % line.line_number)
@@ -1413,6 +1421,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                               'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.') % (selec_name, fo_name))
+                        self.infolog(cr, uid, "The %s split id:%s (%s) has been created." % (
+                            selec_name, split_id, fo_name,
+                        ))
                         split_fo_dic[fo_type] = split_id
                         # For loans, change the subflow
                         if fo_type == 'stock_split_sale_order':
@@ -1526,8 +1537,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         self.write(cr, uid, ids, {'state': 'done',
                                   'active': False}, context=context)
 
-        for order_id in ids:
-            self.infolog(cr, uid, "The splitted FO id:%s has been closed" % order_id)
+        for order in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, "The splitted FO id:%s (%s) has been closed" % (
+                order['id'], order['name'],
+            ))
 
         return True
 
@@ -1945,6 +1958,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
 
+        msg_type = {
+            'in': 'Incoming shipment',
+            'internal': 'Internal picking',
+            'out': {
+                'standard': 'Delivery order',
+                'picking': 'Picking Ticket,'
+            }
+        }
+
         if context is None:
             context = {}
 
@@ -1982,6 +2004,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     if not picking_id:
                         picking_data = self._get_picking_data(cr, uid, order)
                         picking_id = picking_obj.create(cr, uid, picking_data, context=context)
+                        self.infolog(cr, uid, "The %s id:%s (%s) has been created from %s id:%s (%s)." % (
+                            picking_data.get('type', '') == 'out' and \
+                                msg_type.get('out', {}).get(picking_data.get('subtype', ''), '') or \
+                                msg_type.get(picking_data.get('type', ''), ''),
+                            picking_id, picking_data.get('name', ''),
+                            order.procurement_request and 'Internal request' or 'Field order',
+                            order.id, order.name,
+                        ))
 
                     # Get move data and create the move
                     move_data = self._get_move_data(cr, uid, order, line, picking_id, context=context)
@@ -2095,9 +2125,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
                 line_done += 1
                 if line.type == 'make_to_stock':
-                    msg = 'The line id:%s of FO/IR id:%s has been sourced \'from stock\' with the stock.move id:%s' % (
-                            line.id,
-                            line.order_id.id,
+                    msg = 'The line id:%s (line number: %s) of FO/IR id:%s (%s) has been sourced \'from stock\' with the stock.move id:%s' % (
+                            line.id, line.line_number,
+                            line.order_id.id, line.order_id.name,
                             move_id,
                     )
                     self.infolog(cr, uid, msg)
@@ -2247,7 +2277,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
-    def _get_procurement_order_data(self, line, order, rts_date, context=None):
+    def _get_related_sourcing_id(self, line):
+        """
+        Return the ID of the related.sourcing document if any
+        :param line: browse_record of FO/IR line
+        :return: ID of a related.sourcing record or False
+        """
+        if line.related_sourcing_ok and line.related_sourcing_id:
+            return line.related_sourcing_id.id
+
+        return False
+
+    def _get_procurement_order_data(self, line, order, rts_date, product_id=False, context=None):
         """
         Get data for the  procurement order creation according to
         sale.order.line and sale.order values.
@@ -2285,6 +2326,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'company_id': order.company_id.id,
             'supplier': line.supplier and line.supplier.id or False,
             'po_cft': line.po_cft or False,
+            'related_sourcing_id': self._get_related_sourcing_id(line),
             'date_planned': rts_date,
             'from_yml_test': order.from_yml_test,
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
@@ -2310,8 +2352,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
-        if line.product_id:
-            proc_data['product_id'] = line.product_id.id
+        if not product_id and line.product_id:
+            product_id = line.product_id.id
+
+        if product_id:
+            proc_data['product_id'] = product_id
 
         return proc_data
 
@@ -2341,6 +2386,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
         tl_obj = self.pool.get('tender.line')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -2421,9 +2467,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
+                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id):
+                    if not line.product_id and order.procurement_request:
+                        continue
+
+                    product_id = line.product_id.id
+                    if not order.procurement_request and not line.product_id and line.comment:
+                        product_id = \
+                            data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+
                     rts = self._get_date_planned(order, line, prep_lt, db_date_format)
-                    proc_data = self._get_procurement_order_data(line, order, rts, context=context)
+                    proc_data = self._get_procurement_order_data(line, order, rts, product_id=product_id, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
@@ -2510,7 +2564,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Update the context to get IR lines
         context['procurement_request'] = True
 
-        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line'], context=context):
+        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line', 'procurement_request'], context=context):
             if not self._get_ready_to_cancel(cr, uid, [order['id']], order['order_line'], context=context)[order['id']]:
                 return False
 
@@ -2518,15 +2572,21 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if order['from_yml_test']:
                 continue
 
-            line_error = line_obj.search(cr, uid, [
+            domain = [
                 ('order_id', '=', order['id']),
-                ('product_id', '!=', False),
-                ('type', '=', 'make_to_order',),
+                ('type', '=', 'make_to_order'),
                 ('state', '!=', 'confirmed'),
+            ]
+            if order['procurement_request']:
+                domain.append(('product_id', '!=', False))
+
+            domain.extend([
                 '|',
                 ('procurement_id', '=', 'False'),
                 ('procurement_id.state', '!=', 'cancel'),
-            ], limit=1, order='NO_ORDER', context=context)
+            ])
+
+            line_error = line_obj.search(cr, uid, domain, limit=1, order='NO_ORDER', context=context)
 
             if line_error:
                 return False
@@ -2820,16 +2880,30 @@ class sale_order_line(osv.osv):
         lines_to_check = []
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for line in self.read(cr, uid, ids, ['order_id'], context=context):
+
+        lines_to_log = []
+
+        for line in self.browse(cr, uid, ids, context=context):
             ltc_ids = self.search(cr, uid, [
-                ('order_id', '=', line['order_id'][0]),
+                ('order_id', '=', line.order_id.id),
                 ('order_id.state', '=', 'validated'),
-                ('id', '!=', line['id']),
+                ('id', '!=', line.id),
             ], limit=1, context=context)
             if ltc_ids and ltc_ids[0] not in lines_to_check:
                 lines_to_check.append(ltc_ids[0])
 
+            lines_to_log.append((
+                line.id,
+                line.line_number,
+                line.order_id.procurement_request and 'Internal request' or 'Field orer',
+                line.order_id.id,
+                line.order_id.name,
+        ))
+
         res = super(sale_order_line, self).unlink(cr, uid, ids, context=context)
+
+        for ltl in lines_to_log:
+            self.infolog(cr, uid, "The line id:%s (line number: %s) of the %s id:%s (%s) has been deleted." % ltl)
 
         if lines_to_check:
             self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context)

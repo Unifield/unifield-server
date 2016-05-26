@@ -639,6 +639,10 @@ class account_period(osv.osv):
             'period_ids': [(6, 0, ids)]
         }
         res_id = self.pool.get('account.mcdb').create(cr, uid, vals, context=context)
+        module = 'account_mcdb'
+        view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
         return {
             'name': _('G/L Selector'),
             'type': 'ir.actions.act_window',
@@ -647,6 +651,7 @@ class account_period(osv.osv):
             'target': 'current',
             'view_mode': 'form,tree',
             'view_type': 'form',
+            'view_id': [view_id],
             'context': context,
         }
 
@@ -669,6 +674,54 @@ class account_period(osv.osv):
             'view_type': 'form',
             'context': context,
             'domain': [('state', 'in', ['draft', 'open']), ('period_id', 'in', ids)]
+        }
+
+    def button_revaluation(self, cr, uid, ids, context=None):
+        """
+        Open Revaluation menu (by default Month End Revaluation for the period to be closed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        period = self.browse(cr, uid, ids, context=context)[0]
+        vals = {
+            'revaluation_method': 'liquidity_month',
+            'period_id': period.id,
+            'fiscalyear_id': period.fiscalyear_id.id,
+            'result_period_id': period.id,
+            'posting_date': period.date_stop,
+        }
+        res_id = self.pool.get('wizard.currency.revaluation').create(cr, uid, vals, context=context)
+        return {
+            'name': _('Revaluation'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.currency.revaluation',
+            'res_id': res_id,
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def button_accrual_reversal(self, cr, uid, ids, context=None):
+        """
+        Open Accruals Management menu with activated filter "Partially Posted"
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        context.update({'search_default_partially_posted': 1,
+                        'search_default_draft': 0})
+        return {
+            'name': _('Accruals Management'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'msf.accrual.line',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
         }
 
 account_period()

@@ -118,10 +118,16 @@ class BackupConfig(osv.osv):
             bck = bkp[0]
             try:
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
+                version = self.get_server_version(cr, uid, context=context)
                 outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
                         (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
-                            suffix, self.get_server_version(cr, uid,
-                                context=context)))
+                            suffix, version))
+                version_instance_module = self.pool.get('sync.version.instance.monitor')
+                vals = {'version': version,
+                        'backup_path': outfile}
+
+                version_instance_module.create(cr, uid, vals, context=context)
+
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
             except Exception, e:

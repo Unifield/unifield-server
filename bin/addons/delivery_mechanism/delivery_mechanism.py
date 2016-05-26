@@ -1302,6 +1302,10 @@ class stock_picking(osv.osv):
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'close_in': _('Done'),
                 }, context=context)
+                bo_name = self.read(cr, uid, backorder_id, ['name'], context=context)['name']
+                self.infolog(cr, uid, "The Incoming Shipment id:%s (%s) has been processed. Backorder id:%s (%s) has been created." % (
+                    backorder_id, bo_name, picking.id, picking.name,
+                ))
             else:
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'create_bo': _('N/A'),
@@ -1325,6 +1329,9 @@ class stock_picking(osv.osv):
                 prog_id = self.update_processing_info(cr, uid, picking, prog_id, {
                     'close_in': _('Done'),
                 }, context=context)
+                self.infolog(cr, uid, "The Incoming Shipment id:%s (%s) has been processed." % (
+                    picking.id, picking.name,
+                ))
 
             if not sync_in:
                 move_obj.action_assign(cr, uid, processed_out_moves)
@@ -1589,7 +1596,7 @@ class procurement_order(osv.osv):
         # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
         sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
-            if sol.order_id.procurement_request and not sol.product_id and sol.comment:
+            if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
                              'comment': sol.comment,

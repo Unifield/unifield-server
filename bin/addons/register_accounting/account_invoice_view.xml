@@ -141,7 +141,7 @@
             <field name="inherit_id" eval="False" />
             <field name="priority">250</field>
             <field name="arch" type="xml">
-                <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1" hide_edit_button="1" hide_delete_button="1" noteditable="1">
+                <form string="Supplier Invoice" hide_save_button="1" hide_duplicate_button="1" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
                     <group colspan="4" col="8">
                         <field name="is_direct_invoice" invisible="1" readonly="1"/>
                         <field name="journal_id" on_change="onchange_journal_id(journal_id)" widget="selection" attrs="{'readonly': [('is_direct_invoice', '=', True)]}" />
@@ -161,14 +161,6 @@
                         <newline/>
                         <label string="" colspan="4"/>
                         <field name="amount_total"/>
-                    </group>
-                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}">
-                      <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
-                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
-                    </group>
-                    <group colspan="8" col="8" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}">
-                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
-                        <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" states="draft"/>
                     </group>
                     <field name="analytic_distribution_id" invisible="1"/>
                     <group colspan="2"/>
@@ -200,10 +192,6 @@
                                     <field name="inactive_product" invisible="1"  />
                                 </tree>
                             </field>
-                            <group col="4" colspan="4">
-                                <button string="Compute Total" name="button_dummy_compute_total" type="object" icon='gtk-execute' colspan="4" states="draft,open"/>
-                                <button name="button_close_direct_invoice" string="Validate" icon="terp-camera_test" type="object" colspan="4" states="draft,open"/>
-                            </group>
                         </page>
                         <page string="Other Info">
                             <field domain="[('partner_id', '=', partner_id)]" name="partner_bank_id" on_change="onchange_partner_bank(partner_bank_id)" attrs="{'readonly': [('is_direct_invoice', '=', True),('state','=','paid')]}"/>
@@ -328,7 +316,8 @@
                         <field name="supplier_reference"/>
                     </field>
                     <field name="journal_id" position="replace">
-                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
+                               on_change="onchange_journal_id(journal_id)"/>
                         <field name="vat_ok" invisible="1" />
                     </field>
                     <button name="action_cancel_draft" position="replace"/>

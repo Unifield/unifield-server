@@ -294,11 +294,10 @@ class product_product(osv.osv):
             
         partner_price = self.pool.get('pricelist.partnerinfo')
         info_prices = []
-                
+        suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', product.product_tmpl_id.id)], context=context)
         domain = [('min_quantity', '<=', product_qty),
                   ('uom_id', '=', product_uom_id),
-                  ('partner_id', '=', partner_id),
-                  ('product_id', '=', product.product_tmpl_id.id),
+                  ('suppinfo_id', 'in', suppinfo_ids),
                   '|', ('valid_from', '<=', order_date),
                   ('valid_from', '=', False),
                   '|', ('valid_till', '>=', order_date),
