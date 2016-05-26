@@ -190,12 +190,23 @@ class import_data(osv.osv_memory):
         'import_mode': lambda *a: 'create',
     }
 
-    def _import(self, dbname, uid, ids, context=None):
+    def _import(self, cr, uid, ids, context=None, use_new_cursor=True, auto_import=False):
         """if context includes 'import_data_field_max_size' dict,
         this dict specifies the max tolerated field length at import
         (key: field name, value: field size)
         """
-        cr = pooler.get_db(dbname).cursor()
+        dbname = cr.dbname
+        if use_new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        processed = []
+        rejected = []
 
         obj = self.read(cr, uid, ids[0])
         import_mode = obj.get('import_mode')
@@ -282,7 +293,9 @@ WHERE n3.level = 3)
                 self._cache[dbname]['product.international.status']['name'].update({iv['name']: iv['id']})
 
         errorfile = TemporaryFile('w+')
-        writer = csv.writer(errorfile, quotechar='"', delimiter=';')
+        writer = False
+        if not auto_import:
+            writer = csv.writer(errorfile, quotechar='"', delimiter=';')
 
         fields_def = impobj.fields_get(cr, uid, context=context)
         i = 0
@@ -342,6 +355,13 @@ WHERE n3.level = 3)
 
             raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
 
+        def write_error_row(row, index, error=""):
+            if not auto_import and writer:
+                row.append(error)
+                writer.writerow(row)
+            else:
+                rejected.append((index, row, error))
+
         i = 1
         nb_error = 0
         nb_succes = 0
@@ -350,7 +370,8 @@ WHERE n3.level = 3)
         if self.pre_hook.get(impobj._name):
             # for headers mod.
             col_datas = self.pre_hook[impobj._name](impobj, cr, uid, headers, {}, col_datas)
-        writer.writerow(headers)
+        if not auto_import and writer:
+            writer.writerow(headers)
 
         for row in reader:
             newo2m = False
@@ -394,9 +415,8 @@ WHERE n3.level = 3)
                                 logging.getLogger('import data').info(
                                     'Error %s'% (msg, ))
                                 cr.rollback()
-                                row.append("Line %s, row: %s, %s" % (i, n,
-                                    msg, ))
-                                writer.writerow(row)
+                                error = "Line %s, row: %s, %s" % (i, n, msg, )
+                                write_error_row(row, i, error)
                                 nb_error += 1
                                 line_ok = False
                                 break
@@ -464,62 +484,64 @@ WHERE n3.level = 3)
                     impobj.create(cr, uid, data, context={'from_import_menu': True})
                     nb_succes += 1
                     cr.commit()
+                processed.append((i, row))
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s'%e.value)
                 cr.rollback()
-                row.append("Line %s, row: %s, %s"%(i, n, e.value))
-                writer.writerow(row)
+                error = "Line %s, row: %s, %s"%(i, n, e.value)
+                write_error_row(row, i, error)
                 nb_error += 1
             except Exception, e:
                 cr.rollback()
                 logging.getLogger('import data').info('Error %s'%e)
-                row.append("Line %s, row: %s, %s"%(i, n, e))
-                writer.writerow(row)
+                error = "Line %s, row: %s, %s"%(i, n, e)
+                write_error_row(row, i, error)
                 nb_error += 1
 
         if self.post_load_hook.get(impobj._name):
             self.post_load_hook[impobj._name](impobj, cr, uid)
         fileobj.close()
-        import_type = 'Import'
-        if import_mode == 'update':
-            import_type = 'Update'
-            summary = '''Datas Import Summary:
-Object: %s
-Records updated: %s
-Records created: %s
-'''%(objname, nb_update_success, nb_succes)
-        else:
-            summary = '''Datas Import Summary:
-Object: %s
-Records created: %s
-'''%(objname, nb_succes)
+        if not auto_import:
+            import_type = 'Import'
+            if import_mode == 'update':
+                import_type = 'Update'
+                summary = '''Datas Import Summary:
+    Object: %s
+    Records updated: %s
+    Records created: %s
+    '''%(objname, nb_update_success, nb_succes)
+            else:
+                summary = '''Datas Import Summary:
+    Object: %s
+    Records created: %s
+    '''%(objname, nb_succes)
 
-        if nb_error:
-            summary += '''Records rejected: %s
+            if nb_error:
+                summary += '''Records rejected: %s
 
-Find in attachment the rejected lines'''%(nb_error)
+    Find in attachment the rejected lines'''%(nb_error)
 
-        request_obj = self.pool.get('res.request')
-        req_id = request_obj.create(cr, uid,
-            {'name': "%s %s"%(import_type, objname,),
-            'act_from': uid,
-            'act_to': uid,
-            'body': summary,
-            })
-        if req_id:
-            request_obj.request_send(cr, uid, [req_id])
+            request_obj = self.pool.get('res.request')
+            req_id = request_obj.create(cr, uid,
+                {'name': "%s %s"%(import_type, objname,),
+                'act_from': uid,
+                'act_to': uid,
+                'body': summary,
+                })
+            if req_id:
+                request_obj.request_send(cr, uid, [req_id])
 
-        if nb_error:
-            errorfile.seek(0)
-            attachment = self.pool.get('ir.attachment')
-            attachment.create(cr, uid, {
-                'name': 'rejected-lines.csv',
-                'datas_fname': 'rejected-lines.csv',
-                'description': 'Rejected Lines',
-                'res_model': 'res.request',
-                'res_id': req_id,
-                'datas': base64.encodestring(errorfile.read()),
-            })
+            if nb_error:
+                errorfile.seek(0)
+                attachment = self.pool.get('ir.attachment')
+                attachment.create(cr, uid, {
+                    'name': 'rejected-lines.csv',
+                    'datas_fname': 'rejected-lines.csv',
+                    'description': 'Rejected Lines',
+                    'res_model': 'res.request',
+                    'res_id': req_id,
+                    'datas': base64.encodestring(errorfile.read()),
+                })
 
         if impobj == 'product.product':
             # Clear the cache
@@ -528,10 +550,14 @@ Find in attachment the rejected lines'''%(nb_error)
 
         errorfile.close()
         cr.commit()
-        cr.close(True)
+        if use_new_cursor:
+            cr.close(True)
+
+        if auto_import:
+            return processed, rejected, headers
 
     def import_csv(self, cr, uid, ids, context=None):
-        thread = threading.Thread(target=self._import, args=(cr.dbname, uid, ids, context))
+        thread = threading.Thread(target=self._import, args=(cr, uid, ids, context))
         thread.start()
         return {'type': 'ir.actions.act_window_close'}
 

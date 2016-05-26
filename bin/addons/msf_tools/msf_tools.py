@@ -624,10 +624,7 @@ class ir_translation(osv.osv):
         tr_split = name.split(',')
         res_id = self.pool.get('ir.model.data').find_sd_ref(cr, 1, sdref, field='res_id', context=context)
         if res_id and tr_split[0] == 'product.template':
-            prod = self.pool.get('product.product').read(cr, 1, [res_id], ['product_tmpl_id'], context=context)
-            if not prod:
-                return False
-            prod = prod[0]
+            prod = self.pool.get('product.product').read(cr, 1, [res_id], ['product_tmpl_id'], context=context)[0]
             if prod['product_tmpl_id']:
                 return prod['product_tmpl_id'][0]
         return res_id

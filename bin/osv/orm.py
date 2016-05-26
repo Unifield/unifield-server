@@ -48,6 +48,7 @@ import re
 import time
 import traceback
 import types
+import csv
 
 import netsvc
 from lxml import etree
@@ -744,6 +745,48 @@ class orm_template(object):
         for row in self.browse(cr, uid, ids, context):
             datas += self.__export_row(cr, uid, row, fields_to_export, context)
         return {'datas': datas}
+
+    def import_data_with_wizard(self, cr, uid, csv_file, quotechar="'", delimiter=","):
+        import base64
+
+        import_obj = self.pool.get('import_data')
+        import_id = import_obj.create(cr, uid, {
+            'ignore': 1,
+            'file': base64.encodestring(open(csv_file, 'r').read()),
+            'object': self._name,
+            'import_mode': 'create',
+        })
+        processed, rejected, headers = import_obj._import(cr, uid, import_id, use_new_cursor=False, auto_import=True)
+        return processed, rejected, headers
+
+    def import_data_from_csv(self, cr, uid, csv_file, quotechar='"', delimiter=','):
+        headers = []
+        list_data = []
+        with open(csv_file, 'r') as fcsv:
+            reader = csv.reader(fcsv, quotechar=quotechar, delimiter=delimiter)
+            for row in reader:
+                if not headers:
+                    headers = row
+                else:
+                    list_data.append(row)
+
+        rejected = []
+        processed = []
+        i = 1
+        for d in list_data:
+            i += 1
+            try:
+                res = self.import_data(cr, uid, headers, [d])
+                if res[0] == -1:
+                    rejected.append((i, d, res[2]))
+                else:
+                    processed.append((i, d))
+                cr.commit()
+            except Exception as e:
+                rejected.append((i, d, str(e)))
+                cr.commit()
+
+        return processed, rejected, headers
 
     def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
         """
