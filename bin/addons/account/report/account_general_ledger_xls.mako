@@ -227,7 +227,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
-    <Data ss:Type="String">${(get_prop_instances(data) or '')|x}</Data>
+    <Data ss:Type="String">${(get_prop_instances() or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
