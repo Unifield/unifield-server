@@ -147,6 +147,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     self.init_query = instance_ids_in
                 else:
                     self.init_query += ' AND ' + instance_ids_in
+        # selected instance ids display / filtering in journal:
+        # - mission if no instance selected (<=> no instance filter in query)
+        # - user selected instances
+        self.selected_instance_ids = self.instance_ids or \
+            self._get_instances(get_code=False, mission_filter=True) or []
 
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
@@ -200,7 +205,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_line_credit': self._get_line_credit,
             'get_line_balance': self._get_line_balance,
             'currency_conv': self._currency_conv,
-            'get_prop_instances': self._get_prop_instances,
+            'get_prop_instances': self._get_prop_instances_str,
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
@@ -250,11 +255,6 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     res = False
 
         return res
-
-    def _get_journals_str(self, data):
-        if 'all_journals' in data['form']:
-            return _('All Journals')
-        return ', '.join(self._get_journal(data))
 
     def lines(self, node, initial_balance_mode=False):
         res = []
@@ -449,18 +449,16 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             amount = 0.
         return amount
         
-    def _get_prop_instances(self, data):
-        instances = []
-        if data.get('form', False):
-            if data['form'].get('instance_ids', False):
-                self.cr.execute('select code from msf_instance where id IN %s',
-                    (tuple(data['form']['instance_ids']),))
-                instances = [x for x, in self.cr.fetchall()]
-            else:
-                # US-1166: mission only instances if none provided
-                instances = self._get_instances(get_code=True,
-                    mission_filter=True)
-        return ', '.join(instances)
+    def _get_prop_instances_str(self):
+        return ', '.join([ i.code \
+            for i in self.pool.get('msf.instance').browse(self.cr, self.uid, self.selected_instance_ids) \
+            if i.code ])
+            
+    def _get_journals_str(self, data):
+        if 'all_journals' in data['form']:
+            return _('All Journals')
+        return ', '.join(list(set(self._get_journal(data,
+            instance_ids=self.selected_instance_ids))))
 
     # internal filter functions
     def _get_data_form(self, data, key, default=False):
