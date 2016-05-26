@@ -280,8 +280,8 @@ class analytic_distribution_wizard(osv.osv_memory):
         
 
         keep_seq_and_corrected = False
-        period_closed = is_HQ_origin or ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
-        if period_closed and to_create and (to_override or to_delete or any_reverse):
+        period_closed =  ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
+        if (period_closed or is_HQ_origin) and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
                 for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref', 'reversal_origin']):
@@ -311,17 +311,18 @@ class analytic_distribution_wizard(osv.osv_memory):
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
-            if period_closed:
-                create_date = wizard.date
+            if period_closed or is_HQ_origin:
+                if period_closed:
+                    create_date = wizard.date
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
-                    create_date = keep_seq_and_corrected[2]
+                    create_date = keep_seq_and_corrected[2]  # is_HQ_origin keep date too
                     if keep_seq_and_corrected[4]:
                         name = self.pool.get('account.analytic.line').join_without_redundancy(keep_seq_and_corrected[4], 'COR')
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             # Set right analytic correction journal to these lines
-            if period_closed:
+            if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
                 sql_data = [correction_journal_id]
                 if keep_seq_and_corrected:
