@@ -167,6 +167,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
         entry_seq_data = {}
+        is_HQ_origin = False
 
         # US-676: check wizard lines total matches JI amount
         # the wizard already check distri is 100% allocated
@@ -211,14 +212,12 @@ class analytic_distribution_wizard(osv.osv_memory):
                         original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
                         if original_al.journal_id.type == 'hq':
                             is_HQ_entries = True
-                        else:
-                            if original_al.move_id and \
-                                original_al.move_id.journal_id.type == 'hq':
-                                # added behaviour for US-714
-                                # US-1343/2: from a HQ JI chain, always use OD
-                                # journal for sequence
-                                is_HQ_entries = True
-
+                        elif original_al.move_id and \
+                            original_al.move_id.journal_id.type == 'hq':
+                            # US-1343/2: flag that the chain origin is an HQ
+                            # entry: in other terms OD AJI from a HQ JI
+                            is_HQ_origin = True
+ 
                     # In case it's an HQ entries, just generate the REV and COR
                     if is_HQ_entries:
                         to_reverse.append(wiz_line)
@@ -278,8 +277,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             else:
                 to_delete.append(wiz_line)
 
+        
+
         keep_seq_and_corrected = False
-        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
+        period_closed = is_HQ_origin or ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
         if period_closed and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
@@ -288,6 +289,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         rev_name = ana['reversal_origin'] and ana['reversal_origin'][1] or ana['last_corrected_id'] and ana['last_corrected_id'][1] or False
                         keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'], ana['ref'], rev_name)
                         break
+                        
         #####
         ## FP: TO CREATE
         ###
