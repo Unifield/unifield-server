@@ -88,7 +88,7 @@ class button_access_rule(osv.osv):
                 vals['name'] = new_name
         return super(button_access_rule, self).write(cr, uid, ids, vals, context)
 
-    def _get_family_ids(self, cr, view_id):
+    def get_family_ids(self, cr, view_id):
         """
         Return a list of ids for all the children of view_id (and contains the view_id itself)
         """
