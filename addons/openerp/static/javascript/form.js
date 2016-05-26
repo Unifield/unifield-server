@@ -20,6 +20,60 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 var form_controller;
+
+function showBtnSdref(ev, btn_name, btn_model, btn_id, src)
+{
+    if(ev.ctrlKey === true) {
+        var prefix = src && src != '_terp_list' ? src + '/' : '';
+        if (prefix !== '') {
+            // In case of one2many, get the o2m view id and the parent model
+            o2m_view_id = openobject.dom.get(prefix + '_terp_view_id').value;
+            o2m_model = openobject.dom.get(prefix + '_terp_model').value;
+            parent_model = openobject.dom.get('_terp_model').value;
+            parent_view_id = openobject.dom.get('_terp_view_id').value;
+
+            if (o2m_view_id === 'False' || o2m_view_id === false) {
+                view_id = parent_view_id;
+                btn_model = parent_model;
+            }
+            else {
+                view_id = o2m_view_id;
+                btn_model = o2m_model;
+            }
+        }
+        else {
+            view_id = openobject.dom.get('_terp_view_id').value;
+            if (btn_model === false || btn_model === '') {
+                btn_model = openobject.dom.get('_terp_model').value;
+            }
+        }
+
+        openobject.http.postJSON('/openerp/form/display_button_sd_ref', {
+            'view_id': view_id,
+            'btn_name': btn_name,
+            'btn_model': btn_model,
+            'btn_id': btn_id,
+        }).addCallback(function(obj){
+            if (obj.admin === true) {
+                model_name_msg = obj.model != false ? obj.model : 'No model found';
+                model_sdref_msg = obj.model_sdref != false ? obj.model_sdref : 'No model found';
+                btn_name_msg = obj.name != false ? obj.name : 'No button found';
+                btn_id_msg = obj.btn_id != false ? obj.btn_id : 'No button found';
+                bar_sdref_msg = obj.bar_sdref != false ? obj.bar_sdref : 'No BAR found';
+
+                alert(
+                    'Model name: ' + model_name_msg + '\n' + 
+                    'Model SDRef: ' + model_sdref_msg + '\n' + 
+                    'Button name: ' + btn_name_msg + '\n' + 
+                    //'Button ID: ' + btn_id_msg + '\n' + 
+                    'BAR SDRef: ' + bar_sdref_msg
+                );
+            }
+        });
+        ev.preventDefault();
+    }
+}
+
 function get_form_action(action, params){
     var act = typeof(form_controller) == 'undefined' ? '/openerp/form' : form_controller;
     act = action && action.indexOf('/') == 0 ? action : act + '/' + action;

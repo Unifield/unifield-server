@@ -276,6 +276,60 @@ class Form(SecuredController):
     def close_or_disable_tips(self):
         rpc.RPCProxy('res.users').write(rpc.session.uid,{'menu_tips':False}, rpc.session.context)
 
+    def get_sd_ref(self, model, res_id):
+        """
+        Get the sdref of the record
+        """
+        data_pool = rpc.RPCProxy('ir.model.data')
+        data_ids = data_pool.search([
+            ('model', '=', model),
+            ('res_id', '=', res_id)
+        ])
+        if not data_ids:
+            return False
+
+        return data_pool.read(data_ids[0], ['name'])['name']
+
+    @expose('json', methods=('POST',))
+    def display_button_sd_ref(self, view_id, btn_name, btn_model, btn_id):
+        """
+        Get sdref values of Button Access Rule and Model
+        :param view_id: The ID of the ir.ui.view where the button is on
+        :param btn_name: Name of the button to get values
+        :param btn_model: Name (model) of the ir.model on which the button act
+        :param btn_id: ID of the button
+        """
+        bar_sdref = ''
+        model_sdref = ''
+
+        # If the user is not the administrator, don't display values
+        if rpc.session.uid != 1:
+            return dict(admin=False)
+
+        rules_pool = rpc.RPCProxy('msf_button_access_rights.button_access_rule')
+        model_pool = rpc.RPCProxy('ir.model')
+
+        if btn_name and view_id:
+            view_ids = rules_pool.get_family_ids(int(view_id))
+            if not view_ids:
+                view_ids = [view_id]
+
+            rule_ids = rules_pool.search([
+                ('name', '=', btn_name),
+                ('view_id', 'in', view_ids),
+            ])
+
+            if rule_ids:
+                bar_sdref = self.get_sd_ref('msf_button_access_rights.button_access_rule', rule_ids[0])
+
+        model_ids = model_pool.search([
+            ('model', '=', btn_model)
+        ])
+        if model_ids:
+            model_sdref = self.get_sd_ref('ir.model', model_ids[0])
+
+        return dict(model=btn_model, name=btn_name, btn_id=btn_id, bar_sdref=bar_sdref, model_sdref=model_sdref, admin=True)
+
     def _read_form(self, context, count, domain, filter_domain, id, ids, kw,
                    limit, model, offset, search_data, search_domain, source,
                    view_ids, view_mode, view_type, notebook_tab, o2m_edit=False,
