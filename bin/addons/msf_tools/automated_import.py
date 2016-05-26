@@ -31,6 +31,45 @@ from tools.translate import _
 class automated_import(osv.osv):
     _name = 'automated.import'
 
+    def _check_paths(self, cr, uid, ids, context=None):
+        """
+        Check if given paths are accessible and make checks that src path is not same path as report or dest path.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of automated.import on which checks are made
+        :param context: Context of the call
+        :return: Return True or raise an error
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for imp_brw in self.browse(cr, uid, ids, context=context):
+            for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
+                if imp_brw[path[0]]:
+                    self.path_is_accessible(imp_brw[path[0]], path[1])
+
+            if imp_brw.src_path:
+                if imp_brw.src_path == imp_brw.dest_path:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You cannot have same directory for \'Source Path\' and \'Destination Path\''),
+                    )
+                if imp_brw.src_path == imp_brw.report_path:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('You cannot have same directory for \'Source Path\' and \'Report Path\''),
+                    )
+            if imp_brw.active and not (imp_brw.src_path and imp_brw.dest_path and imp_brw.report_path):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Before activation, the different paths should be set.')
+                )
+
+        return True
+
     _columns = {
         'name': fields.char(
             size=128,
@@ -95,61 +134,28 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         'priority': lambda *a: 10,
     }
 
-    def unique_import_by_name(self, cr, uid, name, ids=None, context=None):
-        """
-        Check if no other automated.import with same name exists in the system
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param name: Name of the automated.import to check
-        :param ids: List of ID of automated.import on which the test is made
-        :param context: Context of the call
-        :return: True or raise an error.
-        """
-        if context is None:
-            context = {}
+    _sql_constraints = [
+        (
+            'import_name_uniq',
+            'unique(name)',
+            _('Another Automated import with same name already exists (maybe inactive). Automated import name must be unique. Please select an other name.'),
+        ),
+        (
+            'import_function_id_uniq',
+            'unique(function_id)',
+            _('Another Automated import with same functionalilyt already exists (maybe inactive). Only one automated import must be created for a '\
+              'same functionality. Please select an other functionality.'),
+        ),
+        (
+            'import_positive_interval',
+            'interval >= 0',
+            _('Interval number cannot be negative !'),
+        ),
+    ]
 
-        if ids and isinstance(ids, (int, long)):
-            ids = [ids]
-
-        src_domain = [('name', '=', name), ('active', 'in', ['t', 'f'])]
-        if ids:
-            src_domain.append(('id', 'not in', ids))
-        if self.search(cr, uid, src_domain, limit=1, order='NO_ORDER', context=context):
-            raise osv.except_osv(
-                _('Error'),
-                _('''Another Automated import with same name already exists (maybe inactive). Automated import name
-must be unique. Please select an other name.'''),
-            )
-
-        return True
-
-    def unique_import_by_function(self, cr, uid, function_id, ids=None, context=None):
-        """
-        Check if no other automated.import with same fuctionality exists in the system
-        :param cr: Cursor to the database
-        :param uid: ID of the res.users that calls the method
-        :param function_id: Functionality of the automated.import to check
-        :param ids: List of ID of automated.import on which the test is made
-        :param context: Context of the call
-        :return: True or raise an error.
-        """
-        if context is None:
-            context = {}
-
-        if ids and isinstance(ids, (int, long)):
-            ids = [ids]
-
-        src_domain = [('function_id', '=', function_id), ('active', 'in', ['t', 'f'])]
-        if ids:
-            src_domain.append(('id', 'not in', ids))
-        if self.search(cr, uid, src_domain, limit=1, order='NO_ORDER', context=context):
-            raise osv.except_osv(
-                _('Error'),
-                _('''Another Automated import with same functionality already exists (maybe inactive). Only one
-automated import must be created for a same functionality. Please select an other functionality.'''),
-            )
-
-        return True
+    _constraints = [
+        (_check_paths, _('There is a problem with paths'), ['active', 'src_path', 'dest_path', 'report_path']),
+    ]
 
     def job_in_progress(self, cr, uid, ids, context=None):
         """
@@ -313,44 +319,6 @@ automated import must be created for a same functionality. Please select an othe
         if context is None:
             context = {}
 
-        # Make some checks
-        if vals.get('name', False):
-            self.unique_import_by_name(cr, uid, vals.get('name', False), context=context)
-
-        if vals.get('function_id', False):
-            self.unique_import_by_function(cr, uid, vals.get('function_id', False), context=context)
-
-        for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-            if vals.get(path[0]):
-                self.path_is_accessible(vals.get(path[0]), path[1])
-
-        src_path = vals.get('src_path')
-        dest_path = vals.get('dest_path')
-        report_path = vals.get('report_path')
-        if src_path:
-            if src_path == dest_path:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('You cannot have same directory for \'Source Path\' and \'Destination Path\''),
-                )
-            if src_path == report_path:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('You cannot have same directory for \'Source Path\' and \'Report Path\''),
-                )
-
-        if vals.get('active') and not (src_path and dest_path and report_path):
-            raise osv.except_osv(
-                _('Error'),
-                _('Before activation, the different paths should be set.')
-            )
-
-        if vals.get('interval', 0.00) < 0:
-            raise osv.except_osv(
-                _('Error'),
-                _('Interval number cannot be negative !'),
-            )
-
         # Call the super create
         new_id = super(automated_import, self).create(cr, uid, vals, context=context)
 
@@ -381,47 +349,9 @@ automated import must be created for a same functionality. Please select an othe
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # Make some checks
-        if vals.get('name', False):
-            self.unique_import_by_name(cr, uid, vals.get('name', False), ids, context=context)
-
-        if vals.get('function_id', False):
-            self.unique_import_by_function(cr, uid, vals.get('function_id', False), ids, context=context)
-
-        if vals.get('interval', 0.00) < 0:
-            raise osv.except_osv(
-                _('Error'),
-                _('Interval number cannot be negative !'),
-            )
-
         res = super(automated_import, self).write(cr, uid, ids, vals, context=context)
 
         for import_brw in self.browse(cr, uid, ids, context=context):
-            for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-                if vals.get(path[0], import_brw[path[0]]):
-                    self.path_is_accessible(vals.get(path[0], import_brw[path[0]]), path[1])
-
-            src_path = vals.get('src_path', import_brw.src_path)
-            dest_path = vals.get('dest_path', import_brw.dest_path)
-            report_path = vals.get('report_path', import_brw.report_path)
-            if src_path:
-                if src_path == dest_path:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('You cannot have same directory for \'Source Path\' and \'Destination Path\''),
-                    )
-                if src_path == report_path:
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('You cannot have same directory for \'Source Path\' and \'Report Path\''),
-                    )
-
-            if vals.get('active', import_brw.active) and not (src_path and dest_path and report_path):
-                raise osv.except_osv(
-                    _('Error'),
-                    _('Before activation, the different paths should be set.')
-                )
-
             cron_vals = self._generate_ir_cron(import_brw)
             if import_brw.cron_id:
                 cron_obj.write(cr, uid, [import_brw.cron_id.id], cron_vals, context=context)
