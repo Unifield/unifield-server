@@ -218,9 +218,8 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                     upgrade_id = upgrade_module.create(cr, uid, {})
                                     upgrade_module.do_upgrade(cr, uid,
                                             [upgrade_id], sync_type=context.get('sync_type', 'manual'))
-                                elif not up_to_date[0]:
                                     raise osv.except_osv(_('Sync aborted'),
-                                            _("Current synchronzation has been aborted because there is some update to install ."))
+                                            _("Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."))
                     else:
                         context['offline_synchronization'] = True
 
