@@ -629,11 +629,13 @@ class sync_manager(osv.osv):
                             'sequence_number' : integer : Sequence number of the rule,
                             'included_fields' : string : list of fields to include, same format as the one needed for export data
                         }
-                    
+
         """
+        if self.pool.get('res.company').search(cr, uid, [('sync_lock', '=', True)], limit=1, order='NO_ORDER', context=context):
+            return (False, _('Patch installation is in progress on Synchronization server. It doesn\'t accept new synchronization for now. Please re-try later.'))
         res = self.pool.get('sync_server.sync_rule')._get_rule(cr, uid, entity, context=context)
         return (True, res[1], get_md5(res[1]))
-        
+
     @check_validated
     def receive_package(self, cr, uid, entity, packet, context=None):
         """

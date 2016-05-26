@@ -19,34 +19,27 @@
 #
 ##############################################################################
 
+from osv import osv
+from osv import fields
 
-{
-    'name': 'Synchronization Utility Server',
-    'version': '0.1',
-    'category': 'Tools',
-    'description': """
-        
-    """,
-    'author': 'OpenERP SA',
-    'website': 'http://openerp.com',
-    'depends': ['sync_common', 'msf_tools'],
-    'init_xml': [],
-    'data': [
-        'sync_server_view.xml',
-        'update_view.xml',
-        'message_view.xml',
-        'rules_view.xml',
-        'res_company_view.xml',
-        'security/ir.model.access.csv',
-        'data/cron.xml',
-        'data/alert_email.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test':[
-    ],
-    'installable': True,
-}
 
-# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
+class res_company(osv.osv):
+    _inherit = 'res.company'
 
+    _columns = {
+        'sync_lock': fields.boolean(
+            string='Synchronization locked',
+        ),
+    }
+
+    _defaults = {
+        'sync_lock': False,
+    }
+
+    def lock(self, cr, uid, ids, context=None):
+        return self.write(cr, uid, ids, {'sync_lock': True}, context=context)
+
+    def unlock(self, cr, uid, ids, context=None):
+        return self.write(cr, uid, ids, {'sync_lock': False}, context=context)
+
+res_company()

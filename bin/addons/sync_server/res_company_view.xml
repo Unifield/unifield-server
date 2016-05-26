@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+        <record id="res_company_lock_sync_form_view" model="ir.ui.view">
+            <field name="name">res.company.lock.sync.form.view</field>
+            <field name="model">res.company</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_company_form" />
+            <field name="arch" type="xml">
+                <xpath expr="/form/group" position="before">
+                    <group colspan="4" col="1">
+                        <field name="sync_lock" invisible="1" />
+                        <button name="lock" type="object" string="Lock sync. server" confirm="Are you sure you want to lock sync. server ? This will prevent new synchronization from clients (synchronizations in progress will not be impacted) !" icon="gtk-yes" attrs="{'invisible': [('sync_lock', '=', True)]}" />
+                        <button name="unlock" type="object" string="Unlock sync. server" icon="gtk-no" attrs="{'invisible': [('sync_lock', '=', False)]}" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>
