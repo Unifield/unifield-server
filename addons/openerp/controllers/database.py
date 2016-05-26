@@ -231,7 +231,12 @@ class Database(BaseController):
     def do_drop(self, dbname, password, **kw):
         self.msg = {}
         try:
-            rpc.session.execute_db('drop', password, dbname)
+            if not rpc.session.execute_db('connected_to_prod_sync_server',
+                    dbname):
+                rpc.session.execute_db('drop', password, dbname)
+            else:
+                self.msg = {'message': _('You are trying to delete a production database, please disconnect from sync server before to delete it.'),
+                            'title': 'Producion database deletion'}
         except openobject.errors.AccessDenied, e:
             self.msg = {'message': _('Wrong password'),
                         'title' : e.title}

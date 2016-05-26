@@ -35,23 +35,7 @@ def clear():
 def memoize(limit=100, force=False):
 
     def memoize_wrapper(func):
-
-        # Don't use cache for development environment
-        if not force and cherrypy.config.get('server.environment') == 'development':
-            return func
-
-        func_name = "%s.%s.%s" % (func.__module__, func.func_code.co_firstlineno, func.func_name)
-        @functools.wraps(func)
-        def func_wrapper(*args, **kwargs):
-
-            store = __cache.setdefault(rpc.session.db, {}).setdefault(func_name, LRUCache(limit))
-
-            key = cPickle.dumps((args, kwargs))
-            if key not in store:
-                store[key] = func(*args, **kwargs)
-            return copy.deepcopy(store[key])
-
-        return func_wrapper
+        return func
     return memoize_wrapper
 
 @memoize(1000)

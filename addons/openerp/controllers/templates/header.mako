@@ -23,7 +23,11 @@ else:
 from openobject import release
 version = release.version
 %>
+% if cp.config('server.environment') == 'production':
+<td id="top_production" colspan="3">
+% else:
 <td id="top" colspan="3">
+% endif
     <p id="cmp_logo">
         <a href="/" target="_top">
             <img alt="UniField" id="company_logo" src="/openerp/static/images/unifield.png" height="60"/>
@@ -64,16 +68,6 @@ version = release.version
                         <li class="first last"><a href="${py.url('/openerp/unifield_version')}">${_("Version")}</a></li>
                     </ul>
                 </li>
-
-                % if cp.config('server.environment') == 'production':
-                    <li id="clear_cache"><a href="${py.url('/openerp/pref/clear_cache')}"
-                                            class="clear_cache" target="_top">${_("Clear Cache")}</a>
-                        <ul>
-                            <li class="first last"><a href="${py.url('/openerp/pref/clear_cache')}"
-                                                      target="_top">${_("Clear Cache")}</a></li>
-                        </ul>
-                    </li>
-                % endif
             </ul>
             <p class="logout"><a href="${py.url('/openerp/logout')}" target="_top">${_("Logout")}</a></p>
         </div>
