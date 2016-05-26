@@ -154,7 +154,6 @@ class parser_account_move_line(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(parser_account_move_line, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
-            'reconcile_name': self.reconcile_name,
             #'getSub': self.getSub,
         })
 
@@ -182,14 +181,6 @@ class parser_account_move_line(report_sxw.rml_parse):
         if context is None:
             context = {}
         return super(parser_account_move_line, self).create(cr, uid, ids, data, context=context)
-
-    def reconcile_name(self, r_id=None, context=None):
-        if not r_id:
-            return None
-        res = self.pool.get('account.move.reconcile').name_get(self.cr, self.uid, [r_id])
-        if res and res[0] and res[0][1]:
-            return res[0][1]
-        return None
 
 account_move_line_report_xls('report.account.move.line_xls','account.move.line','addons/account_mcdb/report/report_account_move_line_xls.mako', parser=parser_account_move_line)
 

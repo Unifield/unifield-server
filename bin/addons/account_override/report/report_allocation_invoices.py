@@ -33,7 +33,11 @@ class allocation_invoice_report(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'get_data': self.get_data,
+            'get_total_amount': self.get_total_amount,
+            'get_journal_code': self.get_journal_code,
         })
+
+        self.total_amount = 0.0
 
     def get_data(self, invoice_id):
         self._cr.execute("""SELECT line_number,NULLIF('[' || default_code || '] ' || name_template, '[] ') as product,i.name as description, ac.code || ' ' || ac.name as account, quantity, ROUND(price_unit, 2) as price_unit, ROUND(percentage, 2) as percentage, ROUND(price_subtotal*percentage/100, 2) as sub_total, y.name as currency, n1.code as destination, n2.code as cost_center, n3.code as funding_pool
@@ -69,9 +73,25 @@ class allocation_invoice_report(report_sxw.rml_parse):
             WHERE s.id=%s and is_analytic_addicted = False
             ORDER BY line_number, destination, cost_center, funding_pool
             """, (invoice_id, invoice_id, invoice_id))
+        res = self._cr.fetchall()
+        self.total_amount = sum([line[7] or 0.0 for line in res])
+        return res
 
-        return self._cr.fetchall()
+    def get_total_amount(self):
+        return self.total_amount
 
+    def get_journal_code(self, inv):
+        '''
+        If the SI has been (partially or totally) imported in a register, return the Journal Code
+        It the SI has been partially imported in several registers, return : "code1 / code2 / code3"
+        '''
+        journal_code_list = []
+        if inv and inv.move_id:
+            absl_ids = self.pool.get('account.bank.statement.line').search(self.cr, self.uid, [('imported_invoice_line_ids', 'in', [x.id for x in inv.move_id.line_id])])
+            if absl_ids:
+                for absl in self.pool.get('account.bank.statement.line').browse(self.cr, self.uid, absl_ids):
+                    journal_code_list.append(absl.journal_id and absl.journal_id.code or '')
+        return ' / '.join(journal_code_list)
 
 report_sxw.report_sxw('report.allocation.invoices.report',
                       'account.invoice',
