@@ -73,6 +73,22 @@ class account_analytic_chart(osv.osv_memory):
         'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
         'granularity': 'parent',
     }
+    
+    def default_get(self, cr, uid, fields, context=None):
+        res = super(account_analytic_chart, self).default_get(cr, uid, fields,
+            context=context)
+            
+        fy_id = res.get('fiscalyear', False)
+        if fy_id:
+            oc_rec = self.onchange_fiscalyear(cr, uid, False,
+                fiscalyear_id=fy_id, context=context)
+            if oc_rec and oc_rec.get('value', False):
+                res.update({
+                    'period_from': oc_rec['value'].get('period_from', False),
+                    'period_to': oc_rec['value'].get('period_to', False),
+                })
+
+        return res
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
         res = {}
