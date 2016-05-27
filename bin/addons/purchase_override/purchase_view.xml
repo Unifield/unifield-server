@@ -336,7 +336,7 @@
                         <field name="tender_line_id" invisible="1" />
                         <field name="product_id" colspan="4" 
                             context="partner_id=parent.partner_id,quantity=product_qty,pricelist=parent.pricelist_id,uom=product_uom,warehouse=parent.warehouse_id, available_for_restriction=parent.partner_type,search_default_not_restricted=1,categ=parent.categ" 
-                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"
+                            on_change="product_id_on_change(parent.pricelist_id,product_id,product_qty,product_uom,parent.partner_id, parent.date_order,parent.fiscal_position,date_planned,parent.name,price_unit,notes,parent.state,old_price_unit,nomen_manda_0,comment,context)"
                             attrs="{'readonly': [('tender_line_id', '!=', False)]}"
                             />
                         <!-- domain="[('purchase_type', '=', parent.categ)] />" -->
