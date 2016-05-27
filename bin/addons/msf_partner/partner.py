@@ -373,7 +373,19 @@ class res_partner(osv.osv):
             except ValueError:
                 pass
 
-        return super(res_partner, self).unlink(cr, uid, ids, context=context)
+
+        #US-1344: treat deletion of partner
+        address_obj = self.pool.get('res.partner.address')
+        address_ids = address_obj.search(cr, uid, [('partner_id', 'in', ids)])
+
+        res = super(res_partner, self).unlink(cr, uid, ids, context=context)
+        ir_model_data_obj = self.pool.get('ir.model.data')
+
+        address_obj.unlink(cr, uid, address_ids, context)
+
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def _check_main_partner(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -799,8 +811,13 @@ class res_partner_address(osv.osv):
                     )
             except ValueError:
                 pass
+        res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
-        return super(res_partner_address, self).unlink(cr, uid, ids, context=context)
+        #US-1344: treat deletion of partner
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner.address'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def create(self, cr, uid, vals, context=None):
         '''
