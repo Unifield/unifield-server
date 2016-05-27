@@ -92,7 +92,7 @@ class db(netsvc.ExportService):
             cr.autocommit(True) # avoid transaction block
             cr.execute("""CREATE DATABASE "%s" ENCODING 'unicode' TEMPLATE "template0" """ % name)
         finally:
-            cr.close()
+            cr.close(True)
 
     def exp_create(self, db_name, demo, lang, user_password='admin'):
         self.id_protect.acquire()
@@ -113,7 +113,7 @@ class db(netsvc.ExportService):
                     tools.init_db(cr)
                     tools.config['lang'] = lang
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     cr = None
                     pool = pooler.restart_pool(db_name, demo, serv.actions[id],
                             update_module=True)[1]
@@ -133,7 +133,7 @@ class db(netsvc.ExportService):
                     serv.actions[id]['users'] = cr.dictfetchall()
                     serv.actions[id]['clean'] = True
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                 except Exception, e:
                     serv.actions[id]['clean'] = False
                     serv.actions[id]['exception'] = e
@@ -145,7 +145,7 @@ class db(netsvc.ExportService):
                     netsvc.Logger().notifyChannel('web-services', netsvc.LOG_ERROR, 'CREATE DATABASE\n%s' % (traceback_str))
                     serv.actions[id]['traceback'] = traceback_str
                     if cr:
-                        cr.close()
+                        cr.close(True)
         logger = netsvc.Logger()
         logger.notifyChannel("web-services", netsvc.LOG_INFO, 'CREATE DATABASE: %s' % (db_name.lower()))
         dbi = DBInitialize()

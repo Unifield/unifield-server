@@ -2549,7 +2549,7 @@ stock moves which are already processed : '''
 
         if use_new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 

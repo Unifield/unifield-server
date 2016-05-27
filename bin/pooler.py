@@ -24,7 +24,7 @@ import updater
 pool_dic = {}
 
 def get_db_and_pool(db_name, force_demo=False, status=None,
-        update_module=False, pooljobs=True, upgrade_modules=True):
+        update_module=False, pooljobs=True, threaded=False, upgrade_modules=True):
     '''
     Return the db and pool.
 
@@ -67,7 +67,10 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
                     raise Exception("updater.py told us that OpenERP version doesn't match database version!")
             cr.commit()
         finally:
-            cr.close()
+            if threaded:
+                cr.close(True)
+            else:
+                cr.close()
 
         if pooljobs:
             pool.get('ir.cron').restart(db.dbname)
@@ -96,9 +99,9 @@ def get_db(db_name):
 
 
 def get_pool(db_name, force_demo=False, status=None, update_module=False,
-        upgrade_modules=True):
+        threaded=False, upgrade_modules=True):
     pool = get_db_and_pool(db_name, force_demo, status, update_module,
-            upgrade_modules=upgrade_modules)[1]
+            threaded=threaded, upgrade_modules=upgrade_modules)[1]
     return pool
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
