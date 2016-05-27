@@ -266,7 +266,8 @@ class msf_budget(osv.osv):
                     ('cost_center_id', '=', cc_id),
                     ('type', '!=', 'view'),
                     ('state', '!=', 'draft'),
-                    ('decision_moment_id', '=', budget.decision_moment_id.id)
+                    ('decision_moment_id', '=', budget.decision_moment_id.id),
+                    ('fiscalyear_id', '=', budget.fiscalyear_id.id),
                 ]
                 corresponding_budget_ids = self.search(cr, uid, cc_args, limit=1, order='version DESC')
                 if corresponding_budget_ids:
@@ -317,12 +318,13 @@ class msf_budget(osv.osv):
             ids = [ids]
         # We only need to update parent budgets.
         # So we search all parent cost center (but only them, so we don't care about cost center that are linked to given budgets)
-        # Then we use these parent cost center to find budget to update (only budget lines)
+        # Then we use these parent cost centers to find budgets to update (only budget lines), for the related fiscal year
         budgets = self.read(cr, uid, ids, ['cost_center_id'])
         cost_center_ids = [x.get('cost_center_id', False) and x.get('cost_center_id')[0] or 0 for x in budgets]
         cc_parent_ids = self.pool.get('account.analytic.account')._get_parent_of(cr, uid, cost_center_ids, context=context)
         parent_ids = [x for x in cc_parent_ids if x not in cost_center_ids]
-        to_update = self.search(cr, uid, [('cost_center_id', 'in', parent_ids)])
+        fiscalyear_id = self.browse(cr, uid, ids, context)[0].fiscalyear_id
+        to_update = self.search(cr, uid, [('cost_center_id', 'in', parent_ids), ('fiscalyear_id', '=', fiscalyear_id.id)])
         # Update budgets
         self.update(cr, uid, to_update, context=context)
         return True
