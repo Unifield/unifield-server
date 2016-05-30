@@ -16,7 +16,7 @@
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Selector - G/L" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" >
                     &general;
                     <group col="4" colspan="4">
                         <group col="2" colspan="2">
@@ -86,7 +86,7 @@
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Selector - Analytic" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Selector - Analytic" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
                     &general;
                     <group col="4" colspan="4">
                         <group col="2" colspan="2">
