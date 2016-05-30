@@ -846,15 +846,13 @@ class Form(TinyInputWidget):
         # make editors
         if values and attrs.get('noteditable'):
             try:
-                if expr_eval(attrs.get('noteditable'), values):
+                new_values = values.copy()
+                new_values['__id'] = self.id
+                if expr_eval(attrs.get('noteditable'), new_values):
                     self.noteditable = True
                     self.hide_button_save = True
             except:
                 pass
-
-        if self.hide_button_new and not self.id:
-            self.noteditable = True
-            self.hide_button_save = True
 
         # store current record values in request object (see, self.parse & O2M default_get_ctx)
         if not hasattr(cherrypy.request, 'terp_record'):
