@@ -168,7 +168,7 @@ class sync_rule(osv.osv):
 
     def _get_rules_per_group(self, cr, uid, entity, context=None):
         if not entity.group_ids:
-            raise osv.except_osv(_("Warning"), "Your instace does not belong "
+            raise osv.except_osv(_("Warning"), "Your instance does not belong "
                     "to any group. Instance must be member of at least one "
                     "group to be able to synchronize.")
         cr.execute("""SELECT g.id, array_agg(r.id)
