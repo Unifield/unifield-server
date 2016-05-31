@@ -40,7 +40,7 @@
                 <form string="Internal Request">
                     <group colspan="6" attrs="{'invisible': [('state', '!=', 'validated')]}">
                         <html>
-                            <p style="text-align:center; color: orange; font-weight: bold; font-size: 1.2em;">
+                            <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
                                WARNING: This document has already been validated, are you sure you wish to modify after validation?
                             </p>
                         </html>
