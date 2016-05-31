@@ -117,6 +117,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         ctx['state'] = data['form'].get('target_move', 'all')
         if 'instance_ids' in data['form']:
             ctx['instance_ids'] = data['form']['instance_ids']
+        ctx['period0'] = True  # US-1296: include IB entries in this report
 
         cal_list = {}
         pl_dict = {}

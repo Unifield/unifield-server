@@ -119,36 +119,6 @@ class stock_incoming_processor(osv.osv):
 
         return super(stock_incoming_processor, self).create(cr, uid, vals, context=context)
 
-    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
-        """
-        Search if an internal batch exists in the system with this expiry date.
-        If no, create the batch.
-        """
-        # Objects
-        lot_obj = self.pool.get('stock.production.lot')
-        seq_obj = self.pool.get('ir.sequence')
-
-        # Double check to find the corresponding batch
-        lot_ids = lot_obj.search(cr, uid, [
-                            ('life_date', '=', expiry_date),
-                            ('type', '=', 'internal'),
-                            ('product_id', '=', product_id),
-                            ], context=context)
-
-        # No batch found, create a new one
-        if not lot_ids:
-            vals = {
-                'product_id': product_id,
-                'life_date': expiry_date,
-                'name': seq_obj.get(cr, uid, 'stock.lot.serial'),
-                'type': 'internal',
-            }
-            lot_id = lot_obj.create(cr, uid, vals, context)
-        else:
-            lot_id = lot_ids[0]
-
-        return lot_id
-
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
@@ -215,7 +185,8 @@ class stock_incoming_processor(osv.osv):
                    and not line.prodlot_id \
                    and line.expiry_date:
                     if line.type_check == 'in':
-                        prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
+                        # US-838: The method has been moved to addons/stock_batch_recall/product_expiry.py
+                        prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
                     else:
                         # Should not be reached thanks to UI checks

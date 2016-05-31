@@ -22,39 +22,6 @@
             </field>
         </record>
 
-    <!-- Add a filter to search engagement journal lines -->
-        <record id="inherit2_view_account_analytic_line_filter" model="ir.ui.view">
-            <field name="name">inherit.account.analytic.line.select</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
-            <field name="priority" eval="25"/>
-            <field name="arch" type="xml">
-                <data>
-                    <xpath expr="/search/group[1]/field[@name='account_id']" position='replace'>
-                        <newline/>
-                        <field name="destination_id" invisible="not context.get('display_fp', False)"/>
-                        <field name="cost_center_id" invisible="not context.get('display_fp', False)"/>
-                        <field name="account_id" domain="[('category', '=', context.get('categ', False) and context.get('categ') or 'FUNDING'), ('type', '!=', 'view')]"/>
-                        <field name="is_reallocated"/>
-                        <newline/>
-                        <field name="partner_txt"/>
-                    </xpath>
-                    <xpath expr="/search/group[1]/field[@name='name']" position='after'>
-                        <field name="ref"/>
-                        <field name="move_id" widget="char"/>
-                        <field name="general_account_id"/>
-                    </xpath>
-                    <xpath expr="/search//field[@name='journal_id']" position="after">
-                        <field name="journal_type"/>
-                    </xpath>
-                    <xpath expr="/search//field[@name='move_id']" position="replace">
-                        <field name="entry_sequence" select="1"/>
-                    </xpath>
-                </data>
-            </field>
-        </record>
-
     <!-- View for Analytic Journal Items (FUNDING POOL) -->
         <record id="view_account_analytic_line_tree" model="ir.ui.view">
             <field name="name">account.analytic.line.tree</field>

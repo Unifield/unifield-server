@@ -59,7 +59,8 @@ def login(db, login, password):
         to_update = updater.test_do_upgrade(cr)
     cr.close()
     if nb or to_update:
-        s = threading.Thread(target=pooler.get_pool, args=(db,))
+        s = threading.Thread(target=pooler.get_pool, args=(db,),
+                kwargs={'threaded': True})
         s.start()
         raise Exception("ServerUpdate: Server is updating modules ...")
     pool = pooler.get_pool(db)

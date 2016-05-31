@@ -101,6 +101,38 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
+    def _get_supplier(self, cr, uid, ids, context=None):
+        """
+        Returns a list of sale.order.line ID to update
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of res.partner
+        :param context: Context of the call
+        :return: List of sale.order.line ID to update
+        """
+        return self.pool.get('sale.order.line').search(cr, uid, [
+            ('supplier', 'in', ids),
+            ('state', '=', 'draft'),
+        ], context=context)
+
+    def _check_related_sourcing_ok(self, cr, uid, supplier=False, l_type='make_to_order', context=None):
+        """
+        Return True if the supplier allows split PO.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param supplier: ID of the res.partner selected as supplier for the sale.order.line
+        :param l_type: Procurement method selected for the sale.order.line
+        :param context: Context of the call
+        :return: True or False
+        """
+        if not supplier:
+            return False
+
+        sup_rec = self.pool.get('res.partner').\
+            read(cr, uid, [supplier], ['partner_type', 'split_po'], context=context)[0]
+
+        return l_type == 'make_to_order' and sup_rec['partner_type'] == 'esc' and sup_rec['split_po'] == 'yes'
+
     """
     Methods to get fields.function values
     """
@@ -176,6 +208,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                               uid,
                                               [line.id],
                                               line.supplier.id,
+                                              line.type,
                                               context=context)
             res = get_delay.get('value', {}).get('estimated_delivery_date', False)
 
@@ -428,6 +461,30 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ('sale_order_state', '=', 'validated'),
         ]
 
+    def _get_related_sourcing_ok(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True or False to determine if the user could select a sourcing group on the OST for the line
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of sale.order.line to compute
+        :param field_name: Name of the fields to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: True or False
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = self._check_related_sourcing_ok(cr, uid, line.supplier.id, line.type, context=context)
+
+        return res
+
     _columns = {
         'customer': fields.related(
             'order_id',
@@ -442,6 +499,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'supplier': fields.many2one(
             'res.partner',
             'Supplier',
+        ),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
         ),
         'location_id': fields.many2one(
             'stock.location',
@@ -541,7 +602,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             method=True,
             type='boolean',
             string='Order in progress',
-            multi='line_info'),
+            multi='line_info',
+        ),
+        'related_sourcing_ok': fields.function(
+            _get_related_sourcing_ok,
+            method=True,
+            type='boolean',
+            string='Related sourcing OK',
+            store={
+                'sale.order.line': (lambda obj, cr, uid, ids, c={}: ids, ['supplier', 'type'], 10),
+                'res.partner': (_get_supplier, ['partner_type', 'split_po'], 20),
+            },
+        ),
         # UTP-965 : Select a source stock location for line in make to stock
         'real_stock': fields.function(
             _getVirtualStock,
@@ -1037,6 +1109,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         # UFTP-11: if make_to_order can not have a location
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
+
+        if vals.get('type') == 'make_to_stock':
+            vals['related_sourcing_id'] = False
+        elif vals.get('supplier'):
+            related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, vals.get('supplier'), vals.get('type'), context=context)
+            if not related_sourcing_ok:
+                vals['related_sourcing_id'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
         if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
@@ -1570,7 +1649,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return res
 
-    def onChangeType(self, cr, uid, line_id, l_type, location_id=False, context=None):
+    def onChangeType(self, cr, uid, line_id, l_type, location_id=False, supplier=False, context=None):
         """
         When the method of procurement is changed, check if the new
         values are compatible with the other values of the line and of the order.
@@ -1580,6 +1659,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :param line_id: ID of the line to check
         :param l_type: Value of the procurement method
         :param location_id: ID of the stock location of the line
+        :param supplier: Id of the res.partner selected as partner for the line
         :param context: Context of the change
 
         :return A dictionary with the new values
@@ -1614,7 +1694,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 if wh_ids:
                     value['location_id'] = wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
 
-            value['po_cft'] = False
+            value.update({
+                'po_cft': False,
+                'related_sourcing_ok': False,
+                'related_sourcing_id': False,
+            })
 
             res = {'value': value, 'warning': message}
             if line_id:
@@ -1637,10 +1721,15 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
                     if error:
                         return res
+        else:
+            related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+            value['related_sourcing_ok'] = related_sourcing_ok
+            if not related_sourcing_ok:
+                value['related_sourcing_id'] = False
 
         return {'value': value, 'warning': message}
 
-    def onChangeSupplier(self, cr, uid, line_id, supplier, context=None):
+    def onChangeSupplier(self, cr, uid, line_id, supplier, l_type, context=None):
         """
         When the supplier is changed, check if the new values are compatible
         with the other values of the line and of the order.
@@ -1649,6 +1738,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :param uid: ID of the user that runs the method
         :param line_id: ID of the line to check
         :param supplier: ID of the current or new choosen supplier
+        :param l_type: Mode of procurement for the line
         :param context: Context of the change
 
         :return A dictionary with the new values
@@ -1670,6 +1760,10 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         }
 
         if not supplier:
+            result['value'].update({
+                'related_sourcing_id': False,
+                'related_sourcing_ok': False,
+            })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
                 result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
@@ -1690,7 +1784,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         estDeliveryDate = date.today() + relativedelta(days=int(delay))
 
-        result['value']['estimated_delivery_date'] = estDeliveryDate.strftime('%Y-%m-%d')
+        related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+        result['value'].update({
+            'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
+            'related_sourcing_ok': related_sourcing_ok,
+        })
+        if not related_sourcing_ok:
+            result['value']['related_sourcing_id'] = False
 
         value = result['value']
         partner_id = 'supplier' in value and value['supplier'] or supplier

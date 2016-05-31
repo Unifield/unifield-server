@@ -12,13 +12,21 @@
                     <xpath expr="/form//field[@name='target_move']" position="before">
                         <newline/>
                     </xpath>
+                    <xpath expr="/form//field[@name='target_move']" position="after">
+                        <newline/>
+                        <field name="is_initial_balance_available" invisible="1" />
+                        <field name="initial_balance" attrs="{'readonly':[('is_initial_balance_available', '=', False)]}" />
+                    </xpath>
                     <xpath expr="/form//field[@name='period_from']" position="replace">
-                        <field name="period_from"/>
+                        <field name="period_from" on_change="on_change_period(period_from, fiscalyear)"/>
                         <newline/>
                     </xpath>
                     <xpath expr="/form/group[2]" position="before">
-                        <separator string="Inactive accounts" colspan="4"/>
+                        <separator string="Accounts" colspan="4"/>
                         <field name="show_inactive"/>
+                        <newline/>
+                        <field name="account_type"/>
+                        <field name="granularity"/>
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>

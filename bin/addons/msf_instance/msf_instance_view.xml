@@ -132,20 +132,6 @@
                 </field>
             </field>
         </record>
-        <record id="view_account_analytic_line_filter_instance_inherit" model="ir.ui.view">
-            <field name="name">account.analytic.line.filter.instance.inherit</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
-            <field eval="30" name="priority"/>
-            <field name="arch" type="xml">
-                <field name="journal_id" position="replace">
-                    <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"
-                           on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
-                    <field name="journal_id_fake"/>
-                </field>
-            </field>
-        </record>
         <!-- Redefine analytic journal -->
         <record id="view_account_analytic_journal_instance_tree" model="ir.ui.view">
             <field name="name">account.analytic.journal.instance.tree</field>
