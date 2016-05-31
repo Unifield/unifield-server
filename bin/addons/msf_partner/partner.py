@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE
+from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
 from lxml import etree
@@ -189,9 +190,70 @@ class res_partner(osv.osv):
             partner_id = user.company_id.partner_id.id
         return partner_id and [('id', '=', partner_id)] or []
 
+    def _get_is_coordo(self, cr, uid, ids, field_name, args, context=None):
+        """ return True if the instance's level is coordo """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long,)):
+            ids = [ids]
+
+        for id in ids:
+            res[id] = False
+
+        inst_level = _get_instance_level(self, cr, uid)
+        if inst_level != 'coordo':
+            return res
+
+        inst_partner_id = self.search(cr, uid, [('is_instance', '=', True)], context=context)
+        if inst_partner_id and inst_partner_id[0] in ids:
+            res[inst_partner_id[0]] = True
+
+        return res
+
+    def _get_is_coordo_search(self, cr, uid, ids, field_name, args,
+                                context=None):
+        """ return partner which are coordination and current company partner """
+        a = args[0]
+        if _get_instance_level(self, cr, uid) != 'coordo':
+            if a[1] in ('=', 'in'):
+                if a[2] in ('True', 'true', True, 1, 't'):
+                    return [('id', 'in', [])]
+                elif a[2] in ('False', 'false', False, 0, 'f'):
+                    return []
+            elif a[1] in ('<>', '!=', 'not in'):
+                if a[2] in ('True', 'true', True, 1, 't'):
+                    return []
+                elif a[2] in ('False', 'false', False, 0, 'f'):
+                    return [('id', 'in', [])]
+            else:
+                return []
+
+        if a[1] in ('=', 'in'):
+            if a[2] in ('True', 'true', True, 1, 't'):
+                operator = 'in'
+            elif a[2] in ('False', 'false', False, 0, 'f'):
+                operator = 'not in'
+        elif a[1] in ('<>', '!=', 'not in'):
+            if a[2] in ('True', 'true', True, 1, 't'):
+                operator = 'not in'
+            elif a[2] in ('False', 'false', False, 0, 'f'):
+                operator = 'in'
+        else:
+            return []
+
+        return [('id', operator, self.search(cr, uid, [('is_instance', '=', True)], context=context))]
+
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
+        'split_po': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='Split PO ?',
+        ),
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
@@ -241,12 +303,20 @@ class res_partner(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'is_instance': fields.function(_get_is_instance, fnct_search=_get_is_instance_search, method=True, type='boolean', string='Is current instance partner id'),
         'transporter': fields.boolean(string='Transporter'),
+        'is_coordo': fields.function(
+            _get_is_coordo,
+            fnct_search=_get_is_coordo_search,
+            method=True,
+            type='boolean',
+            string='Is a coordination ?',
+        )
     }
 
     _defaults = {
         'manufacturer': lambda *a: False,
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
+        'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
@@ -303,7 +373,19 @@ class res_partner(osv.osv):
             except ValueError:
                 pass
 
-        return super(res_partner, self).unlink(cr, uid, ids, context=context)
+
+        #US-1344: treat deletion of partner
+        address_obj = self.pool.get('res.partner.address')
+        address_ids = address_obj.search(cr, uid, [('partner_id', 'in', ids)])
+
+        res = super(res_partner, self).unlink(cr, uid, ids, context=context)
+        ir_model_data_obj = self.pool.get('ir.model.data')
+
+        address_obj.unlink(cr, uid, address_ids, context)
+
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def _check_main_partner(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -729,8 +811,13 @@ class res_partner_address(osv.osv):
                     )
             except ValueError:
                 pass
+        res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
-        return super(res_partner_address, self).unlink(cr, uid, ids, context=context)
+        #US-1344: treat deletion of partner
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner.address'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def create(self, cr, uid, vals, context=None):
         '''

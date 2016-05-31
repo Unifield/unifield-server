@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="related_sourcing_tree_view" model="ir.ui.view">
+            <field name="name">related.sourcing.tree.view</field>
+            <field name="model">related.sourcing</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Sourcing groups" editable="top">
+                    <field name="name" />
+                    <field name="description" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="related_sourcing_action" model="ir.actions.act_window">
+            <field name="name">Sourcing groups</field>
+            <field name="res_model">related.sourcing</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <menuitem
+            id="related_sourcing_menu"
+            action="related_sourcing_action"
+            parent="base.menu_sale_config_sales" />
+
+    </data>
+</openerp>

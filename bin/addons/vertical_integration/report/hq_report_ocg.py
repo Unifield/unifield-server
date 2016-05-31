@@ -198,7 +198,7 @@ class hq_report_ocg(report_sxw.report_sxw):
             if journal.analytic_journal_id and journal.analytic_journal_id.id not in ana_cur_journal_ids:
                 ana_cur_journal_ids.append(journal.analytic_journal_id.id)
         
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('move_id.period_id', '=', data['form']['period_id']),
+        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)

@@ -63,6 +63,12 @@ class account_chart(osv.osv_memory):
                 start_period = periods[0]
                 end_period = periods[1]
             res['value'] = {'period_from': start_period, 'period_to': end_period}
+
+        # US-1179
+        res['value']['is_initial_balance_available'] = fiscalyear_id or False
+        if not res['value']['is_initial_balance_available']:
+            res['value']['initial_balance'] = False
+
         return res
 
     def account_chart_open_window(self, cr, uid, ids, context=None):

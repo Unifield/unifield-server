@@ -95,13 +95,33 @@
     </Cell>
   </Row>
 -->
-% for t in [(_('Fiscalyear'), 'fy'), (_('From'), 'from_period_header'), (_('To'), 'to_period_header'), (_('Instances'), 'instances'), (_('Show inactive accounts?'), 'show_inactive'), (_('Filtering on currency'), 'currency_filtering')]:
+<%
+header_fields = [
+    (_('Fiscalyear'), 'fy'),
+    (_('From'), 'from_period_header'),
+    (_('To'), 'to_period_header'),
+    (_('Instances'), 'instance_header'),
+    (_('Show inactive accounts?'), 'show_inactive', 'boolean'),
+    (_('Granularity'), 'granularity', 'selection', {'account': _('By analytic account'), 'parent': _('By parent account'), }),
+    (_('Filtering on currency'), 'currency_filtering'),
+]
+%>
+% for t in header_fields:
+<%
+ header_val = data.get('wiz_fields').get(t[1], '')
+ if len(t) >= 3:
+    if t[2] == 'boolean':
+        header_val = _(header_val and 'Yes' or 'No')
+    elif t[2] == 'selection':
+        if len(t) >= 4:
+            header_val = t[3] and t[3].get(header_val, '') or header_val
+%>
   <Row ss:Height="12.6425">
     <Cell ss:StyleID="header_part">
       <Data ss:Type="String">${ t[0] or ''|x }</Data>
     </Cell>
     <Cell ss:StyleID="header_part_center">
-      <Data ss:Type="String">${( data.get('wiz_fields', False) and data.get('wiz_fields').get(t[1], False) and data.get('wiz_fields').get(t[1]) or '')|x}</Data>
+      <Data ss:Type="String">${header_val|x}</Data>
     </Cell>
   </Row>
 % endfor

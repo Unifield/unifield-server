@@ -122,7 +122,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.output_currency and o.output_currency.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.reconcile_total_partial_id and reconcile_name(o.reconcile_total_partial_id.id) or '')|x}</Data>
+        <Data ss:Type="String">${(o.reconcile_txt or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.move_state and getSel(o,'move_state') or '')|x}</Data>

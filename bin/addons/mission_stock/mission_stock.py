@@ -350,9 +350,11 @@ class stock_mission_report(osv.osv):
             current_product = None
             line = None
             vals = {}
+            in_pipe_products = set()
             for product_id, qty, uom, partner in in_pipe_moves:
                 if current_product != product_id:
                     if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
+                        in_pipe_products.add(current_product)
                         line_obj.write(cr, uid, [line.id], vals)
                     line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
                                                         ('mission_report_id', '=', id)])
@@ -374,7 +376,19 @@ class stock_mission_report(osv.osv):
                     vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
 
             if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
+                in_pipe_products.add(current_product)
                 line_obj.write(cr, uid, [line.id], vals)
+
+            # Update in-pipe quantities for all other lines
+            no_pipe_line_ids = line_obj.search(cr, uid, [
+                ('product_id', 'not in', list(in_pipe_products)),
+                ('mission_report_id', '=', id),
+                '|', ('in_pipe_qty', '!=', 0.00), ('in_pipe_coor_qty', '!=', 0.00),
+            ], order='NO_ORDER', context=context)
+            line_obj.write(cr, uid, no_pipe_line_ids, {
+                'in_pipe_qty': 0.00,
+                'in_pipe_coor_qty': 0.00,
+            }, context=context)
 
             # All other moves
             cr.execute('''

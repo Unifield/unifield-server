@@ -51,6 +51,15 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_993_patch(self, cr, uid, *a, **b):
+        # set no_update to True on USB group_type not to delete it on
+        # existing instances
+        cr.execute("""
+        UPDATE ir_model_data SET noupdate='t'
+        WHERE model='sync.server.group_type' AND
+        name='sync_remote_warehouse_rule_group_type'
+        """)
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:

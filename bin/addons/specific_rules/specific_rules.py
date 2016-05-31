@@ -1365,7 +1365,7 @@ class stock_production_lot(osv.osv):
             if not batch.delete_ok:
                 raise osv.except_osv(_('Error'), _('You cannot remove a batch number which has stock !'))
 
-        return super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
+        return super(stock_production_lot, self).unlink(cr, uid, ids, context=context)
 
 
 stock_production_lot()

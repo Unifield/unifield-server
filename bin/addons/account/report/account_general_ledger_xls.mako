@@ -227,7 +227,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
-    <Data ss:Type="String">${(get_prop_instances(data) or '')|x}</Data>
+    <Data ss:Type="String">${(get_prop_instances() or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
@@ -352,7 +352,9 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endfor
 
+% if o.displayed:
 % for ccy in o.get_currencies():
+## subtotals line
 <Row>
 <Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
@@ -377,6 +379,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 </Row>
 % endfor
+% endif
 
 % endfor
 % endfor

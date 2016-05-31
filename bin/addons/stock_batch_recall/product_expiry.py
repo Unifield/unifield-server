@@ -67,28 +67,40 @@ class stock_production_lot(osv.osv):
         return super(stock_production_lot, self).copy_data(cr, uid, id, default, context=context)
 
     # UF-1617: Handle the instance in the batch number object
-    def create(self, cr, uid, vals, context=None):
-        '''
-        override create method to set the instance id to the current instance if it has not been provided
-        '''
-        if 'partner_name' not in vals or not vals['partner_name']:
-            company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-            if company and company.partner_id:
-                vals['partner_name'] = company.partner_id.name
+    # US-838: this method is removed in integration, because the 2 fields are no more used, xmlid_name and partner name
 
-        
-        # UF-2148: make the xmlid_name from batch name for building xmlid if the value is not given in vals
-        if 'product_id' in vals and ('xmlid_name' not in vals or not vals['xmlid_name']):
-            prod_name = self.pool.get('product.product').browse(cr, uid, vals['product_id'], context=context)
-            vals['xmlid_name'] = '%s_%s' % (prod_name.default_code, vals['name'])
-        
-        if 'xmlid_name' in vals:
-            exist = self.search(cr, uid, [('xmlid_name', '=', vals['xmlid_name']), ('partner_name', '=', vals['partner_name']), ('product_id', '=', vals['product_id'])], context=context)
-            if exist:
-                # but if the value exist for xmlid_name, then add a suffix to differentiate, no constraint unique required here  
-                vals['xmlid_name'] = vals['xmlid_name'] + "_1"
-        
-        return super(stock_production_lot, self).create(cr, uid, vals, context)
+
+
+    # US-838: This method got moved from addons/msf_outgoing/wizard/incoming_shipment_processor.py
+    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
+        """
+        Search if an internal batch exists in the system with this expiry date.
+        If no, create the batch.
+        """ 
+        # Objects
+        seq_obj = self.pool.get('ir.sequence')
+
+        # Double check to find the corresponding batch
+        lot_ids = self.search(cr, uid, [
+                            ('life_date', '=', expiry_date),
+                            ('type', '=', 'internal'),
+                            ('product_id', '=', product_id),
+                            ], context=context)
+
+        # No batch found, create a new one
+        if not lot_ids:
+            seq_ed = seq_obj.get(cr, uid, 'stock.lot.serial')
+            vals = {
+                'product_id': product_id,
+                'life_date': expiry_date,
+                'name': seq_ed,
+                'type': 'internal',
+            }
+            lot_id = self.create(cr, uid, vals, context)
+        else:
+            lot_id = lot_ids[0]
+
+        return lot_id
 
     _columns = {
         # renamed from End of Life Date
@@ -102,8 +114,8 @@ class stock_production_lot(osv.osv):
 
         # UF-1617: field only used for sync purpose
         'partner_id': fields.many2one('res.partner', string="Supplier", readonly=True, required=False),
-        'partner_name': fields.char('Partner', size=128, required=True),
-        'xmlid_name': fields.char('XML Code, hidden field', size=128, required=True), # UF-2148, this field is used only for xml_id
+        'partner_name': fields.char('Partner', size=128),
+        'xmlid_name': fields.char('XML Code, hidden field', size=128), # UF-2148, this field is used only for xml_id
     }
 
     _defaults = {

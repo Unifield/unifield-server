@@ -167,6 +167,7 @@ class analytic_distribution_wizard(osv.osv_memory):
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
         entry_seq_data = {}
+        is_HQ_origin = False
 
         # US-676: check wizard lines total matches JI amount
         # the wizard already check distri is 100% allocated
@@ -205,11 +206,17 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if old_line:
                     #US-714: For HQ Entries, always create the COR and REV even the period is closed
                     original_al_id = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%old_line.id), ('is_reversal', '=', False), ('is_reallocated', '=', False)])
+
                     is_HQ_entries = False
                     if original_al_id and len(original_al_id) == 1:
                         original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
                         if original_al.journal_id.type == 'hq':
                             is_HQ_entries = True
+                        elif original_al.move_id and \
+                            original_al.move_id.journal_id.type == 'hq':
+                            # US-1343/2: flag that the chain origin is an HQ
+                            # entry: in other terms OD AJI from a HQ JI
+                            is_HQ_origin = True
 
                     # In case it's an HQ entries, just generate the REV and COR
                     if is_HQ_entries:
@@ -270,9 +277,11 @@ class analytic_distribution_wizard(osv.osv_memory):
             else:
                 to_delete.append(wiz_line)
 
+
+
         keep_seq_and_corrected = False
-        period_closed = ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
-        if period_closed and to_create and (to_override or to_delete or any_reverse):
+        period_closed =  ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
+        if (period_closed or is_HQ_origin) and to_create and (to_override or to_delete or any_reverse):
             already_corr_ids = ana_obj.search(cr, uid, [('distribution_id', '=', distrib_id), ('last_corrected_id', '!=', False)])
             if already_corr_ids:
                 for ana in ana_obj.read(cr, uid, already_corr_ids, ['entry_sequence', 'last_corrected_id', 'date', 'ref', 'reversal_origin']):
@@ -280,6 +289,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         rev_name = ana['reversal_origin'] and ana['reversal_origin'][1] or ana['last_corrected_id'] and ana['last_corrected_id'][1] or False
                         keep_seq_and_corrected = (ana['entry_sequence'], ana['last_corrected_id'][0], ana['date'], ana['ref'], rev_name)
                         break
+
         #####
         ## FP: TO CREATE
         ###
@@ -301,17 +311,18 @@ class analytic_distribution_wizard(osv.osv_memory):
                 create_date = ml.date
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
-            if period_closed:
-                create_date = wizard.date
+            if period_closed or is_HQ_origin:
+                if period_closed:
+                    create_date = wizard.date
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
-                    create_date = keep_seq_and_corrected[2]
+                    create_date = keep_seq_and_corrected[2]  # is_HQ_origin keep date too
                     if keep_seq_and_corrected[4]:
                         name = self.pool.get('account.analytic.line').join_without_redundancy(keep_seq_and_corrected[4], 'COR')
 
             created_analytic_line_ids = self.pool.get('funding.pool.distribution.line').create_analytic_lines(cr, uid, [new_distrib_line], ml.id, date=create_date, document_date=orig_document_date, source_date=orig_date, name=name, context=context)
             # Set right analytic correction journal to these lines
-            if period_closed:
+            if period_closed or is_HQ_origin:
                 sql_to_cor = ['journal_id=%s']
                 sql_data = [correction_journal_id]
                 if keep_seq_and_corrected:
