@@ -404,6 +404,18 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def us_1024_send_bar_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id and usr.company_id.instance_id.level == 'section':
+            cr.execute('''update ir_model_data
+                set touched='[''active'']', last_modification=NOW()
+                where module='sd' and model='msf_button_access_rights.button_access_rule'
+            ''')
+
     def update_volume_patch(self, cr, uid, *a, **b):
         """
         Update the volume from dm³ to m³ for OCB databases
