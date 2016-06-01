@@ -113,7 +113,7 @@ class wizard_import_fo_line(osv.osv_memory):
                     currency_index, order_currency_code)
                 if lines_to_correct > 0:
                     msg = "You can not import this file because it contains" \
-                        " line(s) with currency not of the order currency (%s)" % (
+                        " line(s) with currency (Column F) not of the order currency (%s)" % (
                         order_currency_code, )
                     error_list.append(msg)
 
