@@ -124,9 +124,14 @@ class account_chart(osv.osv_memory):
         if isinstance(rec, (list, tuple, )):
             rec = self.browse(cr, uid, rec[0], context=context)
 
+        if context is None:
+            context = {}
         if rec.initial_balance:
             # include IB entries
             context['period0'] = True
+        if not context.get('fiscalyear', False):
+            # US-1377: active cross FY (for account.move._query_get())
+            context['report_cross_fy'] = True
 
     def _get_account_type_ids(self, cr, uid, account_type_val, context=None):
         """
