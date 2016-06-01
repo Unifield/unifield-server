@@ -60,13 +60,15 @@ function showBtnSdref(ev, btn_name, btn_model, btn_id, src)
                 btn_name_msg = obj.name != false ? obj.name : 'No button found';
                 btn_id_msg = obj.btn_id != false ? obj.btn_id : 'No button found';
                 bar_sdref_msg = obj.bar_sdref != false ? obj.bar_sdref : 'No BAR found';
+                group_names_msg = obj.group_names != false ? obj.group_names : 'No group defined for this rule';
 
                 alert(
                     'Model name: ' + model_name_msg + '\n' + 
                     'Model SDRef: ' + model_sdref_msg + '\n' + 
                     'Button name: ' + btn_name_msg + '\n' + 
                     //'Button ID: ' + btn_id_msg + '\n' + 
-                    'BAR SDRef: ' + bar_sdref_msg
+                    'BAR SDRef: ' + bar_sdref_msg + '\n' +
+                    'Groups: ' + group_names_msg
                 );
             }
         });

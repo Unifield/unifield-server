@@ -301,6 +301,7 @@ class Form(SecuredController):
         """
         bar_sdref = ''
         model_sdref = ''
+        group_names = False
 
         # If the user is not the administrator, don't display values
         if rpc.session.uid != 1:
@@ -321,6 +322,7 @@ class Form(SecuredController):
 
             if rule_ids:
                 bar_sdref = self.get_sd_ref('msf_button_access_rights.button_access_rule', rule_ids[0])
+                group_names = rules_pool.read(rule_ids[0], ['group_names'])['group_names']
 
         model_ids = model_pool.search([
             ('model', '=', btn_model)
@@ -328,7 +330,7 @@ class Form(SecuredController):
         if model_ids:
             model_sdref = self.get_sd_ref('ir.model', model_ids[0])
 
-        return dict(model=btn_model, name=btn_name, btn_id=btn_id, bar_sdref=bar_sdref, model_sdref=model_sdref, admin=True)
+        return dict(model=btn_model, name=btn_name, btn_id=btn_id, bar_sdref=bar_sdref, model_sdref=model_sdref, admin=True, group_names=group_names)
 
     def _read_form(self, context, count, domain, filter_domain, id, ids, kw,
                    limit, model, offset, search_data, search_domain, source,
