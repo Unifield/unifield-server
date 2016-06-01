@@ -795,25 +795,45 @@ class Form(TinyInputWidget):
         defaults = {}
         try:
             if ids:
-                fields_to_read = fields.keys()
+                if get_source:
+                    fields_to_read = [get_source.split('/')[0]]
+                    if 'state' in fields:
+                        fields_to_read.append('state')
+                    newfields = {}
+                    for k in fields_to_read:
+                        newfields[k] = fields[k]
+                    fields = newfields
+                else:
+                    fields_to_read = fields.keys()
                 lval = proxy.read(ids[:1], fields_to_read + ['__last_update'], self.context)
+                
                 if lval:
                     values = lval[0]
                     self.id = ids[0]
+                    
                     for f in fields:
                         if fields[f]['type'] == 'many2one' and f in values and isinstance(values[f], tuple):
                             values[f] = values[f][0]
+                            
                     ConcurrencyInfo.update(self.model, [values])
 
             elif 'datas' in view: # wizard data
+
                 for f in fields:
                     if 'value' in fields[f]:
                         values[f] = fields[f]['value']
+
                 values.update(view['datas'])
+
             elif not self.nodefault: # default
                 defaults = self.get_defaults(fields, domain, self.context)
-            else:
-                defaults = proxy.default_get(fields.keys(), self.context)
+
+            elif 'state' in fields: # if nodefault and state get state only
+                defaults = proxy.default_get(['state'], self.context)
+
+            elif 'x_state' in fields: # if nodefault and x_state get x_state only (for custom objects)
+                defaults = proxy.default_get(['x_state'], self.context)
+
         except Exception,e:
             raise common.warning(e)
 
