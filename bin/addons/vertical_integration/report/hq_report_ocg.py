@@ -211,8 +211,8 @@ class hq_report_ocg(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
 
-            # US-817
-            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
+            # US-1375: cancel US-817
+            aji_period_id = analytic_line and analytic_line.period_id
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
