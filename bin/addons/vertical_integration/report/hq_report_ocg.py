@@ -212,7 +212,7 @@ class hq_report_ocg(report_sxw.report_sxw):
             cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
 
             # US-1375: cancel US-817
-            aji_period_id = analytic_line and analytic_line.period_id
+            aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",

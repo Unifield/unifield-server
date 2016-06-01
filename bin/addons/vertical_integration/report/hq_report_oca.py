@@ -350,9 +350,9 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type == 'cur_adj' or False
             is_analytic_rev_entry = analytic_line.journal_id \
                 and analytic_line.journal_id.type == 'revaluation' or False
-            # US-817: display period from JI (VI from HQ so AJI always with its JI)
-            # (AJI period_id is a field function always deduced from date since UTP-943)
-            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
+            
+            # US-1375: cancel US-817
+            aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
