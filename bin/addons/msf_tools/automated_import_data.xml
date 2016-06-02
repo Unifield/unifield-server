@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="auto_import_fnct_res_partner" model="automated.import.function">
+            <field name="name">Import Suppliers</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'res.partner')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_account_account" model="automated.import.function">
+            <field name="name">Import G/L Accounts</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'account.account')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_account_journal" model="automated.import.function">
+            <field name="name">Import G/L Journals</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'account.journal')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_analytic_account" model="automated.import.function">
+            <field name="name">Import Analytic Accounts</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'account.analytic.account')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_analytic_journal" model="automated.import.function">
+            <field name="name">Import Analytic Journals</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'account.analytic.journal')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_destination_account" model="automated.import.function">
+            <field name="name">Import Links between destinations and GL accounts</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'account.analytic.account')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_sync_product_nomenclature" model="automated.import.function">
+            <field name="name">Import Product Nomenclatures</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'product.nomenclature')]" />
+            <field name="method_to_call">import_data_with_wizard</field>
+        </record>
+
+        <record id="auto_import_fnct_product_categories" model="automated.import.function">
+            <field name="name">Import Product Categories</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'product.category')]" />
+            <field name="method_to_call">import_data_with_wizard</field>
+        </record>
+
+        <record id="auto_import_fnct_employee" model="automated.import.function">
+            <field name="name">Import Employees</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'hr.employee')]" />
+            <field name="method_to_call">auto_import</field>
+        </record>
+
+        <record id="auto_import_fnct_product" model="automated.import.function">
+            <field name="name">Import Products</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'product.product')]" />
+            <field name="method_to_call">import_data_with_wizard</field>
+        </record>
+
+        <record id="auto_import_fnct_access_control_list" model="automated.import.function">
+            <field name="name">Import Access Control Lists</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'ir.model.access')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_record_rules" model="automated.import.function">
+            <field name="name">Import Record Rules</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'ir.rule')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_window_actions" model="automated.import.function">
+            <field name="name">Import Window Actions</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'ir.actions.act_window')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_field_access_rule" model="automated.import.function">
+            <field name="name">Import Field Access Rules</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'msf_field_access_rights.field_access_rule')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_field_access_rule_lines" model="automated.import.function">
+            <field name="name">Import Field Access Rule Lines</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'msf_field_access_rights.field_access_rule_line')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+        <record id="auto_import_fnct_button_access_rules" model="automated.import.function">
+            <field name="name">Import Button Access Rules</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'msf_button_access_rights.button_access_rule')]" />
+            <field name="method_to_call">import_data_from_csv</field>
+        </record>
+
+    </data>
+</openerp>

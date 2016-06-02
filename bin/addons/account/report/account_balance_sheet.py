@@ -117,6 +117,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         ctx['state'] = data['form'].get('target_move', 'all')
         if 'instance_ids' in data['form']:
             ctx['instance_ids'] = data['form']['instance_ids']
+        ctx['period0'] = True  # US-1296: include IB entries in this report
 
         cal_list = {}
         pl_dict = {}
@@ -183,6 +184,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                                 'cash',
                                 'asset',
                                 'stock',
+                                'receivables',  # added US-1318
                                 )) or False
                 elif  typ == 'liability':
                     # US-227/1, breakdown in liability:
@@ -194,6 +196,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                             and account.user_type.code in (
                                 'debt',
                                 'equity',
+                                'payables',  # added US-1318
                                 )) or False
                 if register_account:
                     account_dict = {

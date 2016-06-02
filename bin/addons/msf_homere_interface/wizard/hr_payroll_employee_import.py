@@ -592,7 +592,7 @@ class hr_payroll_employee_import(osv.osv_memory):
             for employee_infos in staff_data:
                 employee_code = employee_infos[0]
                 if employee_code in duplicates:
-                    details.append(','.join([employee_infos[1], employee_infos[2]]))
+                    details.append(','.join([ustr(employee_infos[1]), ustr(employee_infos[2])]))
             res = True
             if not details:
                 created = 0

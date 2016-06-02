@@ -332,17 +332,49 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- Grey color for deleted entries and DP Reversals -->
+    <Style ss:ID="grey_left_bold">
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="grey_centre">
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="grey_amount_bold">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
   </Styles>
   <Worksheet ss:Name="Info">
     <Table>
-      <Column ss:Width="105.1937"/>
-      <Column ss:Width="64.0063"/>
+      <Column ss:Width="101.1937"/>
+      <Column ss:Width="63.01"/>
       <Row ss:Height="12.1039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">REGISTER REPORT</Data>
         </Cell>
       </Row>
-      <Row ss:Height="12.8126">
+      <Row ss:Height="12.81">
         <Cell ss:Index="2"/>
       </Row>
       <Row ss:Height="12.1039">
@@ -372,7 +404,7 @@
       <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
     </Names>
     <Table>
-      <Column ss:Width="95.9527"/>
+      <Column ss:Width="105.9527"/>
       <Column ss:Width="70" ss:Span="1"/>
       <Column ss:Width="155"/>
       <Column ss:Width="135"/>
@@ -572,6 +604,75 @@
           <Data ss:Type="String">${line.state and getSel(line, 'state') or ''|x}</Data>
         </Cell>
       </Row>
+
+<!-- if it is a Down Payment that has been partially or totally reversed -->
+<% dp_reversals_ml = getDownPaymentReversals(line) %>
+% for dp_reversal_ml in sorted(dp_reversals_ml, key=lambda x: x.move_id.name):
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('REV - Down Payment')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${dp_reversal_ml.move_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- DESC -->
+          <Data ss:Type="String">${dp_reversal_ml.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <!-- REF -->
+          <Data ss:Type="String">${dp_reversal_ml.ref or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+    </Row>
+% endfor
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% move_lines = [] %>
@@ -788,6 +889,73 @@ endif
 % endif
 
 % endfor
+
+<!-- DELETED ENTRIES -->
+% for deleted_line in sorted(o.deleted_line_ids, key=lambda x: x.sequence):
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('Deleted Entry')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${deleted_line.sequence or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+    </Row>
+% endfor
+
     </Table>
     <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
       <PageSetup>

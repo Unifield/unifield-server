@@ -51,6 +51,15 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_993_patch(self, cr, uid, *a, **b):
+        # set no_update to True on USB group_type not to delete it on
+        # existing instances
+        cr.execute("""
+        UPDATE ir_model_data SET noupdate='t'
+        WHERE model='sync.server.group_type' AND
+        name='sync_remote_warehouse_rule_group_type'
+        """)
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:
@@ -536,6 +545,15 @@ class patch_scripts(osv.osv):
                                        OR l.cu_qty != 0.00
                                        OR l.in_pipe_qty != 0.00
                                        OR l.in_pipe_coor_qty != 0.00))''', (msl_touched, tuple(ms_ids)))
+        return True
+
+    def us_1273_patch(self, cr, uid, *a, **b):
+        # Put all internal requests import_in_progress field to False
+        ir_obj = self.pool.get('sale.order')
+        context = {'procurement_request': True}
+        ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
+        if ir_ids:
+            ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
         return True
 
 patch_scripts()

@@ -26,6 +26,42 @@ from time import strftime
 
 class account_chart(osv.osv_memory):
     _inherit = "account.chart"
+
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _get_instance_header(self, cr, uid, ids, field_names, args,
+        context=None):
+        def get_codes(instance_recs):
+            instance_obj = self.pool.get('msf.instance')
+            if not instance_recs:
+                # get mission instances
+                instance_ids = instance_obj.search(cr, uid, [
+                        ('instance_to_display_ids', '=', True),
+                    ], context=context)
+                if instance_ids:
+                    instance_recs = instance_obj.browse(cr, uid, instance_ids,
+                        context=context)
+                else:
+                    instance_recs = []
+            return [ i.code for i in instance_recs ]
+
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for rec in self.browse(cr, uid, ids, context=context):
+            res[rec.id] = ', '.join(get_codes(rec.instance_ids))
+        return res
+
     _columns = {
         'show_inactive': fields.boolean('Show inactive accounts'),
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
@@ -36,17 +72,100 @@ class account_chart(osv.osv_memory):
                                          ('draft', 'Unposted Entries'),
                                         ], 'Move status', required = True),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
+
+        # US-1179 fields
+        'initial_balance': fields.boolean("Include initial balances",
+            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+        'is_initial_balance_available': fields.function(_get_fake, method=True,
+            type='boolean', string="Is initial balance filter available ?"),
+        'account_type': fields.selection([
+            ('all', 'All'),
+            ('pl', 'Profit & Loss'),
+            ('bs', 'Balance Sheet'),
+        ], 'B/S / P&L account', required=True),
+        'granularity': fields.selection([
+            ('account', 'By account'),
+            ('parent', 'By parent account'),
+        ], 'Granularity', required=True),
+        'instance_header': fields.function(_get_instance_header, type='string',
+            method=True, string='Instances'),
     }
 
-    def account_chart_open_window(self, cr, uid, ids, context=None):
+    _defaults = {
+        'show_inactive': lambda *a: False,
+        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
+        'is_initial_balance_available': True,
+        'account_type': 'all',
+        'granularity': 'parent',
+    }
 
+    def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
+        context=None):
+        res = {}
+
+        ib_available = fiscalyear_id
+        if ib_available:
+            if period_from:
+                # allow IB entries if a FY selected and period start = FY 1st period
+                fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
+                    fiscalyear_id, context=context)
+                period_from_rec = self.pool.get('account.period').browse(cr,
+                    uid, period_from, context=context)
+                ib_available = period_from_rec.date_start == fy_rec.date_start
+            else:
+                ib_available = False
+
+        res['value'] = {'is_initial_balance_available': ib_available, }
+        if not ib_available:
+            res['value']['initial_balance'] = False
+        return res
+
+    def _update_context(self, cr, uid, rec, context=None):
+        if isinstance(rec, (list, tuple, )):
+            rec = self.browse(cr, uid, rec[0], context=context)
+
+        if rec.initial_balance:
+            # include IB entries
+            context['period0'] = True
+
+    def _get_account_type_ids(self, cr, uid, account_type_val, context=None):
+        """
+        return filtered account type according to wizard 'account_type' field
+        """
+        res = []
+
+        if account_type_val:
+            if account_type_val == 'pl':
+                rt = [ 'income', 'expense', ]
+            elif account_type_val == 'bs':
+                rt = [ 'asset', 'liability', ]
+            else:
+                rt = False
+
+            if rt:
+                domain = [
+                    ('report_type', 'in' , rt),
+                ]
+                if 'asset' in rt or 'liability' in rt:
+                    # US-227 include tax account for BS accounts selection
+                    domain = [ '|', ('code', '=', 'tax') ] + domain
+                res = self.pool.get('account.account.type').search(cr, uid,
+                    domain, context=context)
+
+        return res
+
+    def account_chart_open_window(self, cr, uid, ids, context=None):
         result = super(account_chart, self).account_chart_open_window(cr, uid, ids, context=context)
+
+        account_obj = self.pool.get('account.account')
+
         # add 'active_test' to the result's context; this allows to show or hide inactive items
         data = self.read(cr, uid, ids, [], context=context)[0]
         context = eval(result['context'])
         context['filter_inactive_accounts'] = not data['show_inactive']
         if data['currency_id']:
             context['currency_id'] = data['currency_id']
+
         # Search regarding move state. Delete original 'state' one
         if 'state' in context:
             del context['state']
@@ -55,10 +174,35 @@ class account_chart(osv.osv_memory):
                 context['move_state'] = data['target_move']
         if data['output_currency_id']:
             context['output_currency_id'] = data['output_currency_id']
+        is_flat_view = data['granularity'] \
+            and data['granularity'] == 'account' or False
+
+        self._update_context(cr, uid, ids, context=context)
         result['context'] = unicode(context)
-        # UF-1718: Add a link on each account to display linked journal items
+
+        domain_tuples_str = []
+        account_type_ids = self._get_account_type_ids(cr, uid,
+            data['account_type'], context=context)
+        if account_type_ids:
+            account_ids = account_obj.search(cr, uid, [
+                    ('user_type', 'in', account_type_ids),
+                ], context=context)
+            if account_ids:
+                is_flat_view = True  # disable tree mode
+                """if not is_flat_view:
+                    account_ids = account_obj._get_parent_of(cr, uid,
+                        account_ids, context=context)"""
+                domain_tuples_str.append("('id', 'in', [%s])" % (
+                    ','.join(map(str, account_ids)), ))
+
+        xmlid = 'balance_account_tree'
+        if is_flat_view:
+            # flat version, not drillable, only final accounts
+            xmlid = 'balance_account_flat'
+            domain_tuples_str.append("('type', '!=', 'view')")
+            result['domain'] = ''  # cancel drillable tree view start domain
         try:
-            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', 'balance_account_tree') or False
+            tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_override', xmlid) or False
         except:
             # Exception is for account tests that attempt to read balance_account_tree that doesn't exists
             tree_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account', 'view_account_tree')
@@ -66,12 +210,11 @@ class account_chart(osv.osv_memory):
             tree_view_id = tree_view_id and tree_view_id[1] or False
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
+        if domain_tuples_str:
+           if not is_flat_view:
+                domain_tuples_str.insert(0, "('parent_id','=',False)")
+           result['domain'] = "[%s]" % (', '.join(domain_tuples_str), )
         return result
-
-    _defaults = {
-        'show_inactive': lambda *a: False,
-        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
-    }
 
     def button_export(self, cr, uid, ids, context=None):
         """
@@ -83,9 +226,15 @@ class account_chart(osv.osv_memory):
         wiz_fields = {}
         target_move = ''
         for wiz in self.browse(cr, uid, ids):
-            args = [('active', '=', True)]
-            if wiz.show_inactive == True:
-                args += [('active', 'in', [True, False])]
+            args = []
+            context['filter_inactive_accounts'] = not wiz.show_inactive
+            if wiz.granularity and wiz.granularity == 'account':
+                args.append(('type', '!=', 'view'))
+            account_type_ids = self._get_account_type_ids(cr, uid,
+                wiz.account_type, context=context)
+            if account_type_ids:
+                args.append(('user_type', 'in', account_type_ids))
+
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
             if wiz.instance_ids:
@@ -100,6 +249,8 @@ class account_chart(osv.osv_memory):
                 context['period_from'] = wiz.period_from.id
             if wiz.period_to:
                 context['period_to'] = wiz.period_to.id
+            self._update_context(cr, uid, wiz, context=context)
+
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)
             # fetch target move value
             o = wiz
@@ -114,11 +265,15 @@ class account_chart(osv.osv_memory):
             wiz_fields = {
                 'fy': wiz.fiscalyear and wiz.fiscalyear.name or '',
                 'target': target_move or '',
+                'initial_balance': wiz.initial_balance,
                 'period_from': wiz.period_from and wiz.period_from.name or '',
                 'period_to': wiz.period_to and wiz.period_to.name or '',
-                'instances': wiz.instance_ids and ','.join([x.name for x in wiz.instance_ids]) or '',
-                'show_inactive': wiz.show_inactive and 'X' or '',
-                'currency_filtering': wiz.currency_id and wiz.currency_id.name or '',
+                'instance_header': wiz.instance_header,
+                'show_inactive': wiz.show_inactive,
+                'currency_filtering': wiz.currency_id and wiz.currency_id.name or _('All'),
+                'account_type': wiz.account_type,
+                'granularity': wiz.granularity,
+                'instance_header': wiz.instance_header,
             }
         # UF-1718: Add currency name used from the wizard. If none, set it to "All" (no currency filtering)
         currency_name = _("No one specified")

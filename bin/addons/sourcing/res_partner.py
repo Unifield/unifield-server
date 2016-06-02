@@ -91,7 +91,7 @@ class res_partner(osv.osv):
                     if not so.procurement_request:
                         newargs.append(('partner_type', 'in', ['external', 'esc']))
                     elif so.procurement_request and not sl.product_id:
-                        newargs.append(('partner_type', 'in', ['internal', 'section', 'intermission']))
+                        newargs.append(('partner_type', 'in', ['internal', 'section', 'intermission', 'esc']))
             else:
                 newargs.append(args)
         return newargs
@@ -129,7 +129,7 @@ class res_partner(osv.osv):
                     if active_ids:
                         sol = self.pool.get('sale.order.line').browse(cr, uid, active_ids)[0]
                         if not context.get('product_id', False) and sol.order_id.procurement_request:
-                            newargs.append(('partner_type', 'in', ['internal', 'section', 'intermission']))
+                            newargs.append(('partner_type', 'in', ['internal', 'section', 'intermission', 'esc']))
             else:
                 newargs.append(args)
         return newargs
@@ -151,6 +151,9 @@ class res_partner(osv.osv):
                    or not isinstance(arg[2]['partner_id'], (int, long)):
                     raise osv.except_osv(_('Error'), _('Filter check_partner_po different than (arg[0], =, %s) not implemented.') % arg[2])
                 order_type = arg[2]['order_type']
+                split_po = arg[2]['split_po']
+                if split_po:
+                    newargs.append(('split_po', '=', 'yes'))
                 # Added by UF-1660 to filter partners
                 # do nothing on partner_type for loan
                 p_list = []

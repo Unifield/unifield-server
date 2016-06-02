@@ -125,14 +125,15 @@ class account_move_line(osv.osv):
             child_ids = account_obj._get_children_and_consol(cr, uid, [context['chart_account_id']], context=context)
             query += ' AND '+obj+'.account_id IN (%s)' % ','.join(map(str, child_ids))
 
-        if not context.get('period0', False):
-            # US-822: by default in reports always not include period 0 (IB journals)
-            domain = [('number', '=', 0)]
-            if fiscalyear_ids:
-                domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
-            periods_ids = fiscalperiod_obj.search(cr, uid, domain, context={'show_period_0': 1})
-            if periods_ids:
-                query += ' AND %s.period_id not in (%s)' % (obj, ','.join(map(str, periods_ids)), )
+        # period 0
+        domain = [('number', '=', 0)]
+        if fiscalyear_ids:
+            domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
+        period0_ids = fiscalperiod_obj.search(cr, uid, domain, context={'show_period_0': 1})
+        if period0_ids:
+            if not context.get('period0', False):
+                # US-822: by default in reports exclude period 0 (IB journals)
+                query += ' AND %s.period_id not in (%s)' % (obj, ','.join(map(str, period0_ids)), )
 
         if context.get('state_agnostic', False):
             query = query.replace(obj+".state <> 'draft' AND ", '')

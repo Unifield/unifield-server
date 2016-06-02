@@ -50,7 +50,7 @@ class wizard_import_pick_line(osv.osv_memory):
 
     _columns = {
         'file': fields.binary(string='File to import', required=True, readonly=True, states={'draft': [('readonly', False)]}),
-        'message': fields.text(string='Message', readonly=True),
+        'message': fields.text(string='Message', readonly=True, translate=True),
         'picking_id': fields.many2one('stock.picking', string='Stock Picking', required=True),
         'data': fields.binary('Lines with errors'),
         'filename': fields.char('Lines with errors', size=256),

@@ -168,6 +168,8 @@ class purchase_order(osv.osv):
 
         if not 'date_confirm' in default:
             default['date_confirm'] = False
+        if not default.get('related_sourcing_id', False):
+            default['related_sourcing_id'] = False
 
         return super(purchase_order, self).copy(cr, uid, p_id, default, context=context)
 
@@ -1374,8 +1376,11 @@ stock moves which are already processed : '''
         ad_obj = self.pool.get('analytic.distribution')
         date_tools = self.pool.get('date.tools')
         fields_tools = self.pool.get('fields.tools')
+        data_obj = self.pool.get('ir.model.data')
         db_date_format = date_tools.get_db_date_format(cr, uid, context=context)
         wf_service = netsvc.LocalService("workflow")
+
+        tbd_product_id = data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
 
         # update corresponding fo if exist
         if so_ids is None:
@@ -1484,12 +1489,28 @@ stock moves which are already processed : '''
                     # write the line
                     sol_obj.write(cr, uid, sol_ids, fields_dic, context=ctx)
 
-                    if so.procurement_request and so.location_requestor_id.usage == 'customer' \
-                                              and line.procurement_id.move_id \
-                                              and not line.procurement_id.move_id.processed_stock_move:
-                        # In case of replacement of a non-stockable product by a stockable product
-                        if line.product_id.id != line.procurement_id.product_id.id and  line.procurement_id.product_id.type in ('service', 'service_recep', 'consu') and line.product_id.type == 'product':
-                            # Get OUT linked to IR
+                    cond2 = not sol.product_id or sol.product_id.id != line.procurement_id.product_id.id
+                    cond1 = so.procurement_request and so.location_requestor_id.usage == 'customer'
+                    cond3 = bool(line.procurement_id.move_id and not line.procurement_id.move_id.processed_stock_move)
+
+                    if cond2 and line.product_id:
+                        proc_obj.write(cr, uid, [line.procurement_id.id], {'product_id': line.product_id.id})
+
+                    if (cond1 or (not so.procurement_request and cond2)) and cond3:
+
+                        # In case of FO with not only no product lines, the picking tickes will be created with normal flow
+                        if not so.procurement_request and cond2:
+                            if sol_obj.search(cr, uid, [('order_id', '=', so.id), ('product_id', '!=', False),
+                                                        ('id', '!=', sol.id)], limit=1, context=context):
+                                continue
+
+                        cond4 = line.product_id.id != line.procurement_id.product_id.id
+                        cond5 = line.procurement_id.product_id.type in ('service', 'service_recep', 'consu')
+                        cond6 = line.procurement_id.product_id.id == tbd_product_id
+                        cond7 = line.product_id.type == 'product'
+                        # In case of replacement of a non-stockable product by a stockable product or replacement of To be Defined product
+                        if cond4 and (cond5 or cond6) and cond7:
+                            # Get OUT linked to IR or PICK linked to FO
                             pick_to_confirm = None
                             out_ids = []
                             if line.procurement_id.sale_id:
@@ -1497,16 +1518,18 @@ stock moves which are already processed : '''
                                     ('sale_id', '=', line.procurement_id.sale_id.id),
                                     ('type', '=', 'out'),
                                     ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                                ], context=context)
+                                ], limit=1, context=context)
                             if not out_ids:
                                 picking_data = so_obj._get_picking_data(cr, uid, so)
                                 out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
-                                pick_to_confirm = out_ids
+                                if so.procurement_request:
+                                    pick_to_confirm = out_ids
 
+                            sol = sol_obj.browse(cr, uid, sol.id, context=context)
                             move_data = so_obj._get_move_data(cr, uid, so, sol, out_ids[0], context=context)
                             new_move_id = move_obj.create(cr, uid, move_data, context=context)
                             out_move_id = line.procurement_id.move_id.id
-                            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': new_move_id}, context=context)
+                            proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': new_move_id, 'product_id': sol.product_id.id}, context=context)
                             move_obj.write(cr, uid, [out_move_id], {'state': 'draft'}, context=context)
                             move_obj.unlink(cr, uid, [out_move_id], context=context)
 
@@ -1730,7 +1753,7 @@ stock moves which are already processed : '''
             if sol_obj.search(cr, uid,
                     [('order_id', 'in', all_so_ids),
                      ('type', '=', 'make_to_order'),
-                     ('product_id', '!=', False),
+                     #('product_id', '!=', False),
                      ('procurement_id.state', '!=', 'cancel'),
                      ('order_id.procurement_request', '=', False),
                      ('state', 'not in', ['confirmed', 'done'])],
@@ -2526,7 +2549,7 @@ stock moves which are already processed : '''
 
         if use_new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 

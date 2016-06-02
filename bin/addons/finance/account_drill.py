@@ -30,23 +30,27 @@ class AccountDrillNode(object):
     """
     def __init__(self, drill, parent=None, level=0, account_id=False):
         super(AccountDrillNode, self).__init__()
-        # set during maping
-        self.drill = drill
 
         self.parent = parent
         self.childs = []
         self.level = level
         self.account_id = account_id
 
-        # set during map/reduce
+        # set during map
+        self.drill = drill  # AccountDrill instance
         self.data = {}
-        self.zero_bal = False
-        self.skip = False
+        self.is_view = True
+        # set during reduce (note that reduce update data too)
+        self.is_zero_bal = False  # total all ccy bal 0
+        self.is_zero = False  # total all ccy amount to 0
 
         # set during next_node() calls
         self.code = ''
         self.name = ''
         self.obj = None
+
+        # set by report parser rendering
+        self.displayed = True
 
     def get_currencies(self):
         if not self.data:
@@ -61,9 +65,6 @@ class AccountDrillNode(object):
         print "%s%d\n" % (indent, self.account_id, )
         for c in self.childs:
             c.output()
-
-#    def is_move_level(self):
-#        return self.level == self.drill._move_level
 
 class AccountDrill(object):
     """
@@ -152,7 +153,7 @@ class AccountDrill(object):
         output node infos for debug purposes
         """
         self.root.output()
-    
+
     def map(self):
         """
         build tree and compute move lines level amounts per currency
@@ -173,6 +174,14 @@ class AccountDrill(object):
         from move lines level, consolidate, up level to up level, the view
         accounts amounts
         """
+        def set_attributes(node):
+            total = node.data.get('*', {})
+            debit = total.get('debit', 0.)
+            credit = total.get('credit', 0.)
+
+            node.is_zero_bal = (debit - credit) == 0.
+            node.is_zero = not debit and not credit
+
         fields = [ 'debit', 'credit', 'debit_ccy', 'credit_ccy', ]
 
         level = max(self.nodes_by_level.keys())
@@ -180,20 +189,14 @@ class AccountDrill(object):
             nodes = self.nodes_by_level.get(level)
             if nodes:
                 for n in nodes:
-                    if not self.is_view(n.account_id):
-                        if self.with_balance_only:
-                            bal = n.data.get('*', {}).get('debit', 0.) \
-                                - n.data.get('*', {}).get('credit', 0.)
-                            if bal == 0.:
-                                # JI level:
-                                # with only balance filter: do not agregate account
-                                # debit/credit with a zero balance
-                                n.zero_bal = True
-                                continue
-                    else:
-                        n.skip = not n.childs
-                    #elif level == self._move_level - 1:
-                    #    n.skip = not n.childs  # no entries due to filtering
+                    set_attributes(n)
+
+                    if not n.is_view and self.with_balance_only \
+                        and n.is_zero_bal:
+                        # JI level:
+                        # with only balance filter: do not agregate account
+                        # debit/credit with a zero balance
+                        continue
 
                     parent = n.parent
                     if parent:
@@ -204,6 +207,7 @@ class AccountDrill(object):
                                     parent.data[ccy][f] = 0.
                             for f in fields:
                                 parent.data[ccy][f] += n.data[ccy].get(f, 0.)
+                        set_attributes(parent)
             level -= 1  # upper level (upper level by uper level)
 
         # uncomment to explore reduced nodes
@@ -276,6 +280,7 @@ class AccountDrill(object):
 
         node = AccountDrillNode(self, parent=parent, level=level,
             account_id=account_id)
+        node.is_view = self.is_view(account_id)
         self.nodes_flat.append(node)
         self.nodes_by_id[account_id] = node
         if level not in self.nodes_by_level:
@@ -284,14 +289,14 @@ class AccountDrill(object):
         if parent:
             parent.childs.append(node)
 
-        if not self.is_view(account_id):
+        if not node.is_view:
             # breakdown func/booking per ccy
-            
+
             # regular query
             sql = prepare_sql(self.sql, self.query, node)
             self.cr.execute(sql, (account_id, tuple(self.move_states), ))
             register_sql_result(self.cr, node)
-                
+
             # initial balance
             if self.query_ib:
                 sql = prepare_sql(self._sql_ib, self.query_ib, node)
@@ -305,7 +310,8 @@ class AccountDrill(object):
             context=self.context)
 
     def is_view(self, account_id):
-        return self.pool.get('account.account').read(self.cr, self.uid, account_id, ['type'])['type'] == 'view'
+        return self.pool.get('account.account').read(self.cr, self.uid,
+            account_id, ['type'])['type'] == 'view'
 
     def next_node(self):
         if self._next_node_index >= self.nodes_count:
