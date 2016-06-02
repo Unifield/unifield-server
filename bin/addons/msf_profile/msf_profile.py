@@ -407,8 +407,25 @@ class patch_scripts(osv.osv):
     def us_1024_send_bar_patch(self, cr, uid, *a, **b):
         context = {}
         user_obj = self.pool.get('res.users')
+        ir_ui_obj = self.pool.get('ir.ui.view')
+        data_obj = self.pool.get('ir.model.data')
+        rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+
         usr = user_obj.browse(cr, uid, [uid], context=context)[0]
         level_current = False
+
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
+        if rule_ids:
+            data_ids = data_obj.search(cr, uid, [
+                ('module', '=', 'sd'),
+                ('model', '=', 'msf_button_access_rights.button_access_rule'),
+                ('res_id', 'in', rule_ids)
+                ])
+            if rule_ids:
+                data_obj.unlink(cr, uid, data_ids)
+            for rule in rules_obj.read(cr, uid, rule_ids, ['type', 'name']):
+                xmlname = ir_ui_obj._get_xmlname(cr, uid, rule['type'], rule['name'])
+                rules_obj.write(cr, uid, rule['id'], {'xmlname': xmlname})
 
         if usr and usr.company_id and usr.company_id.instance_id and usr.company_id.instance_id.level == 'section':
             cr.execute('''update ir_model_data

@@ -161,19 +161,24 @@ class ir_ui_view(osv.osv):
                     button_object_list.append(self._button_dict(name, label, type, groups, model_id, view_id))
                 
         return button_object_list
-            
+
+    def _get_xmlname(self, cr, uid, btype, name):
+        xmlname = False
+        data_obj = self.pool.get('ir.model.data')
+
+        if btype == 'action':
+            model = self.pool.get('ir.actions.actions').read(cr, uid, int(name), ['type'])['type']
+            xmlid = data_obj.search(cr, uid, [('res_id', '=', name), ('module', '!=', 'sd'), ('model', '=', model)])
+            if xmlid:
+                data = data_obj.read(cr, uid, xmlid[0], ['module', 'name'])
+                xmlname = '%s.%s' % (data['module'], data['name'])
+        return xmlname
+
     def _write_button_objects(self, cr, uid, buttons):
         data_obj = self.pool.get('ir.model.data')
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
         for button in buttons:
-            xmlname = False
-            if button.get('type') == 'action':
-                model = self.pool.get('ir.actions.actions').read(cr, uid, int(button['name']), ['type'])['type']
-                xmlid = data_obj.search(cr, uid, [('res_id', '=', button['name']), ('module', '!=', 'sd'), ('model', '=', model)])
-                if xmlid:
-                    data = data_obj.read(cr, uid, xmlid[0], ['module', 'name'])
-                    xmlname = '%s.%s' % (data['module'], data['name'])
-                    button['xmlname'] = xmlname
+            xmlname = self._get_xmlname(cr, uid, btype, name)
             existing_rule_search = rules_pool.search(cr, uid, [
                 ('name','=',button['name']),
                 ('view_id','=',button['view_id']),
