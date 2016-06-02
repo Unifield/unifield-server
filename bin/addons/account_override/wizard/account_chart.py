@@ -93,20 +93,45 @@ class account_chart(osv.osv_memory):
 
     _defaults = {
         'show_inactive': lambda *a: False,
-        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
-        'is_initial_balance_available': True,
+        'fiscalyear': lambda *a: False,
+        'is_initial_balance_available': lambda *a: False,
         'account_type': 'all',
         'granularity': 'parent',
     }
+    
+    def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id, context=None):
+        res = super(account_chart, self).onchange_fiscalyear(cr, uid, ids,
+            fiscalyear_id, context=context)
+        if res is None:
+            res = {}
+
+        # restrict periods to fiscal year
+        domain = fiscalyear_id \
+            and [ ('fiscalyear_id', '=', fiscalyear_id), ] or False
+        res['domain'] = {
+            'period_from': domain,
+            'period_to': domain,
+        }
+        
+        # IB available if a FY picked
+        ib_available = fiscalyear_id or False
+        if not 'value' in res:
+            res['value'] = {}
+        res['value']['is_initial_balance_available'] = ib_available
+        if not ib_available:
+            res['value']['initial_balance'] = False
+        
+        return res
 
     def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
         context=None):
         res = {}
 
-        ib_available = fiscalyear_id
+        ib_available = fiscalyear_id or False
         if ib_available:
             if period_from:
-                # allow IB entries if a FY selected and period start = FY 1st period
+                # allow IB entries if a FY picked
+                # and period start = FY 1st period
                 fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
                     fiscalyear_id, context=context)
                 period_from_rec = self.pool.get('account.period').browse(cr,
@@ -118,6 +143,7 @@ class account_chart(osv.osv_memory):
         res['value'] = {'is_initial_balance_available': ib_available, }
         if not ib_available:
             res['value']['initial_balance'] = False
+            
         return res
 
     def _update_context(self, cr, uid, rec, context=None):
