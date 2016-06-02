@@ -178,7 +178,7 @@ class ir_ui_view(osv.osv):
         data_obj = self.pool.get('ir.model.data')
         rules_pool = self.pool.get('msf_button_access_rights.button_access_rule')
         for button in buttons:
-            xmlname = self._get_xmlname(cr, uid, btype, name)
+            xmlname = self._get_xmlname(cr, uid, button.get('type'), button['name'])
             existing_rule_search = rules_pool.search(cr, uid, [
                 ('name','=',button['name']),
                 ('view_id','=',button['view_id']),
