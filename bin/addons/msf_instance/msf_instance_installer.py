@@ -12,7 +12,7 @@ class msf_instance_setup(osv.osv_memory):
 
     _columns = {
          'instance_id': fields.many2one('msf.instance', string="Proprietary instance", required=True, domain=[('instance', '=', False), ('restrict_level_from_entity', '=', True)]),
-         'message': fields.text(string='message', readonly=True),
+         'message': fields.text(string='', readonly=True),
          'first_run': fields.boolean(string='First Run'),
     }
 
