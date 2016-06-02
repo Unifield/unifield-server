@@ -78,6 +78,7 @@ class wizard_import_tender_line(osv.osv_memory):
         tender_line_obj = self.pool.get('tender.line')
         line_with_error = []
         vals = {'tender_line_ids': []}
+        categ_log = ''
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             tender_browse = wiz_browse.tender_id
