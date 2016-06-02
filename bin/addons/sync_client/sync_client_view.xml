@@ -10,7 +10,7 @@
             <field name="model">sync.client.sync_server_connection</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Instance Tree">
+                <tree string="Instance Tree"  hide_new_button="1" hide_delete_button="1" >
                     <field name="host"/>
                     <field name="database"/>
                     <field name="login"/>
@@ -23,7 +23,7 @@
             <field name="model">sync.client.sync_server_connection</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Instance Form">
+                <form string="Instance Form"  hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1" >
                     <separator string="Connection information" colspan="4"/>
                     <field name="host" required="1" on_change="change_host(host, protocol)"/>
                     <field name="port" required="1"/>
