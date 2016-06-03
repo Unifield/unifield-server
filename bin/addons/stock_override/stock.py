@@ -1228,10 +1228,10 @@ You cannot choose this supplier because some destination locations are not avail
         for pick in self.read(cr, uid, ids, ['move_lines', 'type']):
             if pick['move_lines'] and pick['type'] == 'in':
                 not_assigned_move = pick['move_lines']
+                move_obj.write(cr, uid, not_assigned_move, {'state':
+                    'confirmed'})
                 if not_assigned_move:
-                    vals = {'state': 'confirmed'}
-                    move_obj.action_assign(cr, uid, not_assigned_move,
-                            vals=vals)
+                    move_obj.action_assign(cr, uid, not_assigned_move)
 
         return True
 
@@ -1914,10 +1914,12 @@ class stock_move(osv.osv):
         if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
 
-    def action_confirm(self, cr, uid, ids, context=None):
+    def action_confirm(self, cr, uid, ids, context=None, vals=None):
         '''
         Set the bool already confirmed to True
         '''
+        if vals is None:
+            vals = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
         self.prepare_action_confirm(cr, uid, ids, context=context)
 
@@ -1962,8 +1964,8 @@ class stock_move(osv.osv):
                 self.write(cr, uid, assigned_ids, {'state': 'assigned'})
 
         if notdone:
-            vals = {'state': 'confirmed'}
-            self.action_assign(cr, uid, notdone, vals=vals)
+            self.write(cr, uid, notdone, {'state': 'confirmed'})
+            self.action_assign(cr, uid, notdone)
         return count
 
     def _hook_check_assign(self, cr, uid, *args, **kwargs):
@@ -2256,7 +2258,9 @@ class stock_move(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.confirm_and_force_assign(cr, uid, ids, context)
+
+        self.action_confirm(cr, uid, ids, context)
+        self.action_assign(cr, uid, ids, context)
         return True
 
     # @@@override stock>stock.py>stock_move>_chain_compute
