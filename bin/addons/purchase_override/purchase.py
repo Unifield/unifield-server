@@ -677,7 +677,6 @@ class purchase_order(osv.osv):
             if ids:
                 # Check the restrction of product in lines
                 if ids:
-                    product_obj = self.pool.get('product.product')
                     for order in self.browse(cr, uid, ids):
                         for line in order.order_line:
                             if line.product_id:
@@ -1501,7 +1500,9 @@ stock moves which are already processed : '''
                         # In case of FO with not only no product lines, the picking tickes will be created with normal flow
                         if not so.procurement_request and cond2:
                             if sol_obj.search(cr, uid, [('order_id', '=', so.id), ('product_id', '!=', False),
-                                                        ('id', '!=', sol.id)], limit=1, context=context):
+                                                        ('id', '!=', sol.id)],
+                                                        limit=1,
+                                                        order='NO_ORDER', context=context):
                                 continue
 
                         cond4 = line.product_id.id != line.procurement_id.product_id.id
@@ -1518,7 +1519,7 @@ stock moves which are already processed : '''
                                     ('sale_id', '=', line.procurement_id.sale_id.id),
                                     ('type', '=', 'out'),
                                     ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                                ], limit=1, context=context)
+                                ], limit=1, order='NO_ORDER', context=context)
                             if not out_ids:
                                 picking_data = so_obj._get_picking_data(cr, uid, so)
                                 out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
@@ -2148,9 +2149,9 @@ stock moves which are already processed : '''
                     if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (store_object, store_ids, store_fields2) in done:
                         self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
                         done.append((store_object, store_ids, store_fields2))
-            move_obj.write(cr, uid, moves_to_update, {'location_id':order.location_id.id})
-            move_obj.action_confirm(cr, uid, todo_moves)
-            move_obj.force_assign(cr, uid, todo_moves)
+            if moves_to_update:
+                move_obj.write(cr, uid, moves_to_update, {'location_id':order.location_id.id})
+            move_obj.confirm_and_force_assign(cr, uid, todo_moves)
             wf_service = netsvc.LocalService("workflow")
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
         return picking_id
@@ -3455,7 +3456,7 @@ class purchase_order_line(osv.osv):
                  ('uom_id', '=', uom_id),
                  '|', ('valid_till', '=', False),
                  ('valid_till', '>=', order.date_order)],
-                limit=2, context=context)
+                limit=2, order='NO_ORDER', context=context)
             if len(pricelist) > 1:
                 return True
 
