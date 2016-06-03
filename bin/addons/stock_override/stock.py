@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
@@ -1186,9 +1187,11 @@ You cannot choose this supplier because some destination locations are not avail
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for pick in self.browse(cr, uid, ids):
-            if pick.move_lines and pick.type == 'in':
-                not_assigned_move = [x.id for x in pick.move_lines if x.state == 'confirmed']
+        for pick in self.read(cr, uid, ids, ['move_lines', 'type']):
+            if pick['move_lines'] and pick['type'] == 'in':
+                not_assigned_move = move_obj.search(cr, uid,
+                        [('id', 'in', pick['move_lines']),
+                         ('state', '=', 'confirmed')], order='NO_ORDER')
                 if not_assigned_move:
                     move_obj.action_assign(cr, uid, not_assigned_move)
         return True
@@ -1222,12 +1225,13 @@ You cannot choose this supplier because some destination locations are not avail
         self.log_picking(cr, uid, ids, context=context)
         move_obj = self.pool.get('stock.move')
 
-        for pick in self.browse(cr, uid, ids):
-            if pick.move_lines and pick.type == 'in':
-                not_assigned_move = [x.id for x in pick.move_lines]
-                move_obj.write(cr, uid, not_assigned_move, {'state': 'confirmed'})
+        for pick in self.read(cr, uid, ids, ['move_lines', 'type']):
+            if pick['move_lines'] and pick['type'] == 'in':
+                not_assigned_move = pick['move_lines']
                 if not_assigned_move:
-                    move_obj.action_assign(cr, uid, not_assigned_move)
+                    vals = {'state': 'confirmed'}
+                    move_obj.action_assign(cr, uid, not_assigned_move,
+                            vals=vals)
 
         return True
 
@@ -1279,10 +1283,10 @@ class stock_move(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for move in self.browse(cr, uid, ids, context=context):
-            res[move.id] = False
-            if move.dpo_id:
-                res[move.id] = True
+        for move in self.read(cr, uid, ids, ['dpo_id'], context=context):
+            res[move['id']] = False
+            if move['dpo_id']:
+                res[move['id']] = True
 
         return res
 
@@ -1301,9 +1305,9 @@ class stock_move(osv.osv):
     def _default_location_destination(self, cr, uid, context=None):
         if not context:
             context = {}
-        partner_id = context.get('partner_id')
-        company_part_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
         if context.get('picking_type') == 'out':
+            partner_id = context.get('partner_id')
+            company_part_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id.id
             if partner_id != company_part_id:
                 wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
                 if wh_ids:
@@ -1460,10 +1464,7 @@ class stock_move(osv.osv):
 
         move = self.browse(cr, uid, ids[0], context=context)
         if move.price_changed:
-            func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
             price_unit = move.price_unit
-#            price_unit = self.pool.get('res.currency').compute(cr, uid,
-#                func_curr_id, move.price_currency_id.id, move.price_unit, round=True)
             raise osv.except_osv(
                 _('Information'),
                 _('The initial unit price (coming from Purchase order line) is %s %s - The new unit price is %s %s') % (
@@ -1476,22 +1477,63 @@ class stock_move(osv.osv):
         return True
 
     @check_cp_rw
-    def force_assign(self, cr, uid, ids, context=None):
+    def confirm_and_force_assign(self, cr, uid, ids, context=None):
+        '''avoid multiple write by calling it only once'''
+
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        self.prepare_action_confirm(cr, uid, ids, context=context)
+        vals = {'already_confirmed': True}
+
+        ids_assign = ids[:]
+        self.prepare_force_assign(cr, uid, ids_assign, context=context)
+
+        # if ids and ids_assign are equal, it is possible to call on write on
+        # all ids
+        if ids == ids_assign:
+            res = super(stock_move, self).confirm_and_force_assign(cr, uid,
+                    ids=ids, context=context, vals=vals)
+        else:
+            res = super(stock_move, self).action_confirm(cr, uid,
+                    ids=ids, context=context, vals=vals)
+            res = super(stock_move, self).force_assign(cr, uid,
+                    ids=ids_assign, context=context)
+        return res
+
+    def prepare_force_assign(self, cr, uid, ids, context=None):
+        '''
+        split in smaller methods to ease the reusing of the code in other parts
+        '''
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
 
-        for move in self.browse(cr, uid, ids, context=context):
-            if move.product_id.id == product_tbd and move.from_wkf_line:
-                ids.pop(ids.index(move.id))
+        picking_name_dict = {}
+        pick_obj = self.pool.get('stock.picking')
+
+        for move in self.read(cr, uid, ids,
+                ['product_id', 'from_wkf_line', 'picking_id', 'line_number'], context=context):
+            if move['product_id'][0] == product_tbd and move['from_wkf_line']:
+                ids.pop(ids.index(move['id']))
             else:
+                picking_id = move['picking_id'][0]
+                if picking_id not in picking_name_dict:
+                    picking_id_name = pick_obj.read(cr, uid,
+                            picking_id, ['name'], context)['name']
+                    picking_name_dict[picking_id] = picking_id_name
+                else:
+                    picking_id_name = picking_name_dict[picking_id]
+
                 self.infolog(cr, uid, 'Force availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
-                    move.line_number, move.id, move.picking_id.id, move.picking_id.name,
+                    move['line_number'], move['id'], picking_id, picking_id_name,
                 ))
 
+    @check_cp_rw
+    def force_assign(self, cr, uid, ids, context=None):
+        self.prepare_force_assign(cr, uid, ids, context=context)
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
     def _uom_constraint(self, cr, uid, ids, context=None):
-        for obj in self.browse(cr, uid, ids, context=context):
-            if not self.pool.get('uom.tools').check_uom(cr, uid, obj.product_id.id, obj.product_uom.id, context):
+        for obj in self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context):
+            if not self.pool.get('uom.tools').check_uom(cr, uid,
+                    obj['product_id'][0], obj['product_uom'][0], context):
                 raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
         return True
@@ -1546,16 +1588,17 @@ class stock_move(osv.osv):
         val_type = vals.get('type', False)
         picking = False
         if vals.get('picking_id', False):
-            picking = pick_obj.browse(cr, uid, vals['picking_id'], context=context)
+            picking = pick_obj.read(cr, uid, vals['picking_id'],
+                    ['move_sequence_id', 'type', 'reason_type_id'], context=context)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
-                sequence_id = picking.move_sequence_id.id
+                sequence_id = picking['move_sequence_id'][0]
                 line = seq_obj.get_id(cr, uid, sequence_id, code_or_id='id', context=context)
                 # update values with line value
                 vals['line_number'] = line
 
             if not val_type:
-                val_type = picking.type
+                val_type = picking['type']
 
         if vals.get('product_id', False):
             product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
@@ -1565,13 +1608,13 @@ class stock_move(osv.osv):
                                                      and product.type == 'consu' \
                                                      and vals.get('location_dest_id') != id_cross:
                 if vals.get('sale_line_id'):
-                    if picking.type == 'out':
+                    if picking['type'] == 'out':
                         vals['location_id'] = id_cross
                     else:
                         vals['location_id'] = id_nonstock
                     vals['location_dest_id'] = id_pack
                 else:
-                    if picking.type != 'out':
+                    if picking['type'] != 'out':
                         vals['location_dest_id'] = id_nonstock
 
             if product.batch_management:
@@ -1614,9 +1657,9 @@ class stock_move(osv.osv):
 
         # Change the reason type of the picking if it is not the same
         if picking and not context.get('from_claim') and not context.get('from_chaining') \
-                                                      and vals.get('reason_type_id', False) != picking.reason_type_id.id:
+                                                      and vals.get('reason_type_id', False) != picking['reason_type_id'][0]:
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-            pick_obj.write(cr, uid, [picking.id], {'reason_type_id': other_type_id}, context=context)
+            pick_obj.write(cr, uid, [picking['id']], {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).create(cr, uid, vals, context=context)
 
@@ -1639,36 +1682,38 @@ class stock_move(osv.osv):
             ids = [ids]
 
         product = None
-        pick_bro = None
+        pick_dict = {}
         id_cross = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
 
         if vals.get('product_id', False):
             # complete hidden flags - needed if not created from GUI
-            product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
+            product = prod_obj.read(cr, uid, vals['product_id'],
+                    ['batch_management', 'perishable', 'type'], context=context)
             vals.update({
-                'hidden_batch_management_mandatory': product.batch_management,
-                'hidden_perishable_mandatory': product.perishable,
+                'hidden_batch_management_mandatory': product['batch_management'],
+                'hidden_perishable_mandatory': product['perishable'],
             })
 
             if vals.get('picking_id'):
-                pick_bro = pick_obj.browse(cr, uid, vals['picking_id'], context=context)
+                pick_dict = pick_obj.read(cr, uid, vals['picking_id'], ['type'], context=context)
 
-        if pick_bro and product and product.type == 'consu' and vals.get('location_dest_id') != id_cross:
+        if pick_dict and product and product['type'] == 'consu' and vals.get('location_dest_id') != id_cross:
             id_nonstock = data_obj.get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')
             if vals.get('sale_line_id'):
                 id_pack = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')
                 vals.update({
-                    'location_id': pick_bro.type == 'out' and id_cross or id_nonstock[1],
+                    'location_id': pick_dict['type'] == 'out' and id_cross or id_nonstock[1],
                     'location_dest_id': id_pack[1],
                 })
-            elif pick_bro.type != 'out':
+            elif pick_dict['type'] != 'out':
                 vals['location_dest_id'] = id_nonstock[1]
 
         if vals.get('location_dest_id'):
-            dest_id = loc_obj.browse(cr, uid, vals['location_dest_id'], context=context)
-            if dest_id.usage == 'inventory' and not dest_id.virtual_location:
+            dest_dict = loc_obj.read(cr, uid, vals['location_dest_id'],
+                    ['virtual_location', 'usage', 'scrap_location'], context=context)
+            if dest_dict['usage'] == 'inventory' and not dest_dict['virtual_location']:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-            if dest_id.scrap_location and not dest_id.virtual_location:
+            if dest_dict['scrap_location'] and not dest_dict['virtual_location']:
                 vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
             # if the source location and the destination location are the same, the state is done
             if 'location_id' in vals and vals['location_dest_id'] == vals['location_id']:
@@ -1680,24 +1725,32 @@ class stock_move(osv.osv):
         cond1 = not addr and partner
         cond2 = not partner and addr
 
+        pick_to_change_reason = set()
         if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
-            for move in self.browse(cr, uid, ids, context=context):
-                if cond1 and move.partner_id.id != partner:
+            for move in self.read(cr, uid, ids,
+                    ['partner_id', 'address_id', 'state', 'picking_id'], context=context):
+                partner_id = move['partner_id'][0]
+                picking_id = move['picking_id'][0]
+                if cond1 and partner_id != partner:
                     addr = partner_obj.address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
                     vals['address_id'] = addr.get('delivery', False) or addr.get('default')
 
-                if cond2 and move.address_id.id != vals.get('address_id'):
-                    addr = addr_obj.browse(cr, uid, vals.get('address_id'), context=context)
-                    vals['partner_id2'] = addr.partner_id and addr.partner_id.id or False
+                if cond2 and move['address_id'] != vals.get('address_id'):
+                    addr = addr_obj.read(cr, uid, vals.get('address_id'), ['partner_id'], context=context)
+                    vals['partner_id2'] = addr['partner_id'][0] or False
 
-                if vals.get('date_expected') and vals.get('state', move.state) not in ('done', 'cancel'):
+                if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
                 # Change the reason type of the picking if it is not the same
-                if 'reason_type_id' in vals:
-                    if move.picking_id and move.picking_id.reason_type_id.id != vals['reason_type_id']:
-                        other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                        pick_obj.write(cr, uid, move.picking_id.id, {'reason_type_id': other_type_id}, context=context)
+                if 'reason_type_id' in vals and picking_id:
+                    pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context) 
+                    if pick['reason_type_id'][0] != vals['reason_type_id']:
+                        pick_to_change_reason.add(picking_id)
+
+        if pick_to_change_reason:
+            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            pick_obj.write(cr, uid, list(pick_to_change_reason), {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
@@ -1849,12 +1902,10 @@ class stock_move(osv.osv):
                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
         return True
 
-    def action_confirm(self, cr, uid, ids, context=None):
+    def prepare_action_confirm(self, cr, uid, ids, context=None):
         '''
-        Set the bool already confirmed to True
+        split in smaller methods to ease the reusing of the code in other parts
         '''
-        ids = isinstance(ids, (int, long)) and [ids] or ids
-
         no_product = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_qty', '<=', 0.00),
@@ -1863,10 +1914,16 @@ class stock_move(osv.osv):
         if no_product:
             raise osv.except_osv(_('Error'), _('You cannot confirm a stock move without quantity.'))
 
-        res = super(stock_move, self).action_confirm(cr, uid, ids, context=context)
+    def action_confirm(self, cr, uid, ids, context=None):
+        '''
+        Set the bool already confirmed to True
+        '''
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        self.prepare_action_confirm(cr, uid, ids, context=context)
 
-        self.write(cr, uid, ids, {'already_confirmed': True}, context=context)
-
+        vals = {'already_confirmed': True}
+        res = super(stock_move, self).action_confirm(cr, uid, ids,
+                context=context, vals=vals)
         return res
 
     def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
@@ -1905,8 +1962,8 @@ class stock_move(osv.osv):
                 self.write(cr, uid, assigned_ids, {'state': 'assigned'})
 
         if notdone:
-            self.write(cr, uid, notdone, {'state': 'confirmed'})
-            self.action_assign(cr, uid, notdone)
+            vals = {'state': 'confirmed'}
+            self.action_assign(cr, uid, notdone, vals=vals)
         return count
 
     def _hook_check_assign(self, cr, uid, *args, **kwargs):
@@ -2199,8 +2256,7 @@ class stock_move(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self.action_confirm(cr, uid, ids, context)
-        self.action_assign(cr, uid, ids, context)
+        self.confirm_and_force_assign(cr, uid, ids, context)
         return True
 
     # @@@override stock>stock.py>stock_move>_chain_compute
@@ -2310,7 +2366,6 @@ class stock_location(osv.osv):
         if hasattr(super(stock_location, self), 'init'):
             super(stock_location, self).init(cr)
 
-        mod_obj = self.pool.get('ir.module.module')
         logging.getLogger('init').info('HOOK: module stock_override: loading stock_data.xml')
         pathname = path.join('stock_override', 'stock_data.xml')
         file = tools.file_open(pathname)
@@ -2326,7 +2381,7 @@ class stock_location(osv.osv):
         product_product_obj = self.pool.get('product.product')
         currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         currency_obj = self.pool.get('res.currency')
-        currency = currency_obj.browse(cr, uid, currency_id, context=context)
+        currency = currency_obj.read(cr, uid, currency_id, ['rounding'], context=context)
         if context.get('product_id'):
             view_ids = self.search(cr, uid, [('usage', '=', 'view')], context=context)
             result.update(dict([(i, {}.fromkeys(field_names, 0.0)) for i in list(set([aaa for aaa in view_ids]))]))
@@ -2334,21 +2389,22 @@ class stock_location(osv.osv):
                 c = (context or {}).copy()
                 c['location'] = loc_id
                 c['compute_child'] = True
-                for prod in product_product_obj.browse(cr, uid, [context.get('product_id')], context=c):
+                for prod in product_product_obj.read(cr, uid, [context.get('product_id')],
+                        ['qty_available', 'virtual_available', 'standard_price'], context=c):
                     for f in field_names:
                         if f == 'stock_real':
                             if loc_id not in result:
                                 result[loc_id] = {}
-                            result[loc_id][f] += prod.qty_available
+                            result[loc_id][f] += prod['qty_available']
                         elif f == 'stock_virtual':
-                            result[loc_id][f] += prod.virtual_available
+                            result[loc_id][f] += prod['virtual_available']
                         elif f == 'stock_real_value':
-                            amount = prod.qty_available * prod.standard_price
-                            amount = currency_obj.round(cr, uid, currency.rounding, amount)
+                            amount = prod['qty_available'] * prod['standard_price']
+                            amount = currency_obj.round(cr, uid, currency['rounding'], amount)
                             result[loc_id][f] += amount
                         elif f == 'stock_virtual_value':
-                            amount = prod.virtual_available * prod.standard_price
-                            amount = currency_obj.round(cr, uid, currency.rounding, amount)
+                            amount = prod['virtual_available'] * prod['standard_price']
+                            amount = currency_obj.round(cr, uid, currency['rounding'], amount)
                             result[loc_id][f] += amount
 
         return result
@@ -2368,8 +2424,8 @@ class stock_location(osv.osv):
             context = {}
         id_nonstock = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock_override', 'stock_location_non_stockable')[1]
         id_cross = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
-        prod_obj = self.pool.get('product.product').browse(cr, uid, arg[0][2][0])
-        if prod_obj and prod_obj.type == 'consu':
+        prod_obj = self.pool.get('product.product').read(cr, uid, arg[0][2][0], ['type'])
+        if prod_obj and prod_obj['type'] == 'consu':
             if arg[0][2][1] == 'in':
                 id_virt = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_locations_virtual')[1]
                 ids_child = self.pool.get('stock.location').search(cr, uid,
@@ -2379,7 +2435,7 @@ class stock_location(osv.osv):
             else:
                 return [('id', 'in', [id_cross])]
 
-        elif prod_obj and  prod_obj.type != 'consu':
+        elif prod_obj and  prod_obj['type'] != 'consu':
                 if arg[0][2][1] == 'in':
                     return [('id', 'in', ids_child)]
                 else:
@@ -2402,12 +2458,12 @@ class stock_location(osv.osv):
             return []
         if context is None:
             context = {}
-        prod_obj = self.pool.get('product.product').browse(cr, uid, arg[0][2])
-        if prod_obj.type == 'service_recep':
+        prod_obj = self.pool.get('product.product').read(cr, uid, arg[0][2], ['type'])
+        if prod_obj['type'] == 'service_recep':
             ids = self.pool.get('stock.location').search(cr, uid, [('usage',
                 '=', 'inventory')], order='NO_ORDER')
             return [('id', 'in', ids)]
-        elif prod_obj.type == 'consu':
+        elif prod_obj['type'] == 'consu':
             return []
         else:
             ids = self.pool.get('stock.location').search(cr, uid, [('usage',

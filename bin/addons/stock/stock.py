@@ -740,14 +740,18 @@ class stock_picking(osv.osv):
         """
         self.write(cr, uid, ids, {'state': 'confirmed'})
         todo = []
-        for picking in self.browse(cr, uid, ids, context=context):
-            for r in picking.move_lines:
-                if r.state == 'draft':
-                    todo.append(r.id)
+        todo_set = set()
+        move_obj = self.pool.get('stock.move')
+        for pick in self.read(cr, uid, ids, ['move_lines'], context=context):
+            move_ids = move_obj.search(cr, uid,
+                        [('id', 'in', pick['move_lines']),
+                         ('state', '=', 'draft')],
+                        order='NO_ORDER')
+            todo_set.union(move_ids)
 
         self.log_picking(cr, uid, ids, context=context)
 
-        todo = self.action_explode(cr, uid, todo, context)
+        todo = self.action_explode(cr, uid, list(todo_set), context)
         if len(todo):
             self.pool.get('stock.move').action_confirm(cr, uid, todo, context=context)
         return True
@@ -801,10 +805,14 @@ class stock_picking(osv.osv):
         """
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
-        for pick in self.browse(cr, uid, ids):
-            move_ids = [x.id for x in pick.move_lines if x.state in ['confirmed','waiting']]
-            move_obj.force_assign(cr, uid, move_ids)
-            wf_service.trg_write(uid, 'stock.picking', pick.id, cr)
+        for pick in self.read(cr, uid, ids, ['move_lines']):
+            move_ids = move_obj.search(cr, uid,
+                        [('id', 'in', pick['move_lines']),
+                         ('state', 'in', ('confirmed','waiting'))],
+                        order='NO_ORDER')
+            if move_ids:
+                move_obj.force_assign(cr, uid, move_ids)
+            wf_service.trg_write(uid, 'stock.picking', pick['id'], cr)
         return True
 
     def draft_force_assign(self, cr, uid, ids, *args):
@@ -1926,8 +1934,9 @@ class stock_move(osv.osv):
         result = {}
         if context is None:
             context = {}
+        stock_location_obj = self.pool.get('stock.location')
         for m in moves:
-            dest = self.pool.get('stock.location').chained_location_get(
+            dest = stock_location_obj.chained_location_get(
                 cr,
                 uid,
                 m.location_dest_id,
@@ -2018,7 +2027,6 @@ class stock_move(osv.osv):
         location_obj = self.pool.get('stock.location')
         move_obj = self.pool.get('stock.move')
         picking_obj = self.pool.get('stock.picking')
-        wf_service = netsvc.LocalService("workflow")
         new_moves = []
         if context is None:
             context = {}
@@ -2032,12 +2040,13 @@ class stock_move(osv.osv):
 
                 # Need to check name of old picking because it always considers picking as "OUT" when created from Sale Order
                 old_ptype = location_obj.picking_type_get(cr, uid, picking.move_lines[0].location_id, picking.move_lines[0].location_dest_id)
+                picking_vals = {}
                 if old_ptype != picking.type:
-                    old_pick_name = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
-                    picking_obj.write(cr, uid, [picking.id], {'name': old_pick_name}, context=context)
-
+                    picking_vals['name'] = seq_obj.get(cr, uid, 'stock.picking.' + old_ptype)
                 if ptype == 'internal':
-                     picking_obj.write(cr, uid, [picking.id], {'associate_pick_name': new_pick_name}, context=context) # save the INT name into this original IN
+                    picking_vals['associate_pick_name'] = new_pick_name # save the INT name into this original IN
+                if picking_vals:
+                    picking_obj.write(cr, uid, [picking.id], picking_vals, context=context)
             else:
                 pickid = False
             for move, (loc, dummy, delay, dummy, company_id, ptype) in todo:
@@ -2056,13 +2065,15 @@ class stock_move(osv.osv):
                              }
                 move_data = self._create_chained_picking_move_values_hook(cr, uid, context=context, move_data=move_data, move=move)
                 new_id = move_obj.copy(cr, uid, move.id, move_data)
-                move_obj.write(cr, uid, [move.id], {
+                vals = {
                     'move_dest_id': new_id,
                     'move_history_ids': [(4, new_id)]
-                })
+                }
                 # UF-2424: If it's an internal move, just remove the asset_id
                 if ptype == 'internal' and move.product_id.subtype == 'asset':
-                    move_obj.write(cr, uid, [new_id], {'asset_id': False})
+                    vals.update({'asset_id': False})
+
+                move_obj.write(cr, uid, [move.id], vals)
                 new_moves.append(self.browse(cr, uid, [new_id])[0])
             if pickid:
                 self._create_chained_picking_internal_request(cr, uid, context=context, picking=pickid)
@@ -2070,22 +2081,30 @@ class stock_move(osv.osv):
             new_moves += self.create_chained_picking(cr, uid, new_moves, context)
         return new_moves
 
-    def action_confirm(self, cr, uid, ids, context=None):
+    def prepare_action_confirm(self, cr, uid, ids, context=None):
+        '''
+        split in smaller methods to ease the reusing of the code in other parts
+        '''
+        moves = self.browse(cr, uid, ids, context=context)
+        ctx = context.copy()
+        ctx.update({'action_confirm': True})
+        self.create_chained_picking(cr, uid, moves, context=ctx)
+
+    def action_confirm(self, cr, uid, ids, context=None, vals=None):
         """ Confirms stock move.
         @return: List of ids.
         """
         if not context:
             context = {}
+        if vals is None:
+            vals = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        moves = self.browse(cr, uid, ids, context=context)
-        self.write(cr, uid, ids, {'state': 'confirmed'})
-
-        ctx = context.copy()
-        ctx.update({'action_confirm': True})
-        self.create_chained_picking(cr, uid, moves, context=ctx)
+        vals.update({'state': 'confirmed'})
+        self.prepare_action_confirm(cr, uid, ids, context=context)
+        self.write(cr, uid, ids, vals)
         return []
-    
+
     def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
         '''
         Always return True
@@ -2103,6 +2122,20 @@ class stock_move(osv.osv):
                 todo.append(move.id)
         res = self.check_assign(cr, uid, todo)
         return res
+
+    def confirm_and_force_assign(self, cr, uid, ids, context=None, vals=None):
+        '''
+        when action_confirm and force_assign are both called, it is faster to
+        use confirm_and_force_assign to do only one write per move.
+        '''
+        if not context:
+            context = {}
+        if vals is None:
+            vals = {}
+        self.prepare_action_confirm(cr, uid, ids, context)
+        vals.update({'state': 'assigned'})
+        self.write(cr, uid, ids, vals)
+        return []
 
     def force_assign(self, cr, uid, ids, context=None):
         """ Changes the state to assigned.
