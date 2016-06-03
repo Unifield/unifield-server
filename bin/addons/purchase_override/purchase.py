@@ -1840,7 +1840,8 @@ stock moves which are already processed : '''
                 if not (order.partner_id.partner_type == 'esc' and setup.import_commitments):
                     # US-917: Check if any CV exists for the given PO
                     commit_obj = self.pool.get('account.commitment')
-                    existingCV = commit_obj.search(cr, uid, [('purchase_id', 'in', [order.id])], context=context)
+                    existingCV = commit_obj.search(cr, uid, [('purchase_id',
+                        'in', [order.id])], limit=1, order='NO_ORDER', context=context)
                     if not existingCV:
                         self.action_create_commitment(cr, uid, [order.id], order.partner_id and order.partner_id.partner_type, context=context)
             todo = []
