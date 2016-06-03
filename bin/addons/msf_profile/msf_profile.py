@@ -547,6 +547,26 @@ class patch_scripts(osv.osv):
             ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
         return True
 
+    def us_1297_patch(self, cr, uid, *a, **b):
+        """
+        Correct budgets with View Type Cost Center for Fiscal Year 2016
+        """
+        # get only budgets already validated
+        sql = '''SELECT mb.id FROM msf_budget AS mb
+        INNER JOIN account_fiscalyear as afy
+        ON mb.fiscalyear_id = afy.id
+        WHERE mb.type != 'view'
+        AND mb.state = 'valid'
+        AND afy.date_start = '2016-01-01';'''
+        cr.execute(sql)
+        sql_res = cr.fetchall()
+        if sql_res:
+            budget_to_correct_ids = [x and x[0] for x in sql_res]
+            # update the parent budgets
+            budget_obj = self.pool.get('msf.budget')
+            budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
+        return True
+
 patch_scripts()
 
 
