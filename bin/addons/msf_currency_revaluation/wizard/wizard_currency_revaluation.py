@@ -228,21 +228,29 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         """'on_change' method for the 'revaluation_method', 'fiscalyear_id' and
         'period_id' fields.
         """
-        if not method or not fiscalyear_id or not period_id:
+        if not method or not fiscalyear_id:
             return {}
+            
         value = {}
         warning = {}
+        domain = {
+            'period_id': [ ('fiscalyear_id', '=', fiscalyear_id) ],
+        }
+        
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         period_obj = self.pool.get('account.period')
         move_obj = self.pool.get('account.move')
+
         fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
 
         # Set values according to the user input
         value['result_period_id'] = period_id
 
-        period = period_obj.browse(cr, uid, period_id, context=None)
-        value['posting_date'] = period.date_stop
-        value['period_id'] = period_id
+        if period_id:
+            period = period_obj.browse(cr, uid, period_id, context=None)
+            value['posting_date'] = period.date_stop
+            value['period_id'] = period_id
+        
         if method != 'liquidity_month':
             value['posting_date'] = fiscalyear.date_stop
             check_period13_res = self._check_period_opened(cr, uid,
@@ -256,19 +264,32 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     'title': _('Warning!'),
                     'message': check_period13_res[2]
                 }
-        res = {'value': value, 'warning': warning}
+                value['period_id'] = False  # no period 13 open no period
+            if method == 'liquidity_year':
+                # US-816: end year reval restrict to periods 13, 14, 15
+                domain['period_id'] += [
+                    ('number', '>', 12),
+                    ('number', '<', 16),
+                    ('state', '=', 'draft'),
+                ]
+                value['period_id'] = check_period13_res[0] and \
+                    check_period13_res[1] or False  # default period 13 if open
+        
+        res = {'value': value, 'warning': warning, 'domain': domain, }
         return res
 
     def on_change_fiscalyear_id(self, cr, uid, ids, method, fiscalyear_id):
         """'on_change' method for the 'fiscalyear_id' field."""
-
         if not method or not fiscalyear_id:
             return {}
+            
         value = {}
         warning = {}
+        
         fiscalyear_obj = self.pool.get('account.fiscalyear')
         period_obj = self.pool.get('account.period')
         fiscalyear = fiscalyear_obj.browse(cr, uid, fiscalyear_id)
+        
         if method in ['liquidity_month']:
             if fiscalyear_id:
                 # If the current fiscal year is the actual one, we get the
@@ -301,6 +322,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             if period_ids:
                 value['result_period_id'] = period_ids[0]
         res = {'value': value, 'warning': warning}
+  
+        self.on_change_revaluation_method(cr, uid, ids, method, fiscalyear_id,
+            value.get('period_id', False))  # recompute period for method
+        
         return res
 
     def on_change_result_period_id(self, cr, uid, ids, result_period_id, context=None):
