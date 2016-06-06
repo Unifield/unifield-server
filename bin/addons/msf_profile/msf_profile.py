@@ -556,7 +556,7 @@ class patch_scripts(osv.osv):
         INNER JOIN account_fiscalyear as afy
         ON mb.fiscalyear_id = afy.id
         WHERE mb.type != 'view'
-        AND mb.state = 'valid'
+        AND mb.state != 'draft'
         AND afy.date_start = '2016-01-01';'''
         cr.execute(sql)
         sql_res = cr.fetchall()
