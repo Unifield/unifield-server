@@ -181,8 +181,8 @@
         </Row>
         % for ccl in o.analytic_distribution_id.cost_center_lines:
         <Row>
-            <Cell ss:Index="2" ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.name or '')|x}</Data></Cell>
-            <Cell ss:Index="3" ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.name or '')|x}</Data></Cell>
+            <Cell ss:Index="2" ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
+            <Cell ss:Index="3" ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
             <Cell ss:Index="4" ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
             <Cell ss:Index="5" ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</Data></Cell>
         </Row>
@@ -305,8 +305,8 @@
         % if need_ad:
             % if line.analytic_distribution_id:
                 % for ccl in line.analytic_distribution_id.cost_center_lines:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.name or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
                 % endfor
