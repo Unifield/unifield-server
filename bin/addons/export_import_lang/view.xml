@@ -17,6 +17,7 @@
                     <group colspan="4">
                         <field name="lang" required="1"/>
                         <field name="format" />
+                        <field name="only_new_terms" />
                         <field name="advanced" />
                         <field name="modules" colspan="4" attrs="{'invisible': [('advanced', '=', False)]}" />
                         <newline />
