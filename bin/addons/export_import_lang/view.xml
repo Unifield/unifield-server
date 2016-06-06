@@ -9,12 +9,12 @@
         <field name="arch" type="xml">
             <form string="Export Translations">
                 <group col="8">
-                    <group colspan="3">
+                    <group colspan="2">
                         <field name="config_logo" widget="image" width="220" height="130" nolabel="1" colspan="1"/>
                         <newline/>
                     </group>
                     <separator orientation="vertical" rowspan="15"/>
-                    <group colspan="4">
+                    <group colspan="5">
                         <field name="lang" required="1"/>
                         <field name="format" />
                         <field name="only_translated_terms" />

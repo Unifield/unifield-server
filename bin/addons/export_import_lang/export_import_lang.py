@@ -22,7 +22,7 @@ class base_language_export(osv.osv_memory):
 
     _columns = {
         'only_translated_terms': fields.boolean('Export only translated terms'),
-        'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML')], 'File Format', required=True),
+        'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML'), ('compact.xls', 'Compact SpreadSheet XML')], 'File Format', required=True),
         'advanced': fields.boolean('Show advanced options'),
     }
 
@@ -73,24 +73,32 @@ class base_language_export(osv.osv_memory):
             this.name = "%s.%s" % (filename, this.format)
             ignore_name = ['ir.filters,model_id', 'ir.actions.server,copy_object', 'ir.ui.menu,icon', 'ir.sequence,code', 'stock.location,icon']
             out = ''
-            if this.format == 'xls':
+            if this.format in ('xls', 'compact.xls'):
                 trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name, only_translated_terms=this.only_translated_terms)
                 if trans:
-                    headers = [('Source', 'char'), ('Value', 'char'), ('Internal Data', 'char')]
-                    # remove the header
-                    trans.pop(0)
-                    grouped_rows = {}
-                    for module, type, name, res_id, src, trad in trans:
-                        row = grouped_rows.setdefault((src, trad), {})
-                        if ('translation' not in row) or (not row['translation']):
-                            row['translation'] = trad
-                        row.setdefault('tnrs', []).append('%s:%s:%s' % (type, name, res_id))
+                    if this.format == 'compact.xls':
+                        headers = [('Source', 'char'), ('Value', 'char'), ('Type', 'type'), ('Internal Data', 'char')]
+                        # remove the header
+                        trans.pop(0)
+                        grouped_rows = {}
+                        for module, type, name, res_id, src, trad in trans:
+                            row = grouped_rows.setdefault((src, trad, type), {})
+                            if ('translation' not in row) or (not row['translation']):
+                                row['translation'] = trad
+                            row.setdefault('tnrs', []).append('%s:%s:%s' % (type, name, res_id))
 
-                    trans_data = []
-                    for (src, trad), row in grouped_rows.items():
-                        for splited in self.split_xlscell(row['tnrs']):
-                            trans_data.append([src, trad, '\n'.join(splited)])
-                    xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans_data)
+                        trans_data = []
+                        for (src, trad, type), row in grouped_rows.items():
+                            for splited in self.split_xlscell(row['tnrs']):
+                                trans_data.append([src, trad, type, '\n'.join(splited)])
+                        xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans_data)
+
+                    else:
+                        headers = []
+                        for h in trans.pop(0):
+                            headers.append([h, 'char'])
+                        xml = SpreadsheetCreator(title=this.name, headers=headers, datas=trans)
+
                     out = base64.encodestring(xml.get_xml(default_filters=['decode.utf8']))
             else:
                 buf=cStringIO.StringIO()
