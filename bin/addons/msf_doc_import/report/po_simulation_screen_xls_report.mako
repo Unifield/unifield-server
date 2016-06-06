@@ -268,40 +268,44 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.in_price or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.in_currency and obj_name_get('res.currency', l.in_currency.id) or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.in_line_number)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
-        % if l.in_product_id != l.imp_product_id:
+        % if l.type_change == 'del':
+            <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
+        % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
+        % endif
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.in_product_id != l.imp_product_id):
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_product_id and obj_name_get('product.product', l.imp_product_id.id) or '')|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_product_id and obj_name_get('product.product', l.imp_product_id.id) or '')|x}</Data></Cell>
         % endif
-        % if l.in_qty != l.imp_qty:
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.in_qty != l.imp_qty):
         <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_qty or 0.00)|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.imp_qty or 0.00)|x}</Data></Cell>
         % endif
-        % if l.in_price != l.imp_price:
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.in_price != l.imp_price):
         <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_price or 0.00)|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.imp_price or 0.00)|x}</Data></Cell>
         % endif
-        % if l.imp_discrepancy != 0.00:
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.imp_discrepancy != 0.00):
         <Cell ss:StyleID="line_change" ><Data ss:Type="Number">${(l.imp_discrepancy or 0.00)|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.imp_discrepancy or 0.00)|x}</Data></Cell>
         % endif
-        % if l.in_currency != l.imp_currency:
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or l.in_currency != l.imp_currency):
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(l.imp_currency and obj_name_get('res.currency', l.imp_currency.id) or '')|x}</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.imp_currency and obj_name_get('res.currency', l.imp_currency.id) or '')|x}</Data></Cell>
         % endif
-        % if l.in_drd != l.imp_drd and l.imp_drd not in ('False', False):
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or (l.in_drd != l.imp_drd and l.imp_drd not in ('False', False))):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
         % elif l.imp_drd not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_drd)|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif
-        % if l.in_dcd != l.imp_dcd and l.imp_dcd not in ('False', False):
+        % if not l.type_change == 'ignore' and (l.type_change == 'del' or (l.in_dcd != l.imp_dcd and l.imp_dcd not in ('False', False))):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
         % elif l.imp_dcd not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
