@@ -688,11 +688,17 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # check if revaluation has already been run for this period
         # UFTP-385 not checked for year end as is it over months revaluation
         # in this case to check revaluation year already done we check only
-        # period 13
+        # period 13 AND 14, 15 since US-816
         if form.revaluation_method == 'liquidity_month':
             revalcheck_period_ids = period_ids
         else:
-            revalcheck_period_ids = [year_end_entry_period_id]
+            domain = [
+                ('fiscalyear_id', '=', form.fiscalyear_id.id),
+                ('number', '>', 12),
+                ('number', '<', 16),
+            ]
+            revalcheck_period_ids = period_obj.search(cr, uid, domain,
+                context=context)
         for period_id in revalcheck_period_ids:
             if self._is_revaluated(cr, uid, period_id, form.revaluation_method,
                 context=None):
@@ -930,7 +936,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 res = (False, False, _('Period %d is not found') % (
                     period_number, ))
             else:
-                res = (False, period_ids[0], _('Period 13 %d not opened') % (
+                res = (False, period_ids[0], _('Period %d not opened') % (
                     period_number, ))
         return res
 
