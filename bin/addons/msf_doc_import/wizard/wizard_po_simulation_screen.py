@@ -565,8 +565,10 @@ class wizard_import_po_simulation_screen(osv.osv):
                     LN_BY_EXT_REF.setdefault(wiz.id, {})
                     EXT_REF_BY_LN.setdefault(wiz.id, {})
                     if line.in_ext_ref:
-                        LN_BY_EXT_REF[wiz.id][line.in_ext_ref] = l_num
-                        EXT_REF_BY_LN[wiz.id][l_num] = line.in_ext_ref
+                        LN_BY_EXT_REF[wiz.id].setdefault(line.in_ext_ref, [])
+                        EXT_REF_BY_LN[wiz.id].setdefault(l_num, [])
+                        LN_BY_EXT_REF[wiz.id][line.in_ext_ref].append(l_num)
+                        EXT_REF_BY_LN[wiz.id][l_num].append(line.in_ext_ref)
 
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
@@ -790,7 +792,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
-                    ext_ref = str(values.get(x, ['', ''])[1])
+                    ext_ref = values.get(x, ['', ''])[1] and str(values.get(x, ['', ''])[1])
 
                     if not line_number and not ext_ref:
                         not_ok = True
@@ -799,7 +801,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                         values_line_errors.append(err)
                         file_line_error.append(err1)
 
-                    if line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys() and LN_BY_EXT_REF[wiz.id][ext_ref] != line_number:
+                    if line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys() and line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]:
                         not_ok = True
                         err1 = _('No PO line with the line number \'%s\' and the external ref \'%s\' found in database') % (line_number, ext_ref)
                         err = _('Line %s of the file: %s') % (x, err1)
@@ -807,10 +809,10 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                         file_line_error.append(err1)
 
                     if not line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys():
-                        line_number = LN_BY_EXT_REF[wiz.id][ext_ref]
+                        line_number = LN_BY_EXT_REF[wiz.id][ext_ref][0]
 
                     if not ext_ref and line_number and line_number in EXT_REF_BY_LN[wiz.id].keys():
-                        ext_ref = EXT_REF_BY_LN[wiz.id][line_number]
+                        ext_ref = EXT_REF_BY_LN[wiz.id][line_number][0]
 
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
