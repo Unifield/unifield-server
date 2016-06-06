@@ -99,14 +99,14 @@ class account_analytic_chart(osv.osv_memory):
                 SELECT * FROM (SELECT p.id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s
+                               WHERE f.id = %s and number != 0
                                ORDER BY p.date_start ASC
                                LIMIT 1) AS period_start
                 UNION
                 SELECT * FROM (SELECT p.id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s
+                               WHERE f.id = %s and number != 0
                                AND p.date_start < NOW()
                                ORDER BY p.date_stop DESC
                                LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
