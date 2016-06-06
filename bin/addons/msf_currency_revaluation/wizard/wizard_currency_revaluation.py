@@ -276,6 +276,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             if method != 'liquidity_month':
                 # recompute entry target period from method/fy changed
                 value['posting_date'] = fiscalyear.date_stop
+                # check at least period 13 opened, if not 14, 15 not too
                 check_period13_res = self._check_period_opened(cr, uid,
                     fiscalyear.id, 13)  # UFTP-385 period 13 for year end
                 if check_period13_res[1]:
@@ -570,15 +571,22 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             ids = [ids]
         form = self.browse(cr, uid, ids[0], context=context)
 
-        period_13_id = False
+        year_end_entry_period_id = False
         if form.revaluation_method in ('liquidity_year', 'other_bs'):
-            # check if period 13 is valid for end year reval
+            # since US-816, end year reval entries period is extended from
+            # period 13, to 13, 14, 15
+            
+            # check if entry period is valid for end year reval
             # (must exist and must be opened)
-            check_period13_res = self._check_period_opened(cr, uid,
-                form.fiscalyear_id.id, 13)
-            if not check_period13_res[0] and check_period13_res[2]:
-                raise osv.except_osv(_('Warning!'), check_period13_res[2])
-            period_13_id = check_period13_res[1]
+            if not form.result_period_id:
+                return
+            check_period_end_year_res = self._check_period_opened(cr, uid,
+                form.fiscalyear_id.id, form.result_period_id.number)
+            if not check_period_end_year_res[0] \
+                and check_period_end_year_res[2]:
+                raise osv.except_osv(_('Warning!'),
+                    check_period_end_year_res[2])
+            year_end_entry_period_id = check_period_end_year_res[1]
 
             # period 13 is opened but check if N+1 FY 1st period is opened
             # as it is used for reversal lines
@@ -612,9 +620,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Get posting date (as the field is readonly, its value is not sent
         # to the server by the web client
         # and get revaluation date
-        if period_13_id:
-            # period_13_id set: end of year revaluation
-            form.period_id.id = period_13_id
+        if year_end_entry_period_id:
+            # year_end_entry_period_id set: end of year revaluation
+            form.period_id.id = year_end_entry_period_id
             form.posting_date = form.fiscalyear_id.date_stop
             revaluation_date = form.fiscalyear_id.date_stop  # compute reval for FY
         else:
@@ -648,8 +656,8 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             if p.special == True and p.number != 0 ]
         if not special_period_ids:
             raise osv.except_osv(_('Error!'),
-                                 _('No special period found for the fiscalyear %s') %
-                                   form.fiscalyear_id.code)
+                _('No special period found for the fiscalyear %s') %
+                    form.fiscalyear_id.code)
 
         period_ids = []
         if form.revaluation_method == 'liquidity_month':
@@ -684,7 +692,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if form.revaluation_method == 'liquidity_month':
             revalcheck_period_ids = period_ids
         else:
-            revalcheck_period_ids = [period_13_id]
+            revalcheck_period_ids = [year_end_entry_period_id]
         for period_id in revalcheck_period_ids:
             if self._is_revaluated(cr, uid, period_id, form.revaluation_method,
                 context=None):
@@ -909,7 +917,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # search for opened period
         period_ids = period_obj.search(cr, uid, domain, context=context)
         if period_ids:
-            # period 13 opened found
+            # period opened found
             res = (True, period_ids[0], False)
         else:
             # not found, check if exist with any state to get its id
@@ -919,9 +927,11 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             ]
             period_ids = period_obj.search(cr, uid, domain, context=context)
             if not period_ids:
-                res = (False, False, _('Period 13 is not found'))
+                res = (False, False, _('Period %d is not found') % (
+                    period_number, ))
             else:
-                res = (False, period_ids[0], _('Period 13 is not opened'))
+                res = (False, period_ids[0], _('Period 13 %d not opened') % (
+                    period_number, ))
         return res
 
 WizardCurrencyrevaluation()
