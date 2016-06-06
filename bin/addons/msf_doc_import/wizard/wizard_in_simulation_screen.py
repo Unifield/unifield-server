@@ -444,7 +444,8 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                     LN_BY_EXT_REF.setdefault(wiz.id, {})
                     if l_ext_ref and l_num:
-                        LN_BY_EXT_REF[wiz.id][l_ext_ref] = l_num
+                        LN_BY_EXT_REF[wiz.id].setdefault(l_ext_ref, [])
+                        LN_BY_EXT_REF[wiz.id][l_ext_ref].append(l_num)
 
                 # Variables
                 lines_to_ignored = []  # Bad formatting lines
@@ -548,6 +549,8 @@ class wizard_import_in_simulation_screen(osv.osv):
                     # Check mandatory fields
                     not_ok = False
                     file_line_error = []
+                    line_number = int(values.get(x, [False])[0])
+                    ext_ref = values.get(x, [False, False])[1]
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
@@ -556,13 +559,16 @@ class wizard_import_in_simulation_screen(osv.osv):
                             values_line_errors.append(err)
                             file_line_error.append(err1)
 
-                    if not values.get(x, [''])[0]:
-                        if values.get(x, ['', ''])[1]:
-                            line_number = LN_BY_EXT_REF[wiz.id].get(values.get(x, ['', ''])[1], False)
-                        else:
-                            line_number = False
-                    else:
-                        line_number = int(values.get(x, [''])[0])
+                    if line_number and ext_ref:
+                        if line_number not in LN_BY_EXT_REF[wiz.id].get(ext_ref, []):
+                            not_ok = True
+                            err1 = _('No line found for line number \'%s\' and ext. ref. \'%s\' - Line not imported') % (line_number, ext_ref)
+                            err = _('Line %s of the file: %s') % (x, err1)
+                            values_line_errors.append(err)
+                            file_line_error.append(err1)
+
+                    if not line_number and ext_ref:
+                        line_number = LN_BY_EXT_REF[wiz.id].get(ext_ref, [False])[0]
 
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
@@ -614,7 +620,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                             prodlot_cache.setdefault(product_id, {})
                             prodlot_cache[product_id].setdefault(str(vals[8]), exp_value)
 
-                    file_lines[x] = (line_number, product_id, uom_id, qty)
+                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref)
 
                 '''
                 Get the best matching line:
@@ -1272,7 +1278,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if line.type_change == 'new':
                 write_vals['type_change'] = 'error'
-                if write_vals['imp_external_ref']:
+                if write_vals.get('imp_external_ref'):
                     errors.append(_('No original IN lines with external ref \'%s\' found.') % write_vals['imp_external_ref'])
                 else:
                     errors.append(_('Line does not correspond to original IN'))
