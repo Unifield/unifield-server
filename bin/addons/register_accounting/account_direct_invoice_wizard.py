@@ -199,7 +199,7 @@ class account_direct_invoice_wizard(osv.osv_memory):
 
         if invoice and invoice.state != 'draft':
             raise osv.except_osv(_('Error'), _('The invoice cannot be modified'
-                ' as it is in %s state (should be draft).' % (invoice.state)))
+                ' as it is in %s state (should be draft).') % (invoice.state))
 
         vals = {}
         inv = self.read(cr, uid, ids[0], [])
