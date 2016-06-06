@@ -21,14 +21,14 @@ class base_language_export(osv.osv_memory):
 
 
     _columns = {
-        'only_new_terms': fields.boolean('Export only new terms'),
+        'only_translated_terms': fields.boolean('Export only translated terms'),
         'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML')], 'File Format', required=True),
         'advanced': fields.boolean('Show advanced options'),
     }
 
     _defaults = {
         'format': lambda *a: 'xls',
-        'only_new_terms': lambda *a: False,
+        'only_translated_terms': lambda *a: False,
     }
 
     def act_getfile_background(self, cr, uid, ids, context=None):
@@ -74,7 +74,7 @@ class base_language_export(osv.osv_memory):
             ignore_name = ['ir.filters,model_id', 'ir.actions.server,copy_object', 'ir.ui.menu,icon', 'ir.sequence,code', 'stock.location,icon']
             out = ''
             if this.format == 'xls':
-                trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name, only_new_terms=this.only_new_terms)
+                trans = tools.trans_generate(this.lang, modules, cr, ignore_name=ignore_name, only_translated_terms=this.only_translated_terms)
                 if trans:
                     headers = [('Source', 'char'), ('Value', 'char'), ('Internal Data', 'char')]
                     # remove the header
@@ -94,7 +94,7 @@ class base_language_export(osv.osv_memory):
                     out = base64.encodestring(xml.get_xml(default_filters=['decode.utf8']))
             else:
                 buf=cStringIO.StringIO()
-                tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name, only_new_terms=this.only_new_terms)
+                tools.trans_export(this.lang, modules, buf, this.format, cr, ignore_name=ignore_name, only_translated_terms=this.only_translated_terms)
                 out = base64.encodestring(buf.getvalue())
                 buf.close()
 

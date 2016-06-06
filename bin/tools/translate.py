@@ -449,7 +449,7 @@ class TinyPoFile(object):
 
 # Methods to export the translation file
 
-def trans_export(lang, modules, buffer, format, cr, ignore_name=None, only_new_terms=False):
+def trans_export(lang, modules, buffer, format, cr, ignore_name=None, only_translated_terms=False):
 
     def _process(format, modules, rows, buffer, lang, newlang):
         if format == 'csv':
@@ -501,7 +501,7 @@ def trans_export(lang, modules, buffer, format, cr, ignore_name=None, only_new_t
     newlang = not bool(lang)
     if newlang:
         lang = 'en_US'
-    trans = trans_generate(lang, modules, cr, ignore_name=ignore_name, only_new_terms=only_new_terms)
+    trans = trans_generate(lang, modules, cr, ignore_name=ignore_name, only_translated_terms=only_translated_terms)
     if newlang and format!='csv':
         for trx in trans:
             trx[-1] = ''
@@ -577,7 +577,7 @@ def in_modules(object_name, modules):
     module = module_dict.get(module, module)
     return module in modules
 
-def trans_generate(lang, modules, cr, ignore_name=None, only_new_terms=False):
+def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=False):
     logger = logging.getLogger('i18n')
     dbname = cr.dbname
 
@@ -901,8 +901,8 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_new_terms=False):
     _to_translate.sort()
     # translate strings marked as to be translated
     for module, source, name, id, type in _to_translate:
-        trans = trans_obj._get_source(cr, uid, name, type, lang, source, only_new_terms)
-        if only_new_terms and not trans or not only_new_terms:
+        trans = trans_obj._get_source(cr, uid, name, type, lang, source, only_translated_terms)
+        if only_translated_terms and trans and trans != source or not only_translated_terms:
             out.append([module, type, name, id, source, encode(trans) or ''])
 
     return out
