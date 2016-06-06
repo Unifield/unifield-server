@@ -1013,14 +1013,15 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
+        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
-            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):
                     ml_ids = [ml_ids]
-                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
-        self.unlink(cr, uid, to_delete, context, check=False)
+                self.pool.get('account.move.line').unlink(cr, user_id, ml_ids, context, check=False)
+        self.unlink(cr, user_id, to_delete, context, check=False)
         return True
 
     def get_valid_but_unbalanced(self, cr, uid, context=None):
