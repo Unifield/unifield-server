@@ -790,7 +790,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
-                    ext_ref = values.get(x, ['', ''])[1]
+                    ext_ref = str(values.get(x, ['', ''])[1])
 
                     if not line_number and not ext_ref:
                         not_ok = True
