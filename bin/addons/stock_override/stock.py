@@ -1481,13 +1481,13 @@ class stock_move(osv.osv):
         '''avoid multiple write by calling it only once'''
 
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        self.prepare_action_confirm(cr, uid, ids, context=context)
+        self.check_product_quantity(cr, uid, ids, context=context)
         vals = {'already_confirmed': True}
 
         ids_assign = ids[:]
         self.prepare_force_assign(cr, uid, ids_assign, context=context)
 
-        # if ids and ids_assign are equal, it is possible to call on write on
+        # if ids and ids_assign are equal, it is possible to call one write on
         # all ids
         if ids == ids_assign:
             res = super(stock_move, self).confirm_and_force_assign(cr, uid,
@@ -1902,9 +1902,9 @@ class stock_move(osv.osv):
                 self.write(cr, uid, move.id, {'prodlot_id': False}, context)
         return True
 
-    def prepare_action_confirm(self, cr, uid, ids, context=None):
+    def check_product_quantity(self, cr, uid, ids, context=None):
         '''
-        split in smaller methods to ease the reusing of the code in other parts
+        check that all move have a product quantity > 0
         '''
         no_product = self.search(cr, uid, [
             ('id', 'in', ids),
@@ -1921,7 +1921,7 @@ class stock_move(osv.osv):
         if vals is None:
             vals = {}
         ids = isinstance(ids, (int, long)) and [ids] or ids
-        self.prepare_action_confirm(cr, uid, ids, context=context)
+        self.check_product_quantity(cr, uid, ids, context=context)
 
         vals = {'already_confirmed': True}
         res = super(stock_move, self).action_confirm(cr, uid, ids,
