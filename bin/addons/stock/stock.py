@@ -747,7 +747,7 @@ class stock_picking(osv.osv):
                         [('id', 'in', pick['move_lines']),
                          ('state', '=', 'draft')],
                         order='NO_ORDER')
-            todo_set.union(move_ids)
+            todo_set = todo_set.union(move_ids)
 
         self.log_picking(cr, uid, ids, context=context)
 
