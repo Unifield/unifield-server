@@ -1829,7 +1829,23 @@ class stock_move(osv.osv):
 
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
-        for move in self.browse(cr, uid, ids, context):
+        for move in self.read(cr, uid, ids,
+                ['state',
+                 'prodlot_id',
+                 'product_qty',
+                 'location_id',
+                 'product_id',
+                 'product_uom',
+                 'name',
+                 'sale_line_id',
+                 'picking_id',
+                 'date_expected',
+                 'date',
+                 'location_dest_id',
+                 'reason_type_id',
+                 'line_number',
+                 'move_cross_docking_ok',], context):
+            vals = {}
             compare_date = context.get('rw_date', False)
             move_unlinked = False
             if compare_date:
@@ -1838,53 +1854,65 @@ class stock_move(osv.osv):
                 today = datetime.today()
                 compare_date = datetime(today.year, today.month, today.day)
             # FEFO logic
-            if move.state == 'assigned' and not move.prodlot_id:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
-                needed_qty = move.product_qty
-                res = loc_obj.compute_availability(cr, uid, [move.location_id.id], True, move.product_id.id, move.product_uom.id, context=context)
+            if move['state'] == 'assigned' and not move['prodlot_id']:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
+                needed_qty = move['product_qty']
+                res = loc_obj.compute_availability(cr, uid,
+                        [move['location_id'][0]], True, move['product_id'][0],
+                        move['product_uom'][0], context=context)
                 if 'fefo' in res:
                     # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
-                    values = {'name': move.name,
-                              'sale_line_id': move.sale_line_id and move.sale_line_id.id or False,
-                              'picking_id': move.picking_id.id,
-                              'product_uom': move.product_uom.id,
-                              'product_id': move.product_id.id,
-                              'date_expected': move.date_expected,
-                              'date': move.date,
+                    values = {'name': move['name'],
+                              'sale_line_id': move['sale_line_id'] and move['sale_line_id'][0] or False,
+                              'picking_id': move['picking_id'] and move['picking_id'][0] or False,
+                              'product_uom': move['product_uom'][0],
+                              'product_id': move['product_id'][0],
+                              'date_expected': move['date_expected'],
+                              'date': move['date'],
                               'state': 'assigned',
-                              'location_dest_id': move.location_dest_id.id,
-                              'reason_type_id': move.reason_type_id.id,
+                              'location_dest_id': move['location_dest_id'][0],
+                              'reason_type_id': move['reason_type_id'][0],
                               }
                     for loc in res['fefo']:
                         # if source == destination, the state becomes 'done', so we don't do fefo logic in that case
-                        if not move.location_dest_id.id == loc['location_id']:
+                        if not move['location_dest_id'][0] == loc['location_id']:
                             # we ignore the batch that are outdated
                             expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
                             if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
-                                existed_moves = []
-                                if not move.move_dest_id:
-                                    # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
-                                    existed_moves = self.search(cr, uid, [('picking_id', '!=', False), ('picking_id', '=', move.picking_id.id),
-                                                                          ('product_id', '=', move.product_id.id), ('product_uom', '=', loc['uom_id']),
-                                                                          ('line_number', '=', move.line_number), ('location_id', '=', loc['location_id']),
-                                                                          ('location_dest_id', '=', move.location_dest_id.id), ('prodlot_id', '=', loc['prodlot_id'])], context=context)
                                 # as long all needed are not fulfilled
                                 if needed_qty:
+                                    existed_moves = []
+                                    if not move['move_dest_id']:
+                                        # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
+                                        existed_moves = self.search(cr, uid,
+                                                [('picking_id', '!=', False),
+                                                 ('picking_id', '=', move['picking_id'][0]),
+                                                 ('product_id', '=', move['product_id'][0]), 
+                                                 ('product_uom', '=', loc['uom_id']),
+                                                 ('line_number', '=', move['line_number']),
+                                                 ('location_id', '=', loc['location_id']),
+                                                 ('location_dest_id', '=', move['location_dest_id'][0]),
+                                                 ('prodlot_id', '=', loc['prodlot_id'])],
+                                                limit=1, order='NO_ORDER',
+                                                context=context)
                                     # if the batch already exists and qty is enough, it is available (assigned)
                                     if needed_qty <= loc['qty']:
                                         # TODO: Why this condition because move.prodlot_id is always False (e.g. line 1261 of this file)
-                                        if move.prodlot_id.id == loc['prodlot_id']:
-                                            self.write(cr, uid, move.id, {'state': 'assigned'}, context)
+                                        if move['prodlot_id'][0] == loc['prodlot_id']:
+                                            vals.update({'state': 'assigned'})
                                         elif existed_moves:
-                                            exist_move = self.browse(cr, uid, existed_moves[0], context)
-                                            self.write(cr, uid, [exist_move.id], {'product_qty': needed_qty + exist_move.product_qty}, context)
+                                            exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
+                                            self.write(cr, uid, [exist_move['id']], {'product_qty': needed_qty + exist_move['product_qty']}, context)
                                             # We update the linked documents
-                                            self.update_linked_documents(cr, uid, [move.id], exist_move.id, context=context)
-                                            self.unlink(cr, uid, [move.id],
+                                            self.update_linked_documents(cr, uid, [move['id']], exist_move['id'], context=context)
+                                            self.unlink(cr, uid, [move['id']],
                                                     context, force=True)
                                             move_unlinked = True
                                         else:
-                                            self.write(cr, uid, move.id, {'product_qty': needed_qty, 'product_uom': loc['uom_id'],
-                                                                          'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id']}, context)
+                                            vals.update({'product_qty': needed_qty,
+                                                    'product_uom': loc['uom_id'],
+                                                    'location_id': loc['location_id'],
+                                                    'prodlot_id': loc['prodlot_id']
+                                            })
                                         needed_qty = 0.0
                                         break
                                     elif needed_qty:
@@ -1893,23 +1921,33 @@ class stock_move(osv.osv):
                                         needed_qty -= selected_qty
                                         dict_for_create = {}
                                         dict_for_create = values.copy()
-                                        dict_for_create.update({'product_uom': loc['uom_id'], 'product_qty': selected_qty, 'location_id': loc['location_id'], 'prodlot_id': loc['prodlot_id'], 'line_number': move.line_number, 'move_cross_docking_ok': move.move_cross_docking_ok})
+                                        dict_for_create.update({
+                                            'product_uom': loc['uom_id'],
+                                            'product_qty': selected_qty,
+                                            'location_id': loc['location_id'],
+                                            'prodlot_id': loc['prodlot_id'],
+                                            'line_number': move['line_number'],
+                                            'move_cross_docking_ok': move['move_cross_docking_ok']
+                                        })
                                         if existed_moves:
-                                            exist_move = self.browse(cr, uid, existed_moves[0], context)
-                                            self.write(cr, uid, [exist_move.id], {'product_qty': selected_qty + exist_move.product_qty}, context)
+                                            exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
+                                            self.write(cr, uid, [exist_move['id']], {'product_qty': selected_qty + exist_move['product_qty']}, context)
                                         else:
                                             self.create(cr, uid, dict_for_create, context)
-                                        self.write(cr, uid, move.id, {'product_qty': needed_qty})
+                                        vals.update({'product_qty': needed_qty})
                     # if the batch is outdated, we remove it
                     if not context.get('yml_test', False):
-                        if not move_unlinked and move.expired_date and not datetime.strptime(move.expired_date, "%Y-%m-%d") >= compare_date:
+                        if not move_unlinked and move['expired_date'] and not\
+                                datetime.strptime(move['expired_date'], "%Y-%m-%d") >= compare_date:
                             # Don't remove the batch if the move is a chained move
-                            if not self.search(cr, uid, [('move_dest_id', '=',
-                                move.id)], limit=1, order='NO_ORDER', context=context):
-                                self.write(cr, uid, move.id, {'prodlot_id': False}, context)
-            elif move.state == 'confirmed':
+                            if not self.search(cr, uid,
+                                    [('move_dest_id', '=', move['id'])],
+                                    limit=1, order='NO_ORDER', context=context):
+                                vals.update({'prodlot_id': False})
+            elif move['state'] == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
-                self.write(cr, uid, move.id, {'prodlot_id': False}, context)
+                vals.update({'prodlot_id': False})
+            self.write(cr, uid, move['id'], vals, context)
         return True
 
     def check_product_quantity(self, cr, uid, ids, context=None):
@@ -1998,12 +2036,14 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
 
+        prodlot_to_write_list = []
         for line in self.browse(cr, uid, ids, context):
             if line.prodlot_id:
-                self.write(cr, uid, ids, {'prodlot_id': False, 'expired_date': False})
+                prodlot_to_write_list.append(line.id)
             # UF-2426: If the cancel is called from sync, do not change the source location!
             if not context.get('sync_message_execution', False) and line.location_id.location_id and line.location_id.location_id.usage != 'view':
                 self.write(cr, uid, ids, {'location_id': line.location_id.location_id.id})
+        self.write(cr, uid, prodlot_to_write_list, {'prodlot_id': False, 'expired_date': False})
         return True
 
     def check_assign(self, cr, uid, ids, context=None):
@@ -2018,6 +2058,7 @@ class stock_move(osv.osv):
         fields_to_read = ['picking_id', 'product_id', 'product_uom', 'location_id',
                           'product_qty', 'product_uos_qty', 'location_dest_id',
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
+        stock_picking_obj = self.pool.get('stock.picking')
 
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
@@ -2026,7 +2067,7 @@ class stock_move(osv.osv):
                 move_data['line_number'],
                 move_data['id'],
                 move_data['picking_id'][0],
-                self.pool.get('stock.picking').read(cr, uid, move_data['picking_id'][0], ['name'], context=context)['name'],
+                stock_picking_obj.read(cr, uid, move_data['picking_id'][0], ['name'], context=context)['name'],
             ))
 
             for f in fields_to_read:
@@ -2037,40 +2078,40 @@ class stock_move(osv.osv):
                     d = move_data[f][0]
                 search_domain.append((f, '=', d))
 
-            move_ids = self.search(cr, uid, search_domain, context=context)
+            move_ids = self.search(cr, uid, search_domain, limit=1, order='NO_ORDER', context=context)
             if move_ids:
-                move = self.browse(cr, uid, move_ids[0], context=context)
-                res.append(move.id)
-                self.write(cr, uid, [move.id], {'product_qty': move.product_qty + move_data['product_qty'],
-                                                'product_uos_qty': move.product_uos_qty + move_data['product_uos_qty']}, context=context)
+                move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
+                res.append(move['id'])
+                self.write(cr, uid, [move['id']], {'product_qty': move['product_qty'] + move_data['product_qty'],
+                                                'product_uos_qty': move['product_uos_qty'] + move_data['product_uos_qty']}, context=context)
 
                 # Update all link objects
                 proc_ids = self.pool.get('procurement.order').search(cr, uid,
                         [('move_id', '=', move_data['id'])], order='NO_ORDER',context=context)
                 if proc_ids:
-                    self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move.id}, context=context)
+                    self.pool.get('procurement.order').write(cr, uid, proc_ids, {'move_id': move['id']}, context=context)
 
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid,
                         [('move_dest_id', '=', move_data['id'])],
                         order='NO_ORDER', context=context)
                 if pol_ids:
-                    self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': move.id}, context=context)
+                    self.pool.get('purchase.order.line').write(cr, uid, pol_ids, {'move_dest_id': move['id']}, context=context)
 
                 move_dest_ids = self.search(cr, uid, [('move_dest_id', '=',
                     move_data['id'])], order='NO_ORDER', context=context)
                 if move_dest_ids:
-                    self.write(cr, uid, move_dest_ids, {'move_dest_id': move.id}, context=context)
+                    self.write(cr, uid, move_dest_ids, {'move_dest_id': move['id']}, context=context)
 
                 backmove_ids = self.search(cr, uid, [('backmove_id', '=',
                     move_data['id'])], order='NO_ORDER', context=context)
                 if backmove_ids:
-                    self.write(cr, uid, backmove_ids, {'backmove_id': move.id}, context=context)
+                    self.write(cr, uid, backmove_ids, {'backmove_id': move['id']}, context=context)
 
                 pack_backmove_ids = self.search(cr, uid,
                         [('backmove_packing_id', '=', move_data['id'])],
                         order='NO_ORDER', context=context)
                 if pack_backmove_ids:
-                    self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': move.id}, context=context)
+                    self.write(cr, uid, pack_backmove_ids, {'backmove_packing_id': move['id']}, context=context)
 
                 #self.write(cr, uid, [move_data['id']], {'state': 'draft'}, context=context)
                 self.unlink(cr, uid, move_data['id'], context=context, force=True)
@@ -2634,7 +2675,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
         # Objects
         move_obj = self.pool.get('stock.move')
 
-        move_ids = [x.move_id.id for x in self.browse(cr, uid, ids, context=context)]
+        move_ids = [x['move_id'][0] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
         move_obj.write(cr, uid, move_ids, {'has_to_be_resourced': True}, context=context)
 
         return self.just_cancel(cr, uid, ids, context=context)
@@ -2703,8 +2744,8 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         # variables declarations
         pick_ids = []
 
-        for wiz in self.browse(cr, uid, ids, context=context):
-            pick_ids.append(wiz.picking_id.id)
+        for wiz in self.read(cr, uid, ids, ['picking_id'], context=context):
+            pick_ids.append(wiz['picking_id'][0])
 
         # Set the boolean 'has_to_be_resourced' to True for each picking
         vals = {'has_to_be_resourced': True}
