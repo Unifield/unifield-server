@@ -1779,7 +1779,6 @@ class stock_move(osv.osv):
         else:
             d.update({'address_id': [('partner_id', '=', partner_id)]})
 
-
         if address_id:
             addr = self.pool.get('res.partner.address').browse(cr, uid, address_id, context=context)
 
@@ -1789,9 +1788,7 @@ class stock_move(osv.osv):
                 addr = addr.get('default')
             else:
                 addr = addr.get('delivery')
-
             v.update({'address_id': addr})
-
 
         return {'value': v,
                 'domain': d}
