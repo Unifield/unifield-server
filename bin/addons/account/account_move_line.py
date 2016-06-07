@@ -56,6 +56,13 @@ class account_move_line(osv.osv):
         else:
             #for initial balance as well as for normal query, we check only the selected FY because the best practice is to generate the FY opening entries
             fiscalyear_ids = [context['fiscalyear']]
+            
+        # get period 0 ids
+        period0_domain = [('number', '=', 0)]
+        if fiscalyear_ids:
+            period0_domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
+        period0_ids = fiscalperiod_obj.search(cr, uid, period0_domain,
+            context={'show_period_0': 1})
 
         fiscalyear_clause = (','.join([str(x) for x in fiscalyear_ids])) or '0'
         state = context.get('state', False)
@@ -114,6 +121,8 @@ class account_move_line(osv.osv):
                         query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s) AND id IN (%s)) %s %s" % (fiscalyear_clause, periods, where_move_state, where_move_lines_by_date)
             else:
                 ids = ','.join([str(x) for x in context['periods']])
+                if context.get('period0', False) and period0_ids:
+                    ids += ",%s" % (','.join(map(str, period0_ids)), )
                 query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s) AND id IN (%s)) %s %s" % (fiscalyear_clause, ids, where_move_state, where_move_lines_by_date)
         else:
             query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s)) %s %s" % (fiscalyear_clause, where_move_state, where_move_lines_by_date)
@@ -126,10 +135,6 @@ class account_move_line(osv.osv):
             query += ' AND '+obj+'.account_id IN (%s)' % ','.join(map(str, child_ids))
 
         # period 0
-        domain = [('number', '=', 0)]
-        if fiscalyear_ids:
-            domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
-        period0_ids = fiscalperiod_obj.search(cr, uid, domain, context={'show_period_0': 1})
         if period0_ids:
             if not context.get('period0', False):
                 # US-822: by default in reports exclude period 0 (IB journals)
