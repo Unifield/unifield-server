@@ -438,9 +438,18 @@ class hq_entries_validation(osv.osv_memory):
                 # create new lines
                 if not fp_old_lines: # UTP-546 - this have been added because of sync that break analytic lines generation
                     continue
+                
                 # UTP-1118: posting date should be those from initial HQ entry line
-                cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], {'date': line.date, 'source_date': line.date, 'cost_center_id': line.cost_center_id.id,
-                    'account_id': line.analytic_id.id, 'destination_id': line.destination_id.id, 'journal_id': acor_journal_id, 'last_correction_id': fp_old_lines[0]})
+                vals_cor = {'date':line.date, 'source_date':line.date, 'cost_center_id':line.cost_center_id.id, 
+                    'account_id':line.analytic_id.id, 'destination_id':line.destination_id.id, 'journal_id':acor_journal_id, 'last_correction_id':fp_old_lines[0]}
+
+                # US-1347: Use the entry sequence of HQ for reference, not the description
+                entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'])
+                if entry_seq and entry_seq[0]:
+                    entry_seq = entry_seq[0].get('ref')
+                    vals_cor.update({'ref': entry_seq}) 
+                
+                cor_ids = ana_line_obj.copy(cr, uid, fp_old_lines[0], vals_cor)
                 # update new ana line
                 cor_vals = {'last_corrected_id': fp_old_lines[0]}
                 # Add COR before analytic line name (UTP-1118: missing info)
