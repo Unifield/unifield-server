@@ -101,13 +101,16 @@ class account_move_line(osv.osv):
             if state.lower() not in ['all']:
                 where_move_state= " AND "+obj+".move_id IN (SELECT id FROM account_move WHERE account_move.state = '"+state+"')"
 
-        if context.get('period_from', False) and context.get('period_to', False) and not context.get('periods', False):
+        ctx_period_from = context.get('period_from', False)
+        ctx_period_to = context.get('period_to', False)
+        if (ctx_period_from or ctx_period_to) and not context.get('periods', False):
             if initial_bal:
-                period_company_id = fiscalperiod_obj.browse(cr, uid, context['period_from'], context=context).company_id.id
-                first_period = fiscalperiod_obj.search(cr, uid, [('company_id', '=', period_company_id)], order='date_start', limit=1)[0]
-                context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, first_period, context['period_from'])
+                if ctx_period_from:
+                    period_company_id = fiscalperiod_obj.browse(cr, uid, ctx_period_from, context=context).company_id.id
+                    first_period = fiscalperiod_obj.search(cr, uid, [('company_id', '=', period_company_id)], order='date_start', limit=1)[0]
+                    context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, first_period, ctx_period_from)
             else:
-                context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, context['period_from'], context['period_to'])
+                context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, ctx_period_from, ctx_period_to)
         if context.get('periods', False):
             if initial_bal:
                 query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s)) %s %s" % (fiscalyear_clause, where_move_state, where_move_lines_by_date)
@@ -121,8 +124,8 @@ class account_move_line(osv.osv):
                         query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s) AND id IN (%s)) %s %s" % (fiscalyear_clause, periods, where_move_state, where_move_lines_by_date)
             else:
                 ids = ','.join([str(x) for x in context['periods']])
-                if context.get('period0', False) and period0_ids:
-                    ids += ",%s" % (','.join(map(str, period0_ids)), )
+                if context.get('period0', False) and period0_ids:  # US-1391/1
+                    ids += ",%s" % (','.join(map(str, period0_ids)), )  
                 query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s) AND id IN (%s)) %s %s" % (fiscalyear_clause, ids, where_move_state, where_move_lines_by_date)
         else:
             query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s)) %s %s" % (fiscalyear_clause, where_move_state, where_move_lines_by_date)
