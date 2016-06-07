@@ -549,22 +549,22 @@ class patch_scripts(osv.osv):
 
     def us_1297_patch(self, cr, uid, *a, **b):
         """
-        Correct budgets with View Type Cost Center for Fiscal Year 2016
+        Correct budgets with View Type Cost Center (consolidation)
         """
-        # get only budgets already validated
-        sql = '''SELECT mb.id FROM msf_budget AS mb
-        INNER JOIN account_fiscalyear as afy
-        ON mb.fiscalyear_id = afy.id
-        WHERE mb.type != 'view'
-        AND mb.state != 'draft'
-        AND afy.date_start = '2016-01-01';'''
-        cr.execute(sql)
-        sql_res = cr.fetchall()
-        if sql_res:
-            budget_to_correct_ids = [x and x[0] for x in sql_res]
-            # update the parent budgets
-            budget_obj = self.pool.get('msf.budget')
-            budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
+        budget_obj = self.pool.get('msf.budget')
+        # apply the patch only if there are budgets on several fiscal years
+        sql_count_fy = "SELECT COUNT(DISTINCT(fiscalyear_id)) FROM msf_budget;"
+        cr.execute(sql_count_fy)
+        count_fy = cr.fetchone()[0]
+        if count_fy > 1:
+            # get only budgets already validated
+            sql_budgets = "SELECT id FROM msf_budget WHERE type != 'view' AND state != 'draft';"
+            cr.execute(sql_budgets)
+            budgets = cr.fetchall()
+            if budgets:
+                budget_to_correct_ids = [x and x[0] for x in budgets]
+                # update the parent budgets
+                budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
         return True
 
 patch_scripts()
