@@ -288,14 +288,13 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                         'title': _('Warning!'),
                         'message': check_period13_res[2]
                     }
-                if method == 'liquidity_year':
-                    # US-816: end year reval restrict to periods 13, 14, 15
-                    domain['result_period_id'] += [
-                        ('number', '>', 12),
-                        ('number', '<', 16),
-                    ]
-                    value['result_period_id'] = check_period13_res[0] and \
-                        check_period13_res[1] or False  # default period 13
+                # US-816: end year reval restrict to periods 13, 14, 15
+                domain['result_period_id'] += [
+                    ('number', '>', 12),
+                    ('number', '<', 16),
+                ]
+                value['result_period_id'] = check_period13_res[0] and \
+                    check_period13_res[1] or False  # default period 13
         else:
             if period_id:
                 period = period_obj.browse(cr, uid, period_id, context=None)
