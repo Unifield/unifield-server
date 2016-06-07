@@ -17,6 +17,9 @@
                         <field name="is_initial_balance_available" invisible="1" />
                         <field name="initial_balance" attrs="{'readonly':[('is_initial_balance_available', '=', False)]}" />
                     </xpath>
+                    <xpath expr="/form//field[@name='fiscalyear']" position="replace">
+                        <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
+                    </xpath>
                     <xpath expr="/form//field[@name='period_from']" position="replace">
                         <field name="period_from" on_change="on_change_period(period_from, fiscalyear)"/>
                         <newline/>

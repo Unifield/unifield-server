@@ -1500,7 +1500,7 @@ stock moves which are already processed : '''
 
                         # In case of FO with not only no product lines, the picking tickes will be created with normal flow
                         if not so.procurement_request and cond2:
-                            if sol_obj.search(cr, uid, [('order_id', '=', so.id), ('product_id', '!=', False),
+                            if sol_obj.search(cr, uid, [('order_id', '=', so.id),
                                                         ('id', '!=', sol.id)], limit=1, context=context):
                                 continue
 
@@ -1509,7 +1509,7 @@ stock moves which are already processed : '''
                         cond6 = line.procurement_id.product_id.id == tbd_product_id
                         cond7 = line.product_id.type == 'product'
                         # In case of replacement of a non-stockable product by a stockable product or replacement of To be Defined product
-                        if cond4 and (cond5 or cond6) and cond7:
+                        if cond4 and (cond5 or cond6) and cond7 and so.procurement_request:
                             # Get OUT linked to IR or PICK linked to FO
                             pick_to_confirm = None
                             out_ids = []
