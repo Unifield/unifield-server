@@ -272,7 +272,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 value['result_period_id'] = period_id
                 period = period_obj.browse(cr, uid, period_id)
                 value['posting_date'] = period.date_stop
+        
         if from_field != 'period_id':
+            # from fiscalyear_id or not from period_id
             if method != 'liquidity_month':
                 # recompute entry target period from method/fy changed
                 value['posting_date'] = fiscalyear.date_stop
@@ -297,7 +299,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     check_period13_res[1] or False  # default period 13
         else:
             if period_id:
-                period = period_obj.browse(cr, uid, period_id, context=None)
+                period = period_obj.browse(cr, uid, period_id)
                 value['posting_date'] = period.date_stop
                 value['period_id'] = period_id
                 value['result_period_id'] = period_id
