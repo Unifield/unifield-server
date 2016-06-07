@@ -2580,7 +2580,6 @@ class stock_picking(osv.osv):
         return created_ids
 
     def get_current_pick_sequence_for_rw(self, cr, uid, picking_type, context=None):
-        company_ids = self.pool.get('res.company').search(cr, uid, [], context=context)
         cr.execute('SELECT id FROM ir_sequence WHERE code=\'' + picking_type + '\' and active=true ORDER BY id')
         res = cr.dictfetchone()
         if res and res['id']:
@@ -3237,7 +3236,6 @@ class stock_picking(osv.osv):
 
             for line in wizard.move_ids:
                 move = line.move_id
-                first = False
 
                 if move.picking_id.id != picking.id:
                     continue
@@ -3247,7 +3245,6 @@ class stock_picking(osv.osv):
                         'original_qty': move.product_qty,
                         'processed_qty': 0.00,
                         })
-                    first = True
 
                 if line.quantity <= 0.00:
                     continue
@@ -4331,8 +4328,6 @@ class stock_picking(osv.osv):
 
     def _create_sync_message_for_field_order(self, cr, uid, picking, context=None):
         fo_obj = self.pool.get('sale.order')
-        rule_obj = self.pool.get('sync.client.message_rule')
-        msg_to_send_obj = self.pool.get('sync.client.message_to_send')
         if picking.sale_id:
             return_info = {}
             if picking.sale_id.original_so_id_sale_order:
@@ -4743,7 +4738,7 @@ class stock_move(osv.osv):
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                    if sol.order_id.procurement_request and move.picking_id.change_reason:
+                    if sol.order_id.procurement_request and pick_cancel:
                         continue
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
