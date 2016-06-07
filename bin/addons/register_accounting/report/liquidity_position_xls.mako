@@ -570,6 +570,7 @@
       <!-- GRAND TOTAL -->
       <Row></Row>
       <Row></Row>
+      % for cur in getCurrencyList():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
@@ -580,7 +581,30 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:MergeAcross="1" ss:StyleID="s52">
-          <Data ss:Type="String">Grand Total:</Data>
+          <Data ss:Type="String">Grand Total Register Currency</Data>
+        </Cell>
+        <Cell ss:StyleID="s50">
+          <!-- total of register balances + pendinq cheque amount in register currency -->
+          <Data ss:Type="Number">${ formatLang(getGrandTotalRegCurrency()[cur], digits=2, grouping=True) or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s51">
+          <Data ss:Type="String">${ str(cur) }</Data>
+        </Cell>
+      </Row>
+      % endfor
+
+      <Row></Row>
+      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:MergeAcross="1" ss:StyleID="s52">
+          <Data ss:Type="String">Grand Total Functional Currency</Data>
         </Cell>
         <Cell ss:StyleID="s50">
           <!-- total of register balances + pendinq cheque amount in func. currency -->
