@@ -9,7 +9,7 @@
       <field name="model">sync.client.message_received</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:run == False" string="Instance Tree">
+        <tree colors="red:run == False" string="Instance Tree" hide_new_button="1">
           <field name="identifier"/>
           <field name="source"/>
           <field name="remote_call"/>
@@ -26,7 +26,7 @@
       <field name="model">sync.client.message_received</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
-        <form string="Message Received">
+        <form string="Message Received" hide_new_button="1" hide_duplicate_button="1" >
           <group col="6" colspan="4">
             <field name="identifier"/>
             <field name="source"/>
@@ -62,10 +62,13 @@
       <field name="type">search</field>
       <field name="arch" type="xml">
         <search string="Search update Received">
-          <field name="source"/>
-          <field name="remote_call"/>
           <field name="create_date"/>
           <field name="execution_date"/>
+          <newline/>
+          <field name="identifier"/>
+          <field name="arguments"/>
+          <field name="source"/>
+          <field name="remote_call"/>
           <newline/>
           <filter icon="terp-check" string="Not Run"
                   name="current" domain="[('run','=', False)]"/>
@@ -98,7 +101,7 @@
       <field name="model">sync.client.message_to_send</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:sent == False">
+        <tree colors="red:sent == False" hide_new_button="1" >
           <field name="identifier"/>
           <field name="destination_name"/>
           <field name="remote_call"/>
@@ -113,7 +116,7 @@
       <field name="model">sync.client.message_to_send</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
-        <form>
+        <form hide_new_button="1" hide_duplicate_button="1" >
           <field name="identifier"/>
           <field name="destination_name"/>
           <field name="sent_date"/>
@@ -138,9 +141,11 @@
         <search>
           <field name="sent_date"/>
           <separator orientation="vertical"/>
-          <field name="identifier"/>
-          <field name="remote_call"/>
           <field name="destination_name"/>
+          <field name="remote_call"/>
+          <newline/>
+          <field name="identifier"  colspan="3"/>
+          <field name="arguments"/>
           <newline/>
           <filter icon="terp-check" string="Not Sent"
                   domain="[('sent','=', False)]" name="current"/>

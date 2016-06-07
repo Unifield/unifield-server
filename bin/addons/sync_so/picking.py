@@ -240,6 +240,20 @@ class stock_picking(osv.osv):
         context.update({'for_dpo': True})
         return self.partial_shipped_fo_updates_in_po(cr, uid, source, out_info, context=context)
 
+
+    # US-1294: Add the shipped amount into the move lines
+    def _add_to_shipped_moves(self, already_shipped_moves, move_id, quantity):
+        found = False
+        for elem in already_shipped_moves:
+            if move_id in elem:
+                # If the move line exists, then add the new shipped amount into line
+                elem[move_id] += quantity
+                found = True
+                break
+
+        if not found:
+            already_shipped_moves.append({move_id: quantity})
+
     def partial_shipped_fo_updates_in_po(self, cr, uid, source, out_info, context=None):
         '''
         ' This sync method is used for updating the IN of Project side when the OUT/PICK at Coordo side became done.
@@ -307,6 +321,8 @@ class stock_picking(osv.osv):
             for line in pack_data:
                 line_data = pack_data[line]
 
+                #US-1294: Keep this list of pair (move_line: shipped_qty) as amount already shipped
+                already_shipped_moves = []
                 # get the corresponding picking line ids
                 for data in line_data['data']:
                     ln = data.get('line_number')
@@ -334,17 +350,31 @@ class stock_picking(osv.osv):
 
                     move_ids = move_obj.search(cr, uid, search_move, context=context)
                     if not move_ids:
+                        #US-1294: Reduce the search condition
                         del search_move[0]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
 
+                    #US-1294: If there is only one move line found, must check if this has already all taken in shipped moves list
+                    if move_ids and len(move_ids) == 1:  # if there is only one move, take it for process
+                        move = move_obj.read(cr, uid, move_ids[0], ['product_qty'], context=context)
+                        for elem in already_shipped_moves:
+                            # If this move has already all shipped, do not take it anymore
+                            if move['id'] in elem and move['product_qty'] == elem[move['id']]:
+                                move_ids = False # search again
+                                break
+
                     if not move_ids and original_qty_partial != -1:
+                        #US-1294: Reduce the search condition
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number')), ('original_qty_partial', '=', original_qty_partial)]
                         move_ids = move_obj.search(cr, uid, search_move, context=context)
 
+                    #US-1294: But still no move line with exact qty as the amount shipped 
                     if not move_ids:
+                        #US-1294: Now search all moves of the given IN and line number
                         search_move = [('picking_id', '=', in_id), ('line_number', '=', data.get('line_number'))]
-                        move_ids = move_obj.search(cr, uid, search_move, context=context)
+                        move_ids = move_obj.search(cr, uid, search_move, order='product_qty ASC', context=context)
                         if not move_ids:
+                            #US-1294: absolutely no moves -> probably they are closed, just show the error message then ignore
                             closed_in_id = so_po_common.get_in_id_by_state(cr, uid, po_id, po_name, ['done', 'cancel'], context)
                             if closed_in_id:
                                 search_move = [('picking_id', '=', closed_in_id), ('line_number', '=', data.get('line_number'))]
@@ -371,8 +401,15 @@ class stock_picking(osv.osv):
                                 ('wizard_id', '=', in_processor),
                                 ('move_id', '=', move['id']),
                             ], context=context)
-                            if not line_proc_ids:
+                            if line_proc_ids:
                                 diff = move['product_qty'] - orig_qty
+                                # US-1294: If the same move has already been chosen in the previous round, then the shipped amount must be taken into account
+                                for elem in already_shipped_moves:
+                                    if move['id'] in elem:
+                                        # taken into account the amount already shipped previously
+                                        diff -= elem[move['id']]
+                                        break
+
                                 if diff >= 0 and (not best_diff or diff < best_diff):
                                     best_diff = diff
                                     move_id = move['id']
@@ -399,7 +436,7 @@ class stock_picking(osv.osv):
                     already_set_moves.append(move_id)
                     if not line_proc_ids:
                         data['ordered_quantity'] = data['quantity']
-                        self.pool.get('stock.move.in.processor').create(cr, uid, data, context=context)
+                        move_proc.create(cr, uid, data, context=context)
                     else:
                         for line in move_proc.browse(cr, uid, line_proc_ids, context=context):
                             if line.product_id.id == data.get('product_id') and \
@@ -411,6 +448,8 @@ class stock_picking(osv.osv):
                         else:
                             data['ordered_quantity'] = data['quantity']
                             move_proc.create(cr, uid, data, context=context)
+                    #US-1294: Add this move and quantity as already shipped, since it's added to the wizard for processing
+                    self._add_to_shipped_moves(already_shipped_moves, move_id, data['quantity'])
 
             # for the last Shipment of an FO, no new INcoming shipment will be created --> same value as in_id
             new_picking = self.do_incoming_shipment(cr, uid, in_processor, context)
@@ -506,7 +545,7 @@ class stock_picking(osv.osv):
                     message = "The message is ignored as there is no corresponding IN (because the PO " + po.name + " has no line)"
                     self._logger.info(message)
                     return message
-                
+
         elif context.get('restore_flag'):
             # UF-1830: Create a message to remove the invalid reference to the inexistent document
             shipment_ref = pick_dict['name']

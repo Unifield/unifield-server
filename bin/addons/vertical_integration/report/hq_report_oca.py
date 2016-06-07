@@ -178,6 +178,7 @@ class hq_report_oca(report_sxw.report_sxw):
         else:
             raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
 
+        last_processed_journal = False
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
@@ -185,6 +186,8 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                        ('exported', 'in', to_export)], context=context)
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
+            if journal:
+                last_processed_journal = journal
             account = move_line.account_id
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
@@ -321,8 +324,11 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
                                                                                ('account_id.category', 'not in', ['FREE1', 'FREE2']),
                                                                                ('exported', 'in', to_export)], context=context)
+
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
-            journal = analytic_line.move_id and analytic_line.move_id.journal_id
+            journal = analytic_line.move_id and analytic_line.move_id.journal_id or False
+            if journal:
+                last_processed_journal = journal
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
             func_currency = analytic_line.move_id.functional_currency_id
@@ -350,9 +356,9 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type == 'cur_adj' or False
             is_analytic_rev_entry = analytic_line.journal_id \
                 and analytic_line.journal_id.type == 'revaluation' or False
-            # US-817: display period from JI (VI from HQ so AJI always with its JI)
-            # (AJI period_id is a field function always deduced from date since UTP-943)
-            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
+
+            # US-1375: cancel US-817
+            aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
@@ -442,7 +448,7 @@ class hq_report_oca(report_sxw.report_sxw):
             third_report.append(line)
             third_report.append(self.create_counterpart(cr, uid, line))
 
-        if journal and journal.type not in (
+        if last_processed_journal and last_processed_journal.type not in (
                 exclude_jn_type_for_balance_and_expense_report):  # US-274/2
             for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
                 # create the sequence number for those lines
