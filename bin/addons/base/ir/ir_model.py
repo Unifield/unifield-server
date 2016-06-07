@@ -648,7 +648,7 @@ class ir_model_data(osv.osv):
     def _get_id(self, cr, uid, module, xml_id):
         """Returns the id of the ir.model.data record corresponding to a given module and xml_id (cached) or raise a ValueError if not found"""
         ids = self.search(cr, uid, [('module','=',module), ('name','=',
-            xml_id)], limit=1 order='NO_ORDER')
+            xml_id)], limit=1, order='NO_ORDER')
         if not ids:
             raise ValueError('No references to %s.%s' % (module, xml_id))
         # the sql constraints ensure us we have only one result
