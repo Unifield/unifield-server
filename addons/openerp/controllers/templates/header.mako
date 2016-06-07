@@ -23,8 +23,10 @@ else:
 from openobject import release
 version = release.version
 %>
-% if cp.config('server.environment') == 'production':
+% if cp.config('server.environment') == 'red':
 <td id="top_production" colspan="3">
+% elif cp.config('server.environment') == 'green':
+<td id="top_production" class="green" colspan="3">
 % else:
 <td id="top" colspan="3">
 % endif

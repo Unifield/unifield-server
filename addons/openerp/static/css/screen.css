@@ -165,6 +165,10 @@ select {
     text-shadow: #333 0 1px 0;
 }
 
+#top_production.green {
+    background: url(../images/header-background-green.png) top left repeat-x;
+}
+
 #top, p#cmp_logo,
 #top_production, p#cmp_logo {
     height: auto;
