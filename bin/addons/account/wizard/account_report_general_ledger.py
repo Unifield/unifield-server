@@ -81,6 +81,7 @@ class account_report_general_ledger(osv.osv_memory):
         'account_type': 'all',
         'unreconciled': False,
         'is_initial_balance_available': False,  # as no FY selection, not available by default US-926 point 7)
+        'display_account': 'bal_movement',  # by default only result with JIs
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -128,9 +129,7 @@ class account_report_general_ledger(osv.osv_memory):
             fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
                 fiscalyear_id, context=context)
             if filter in ('filter_date_doc', 'filter_date', ):
-                ib_available = date_from and date_to \
-                    and date_from == fy_rec.date_start \
-                    and date_to <= fy_rec.date_stop
+                ib_available = date_from and date_from == fy_rec.date_start
             elif filter in 'filter_period':
                 if not period_from or not period_to:
                     ib_available = False

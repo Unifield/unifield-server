@@ -51,6 +51,15 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_993_patch(self, cr, uid, *a, **b):
+        # set no_update to True on USB group_type not to delete it on
+        # existing instances
+        cr.execute("""
+        UPDATE ir_model_data SET noupdate='t'
+        WHERE model='sync.server.group_type' AND
+        name='sync_remote_warehouse_rule_group_type'
+        """)
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:
@@ -131,6 +140,15 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
+    def us_1061_patch(self, cr, uid, *a, **b):
+        '''setup the size on all attachment'''
+        attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = attachment_obj.search(cr, uid, [])
+        vals = {}
+        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            if attachment.datas and not attachment.size:
+                vals['size'] = attachment_obj.get_size(attachment.datas)
+                attachment_obj.write(cr, uid, attachment.id, vals)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
@@ -422,6 +440,37 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_1024_send_bar_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        ir_ui_obj = self.pool.get('ir.ui.view')
+        data_obj = self.pool.get('ir.model.data')
+        rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
+        if rule_ids:
+            data_ids = data_obj.search(cr, uid, [
+                ('module', '=', 'sd'),
+                ('model', '=', 'msf_button_access_rights.button_access_rule'),
+                ('res_id', 'in', rule_ids)
+                ])
+            if rule_ids:
+                data_obj.unlink(cr, uid, data_ids)
+            for rule in rules_obj.read(cr, uid, rule_ids, ['type', 'name']):
+                xmlname = ir_ui_obj._get_xmlname(cr, uid, rule['type'], rule['name'])
+                rules_obj.write(cr, uid, rule['id'], {'xmlname': xmlname})
+
+        if usr and usr.company_id and usr.company_id.instance_id and usr.company_id.instance_id.level == 'section':
+            cr.execute('''update ir_model_data
+                set touched='[''active'']', last_modification=NOW()
+                where module='sd' and model='msf_button_access_rights.button_access_rule'
+            ''')
+
+        return True
+
     def update_volume_patch(self, cr, uid, *a, **b):
         """
         Update the volume from dm³ to m³ for OCB databases
@@ -515,6 +564,67 @@ class patch_scripts(osv.osv):
         '''
         if self.pool.get('sync.server.update'):
             cr.execute("delete from sync_server_update where values like '%msf_outgoing.field_product_product_is_keep_cool%' and model='msf_field_access_rights.field_access_rule_line'")
+
+    def us_1185_patch(self, cr, uid, *a, **b):
+        # AT HQ level: untick 8/9 top accounts for display in BS/PL report
+        user_rec = self.pool.get('res.users').browse(cr, uid, [uid])[0]
+        if user_rec.company_id and user_rec.company_id.instance_id \
+            and user_rec.company_id.instance_id.level == 'section':
+            account_obj = self.pool.get('account.account')
+            codes = ['8', '9', ]
+
+            ids = account_obj.search(cr, uid, [
+                ('type', '=', 'view'),
+                ('code', 'in', codes),
+            ])
+            if ids and len(ids) == len(codes):
+                account_obj.write(cr, uid, ids, {
+                    'display_in_reports': False,
+                })
+
+    def us_1263_patch(self, cr, uid, *a, **b):
+        ms_obj = self.pool.get('stock.mission.report')
+        msl_obj = self.pool.get('stock.mission.report.line')
+
+        ms_touched = "['name']"
+        msl_touched = "['internal_qty']"
+
+        ms_ids = ms_obj.search(cr, uid, [('local_report', '=', True)])
+        if not ms_ids:
+            return True
+
+        # Touched Mission stock reports
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE model =  'stock.mission.report' AND res_id in %s''', (ms_touched, tuple(ms_ids),))
+        # Touched Mission stock report lines
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE
+                          model = 'stock.mission.report.line'
+                          AND
+                          res_id IN (SELECT l.id
+                                     FROM stock_mission_report_line l
+                                     WHERE
+                                       l.mission_report_id IN %s
+                                       AND (l.internal_qty != 0.00
+                                       OR l.stock_qty != 0.00
+                                       OR l.central_qty != 0.00
+                                       OR l.cross_qty != 0.00
+                                       OR l.secondary_qty != 0.00
+                                       OR l.cu_qty != 0.00
+                                       OR l.in_pipe_qty != 0.00
+                                       OR l.in_pipe_coor_qty != 0.00))''', (msl_touched, tuple(ms_ids)))
+        return True
+
+    def us_1273_patch(self, cr, uid, *a, **b):
+        # Put all internal requests import_in_progress field to False
+        ir_obj = self.pool.get('sale.order')
+        context = {'procurement_request': True}
+        ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
+        if ir_ids:
+            ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
 
 patch_scripts()
 

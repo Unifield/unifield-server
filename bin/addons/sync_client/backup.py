@@ -85,10 +85,13 @@ class BackupConfig(osv.osv):
         if os.name == 'nt' and self._pg_psw_env_var_is_set:
             os.environ['PGPASSWORD'] = ''
 
-    def exp_dump_for_state(self, cr, uid, state, context=None):
+    def exp_dump_for_state(self, cr, uid, state, context=None, force=False):
         context = context or {}
         logger = context.get('logger')
-        bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
+        if not force:
+            bkp_ids = self.search(cr, uid, [(state, '=', True)], context=context)
+        else:
+            bkp_ids = self.search(cr, uid, [], context=context)
 
         suffix = ''
         if state == 'beforepatching':
@@ -118,10 +121,16 @@ class BackupConfig(osv.osv):
             bck = bkp[0]
             try:
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
+                version = self.get_server_version(cr, uid, context=context)
                 outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
                         (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
-                            suffix, self.get_server_version(cr, uid,
-                                context=context)))
+                            suffix, version))
+                version_instance_module = self.pool.get('sync.version.instance.monitor')
+                vals = {'version': version,
+                        'backup_path': outfile}
+
+                version_instance_module.create(cr, uid, vals, context=context)
+
                 bkpfile = open(outfile,"wb")
                 bkpfile.close()
             except Exception, e:
@@ -130,12 +139,22 @@ class BackupConfig(osv.osv):
                     error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
                 else:
                     error = "Backup Error: %s. Please provide the correct path or deactivate the backup feature." % e
-                self._logger.exception('Cannot perform the backup %s' % error)
-                raise osv.except_osv(_('Error! Cannot perform the backup'), error)
+                self._logger.exception('Cannot perform the backup %s.' % error)
+                raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
 
             res = tools.pg_dump(cr.dbname, outfile)
+
+            # check the backup file
+            error = None
             if res:
-                raise Exception, "Couldn't dump database"
+                error = "Couldn't dump database : pg_dump return an error for path %s." % outfile
+            elif not os.path.isfile(outfile):
+                error = 'The backup file could not be found on the disk with path %s' % outfile
+            elif not os.stat(outfile).st_size > 0:
+                error = 'The backup file should be bigger that 0 (actually size=%s bytes)' % os.stat(outfile).st_size
+            if error:
+                self._logger.exception('Cannot perform the backup %s.' % error)
+                raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
             return "Backup done"
         raise osv.except_osv(_('Error! Cannot perform the backup'), "No backup path defined")
 

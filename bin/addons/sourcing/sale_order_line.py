@@ -44,6 +44,30 @@ _SELECTION_PO_CFT = [
 ]
 
 
+def check_is_service_nomen(obj, cr, uid, nomen=False):
+    """
+    Return True if the nomenclature seleced on the line is a service nomenclature
+    @param cr: Cursor to the database
+    @param uid: ID of the res.users that calls this method
+    @param nomen: ID of the nomenclature to check
+    @return: True or False
+    """
+    nomen_obj = obj.pool.get('product.nomenclature')
+
+    if not nomen:
+        return False
+
+    nomen_srv = nomen_obj.search(cr, uid, [
+        ('name', '=', 'SRV'),
+        ('type', '=', 'mandatory'),
+        ('level', '=', 0),
+    ], limit=1)
+    if not nomen_srv:
+        return False
+
+    return nomen_srv[0] == nomen
+
+
 class sale_order_line(osv.osv):
     _inherit = 'sale.order.line'
     _description = 'Sales Order Line'
@@ -76,6 +100,38 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             )
 
         return True
+
+    def _get_supplier(self, cr, uid, ids, context=None):
+        """
+        Returns a list of sale.order.line ID to update
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of res.partner
+        :param context: Context of the call
+        :return: List of sale.order.line ID to update
+        """
+        return self.pool.get('sale.order.line').search(cr, uid, [
+            ('supplier', 'in', ids),
+            ('state', '=', 'draft'),
+        ], context=context)
+
+    def _check_related_sourcing_ok(self, cr, uid, supplier=False, l_type='make_to_order', context=None):
+        """
+        Return True if the supplier allows split PO.
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param supplier: ID of the res.partner selected as supplier for the sale.order.line
+        :param l_type: Procurement method selected for the sale.order.line
+        :param context: Context of the call
+        :return: True or False
+        """
+        if not supplier:
+            return False
+
+        sup_rec = self.pool.get('res.partner').\
+            read(cr, uid, [supplier], ['partner_type', 'split_po'], context=context)[0]
+
+        return l_type == 'make_to_order' and sup_rec['partner_type'] == 'esc' and sup_rec['split_po'] == 'yes'
 
     """
     Methods to get fields.function values
@@ -152,6 +208,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                               uid,
                                               [line.id],
                                               line.supplier.id,
+                                              line.type,
                                               context=context)
             res = get_delay.get('value', {}).get('estimated_delivery_date', False)
 
@@ -404,6 +461,30 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ('sale_order_state', '=', 'validated'),
         ]
 
+    def _get_related_sourcing_ok(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Return True or False to determine if the user could select a sourcing group on the OST for the line
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of sale.order.line to compute
+        :param field_name: Name of the fields to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: True or False
+        """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = self._check_related_sourcing_ok(cr, uid, line.supplier.id, line.type, context=context)
+
+        return res
+
     _columns = {
         'customer': fields.related(
             'order_id',
@@ -418,6 +499,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'supplier': fields.many2one(
             'res.partner',
             'Supplier',
+        ),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
         ),
         'location_id': fields.many2one(
             'stock.location',
@@ -517,7 +602,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             method=True,
             type='boolean',
             string='Order in progress',
-            multi='line_info'),
+            multi='line_info',
+        ),
+        'related_sourcing_ok': fields.function(
+            _get_related_sourcing_ok,
+            method=True,
+            type='boolean',
+            string='Related sourcing OK',
+            store={
+                'sale.order.line': (lambda obj, cr, uid, ids, c={}: ids, ['supplier', 'type'], 10),
+                'res.partner': (_get_supplier, ['partner_type', 'split_po'], 20),
+            },
+        ),
         # UTP-965 : Select a source stock location for line in make to stock
         'real_stock': fields.function(
             _getVirtualStock,
@@ -586,7 +682,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             ids = [ids]
 
         for obj in self.browse(cr, uid, ids, context=context):
-            if obj.product_id.type == 'service_recep' and obj.type != 'make_to_order':
+            if (obj.product_id.type == 'service_recep' or (not obj.product_id and check_is_service_nomen(cr, uid, obj.nomen_manda_0.id))) \
+               and obj.type != 'make_to_order':
                 raise osv.except_osv(
                     _('Error'),
                     _('You must select on order procurement method for Service with Reception products.'),
@@ -678,6 +775,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if ir and vals.get('po_cft', 'dpo') == 'dpo':
                 vals['po_cft'] = 'po'
             elif not ir and vals.get('po_cft', 'po') == 'po':
+                vals['po_cft'] = 'dpo'
+        elif not product and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0', False)):
+            vals['po_cft'] = 'dpo'
+
+        if not product:
+            vals.update({
+                'type': 'make_to_order',
+                'po_cft': 'po',
+            })
+            if vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
                 vals['po_cft'] = 'dpo'
 
         # If type is missing, set to make_to_stock and po_cft to False
@@ -792,6 +899,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         for line in self.browse(cr, uid, ids, context=context):
             clc = self._check_loan_conditions(cr, uid, line, context=context)
             if clc:
@@ -810,11 +918,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                not line.product_id and \
                line.order_id.procurement_request and \
                line.supplier and \
-               line.supplier.partner_type not in ['internal', 'section', 'intermission']:
+               line.supplier.partner_type not in ['internal', 'section', 'intermission', 'esc']:
                 raise osv.except_osv(
                     _('Warning'),
                     _("""For an Internal Request with a procurement method 'On Order' and without product,
-the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type."""),
+the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ESC' type."""),
                 )
 
             if line.product_id and \
@@ -834,10 +942,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
                 )
 
-            if line.product_id and \
-               line.product_id.type in ('service', 'service_recep') and \
-               not line.order_id.procurement_request and \
-               line.po_cft == 'po':
+            cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
+            cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
+            cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
+            if cond1 and (cond2 or cond3):
                 raise osv.except_osv(
                     _('Warning'),
                     _("""'Purchase Order' is not allowed to source a 'Service' product."""),
@@ -859,11 +967,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                         _('Warning'),
                         _("You can't Source 'from stock' if you don't have product."),
                     )
-                if line.supplier and line.supplier.partner_type in ('external', 'esc'):
+                if line.supplier and line.supplier.partner_type in ('external'):
                     raise osv.except_osv(
                         _('Warning'),
-                        _("You can't Source to an '%s' partner if you don't have product.") %
-                        (line.supplier.partner_type == 'external' and 'External' or 'ESC'),
+                        _("You can't Source to an 'External' partner if you don't have product."),
                     )
 
             if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
@@ -959,10 +1066,19 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         product = False
 
+        srv_product = False
         if vals.get('product_id', False):
             product = product_obj.browse(cr, uid, vals['product_id'])
             if product.type in ('consu', 'service', 'service_recep'):
-                vals['type'] = 'make_to_order'
+                srv_product = True
+        elif vals.get('nomen_manda_0') and check_is_service_nomen(self, cr, uid, vals.get('nomen_manda_0')):
+            srv_product = True
+
+        if srv_product:
+            vals.update({
+                'type': 'make_to_order',
+                'po_cft': 'dpo',
+            })
 
         if 'state' in vals and vals['state'] == 'cancel':
             self.write(cr, uid, ids, {'cf_estimated_delivery_date': False}, context=context)
@@ -994,6 +1110,13 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         if vals.get('type', False) == 'make_to_order':
             vals['location_id'] = False
 
+        if vals.get('type') == 'make_to_stock':
+            vals['related_sourcing_id'] = False
+        elif vals.get('supplier'):
+            related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, vals.get('supplier'), vals.get('type'), context=context)
+            if not related_sourcing_ok:
+                vals['related_sourcing_id'] = False
+
         # UFTP-139: if make_to_stock and no location, put Stock as location
         if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             # Define Stock as location_id for each line without location_id
@@ -1014,7 +1137,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return result
 
-    def confirmLine(self, cr, uid, ids, run_scheduler=False, context=None):
+    def confirmLine(self, cr, uid, ids, context=None, run_scheduler=False):
         """
         Set the line as confirmed and check if all lines
         of the FO/IR are confirmed. If yes, launch the
@@ -1044,7 +1167,8 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         no_prod = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_id', '=', False),
-            ('order_id.procurement_request', '=', False)
+            ('order_id.procurement_request', '=', False),
+            ('supplier.partner_type', '!=', 'esc'),
         ], count=True, context=context)
 
         if no_prod:
@@ -1079,12 +1203,12 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
             ('supplier', '!=', False),
             ('product_id', '=', False),
             ('order_id.procurement_request', '=', True),
-            ('supplier.partner_type', 'not in', ['internal', 'section', 'intermission']),
+            ('supplier.partner_type', 'not in', ['internal', 'section', 'intermission', 'esc']),
         ], count=True, context=context)
 
         if mto_no_cft_no_prod:
             raise osv.except_osv(_('Warning'), _("""For an Internal Request with a procurement method 'On Order' and without product,
-                    the supplier must be either in 'Internal', 'Inter-Section' or 'Intermission' type.
+                    the supplier must be either in 'Internal', 'Inter-Section', 'Intermission' or 'ESC' type.
                     """))
 
         stock_no_loc = self.search(cr, uid, [
@@ -1202,6 +1326,12 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                         'order_id': order_id,
                         'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                     }, context=context)
+
+                    order = self.pool.get('sale.order').read(cr, uid, order_id, ['name'], context=context)
+                    self.infolog(cr, uid, "All lines of the FO/IR id:%s (%s) have been sourced" % (
+                        order['id'],
+                        order['name'],
+                    ))
 
                 self.pool.get('sale.order').write(cr, uid, order_ids, {
                     'sourcing_trace_ok': True,
@@ -1431,7 +1561,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
             if l_type == 'make_to_order':
                 po_cft = 'po'
-                if line and line.product_id and line.product_id.type in ('service', 'service_recep') and line.order_id and not line.order_id.procurement_request:
+                if line and \
+                    ((line.product_id and line.product_id.type in ('service', 'service_recep')) or \
+                     (not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id))) and \
+                     line.order_id and not line.order_id.procurement_request:
                     po_cft = 'dpo'
 
             result['value'].update({
@@ -1483,7 +1616,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         line = self.browse(cr, uid, line_id, context=context)
 
-        if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request and po_cft == 'po':
+        cond1 = line.product_id.type in ('service', 'service_recep')
+        cond2 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
+        cond3 = not line.order_id.procurement_request and po_cft == 'po'
+
+        if (cond1 or cond2) and cond3:
             res['warning'] = {
                 'title': _('Warning'),
                 'message': _("""'Purchase Order' is not allowed to source a 'Service' product."""),
@@ -1512,7 +1649,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         return res
 
-    def onChangeType(self, cr, uid, line_id, l_type, location_id=False, context=None):
+    def onChangeType(self, cr, uid, line_id, l_type, location_id=False, supplier=False, context=None):
         """
         When the method of procurement is changed, check if the new
         values are compatible with the other values of the line and of the order.
@@ -1522,6 +1659,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         :param line_id: ID of the line to check
         :param l_type: Value of the procurement method
         :param location_id: ID of the stock location of the line
+        :param supplier: Id of the res.partner selected as partner for the line
         :param context: Context of the change
 
         :return A dictionary with the new values
@@ -1556,7 +1694,11 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
                 if wh_ids:
                     value['location_id'] = wh_obj.browse(cr, uid, wh_ids[0], context=context).lot_stock_id.id
 
-            value['po_cft'] = False
+            value.update({
+                'po_cft': False,
+                'related_sourcing_ok': False,
+                'related_sourcing_id': False,
+            })
 
             res = {'value': value, 'warning': message}
             if line_id:
@@ -1579,10 +1721,15 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
                     if error:
                         return res
+        else:
+            related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+            value['related_sourcing_ok'] = related_sourcing_ok
+            if not related_sourcing_ok:
+                value['related_sourcing_id'] = False
 
         return {'value': value, 'warning': message}
 
-    def onChangeSupplier(self, cr, uid, line_id, supplier, context=None):
+    def onChangeSupplier(self, cr, uid, line_id, supplier, l_type, context=None):
         """
         When the supplier is changed, check if the new values are compatible
         with the other values of the line and of the order.
@@ -1591,6 +1738,7 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         :param uid: ID of the user that runs the method
         :param line_id: ID of the line to check
         :param supplier: ID of the current or new choosen supplier
+        :param l_type: Mode of procurement for the line
         :param context: Context of the change
 
         :return A dictionary with the new values
@@ -1612,6 +1760,10 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
         }
 
         if not supplier:
+            result['value'].update({
+                'related_sourcing_id': False,
+                'related_sourcing_ok': False,
+            })
             sl = self.browse(cr, uid, line_id, context=context)
             if not sl.product_id and sl.order_id.procurement_request and sl.type == 'make_to_order':
                 result['domain']['supplier'] = [('partner_type', 'in', ['internal', 'section', 'intermission'])]
@@ -1632,7 +1784,13 @@ the supplier must be either in 'Internal', 'Inter-section' or 'Intermission type
 
         estDeliveryDate = date.today() + relativedelta(days=int(delay))
 
-        result['value']['estimated_delivery_date'] = estDeliveryDate.strftime('%Y-%m-%d')
+        related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+        result['value'].update({
+            'estimated_delivery_date': estDeliveryDate.strftime('%Y-%m-%d'),
+            'related_sourcing_ok': related_sourcing_ok,
+        })
+        if not related_sourcing_ok:
+            result['value']['related_sourcing_id'] = False
 
         value = result['value']
         partner_id = 'supplier' in value and value['supplier'] or supplier

@@ -198,7 +198,7 @@ class hq_report_ocg(report_sxw.report_sxw):
             if journal.analytic_journal_id and journal.analytic_journal_id.id not in ana_cur_journal_ids:
                 ana_cur_journal_ids.append(journal.analytic_journal_id.id)
         
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('move_id.period_id', '=', data['form']['period_id']),
+        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)
@@ -211,13 +211,13 @@ class hq_report_ocg(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             cost_center_code = analytic_line.cost_center_id and analytic_line.cost_center_id.code or ""
 
-            # US-817
-            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
+            # US-1375: cancel US-817
+            aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
                               analytic_line.journal_id and analytic_line.journal_id.code or "",
-                              analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
+                              analytic_line.entry_sequence or analytic_line.move_id and analytic_line.move_id.move_id and analytic_line.move_id.move_id.name or "",
                               analytic_line.name or "",
                               analytic_line.ref or "",
                               datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y'),

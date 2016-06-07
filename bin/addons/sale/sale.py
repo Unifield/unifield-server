@@ -611,10 +611,13 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [o.id], {'state': 'manual', 'date_confirm': time.strftime('%Y-%m-%d')})
             else:
                 self.write(cr, uid, [o.id], {'state': 'progress', 'date_confirm': time.strftime('%Y-%m-%d')})
-            self.pool.get('sale.order.line').button_confirm(cr, uid, [x.id for x in o.order_line])
+            self.pool.get('sale.order.line').button_confirm(cr, uid, [x.id for x in o.order_line if x.product_id])
             message = _("The quotation '%s' has been converted to a sales order.") % (o.name,)
             message = self._hook_message_action_wait(cr, uid, order=o, message=message)
             self.log(cr, uid, o.id, message)
+            self.infolog(cr, uid, "The Field Order id:%s (%s) has been confirmed." % (
+                o.id, o.name,
+            ))
         return True
 
     def procurement_lines_get(self, cr, uid, ids, *args):

@@ -27,6 +27,7 @@ class report_pending_cheque(report_sxw.rml_parse):
         super(report_pending_cheque, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'getLines':self.getLines,
+            'getTotals': self.getTotals,
         })
         return
 
@@ -40,9 +41,10 @@ class report_pending_cheque(report_sxw.rml_parse):
         pool = pooler.get_pool(self.cr.dbname)
         aml_obj = pool.get('account.move.line')
 
+        period_r = self.pool.get('account.period').read(self.cr, self.uid, register.period_id.id, ['date_start'])
         # Search for all registers with the same Journal, and the same period or a previous period
         period_ids = self.pool.get('account.period').\
-            search(self.cr, self.uid, [('date_start', '<=', register.period_id.date_start)])
+            search(self.cr, self.uid, [('date_start', '<=', period_r['date_start'])])
         registers_ids = self.pool.get('account.bank.statement').\
             search(self.cr, self.uid, ['&', ('journal_id', '=', journal.id), ('period_id', 'in', period_ids)])
 
@@ -51,6 +53,16 @@ class report_pending_cheque(report_sxw.rml_parse):
         if isinstance(aml_ids, (int, long)):
             aml_ids = [aml_ids]
         return aml_obj.browse(self.cr, self.uid, aml_ids)
+
+    def getTotals(self, register):
+        totals = {}
+        lines = self.getLines(register) or []
+        totals["amount_in"] = sum([l.debit_currency or 0.0 for l in lines])
+        totals["amount_out"] = sum([l.credit_currency or 0.0 for l in lines])
+        totals["func_in"] = sum([l.debit or 0.0 for l in lines])
+        totals["func_out"] = sum([l.credit or 0.0 for l in lines])
+        return totals
+
 
 SpreadsheetReport('report.pending.cheque','account.bank.statement','addons/register_accounting/report/pending_cheque_xls.mako', parser=report_pending_cheque)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

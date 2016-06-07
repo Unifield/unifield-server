@@ -332,17 +332,49 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
+    <!-- Grey color for deleted entries and DP Reversals -->
+    <Style ss:ID="grey_left_bold">
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Alignment ss:Horizontal="Left" ss:Indent="0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="grey_centre">
+      <Alignment ss:Horizontal="Center" ss:Indent="0"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
+    <Style ss:ID="grey_amount_bold">
+      <Alignment ss:Horizontal="Right" ss:Indent="0"/>
+      <NumberFormat ss:Format="Standard"/>
+      <Font ss:Bold="1" ss:Color="#9E9E9E"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+        <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
+      </Borders>
+    </Style>
   </Styles>
   <Worksheet ss:Name="Info">
     <Table>
-      <Column ss:Width="105.1937"/>
-      <Column ss:Width="64.0063"/>
+      <Column ss:Width="101.1937"/>
+      <Column ss:Width="63.01"/>
       <Row ss:Height="12.1039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
           <Data ss:Type="String">REGISTER REPORT</Data>
         </Cell>
       </Row>
-      <Row ss:Height="12.8126">
+      <Row ss:Height="12.81">
         <Cell ss:Index="2"/>
       </Row>
       <Row ss:Height="12.1039">
@@ -372,16 +404,17 @@
       <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
     </Names>
     <Table>
-      <Column ss:Width="95.9527"/>
+      <Column ss:Width="105.9527"/>
       <Column ss:Width="70" ss:Span="1"/>
       <Column ss:Width="155"/>
       <Column ss:Width="135"/>
+      <Column ss:Width="170"/>
       <Column ss:Width="170"/>
       <Column ss:Width="55"/>
       <Column ss:Width="65"/>
       <Column ss:Width="60"/>
       <Column ss:Width="66"/>
-      <Column ss:Width="72" ss:Span="2"/>
+      <Column ss:Width="72" ss:Span="4"/>
       <Column ss:Width="36" ss:Span="1"/>
       <Row ss:Height="19.3039">
         <Cell ss:MergeAcross="3" ss:StyleID="title">
@@ -467,6 +500,9 @@
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Ref</Data>
         </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free Ref</Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="column_headers">
             <Data ss:Type="String">Chk num</Data>
@@ -492,6 +528,12 @@
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">FP</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free 1</Data>
+        </Cell>
+        <Cell ss:StyleID="column_headers">
+          <Data ss:Type="String">Free 2</Data>
         </Cell>
         <Cell ss:StyleID="column_headers">
           <Data ss:Type="String">Rec?</Data>
@@ -520,6 +562,9 @@
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${getRegRef(line) or ''|x}</Data>
         </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
         % if o.journal_id.type == 'cheque':
           <Cell ss:StyleID="centre">
             <Data ss:Type="String">${line.cheque_number}</Data>
@@ -547,12 +592,87 @@
           <Data ss:Type="String"></Data>
         </Cell>
         <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.reconciled and 'X' or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="centre">
           <Data ss:Type="String">${line.state and getSel(line, 'state') or ''|x}</Data>
         </Cell>
       </Row>
+
+<!-- if it is a Down Payment that has been partially or totally reversed -->
+<% dp_reversals_ml = getDownPaymentReversals(line) %>
+% for dp_reversal_ml in sorted(dp_reversals_ml, key=lambda x: x.move_id.name):
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('REV - Down Payment')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${dp_reversal_ml.move_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- DESC -->
+          <Data ss:Type="String">${dp_reversal_ml.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <!-- REF -->
+          <Data ss:Type="String">${dp_reversal_ml.ref or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+    </Row>
+% endfor
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% move_lines = [] %>
@@ -574,6 +694,9 @@
         </Cell>
         <Cell ss:StyleID="left">
           <Data ss:Type="String">${inv_line.move_id and inv_line.move_id.name or hasattr(inv_line, 'reference') and inv_line.reference or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="left">
+          <Data ss:Type="String">${getFreeRef(inv_line) or ''|x}</Data>
         </Cell>
         % if o.journal_id.type == 'cheque':
         <Cell ss:StyleID="left">
@@ -607,9 +730,9 @@ endif
 %>
       <Row>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
-          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
         % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
@@ -629,7 +752,15 @@ endif
           <Data ss:Type="String">${ana_line.cost_center_id and ana_line.cost_center_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
-          <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+          <Data ss:Type="String">${not ana_line.free_account and ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
@@ -657,11 +788,12 @@ elif ana_line.last_corrected_id:
     line_color = 'red'
 endif
 %>
+% if not ana_line.free_account:
       <Row>
         % if o.journal_id.type == 'cheque':
-          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
         % else:
-          <Cell ss:Index="7" ss:StyleID="${line_color}_ana_left">
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
         % endif
           <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
         </Cell>
@@ -684,14 +816,146 @@ endif
           <Data ss:Type="String">${ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
+        </Cell>
+      </Row>
+% endif
+% endfor
+% endif
+
+<!-- Display analytic lines Free 1 and Free 2 linked to this register line -->
+<%
+a_lines = False
+if line.free_analytic_lines and not line.invoice_id and not line.imported_invoice_line_ids:
+    a_lines = line.free_analytic_lines
+%>
+% if a_lines:
+% for ana_line in sorted(a_lines, key=lambda x: x.id):
+<%
+line_color = 'blue'
+if ana_line.is_reallocated:
+    line_color = 'darkblue'
+elif ana_line.is_reversal:
+    line_color = 'green'
+elif ana_line.last_corrected_id:
+    line_color = 'red'
+endif
+%>
+      <Row>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:Index="9" ss:StyleID="${line_color}_ana_left">
+        % else:
+          <Cell ss:Index="8" ss:StyleID="${line_color}_ana_left">
+        % endif
+          <Data ss:Type="String">${ana_line.general_account_id.code + ' ' + ana_line.general_account_id.name|x}</Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell>
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_amount">
+          <Data ss:Type="Number">${ana_line.amount_currency}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.1.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
+          <Data ss:Type="String">${ana_line.distrib_line_id and ana_line.distrib_line_id._name == 'free.2.distribution.line' and \
+                                   ana_line.account_id and ana_line.account_id.code or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="${line_color}_ana_left">
           <Data ss:Type="String">${(ana_line.is_reallocated and _('Corrected')) or (ana_line.is_reversal and _('Reversal')) or ''}</Data>
         </Cell>
       </Row>
 % endfor
 % endif
 
-
 % endfor
+
+<!-- DELETED ENTRIES -->
+% for deleted_line in sorted(o.deleted_line_ids, key=lambda x: x.sequence):
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('Deleted Entry')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${deleted_line.sequence or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+    </Row>
+% endfor
+
     </Table>
     <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
       <PageSetup>

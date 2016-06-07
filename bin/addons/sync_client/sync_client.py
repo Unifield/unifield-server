@@ -30,6 +30,7 @@ import uuid
 import tools
 import sys
 import os
+import math
 import hashlib
 import traceback
 from psycopg2 import OperationalError
@@ -41,6 +42,9 @@ from threading import Thread, RLock, Lock
 import pooler
 
 import functools
+
+from datetime import datetime
+import updater
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -69,11 +73,18 @@ class BackgroundProcess(Thread):
                 connected = False
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
             # Check for update
+
             if hasattr(entity, 'upgrade'):
                 up_to_date = entity.upgrade(cr, uid, context=context)
                 if not up_to_date[0]:
-                    cr.commit()
-                    raise osv.except_osv(_('Error!'), _(up_to_date[1]))
+                    # check if patchs should be applied automatically
+                    connection = pool.get("sync.client.sync_server_connection")
+                    sync_type = context and context.get('sync_type', 'manual')
+                    automatic_patching = sync_type == 'automatic' and\
+                            connection.is_automatic_patching_allowed(cr, uid)
+                    if not automatic_patching:
+                        cr.commit()
+                        raise osv.except_osv(_('Error!'), _(up_to_date[1]))
         except BaseException, e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
@@ -191,10 +202,25 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
                             up_to_date = self.upgrade(cr, uid, context=context)
                             cr.commit()
-                            if not up_to_date[0]:
+
+                            # check if patchs should be applied automatically
+                            connection_module = self.pool.get("sync.client.sync_server_connection")
+                            upgrade_module = self.pool.get('sync_client.upgrade')
+
+                            sync_type = context.get('sync_type', 'manual')
+                            automatic_patching = sync_type == 'automatic' and\
+                                    connection_module.is_automatic_patching_allowed(cr, uid)
+                            if not up_to_date[0] and not automatic_patching:
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
+                                if automatic_patching:
+                                    upgrade_module = self.pool.get('sync_client.upgrade')
+                                    upgrade_id = upgrade_module.create(cr, uid, {})
+                                    upgrade_module.do_upgrade(cr, uid,
+                                            [upgrade_id], sync_type=context.get('sync_type', 'manual'))
+                                    raise osv.except_osv(_('Sync aborted'),
+                                            _("Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."))
                     else:
                         context['offline_synchronization'] = True
 
@@ -844,12 +870,18 @@ class Entity(osv.osv):
         """
             SYNC process : usefull for scheduling
         """
+        if context is None:
+            context = {}
+        context['sync_type'] = 'automatic'
         BackgroundProcess(cr, uid,
             ('sync_recover_withbackup' if recover else 'sync_withbackup'),
             context).start()
         return True
 
     def sync_manual_threaded(self, cr, uid, recover=False, context=None):
+        if context is None:
+            context = {}
+        context['sync_type'] = 'manual'
         BackgroundProcess(cr, uid,
             ('sync_manual_recover_withbackup' if recover else 'sync_manual_withbackup'),
             context).start()
@@ -901,6 +933,11 @@ class Entity(osv.osv):
     def sync(self, cr, uid, context=None):
         if context is None:
             context = {}
+        # is sync modules installed ?
+        for sql_table, module in [('sync_client.version', 'update_client'),
+                       ('so.po.common', 'sync_so')]:
+            if not self.pool.get(sql_table):
+                raise osv.except_osv('Error', "%s module is not installed ! You need to install it to be able to sync." % module)
         # US_394: force synchronization lang to en_US
         context['lang'] = 'en_US'
         logger = context.get('logger')
@@ -1046,6 +1083,9 @@ class Connection(osv.osv):
         'timeout' : fields.float("Timeout"),
         'netrpc_retry' : fields.integer("NetRPC retry"),
         'xmlrpc_retry' : fields.integer("XmlRPC retry"),
+        'automatic_patching' : fields.boolean('Silent Upgrade', help="Enable this if you want to automatically install patch on synchronization during this hours."),
+        'automatic_patching_hour_from': fields.float('Upgrade from', size=8, help="Enable upgrade from this day time"),
+        'automatic_patching_hour_to': fields.float('Upgrade until', size=8, help="Enable upgrade unitl this day time"),
     }
 
     _defaults = {
@@ -1059,7 +1099,58 @@ class Connection(osv.osv):
         'timeout' : 600.0,
         'netrpc_retry' : 10,
         'xmlrpc_retry' : 10,
+        'automatic_patching': lambda *a: False,
     }
+
+    def on_change_upgrade_hour(self, cr, uid, ids, automatic_patching_hour_from, automatic_patching_hour_to):
+        """ Finds default stock location id for changed warehouse.
+        @param warehouse_id: Changed id of warehouse.
+        @return: Dictionary of values.
+        """
+        result = {'value': {}, 'warning': {}}
+        values_dict = {
+                'automatic_patching_hour_from':automatic_patching_hour_from,
+                'automatic_patching_hour_to':automatic_patching_hour_to
+        }
+        for name, value in values_dict.items():
+            if value < 0:
+                result.setdefault('value', {}).update({name: 0})
+            if value >= 24:
+                result.setdefault('value', {}).update({name: 23.98}) # 23.98 == 23h59
+        return result
+
+    def is_automatic_patching_allowed(self, cr, uid, context=None):
+        """
+        return True if the current time is in the range of hour_from, hour_to
+        False othewise
+        """
+        connection = self._get_connection_manager(cr, uid)
+        if not connection.automatic_patching:
+            return False
+
+        now = datetime.today()
+
+        hour_from = int(math.floor(abs(connection.automatic_patching_hour_from)))
+        min_from = int(round(abs(connection.automatic_patching_hour_from)%1+0.01,2) * 60)
+        hour_to = int(math.floor(abs(connection.automatic_patching_hour_to)))
+        min_to = int(round(abs(connection.automatic_patching_hour_to)%1+0.01,2) * 60)
+
+        from_date = datetime(now.year, now.month, now.day, hour_from, min_from)
+        to_date = datetime(now.year, now.month, now.day, hour_to, min_to)
+
+        # from_date and to_date are not the same day:
+        if from_date > to_date:
+            # case 1: the from date is in the past
+            # ex. it is 3h, from_date=19h, to_date=7h
+            if from_date > now:
+                from_date = datetime(now.year, now.month, now.day - 1, hour_from, min_from)
+
+            # case 2: the to_date is in the future
+            # ex. it is 20h, from_date=19h, to_date=7h
+            elif now > to_date:
+                to_date = datetime(now.year, now.month, now.day + 1, hour_to, min_to)
+
+        return now > from_date and now < to_date
 
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
@@ -1084,7 +1175,10 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
-    def connect(self, cr, uid, ids=None, context=None):
+    def connect(self, cr, uid, ids=None, password=None, context=None):
+        """
+        connect the instance to the SYNC_SERVER instance for synchronization
+        """
         if getattr(self, '_uid', False):
             return True
         try:
@@ -1096,8 +1190,13 @@ class Connection(osv.osv):
             self._logger.info('Client \'%(client_name)s\' attempts to connect to sync. server \'%(server_name)s\'' % sync_args)
             connector = self.connector_factory(con)
             if not getattr(self, '_password', False):
-                self._password = con.login
+                if password is not None:
+                    self._password = password
+                    con.password = password
+                else:
+                    self._password = con.login
             cnx = rpc.Connection(connector, con.database, con.login, self._password)
+            con._cache = {}
             if cnx.user_id:
                 self._uid = cnx.user_id
             else:
@@ -1144,8 +1243,27 @@ class Connection(osv.osv):
         return {}
 
     def write(self, *args, **kwargs):
-        # reset connection flag when data changed
-        self._uid = False
+        # reset connection flag when connection data changed
+        connection_property_list = [
+                'database',
+                'host',
+                'login',
+                'max_size',
+                'netrpc_retry',
+                'password',
+                'port',
+                'protocol',
+                'timeout',
+                'xmlrpc_retry'
+        ]
+
+        new_values = args[3]
+        current_values = self.read(*args)[0]
+        for key, value in new_values.items():
+            if current_values[key] != value and \
+                    key in connection_property_list:
+                self._uid = False
+                break
         return super(Connection, self).write(*args, **kwargs)
 
     def change_host(self, cr, uid, ids, host, proto, context=None):

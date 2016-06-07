@@ -77,6 +77,9 @@ class button_access_rule(osv.osv):
             new_name = self._update_name_for_action(cr, uid, vals['xmlname'])
             if new_name:
                 vals['name'] = new_name
+        elif not context.get('sync_update_execution') and vals.get('type') == 'action' and not vals.get('xmlname') and vals.get('name'):
+            vals['xmlname'] = self.pool.get('ir.ui.view')._get_xmlname(cr, uid, vals.get('type'), vals.get('name'))
+
         return super(button_access_rule, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):

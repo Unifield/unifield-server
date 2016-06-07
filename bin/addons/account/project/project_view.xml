@@ -194,6 +194,8 @@
                 </tree>
             </field>
         </record>
+
+        <!-- Account analytic line search view -->
         <record id="view_account_analytic_line_filter" model="ir.ui.view">
             <field name="name">account.analytic.line.select</field>
             <field name="model">account.analytic.line</field>
@@ -201,36 +203,65 @@
             <field name="arch" type="xml">
                 <search string="Search Analytic Lines">
                     <group col='6' colspan='4'>
-                        <filter name="sales" string="Sales" domain="[('journal_id.type','=','sale')]" icon="terp-camera_test" help="Analytic Journal Items related to a sale journal."/>
-                        <filter name="purchases" string="Purchases" domain="[('journal_id.type','=','purchase')]" icon="terp-purchase" help="Analytic Journal Items related to a purchase journal."/>
-                        <filter name="others" string="Others" domain="[('journal_id.type','in',('cash','general','situation'))]" icon="terp-folder-orange"/>
-                        <separator orientation="vertical"/>
-                        <field name="date"/>
-                        <field name="name"/>
-                        <field name="account_id"/>
-                        <field name="user_id">
-                            <filter string="My Entries" domain="[('user_id','=',uid)]" icon="terp-personal"/>
-                        </field>
-                    </group>
-					<newline/>
-                    <group expand="0" string="Extended Filters...">
-                        <field name="journal_id" widget="selection"/>
-                        <field name="product_id" widget="selection"/>
-                        <field name="amount" select="1"/>
+                        <group>
+                            <filter name="sales" string="Sales" domain="[('journal_id.type','=','sale')]" icon="terp-camera_test" help="Analytic Journal Items related to a sale journal."/>
+                            <filter name="purchases" string="Purchases" domain="[('journal_id.type','=','purchase')]" icon="terp-purchase" help="Analytic Journal Items related to a purchase journal."/>
+                            <!-- Add a filter to search engagement journal lines -->
+                            <filter name="engagements" string="Engagements" domain="[('journal_id.type','=','engagement')]" icon="terp-folder-violet"
+                                    help="Analytic Journal Items related to an engagement journal."/>
+                            <filter name="intl_engagements" string="ENGI"
+                                domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
+                                icon="terp-folder-violet"
+                                help="Analytic Journal Items related to an ENGI journal."
+                                />
+                            <filter name="others" string="Others" domain="[('journal_id.type','in',('cash','general','situation'))]" icon="terp-folder-orange"/>
+                            <separator orientation="vertical"/>
+                            <field name="document_date" select="1"/>
+                            <field name="date"/>
+                            <field name="period_id"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="entry_sequence" select="1"/>
+                            <field name="ref" string="Reference"/>
+                            <field name="general_account_id"/>
+                            <field name="name"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="destination_id" invisible="not context.get('display_fp', False)"/>
+                            <field name="cost_center_id" invisible="not context.get('display_fp', False)"/>
+                            <field name="account_id" domain="[('category', '=', context.get('categ', False) and context.get('categ') or 'FUNDING'), ('type', '!=', 'view')]"/>
+                            <field name="is_reallocated"/>
+                            <field name="partner_txt"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="instance_id" domain="[('instance_to_display_ids','=',True)]"
+                               on_change="onchange_filter_journal(instance_id, journal_id_fake)"/>
+                            <field name="journal_id_fake"/>
+                            <field name="journal_type"/>
+                        </group>
+                        <newline/>
+                        <group>
+                            <field name="amount" select="1"/>
+                            <field name="amount_currency"/>
+                        </group>
                     </group>
                     <newline/>
                     <group string="Group By..." expand="0">
-                        <filter string="Account" context="{'group_by':'account_id'}" groups="base.group_extended" icon="terp-folder-green"/>
+                        <filter string="CC" context="{'group_by':'cost_center_id'}" icon="terp-folder-green"/>
                         <filter string="Journal" context="{'group_by':'journal_id'}" icon="terp-folder-orange"/>
-                        <filter string="User" context="{'group_by':'user_id'}" icon="terp-personal"/>
                         <separator orientation="vertical"/>
-                        <filter string="Fin.Account" context="{'group_by':'general_account_id'}" icon="terp-folder-green"/>
+                        <filter string='G/L account' context="{'group_by':'general_account_id'}" icon="terp-folder-green"/>
                         <separator orientation="vertical"/>
-                        <filter string="Product" context="{'group_by':'product_id'}" icon="terp-accessories-archiver"/>
+                        <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
+                        <separator orientation="vertical"/>
                     </group>
                 </search>
             </field>
         </record>
+
         <record id="action_account_analytic_line_form" model="ir.actions.act_window">
             <field name="name">Analytic Entries</field>
             <field name="type">ir.actions.act_window</field>

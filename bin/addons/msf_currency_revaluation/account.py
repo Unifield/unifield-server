@@ -66,17 +66,22 @@ class account_account(osv.osv):
             'balance': "COALESCE(SUM(l.debit),0) - COALESCE(SUM(l.credit), 0) as balance",
             'debit': "COALESCE(SUM(l.debit), 0) as debit",
             'credit': "COALESCE(SUM(l.credit), 0) as credit",
-            'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"}
+            # US-1251: booking balance mapping: use directly booking balance vs JI amount_currency as we have discrepedencies
+            'foreign_balance': "COALESCE(SUM(l.debit_currency),0) - COALESCE(SUM(l.credit_currency), 0) as foreign_balance"
+            #'foreign_balance': "COALESCE(SUM(l.amount_currency), 0) as foreign_balance"
+    }
 
     def _revaluation_query(self, cr, uid, ids, revaluation_date, context=None):
         query = ("SELECT l.account_id as id, l.currency_id, " +
                    ', '.join(self._sql_mapping.values()) +
-                   " FROM account_move_line l "
-                   " WHERE l.account_id IN %(account_ids)s AND "
-                   " l.date <= %(revaluation_date)s AND "
-                   " l.currency_id IS NOT NULL AND "
-                   " l.reconcile_id IS NULL AND "
-                   " l.state <> 'draft' "
+                   " FROM account_move_line l"
+                   " inner join account_period p on p.id = l.period_id"
+                   " WHERE l.account_id IN %(account_ids)s AND"
+                   " l.date <= %(revaluation_date)s AND"
+                   " l.currency_id IS NOT NULL AND"
+                   " l.reconcile_id IS NULL AND"
+                   " l.state <> 'draft' AND"
+                   " p.number != 0"  # US-1251 exclude IB entries period 0 for monthly and yearly
                    " GROUP BY l.account_id, l.currency_id")
         params = {'revaluation_date': revaluation_date,
                   'account_ids': tuple(ids)}
