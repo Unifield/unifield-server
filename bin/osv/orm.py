@@ -1877,6 +1877,14 @@ class orm_template(object):
             return len(res)
         return res
 
+    def search_exist(self, cr, user, args, context=None):
+        """
+        return True if there is at least one element matching the criterions,
+        False otherwise.
+        """
+        return bool(self.search(cr, user, args, context=context,
+                limit=1, order='NO_ORDER'))
+
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
         Search for records based on a search domain.
