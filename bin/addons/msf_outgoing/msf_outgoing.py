@@ -2816,7 +2816,7 @@ class stock_picking(osv.osv):
                 if sale_id:
                     sale_id = sale_id[0]
                     # today
-                    rts = self.pool.get('sale.order').read(cr, uid, [sale_id], ['ready_to_ship_date'], context=context)[0]['ready_to_ship_date']
+                    rts = self.pool.get('sale.order').read(cr, uid, sale_id, ['ready_to_ship_date'], context=context)['ready_to_ship_date']
                 else:
                     rts = date.today().strftime(db_date_format)
                 # rts + shipment lt
@@ -3014,8 +3014,7 @@ class stock_picking(osv.osv):
                             move_obj.write(cr, uid, [move.backmove_id.id], {'state': 'done'}, context=context)
                             move_obj.update_linked_documents(cr, uid, move.backmove_id.id, move.id, context=context)
                     if move.product_qty == 0.00:
-                        move.write({'state': 'draft'})
-                        move.unlink()
+                        move.unlink(force=True)
 #                        move.action_done(context=context)
                 elif move.product_qty != 0.00:
                     vals.update({'picking_id': new_pick_id,

@@ -188,7 +188,7 @@ class stock_move(osv.osv):
                 defaults.update(location_dest_id=input_loc)
         return super(stock_move, self).copy_data(cr, uid, id, defaults, context=context)
 
-    def unlink(self, cr, uid, ids, context=None):
+    def unlink(self, cr, uid, ids, context=None, force=False):
         '''
         check the numbering on deletion
         '''
@@ -217,7 +217,8 @@ class stock_move(osv.osv):
                 context=context,
             )
 
-        return super(stock_move, self).unlink(cr, uid, ids, context=context)
+        return super(stock_move, self).unlink(cr, uid, ids, context=context,
+                force=force)
 
     def allow_resequencing(self, cr, uid, ids, context=None):
         '''
