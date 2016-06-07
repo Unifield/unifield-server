@@ -292,11 +292,6 @@
 	    		</td>
 	    	</tr>
         </blockTable>
-
-        <para style="LinesBlue">
-            <font color="white"> </font>
-        </para>
-
         <blockTable colWidths="772.0" style="Notes">
             [[ r.include_notes_ok or removeParentNode('blockTable') ]]
             <tr>
@@ -306,6 +301,10 @@
                 </td>
             </tr>
         </blockTable>
+
+        <para style="LinesBlue">
+            <font color="white"> </font>
+        </para>
 
     </section>
         
