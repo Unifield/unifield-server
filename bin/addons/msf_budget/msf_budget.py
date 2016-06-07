@@ -323,10 +323,13 @@ class msf_budget(osv.osv):
         cost_center_ids = [x.get('cost_center_id', False) and x.get('cost_center_id')[0] or 0 for x in budgets]
         cc_parent_ids = self.pool.get('account.analytic.account')._get_parent_of(cr, uid, cost_center_ids, context=context)
         parent_ids = [x for x in cc_parent_ids if x not in cost_center_ids]
-        fiscalyear_id = self.browse(cr, uid, ids, context)[0].fiscalyear_id
-        to_update = self.search(cr, uid, [('cost_center_id', 'in', parent_ids), ('fiscalyear_id', '=', fiscalyear_id.id)])
-        # Update budgets
-        self.update(cr, uid, to_update, context=context)
+        fiscal_years = {}
+        for budg in self.read(cr, uid, ids, ['fiscalyear_id'], context=context):
+            fiscal_years[budg.get('fiscalyear_id')[0]] = True
+        for fy in fiscal_years.keys():
+            to_update = self.search(cr, uid, [('cost_center_id', 'in', parent_ids), ('fiscalyear_id', '=', fy)])
+            # Update budgets
+            self.update(cr, uid, to_update, context=context)
         return True
 
     def button_display_type(self, cr, uid, ids, context=None, *args, **kwargs):
