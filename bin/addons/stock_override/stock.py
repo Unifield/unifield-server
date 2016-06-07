@@ -1312,7 +1312,7 @@ class stock_move(osv.osv):
             if partner_id != company_part_id:
                 wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
                 if wh_ids:
-                    return self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_output_id.id
+                    return self.pool.get('stock.warehouse').read(cr, uid, wh_ids[0], ['lot_output_id'])['lot_output_id']
 
         return False
 
@@ -1650,11 +1650,12 @@ class stock_move(osv.osv):
 
         if vals.get('location_dest_id', False):
             if not vals.get('reason_type_id', False):
-                loc_dest_id = location_obj.browse(cr, uid, vals['location_dest_id'], context=context)
-                if not loc_dest_id.virtual_location:
-                    if loc_dest_id.scrap_location:
+                loc_dest_id = location_obj.read(cr, uid, vals['location_dest_id'],
+                        ['virtual_location', 'scrap_location', 'usage'], context=context)
+                if not loc_dest_id['virtual_location']:
+                    if loc_dest_id['scrap_location']:
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_scrap')[1]
-                    elif loc_dest_id.usage == 'inventory':
+                    elif loc_dest_id['usage'] == 'inventory':
                         vals['reason_type_id'] = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
 
             # If the source location and teh destination location are the same, the state should be 'Closed'
@@ -1733,26 +1734,32 @@ class stock_move(osv.osv):
 
         pick_to_change_reason = set()
         if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
+            cond1_addr = None
+            cond2_addr = None
             for move in self.read(cr, uid, ids,
                     ['partner_id', 'address_id', 'state', 'picking_id'], context=context):
                 partner_id = move['partner_id'][0]
                 picking_id = move['picking_id'][0]
                 if cond1 and partner_id != partner:
-                    addr = partner_obj.address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
-                    vals['address_id'] = addr.get('delivery', False) or addr.get('default')
+                    if cond1_addr is None:
+                        cond1_addr = partner_obj.address_get(cr, uid,
+                                vals.get('partner_id2'), ['delivery', 'default'])
+                    vals['address_id'] = cond1.get('delivery', False) or cond1.get('default')
 
                 if cond2 and move['address_id'] != vals.get('address_id'):
-                    addr = addr_obj.read(cr, uid, vals.get('address_id'), ['partner_id'], context=context)
-                    vals['partner_id2'] = addr['partner_id'][0] or False
+                    if cond2_addr is None:
+                        cond2_addr = addr_obj.read(cr, uid,
+                                vals.get('address_id'), ['partner_id'], context=context)
+                    vals['partner_id2'] = cond2_addr['partner_id'][0] or False
 
                 if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
-                # Change the reason type of the picking if it is not the same
-                if 'reason_type_id' in vals and picking_id:
-                    pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context) 
-                    if pick['reason_type_id'][0] != vals['reason_type_id']:
-                        pick_to_change_reason.add(picking_id)
+            # Change the reason type of the picking if it is not the same
+            if 'reason_type_id' in vals and picking_id:
+                pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context) 
+                if pick['reason_type_id'][0] != vals['reason_type_id']:
+                    pick_to_change_reason.add(picking_id)
 
         if pick_to_change_reason:
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
