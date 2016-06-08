@@ -256,7 +256,9 @@
       <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
       <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
       <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
-      <Column ss:AutoFitWidth="0" ss:Width="70.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="82" ss:Span="1"/>
+      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
 
       <% period = getPeriod() %>
       <Row>
