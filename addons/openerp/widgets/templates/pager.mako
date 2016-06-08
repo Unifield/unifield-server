@@ -25,9 +25,13 @@
         % if next:
         </a>
         % endif
-        % if not approximation:
+        % if next and not approximation:
         <a href="#last" action="last" relation="${name}" onclick="validate_action(this, pager_action); return false;">
+        % endif
+        % if not approximation:
         <span class="last nav ${' ' if next else ' inactive'}">${_("Last >>")}</span>
+        % endif
+        % if next and not approximation:
         </a>
         % endif
     </p>
