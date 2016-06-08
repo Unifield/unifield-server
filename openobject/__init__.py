@@ -97,7 +97,6 @@ def configure(app_config):
     """
     _global = app_config.pop('global', {})
     _environ = _global.setdefault('server.environment', 'development')
-    _environ = 'production'
     _global['server.environment'] = _environ
     if _environ != 'development':
         _global['environment'] = _environ
