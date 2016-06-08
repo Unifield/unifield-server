@@ -1312,7 +1312,7 @@ class stock_move(osv.osv):
             if partner_id != company_part_id:
                 wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
                 if wh_ids:
-                    return self.pool.get('stock.warehouse').read(cr, uid, wh_ids[0], ['lot_output_id'])['lot_output_id']
+                    return self.pool.get('stock.warehouse').read(cr, uid, wh_ids[0], ['lot_output_id'])['lot_output_id'][0]
 
         return False
 
