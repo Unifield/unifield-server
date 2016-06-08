@@ -1733,6 +1733,7 @@ class stock_move(osv.osv):
         cond2 = not partner and addr
 
         pick_to_change_reason = set()
+        picking_reason_type_dict = {}
         if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
             cond1_addr = None
             cond2_addr = None
@@ -1757,11 +1758,13 @@ class stock_move(osv.osv):
                 if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
 
-            # Change the reason type of the picking if it is not the same
-            if 'reason_type_id' in vals and picking_id:
-                pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context) 
-                if pick['reason_type_id'][0] != vals['reason_type_id']:
-                    pick_to_change_reason.add(picking_id)
+                # Change the reason type of the picking if it is not the same
+                if 'reason_type_id' in vals and picking_id:
+                    if picking_id not in picking_reason_type_dict:
+                        pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context)
+                        picking_reason_type_dict[picking_id] = pick['reason_type_id'][0]
+                    if picking_reason_type_dict[picking_id] != vals['reason_type_id']:
+                        pick_to_change_reason.add(picking_id)
 
         if pick_to_change_reason:
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
