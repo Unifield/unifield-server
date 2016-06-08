@@ -1744,13 +1744,15 @@ class stock_move(osv.osv):
                     if cond1_addr is None:
                         cond1_addr = partner_obj.address_get(cr, uid,
                                 vals.get('partner_id2'), ['delivery', 'default'])
-                    vals['address_id'] = cond1.get('delivery', False) or cond1.get('default')
+                        cond1_addr = cond1_addr.get('delivery', False) or cond1_addr.get('default')
+                    vals['address_id'] = cond1_addr
 
                 if cond2 and move['address_id'] != vals.get('address_id'):
                     if cond2_addr is None:
                         cond2_addr = addr_obj.read(cr, uid,
                                 vals.get('address_id'), ['partner_id'], context=context)
-                    vals['partner_id2'] = cond2_addr['partner_id'][0] or False
+                        cond2_addr = cond2_addr['partner_id'] and cond2_addr['partner_id'][0] or False
+                    vals['partner_id2'] = cond2_addr
 
                 if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
                     vals['date'] = vals.get('date_expected')
