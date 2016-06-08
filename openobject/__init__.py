@@ -96,11 +96,13 @@ def configure(app_config):
     cherrypy globally and configure the OpenERP WSGI Application.
     """
     _global = app_config.pop('global', {})
-    cherrypy._cpconfig.environments['red'] = cherrypy._cpconfig.environments['production']
-    cherrypy._cpconfig.environments['green'] = cherrypy._cpconfig.environments['production']
     _environ = _global.setdefault('server.environment', 'development')
+    _environ = 'production'
+    _global['server.environment'] = _environ
     if _environ != 'development':
         _global['environment'] = _environ
+        if _environ != 'production':
+            cherrypy._cpconfig.environments[_environ] = cherrypy._cpconfig.environments['production']
     cherrypy.config.update(BASE_CONFIG)
     cherrypy.config.update(_global)
     application.merge(app_config)
