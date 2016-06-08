@@ -167,7 +167,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
         move_prefix = self.pool.get('res.users').browse(cr, uid, uid, context).company_id.instance_id.move_prefix
         entry_seq_data = {}
-        is_HQ_origin = False
 
         # US-676: check wizard lines total matches JI amount
         # the wizard already check distri is 100% allocated
@@ -194,6 +193,24 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Search old line and new lines
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
         wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
+
+        # US-1398: determine if AD chain is from an HQ entry
+        is_HQ_origin = False
+        for old_line_id in old_line_ids:
+            original_al_id = ana_obj.search(cr, uid, [
+                ('distrib_line_id', '=', 'funding.pool.distribution.line,%d' % (old_line_id, )),
+                ('is_reversal', '=', False),
+                ('is_reallocated', '=', False)
+            ])
+            if original_al_id and len(original_al_id) == 1:
+                original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
+                if original_al and original_al.move_id and \
+                    original_al.move_id.journal_id.type == 'hq':
+                        # US-1343/2: flag that the chain origin is an HQ
+                        # entry: in other terms OD AJI from a HQ JI
+                        is_HQ_origin = True
+                        break
+        
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
             if not wiz_line.distribution_line_id or wiz_line.distribution_line_id.id not in old_line_ids:
                 # new distribution line
@@ -212,11 +229,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                         original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
                         if original_al.journal_id.type == 'hq':
                             is_HQ_entries = True
-                        elif original_al.move_id and \
-                            original_al.move_id.journal_id.type == 'hq':
-                            # US-1343/2: flag that the chain origin is an HQ
-                            # entry: in other terms OD AJI from a HQ JI
-                            is_HQ_origin = True
 
                     # In case it's an HQ entries, just generate the REV and COR
                     if is_HQ_entries:
