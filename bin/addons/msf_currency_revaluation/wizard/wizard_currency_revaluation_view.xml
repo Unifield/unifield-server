@@ -39,6 +39,8 @@
                     <newline/>
                     <button special="cancel" string="Cancel" icon="gtk-cancel" />
                     <button name="revaluate_currency" string="Validate" type="object" icon="gtk-execute"/>
+                    <newline/>
+                    <field name="msg" nolabel="1" colspan="4" readonly="1" attrs="{'invisible': [('msg', '=', False)]}"/>
                 </form>
             </field>
         </record>

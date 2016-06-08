@@ -68,6 +68,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                  " You can use %(account)s, %(currency)s"
                  " and %(rate)s keywords.",
              required=True),
+        'msg': fields.text('Message'),
     }
 
     def _get_default_fiscalyear_id(self, cr, uid, context=None):
@@ -96,8 +97,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
     
     def _get_last_yearly_reval_period_id(self, cr, uid, fy_id, context=None):
         """
-        :return period
-        :rtype: account.period
+        for given fy has been any revaluation liquidity/BS processed ?
+        :return tuple period/False, is liquidity
+        :rtype: tuple (account.period/False, boolean)
         """
         res = False
         
@@ -281,6 +283,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             
         value = {
             'result_period_yearly_editable': True,
+            'msg': False,
         }
         warning = {}
         domain = {
@@ -337,6 +340,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     period_number = last_reval_period.number
                     value['result_period_id'] = last_reval_period.id
                     value['result_period_yearly_editable'] = False
+                    value['msg'] = _('One of yearly revaluation has been' \
+                        ' already processed. Other next will be processed on' \
+                        ' same period: %s.') % (last_reval_period.name, )
   
                 # check period opened
                 check_period_res = self._check_period_opened(cr, uid,
