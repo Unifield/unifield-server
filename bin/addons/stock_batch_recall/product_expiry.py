@@ -126,7 +126,7 @@ class stock_production_lot(osv.osv):
     }
     
     # UF-2148: Removed the name unique constraint in specific_rules and use only this constraint with 3 attrs: name, prod and instance 
-    _sql_constraints = [('batch_name_uniq', 'unique(name, product_id, partner_name)', 'Batch name must be unique per instance and product!'),]
+    _sql_constraints = [('batch_name_uniq', 'unique(name, product_id, life_date)', 'Batch name must be unique per product and expiry date!'),]
     
 stock_production_lot()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
