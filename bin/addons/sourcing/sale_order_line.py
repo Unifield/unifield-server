@@ -763,6 +763,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     'type': 'make_to_stock',
                     'po_cft': False,
                     'supplier': False,
+                    'related_sourcing_id': False,
                 })
 
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
@@ -812,6 +813,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
             stock_loc = data_obj.get_object_reference(cr, uid, 'stock', 'stock_location_stock')[1]
             vals['location_id'] = stock_loc
+
+        if 'supplier' in vals and not vals.get('supplier'):
+            vals['related_sourcing_id'] = False
 
         # Create the new sale order line
         res = super(sale_order_line, self).create(cr, uid, vals, context=context)
@@ -1088,6 +1092,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 vals.update({
                     'po_cft': False,
                     'supplier': False,
+                    'related_sourcing_id': False,
                 })
 
         # Search lines to modified with loan values
@@ -1116,6 +1121,9 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             related_sourcing_ok = self._check_related_sourcing_ok(cr, uid, vals.get('supplier'), vals.get('type'), context=context)
             if not related_sourcing_ok:
                 vals['related_sourcing_id'] = False
+
+        if 'supplier' in vals and not vals.get('supplier'):
+            vals['related_sourcing_id'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
         if ids and 'type' in vals and  vals.get('type', False) == 'make_to_stock' and not vals.get('location_id', False):
@@ -1607,7 +1615,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 value['po_cft'] = 'po'
             if po_cft == 'cft':
                 # Tender does not allow supplier selection
-                value['supplier'] = False
+                value.update({
+                    'supplier': False,
+                    'related_sourcing_id': False,
+                })
+            if po_cft == 'rfq':
+                value['related_sourcing_id'] = False
 
         if line_id and isinstance(line_id, list):
             line_id = line_id[0]
