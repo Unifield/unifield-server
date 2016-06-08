@@ -572,7 +572,7 @@
       <!-- GRAND TOTAL -->
       <Row></Row>
       <Row></Row>
-      % for cur in getCurrencyList():
+      % for cur in getGrandTotalRegCurrency():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>

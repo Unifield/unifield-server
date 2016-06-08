@@ -167,7 +167,7 @@
 
     <!-- GRAND TOTAL -->
     <section>
-      [[ repeatIn( getCurrencyList(), 'cur') ]]
+      [[ repeatIn( getGrandTotalRegCurrency(), 'cur') ]]
       <blockTable htmlSpans="1" style="table_header" colWidths="186mm,60mm,10mm">
         <tr>
           <td><para style="right"><b>Grand Total Register Currency</b></para></td>

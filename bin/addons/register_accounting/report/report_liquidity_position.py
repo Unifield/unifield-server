@@ -37,7 +37,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.total_func_calculated_balance = 0
         self.total_func_register_balance = 0
         self.grand_total_reg_currency = {}
-        self.currency_list = []
 
         self.localcontext.update({
             'getRegistersByType': self.getRegistersByType,
@@ -49,7 +48,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
             'getPendingCheques': self.getPendingCheques,
-            'getCurrencyList': self.getCurrencyList,
             'getGrandTotalRegCurrency': self.getGrandTotalRegCurrency,
         })
         return
@@ -68,9 +66,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
 
     def getPeriod(self):
         return self.pool.get('account.period').browse(self.cr, self.uid, self.period_id, context={'lang': self.localcontext.get('lang')})
-
-    def getCurrencyList(self):
-        return self.currency_list
 
     def getConvert(self, cur_id, amount):
         '''
@@ -130,9 +125,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
                     'amount_balanced': 0,
                     'id': currency.id
                 }
-                # store the different currencies (whatever the register type is)
-                if currency.name not in self.currency_list:
-                    self.currency_list.append(currency.name)
 
             # ###########
             # Calculation
@@ -172,6 +164,11 @@ class report_liquidity_position3(report_sxw.rml_parse):
             # Add currency amounts
             reg_types[reg.journal_id.type]['currency_amounts'][currency.name]['amount_calculated'] += calc_bal
             reg_types[reg.journal_id.type]['currency_amounts'][currency.name]['amount_balanced'] += reg_bal
+
+            # Add the amount in register currency to the Grand Total for all register types
+            if currency.name not in self.grand_total_reg_currency:
+                self.grand_total_reg_currency[currency.name] = 0
+            self.grand_total_reg_currency[currency.name] += calc_bal
 
             # Add totals functionnal amounts
             total_func_calculated_balance += func_calc_bal
@@ -273,13 +270,15 @@ class report_liquidity_position3(report_sxw.rml_parse):
                     'total_amount_reg_currency': 0,
                     'total_amount_func_currency': 0
                 }
-                # store the different currencies
-                # (note that it is technically possible to have pending cheques in a currency for which
-                # no bank register is open yet for the period)
-                if journal.currency.name not in self.currency_list:
-                    self.currency_list.append(journal.currency.name)
             pending_cheques['currency_amounts'][journal.currency.name]['total_amount_reg_currency'] += amount_reg_currency
             pending_cheques['currency_amounts'][journal.currency.name]['total_amount_func_currency'] += amount_func_currency
+
+            # Add the amount in register currency to the Grand Total for all register types
+            # (note that it is technically possible to have pending cheques in a currency for which
+            # no bank register is open yet for the period)
+            if journal.currency.name not in self.grand_total_reg_currency:
+                self.grand_total_reg_currency[journal.currency.name] = 0
+            self.grand_total_reg_currency[journal.currency.name] += amount_reg_currency
 
             # Add amount to get the "global" Total for all currencies (in functional currency)
             pending_cheques['total_cheque'] += amount_func_currency
@@ -287,17 +286,6 @@ class report_liquidity_position3(report_sxw.rml_parse):
         return pending_cheques
 
     def getGrandTotalRegCurrency(self):
-        '''
-        Returns the Grand Total in register currency, per currency
-        '''
-        if not self.grand_total_reg_currency:
-            cash = 'cash' in self.getRegisters() and self.getRegisters()['cash']['currency_amounts']
-            bank = 'bank' in self.getRegisters() and self.getRegisters()['bank']['currency_amounts']
-            cheque = self.getPendingCheques()
-            for cur in self.getCurrencyList():
-                self.grand_total_reg_currency[cur] = (cash and cur in cash and cash[cur]['amount_calculated'] or 0.0) \
-                                                     + (bank and cur in bank and bank[cur]['amount_calculated'] or 0.0) \
-                                                     + (cheque and cur in cheque['currency_amounts'] and cheque['currency_amounts'][cur]['total_amount_reg_currency'] or 0.0)
         return self.grand_total_reg_currency
 
 
