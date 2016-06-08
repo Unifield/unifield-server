@@ -20,14 +20,25 @@ if rpc.session.is_logged():
 else:
     logged = False
 
+css_style_dict = {
+    'blue': "background: rgb(0, 0, 255); background: rgba(0, 0, 155, .8);",
+    'red': "background: rgb(255, 0, 0); background: rgba(155, 0, 0, .8);",
+    'green': "background: rgb(0, 255, 0); background: rgba(0, 100, 0, .8);",
+}
+
+css_style = ""
+add_style = cp.config('server.environment') in css_style_dict.keys()
+if add_style:
+    css_style = css_style_dict.get(cp.config('server.environment'), "")
+
 from openobject import release
 version = release.version
 %>
-% if cp.config('server.environment') == 'production':
-<td id="top_production" colspan="3">
-% else:
-<td id="top" colspan="3">
-% endif
+<td id="top"
+    % if add_style:
+        style="${css_style}"
+    % endif
+    colspan="3">
     <p id="cmp_logo">
         <a href="/" target="_top">
             <img alt="UniField" id="company_logo" src="/openerp/static/images/unifield.png" height="60"/>
@@ -45,9 +56,28 @@ version = release.version
         <li><a href="#footer" accesskey="f">Skip to footer [f]</a></li>
     </ul>
     % if logged:
+        % if add_style:
+        <div id="corner"
+            % if add_style:
+                style="${css_style}"
+            % endif
+        >
+            <ul class="tools"
+                % if add_style:
+                    style="${css_style}"
+                % endif
+            >
+        % else:
         <div id="corner">
             <ul class="tools">
-                <li><a href="${py.url('/openerp')}" target="_top" class="home">${_("Home")}</a>
+        % endif
+                <li><a href="${py.url('/openerp')}" target="_top" class="home"
+                       % if add_style:
+                           style="background-position: -22px 0px;"
+                           onMouseOver="this.style.opacity=0.6"
+                           onMouseOut="this.style.opacity=1.0"
+                       % endif
+                >${_("Home")}</a>
                     <ul>
                         <li class="first last"><a href="${py.url('/openerp')}" target="_top">${_("Home")}</a></li>
                     </ul>
@@ -55,6 +85,11 @@ version = release.version
 
                 <li class="preferences">
                     <a href="${py.url('/openerp/pref/create')}"
+                       % if add_style:
+                           style="background-position: -70px 0px;"
+                           onMouseOver="this.style.opacity=0.6"
+                           onMouseOut="this.style.opacity=1.0"
+                       % endif
                        class="preferences" target="_blank">${_("Preferences")}</a>
                     <ul>
                         <li class="first last"><a href="${py.url('/openerp/pref/create')}"
@@ -63,13 +98,32 @@ version = release.version
                 </li>
 
                 <li>
-                    <a href="${py.url('/openerp/unifield_version')}" class="info"></a>
+                    <a href="${py.url('/openerp/unifield_version')}" class="info"
+                       % if add_style:
+                           style="background-position: -118px 0px;"
+                           onMouseOver="this.style.opacity=0.6"
+                           onMouseOut="this.style.opacity=1.0"
+                       % endif
+                    ></a>
                     <ul>
                         <li class="first last"><a href="${py.url('/openerp/unifield_version')}">${_("Version")}</a></li>
                     </ul>
                 </li>
             </ul>
-            <p class="logout"><a href="${py.url('/openerp/logout')}" target="_top">${_("Logout")}</a></p>
+            <p class="logout" 
+                % if add_style:
+                    style="${css_style}"
+                % endif
+            >
+                <a href="${py.url('/openerp/logout')}"
+                   target="_top"
+                   % if add_style:
+                        style="${css_style}"
+                       onMouseOver="this.style.opacity=0.6"
+                       onMouseOut="this.style.opacity=1.0"
+                   % endif
+               >${_("Logout")}</a>
+            </p>
         </div>
     % endif
     

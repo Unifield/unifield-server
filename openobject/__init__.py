@@ -97,8 +97,11 @@ def configure(app_config):
     """
     _global = app_config.pop('global', {})
     _environ = _global.setdefault('server.environment', 'development')
+    _global['server.environment'] = _environ
     if _environ != 'development':
         _global['environment'] = _environ
+        if _environ != 'production':
+            cherrypy._cpconfig.environments[_environ] = cherrypy._cpconfig.environments['production']
     cherrypy.config.update(BASE_CONFIG)
     cherrypy.config.update(_global)
     application.merge(app_config)
