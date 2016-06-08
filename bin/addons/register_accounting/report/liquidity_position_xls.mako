@@ -325,7 +325,11 @@
           <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Balance in register currency')}</Data>
+          % if reg_type == 'cash':
+            <Data ss:Type="String">${_('Cash Box Balance in register currency')}</Data>
+          % else:
+            <Data ss:Type="String">${_('Bank Statement Balance in register currency')}</Data>
+          % endif
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Register Currency')}</Data>
@@ -334,7 +338,11 @@
           <Data ss:Type="String">${_('Calculated Balance in functional currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Balance in functional currency')}</Data>
+          % if reg_type == 'cash':
+            <Data ss:Type="String">${_('Cash Box Balance in functional currency')}</Data>
+          % else:
+            <Data ss:Type="String">${_('Bank Statement Balance in functional currency')}</Data>
+          % endif
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Functional Currency')}</Data>
