@@ -747,9 +747,8 @@ class stock_picking(osv.osv):
         for pick in self.read(cr, uid, ids, ['move_lines'], context=context):
             move_ids = move_obj.search(cr, uid,
                         [('id', 'in', pick['move_lines']),
-                         ('state', '=', 'draft')],
-                        order='NO_ORDER')
-            todo_set = todo_set.union(move_ids)
+                         ('state', '=', 'draft')])
+            todo_set.update(move_ids)
 
         self.log_picking(cr, uid, ids, context=context)
 
@@ -810,8 +809,7 @@ class stock_picking(osv.osv):
         for pick in self.read(cr, uid, ids, ['move_lines']):
             move_ids = move_obj.search(cr, uid,
                         [('id', 'in', pick['move_lines']),
-                         ('state', 'in', ('confirmed','waiting'))],
-                        order='NO_ORDER')
+                         ('state', 'in', ('confirmed','waiting'))])
             if move_ids:
                 move_obj.force_assign(cr, uid, move_ids)
             wf_service.trg_write(uid, 'stock.picking', pick['id'], cr)
@@ -2100,9 +2098,10 @@ class stock_move(osv.osv):
             vals = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         vals.update({'state': 'confirmed'})
-        self.prepare_action_confirm(cr, uid, ids, context=context)
         self.write(cr, uid, ids, vals)
+        self.prepare_action_confirm(cr, uid, ids, context=context)
         return []
 
     def _hook_confirmed_move(self, cr, uid, *args, **kwargs):
@@ -2117,7 +2116,7 @@ class stock_move(osv.osv):
         """
         todo = []
         for move in self.read(cr, uid, ids, ['state', 'already_confirmed']):
-            self._hook_confirmed_move(cr, uid, already_confirmed=['already_confirmed'], move_id=move['id'])
+            self._hook_confirmed_move(cr, uid, already_confirmed=move['already_confirmed'], move_id=move['id'])
             if move['state'] in ('confirmed', 'waiting'):
                 todo.append(move['id'])
         res = self.check_assign(cr, uid, todo)

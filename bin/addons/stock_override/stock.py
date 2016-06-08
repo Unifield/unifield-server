@@ -1192,7 +1192,7 @@ You cannot choose this supplier because some destination locations are not avail
             if pick['move_lines'] and pick['type'] == 'in':
                 not_assigned_move = move_obj.search(cr, uid,
                         [('id', 'in', pick['move_lines']),
-                         ('state', '=', 'confirmed')], order='NO_ORDER')
+                         ('state', '=', 'confirmed')])
                 if not_assigned_move:
                     move_obj.action_assign(cr, uid, not_assigned_move)
         return True
@@ -1897,7 +1897,6 @@ class stock_move(osv.osv):
                                                  ('location_id', '=', loc['location_id']),
                                                  ('location_dest_id', '=', move['location_dest_id'][0]),
                                                  ('prodlot_id', '=', loc['prodlot_id'])],
-                                                limit=1, order='NO_ORDER',
                                                 context=context)
                                     # if the batch already exists and qty is enough, it is available (assigned)
                                     if needed_qty <= loc['qty']:
@@ -2083,7 +2082,7 @@ class stock_move(osv.osv):
                     d = move_data[f][0]
                 search_domain.append((f, '=', d))
 
-            move_ids = self.search(cr, uid, search_domain, limit=1, order='NO_ORDER', context=context)
+            move_ids = self.search(cr, uid, search_domain, context=context)
             if move_ids:
                 move = self.read(cr, uid, move_ids[0], ['product_qty', 'product_uos_qty'], context=context)
                 res.append(move['id'])
@@ -2680,7 +2679,7 @@ class stock_move_cancel_wizard(osv.osv_memory):
         # Objects
         move_obj = self.pool.get('stock.move')
 
-        move_ids = [x['move_id'][0] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
+        move_ids = [x['move_id'] for x in self.read(cr, uid, ids, ['move_id'], context=context)]
         move_obj.write(cr, uid, move_ids, {'has_to_be_resourced': True}, context=context)
 
         return self.just_cancel(cr, uid, ids, context=context)
