@@ -358,7 +358,7 @@ class db(netsvc.ExportService):
         host, database = cr.fetchone()
         cr.close()
         if host and database == 'SYNC_SERVER' and \
-            ('sync.unifield.net' in host or '212.95.73.129' in host):
+            ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
             return True
         return False
 
@@ -452,7 +452,8 @@ class common(_ObjectService):
             res = security.login(params[0], params[1], params[2])
             msg = res and 'successful login' or 'bad login or password'
             # TODO log the client ip address..
-            logger.notifyChannel("web-service", netsvc.LOG_INFO, "%s from '%s' using database '%s'" % (msg, params[1], params[0].lower()))
+            if params[1].lower() != 'unidata':
+                logger.notifyChannel("web-service", netsvc.LOG_INFO, "%s from '%s' using database '%s'" % (msg, params[1], params[0].lower()))
             return res or False
         elif method == 'number_update_modules':
             return security.number_update_modules(params[0])
