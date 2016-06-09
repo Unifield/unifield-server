@@ -1122,7 +1122,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if not related_sourcing_ok:
                 vals['related_sourcing_id'] = False
 
-        if 'supplier' in vals and not vals.get('supplier'):
+        if ('supplier' in vals and not vals.get('supplier')) or ('po_cft' in vals and vals.get('po_cft') in ('cft', 'rfq')):
             vals['related_sourcing_id'] = False
 
         # UFTP-139: if make_to_stock and no location, put Stock as location
