@@ -1952,7 +1952,8 @@ class stock_move(osv.osv):
             elif move['state'] == 'confirmed':
                 # we remove the prodlot_id in case that the move is not available
                 vals.update({'prodlot_id': False})
-            self.write(cr, uid, move['id'], vals, context)
+            if vals:
+                self.write(cr, uid, move['id'], vals, context)
         return True
 
     def check_product_quantity(self, cr, uid, ids, context=None):
