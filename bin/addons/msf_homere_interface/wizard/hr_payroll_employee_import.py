@@ -191,7 +191,9 @@ class hr_payroll_employee_import(osv.osv_memory):
         'filename': fields.char(string="Imported filename", size=256),
     }
 
-    def update_employee_check(self, cr, uid, staffcode=False, missioncode=False, staff_id=False, uniq_id=False, wizard_id=None, employee_name=False):
+    def update_employee_check(self, cr, uid,
+        staffcode=False, missioncode=False, staff_id=False, uniq_id=False,
+        wizard_id=None, employee_name=False, registered_keys=None):
         """
         Check that:
         - no more than 1 employee exist for "missioncode + staff_id + uniq_id"
@@ -228,9 +230,24 @@ class hr_payroll_employee_import(osv.osv_memory):
             return (res, what_changed)
 
         # Check employees
+        
+        # US-1404: check duplicates on the import files itself
+        # => as not already in db
+        check_key = missioncode + staff_id + uniq_id
+        if check_key in registered_keys:
+            self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
+                'wizard_id': wizard_id,
+                'msg': _("Import file have more than one employee with the combinaison key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
+                })
+            return (res, what_changed)
+        
+        # check duplicates already in db
         search_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', missioncode), ('homere_id_staff', '=', staff_id), ('homere_id_unique', '=', uniq_id)])
         if search_ids and len(search_ids) > 1:
-            self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': _("Database have more than one employee with the unique code of this employee: %s") % (employee_name,)})
+            self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
+                'wizard_id': wizard_id,
+                'msg': _("Database have more than one employee with the combinaison key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
+                })
             return (res, what_changed)
 
         # Check staffcode
@@ -265,7 +282,8 @@ class hr_payroll_employee_import(osv.osv_memory):
             res = (code_staff, nom, prenom)
         return res
 
-    def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None, line_number=None):
+    def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None,
+        line_number=None, registered_keys=None):
         """
         Get employee infos and set them to DB.
         """
@@ -308,10 +326,16 @@ class hr_payroll_employee_import(osv.osv_memory):
         if codeterrain and id_staff and code_staff:
             # Employee name
             employee_name = (nom and prenom and ustr(nom) + ', ' + ustr(prenom)) or (nom and ustr(nom)) or (prenom and ustr(prenom)) or False
+            
             # Do some check
-            employee_check, what_changed = self.update_employee_check(cr, uid, ustr(code_staff), ustr(codeterrain), id_staff, ustr(uniq_id), wizard_id, employee_name)
+            employee_check, what_changed = self.update_employee_check(cr, uid,
+                staffcode=ustr(code_staff), missioncode=ustr(codeterrain),
+                staff_id=id_staff, uniq_id=ustr(uniq_id),
+                wizard_id=wizard_id, employee_name=employee_name,
+                registered_keys=registered_keys)
             if not employee_check and not what_changed:
                 return False, created, updated
+                
             # Search employee regarding a unique trio: codeterrain, id_staff, id_unique
             e_ids = self.pool.get('hr.employee').search(cr, uid, [('homere_codeterrain', '=', codeterrain), ('homere_id_staff', '=', id_staff), ('homere_id_unique', '=', uniq_id)])
             # UTP-1098: If what_changed is not None, we should search the employee only on code_staff
@@ -405,10 +429,12 @@ class hr_payroll_employee_import(osv.osv_memory):
                 res = self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
                 if res:
                     updated += 1
+            registered_keys[codeterrain + id_staff + uniq_id] = True
         else:
             message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often happens when the line is empty.') % (line_number)
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
             return False, created, updated
+            
         return True, created, updated
 
     def update_contract(self, cr, uid, ids, reader, context=None):
@@ -548,6 +574,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         updated = 0
         processed = 0
         filename = ""
+        registered_keys = {}
         # Delete old errors
         error_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [])
         if error_ids:
@@ -601,7 +628,9 @@ class hr_payroll_employee_import(osv.osv_memory):
                 # UF-2504 read staff file again for next enumeration
                 # (because already read/looped above for staff codes)
                 for i, employee_data in enumerate(staff_seen):
-                    update, nb_created, nb_updated = self.update_employee_infos(cr, uid, employee_data, wiz.id, i)
+                    update, nb_created, nb_updated = self.update_employee_infos(
+                        cr, uid, employee_data, wiz.id, i,
+                        registered_keys=registered_keys)
                     if not update:
                         res = False
                     created += nb_created
@@ -619,6 +648,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                 to_close.close()
             if tmpdir:
                 shutil.rmtree(tmpdir)
+        del registered_keys
         if res:
             message = _("Employee import successful.")
         else:
