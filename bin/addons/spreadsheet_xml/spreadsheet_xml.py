@@ -134,6 +134,11 @@ class SpreadsheetXML(SpreadsheetTools):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
         return SpreadsheetRow(table[0].getiterator(etree.QName(self.defaultns, 'Row')))
 
+    def countRows(self,worksheet=1):
+        table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
+        ns = {'schema': self.defaultns}
+        return len(table[0].xpath('//schema:Row', namespaces=ns))
+
     def enc(self, s):
         if isinstance(s, unicode):
             return s.encode('utf8')

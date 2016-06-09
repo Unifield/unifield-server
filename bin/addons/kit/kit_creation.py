@@ -1430,7 +1430,7 @@ class stock_move(osv.osv):
                 wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
         return count
     
-    def unlink(self, cr, uid, ids, context=None):
+    def unlink(self, cr, uid, ids, context=None, force=False):
         '''
         override the function so we prevent deletion of original_from_process_stock_move stock.moves
         '''
@@ -1444,7 +1444,8 @@ class stock_move(osv.osv):
             if move.original_from_process_stock_move and not context.get('call_unlink', False):
                 raise osv.except_osv(_('Warning !'), _('Original Stock Move cannot be deleted.'))
         
-        return super(stock_move, self).unlink(cr, uid, ids, context=context)
+        return super(stock_move, self).unlink(cr, uid, ids, context=context,
+                force=force)
     
     def copy_data(self, cr, uid, id, default=None, context=None):
         '''

@@ -96,9 +96,7 @@ class stock_picking(osv.osv):
             return message 
         
         # UF-2422: Remove all current IN lines, then recreate new lines
-        for move in existing_pick.move_lines:
-            move_obj.write(cr, uid, move.id, {'state': 'draft'}, context=context)
-            move_obj.unlink(cr, uid, move.id)
+        move_obj.unlink(cr, uid, existing_pick.move_lines, force=True)
             
         picking_lines = self.get_picking_lines(cr, uid, source, pick_dict, context)
         for line in picking_lines:

@@ -735,7 +735,7 @@ class uom_tools(osv.osv_memory):
                 uom_id = [uom_id]
             cr.execute(
                 """
-                SELECT COUNT(*)
+                SELECT uom.id
                 FROM product_uom AS uom,
                     product_template AS pt,
                     product_product AS pp,
@@ -744,9 +744,9 @@ class uom_tools(osv.osv_memory):
                 AND pt.id = pp.product_tmpl_id
                 AND pp.id = %s
                 AND uom2.category_id = uom.category_id
-                AND uom2.id = %s""",
+                AND uom2.id = %s LIMIT 1""",
                 (product_id[0], uom_id[0]))
-            count = cr.fetchall()[0][0]
+            count = len(cr.fetchall())
             return count > 0
         return True
 
