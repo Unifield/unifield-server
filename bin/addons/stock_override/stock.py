@@ -1834,6 +1834,13 @@ class stock_move(osv.osv):
 
         loc_obj = self.pool.get('stock.location')
         prodlot_obj = self.pool.get('stock.production.lot')
+        compare_date = context.get('rw_date', False)
+        if compare_date:
+            compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
+        else:
+            today = datetime.today()
+            compare_date = datetime(today.year, today.month, today.day)
+
         for move in self.read(cr, uid, ids,
                 ['state',
                  'prodlot_id',
@@ -1851,13 +1858,7 @@ class stock_move(osv.osv):
                  'line_number',
                  'move_cross_docking_ok',], context):
             vals = {}
-            compare_date = context.get('rw_date', False)
             move_unlinked = False
-            if compare_date:
-                compare_date = datetime.strptime(compare_date[0:10], '%Y-%m-%d')
-            else:
-                today = datetime.today()
-                compare_date = datetime(today.year, today.month, today.day)
             # FEFO logic
             if move['state'] == 'assigned' and not move['prodlot_id']:  # a check_availability has already been done in action_assign, so we take only the 'assigned' lines
                 needed_qty = move['product_qty']
