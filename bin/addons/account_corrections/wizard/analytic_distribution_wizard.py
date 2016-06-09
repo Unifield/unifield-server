@@ -120,8 +120,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # behaviour
                 if (ana.period_id
                     and ana.period_id.state in ('done', 'mission-closed', )) \
-                    or (is_HQ_origin is not None
-                        and not is_HQ_origin.get('from_od', False)):
+                    or (is_HQ_origin and not is_HQ_origin.get('from_od', False)):
                     closed.append(ana.id)
         return closed
 
