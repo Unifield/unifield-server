@@ -23,6 +23,62 @@ from osv import fields, osv
 from tools.translate import _
 import decimal_precision as dp
 
+
+class product_stock_availability(osv.osv):
+    _name = 'product.stock.availability'
+
+    def update_uom_qantity(self, cr, uid, ids, new_uom, context=None):
+        """
+        Compute the quantity of the product.stock.availability in the UoM of associated product
+        :param cr: Cursor to the database
+        :param uid: ID of user that calls the method
+        :param ids: ID of product.stock.availability to update
+        :param new_uom: ID of the new Unit of Measure of the product
+        :param context: Context of the call
+        :return: True
+        """
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        for pas in self.browse(cr, uid, ids, context=context):
+            self.write(cr, uid, [pas.id], {
+                'quantity': uom_obj._compute_qty(cr, uid, pas.product_id.uom_id.id, pas.quantity, new_uom)
+            }, context=context)
+
+        return True
+
+    _columns = {
+        'product_id': fields.many2one(
+            'product.product',
+            string='Product',
+            ondelete='cascade',
+            select=1,
+        ),
+        'location_id': fields.many2one(
+            'stock.location',
+            string='Location',
+            ondelete='cascade',
+            select=1,
+        ),
+        'prodlot_id': fields.many2one(
+            'stock.production.lot',
+            string='Prodlot',
+            ondelete='cascade',
+        ),
+        'quantity': fields.float(
+            digits=(16,2),
+            string='Quantity',
+        ),
+    }
+
+product_stock_availability()
+
+
 class product_product(osv.osv):
     _inherit = "product.product"
 
@@ -176,6 +232,52 @@ class product_product(osv.osv):
             return _('Products: ')+self.pool.get('stock.location').browse(cr, user, context['active_id'], context).name
         return res
 
+    def get_product_pas(self, cr, uid, ids, location_ids, prodlot_id, context=None):
+        """
+        Compute the available quantities for products by using the intermediate table product_stock_availability
+        @param cr: Cursor to the database
+        @param uid: ID of the user that calls the method
+        @param ids: List of ID of product.product
+        @param location_ids: List of ID of stock.location where the quantities must be computed
+        @param prodlot_id: ID of the stock.production.lot on which the quantities must be computed
+        @param context: Context of the call
+        @return: A dictionary with the ID of products as keys and the computed quantities as values.
+        """
+        uom_obj = self.pool.get('product.uom')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if isinstance(location_ids, (int, long)):
+            location_ids = [location_ids]
+
+        sql_req = '''
+            SELECT product_id, sum(quantity)
+            FROM product_stock_availability
+            WHERE location_id IN %%s
+              AND product_id IN %%s
+              %s
+            GROUP BY product_id''' % (prodlot_id and 'AND prodlot_id = %%s' or '')
+        where = [tuple(location_ids), tuple(ids)]
+        if prodlot_id:
+            where.append(prodlot_id)
+        cr.execute(sql_req, tuple(where))
+        results = cr.dictfetchall()
+        res = {}
+        for r in results:
+            if context.get('uom', False):
+                prd_brw = prd_obj.browse(cr, uid, r['product_id'], context=context)
+                uom_brw = uom_obj.browse(cr, uid, context.get('uom'), context=context)
+                res[r['product_id']] = uom_obj.\
+                    _compute_qty_obj(cr, uid, prd_brw.uom_id, r['sum'], uom_brw, context=context)
+            res[r['product_id']] = r['sum']
+
+        if not res:
+            for prd_id in ids:
+                res[prd_id] = 0.00
+
+        return res
+
     def get_product_available(self, cr, uid, ids, context=None):
         """ Finds whether product is available or not in particular warehouse.
         @return: Dictionary of values
@@ -250,6 +352,9 @@ class product_product(osv.osv):
 
         prodlot_id = context.get('prodlot_id', False)
 
+        if context.get('get_pas', False):
+            return self.get_product_pas(cr, uid, ids, location_ids, prodlot_id, context=context)
+
     # TODO: perhaps merge in one query.
         if date_values:
             where.append(tuple(date_values))
@@ -290,12 +395,14 @@ class product_product(osv.osv):
         #TOCHECK: before change uom of product, stock move line are in old uom.
         context.update({'raise-exception': False})
         for amount, prod_id, prod_uom in results:
-            amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                     uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+            if prod_uom != context.get('uom', product2uom[prod_id]):
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
             res[prod_id] += amount
         for amount, prod_id, prod_uom in results2:
-            amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                    uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+            if prod_uom != context.get('uom', product2uom[prod_id]):
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                        uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
             res[prod_id] -= amount
         return res
 
@@ -313,7 +420,7 @@ class product_product(osv.osv):
         for f in field_names:
             c = context.copy()
             if f == 'qty_available':
-                c.update({ 'states': ('done',), 'what': ('in', 'out') })
+                c.update({ 'states': ('done',), 'what': ('in', 'out'), 'get_pas': True })
             if f == 'virtual_available':
                 c.update({ 'states': ('confirmed','waiting','assigned','done'), 'what': ('in', 'out') })
             if f == 'incoming_qty':
@@ -387,6 +494,25 @@ class product_product(osv.osv):
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Produced Qty')
         return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Check if we need to update the quantities in the product.stock.availability
+        :param cr: Cursor to the database
+        :param uid: ID of the user that calls the write
+        :param ids: List of ID of product.product updated
+        :param vals: Values to update in product.product
+        :param context: Context of the call
+        :return: True
+        """
+        psa_obj = self.pool.get('product.stock.availability')
+
+        if vals.get('uom_id', False):
+            prd_ids = [x['id'] for x in self.read(cr, uid, ids, ['uom_id'], context=context) if x['uom_id'] != vals['uom_id']]
+            psa_ids = psa_obj.search(cr, uid, [('product_id', 'in', prd_ids)], context=context)
+            psa_obj.update_uom_qantity(cr, uid, psa_ids, vals['uom_id'], context=context)
+
+        return super(product_product, self).write(cr, uid, ids, vals, context=context)
 
 product_product()
 
