@@ -1139,16 +1139,16 @@ stock moves which are already processed : '''
 
         # Check analytic distribution
         self.check_analytic_distribution(cr, uid, ids, context=context)
-        for po in self.browse(cr, uid, ids, context=context):
+        for po in self.read(cr, uid, ids, ['order_type', 'state', 'delivery_confirmed_date'], context=context):
             # prepare some values
-            is_regular = po.order_type == 'regular' # True if order_type is regular, else False
+            is_regular = po['order_type'] == 'regular' # True if order_type is regular, else False
             line_error = []
             # msf_order_date checks
-            if po.state == 'approved' and not po.delivery_confirmed_date:
+            if po['state'] == 'approved' and not po['delivery_confirmed_date']:
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             if is_regular:
-                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (po.id,))
+                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (po['id'],))
                 line_errors = cr.dictfetchall()
                 for l_id in line_errors:
                     if l_id not in line_error:
@@ -1160,10 +1160,11 @@ stock moves which are already processed : '''
 
             lines_to_update = po_line_obj.search(
                 cr, uid,
-                [('order_id', '=', po.id), ('confirmed_delivery_date', '=', False)],
+                [('order_id', '=', po['id']), ('confirmed_delivery_date', '=', False)],
+                order='NO_ORDER',
                 context=context)
 
-            po_line_obj.write(cr, uid, lines_to_update, {'confirmed_delivery_date': po.delivery_confirmed_date}, context=context)
+            po_line_obj.write(cr, uid, lines_to_update, {'confirmed_delivery_date': po['delivery_confirmed_date']}, context=context)
         # MOVE code for COMMITMENT into wkf_approve_order
         return True
 
@@ -1865,7 +1866,7 @@ stock moves which are already processed : '''
                         todo4.update({line.procurement_id.id: line.id})
 
             if todo:
-                todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], context=context)
+                todo2 = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', 'in', todo)], order='NO_ORDER', context=context)
 
             if todo2:
                 sm_ids = move_obj.search(cr, uid, [('sale_line_id', 'in', todo2)], context=context)
@@ -2007,10 +2008,10 @@ stock moves which are already processed : '''
                     ('is_current_instance', '=', True)
                 ])
 
-        for order in self.browse(cr, uid, ids):
-            if order.order_type == 'purchase_list':
+        for order in self.read(cr, uid, ['order_type'], ids):
+            if order['order_type'] == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
-            elif order.order_type == 'in_kind':
+            elif order['order_type'] == 'in_kind':
                 if not inkind_journal_ids:
                     raise osv.except_osv(_('Error'), _('No In-kind Donation journal found!'))
                 invoice_obj.write(cr, uid, [invoice_id], {'journal_id': inkind_journal_ids[0], 'is_inkind_donation': True})
@@ -2079,8 +2080,7 @@ stock moves which are already processed : '''
 
             # US-917: Check if any IN exists for the given PO
             pick_obj = self.pool.get('stock.picking')
-            existingIN = pick_obj.search(cr, uid, [('purchase_id', 'in', [order.id])], context=context)
-            if existingIN:
+            if pick_obj.search_exist(cr, uid, [('purchase_id', 'in', [order.id])], context=context):
                 return
 
             picking_id = self.pool.get('stock.picking').create(cr, uid, picking_values, context=context)

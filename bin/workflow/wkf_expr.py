@@ -49,9 +49,9 @@ def _eval_expr(cr, ident, workitem, action):
     ids=[ident[2]]
     for line in action.split('\n'):
         line = line.strip()
-        if line =='True':
+        if line == 'True':
             ret=True
-        elif line =='False':
+        elif line == 'False':
             ret=False
         else:
             env = Env(cr, uid, model, ids)
