@@ -13,8 +13,9 @@
                     <field name="percent_completed" widget="progressbar" attrs="{'invisible': [('state', '=', 'draft')]}" />
                     <field name="filename_template" invisible="1" />
                     <field name="filename" invisible="1" />
+                    <field name="import_error_ok" invisible="1" />
                     <field name="data" filename="filename" readonly="1" 
-                        attrs="{'invisible': [('import_error_ok', '!=', False), ('state', '!=', 'done']}"
+                        attrs="{'invisible': ['|', ('import_error_ok', '!=', False), ('state', '!=', 'done')]}"
                         />
 
                     <separator colspan="4" string="Information" />
