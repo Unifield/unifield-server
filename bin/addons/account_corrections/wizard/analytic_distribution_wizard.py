@@ -108,14 +108,20 @@ class analytic_distribution_wizard(osv.osv_memory):
             del to_override[oline.id]
         return True, _("All is OK."), to_reverse, to_override
 
-    def _check_period_closed_on_fp_distrib_line(self, cr, uid, distrib_line_id, context=None):
+    def _check_period_closed_on_fp_distrib_line(self, cr, uid, distrib_line_id,
+        context=None, is_HQ_origin=None):
         ana_obj = self.pool.get('account.analytic.line')
         period_obj = self.pool.get('account.period')
         aa_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%distrib_line_id), ('is_reversal', '=', False), ('is_reallocated', '=', False)], context=context)
         closed = []
         if aa_ids:
             for ana in ana_obj.browse(cr, uid, aa_ids, context=context):
-                if ana.period_id and ana.period_id.state in ('done', 'mission-closed'):
+                # US-1398 HQ origin and not from OD AJI: like period close
+                # behaviour
+                if (ana.period_id
+                    and ana.period_id.state in ('done', 'mission-closed', )) \
+                    or (is_HQ_origin is not None
+                        and not is_HQ_origin.get('from_od', False)):
                     closed.append(ana.id)
         return closed
 
@@ -209,12 +215,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                 original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
                 # AJI correction journal and HQ JI
                 if original_al \
-                    and original_al.journal_id.type == 'correction' \
                     and original_al.move_id and \
                         original_al.move_id.journal_id.type == 'hq':
                         # US-1343/2: flag that the chain origin is an HQ
                         # entry: in other terms OD AJI from a HQ JI
-                        is_HQ_origin = True
+                        is_HQ_origin = {
+                            'from_od': \
+                                original_al.journal_id.type == 'correction',
+                        }
                         break
         
         for wiz_line in self.pool.get('analytic.distribution.wizard.fp.lines').browse(cr, uid, wiz_line_ids):
@@ -276,7 +284,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # distribution line deleted by user
             if self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [wiz_line.analytic_id.id]):
                 raise osv.except_osv(_('Error'), _("Funding pool is on a soft/hard closed contract: %s")%(wiz_line.analytic_id.code))
-            to_reverse_ids = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id)
+            to_reverse_ids = self._check_period_closed_on_fp_distrib_line(cr, uid, wiz_line.id, is_HQ_origin=is_HQ_origin)
             if to_reverse_ids:
                 # reverse the line
                 #to_reverse_ids = ana_obj.search(cr, uid, [('distrib_line_id', '=', 'funding.pool.distribution.line,%d'%wiz_line.id)])
@@ -294,8 +302,6 @@ class analytic_distribution_wizard(osv.osv_memory):
                 any_reverse = True
             else:
                 to_delete.append(wiz_line)
-
-
 
         keep_seq_and_corrected = False
         period_closed =  ml.period_id and ml.period_id.state and ml.period_id.state in ['done', 'mission-closed'] or ml.have_an_historic or False
@@ -330,7 +336,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # create the ana line (pay attention to take original date as posting date as UF-2199 said it.
             name = False
             if period_closed or is_HQ_origin:
-                if period_closed:
+                if period_closed or is_HQ_origin:
                     create_date = wizard.date
                 name = self.pool.get('account.analytic.line').join_without_redundancy(ml.name, 'COR')
                 if keep_seq_and_corrected:
