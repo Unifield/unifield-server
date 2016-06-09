@@ -246,7 +246,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         if search_ids and len(search_ids) > 1:
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {
                 'wizard_id': wizard_id,
-                'msg': _("Database have more than one employee with the combinaison key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
+                'msg': _("Database has already one employee with the combinaison key codeterrain/id_staff(/id_unique) of this employee: %s") % (employee_name,)
                 })
             return (res, what_changed)
 
