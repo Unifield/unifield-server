@@ -194,18 +194,24 @@ class analytic_distribution_wizard(osv.osv_memory):
         old_line_ids = self.pool.get('funding.pool.distribution.line').search(cr, uid, [('distribution_id', '=', distrib_id)])
         wiz_line_ids = self.pool.get('analytic.distribution.wizard.fp.lines').search(cr, uid, [('wizard_id', '=', wizard_id), ('type', '=', 'funding.pool')])
 
-        # US-1398: determine if AD chain is from an HQ entry
+        # US-1398: determine if AD chain is from an HQ entry and from a pure AD
+        # correction: analytic reallocation of HQ entry before validation
+        # if yes this flag represents that we have to maintain OD sequence
+        # consistency
         is_HQ_origin = False
         for old_line_id in old_line_ids:
             original_al_id = ana_obj.search(cr, uid, [
                 ('distrib_line_id', '=', 'funding.pool.distribution.line,%d' % (old_line_id, )),
                 ('is_reversal', '=', False),
-                ('is_reallocated', '=', False)
+                ('is_reallocated', '=', False),
             ])
             if original_al_id and len(original_al_id) == 1:
                 original_al = ana_obj.browse(cr, uid, original_al_id[0], context)
-                if original_al and original_al.move_id and \
-                    original_al.move_id.journal_id.type == 'hq':
+                # AJI correction journal and HQ JI
+                if original_al \
+                    and original_al.journal_id.type == 'correction' \
+                    and original_al.move_id and \
+                        original_al.move_id.journal_id.type == 'hq':
                         # US-1343/2: flag that the chain origin is an HQ
                         # entry: in other terms OD AJI from a HQ JI
                         is_HQ_origin = True
