@@ -29,6 +29,7 @@ class bank_reconciliation(report_sxw.rml_parse):
         self.cr = cr
         self.uid = uid
         self.context = context
+        self.amount_pending_cheque = 0
         self.localcontext.update({
             'get_amount_pending_cheque': self.get_amount_pending_cheque,
             'getNow': self.get_now,
@@ -39,36 +40,36 @@ class bank_reconciliation(report_sxw.rml_parse):
         Returns the amount of unreconciled cheques linked to the Bank journal selected
         and for the same period and the previous ones
         '''
-        amount = 0
-        aj_obj = self.pool.get('account.journal')
-        abs_obj = self.pool.get('account.bank.statement')
+        if not self.amount_pending_cheque:
+            aj_obj = self.pool.get('account.journal')
+            abs_obj = self.pool.get('account.bank.statement')
 
-        aj_args = [
-            ('type', '=', 'cheque'),
-            ('bank_journal_id', '=', obj.journal_id.id)
-        ]
-        aj_ids = aj_obj.search(self.cr, self.uid, aj_args, context=self.context)
-        account_ids = []
-        for journal in aj_obj.browse(self.cr, self.uid, aj_ids, context=self.context):
-            account_ids += [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
+            aj_args = [
+                ('type', '=', 'cheque'),
+                ('bank_journal_id', '=', obj.journal_id.id)
+            ]
+            aj_ids = aj_obj.search(self.cr, self.uid, aj_args, context=self.context)
+            account_ids = []
+            for journal in aj_obj.browse(self.cr, self.uid, aj_ids, context=self.context):
+                account_ids += [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
 
-        period_ids = self.pool.get('account.period').\
-            search(self.cr, self.uid, [('date_start', '<=', obj.period_id.date_start)])
-        abs_args = [
-            ('period_id', 'in', period_ids),
-            ('journal_id', 'in', aj_ids),
-        ]
+            period_ids = self.pool.get('account.period').\
+                search(self.cr, self.uid, [('date_start', '<=', obj.period_id.date_start)])
+            abs_args = [
+                ('period_id', 'in', period_ids),
+                ('journal_id', 'in', aj_ids),
+            ]
 
-        ids = abs_obj.search(self.cr, self.uid, abs_args, context=self.context)
+            ids = abs_obj.search(self.cr, self.uid, abs_args, context=self.context)
 
-        amvl_obj = self.pool.get('account.move.line')
-        amvl_ids = amvl_obj.search(self.cr, self.uid, [('statement_id', 'in', ids), ('is_reconciled', '=', False),
-                                                       ('account_id', 'in', account_ids)], context=self.context)
-        # amount in booking currency
-        for line in amvl_obj.read(self.cr, self.uid, amvl_ids, ['debit_currency', 'credit_currency'], context=self.context):
-            amount += line['credit_currency']
-            amount -= line['debit_currency']
-        return amount
+            amvl_obj = self.pool.get('account.move.line')
+            amvl_ids = amvl_obj.search(self.cr, self.uid, [('statement_id', 'in', ids), ('is_reconciled', '=', False),
+                                                           ('account_id', 'in', account_ids)], context=self.context)
+            # amount in booking currency
+            for line in amvl_obj.read(self.cr, self.uid, amvl_ids, ['debit_currency', 'credit_currency'], context=self.context):
+                self.amount_pending_cheque += line['credit_currency']
+                self.amount_pending_cheque -= line['debit_currency']
+        return self.amount_pending_cheque
 
     def get_now(self, show_datetime=False):
         date_tools_obj = self.pool.get('date.tools')
