@@ -2242,6 +2242,7 @@ class stock_move(osv.osv):
             context = {}
         pickings = {}
         picking_obj = self.pool.get('stock.picking')
+        move_obj = self.pool.get('stock.move')
         for move in self.browse(cr, uid, ids, context=context):
             if move.state in ('confirmed', 'waiting', 'assigned', 'draft'):
                 if move.picking_id:
@@ -2255,9 +2256,15 @@ class stock_move(osv.osv):
                     wf_service.trg_write(uid, 'stock.picking', move.move_dest_id.picking_id.id, cr)
         self.write(cr, uid, ids, {'state': 'cancel', 'move_dest_id': False})
         if not context.get('call_unlink',False):
-            for pick in picking_obj.browse(cr, uid, pickings.keys()):
-                if all(move.state == 'cancel' for move in pick.move_lines):
-                    picking_obj.write(cr, uid, [pick.id], {'state': 'cancel'})
+            picking_to_write = []
+            for pick in picking_obj.read(cr, uid, pickings.keys(), ['move_lines']):
+                # if all movement are in cancel state:
+                if not move_obj.search_exist(cr, uid,
+                        [('id', 'in', pick['move_lines'])
+                         ('state', '!=', 'cancel'),]):
+                    picking_to_write.append(pick['id'])
+            if picking_to_write:
+                picking_obj.write(cr, uid, picking_to_write, {'state': 'cancel'})
 
         wf_service = netsvc.LocalService("workflow")
         for id in ids:
