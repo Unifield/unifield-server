@@ -332,7 +332,7 @@
         <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="0.5" ss:Color="#000000"/>
       </Borders>
     </Style>
-    <!-- Grey color for deleted entries and DP Reversals -->
+    <!-- Grey color for deleted entries, DP Reversals, Payable Entries... -->
     <Style ss:ID="grey_left_bold">
       <Font ss:Bold="1" ss:Color="#9E9E9E"/>
       <Alignment ss:Horizontal="Left" ss:Indent="0"/>
@@ -673,6 +673,74 @@
         </Cell>
     </Row>
 % endfor
+
+<!-- if it is a Trade Payable Entry (automatically generated) -->
+% if line.partner_move_id:
+    <Row ss:Height="14.5134">
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('Payable Entry')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- SEQUENCE -->
+          <Data ss:Type="String">${line.partner_move_id.name or ''|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <!-- DESC -->
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <!-- REF -->
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % if o.journal_id.type == 'cheque':
+          <Cell ss:StyleID="grey_centre">
+            <Data ss:Type="String"></Data>
+          </Cell>
+        % endif
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_left_bold">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_amount_bold">
+          <Data ss:Type="Number">0.0</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String">${_('FALSE')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        <Cell ss:StyleID="grey_centre">
+          <Data ss:Type="String"></Data>
+        </Cell>
+    </Row>
+% endif
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->
 <% move_lines = [] %>

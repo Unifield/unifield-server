@@ -1000,6 +1000,9 @@ class wizard_cash_return(osv.osv_memory):
                             raise osv.except_osv(_('Error'), _('An error has occurred: The journal entries cannot be posted.'))
                         # Do reconciliation
                         move_line_obj.reconcile_partial(cr, uid, [supp_move_line_debit_id, supp_move_line_credit_id])
+                        # Update the statement line with the partner move id ("Payable entry")
+                        if 'statement_line_id' in context:
+                            absl_obj.write(cr, uid, context['statement_line_id'], {'partner_move_id' : supp_move_id} , context)
 
         # reconcile advance and advance return lines
         original_move_id = wizard.advance_st_line_id.move_ids[0]
