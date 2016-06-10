@@ -151,7 +151,7 @@ header_fields = [
 <% total = 0.0 %>
 % for o in localSort(objects, cat[1]):
 <%
-  if not o.parent_id:
+  if not o.parent_id or data.get('wiz_fields')['granularity'] == 'account':
     total += o.balance or 0.0
 %>
   <Row>
