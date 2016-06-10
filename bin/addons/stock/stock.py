@@ -2260,7 +2260,7 @@ class stock_move(osv.osv):
             for pick in picking_obj.read(cr, uid, pickings.keys(), ['move_lines']):
                 # if all movement are in cancel state:
                 if not move_obj.search_exist(cr, uid,
-                        [('id', 'in', pick['move_lines'])
+                        [('id', 'in', pick['move_lines']),
                          ('state', '!=', 'cancel'),]):
                     picking_to_write.append(pick['id'])
             if picking_to_write:
