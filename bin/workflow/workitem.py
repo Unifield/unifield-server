@@ -64,15 +64,14 @@ def process(cr, workitem, ident, signal=None, force_running=False, stack=None):
         triggers = triggers and not ok
 
     if triggers:
-        cr.execute('select * from wkf_transition where act_from=%s', (workitem['act_id'],))
+        cr.execute('select * from wkf_transition where act_from=%s and trigger_model is not null', (workitem['act_id'],))
         alltrans = cr.dictfetchall()
         for trans in alltrans:
-            if trans['trigger_model']:
-                ids = wkf_expr._eval_expr(cr,ident,workitem,trans['trigger_expr_id'])
-                for res_id in ids:
-                    cr.execute('select nextval(\'wkf_triggers_id_seq\')')
-                    id =cr.fetchone()[0]
-                    cr.execute('insert into wkf_triggers (model,res_id,instance_id,workitem_id,id) values (%s,%s,%s,%s,%s)', (trans['trigger_model'],res_id,workitem['inst_id'], workitem['id'], id))
+            ids = wkf_expr._eval_expr(cr, ident, workitem,trans['trigger_expr_id'])
+            for res_id in ids:
+                cr.execute('select nextval(\'wkf_triggers_id_seq\')')
+                id = cr.fetchone()[0]
+                cr.execute('insert into wkf_triggers (model,res_id,instance_id,workitem_id,id) values (%s,%s,%s,%s,%s)', (trans['trigger_model'],res_id,workitem['inst_id'], workitem['id'], id))
 
     return result
 

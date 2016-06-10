@@ -508,8 +508,10 @@ class stock_tracking(osv.osv):
     def name_search(self, cr, user, name, args=None, operator='ilike', context=None, limit=100):
         if not args:
             args = []
-        ids = self.search(cr, user, [('serial', '=', name)]+ args, limit=limit, context=context)
-        ids += self.search(cr, user, [('name', operator, name)]+ args, limit=limit, context=context)
+        ids = self.search(cr, user, [('serial', '=', name)]+ args, limit=limit,
+                order='NO_ORDER', context=context)
+        ids += self.search(cr, user, [('name', operator, name)]+ args,
+                limit=limit, order='NO_ORDER', context=context)
         return self.name_get(cr, user, ids, context)
 
     def name_get(self, cr, uid, ids, context=None):
@@ -809,7 +811,8 @@ class stock_picking(osv.osv):
         for pick in self.read(cr, uid, ids, ['move_lines']):
             move_ids = move_obj.search(cr, uid,
                         [('id', 'in', pick['move_lines']),
-                         ('state', 'in', ('confirmed','waiting'))])
+                         ('state', 'in', ('confirmed','waiting'))],
+                        order='NO_ORDER')
             if move_ids:
                 move_obj.force_assign(cr, uid, move_ids)
             wf_service.trg_write(uid, 'stock.picking', pick['id'], cr)
@@ -867,7 +870,8 @@ class stock_picking(osv.osv):
         move_to_write = []
         move_ids = move_obj.search(cr, uid,
                 [('picking_id', 'in', ids),
-                 ('state', 'not in', ('done', 'cancel'))])
+                 ('state', 'not in', ('done', 'cancel'))],
+                order='NO_ORDER')
         for move in move_obj.read(cr, uid, move_ids, ['state', 'product_qty']):
             if move['product_qty'] != 0.0:
                 move_obj.write(cr, uid, move_to_write, {'state': 'done'})
@@ -1203,7 +1207,7 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are canceled or not.
         @return: True or False
         """
-        if self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', ids), ('state', '!=', 'cancel')], count=True):
+        if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '!=', 'cancel')]):
             return False
         return True
 
@@ -1503,7 +1507,8 @@ class stock_production_lot(osv.osv):
         # when the location_id = False results now in showing stock for all internal locations
         # *previously*, was showing the location of no location (= 0.0 for all prodlot)
         if 'location_id' not in context or not context['location_id']:
-            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')],
+                    order='NO_ORDER', context=context)
         else:
             locations = context['location_id'] or []
 
@@ -1535,7 +1540,8 @@ class stock_production_lot(osv.osv):
         # when the location_id = False results now in showing stock for all internal locations
         # *previously*, was showing the location of no location (= 0.0 for all prodlot)
         if 'location_id' not in context or not context['location_id']:
-            locations = self.pool.get('stock.location').search(cr, uid, [('usage', '=', 'internal')], context=context)
+            locations = self.pool.get('stock.location').search(cr, uid,
+                    [('usage', '=', 'internal')], order='NO_ORDER', context=context)
         else:
             locations = context['location_id'] or []
         
@@ -1782,7 +1788,7 @@ class stock_move(osv.osv):
                     
         if uid != 1:
             frozen_fields = set(['product_qty', 'product_uom', 'product_uos_qty', 'product_uos', 'location_id', 'location_dest_id', 'product_id'])
-            done_moves = self.search(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'done')], count=True)
+            done_moves = self.search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '=', 'done')])
             if done_moves and frozen_fields.intersection(vals):
                 raise osv.except_osv(_('Operation forbidden'),
                         _('Quantities, UoMs, Products and Locations cannot be modified on stock moves that have already been processed (except by the Administrator)'))
@@ -1934,6 +1940,7 @@ class stock_move(osv.osv):
         if context is None:
             context = {}
         stock_location_obj = self.pool.get('stock.location')
+        stock_picking_obj = self.pool.get('stock.picking')
         for m in moves:
             dest = stock_location_obj.chained_location_get(
                 cr,
@@ -1951,7 +1958,7 @@ class stock_move(osv.osv):
                         'date': newdate,
                         'location_dest_id': dest[0].id})
                     if m.picking_id and (dest[3] or dest[5]):
-                        self.pool.get('stock.picking').write(cr, uid, [m.picking_id.id], {
+                        stock_picking_obj.write(cr, uid, [m.picking_id.id], {
                             'stock_journal_id': dest[3] or m.picking_id.stock_journal_id.id,
                             'type': m.picking_id.type
                         }, context=context)
@@ -2180,6 +2187,7 @@ class stock_move(osv.osv):
         pickings = {}
         if context is None:
             context = {}
+        move_to_assign = set()
         for move in self.browse(cr, uid, ids, context=context):
             if self._hook_check_assign(cr, uid, move=move):
 #            if move.product_id.type == 'consu' or move.location_id.usage == 'supplier':
@@ -2195,13 +2203,14 @@ class stock_move(osv.osv):
                     #the test does not work correctly if the same product occurs multiple times
                     #in the same order. This is e.g. the case when using the button 'split in two' of
                     #the stock outgoing form
-                    self.write(cr, uid, [move.id], {'state':'assigned'})
+                    move_to_assign.add(move.id)
                     done.append(move.id)
                     pickings[move.picking_id.id] = 1
                     r = res.pop(0)
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
                     done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
+        self.write(cr, uid, list(move_to_assign), {'state':'assigned'})
         count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
@@ -2399,7 +2408,7 @@ class stock_move(osv.osv):
         move_ids = []
         partial_obj=self.pool.get('stock.partial.picking')
         wf_service = netsvc.LocalService("workflow")
-        partial_id=partial_obj.search(cr,uid,[])
+        partial_id=partial_obj.search(cr,uid,[], order='NO_ORDER')
         if partial_id:
             partial_datas = partial_obj.read(cr, uid, partial_id, context=context)[0]
         if context is None:
@@ -2451,12 +2460,15 @@ class stock_move(osv.osv):
             self.write(cr, uid, move_ids, {'state': 'done', 'date': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
             wf_service.trg_trigger(uid, 'stock.move', move_ids, cr)
 
+        pick_id_to_write = set()
         for pick_id in picking_ids:
             wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
             pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
             ##### UF-2378 For some reason, the RW code from OpenERP kept the IN always in Available, even its lines are closed!!!
             if pick.state != 'done' and pick.type=='in':
-                self.pool.get('stock.picking').write(cr, uid, pick_id, {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+                pick_id_to_write.add(pick_id)
+        self.pool.get('stock.picking').write(cr, uid,
+                list(pick_id_to_write), {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         moves = self.browse(cr, uid, move_ids, context=context)
         self.create_chained_picking(cr, uid, moves, context)
@@ -2918,9 +2930,12 @@ class stock_inventory(osv.osv):
         """ Cancels the stock move and change inventory state to draft.
         @return: True
         """
-        for inv in self.browse(cr, uid, ids, context=context):
-            self.pool.get('stock.move').action_cancel(cr, uid, [x.id for x in inv.move_ids], context=context)
-            self.write(cr, uid, [inv.id], {'state':'draft'}, context=context)
+        inv_to_write = set()
+        for inv in self.read(cr, uid, ids, ['move_ids'], context=context):
+            self.pool.get('stock.move').action_cancel(cr, uid, inv['move_ids'], context=context)
+            inv_to_write.add(inv['id'])
+
+        self.write(cr, uid, list(inv_to_write), {'state':'draft'}, context=context)
         return True
 
     def action_cancel_inventary(self, cr, uid, ids, context=None):
@@ -2932,7 +2947,8 @@ class stock_inventory(osv.osv):
         for inv in self.browse(cr, uid, ids, context=context):
             move_obj.action_cancel(cr, uid, [x.id for x in inv.move_ids], context=context)
             for move in inv.move_ids:
-                 account_move_ids = account_move_obj.search(cr, uid, [('name', '=', move.name)])
+                 account_move_ids = account_move_obj.search(cr, uid, [('name',
+                     '=', move.name)], order='NO_ORDER')
                  if account_move_ids:
                      account_move_data_l = account_move_obj.read(cr, uid, account_move_ids, ['state'], context=context)
                      for account_move in account_move_data_l:

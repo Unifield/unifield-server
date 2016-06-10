@@ -489,7 +489,7 @@ class stock_picking(osv.osv):
                     else:
                         vals['address_id'] = addr.get('delivery')
 
-        if not vals.get('partner_id2') and vals.get('address_id'):
+        elif not vals.get('partner_id2') and vals.get('address_id'):
             for pick in self.read(cr, uid, ids, ['address_id'], context=context):
                 address_id = pick['address_id'] and pick['address_id'][0] or False
                 if address_id != vals.get('address_id'):
@@ -601,8 +601,8 @@ You cannot choose this supplier because some destination locations are not avail
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for pick in self.browse(cr, uid, ids, context=context):
-            self.write(cr, uid, [pick.id], {'state': pick.state_before_import}, context=context)
+        for pick in self.read(cr, uid, ids, ['state_before_import'], context=context):
+            self.write(cr, uid, [pick['id']], {'state': pick['state_before_import']}, context=context)
 
         return True
 
@@ -664,7 +664,7 @@ You cannot choose this supplier because some destination locations are not avail
                 if self.has_picking_ticket_in_progress(cr, uid, [pick_data['id']], context=context)[pick_data['id']]:
                     raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and      try to cancel again.'))
             # if not draft or qty does not match, the shipping is already in progress
-            if pick_data['subtype'] == 'picking' and pick_data['state'] in ('done',):
+            elif pick_data['subtype'] == 'picking' and pick_data['state'] in ('done',):
                 raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
 
             if pick_data['sale_id'] or pick_data['purchase_id']:
@@ -1024,10 +1024,10 @@ You cannot choose this supplier because some destination locations are not avail
             res = False
             sm_ids = self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', sp.id)])
             if sm_ids:
-                for sm in self.pool.get('stock.move').read(cr, uid, sm_ids,
-                        ['reason_type_id']):
-                    if sm['reason_type_id'][0] == rt_id:
-                        res = True
+                if self.pool.get('stock.move').search_exist(cr, uid,
+                        [('id', 'in', sm_ids),
+                         ('reason_type_id', '=', rt_id)]):
+                    res = True
         # partner is itself (those that own the company)
         company_partner_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.partner_id
         if sp.partner_id.id == company_partner_id.id:
@@ -1229,9 +1229,9 @@ You cannot choose this supplier because some destination locations are not avail
         for pick in self.read(cr, uid, ids, ['move_lines', 'type']):
             if pick['move_lines'] and pick['type'] == 'in':
                 not_assigned_move = pick['move_lines']
-                move_obj.write(cr, uid, not_assigned_move, {'state':
-                    'confirmed'})
                 if not_assigned_move:
+                    move_obj.write(cr, uid, not_assigned_move, {'state':
+                        'confirmed'})
                     move_obj.action_assign(cr, uid, not_assigned_move)
 
         return True
@@ -1421,7 +1421,7 @@ class stock_move(osv.osv):
         backmove_ids = self.search(cr, uid, [('backmove_id', 'in', ids), ('state', 'not in', ('done', 'cancel'))], context=context)
 
         for move in self.browse(cr, uid, ids, context=context):
-            mem_ids = mem_obj.search(cr, uid, [
+            mem_ids = mem_obj.search_exist(cr, uid, [
                 ('picking_id', '=', move.picking_id.id),
                 ('end_date', '=', False),
             ], context=context)
@@ -1748,7 +1748,7 @@ class stock_move(osv.osv):
                         cond1_addr = cond1_addr.get('delivery', False) or cond1_addr.get('default')
                     vals['address_id'] = cond1_addr
 
-                if cond2 and move['address_id'] != vals.get('address_id'):
+                elif cond2 and move['address_id'] != vals.get('address_id'):
                     if cond2_addr is None:
                         cond2_addr = addr_obj.read(cr, uid,
                                 vals.get('address_id'), ['partner_id'], context=context)
@@ -1881,11 +1881,11 @@ class stock_move(osv.osv):
                     for loc in res['fefo']:
                         # if source == destination, the state becomes 'done', so we don't do fefo logic in that case
                         if not move['location_dest_id'][0] == loc['location_id']:
-                            # we ignore the batch that are outdated
-                            expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
-                            if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
-                                # as long all needed are not fulfilled
-                                if needed_qty:
+                            # as long all needed are not fulfilled
+                            if needed_qty:
+                                # we ignore the batch that are outdated
+                                expired_date = prodlot_obj.read(cr, uid, loc['prodlot_id'], ['life_date'], context)['life_date']
+                                if datetime.strptime(expired_date, "%Y-%m-%d") >= compare_date:
                                     existed_moves = []
                                     if not move['move_dest_id']:
                                         # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
