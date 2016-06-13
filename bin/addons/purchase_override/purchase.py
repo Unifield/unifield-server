@@ -1018,7 +1018,7 @@ stock moves which are already processed : '''
             datas = sol_obj.read(cr, uid, sol_ids, ['order_id'], context=context)
             # we retrieve the list of sale order ids
             for data in datas:
-                if data['order_id'] and data['order_id'][0] not in so_ids:
+                if data['order_id'][0] not in so_ids:
                     so_ids.append(data['order_id'][0])
 
         for po in self.browse(cr, uid, ids, context=context):
@@ -2215,9 +2215,7 @@ stock moves which are already processed : '''
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
         # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
         vals = self._get_location_id(cr, uid, vals, warehouse_id=vals.get('warehouse_id', False), context=context)
-
         res = super(purchase_order, self).create(cr, uid, vals, context=context)
-
         return res
 
     def wkf_action_cancel_po(self, cr, uid, ids, context=None):
@@ -2783,11 +2781,12 @@ class purchase_order_line(osv.osv):
             if 'product_qty' not in vals:
                 tmp_vals.update({'product_qty': line['product_qty']})
 
+            line_product_id = line['product_id'] and line['product_id'][0] or False
+            merged_id = line['merged_id'] and line['merged_id'][0] or False
             # If the user changed the product or the UoM or both on the PO line
-            if ('product_id' in vals and line['product_id'][0] != vals['product_id']) or ('product_uom' in vals and line['product_uom'][0] != vals['product_uom']):
+            if ('product_id' in vals and line_product_id != vals['product_id']) or ('product_uom' in vals and line['product_uom'][0] != vals['product_uom']):
                 # Need removing the merged_id link before update the merged line because the merged line
                 # will be removed if it hasn't attached PO line
-                merged_id = line['merged_id'][0]
                 change_price_ok = line['change_price_ok']
                 c = context.copy()
                 tmp_import_in_progress = context.get('import_in_progress')
@@ -2801,19 +2800,19 @@ class purchase_order_line(osv.osv):
                 res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], -line['product_qty'], line['price_unit'], context=c)
 
                 # Create or update an existing merged line with the new product
-                vals = self.link_merged_line(cr, uid, tmp_vals, tmp_vals.get('product_id', line['product_id'][0]), line['order_id'][0], tmp_vals.get('product_qty', line['product_qty']), tmp_vals.get('product_uom', line['product_uom'][0]), tmp_vals.get('price_unit', line['price_unit']), context=context)
+                vals = self.link_merged_line(cr, uid, tmp_vals, tmp_vals.get('product_id', line_product_id), line['order_id'][0], tmp_vals.get('product_qty', line['product_qty']), tmp_vals.get('product_uom', line['product_uom'][0]), tmp_vals.get('price_unit', line['price_unit']), context=context)
 
             # If the quantity is changed
             elif 'product_qty' in vals and line['product_qty'] != vals['product_qty']:
-                res_merged = merged_line_obj._update(cr, uid, line['merged_id'][0], line['id'], vals['product_qty']-line['product_qty'], line['price_unit'], context=context)
+                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], vals['product_qty']-line['product_qty'], line['price_unit'], context=context)
                 # Update the unit price
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})
 
             # If the price unit is changed and the product and the UoM is not modified
-            if 'price_unit' in tmp_vals and (line['price_unit'] != tmp_vals['price_unit'] or vals['price_unit'] != tmp_vals['price_unit']) and not (line['product_id'][0] != vals.get('product_id', False) or line['product_uom'][0] != vals.get('product_uom', False)):
+            if 'price_unit' in tmp_vals and (line['price_unit'] != tmp_vals['price_unit'] or vals['price_unit'] != tmp_vals['price_unit']) and not (line_product_id != vals.get('product_id', False) or line['product_uom'][0] != vals.get('product_uom', False)):
                 # Give 0.00 to quantity because the _update should recompute the price unit with the same quantity
-                res_merged = merged_line_obj._update(cr, uid, line['merged_id'][0], line['id'], 0.00, tmp_vals['price_unit'], context=context)
+                res_merged = merged_line_obj._update(cr, uid, merged_id, line['id'], 0.00, tmp_vals['price_unit'], context=context)
                 # Update the unit price
                 if res_merged and res_merged[1]:
                     vals.update({'price_unit': res_merged[1]})

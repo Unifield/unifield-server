@@ -1514,7 +1514,7 @@ class stock_move(osv.osv):
             if move['product_id'][0] == product_tbd and move['from_wkf_line']:
                 ids.pop(ids.index(move['id']))
             else:
-                picking_id = move['picking_id'][0]
+                picking_id = move['picking_id'] and move['picking_id'][0] or False
                 if picking_id not in picking_name_dict:
                     picking_id_name = pick_obj.read(cr, uid,
                             picking_id, ['name'], context)['name']
@@ -1532,9 +1532,9 @@ class stock_move(osv.osv):
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
     def _uom_constraint(self, cr, uid, ids, context=None):
-        for obj in self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context):
+        for move in self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context):
             if not self.pool.get('uom.tools').check_uom(cr, uid,
-                    obj['product_id'][0], obj['product_uom'][0], context):
+                    move['product_id'][0], move['product_uom'][0], context):
                 raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
 
         return True
@@ -1739,8 +1739,8 @@ class stock_move(osv.osv):
             cond2_addr = None
             for move in self.read(cr, uid, ids,
                     ['partner_id', 'address_id', 'state', 'picking_id'], context=context):
-                partner_id = move['partner_id'][0]
-                picking_id = move['picking_id'][0]
+                partner_id = move['partner_id'] and move['partner_id'][0] or False
+                picking_id = move['picking_id'] and move['picking_id'][0] or False
                 if cond1 and partner_id != partner:
                     if cond1_addr is None:
                         cond1_addr = partner_obj.address_get(cr, uid,
@@ -1867,9 +1867,10 @@ class stock_move(osv.osv):
                         move['product_uom'][0], context=context)
                 if 'fefo' in res:
                     # We need to have the value like below because we need to have the id of the m2o (which is not possible if we do self.read(cr, uid, move.id))
+                    picking_id = move['picking_id'] and move['picking_id'][0] or False
                     values = {'name': move['name'],
                               'sale_line_id': move['sale_line_id'] and move['sale_line_id'][0] or False,
-                              'picking_id': move['picking_id'] and move['picking_id'][0] or False,
+                              'picking_id': picking_id,
                               'product_uom': move['product_uom'][0],
                               'product_id': move['product_id'][0],
                               'date_expected': move['date_expected'],
@@ -1891,8 +1892,8 @@ class stock_move(osv.osv):
                                         # Search if a stock move with the same location_id and same product_id and same prodlot_id exist
                                         existed_moves = self.search(cr, uid,
                                                 [('picking_id', '!=', False),
-                                                 ('picking_id', '=', move['picking_id'][0]),
-                                                 ('product_id', '=', move['product_id'][0]), 
+                                                 ('picking_id', '=', picking_id),
+                                                 ('product_id', '=', move['product_id'][0]),
                                                  ('product_uom', '=', loc['uom_id']),
                                                  ('line_number', '=', move['line_number']),
                                                  ('location_id', '=', loc['location_id']),
@@ -1901,10 +1902,7 @@ class stock_move(osv.osv):
                                                 context=context)
                                     # if the batch already exists and qty is enough, it is available (assigned)
                                     if needed_qty <= loc['qty']:
-                                        # TODO: Why this condition because move.prodlot_id is always False (e.g. line 1261 of this file)
-                                        if move['prodlot_id'][0] == loc['prodlot_id']:
-                                            vals.update({'state': 'assigned'})
-                                        elif existed_moves:
+                                        if existed_moves:
                                             exist_move = self.read(cr, uid, existed_moves[0], ['product_qty'], context)
                                             self.write(cr, uid, [exist_move['id']], {'product_qty': needed_qty + exist_move['product_qty']}, context)
                                             # We update the linked documents
@@ -2068,12 +2066,13 @@ class stock_move(osv.osv):
 
         for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
+            picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
 
             self.infolog(cr, uid, 'Cancel availability run on stock move #%s (id:%s) of picking id:%s (%s)' % (
                 move_data['line_number'],
                 move_data['id'],
-                move_data['picking_id'][0],
-                stock_picking_obj.read(cr, uid, move_data['picking_id'][0], ['name'], context=context)['name'],
+                picking_id,
+                stock_picking_obj.read(cr, uid, picking_id, ['name'], context=context)['name'],
             ))
 
             for f in fields_to_read:
