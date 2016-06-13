@@ -674,8 +674,10 @@
     </Row>
 % endfor
 
-<!-- if it is a Trade Payable Entry (automatically generated) -->
-% if line.partner_move_id:
+<!-- if there are Trade Payable Entries (automatically generated) -->
+<% partner_move_ids = line.partner_move_ids or False %>
+% if partner_move_ids:
+% for partner_move_id in sorted(partner_move_ids, key=lambda x: x.name):
     <Row ss:Height="14.5134">
         <Cell ss:StyleID="grey_centre">
           <Data ss:Type="String">${_('Payable Entry')|x}</Data>
@@ -688,7 +690,7 @@
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <!-- SEQUENCE -->
-          <Data ss:Type="String">${line.partner_move_id.name or ''|x}</Data>
+          <Data ss:Type="String">${partner_move_id.name or ''|x}</Data>
         </Cell>
         <Cell ss:StyleID="grey_left_bold">
           <!-- DESC -->
@@ -740,6 +742,7 @@
           <Data ss:Type="String"></Data>
         </Cell>
     </Row>
+% endfor
 % endif
 
 <!-- Direct invoice and invoice that comes from a PL (in a cash return) -->

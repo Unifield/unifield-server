@@ -957,6 +957,7 @@ class wizard_cash_return(osv.osv_memory):
             # Have you filled in the supplier field ? If yes let's go for creating some moves for them !
             if advances_with_supplier:
                 wiz_adv_line_obj = self.pool.get('wizard.advance.line')
+                supp_move_ids = []  # to store the ids of the account moves created
                 # Browse suppliers
                 for supplier_id in advances_with_supplier:
                     total = 0.0
@@ -988,6 +989,7 @@ class wizard_cash_return(osv.osv_memory):
                             Please contact an accountant administrator to resolve this problem.'))
                         # Create the move
                         supp_move_id = move_obj.create(cr, uid, supp_move_vals, context=context)
+                        supp_move_ids.append(supp_move_id)
                         # Create move_lines
                         supp_move_line_debit_id = self.create_move_line(cr, uid, ids, wizard.date, supp_move_date, supp_move_name, journal, register, supplier_id, False, \
                             account_id, total, 0.0, wizard.reference, supp_move_id, False, context=context)
@@ -1000,10 +1002,9 @@ class wizard_cash_return(osv.osv_memory):
                             raise osv.except_osv(_('Error'), _('An error has occurred: The journal entries cannot be posted.'))
                         # Do reconciliation
                         move_line_obj.reconcile_partial(cr, uid, [supp_move_line_debit_id, supp_move_line_credit_id])
-                        # Update the statement line with the partner move id ("Payable entry")
-                        if 'statement_line_id' in context:
-                            absl_obj.write(cr, uid, context['statement_line_id'], {'partner_move_id' : supp_move_id} , context)
-
+                # Update the statement line with the partner move ids ("Payable entries")
+                if 'statement_line_id' in context:
+                    absl_obj.write(cr, uid, context['statement_line_id'], {'partner_move_ids': [(6, 0, supp_move_ids)]}, context)
         # reconcile advance and advance return lines
         original_move_id = wizard.advance_st_line_id.move_ids[0]
         criteria = [('statement_id', '=', wizard.advance_st_line_id.statement_id.id), ('account_id', '=', adv_closing_acc_id), ('move_id', '=', original_move_id.id)]
