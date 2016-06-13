@@ -198,10 +198,6 @@ class users(osv.osv):
 
     def _set_new_password(self, cr, uid, id, name, value, args, context=None):
         login = self.read(cr, uid, id, ['login'])['login']
-        if not all(self.is_password_strong(value, login).values()):
-            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
-                    'Password must be diffrent from the login, it must contain '\
-                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
         if value is False:
             # Do not update the password if no value is provided, ignore silently.
             # For example web client submits False values for all empty fields.
@@ -211,6 +207,10 @@ class users(osv.osv):
             # so that the new password is immediately used for further RPC requests, otherwise the user
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
+        if not all(self.is_password_strong(value, login).values()):
+            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
+                    'Password must be diffrent from the login, it must contain '\
+                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
         self.write(cr, uid, id, {'password': value})
 
     _columns = {
