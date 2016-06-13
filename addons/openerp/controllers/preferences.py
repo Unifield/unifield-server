@@ -107,6 +107,8 @@ class Preferences(Form):
                 _('Could not change your password.'))
         except openobject.errors.AccessDenied:
             context['errors'].append(_('Original password incorrect, your password was not changed.'))
+        except Exception, e:
+            context['errors'].append(str(e))
         return context
 
     @expose()
