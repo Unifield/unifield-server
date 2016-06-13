@@ -305,10 +305,12 @@
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif
-        % if not l.type_change == 'ignore' and (l.type_change == 'del' or (l.in_dcd != l.imp_dcd and l.imp_dcd not in ('False', False))):
+        % if not l.type_change == 'ignore' and ((l.type_change == 'del' or l.in_dcd != l.imp_dcd) and l.imp_dcd not in ('False', False)):
         <Cell ss:StyleID="line_change_short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
         % elif l.imp_dcd not in ('False', False):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(l.imp_dcd)|n}T00:00:00.000</Data></Cell>
+        % elif l.type_change == 'del':
+        <Cell ss:StyleID="line_change"></Cell>
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif

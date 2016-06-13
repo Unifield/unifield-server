@@ -605,14 +605,14 @@ information must be on two columns : Column A for name of the field and column\
  B for value.') % x
                         file_format_errors.append(error_msg)
 
-                if len(values.get(first_line_index, [])) != nb_file_lines_columns:
+                if len(values.get(first_line_index, [])) < nb_file_lines_columns:
                     error_msg = _('Line %s of the Excel file: This line is \
 mandatory and must have %s columns. The values on this line must be the name \
 of the field for PO lines.') % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
                 for x in xrange(first_line_index, len(values)+1):
-                    if len(values.get(x, [])) != nb_file_lines_columns:
+                    if len(values.get(x, [])) < nb_file_lines_columns:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line \
 information must be on %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
