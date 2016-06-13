@@ -29,6 +29,7 @@ import pooler
 from tools.translate import _
 from service import security
 import netsvc
+import re
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -99,6 +100,7 @@ class users(osv.osv):
     _name = "res.users"
     _order = 'name'
 
+    PASSWORD_MIN_LENGHT = 6
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
         "\"%(name)s\".\n\nYour login is %(login)s, "\
@@ -195,6 +197,11 @@ class users(osv.osv):
         return True
 
     def _set_new_password(self, cr, uid, id, name, value, args, context=None):
+        login = self.read(cr, uid, id, ['login'])['login']
+        if not all(self.is_password_strong(value, login).values()):
+            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
+                    'Password must be diffrent from the login, it must contain '\
+                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
         if value is False:
             # Do not update the password if no value is provided, ignore silently.
             # For example web client submits False values for all empty fields.
@@ -514,6 +521,31 @@ class users(osv.osv):
         finally:
             cr.close()
 
+    def is_password_strong(self, password, login):
+        """
+        Check that given password is strong enough.
+        In case it is, all values of the returned dict are True
+        """
+        result = {
+                'has_digit': False,
+                'long_enought': False,
+                'login_not_equal_password': False,
+        }
+
+        # check it contains at least one digit
+        if re.search(r'\d', password):
+            result['has_digit'] = True
+
+        # check password lenght
+        if len(password) > self.PASSWORD_MIN_LENGHT:
+            result['long_enought'] = True
+
+        # check login != password:
+        if password != login:
+            result['login_not_equal_password'] = True
+
+        return result
+
     def change_password(self, cr, uid, old_passwd, new_passwd, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
@@ -525,6 +557,11 @@ class users(osv.osv):
         """
         self.check(cr.dbname, uid, old_passwd)
         if new_passwd:
+            login = self.read(cr, uid, uid, ['login'])['login']
+            if not all(self.is_password_strong(new_passwd, login).values()):
+                raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
+                        'Password must be diffrent from the login, it must contain '\
+                        'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
             return self.write(cr, uid, uid, {'password': new_passwd})
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
