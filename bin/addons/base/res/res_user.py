@@ -231,6 +231,9 @@ class users(osv.osv):
                  "users."),
         'signature': fields.text('Signature', size=64),
         'address_id': fields.many2one('res.partner.address', 'Address'),
+        'force_password_change':fields.boolean('Change password on next login',
+            help="Check out this box to force this user to change his "\
+            "password on next login."),
         'active': fields.boolean('Active'),
         'action_id': fields.many2one('ir.actions.actions', 'Home Action', help="If specified, this action will be opened at logon for this user, in addition to the standard menu."),
         'menu_id': fields.many2one('ir.actions.actions', 'Menu Action', help="If specified, the action will replace the standard menu for this user."),
@@ -353,7 +356,8 @@ class users(osv.osv):
         'company_ids': _get_companies,
         'groups_id': _get_group,
         'address_id': False,
-        'menu_tips':True
+        'menu_tips':True,
+        'force_password_change': False,
     }
 
     @tools.cache()
@@ -562,7 +566,11 @@ class users(osv.osv):
                 raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
                         'Password must be diffrent from the login, it must contain '\
                         'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-            return self.write(cr, uid, uid, {'password': new_passwd})
+            vals = {
+                'password': new_passwd,
+                'force_password_change': False,
+            }
+            return self.write(cr, uid, uid, vals)
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
     def get_admin_profile(self, cr, uid, context=None):
