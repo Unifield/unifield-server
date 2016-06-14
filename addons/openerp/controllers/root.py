@@ -48,8 +48,11 @@ class Root(SecuredController):
         """Index page, loads the view defined by `action_id`.
         """
         if not next:
-            user_action_id = rpc.RPCProxy("res.users").read([rpc.session.uid], ['action_id'], rpc.session.context)[0]['action_id']
-            if user_action_id:
+            read_result = rpc.RPCProxy("res.users").read([rpc.session.uid],
+                    ['action_id', 'force_password_change'], rpc.session.context)[0]
+            if read_result['force_password_change']:
+                next = '/openerp/pref/password'
+            elif read_result['action_id']:
                 next = '/openerp/home'
         
         return self.menu(next=next)
@@ -124,12 +127,12 @@ class Root(SecuredController):
 
         if next or active:
             if not id and ids:
-                id = ids[0] 
+                id = ids[0]
             ids = menus.search([('parent_id', '=', id)], 0, 0, 0, ctx)
             tools = menus.read(ids, ['name', 'action'], ctx)
             view = cache.fields_view_get('ir.ui.menu', 1, 'tree', {})
             fields = cache.fields_get(view['model'], False, ctx)
-            
+
             for tool in tools:
                 tid = tool['id']
                 tool['tree'] = tree = tree_view.ViewTree(view, 'ir.ui.menu', tid,
@@ -143,12 +146,30 @@ class Root(SecuredController):
             # display home action
             tools = None
 
+        force_password_change = rpc.RPCProxy("res.users").read([rpc.session.uid],
+                ['force_password_change'],
+                rpc.session.context)[0]['force_password_change']
+        widgets= openobject.pooler.get_pool()\
+                .get_controller('/openerp/widgets')\
+                .user_home_widgets(ctx)
+        display_shortcut = True
+        if next == '/openerp/pref/password' and force_password_change:
+            cherrypy.session['terp_shortcuts']=[]
+            tree.tree.onselection = None
+            tree.tree.onheaderclick = None
+            tree.tree.showheaders = 0
+            tools = {}
+            parents = []
+            widgets=None
+            display_shortcut = False
+
+
+
         return dict(parents=parents, tools=tools, load_content=(next and next or ''),
                     welcome_messages=rpc.RPCProxy('publisher_warranty.contract').get_last_user_messages(_MAXIMUM_NUMBER_WELCOME_MESSAGES),
                     show_close_btn=rpc.session.uid == 1,
-                    widgets=openobject.pooler.get_pool()\
-                                      .get_controller('/openerp/widgets')\
-                                      .user_home_widgets(ctx))
+                    widgets=widgets,
+                    display_shortcut=display_shortcut)
 
     @expose(allow_json=True)
     @unsecured
