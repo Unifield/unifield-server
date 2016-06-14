@@ -1797,7 +1797,7 @@ class account_tax_code(osv.osv):
         if default is None:
             default = {}
         default = default.copy()
-        default.update({'line_ids': []})
+        default.update({'line_ids': [], 'register_line_id': False})
         return super(account_tax_code, self).copy(cr, uid, id, default, context)
 
     _check_recursion = check_cycle
