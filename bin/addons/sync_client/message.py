@@ -211,7 +211,7 @@ class message_to_send(osv.osv):
 
     _columns = {
 
-        'identifier' : fields.char('Identifier', size=128, readonly=True),
+        'identifier' : fields.char('Identifier', size=128, readonly=True, select=1),
         'sent' : fields.boolean('Sent ?', readonly=True),
         'generate_message' : fields.boolean("Generate By system", readonly=True),
         'remote_call':fields.text('Method to call', required = True,readonly=True),
@@ -250,7 +250,7 @@ class message_to_send(osv.osv):
         # UF-2483: Verify if this identifier has already be created, only add for latter calculation if it is completely NEW
         obj_ids = [obj_id for obj_id in obj_ids_temp if not \
                 self.search(cr, uid, [('identifier', '=',
-                    identifiers[obj_id])], context=context)]
+                    identifiers[obj_id])], limit=1, order='NO_ORDER', context=context)]
 
         dest = self.pool.get(rule.model).get_destination_name(cr, uid, obj_ids, rule.destination_name, context=context)
         args = {}
@@ -282,7 +282,7 @@ class message_to_send(osv.osv):
                 'sent' : sent,
                 'generate_message' : False,
         }
-        ids = self.search(cr, uid, [('identifier', '=', identifier)], context=context)
+        ids = self.search(cr, uid, [('identifier', '=', identifier)], limit=1, context=context)
         if not ids:
             ids = [self.create(cr, uid, data, context=context)]
         return ids[0]
