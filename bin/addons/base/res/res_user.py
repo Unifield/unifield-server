@@ -541,7 +541,7 @@ class users(osv.osv):
             result['has_digit'] = True
 
         # check password lenght
-        if len(password) > self.PASSWORD_MIN_LENGHT:
+        if len(password) >= self.PASSWORD_MIN_LENGHT:
             result['long_enought'] = True
 
         # check login != password:
