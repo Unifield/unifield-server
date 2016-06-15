@@ -66,7 +66,7 @@ class account_line_csv_export(osv.osv_memory):
             head += [_('Func. Debit'), _('Func. Credit'), _('Func. Currency')]
         else:
             head += [_('Output Debit'), _('Output Credit'), _('Output Currency')]
-        head += [_('Reconcile'), _('State')]
+        head += [_('Reconcile'), _('Reconcile Date'), _('State')]
         writer.writerow(map(lambda x: x.encode('utf-8'), head))
         # Sort items
         ids.sort()
@@ -138,6 +138,8 @@ class account_line_csv_export(osv.osv_memory):
                     csv_line.append(currency_name.encode('utf-8') or '')
                     #reconcile
                     csv_line.append(ml.reconcile_txt and ml.reconcile_txt.encode('utf-8') or '')
+                    #reconcile date US-533
+                    csv_line.append(ml.reconcile_date or '')
                     #state
                     csv_line.append(field_sel(cr, uid, ml, 'move_state', context).encode('utf-8'))
                     # Write line
