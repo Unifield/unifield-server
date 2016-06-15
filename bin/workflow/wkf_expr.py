@@ -44,11 +44,11 @@ class Env(dict):
 def _eval_expr(cr, ident, workitem, action):
     ret=False
     assert action, 'You used a NULL action in a workflow, use dummy node instead.'
-    uid=ident[0]
-    model=ident[1]
-    ids=[ident[2]]
     for line in action.split('\n'):
         line = line.strip()
+        uid=ident[0]
+        model=ident[1]
+        ids=[ident[2]]
         if line == 'True':
             ret=True
         elif line == 'False':

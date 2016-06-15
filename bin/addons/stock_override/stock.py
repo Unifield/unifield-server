@@ -491,8 +491,7 @@ class stock_picking(osv.osv):
 
         elif not vals.get('partner_id2') and vals.get('address_id'):
             for pick in self.read(cr, uid, ids, ['address_id'], context=context):
-                address_id = pick['address_id'] and pick['address_id'][0] or False
-                if address_id != vals.get('address_id'):
+                if pick['address_id'] and pick['address_id'][0] != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').read(cr, uid,
                             vals.get('address_id'), ['partner_id'], context=context)
                     vals['partner_id2'] = addr['partner_id'] and addr['partner_id'][0] or False
@@ -1490,7 +1489,7 @@ class stock_move(osv.osv):
 
         # if ids and ids_assign are equal, it is possible to call one write on
         # all ids
-        if ids == ids_assign:
+        if set(ids) == set(ids_assign):
             res = super(stock_move, self).confirm_and_force_assign(cr, uid,
                     ids=ids, context=context, vals=vals)
         else:

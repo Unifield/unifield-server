@@ -52,7 +52,7 @@ class purchase_order_confirm_wizard(osv.osv):
     def validate_order(self, cr, uid, ids, context=None):
         wf_service = netsvc.LocalService("workflow")
         for wiz in self.read(cr, uid, ids, ['order_id'], context=context):
-            wf_service.trg_validate(uid, 'purchase.order', wiz['order_id'], 'purchase_confirmed_wait', cr)
+            wf_service.trg_validate(uid, 'purchase.order', wiz['order_id'][0], 'purchase_confirmed_wait', cr)
         return {'type': 'ir.actions.act_window_close'}
 
 purchase_order_confirm_wizard()
@@ -238,7 +238,10 @@ class purchase_order(osv.osv):
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
         res = {}
         for order in self.read(cr, uid, ids, ['order_line'], context=context):
-            res[order['id']] = bool(order['order_line'])
+            if order['order_line']:
+                res[order['id']] = False
+            else:
+                res[order['id']] = True
         return res
 
     def _po_from_x(self, cr, uid, ids, field_names, args, context=None):
@@ -563,8 +566,10 @@ class purchase_order(osv.osv):
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
 
+
+        res_partner_obj = self.pool.get('res.partner')
         for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'], context=context):
-            partner_type = self.pool.get('res.partner').read(cr, uid, vals.get('partner_id', order['partner_id'][0]), ['partner_type'], context=context)['partner_type']
+            partner_type = res_partner_obj.read(cr, uid, vals.get('partner_id', order['partner_id'][0]), ['partner_type'], context=context)['partner_type']
             if vals.get('order_type'):
                 if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
                     vals.update({'invoice_method': 'manual'})
@@ -576,6 +581,9 @@ class purchase_order(osv.osv):
                     vals.update({'invoice_method': 'picking'})
             # we need to update the location_id because it is readonly and so does not pass in the vals of create and write
             vals = self._get_location_id(cr, uid, vals,  warehouse_id=vals.get('warehouse_id', order['warehouse_id'] and order['warehouse_id'][0] or False), context=context)
+            # FIXME here it is useless to continue as the next loop will
+            # overwrite vals
+            break
 
         res = super(purchase_order, self).write(cr, uid, ids, vals, context=context)
 
@@ -1323,9 +1331,12 @@ stock moves which are already processed : '''
             # UFTP-335: Added a check in if to avoid False value being taken
             if exp_sol['po_id'] and exp_sol['po_id'][0] not in all_po_ids:
                 all_po_ids.append(exp_sol['po_id'][0])
-        list_po_name = ', '.join([linked_po['name'] for linked_po in self.read(cr, uid, all_po_ids, ['name'], context) if linked_po['id'] != ids[0]])
+        ids_to_read = all_po_ids[:]
+        if ids[0] in ids_to_read:
+            ids_to_read.remove(ids[0])
+        list_po_name = ', '.join([linked_po['name'] for linked_po in self.read(cr, uid, ids_to_read, ['name'], context)])
         self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
-                                 ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
+                                 ) % (self.read(cr, uid, ids[0], ['name'])['name'], list_po_name))
         # sale order lines with modified state
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
@@ -1524,7 +1535,7 @@ stock moves which are already processed : '''
                                     ('sale_id', '=', line.procurement_id.sale_id.id),
                                     ('type', '=', 'out'),
                                     ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                                ], context=context)
+                                ], limit=1, context=context)
                             if not out_ids:
                                 picking_data = so_obj._get_picking_data(cr, uid, so)
                                 out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]
@@ -1554,6 +1565,7 @@ stock moves which are already processed : '''
                                 'move_id': line.move_dest_id.id,
                             }, context=context)
                             if out_pick_id:
+                                move_obj.write(cr, uid, [out_move_id.id], {'state': 'draft'})
                                 picks_to_check.setdefault(out_pick_id, [])
                                 picks_to_check[out_pick_id].append(out_move_id.id)
                             else:
@@ -1648,6 +1660,7 @@ stock moves which are already processed : '''
                     wf_service.trg_write(uid, 'sale.order', so['id'], cr)
 
         move_to_delete = set()
+        pick_id_to_delete = set()
         for out_pick_id, out_move_ids in picks_to_check.iteritems():
             full_out = pick_obj.read(cr, uid, out_pick_id, ['move_lines'])['move_lines']
             for om_id in out_move_ids:
@@ -1655,13 +1668,13 @@ stock moves which are already processed : '''
                     full_out.remove(om_id)
 
             if out_pick_id and not full_out:
-                pick_obj.write(cr, uid, [out_pick_id], {'state': 'draft'}, context=context)
-                pick_obj.unlink(cr, uid, out_pick_id)
-                move_to_delete.update(out_move_ids)
-            else:
-                move_to_delete.update(out_move_ids)
-        move_obj.unlink(cr, uid, list(move_to_delete), context=context, force=True)
-
+                pick_id_to_delete.add(out_pick_id)
+            move_to_delete.update(out_move_ids)
+        if pick_id_to_delete:
+            pick_obj.write(cr, uid, list(pick_id_to_delete), {'state': 'draft'}, context=context)
+            pick_obj.unlink(cr, uid, list(pick_id_to_delete))
+        if move_to_delete:
+            move_obj.unlink(cr, uid, list(move_to_delete), context=context, force=True)
         return True
 
     def check_if_product(self, cr, uid, ids, context=None):
@@ -1889,12 +1902,9 @@ stock moves which are already processed : '''
                             location_id = cross_id
                         elif move.product_id.type == 'consu':
                             location_id = non_stock_id
-                        dpo_line_id = False
-                        if order.order_type == 'direct':
-                            dpo_line_id = todo4.get(move.sale_line_id.procurement_id.id, False)
                         move_obj.write(cr, uid, [move.id], {'dpo_id': order.id,
                                                             'state': 'done',
-                                                            'dpo_line_id': dpo_line_id,
+                                                            'dpo_line_id': todo4.get(move.sale_line_id.procurement_id.id, False),
                                                             'location_id': location_id,
                                                             'location_dest_id': location_id,
                                                             'date': strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -2014,7 +2024,7 @@ stock moves which are already processed : '''
                     ('is_current_instance', '=', True)
                 ])
 
-        for order in self.read(cr, uid, ['order_type'], ids):
+        for order in self.read(cr, uid, ids, ['order_type']):
             if order['order_type'] == 'purchase_list':
                 invoice_obj.write(cr, uid, [invoice_id], {'purchase_list': 1})
             elif order['order_type'] == 'in_kind':
@@ -2116,7 +2126,7 @@ stock moves which are already processed : '''
                                 break
 
                 move_values = {
-                    'name': order.name + ': ' +(order_line.name or ''),
+                    'name': ''.join((order.name, ': ', (order_line.name or ''))),
                     'product_id': order_line.product_id.id,
                     'product_qty': order_line.product_qty,
                     'product_uos_qty': order_line.product_qty,
@@ -2172,8 +2182,9 @@ stock moves which are already processed : '''
         if 'cross_docking_ok' not in vals:
             return vals
 
+        stock_warehouse_obj = self.pool.get('stock.warehouse')
         if not warehouse_id:
-            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
+            warehouse_id = stock_warehouse_obj.search(cr, uid, [], context=context)[0]
 
         if isinstance(warehouse_id, str):
             try:
@@ -2185,7 +2196,7 @@ stock moves which are already processed : '''
                 )
 
         if not vals.get('cross_docking_ok', False):
-            vals.update({'location_id': self.pool.get('stock.warehouse').read(cr, uid, warehouse_id, ['lot_input_id'], context=context)['lot_input_id'][0]})
+            vals.update({'location_id': stock_warehouse_obj.read(cr, uid, warehouse_id, ['lot_input_id'], context=context)['lot_input_id'][0]})
         elif vals.get('cross_docking_ok', False):
             vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
 
@@ -2830,7 +2841,7 @@ class purchase_order_line(osv.osv):
                     context=context)
             # Remove the qty from the merged line
             if line['merged_id']:
-                merged_id = line['merged_id'][0]
+                merged_id = line['merged_id'] and line['merged_id'][0] or False
                 change_price_ok = line['change_price_ok']
                 c = context.copy()
                 c.update({'change_price_ok': change_price_ok})
@@ -3111,8 +3122,6 @@ class purchase_order_line(osv.osv):
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
-        if vals.get('origin'):
-            so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], order='NO_ORDER', context=context)
         for line in self.browse(cr, uid, ids, context=context):
             new_vals = vals.copy()
             # check qty
@@ -3141,6 +3150,7 @@ class purchase_order_line(osv.osv):
             res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
             if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id', line.procurement_id):
+                so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], order='NO_ORDER', context=context)
                 for so_id in so_ids:
                     exp_sol_obj.create(cr, uid, {
                         'order_id': so_id,
@@ -3431,12 +3441,12 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         order_ids = []
-        tmp_skip_resourcing = context.get('skipResourcing', False)
-        context['skipResourcing'] = True
-        context['skipResourcing'] = tmp_skip_resourcing
         for line in self.read(cr, uid, ids, ['id', 'order_id'], context=context):
+            tmp_skip_resourcing = context.get('skipResourcing', False)
+            context['skipResourcing'] = True
             # we want to skip resequencing because unlink is performed on merged purchase order lines
             self._update_merged_line(cr, uid, line['id'], False, context=context)
+            context['skipResourcing'] = tmp_skip_resourcing
             if line['order_id'][0] not in order_ids:
                 order_ids.append(line['order_id'][0])
 
@@ -3767,8 +3777,9 @@ class purchase_order_line(osv.osv):
                                  'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False,
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False,
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
-            st_uom = self.pool.get('product.product').read(cr, uid, product, ['uom_id'])['uom_id'][0]
-            st_price = self.pool.get('product.product').read(cr, uid, product, ['standard_price'])['standard_price']
+            product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price'])
+            st_uom = product_result['uom_id'][0]
+            st_price = product_result['standard_price']
             st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False, context=context)
             st_price = self.pool.get('product.uom')._compute_price(cr, uid, st_uom, st_price, uom)
 

@@ -42,7 +42,7 @@ class stock_location(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        cross_docking_location = self.search(cr, uid, [('cross_docking_location_ok', '=', True), ('id', 'in', ids)], context=context)
+        cross_docking_location = self.search_exists(cr, uid, [('cross_docking_location_ok', '=', True), ('id', 'in', ids)], context=context)
         if cross_docking_location:
             raise osv.except_osv(_('Warning !'), _('You cannot delete the cross docking location.'))
         return super(stock_location, self).unlink(cr, uid, ids, context)

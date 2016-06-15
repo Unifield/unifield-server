@@ -753,7 +753,6 @@ class stock_picking(osv.osv):
             todo_set.update(move_ids)
 
         self.log_picking(cr, uid, ids, context=context)
-
         todo = self.action_explode(cr, uid, list(todo_set), context)
         if len(todo):
             self.pool.get('stock.move').action_confirm(cr, uid, todo, context=context)
@@ -874,11 +873,13 @@ class stock_picking(osv.osv):
                 order='NO_ORDER')
         for move in move_obj.read(cr, uid, move_ids, ['state', 'product_qty']):
             if move['product_qty'] != 0.0:
-                move_obj.write(cr, uid, move_to_write, {'state': 'done'})
+                if move_to_write:
+                    move_obj.write(cr, uid, move_to_write, {'state': 'done'})
                 return False
             else:
                 move_to_write.append(move['id'])
-        move_obj.write(cr, uid, move_to_write, {'state': 'done'})
+        if move_to_write:
+            move_obj.write(cr, uid, move_to_write, {'state': 'done'})
         return True
 
     def test_assigned(self, cr, uid, ids):
@@ -2134,6 +2135,8 @@ class stock_move(osv.osv):
         when action_confirm and force_assign are both called, it is faster to
         use confirm_and_force_assign to do only one write per move.
         '''
+        if not ids:
+            import pdb; pdb.set_trace()
         if not context:
             context = {}
         if vals is None:
@@ -2210,7 +2213,8 @@ class stock_move(osv.osv):
                     cr.execute('update stock_move set location_id=%s, product_qty=%s, product_uos_qty=%s where id=%s', (r[1], r[0], r[0] * move.product_id.uos_coeff, move.id))
 
                     done, notdone = self._hook_copy_stock_move(cr, uid, res, move, done, notdone)
-        self.write(cr, uid, list(move_to_assign), {'state':'assigned'})
+        if not move_to_assign:
+            self.write(cr, uid, list(move_to_assign), {'state':'assigned'})
         count = self._hook_write_state_stock_move(cr, uid, done, notdone, count)
 
         if count:
@@ -2449,7 +2453,8 @@ class stock_move(osv.osv):
             prodlot_id = partial_datas and partial_datas.get('move%s_prodlot_id' % (move.id), False)
             if prodlot_id:
                 vals.update({'prodlot_id': prodlot_id})
-            self.write(cr, uid, [move.id], vals)
+            if vals:
+                self.write(cr, uid, [move.id], vals)
             if move.state not in ('confirmed','done','assigned'):
                 todo.append(move.id)
 
@@ -2461,14 +2466,15 @@ class stock_move(osv.osv):
             wf_service.trg_trigger(uid, 'stock.move', move_ids, cr)
 
         pick_id_to_write = set()
-        for pick_id in picking_ids:
-            wf_service.trg_write(uid, 'stock.picking', pick_id, cr)
-            pick = self.pool.get('stock.picking').browse(cr, uid, pick_id, context=context)
+        for pick in self.pool.get('stock.picking').read(cr, uid, picking_ids,
+                ['state', 'type'], context=context):
+            wf_service.trg_write(uid, 'stock.picking', pick['id'], cr)
             ##### UF-2378 For some reason, the RW code from OpenERP kept the IN always in Available, even its lines are closed!!!
-            if pick.state != 'done' and pick.type=='in':
+            if pick['state'] != 'done' and pick['type'] == 'in':
                 pick_id_to_write.add(pick_id)
-        self.pool.get('stock.picking').write(cr, uid,
-                list(pick_id_to_write), {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+        if pick_id_to_write:
+            self.pool.get('stock.picking').write(cr, uid,
+                    list(pick_id_to_write), {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
 
         moves = self.browse(cr, uid, move_ids, context=context)
         self.create_chained_picking(cr, uid, moves, context)
@@ -2707,6 +2713,8 @@ class stock_move(osv.osv):
                         'location_id': location_id or move.location_id.id
                     }
                     self.write(cr, uid, [move.id], update_val)
+            #regarder la valeur de res a chaque passage
+            import pdb; pdb.set_trace()
 
         for new_move in self.read(cr, uid, res, ['product_id', 'product_qty'], context=context):
             for (id, name) in product_obj.name_get(cr, uid, [new_move['product_id'][0]]):

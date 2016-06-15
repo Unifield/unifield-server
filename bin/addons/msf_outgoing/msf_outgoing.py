@@ -2608,6 +2608,7 @@ class stock_picking(osv.osv):
         '''
         # Objects
         ship_proc_obj = self.pool.get('shipment.processor')
+        sale_order_obj = self.pool.get('sale.order')
         # For Remote Warehouse: If the instance is CP, and if the type=out, subtype=PICK and name does not contain "-", then set the flag to ask syncing this PICK
         usb_entity = self._get_usb_entity_type(cr, uid, context)
 
@@ -2816,7 +2817,7 @@ class stock_picking(osv.osv):
                 if sale_id:
                     sale_id = sale_id[0]
                     # today
-                    rts = self.pool.get('sale.order').read(cr, uid, sale_id, ['ready_to_ship_date'], context=context)['ready_to_ship_date']
+                    rts = sale_order_obj.read(cr, uid, sale_id, ['ready_to_ship_date'], context=context)['ready_to_ship_date']
                 else:
                     rts = date.today().strftime(db_date_format)
                 # rts + shipment lt
@@ -2837,7 +2838,7 @@ class stock_picking(osv.osv):
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
                                   'shipment_actual_date': rts,
-                                  'transport_type': sale_id and self.pool.get('sale.order').read(cr, uid, [sale_id], ['transport_type'], context=context)[0]['transport_type'] or False,
+                                  'transport_type': sale_id and sale_order_obj.read(cr, uid, sale_id, ['transport_type'], context=context)['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                                 'code':name,
                                                                                 'prefix':'',
