@@ -373,7 +373,7 @@ class purchase_order(osv.osv):
                                                        ('mixed', 'Mixed')], string='Allocated setup', method=True, store=False),
         'unallocation_ok': fields.boolean(string='Unallocated PO'),
         # we increase the size of the partner_ref field from 64 to 128
-        'partner_ref': fields.char('Supplier Reference', size=128),
+        'partner_ref': fields.char('Supplier Reference', size=128, select=1),
         'product_id': fields.related('order_line', 'product_id', type='many2one', relation='product.product', string='Product'),
         'no_line': fields.function(_get_no_line, method=True, type='boolean', string='No line'),
         'active': fields.boolean('Active', readonly=True),

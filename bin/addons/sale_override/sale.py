@@ -2815,7 +2815,7 @@ class sale_order_line(osv.osv):
                     \n* The \'Cancelled\' state is set when a user cancel the sales order related.'),
 
                 # This field is used to identify the FO PO line between 2 instances of the sync
-                'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True),
+                'sync_order_line_db_id': fields.text(string='Sync order line DB Id', required=False, readonly=True, select=1),
                 'original_line_id': fields.many2one('sale.order.line', string='Original line', help='ID of the original line before the split'),
                 'manually_corrected': fields.boolean(string='FO line is manually corrected by user'),
                 'created_by_po': fields.many2one('purchase.order', string='Created by PO'),
