@@ -58,5 +58,8 @@
             <field name="method">us_1024_send_bar_patch</field>
         </record>
 
+        <record id="us_1297_patch" model="patch.scripts">
+            <field name="method">us_1297_patch</field>
+        </record>
     </data>
 </openerp>

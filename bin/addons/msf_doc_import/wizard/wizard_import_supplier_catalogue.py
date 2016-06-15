@@ -50,18 +50,9 @@ The columns should be in this order (* indicates that the field cannot be empty)
 """)
 
 
-class wizard_import_supplier_catalogue(osv.osv):
+class wizard_import_supplier_catalogue(osv.osv_memory):
     _name = 'wizard.import.supplier.catalogue'
     _rec_name = 'catalogue_id'
-
-    def get_bool_values(self, cr, uid, ids, fields, arg, context=None):
-        res = {}
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = False
-            if any([item for item in obj.line_ids if item.to_correct_ok]):
-                res[obj.id] = True
 
     _columns = {
         'file': fields.binary(
@@ -79,14 +70,6 @@ class wizard_import_supplier_catalogue(osv.osv):
             required=True,
             ondelete='cascade',
         ),
-        'line_ids': fields.many2many(
-            'supplier.catalogue.line',
-            'import_catalogue_line_rel',
-            'import_id',
-            'catalogue_line_id',
-            string='Catalogue lines',
-            readonly=True,
-        ),
         'data': fields.binary(
             string='Lines with errors',
         ),
@@ -98,10 +81,7 @@ class wizard_import_supplier_catalogue(osv.osv):
             string='Templates',
             size=256,
         ),
-        'import_error_ok': fields.function(
-            get_bool_values,
-            method=True,
-            type="boolean",
+        'import_error_ok': fields.boolean(
             string="Show column errors",
             store=False,
         ),
@@ -170,7 +150,7 @@ class wizard_import_supplier_catalogue(osv.osv):
             ids = [ids]
 
         vals = {}
-        vals['line_ids'], error_list, line_with_error = [], [], []
+        error_list, line_with_error = [], []
         msg_to_return = _("All lines successfully imported")
         error_log = ''
         start_time = time.time()
@@ -201,6 +181,7 @@ class wizard_import_supplier_catalogue(osv.osv):
                     error_list_line.append(_("You should have exactly 8 columns in this order: Product code*, Product description, Product UoM*, Min Quantity*, Unit Price*, SoQ Rounding, Min Order Qty, Comment."))
                 comment = []
                 p_comment = False
+                catalog_line_id = False
                 try:
                     #Product code
                     try:
@@ -341,8 +322,6 @@ class wizard_import_supplier_catalogue(osv.osv):
                                 to_write['min_order_qty'] = p_min_order_qty
                             if cl_obj.comment != p_comment:
                                 to_write['comment'] = p_comment
-                            if to_write:
-                                vals['line_ids'].append((1, catalog_line_id[0], to_write))
                             # Check Min. Qty rounding quantity
                             qty_check = obj_catalog_line.change_uom_qty(cr, uid, cl_obj.id,
                                                                       to_write.get('line_uom_id', cl_obj.line_uom_id.id),
@@ -364,7 +343,6 @@ class wizard_import_supplier_catalogue(osv.osv):
                             'min_order_qty': p_min_order_qty,
                             'comment': p_comment,
                         }
-                        vals['line_ids'].append((0, 0, to_write))
                         # Check Min. Qty rounding quantity
                         qty_check = obj_catalog_line.change_uom_qty(cr, uid, False,
                                                                     to_write.get('line_uom_id', False),
@@ -391,6 +369,11 @@ class wizard_import_supplier_catalogue(osv.osv):
 
                     to_write['catalogue_id'] = obj.catalogue_id.id
 
+                    if not catalog_line_id:
+                        obj_catalog_line.create(cr, uid, to_write)
+                    else:
+                        obj_catalog_line.write(cr, uid, catalog_line_id, to_write)
+
                     percent_completed = float(line_num-1)/float(total_line_num-1)*100.0
                     complete_lines += 1
                 except IndexError, e:
@@ -415,13 +398,9 @@ class wizard_import_supplier_catalogue(osv.osv):
                     cr.commit()
 
             # in case of lines ignored, we notify the user and create a file with the lines ignored
-            vals.update({'text_error': _('Lines ignored: %s \n ----------------------\n') % (ignore_lines,) +
+            vals.update({'message': _('Lines ignored: %s \n ----------------------\n') % (ignore_lines,) +
                          '\n'.join(error_list), 'data': False, 'import_error_ok': False,
                          'file': False})
-            if line_with_error:
-                file_to_export = self.export_file_with_error(cr, uid, ids, line_with_error=line_with_error)
-                vals.update(file_to_export)
-            self.write(cr, uid, ids, vals, context=context)
 
         error_log += '\n'.join(error_list)
         if error_log:
@@ -438,6 +417,7 @@ Importation completed in %s!
         if line_with_error:
             file_to_export = wiz_common_import.export_file_with_error(cr, uid, ids, line_with_error=line_with_error, header_index=context.get('header_index'))
             wizard_vals.update(file_to_export)
+            vals['import_error_ok'] = True
         self.write(cr, uid, ids, wizard_vals, context=context)
         cr.commit()
         cr.close(True)
@@ -471,7 +451,7 @@ Importation completed in %s!
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'catalogue_id': wiz['catalogue_id'][0], 'header_index': header_index, 'object': catalogue_obj})
+                context.update({'catalogue_id': wiz['catalogue_id'], 'header_index': header_index, 'object': catalogue_obj})
                 res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_supplier_catalogue_import)
                 if not res:
                     return self.write(cr, uid, ids, res1)
@@ -507,7 +487,7 @@ Otherwise, you can continue to use Unifield.""")
             return False
 
         wiz = self.read(cr, uid, ids, ['catalogue_id', 'state', 'file'])
-        catalogue_name = catalogue_obj.read(cr, uid, wiz[0]['catalogue_id'][0], ['name'])['name']
+        catalogue_name = catalogue_obj.read(cr, uid, wiz[0]['catalogue_id'], ['name'])['name']
         if wiz[0]['state'] != 'done':
             self.write(cr, uid, ids, {
                 'message': _(' Import in progress... \n Please wait that the import is finished before editing %s.') % (catalogue_name),
@@ -536,7 +516,7 @@ Otherwise, you can continue to use Unifield.""")
         if not ids:
             return True
 
-        catalogue_id = self.read(cr, uid, ids[0], ['catalogue_id'], context=context)['catalogue_id'][0]
+        catalogue_id = self.read(cr, uid, ids[0], ['catalogue_id'], context=context)['catalogue_id']
 
         return {
             'type': 'ir.actions.act_window',

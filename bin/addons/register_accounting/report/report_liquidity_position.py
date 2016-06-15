@@ -36,6 +36,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
         self.func_currency_id = 0
         self.total_func_calculated_balance = 0
         self.total_func_register_balance = 0
+        self.grand_total_reg_currency = {}
 
         self.localcontext.update({
             'getRegistersByType': self.getRegistersByType,
@@ -47,6 +48,7 @@ class report_liquidity_position3(report_sxw.rml_parse):
             'getConvert': self.getConvert,
             'getOpeningBalance': self.getOpeningBalance,
             'getPendingCheques': self.getPendingCheques,
+            'getGrandTotalRegCurrency': self.getGrandTotalRegCurrency,
         })
         return
 
@@ -163,6 +165,11 @@ class report_liquidity_position3(report_sxw.rml_parse):
             reg_types[reg.journal_id.type]['currency_amounts'][currency.name]['amount_calculated'] += calc_bal
             reg_types[reg.journal_id.type]['currency_amounts'][currency.name]['amount_balanced'] += reg_bal
 
+            # Add the amount in register currency to the Grand Total for all register types
+            if currency.name not in self.grand_total_reg_currency:
+                self.grand_total_reg_currency[currency.name] = 0
+            self.grand_total_reg_currency[currency.name] += calc_bal
+
             # Add totals functionnal amounts
             total_func_calculated_balance += func_calc_bal
             total_func_register_balance += func_reg_bal
@@ -266,10 +273,20 @@ class report_liquidity_position3(report_sxw.rml_parse):
             pending_cheques['currency_amounts'][journal.currency.name]['total_amount_reg_currency'] += amount_reg_currency
             pending_cheques['currency_amounts'][journal.currency.name]['total_amount_func_currency'] += amount_func_currency
 
+            # Add the amount in register currency to the Grand Total for all register types
+            # (note that it is technically possible to have pending cheques in a currency for which
+            # no bank register is open yet for the period)
+            if journal.currency.name not in self.grand_total_reg_currency:
+                self.grand_total_reg_currency[journal.currency.name] = 0
+            self.grand_total_reg_currency[journal.currency.name] += amount_reg_currency
+
             # Add amount to get the "global" Total for all currencies (in functional currency)
             pending_cheques['total_cheque'] += amount_func_currency
         self.pending_cheques = pending_cheques
         return pending_cheques
+
+    def getGrandTotalRegCurrency(self):
+        return self.grand_total_reg_currency
 
 
 SpreadsheetReport('report.liquidity.position.2', 'account.bank.statement', 'addons/register_accounting/report/liquidity_position_xls.mako', parser=report_liquidity_position3)
