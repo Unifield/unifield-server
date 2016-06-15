@@ -52,6 +52,8 @@ def get_db_list():
 
 class DBForm(openobject.widgets.Form):
     strip_name = True
+    display_string = False
+    display_description = False
 
     def __init__(self, *args, **kw):
         super(DBForm, self).__init__(*args, **kw)

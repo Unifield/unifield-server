@@ -51,7 +51,7 @@ class Root(SecuredController):
             read_result = rpc.RPCProxy("res.users").read([rpc.session.uid],
                     ['action_id', 'force_password_change'], rpc.session.context)[0]
             if read_result['force_password_change']:
-                next = '/openerp/pref/password'
+                next = '/openerp/pref/update_password'
             elif read_result['action_id']:
                 next = '/openerp/home'
         
@@ -153,7 +153,7 @@ class Root(SecuredController):
                 .get_controller('/openerp/widgets')\
                 .user_home_widgets(ctx)
         display_shortcut = True
-        if next == '/openerp/pref/password' and force_password_change:
+        if next == '/openerp/pref/update_password' and force_password_change:
             cherrypy.session['terp_shortcuts']=[]
             tree.tree.onselection = None
             tree.tree.onheaderclick = None

@@ -226,7 +226,8 @@ class Form(FormField):
 
     template = "/openobject/widgets/templates/form.mako"
 
-    params = ['action', 'method', 'submit_text']
+    params = ['action', 'method', 'submit_text', 'string', 'display_string',
+            'description', 'display_description']
     member_widgets = ['hidden_fields', 'fields']
 
     hidden_fields = []

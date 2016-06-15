@@ -38,6 +38,16 @@ class PrefsPassword(database.FormPassword):
               openobject.widgets.PasswordField(name='new_password', label=_('New Password:'), validator=formencode.validators.NotEmpty()),
               openobject.widgets.PasswordField(name='confirm_password', label=_('Confirm Password:'), validator=formencode.validators.NotEmpty())]
 
+class UpdatePassword(PrefsPassword):
+    action = "/openerp/pref/update_password"
+    string = _('Change your password')
+    description = _("""The admnistrator of your Unifield instance decide to reset
+    your password. You need to choose a new one to be able to use Unifield
+    normally. The new password have to be different from the login, to be more
+    or equal than 6 characters, and contain a least one number.""")
+    display_string = True
+    display_description = True
+
 int_pattern = re.compile(r'^\d+$')
 class Preferences(Form):
 
@@ -87,8 +97,10 @@ class Preferences(Form):
         raise redirect('/openerp/pref/create', saved=True)
 
     @expose(template='/openerp/controllers/templates/preferences/password.mako')
-    def password(self, old_password='', new_password='', confirm_password=''):
-        context = {'form': PrefsPassword(), 'errors': []}
+    def password(self, old_password='', new_password='', confirm_password='',
+            context=None):
+        if context is None:
+            context = {'form': PrefsPassword(), 'errors': []}
         if cherrypy.request.method != 'POST':
             return context
 
@@ -110,6 +122,13 @@ class Preferences(Form):
         except Exception, e:
             context['errors'].append(str(e))
         return context
+
+    @expose(template='/openerp/controllers/templates/preferences/password.mako')
+    def update_password(self, old_password='', new_password='',
+            confirm_password=''):
+        context = {'form': UpdatePassword(), 'errors': []}
+        return self.password(old_password, new_password, confirm_password,
+                context=context)
 
     @expose()
     def clear_cache(self):
