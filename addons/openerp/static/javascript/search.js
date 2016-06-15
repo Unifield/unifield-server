@@ -623,6 +623,12 @@ function parse_filters(src, id) {
     });
     all_domains['filter_status'] = serializeJSON(fl_status);
 
+    // (US-1360) Store the original domain used
+    if (openobject.dom.get('_terp_domain'))
+    {
+        all_domains['original_domain'] = openobject.dom.get('_terp_domain').value;
+    }
+
     all_domains = serializeJSON(all_domains);
     return all_domains;
 }
