@@ -31,6 +31,10 @@ from tools.misc import flatten
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     _name = 'account.move.line'
+    
+    _columns = {
+        'reconcile_date': fields.date('Reconcile date', help="Date of reconciliation"),
+    }
 
     def check_imported_invoice(self, cr, uid, ids, context=None):
         """
