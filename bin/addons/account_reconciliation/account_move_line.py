@@ -33,7 +33,8 @@ class account_move_line(osv.osv):
     _name = 'account.move.line'
     
     _columns = {
-        'reconcile_date': fields.date('Reconcile date', help="Date of reconciliation"),
+        'reconcile_date': fields.date('Reconcile date',
+            help="Date of reconciliation"),
     }
 
     def check_imported_invoice(self, cr, uid, ids, context=None):
@@ -123,6 +124,11 @@ class account_move_line(osv.osv):
             'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
             'is_multi_instance': different_level,
         })
+        # US-533: date of JI reconciliation for line_partial_ids linked with
+        # above (4, 0)
+        self.pool.get('account.move.line').write(cr, uid, merges+unmerge, {
+                'reconcile_date': time.strftime('%Y-%m-%d'),
+            })
         
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
@@ -230,6 +236,12 @@ class account_move_line(osv.osv):
             'is_multi_instance': different_level,
             'multi_instance_level_creation': multi_instance_level_creation,
         })
+        
+        # US-533: date of JI reconciliation for total reconciliation linked
+        # with above (4, 0)
+        self.pool.get('account.move.line').write(cr, uid, ids, {
+                'reconcile_date': time.strftime('%Y-%m-%d'),
+            })
         
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):

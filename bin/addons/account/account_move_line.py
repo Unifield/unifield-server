@@ -1135,6 +1135,9 @@ class account_move_line(osv.osv):
         unlink_ids += part_rec_ids
         if unlink_ids:
             obj_move_rec.unlink(cr, uid, unlink_ids)
+        obj_move_line.write(cr, uid, move_ids, {
+                'reconcile_date': False,  # US-533 reset reconcilation date
+            }, context=context)
         return True
 
     def check_unlink(self, cr, uid, ids, context=None):
