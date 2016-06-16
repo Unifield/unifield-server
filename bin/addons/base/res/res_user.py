@@ -208,7 +208,7 @@ class users(osv.osv):
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
         if not all(self.is_password_strong(value, login).values()):
-            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
+            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                     'Password must be diffrent from the login, it must contain '\
                     'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
         self.write(cr, uid, id, {'password': value})
@@ -532,7 +532,7 @@ class users(osv.osv):
         """
         result = {
                 'has_digit': False,
-                'long_enought': False,
+                'long_enough': False,
                 'login_not_equal_password': False,
         }
 
@@ -542,7 +542,7 @@ class users(osv.osv):
 
         # check password lenght
         if len(password) >= self.PASSWORD_MIN_LENGHT:
-            result['long_enought'] = True
+            result['long_enough'] = True
 
         # check login != password:
         if password != login:
@@ -563,7 +563,7 @@ class users(osv.osv):
         if new_passwd:
             login = self.read(cr, uid, uid, ['login'])['login']
             if not all(self.is_password_strong(new_passwd, login).values()):
-                raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enought. '\
+                raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                         'Password must be diffrent from the login, it must contain '\
                         'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
             vals = {
