@@ -1535,7 +1535,7 @@ stock moves which are already processed : '''
                                     ('sale_id', '=', line.procurement_id.sale_id.id),
                                     ('type', '=', 'out'),
                                     ('state', 'in', ['draft', 'confirmed', 'assigned']),
-                                ], limit=1, context=context)
+                                ], context=context)
                             if not out_ids:
                                 picking_data = so_obj._get_picking_data(cr, uid, so)
                                 out_ids = [pick_obj.create(cr, uid, picking_data, context=context)]

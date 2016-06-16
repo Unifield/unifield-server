@@ -2135,8 +2135,6 @@ class stock_move(osv.osv):
         when action_confirm and force_assign are both called, it is faster to
         use confirm_and_force_assign to do only one write per move.
         '''
-        if not ids:
-            import pdb; pdb.set_trace()
         if not context:
             context = {}
         if vals is None:
@@ -2471,7 +2469,7 @@ class stock_move(osv.osv):
             wf_service.trg_write(uid, 'stock.picking', pick['id'], cr)
             ##### UF-2378 For some reason, the RW code from OpenERP kept the IN always in Available, even its lines are closed!!!
             if pick['state'] != 'done' and pick['type'] == 'in':
-                pick_id_to_write.add(pick_id)
+                pick_id_to_write.add(pick['id'])
         if pick_id_to_write:
             self.pool.get('stock.picking').write(cr, uid,
                     list(pick_id_to_write), {'state': 'done', 'date_done': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
@@ -2713,8 +2711,6 @@ class stock_move(osv.osv):
                         'location_id': location_id or move.location_id.id
                     }
                     self.write(cr, uid, [move.id], update_val)
-            #regarder la valeur de res a chaque passage
-            import pdb; pdb.set_trace()
 
         for new_move in self.read(cr, uid, res, ['product_id', 'product_qty'], context=context):
             for (id, name) in product_obj.name_get(cr, uid, [new_move['product_id'][0]]):
