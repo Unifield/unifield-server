@@ -43,6 +43,7 @@ class bank_reconciliation(report_sxw.rml_parse):
         if not self.amount_pending_cheque:
             aj_obj = self.pool.get('account.journal')
             abs_obj = self.pool.get('account.bank.statement')
+            period_obj = self.pool.get('account.period')
 
             aj_args = [
                 ('type', '=', 'cheque'),
@@ -53,8 +54,11 @@ class bank_reconciliation(report_sxw.rml_parse):
             for journal in aj_obj.browse(self.cr, self.uid, aj_ids, context=self.context):
                 account_ids += [journal.default_debit_account_id.id, journal.default_credit_account_id.id]
 
-            period_ids = self.pool.get('account.period').\
-                search(self.cr, self.uid, [('date_start', '<=', obj.period_id.date_start)])
+            # (US-1412) Don't get the date_start directly from the obj.period_id, otherwise it would have the type
+            # "report.report_sxw._date_format" and would be interpreted differently depending on language settings.
+            period = period_obj.browse(self.cr, self.uid, obj.period_id.id, self.context)
+            period_ids = period_obj.search(self.cr, self.uid, [('date_start', '<=', period.date_start)], context=self.context)
+
             abs_args = [
                 ('period_id', 'in', period_ids),
                 ('journal_id', 'in', aj_ids),
