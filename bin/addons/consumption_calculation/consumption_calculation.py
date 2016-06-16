@@ -316,6 +316,11 @@ class real_average_consumption(osv.osv):
        
         # check and update lines
         for rac in self.browse(cr, uid, ids, context=context):
+            if rac.state != 'draft':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Only draft Consumption reports can be processed. Maybe this one has been already processed.'),
+                )
             if DateFrom(rac.period_to) > now():
                 raise osv.except_osv(_('Error'), _('"Period to" can\'t be in the future.'))
 
