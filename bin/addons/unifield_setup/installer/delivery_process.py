@@ -128,18 +128,3 @@ So, you cannot choose 'Simple OUT' as Delivery process while these documents are
 
         
 delivery_process_setup()
-
-
-class ir_ui_menu(osv.osv):
-    _name = 'ir.ui.menu'
-    _inherit = 'ir.ui.menu'
-    
-    _columns = {
-        'active': fields.boolean(string='Active'),
-    }
-    
-    _defaults = {
-        'active': lambda *a: True,
-    }
-    
-ir_ui_menu() 
