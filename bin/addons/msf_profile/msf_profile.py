@@ -605,6 +605,34 @@ class patch_scripts(osv.osv):
                 budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
         return True
 
+    def us_1427_patch(self, cr, uid, *a, **b):
+        """
+        Put active all inactive products with stock quantities in internal locations
+        """
+        sql = """
+        UPDATE product_product SET active = 't' WHERE id IN (
+            SELECT DISTINCT(q.product_id) FROM (
+            SELECT location_id, product_id, sum(sm.product_qty) AS qty
+                FROM (
+                    (
+                        SELECT location_id, product_id, sum(-product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_id, product_id
+                    )
+                    UNION
+                    (
+                        SELECT location_dest_id, product_id, sum(product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_dest_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_dest_id, product_id
+                    )
+                ) AS sm GROUP BY location_id, product_id) AS q
+            LEFT JOIN product_product pp ON q.product_id = pp.id WHERE q.qty > 0 AND pp.active = 'f' ORDER BY q.product_id)
+        """
+        cr.execute(sql)
+        return True
+
 patch_scripts()
 
 
