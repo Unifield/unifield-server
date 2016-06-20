@@ -526,7 +526,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     max_ad_lines = ad_lines and max(ad_lines) * 4 or 0
                     nb_file_header_lines += header_ad_lines
                     nb_file_lines_columns += max_ad_lines
-                    first_line_index = nb_file_header_lines + 2 
+                    first_line_index = nb_file_header_lines + 1
 
                 for line in wiz.simu_line_ids:
                     # Put data in cache
