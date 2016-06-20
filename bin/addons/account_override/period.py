@@ -26,19 +26,25 @@ from osv import osv
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
     Get period in which this date could go into, otherwise return last open period.
-    Do not select special periods (Period 13, 14 and 15).
+    By default: Do not select special periods (Period 13, 14 and 15).
+    except if extend_december to True in context
     """
-    # Some verifications
-    if not context:
+    if context is None:
         context = {}
     if not date:
         return False
+        
+    limit = 1
+    if context.get('extend_december', False) and date[5:7] == '12':
+        # extend search to periods 12, 13, 14, 15 for december date
+        limit = 4
+        
     # Search period in which this date come from
-    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('number', '!=', 16)], limit=1,
+    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('number', '!=', 16)], limit=limit,
         order='date_start asc, name asc', context=context) or []
     # Get last period if no period found
     if not period_ids:
-        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('number', '!=', 16)], limit=1,
+        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('number', '!=', 16)], limit=limit,
             order='date_stop desc, name desc', context=context) or []
     if isinstance(period_ids, (int, long)):
         period_ids = [period_ids]
@@ -50,7 +56,7 @@ def get_date_in_period(self, cr, uid, date=None, period_id=None, context=None):
      - if given date is included in period, return the given date
      - else return the date_stop of given period
     """
-    if not context:
+    if context is None:
         context = {}
     if not date or not period_id:
         return False
