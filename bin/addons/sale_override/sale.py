@@ -1326,6 +1326,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'validated_date': time.strftime('%Y-%m-%d %H:%M:%S'),
         }, context=context)
 
+        self.ssl_products_in_line(cr, uid, ids, context=context)
+
         # Display validation message to the user
         for order in order_brw_list:
             if not order.procurement_request:
