@@ -73794,3 +73794,15 @@ msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la
 #, python-format
 msgid "Not Created"
 msgstr "Non Créé"
+
+#. module: account
+#: code:addons/account/wizard/account_subscription_generate.py:0
+#, python-format
+msgid "The Recurring Model %s has no accounting lines!"
+msgstr "Le Modèle périodique %s n'a pas de lignes comptables !"
+
+#. module: account
+#: code:addons/account/wizard/account_subscription_generate.py:0
+#, python-format
+msgid "The entry is not balanced for the Recurring Model %s!"
+msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
