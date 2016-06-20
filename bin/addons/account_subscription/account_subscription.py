@@ -37,14 +37,14 @@ class account_subscription(osv.osv):
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}
-        if not 'period_nbr' in vals or vals['period_nbr'] < 1:
+        if 'period_nbr' in vals and vals['period_nbr'] < 1:
             raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
         return super(account_subscription, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
             context = {}
-        if not 'period_nbr' in vals or vals['period_nbr'] < 1:
+        if 'period_nbr' in vals and vals['period_nbr'] < 1:
             raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
         return super(account_subscription, self).write(cr, uid, ids, vals, context)
 
