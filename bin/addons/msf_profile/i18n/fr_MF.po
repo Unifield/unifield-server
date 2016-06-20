@@ -73806,3 +73806,10 @@ msgstr "Le Modèle périodique %s n'a pas de lignes comptables !"
 #, python-format
 msgid "The entry is not balanced for the Recurring Model %s!"
 msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_subscription.py:41
+#: code:addons/account_subscription/account_subscription.py:48
+#, python-format
+msgid "The value in the field \"Repeat\" must be greater than 0!"
+msgstr "La valeur dans le champ \"Périodicité\" doit être supérieure à 0 !"

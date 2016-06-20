@@ -20,6 +20,7 @@
 #
 ##############################################################################
 from osv import fields, osv
+from tools.translate import _
 
 class account_subscription(osv.osv):
     _name = "account.subscription"
@@ -32,6 +33,20 @@ class account_subscription(osv.osv):
     _defaults = {
         'period_total': 0,
     }
+
+    def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
+        if not 'period_nbr' in vals or vals['period_nbr'] < 1:
+            raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
+        return super(account_subscription, self).create(cr, uid, vals, context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
+        if not 'period_nbr' in vals or vals['period_nbr'] < 1:
+            raise osv.except_osv(_('Warning'), _('The value in the field "Repeat" must be greater than 0!'))
+        return super(account_subscription, self).write(cr, uid, ids, vals, context)
 
 account_subscription()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
