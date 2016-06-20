@@ -35,7 +35,8 @@ def create(cr, act_datas, inst_id, ident, stack):
     for act in act_datas:
         cr.execute("select nextval('wkf_workitem_id_seq')")
         id_new = cr.fetchone()[0]
-        cr.execute("insert into wkf_workitem (id,act_id,inst_id,state) values (%s,%s,%s,'active') returning *", (id_new, act['id'], inst_id))
+        cr.execute("insert into wkf_workitem (id,act_id,inst_id,state) values (%s,%s,%s,'active')", (id_new, act['id'], inst_id))
+        cr.execute('select * from wkf_workitem where id=%s',(id_new,))
         res = cr.dictfetchone()
         wkf_logs.log(cr,ident,act['id'],'active')
         process(cr, res, ident, stack=stack)
