@@ -1752,37 +1752,60 @@ class stock_move(osv.osv):
 
         pick_to_change_reason = set()
         picking_reason_type_dict = {}
-        if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
-            cond1_addr = None
-            cond2_addr = None
-            for move in self.read(cr, uid, ids,
-                    ['partner_id', 'address_id', 'state', 'picking_id'], context=context):
-                partner_id = move['partner_id'] and move['partner_id'][0] or False
-                picking_id = move['picking_id'] and move['picking_id'][0] or False
-                if cond1 and partner_id != partner:
-                    if cond1_addr is None:
+        #if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
+        if True:
+
+            # separate the moves which have the same values than the fisrt one
+            # (it could be a majority (or all) in some cases
+            first_move = self.read(cr, uid, ids[0], ['partner_id', 'address_id',
+                                                     'state', 'picking_id'],
+                                                    context=context)
+            partner_id = ['partner_id'] and first_move['partner_id'][0] or False
+            picking_id = first_move['picking_id'] and first_move['picking_id'][0] or False
+
+            same_values_ids = self.search(cr, uid,
+                                          [('id', 'in', ids),
+                                           ('partner_id', '=', partner_id),
+                                           ('picking_id', '=', picking_id)],
+                                          context=context, order='NO_ORDER')
+
+            remain_ids = list(set(ids).difference(same_values_ids))
+            vals['reason_type_id']=False
+
+            def pick_change_reason(move_read_list, partner_id, partner,
+                                   pick_to_change_reason):
+                for move in move_read_list:
+                    partner_id = move['partner_id'] and move['partner_id'][0] or False
+                    picking_id = move['picking_id'] and move['picking_id'][0] or False
+                    if cond1 and partner_id != partner:
                         cond1_addr = partner_obj.address_get(cr, uid,
                                 vals.get('partner_id2'), ['delivery', 'default'])
                         cond1_addr = cond1_addr.get('delivery', False) or cond1_addr.get('default')
-                    vals['address_id'] = cond1_addr
-
-                elif cond2 and move['address_id'] != vals.get('address_id'):
-                    if cond2_addr is None:
+                        vals['address_id'] = cond1_addr
+                    elif cond2 and move['address_id'] != vals.get('address_id'):
                         cond2_addr = addr_obj.read(cr, uid,
                                 vals.get('address_id'), ['partner_id'], context=context)
                         cond2_addr = cond2_addr['partner_id'] and cond2_addr['partner_id'][0] or False
-                    vals['partner_id2'] = cond2_addr
+                        vals['partner_id2'] = cond2_addr
+                    if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
+                        vals['date'] = vals.get('date_expected')
 
-                if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
-                    vals['date'] = vals.get('date_expected')
+                    # Change the reason type of the picking if it is not the same
+                    if 'reason_type_id' in vals and picking_id:
+                        if picking_id not in picking_reason_type_dict:
+                            pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context)
+                            picking_reason_type_dict[picking_id] = pick['reason_type_id'][0]
+                        if picking_reason_type_dict[picking_id] != vals['reason_type_id']:
+                            pick_to_change_reason.add(picking_id)
 
-                # Change the reason type of the picking if it is not the same
-                if 'reason_type_id' in vals and picking_id:
-                    if picking_id not in picking_reason_type_dict:
-                        pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context)
-                        picking_reason_type_dict[picking_id] = pick['reason_type_id'][0]
-                    if picking_reason_type_dict[picking_id] != vals['reason_type_id']:
-                        pick_to_change_reason.add(picking_id)
+            pick_change_reason([first_move], partner_id, partner,
+                               pick_to_change_reason)
+            if remain_ids:
+                remain_move = self.read(cr, uid, ids[1:], ['partner_id', 'address_id',
+                                                         'state', 'picking_id'],
+                                                        context=context)
+                pick_change_reason(reamain_move, partner_id, partner,
+                                   pick_to_change_reason)
 
         if pick_to_change_reason:
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
