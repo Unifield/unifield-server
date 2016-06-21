@@ -1769,7 +1769,6 @@ class stock_move(osv.osv):
                                           context=context, order='NO_ORDER')
 
             remain_ids = list(set(ids).difference(same_values_ids))
-            vals['reason_type_id']=False
 
             def pick_change_reason(move_read_list, partner_id, partner,
                                    pick_to_change_reason):
