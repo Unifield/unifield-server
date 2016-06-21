@@ -2016,7 +2016,8 @@ class account_bank_statement_line(osv.osv):
                         # copy distribution
                         new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, new_distrib, {}, context=context)
                         # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
-                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
+                        # US-1343: The account to be updated must the new one, not the old account of the move line!
+                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': values.get('account_id')}, check=False, update_check=False)
 
         # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update
         # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
