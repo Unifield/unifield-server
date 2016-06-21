@@ -1084,7 +1084,7 @@ class orm_template(object):
 
     def _validate(self, cr, uid, ids, context=None):
         context = context or {}
-        lng = context.get('lang', False) or 'en_US'
+        lng = context and context.get('lang', False) or 'en_US'
         trans = self.pool.get('ir.translation')
         error_msgs = []
         for constraint in self._constraints:
@@ -1277,7 +1277,7 @@ class orm_template(object):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 
-                context_lang = context.get('lang', False) or 'en_US'
+                context_lang = context and context.get('lang', False) or 'en_US'
                 if field_col.string and context_lang != 'en_US':
                     res_trans = translation_obj._get_source(cr, user,
                             self._name + ',' + f, 'field', context_lang)
@@ -3425,21 +3425,32 @@ class orm(orm_template):
             fields_pre2 = map(convert_field, fields_pre)
             order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
-            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
+            query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields,
+                    ','.join(tables), self._table)
             if rule_clause:
                 query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
-            query = ''.join((query, ' ORDER BY ', order_by))
-            for sub_ids in cr.split_for_in_conditions(ids):
+
+            def execute_request(res, query, rule_clause, local_ids):
                 if rule_clause:
-                    cr.execute(query, [tuple(sub_ids)] + rule_params)
-                    if cr.rowcount != len(sub_ids):
+                    cr.execute(query, [tuple(local_ids)] + rule_params)
+                    if cr.rowcount != len(local_ids):
                         raise except_orm(_('AccessError'),
                                          _('Operation prohibited by access rules, or performed on an already deleted document (Operation: read, Document type: %s).')
                                          % (self._description,))
                 else:
-                    cr.execute(query, (tuple(sub_ids),))
+                    cr.execute(query, (tuple(local_ids),))
                 res.extend(cr.dictfetchall())
-            context_lang = context.get('lang', False) or 'en_US'
+
+            if len(ids) == 1:
+                # ~ 70% of the requests are done with only one id (20/05/2016)
+                execute_request(res, query, rule_clause, ids)
+            else:
+                # order only when there is more than one id in ids
+                query = ''.join((query, ' ORDER BY ', order_by))
+                for sub_ids in cr.split_for_in_conditions(ids):
+                    execute_request(res, query, rule_clause, sub_ids)
+
+            context_lang = context and context.get('lang', False) or 'en_US'
             if context_lang != 'en_US':
                 for f in fields_pre:
                     if f == self.CONCURRENCY_CHECK_FIELD:
@@ -3828,7 +3839,7 @@ class orm(orm_template):
         updend_append = updend.append
         direct = []
         direct_append = direct.append
-        to_translate = context.get('lang', False) and (context['lang'] != 'en_US')
+        to_translate = context and context.get('lang', False) and (context['lang'] != 'en_US')
         for field in vals:
             if field in self._columns:
                 if self._columns[field]._classic_write and not (hasattr(self._columns[field], '_fnct_inv')):

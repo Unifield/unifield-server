@@ -117,7 +117,7 @@ class product_product(osv.osv):
 
     _inherit = 'product.product'
     _description = 'Product'
-    
+
     def name_get(self, cr, user, ids, context=None):
         if context is None:
             context = {}
@@ -129,21 +129,18 @@ class product_product(osv.osv):
             if code:
                 name = '[%s] %s' % (code,name)
             if d.get('variants'):
-                name = name + ' - %s' % (d['variants'],)
+                name = '%s - %s' % (name, d['variants'],)
             return (d['id'], name)
 
         partner_id = context.get('partner_id', False)
-
         result = []
-        for product in self.browse(cr, user, ids, context=context):
-            mydict = {
-                      'id': product.id,
-                      'name': product.name,
-                      'default_code': product.default_code,
-                      'variants': product.variants
-                      }
-            result.append(_name_get(mydict))
+        read_result = self.read(cr, user, ids,
+                                ['id', 'name', 'default_code', 'variants'],
+                                context=context)
+
+        for product_dict in read_result:
+            result.append(_name_get(product_dict))
         return result
-    
+
 product_product()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

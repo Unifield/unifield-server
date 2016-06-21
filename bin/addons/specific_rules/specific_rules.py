@@ -750,40 +750,60 @@ class stock_move(osv.osv):
         '''
         # objects
         kit_obj = self.pool.get('composition.kit')
+
         result = {}
         for id in ids:
             result[id] = {}
             for f in name:
                 result[id].update({f: False})
+        product_ids = set()
+        read_result = self.read(cr, uid, ids, ['product_id', 'prodlot_id'], context=context)
+        for read_dict in read_result:
+            product_ids.add(read_dict['product_id'][0])
 
-        for obj in self.browse(cr, uid, ids, context=context):
+        product_list_dict = self.pool.get('product.product').read(cr, uid,
+                                                             list(product_ids),
+                                                             ['kc_txt',
+                                                              'ssl_txt',
+                                                              'dg_txt',
+                                                              'cs_txt',
+                                                              'batch_management',
+                                                              'perishable',
+                                                              'type',
+                                                              'subtype',],
+                                                             context=context)
+        product_dict = dict([(x['id'], x) for x in product_list_dict])
+
+        for stock_move_dict in read_result:
+            stock_move_id = stock_move_dict['id']
+            product_id = stock_move_dict['product_id'][0]
+            product = product_dict[product_id]
             # keep cool
-            result[obj.id]['kc_check'] = obj.product_id.kc_txt
+            result[stock_move_id]['kc_check'] = product['kc_txt']
             # ssl
-            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
+            result[stock_move_id]['ssl_check'] = product['ssl_txt']
             # dangerous goods
-            result[obj.id]['dg_check'] = obj.product_id.dg_txt
+            result[stock_move_id]['dg_check'] = product['dg_txt']
             # narcotic
-            result[obj.id]['np_check'] = obj.product_id.cs_txt
+            result[stock_move_id]['np_check'] = product['cs_txt']
             # lot management
-            if obj.product_id.batch_management:
-                result[obj.id]['lot_check'] = True
+            if product['batch_management']:
+                result[stock_move_id]['lot_check'] = True
             # expiry date management
-            if obj.product_id.perishable:
-                result[obj.id]['exp_check'] = True
+            if product['perishable']:
+                result[stock_move_id]['exp_check'] = True
             # contains a kit and allow the creation of a new composition LIst
             # will be false if the kit is batch management and a composition list already uses this batch number
             # only one composition list can  use a given batch number for a given product
-            if obj.product_id.type == 'product' and obj.product_id.subtype == 'kit':
-                if obj.prodlot_id:
+            if product['type'] == 'product' and product['subtype'] == 'kit':
+                if product['prodlot_id']:
                     # search if composition list already use this batch number
-                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', obj.prodlot_id.id)], context=context)
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', product['prodlot_id'])], context=context)
                     if not kit_ids:
-                        result[obj.id]['kit_check'] = True
+                        result[stock_move_id]['kit_check'] = True
                 else:
                     # not batch management, we can create as many composition list as we want
-                    result[obj.id]['kit_check'] = True
-
+                    result[stock_move_id]['kit_check'] = True
         return result
 
     _columns = {

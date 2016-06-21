@@ -1319,18 +1319,37 @@ class stock_move(osv.osv):
         '''
         Fill the error message if the product of the line is inactive
         '''
-        res = {}
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {'inactive_product': False,
-                            'inactive_error': ''}
-            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and line.product_id.id != product_tbd and not line.product_id.active:
-                res[line.id] = {'inactive_product': True,
-                                'inactive_error': _('The product in line is inactive !')}
+        res = dict([(x, {'inactive_product': False,
+                         'inactive_error': ''}) for x in ids])
+        pick_ids = set()
+        pick_ids_add = pick_ids.add
+        product_ids = set()
+        product_ids_add = product_ids.add
+        for stock_move_dict in self.read(cr, uid, ids, ('picking_id', 'product_id'),
+                                        context=context):
+            pick_ids_add(stock_move_dict['picking_id'][0])
+            product_ids_add(stock_move_dict['product_id'][0])
 
+        product_ids = product_ids.difference((product_tbd,))
+        product_module = self.pool.get('product.product')
+        inactive_product_ids = product_module.search(cr, uid,
+                [('id', 'in', list(product_ids)), ('active', '=', False)],
+                context=context)
+        pick_ids = self.pool.get('stock.picking').search(cr,
+                uid, [('id', 'in', list(pick_ids)), ('state', 'not in', ('cancel', 'done'))],
+                context=context)
+        stock_move_inactive_prod_ids = self.search(cr, uid,
+                                                   [('id', 'in', ids),
+                                                    ('picking_id', 'in', pick_ids),
+                                                    ('product_id', 'in', inactive_product_ids)],
+                                                   context=context)
+        for stock_move_id in stock_move_inactive_prod_ids:
+            res[stock_move_id]={'inactive_product': True,
+                                'inactive_error': _('The product in line is inactive !')}
         return res
 
     def _is_expired_lot(self, cr, uid, ids, field_name, args, context=None):

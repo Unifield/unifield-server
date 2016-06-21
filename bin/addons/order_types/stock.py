@@ -186,18 +186,22 @@ class stock_picking(osv.osv):
         '''
         Return True if at least one stock move requires a donation certificate
         '''
-        res = {}
-
-        for pick in self.browse(cr, uid, ids, context=context):
-            certif = False
-            if pick.type == 'out':
-                for move in pick.move_lines:
-                    if move.order_type in ['donation_exp', 'donation_st', 'in_kind']:
-                        certif = True
-                        break
-
-            res[pick.id] = certif
-
+        res = dict.fromkeys(ids, False)
+        new_ids = self.search(cr, uid, [('id', 'in', ids),
+                                        ('type', '=', 'out')], context=context)
+        if new_ids:
+            stock_move_obj = self.pool.get('stock.move')
+            move_line_read_list = self.read(cr, uid, new_ids, ['id', 'move_lines', 'type'],
+                                      context=context)
+            for move_line_dict in move_line_read_list:
+                stock_move_ids = move_line_dict['move_lines']
+                if stock_move_obj.search(cr, uid, [('id', 'in', stock_move_ids),
+                                                   ('order_type', 'in',
+                                                    ('donation_exp',
+                                                     'donation_st',
+                                                     'in_kind')),
+                                                  ], context=context):
+                    res[move_line_dict['id']] = True
         return res
 
     _columns = {
