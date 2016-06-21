@@ -546,6 +546,8 @@ class procurement_request(osv.osv):
         line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
+        self.ssl_products_in_line(cr, uid, ids, context=context)
+
         return True
 
     def confirm_procurement(self, cr, uid, ids, context=None):

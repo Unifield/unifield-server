@@ -150,7 +150,7 @@ class res_log(osv.osv):
 
         for r in res:
            r['read_ok'] = self._check_read_rights(cr, uid, r['res_model'], read_rights, context=context)
-           t = (r['res_model'], r['res_id'])
+           t = (r['name'], r['res_model'], r['res_id'])
            if t not in res_dict:
                res_dict[t] = True
                result.insert(0,r)

@@ -97,21 +97,26 @@ class sale_order(osv.osv):
     '''
     _inherit = 'sale.order'
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def ssl_products_in_line(self, cr, uid, ids, context=None):
         '''
         display message if contains short shelf life
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
+            if can_break:
+                break
             for line in obj.order_line:
                 # log the message
                 if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
+                    can_break = True
+                    break
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        return True
 
 sale_order()
 
@@ -178,21 +183,26 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def ssl_products_in_line(self, cr, uid, ids, context=None):
         '''
         display message if contains short shelf life
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
+            if can_break:
+                break
             for line in obj.order_line:
                 # log the message
                 if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
+                    can_break = True
+                    break
 
-        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+        return True
 
 purchase_order()
 
