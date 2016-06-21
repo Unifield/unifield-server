@@ -2376,17 +2376,24 @@ class account_subscription(osv.osv):
                     _("Compute cancelled. Please review analytic allocation for lines with expense or income accounts.")
                 )
             ds = sub.date_start
+            date_list = []
+            # get all the dates for which a subscription line has to be created
             for i in range(sub.period_total):
-                self.pool.get('account.subscription.line').create(cr, uid, {
-                    'date': ds,
-                    'subscription_id': sub.id,
-                })
+                date_list.append(ds)
                 if sub.period_type=='day':
                     ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(days=sub.period_nbr)).strftime('%Y-%m-%d')
                 if sub.period_type=='month':
                     ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(months=sub.period_nbr)).strftime('%Y-%m-%d')
                 if sub.period_type=='year':
                     ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(years=sub.period_nbr)).strftime('%Y-%m-%d')
+            # create the subscription lines if they don't exist yet
+            existing_sub_lines = sub.lines_id or []
+            existing_dates = [l.date for l in existing_sub_lines]
+            for date_sub in [d for d in date_list if d not in existing_dates]:
+                self.pool.get('account.subscription.line').create(cr, uid, {
+                    'date': date_sub,
+                    'subscription_id': sub.id,
+                })
         self.write(cr, uid, ids, {'state':'running'})
         return True
 account_subscription()
