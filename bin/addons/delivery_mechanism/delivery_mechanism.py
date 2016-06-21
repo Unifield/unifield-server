@@ -1246,7 +1246,7 @@ class stock_picking(osv.osv):
                         # US-111: in case of partial reception invoice was not linked to PO
                         # => analytic_distribution_supply/stock.py _invoice_hook
                         #    picking.purchase_id was False
-                        back_order_post_copy_vals['purchase_id'] = picking_dict['purchase_id.id'][0]
+                        back_order_post_copy_vals['purchase_id'] = picking_dict['purchase_id'][0]
 
                     if back_order_post_copy_vals:
                         self.write(cr, uid, backorder_id, back_order_post_copy_vals, context=context)
