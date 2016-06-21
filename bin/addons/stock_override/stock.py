@@ -1752,8 +1752,7 @@ class stock_move(osv.osv):
 
         pick_to_change_reason = set()
         picking_reason_type_dict = {}
-        #if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
-        if True:
+        if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
 
             # separate the moves which have the same values than the fisrt one
             # (it could be a majority (or all) in some cases
