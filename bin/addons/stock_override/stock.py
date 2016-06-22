@@ -1750,8 +1750,6 @@ class stock_move(osv.osv):
         cond1 = not addr and partner
         cond2 = not partner and addr
 
-        pick_to_change_reason = set()
-        picking_reason_type_dict = {}
         if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
 
             # separate the moves which have the same values than the fisrt one
@@ -1770,8 +1768,12 @@ class stock_move(osv.osv):
 
             remain_ids = list(set(ids).difference(same_values_ids))
 
-            def pick_change_reason(move_read_list, partner_id, partner,
-                                   pick_to_change_reason):
+            def get_pick_to_change_reason(move_read_list, partner_id, partner):
+                '''
+                :return: a set of picking_id that need to be changed to
+                'reason_type_other' type.
+                '''
+                pick_to_change_reason = set()
                 for move in move_read_list:
                     partner_id = move['partner_id'] and move['partner_id'][0] or False
                     picking_id = move['picking_id'] and move['picking_id'][0] or False
@@ -1790,24 +1792,23 @@ class stock_move(osv.osv):
 
                     # Change the reason type of the picking if it is not the same
                     if 'reason_type_id' in vals and picking_id:
-                        if picking_id not in picking_reason_type_dict:
-                            pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context)
-                            picking_reason_type_dict[picking_id] = pick['reason_type_id'][0]
-                        if picking_reason_type_dict[picking_id] != vals['reason_type_id']:
+                        pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context)
+                        if pick['reason_type_id'][0] != vals['reason_type_id']:
                             pick_to_change_reason.add(picking_id)
+                return pick_to_change_reason
 
-            pick_change_reason([first_move], partner_id, partner,
-                               pick_to_change_reason)
+            pick_list_to_change = get_pick_to_change_reason([first_move], partner_id, partner)
             if remain_ids:
-                remain_move = self.read(cr, uid, ids[1:], ['partner_id', 'address_id',
+                remain_move_list = self.read(cr, uid, remain_ids, ['partner_id', 'address_id',
                                                          'state', 'picking_id'],
                                                         context=context)
-                pick_change_reason(reamain_move, partner_id, partner,
-                                   pick_to_change_reason)
+                pick_list_to_change.update(get_pick_to_change_reason(remain_move_list,
+                                                                     partner_id,
+                                                                     partner))
 
-        if pick_to_change_reason:
+        if pick_list_to_change:
             other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-            pick_obj.write(cr, uid, list(pick_to_change_reason), {'reason_type_id': other_type_id}, context=context)
+            pick_obj.write(cr, uid, list(pick_list_to_change), {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
