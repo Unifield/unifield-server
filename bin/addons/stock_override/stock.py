@@ -1806,9 +1806,9 @@ class stock_move(osv.osv):
                                                                      partner_id,
                                                                      partner))
 
-        if pick_list_to_change:
-            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-            pick_obj.write(cr, uid, list(pick_list_to_change), {'reason_type_id': other_type_id}, context=context)
+            if pick_list_to_change:
+                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+                pick_obj.write(cr, uid, list(pick_list_to_change), {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 
