@@ -551,6 +551,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     file_line_error = []
                     line_number = values.get(x, [False])[0] and int(values.get(x, [False])[0]) or False
                     ext_ref = values.get(x, [False, False])[1]
+                    ext_ref = ext_ref and str(ext_ref) or False
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
