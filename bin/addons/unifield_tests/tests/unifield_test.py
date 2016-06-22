@@ -76,8 +76,10 @@ class UnifieldTest(unittest.TestCase):
             self._db_instance_prefix = c.get('DB', 'instance_prefix') \
                 or self._db_instance_prefix
         tempo_mkdb = c.getboolean('DB', 'tempo_mkdb')
-        db_suffixes = ['SYNC_SERVER', 'HQ1', 'HQ1C1', 'HQ1C1P1']
-        names = ['sync', 'hq1', 'c1', 'p1']
+        #db_suffixes = ['SYNC_SERVER', 'HQ1', 'HQ1C1', 'HQ1C1P1']
+        db_suffixes = ['HQ1C1']
+        #names = ['sync', 'hq1', 'c1', 'p1']
+        names = ['c1',]
         if not tempo_mkdb:
             db_suffixes = ['SYNC_SERVER', 'HQ_01', 'COORDO_01', 'PROJECT_01']
         # Check Remote warehouse and complete old params
@@ -99,7 +101,7 @@ class UnifieldTest(unittest.TestCase):
             # TODO: p21 for 'HQ1C2P1', p22 for 'HQ1C2P2'
         # instance suffixes except sync server
         self._instances_suffixes = list(db_suffixes)
-        self._instances_suffixes.remove('SYNC_SERVER')
+        #self._instances_suffixes.remove('SYNC_SERVER')
         # Other values
         colors = TerminalColors()
         self.colors = colors
