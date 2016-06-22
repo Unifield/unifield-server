@@ -177,6 +177,14 @@ if tools.config["translate_in"]:
 if tools.config["stop_after_init"]:
     sys.exit(0)
 
+#----------------------------------------------------------
+# Check Postgreql timezone and system timezone
+#----------------------------------------------------------
+from service.web_services import db as check_tz
+tz_chk_msg = check_tz().exp_check_timezone()
+if tz_chk_msg:
+    logger.error(tz_chk_msg)
+    sys.exit(0)
 
 #----------------------------------------------------------
 # Launch Servers
