@@ -424,8 +424,7 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def get_browse_user_instance(self, cr, uid, context=None):
-        current_user = self.browse(cr, uid, uid, context=context,
-                fields_to_fetch=['company_id'])
+        current_user = self.browse(cr, uid, uid, context=context)
         return current_user and current_user.company_id and current_user.company_id.instance_id or False
 res_users()
 

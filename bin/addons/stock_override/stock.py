@@ -1319,37 +1319,18 @@ class stock_move(osv.osv):
         '''
         Fill the error message if the product of the line is inactive
         '''
+        res = {}
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = dict([(x, {'inactive_product': False,
-                         'inactive_error': ''}) for x in ids])
-        pick_ids = set()
-        pick_ids_add = pick_ids.add
-        product_ids = set()
-        product_ids_add = product_ids.add
-        for stock_move_dict in self.read(cr, uid, ids, ('picking_id', 'product_id'),
-                                        context=context):
-            pick_ids_add(stock_move_dict['picking_id'][0])
-            product_ids_add(stock_move_dict['product_id'][0])
-
-        product_ids = product_ids.difference((product_tbd,))
-        product_module = self.pool.get('product.product')
-        inactive_product_ids = product_module.search(cr, uid,
-                [('id', 'in', list(product_ids)), ('active', '=', False)],
-                context=context)
-        pick_ids = self.pool.get('stock.picking').search(cr,
-                uid, [('id', 'in', list(pick_ids)), ('state', 'not in', ('cancel', 'done'))],
-                context=context)
-        stock_move_inactive_prod_ids = self.search(cr, uid,
-                                                   [('id', 'in', ids),
-                                                    ('picking_id', 'in', pick_ids),
-                                                    ('product_id', 'in', inactive_product_ids)],
-                                                   context=context)
-        for stock_move_id in stock_move_inactive_prod_ids:
-            res[stock_move_id]={'inactive_product': True,
+        for line in self.browse(cr, uid, ids, context=context):
+            res[line.id] = {'inactive_product': False,
+                            'inactive_error': ''}
+            if line.picking_id and line.picking_id.state not in ('cancel', 'done') and line.product_id and line.product_id.id != product_tbd and not line.product_id.active:
+                res[line.id] = {'inactive_product': True,
                                 'inactive_error': _('The product in line is inactive !')}
+
         return res
 
     def _is_expired_lot(self, cr, uid, ids, field_name, args, context=None):
@@ -1750,65 +1731,43 @@ class stock_move(osv.osv):
         cond1 = not addr and partner
         cond2 = not partner and addr
 
+        pick_to_change_reason = set()
+        picking_reason_type_dict = {}
         if vals.get('date_expected') or vals.get('reason_type_id') or cond1 or cond2:
-
-            # separate the moves which have the same values than the fisrt one
-            # (it could be a majority (or all) in some cases
-            first_move = self.read(cr, uid, ids[0], ['partner_id', 'address_id',
-                                                     'state', 'picking_id'],
-                                                    context=context)
-            partner_id = ['partner_id'] and first_move['partner_id'][0] or False
-            picking_id = first_move['picking_id'] and first_move['picking_id'][0] or False
-
-            same_values_ids = self.search(cr, uid,
-                                          [('id', 'in', ids),
-                                           ('partner_id', '=', partner_id),
-                                           ('picking_id', '=', picking_id)],
-                                          context=context, order='NO_ORDER')
-
-            remain_ids = list(set(ids).difference(same_values_ids))
-
-            def get_pick_to_change_reason(move_read_list, partner_id, partner):
-                '''
-                :return: a set of picking_id that need to be changed to
-                'reason_type_other' type.
-                '''
-                pick_to_change_reason = set()
-                for move in move_read_list:
-                    partner_id = move['partner_id'] and move['partner_id'][0] or False
-                    picking_id = move['picking_id'] and move['picking_id'][0] or False
-                    if cond1 and partner_id != partner:
+            cond1_addr = None
+            cond2_addr = None
+            for move in self.read(cr, uid, ids,
+                    ['partner_id', 'address_id', 'state', 'picking_id'], context=context):
+                partner_id = move['partner_id'] and move['partner_id'][0] or False
+                picking_id = move['picking_id'] and move['picking_id'][0] or False
+                if cond1 and partner_id != partner:
+                    if cond1_addr is None:
                         cond1_addr = partner_obj.address_get(cr, uid,
                                 vals.get('partner_id2'), ['delivery', 'default'])
                         cond1_addr = cond1_addr.get('delivery', False) or cond1_addr.get('default')
-                        vals['address_id'] = cond1_addr
-                    elif cond2 and move['address_id'] != vals.get('address_id'):
+                    vals['address_id'] = cond1_addr
+
+                elif cond2 and move['address_id'] != vals.get('address_id'):
+                    if cond2_addr is None:
                         cond2_addr = addr_obj.read(cr, uid,
                                 vals.get('address_id'), ['partner_id'], context=context)
                         cond2_addr = cond2_addr['partner_id'] and cond2_addr['partner_id'][0] or False
-                        vals['partner_id2'] = cond2_addr
-                    if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
-                        vals['date'] = vals.get('date_expected')
+                    vals['partner_id2'] = cond2_addr
 
-                    # Change the reason type of the picking if it is not the same
-                    if 'reason_type_id' in vals and picking_id:
+                if vals.get('date_expected') and vals.get('state', move['state']) not in ('done', 'cancel'):
+                    vals['date'] = vals.get('date_expected')
+
+                # Change the reason type of the picking if it is not the same
+                if 'reason_type_id' in vals and picking_id:
+                    if picking_id not in picking_reason_type_dict:
                         pick = pick_obj.read(cr, uid, picking_id, ['reason_type_id'], context)
-                        if pick['reason_type_id'][0] != vals['reason_type_id']:
-                            pick_to_change_reason.add(picking_id)
-                return pick_to_change_reason
+                        picking_reason_type_dict[picking_id] = pick['reason_type_id'][0]
+                    if picking_reason_type_dict[picking_id] != vals['reason_type_id']:
+                        pick_to_change_reason.add(picking_id)
 
-            pick_list_to_change = get_pick_to_change_reason([first_move], partner_id, partner)
-            if remain_ids:
-                remain_move_list = self.read(cr, uid, remain_ids, ['partner_id', 'address_id',
-                                                         'state', 'picking_id'],
-                                                        context=context)
-                pick_list_to_change.update(get_pick_to_change_reason(remain_move_list,
-                                                                     partner_id,
-                                                                     partner))
-
-            if pick_list_to_change:
-                other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
-                pick_obj.write(cr, uid, list(pick_list_to_change), {'reason_type_id': other_type_id}, context=context)
+        if pick_to_change_reason:
+            other_type_id = data_obj.get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_other')[1]
+            pick_obj.write(cr, uid, list(pick_to_change_reason), {'reason_type_id': other_type_id}, context=context)
 
         return super(stock_move, self).write(cr, uid, ids, vals, context=context)
 

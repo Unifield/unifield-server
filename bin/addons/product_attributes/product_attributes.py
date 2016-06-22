@@ -1387,6 +1387,9 @@ class product_attributes(osv.osv):
 
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
 
+        c = context.copy()
+        c.update({'location_id': internal_loc})
+
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
             if not product.active:
@@ -1445,12 +1448,7 @@ class product_attributes(osv.osv):
                                                             ('invoice_id.state', 'not in', ['paid', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
-            for loc_id in internal_loc:
-                c = context.copy()
-                c.update({'location': [loc_id]})
-                has_stock = self.read(cr, uid, product.id, ['qty_available'], context=c)['qty_available'] > 0.00
-                if has_stock:
-                    break
+            has_stock = product.qty_available
 
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line
             if has_stock or opened_object:
