@@ -397,6 +397,9 @@ class procurement_request(osv.osv):
         '''
         Update date_planned of lines
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         res = True
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
