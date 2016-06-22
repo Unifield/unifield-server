@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import osv
+from tools.translate import _
 
 class account_unreconcile(osv.osv_memory):
     _name = "account.unreconcile"
@@ -30,8 +31,30 @@ class account_unreconcile(osv.osv_memory):
         if context is None:
             context = {}
         if context.get('active_ids', False):
-            obj_move_line._remove_move_reconcile(cr, uid, context['active_ids'], context=context)
+            if self._check_fx_adjustments(cr, uid, context['active_ids'], context):
+                obj_move_line._remove_move_reconcile(cr, uid, context['active_ids'], context=context)
         return {'type': 'ir.actions.act_window_close'}
+
+    def _check_fx_adjustments(self, cr, uid, move_line_ids, context):
+        '''
+        In case the reconciliation of one of the move lines had triggered an FX adjustment entry,
+        the unreconciliation must be prevented.
+        '''
+        acc_ml_obj = self.pool.get('account.move.line')
+        if move_line_ids:
+            move_lines = acc_ml_obj.browse(cr, uid, move_line_ids, context)
+            reconcile_ids = [(x.reconcile_id and x.reconcile_id.id) or (x.reconcile_partial_id and x.reconcile_partial_id.id) or None for x in move_lines]
+            if reconcile_ids:
+                # get all the related account move lines
+                operator = 'in'
+                if len(reconcile_ids) == 1:
+                    operator = '='
+                ml_ids = acc_ml_obj.search(cr, uid, [('reconcile_id', operator, reconcile_ids)], context=context)
+                # search for addendum lines
+                for line in acc_ml_obj.browse(cr, uid, ml_ids, context):
+                    if line.is_addendum_line:
+                       raise osv.except_osv(_('Error'), _('You cannot unreconcile entries with FX adjustment.'))
+        return True
 
 account_unreconcile()
 
