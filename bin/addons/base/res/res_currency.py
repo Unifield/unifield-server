@@ -67,11 +67,13 @@ class res_currency(osv.osv):
     }
     _order = "name"
 
-    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields=None, context=None,
+            load='_classic_read', use_name_get=True):
         select = ids
         if isinstance(ids, (int, long)):
             select = [select]
-        res = super(osv.osv, self).read(cr, user, select, fields, context, load)
+        res = super(osv.osv, self).read(cr, user, select, fields, context,
+                load, use_name_get=use_name_get)
         for r in res:
             if r.__contains__('rate_ids'):
                 rates=r['rate_ids']

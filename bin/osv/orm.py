@@ -1055,7 +1055,8 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
-    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields=None, context=None,
+            load='_classic_read', use_name_get=True):
         """
         Read records with given ids with the given fields
 
@@ -2202,7 +2203,8 @@ class orm_memory(orm_template):
 
         return True
 
-    def read(self, cr, user, ids, fields_to_read=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields_to_read=None, context=None,
+            load='_classic_read', use_name_get=True):
         if context is None:
             context = {}
         if not fields_to_read:
@@ -3365,7 +3367,8 @@ class orm(orm_template):
                        ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
-    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields=None, context=None,
+            load='_classic_read', use_name_get=True):
         if not ids:
             return []
         if context is None:
@@ -3378,7 +3381,8 @@ class orm(orm_template):
         else:
             select = ids
         select = [isinstance(x, dict) and x['id'] or x for x in select]
-        result = self._read_flat(cr, user, select, fields, context, load)
+        result = self._read_flat(cr, user, select, fields, context, load,
+                use_name_get)
 
         for r in result:
             for key, v in r.items():
@@ -3389,7 +3393,8 @@ class orm(orm_template):
             return result and result[0] or False
         return result
 
-    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None,
+            load='_classic_read', use_name_get=True):
         if not ids:
             return []
         if context is None:
@@ -3511,7 +3516,13 @@ class orm(orm_template):
                             record[pos] = multi_fields.get(pos,[])
             else:
                 for f in val:
-                    res2 = self._columns[f].get(cr, self, ids, f, user, context=context, values=res)
+                    try:
+                        res2 = self._columns[f].get(cr, self, ids, f, user,
+                                context=context, values=res,
+                                use_name_get=use_name_get)
+                    except:
+                        import pdb; pdb.set_trace()
+                        print 'couscous'
                     for record in res:
                         if res2:
                             record[f] = res2[record['id']]
