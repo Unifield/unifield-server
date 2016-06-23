@@ -340,9 +340,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     period_number = last_reval_period.number
                     value['result_period_id'] = last_reval_period.id
                     value['result_period_yearly_editable'] = False
-                    value['msg'] = _('One of yearly revaluation has been' \
-                        ' already processed. Other next will be processed on' \
-                        ' same period: %s.') % (last_reval_period.name, )
+                    value['msg'] = _('One of the year-end revaluations has' \
+                        ' already been processed. The next one will be' \
+                        ' processed on the same period: %s.') % (
+                        last_reval_period.name, )
   
                 # check period opened
                 check_period_res = self._check_period_opened(cr, uid,
