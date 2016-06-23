@@ -400,7 +400,7 @@ class stock_location(osv.osv):
             temp.remove(location_dest_id)
             temp.append(location_dest_id)
 
-        for id in temp:
+        for loc_id in temp:
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
@@ -419,7 +419,7 @@ class stock_location(osv.osv):
                                              location_dest_id<>%s AND
                                              state in ('done', 'assigned'))
                                           )
-                                  FOR UPDATE of stock_move NOWAIT""", (product_id, id, id, id, id), log_exceptions=False)
+                                  FOR UPDATE of stock_move NOWAIT""", (product_id, loc_id, loc_id, loc_id, loc_id), log_exceptions=False)
                 except Exception:
                     # Here it's likely that the FOR UPDATE NOWAIT failed to get the LOCK,
                     # so we ROLLBACK to the SAVEPOINT to restore the transaction to its earlier
@@ -430,44 +430,35 @@ class stock_location(osv.osv):
                     logger.debug("Trace of the failed product reservation attempt: ", exc_info=True)
                     return False
 
-            # XXX TODO: rewrite this with one single query, possibly even the quantity conversion
-            cr.execute("""SELECT product_uom, sum(product_qty) AS product_qty
+
+            query = """SELECT product_uom, sum(product_qty)
+            + (SELECT -sum(product_qty) AS product_qty
+               FROM stock_move
+               WHERE location_id=%s AND
+                     location_dest_id<>%s AND
+                     product_id=%s AND
+                     state in ('done', 'assigned')
+               GROUP BY product_uom) AS product_qty
                           FROM stock_move
                           WHERE location_dest_id=%s AND
                                 location_id<>%s AND
                                 product_id=%s AND
                                 state='done'
                           GROUP BY product_uom
-                       """,
-                       (id, id, product_id))
-            results = cr.dictfetchall()
-            cr.execute("""SELECT product_uom,-sum(product_qty) AS product_qty
-                          FROM stock_move
-                          WHERE location_id=%s AND
-                                location_dest_id<>%s AND
-                                product_id=%s AND
-                                state in ('done', 'assigned')
-                          GROUP BY product_uom
-                       """,
-                       (id, id, product_id))
-            results += cr.dictfetchall()
-            total = 0.0
-            results2 = 0.0
+                       """
+            cr.execute(query, (loc_id, loc_id, product_id, loc_id, loc_id, product_id))
+            new_results = cr.dictfetchall()
+            total_amount = 0.0
+            if new_results:
+                total_amount = pool_uom._compute_qty(cr, uid, new_results[0]['product_uom'], new_results[0]['product_qty'], context.get('uom', False))
 
-            for r in results:
-                amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], context.get('uom', False))
-                results2 += amount
-                total += amount
+            if total_amount <= 0.0:
+                if total_amount != amount:
+                    continue
 
-            if total <= 0.0:
-                continue
-
-            amount = results2
-            if amount > 0:
-                if amount > min(total, product_qty):
-                    amount = min(product_qty, total)
-
-                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id, ids)
+            if total_amount > 0:
+                total_amount = min(total_amount, product_qty)
+                return self._hook_proct_reserve(cr, uid, product_qty, result, total_amount, loc_id, ids)
 
         return False
 
