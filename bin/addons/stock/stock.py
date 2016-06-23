@@ -432,7 +432,7 @@ class stock_location(osv.osv):
                           WHERE location_dest_id=%s AND
                                 location_id<>%s AND
                                 product_id=%s AND
-                                state='done'
+                                state='done' AND (expired_date is null or expired_date >= now())
                           GROUP BY product_uom
                        """,
                        (id, id, product_id))
@@ -443,6 +443,7 @@ class stock_location(osv.osv):
                                 location_dest_id<>%s AND
                                 product_id=%s AND
                                 state in ('done', 'assigned')
+                                AND (expired_date is null or expired_date >= now())
                           GROUP BY product_uom
                        """,
                        (id, id, product_id))
