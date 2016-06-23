@@ -2337,9 +2337,6 @@ class account_subscription(osv.osv):
         'period_nbr': 1,
         'state': 'draft',
     }
-    def state_draft(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state':'draft'})
-        return False
 
     def check(self, cr, uid, ids, context=None):
         todone = []
