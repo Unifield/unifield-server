@@ -185,43 +185,47 @@ class product_product(osv.osv):
         states = context.get('states',[])
         what = context.get('what',())
         if not ids:
-            ids = self.search(cr, uid, [])
+            ids = self.search(cr, uid, [], order='NO_ORDER')
         res = {}.fromkeys(ids, 0.0)
         if not ids:
             return res
 
-        # TODO: write in more ORM way, less queries, more pg84 magic
+        if not('in' in what or 'out' in what):
+            return res
+
+        stock_warehouse_obj = self.pool.get('stock.warehouse')
+        stock_location_obj = self.pool.get('stock.location')
         if context.get('shop', False):
-            cr.execute('select warehouse_id from sale_shop where id=%s', (int(context['shop']),))
-            res2 = cr.fetchone()
-            if res2:
-                context['warehouse'] = res2[0]
+            sale_shop_obj = self.pool.get('sale.shop')
+            warehouse_id = sale_shop_obj.read(cr, uid, int(context['shop']),
+                    ['warehouse_id'], context=context)['warehouse_id']
+            if warehouse_id:
+                context['warehouse'] = warehouse_id[0]
 
         if context.get('warehouse', False):
-            cr.execute('select lot_stock_id from stock_warehouse where id=%s', (int(context['warehouse']),))
-            res2 = cr.fetchone()
-            if res2:
-                context['location'] = res2[0]
+            lot_stock_id = stock_warehouse_obj.read(cr, uid, int(context['warehouse']),
+                    ['lot_stock_id'], context=context)['lot_stock_id']
+            if lot_stock_id:
+                context['location'] = lot_stock_id[0]
 
         if context.get('location', False):
             if type(context['location']) == type(1):
                 location_ids = [context['location']]
             elif type(context['location']) in (type(''), type(u'')):
-                location_ids = self.pool.get('stock.location').search(cr, uid,
+                location_ids = stock_location_obj.search(cr, uid,
                             [('name','ilike',context['location'])],
                             order='NO_ORDER', context=context)
             else:
                 location_ids = context['location']
         else:
             location_ids = []
-            stock_warehouse = self.pool.get('stock.warehouse')
-            wids = stock_warehouse.search(cr, uid, [], order='NO_ORDER', context=context)
-            for w in stock_warehouse.read(cr, uid, wids, ['lot_stock_id'], context=context):
+            wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
+            for w in stock_warehouse_obj.read(cr, uid, wids, ['lot_stock_id'], context=context):
                 location_ids.append(w['lot_stock_id'][0])
 
         # build the list of ids of children of the location given by id
         if context.get('compute_child',True):
-            child_location_ids = self.pool.get('stock.location').search(cr, uid,
+            child_location_ids = stock_location_obj.search(cr, uid,
                     [('location_id', 'child_of', location_ids)],
                     order='NO_ORDER')
             location_ids = child_location_ids or location_ids
@@ -233,7 +237,7 @@ class product_product(osv.osv):
         date_values = False
         where = [tuple(location_ids),tuple(location_ids), tuple(location_ids),tuple(location_ids), tuple(ids), tuple(states)]
         if from_date and to_date:
-            date_str = "date>=%s and date<=%s"
+            date_str = "date>=%s AND date<=%s"
             where.append(tuple([from_date]))
             where.append(tuple([to_date]))
         elif from_date:
@@ -248,10 +252,10 @@ class product_product(osv.osv):
         prodlot_id = context.get('prodlot_id', False)
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
         date_str = date_str and ' AND %s '% date_str or ''
-        query = """SELECT sum(product_qty), product_id, product_uom
+        query = """SELECT SUM(product_qty), product_id, product_uom
            FROM stock_move
-           WHERE ((location_id NOT IN %%s and location_dest_id IN %%s) or
-                  (location_id IN %%s and location_dest_id NOT IN %%s))
+           WHERE ((location_id NOT IN %%s AND location_dest_id IN %%s) OR
+                  (location_id IN %%s AND location_dest_id NOT IN %%s))
                   AND
                   product_id IN %%s
                   %s
@@ -259,11 +263,9 @@ class product_product(osv.osv):
                   state in %%s
                   %s
            GROUP BY product_id, product_uom""" % (prodlot_id_str, date_str)
-        if 'in' in what or 'out' in what:
-            cr.execute(query, tuple(where))
-            results = cr.fetchall()
 
-
+        cr.execute(query, tuple(where))
+        results = cr.fetchall()
         if results:
             uoms_o = {}
             product2uom = {}
@@ -350,29 +352,29 @@ class product_product(osv.osv):
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Received Qty')
 
-                if location_info.usage == 'internal':
+                elif location_info.usage == 'internal':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Stock')
 
-                if location_info.usage == 'customer':
+                elif location_info.usage == 'customer':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Deliveries')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Delivered Qty')
 
-                if location_info.usage == 'inventory':
+                elif location_info.usage == 'inventory':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future P&L')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('P&L Qty')
 
-                if location_info.usage == 'procurement':
+                elif location_info.usage == 'procurement':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Qty')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Unplanned Qty')
 
-                if location_info.usage == 'production':
+                elif location_info.usage == 'production':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Productions')
                     if fields.get('qty_available'):
