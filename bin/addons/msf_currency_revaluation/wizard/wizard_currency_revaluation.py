@@ -678,6 +678,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 msg = "For year revaluation, start period of next FY must be" \
                     " opened to store revaluation reversal entries"
                 raise osv.except_osv(_('Warning!'), msg)
+        else:
+            # US-1370: monthly check that period is open
+            check_period_res = self._check_period_opened(cr, uid,
+                form.fiscalyear_id.id, form.period_id.number)
+            if not check_period_res[0] and check_period_res[2]:
+                raise osv.except_osv(_('Warning!'), check_period_res[2])
 
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:
@@ -1008,8 +1014,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 res = (False, False, _('Period %d is not found') % (
                     period_number, ))
             else:
-                res = (False, period_ids[0], _('Period %d not opened') % (
-                    period_number, ))
+                period_rec = period_obj.browse(cr, uid, period_ids[0])
+                res = (False, period_ids[0], _('Period %s not opened') % (
+                    period_rec.name or period_number, ))
         return res
 
 WizardCurrencyrevaluation()
