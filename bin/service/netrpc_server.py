@@ -112,6 +112,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         self.socket.bind((self.__interface, self.__port))
         self.socket.listen(5)
         self.threads = []
+
         netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO, 
                          "starting NET-RPC service at %s port %d" % (interface or '0.0.0.0', port,))
         self.is_gzip = is_gzip
@@ -163,6 +164,12 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
 netrpcd = None
 
 def init_servers():
+    if True:
+        from service.web_services import db as check_tz
+        tz_chk_msg = check_tz().exp_check_timezone()
+        if tz_chk_msg:
+            netsvc.Logger().notifyChannel("web-services", netsvc.LOG_ERROR, tz_chk_msg)
+            sys.exit(0)
     global netrpcd
     if tools.config.get('netrpc', False) or tools.config.get('netrpc_gzip', False):
         netrpcd = TinySocketServerThread(
