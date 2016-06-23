@@ -360,7 +360,8 @@ class stock_location(osv.osv):
     def _product_all_get(self, cr, uid, id, product_ids=False, context=None, states=['done']):
         # build the list of ids of children of the location given by id
         ids = id and [id] or []
-        location_ids = self.search(cr, uid, [('location_id', 'child_of', ids)])
+        location_ids = self.search(cr, uid, [('location_id', 'child_of', ids)],
+                order='NO_ORDER')
         return self._product_get_multi_location(cr, uid, location_ids, product_ids, context, states)
 
     def _product_virtual_get(self, cr, uid, id, product_ids=False, context=None, states=['confirmed', 'waiting', 'assigned', 'done']):
