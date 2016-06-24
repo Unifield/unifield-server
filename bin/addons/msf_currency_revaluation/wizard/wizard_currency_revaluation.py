@@ -631,6 +631,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             context = {}
         user_obj = self.pool.get('res.users')
         period_obj = self.pool.get('account.period')
+        period_state_obj =  self.pool.get('account.period.state')
         account_obj = self.pool.get('account.account')
         currency_obj = self.pool.get('res.currency')
         seq_obj = self.pool.get('ir.sequence')
@@ -642,9 +643,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         form = self.browse(cr, uid, ids[0], context=context)
+        period_check_id = False
 
         year_end_entry_period_id = False
         if form.revaluation_method in ('liquidity_year', 'other_bs'):
+            period_check_id = form.result_period_internal_id.id
+
             # since US-816, end year reval entries period is extended from
             # period 13, to 13, 14, 15
             
@@ -679,11 +683,39 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                     " opened to store revaluation reversal entries"
                 raise osv.except_osv(_('Warning!'), msg)
         else:
-            # US-1370: monthly check that period is open
+            # US-1370/1: monthly check that period is open
+            period_check_id = form.period_id.id
             check_period_res = self._check_period_opened(cr, uid,
                 form.fiscalyear_id.id, form.period_id.number)
             if not check_period_res[0] and check_period_res[2]:
                 raise osv.except_osv(_('Warning!'), check_period_res[2])
+
+        # US-1370/2: monthly and yearly
+        # check that all projects have target period field closed
+        # using the period status object
+        # upper state mission/hq closed are not accepted
+
+        # check reval well processed at coordo level
+        if company.instance_id.level != 'coordo':
+            raise osv.except_osv(_('Warning!'),
+                _("Revaluation should be run at Coordo level"))
+        # get coordo projects...
+        project_ids = [
+            p.id for p in company.instance_id.child_ids \
+                if p.level == 'project'
+        ]
+        # ...check their period state field-closed
+        # we match exactly as any state could not be already synced yet
+        domain = [
+            ('instance_id', 'in', project_ids),
+            ('period_id', '=', period_check_id),
+            ('state', '=', 'field-closed'),
+        ]
+        res = period_state_obj.search(cr, uid, domain, context=context,
+            count=True)
+        if not res or res != len(project_ids):
+            raise osv.except_osv(_('Warning!'),
+                _("All coordo projects are not field closed"))
 
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:
