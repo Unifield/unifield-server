@@ -65,5 +65,9 @@
         <record id="us_1427_patch" model="patch.scripts">
             <field name="method">us_1427_patch</field>
         </record>
+
+        <record id="us_1452_patch" model="patch.scripts">
+            <field name="method">us_1452_patch</field>
+        </record>
     </data>
 </openerp>
