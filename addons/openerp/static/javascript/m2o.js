@@ -286,6 +286,9 @@ ManyToOne.prototype.on_keydown = function(evt) {
                 w = jQuery(evt.currentTarget).width()
             } else {
                 w = jQuery(evt.currentTarget).width() + jQuery(idSelector(this.name + '_select')).width();
+                if (len(jQuery(idSelector(this.name + '_select')).value()) > w) {
+                    w = len(jQuery(idSelector(this.name + '_select')).value());
+                }
             }
             jQuery('div.autoTextResults[id$="' + this.name + '"]').width(w)
         }
