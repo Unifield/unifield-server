@@ -282,15 +282,13 @@ ManyToOne.prototype.on_keydown = function(evt) {
     if(evt.currentTarget) {
         if(evt.target.tagName.toLowerCase() == 'input') {
             var w;
+            var mv;
             if(jQuery('#search_filter_data').is(':visible')) {
                 w = jQuery(evt.currentTarget).width()
-            } else {
-                w = jQuery(evt.currentTarget).width() + jQuery(idSelector(this.name + '_select')).width();
-                if (jQuery(idSelector(this.name + '_select')).value && len(jQuery(idSelector(this.name + '_select')).value) > w) {
-                    w = len(jQuery(idSelector(this.name + '_select')).value());
-                }
-            }
-            jQuery('div.autoTextResults[id$="' + this.name + '"]').width(w)
+            } else {}
+                mw = jQuery(evt.currentTarget).width() + jQuery(idSelector(this.name + '_select')).width();
+                jQuery('div.autoTextResults[id$="' + this.name + '"]').css('min-width', mw);
+            jQuery('div.autoTextResults[id$="' + this.name + '"]').width(w);
         }
     }
 
