@@ -220,6 +220,7 @@ class hq_entries_validation(osv.osv_memory):
         od_journal_id = od_journal_ids[0]
         all_lines = set()
         pure_ad_cor_ji_ids = []
+        original_aji_ids = []
 
         # Split lines into 2 groups:
         #+ original ones
@@ -281,6 +282,7 @@ class hq_entries_validation(osv.osv_memory):
 
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
+            original_aji_ids += initial_ana_ids
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
             acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
             if not acor_journal_ids:
@@ -311,6 +313,12 @@ class hq_entries_validation(osv.osv_memory):
         if pure_ad_cor_ji_ids:
             osv.osv.write(aml_obj, cr, uid, list(set(pure_ad_cor_ji_ids)),
                 {'last_cor_was_only_analytic': True,})
+
+        # US-857: mark splitted original lines as reallocated
+        # (like any corrected AJI)
+        if original_aji_ids:
+            osv.osv.write(ana_line_obj, cr, uid, original_aji_ids,
+                { 'is_reallocated': True, })
 
         # Mark ALL lines as user_validated
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
