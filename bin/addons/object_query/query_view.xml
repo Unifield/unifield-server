@@ -82,7 +82,7 @@
                     <group colspan="4" attrs="{'invisible': [('newquery', '=', True)]}">
                     <notebook colspan="4">
                         <page string="Search fields">
-                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('is_unsearchable', '=', False)]" nolabel="1" mode="tree" 
+                            <field name="selection_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('is_unsearchable', '=', False), ('is_in_model', '=', True)]" nolabel="1" mode="tree" 
                                    context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}"
                                 >
                                 <tree string="Search fields" noteditable="1" editable="top">
@@ -103,7 +103,7 @@
                         </page>
                         <page string="Result fields">
                            <button name="populate_result" type="object" string="Populate from Search Fields"  icon="terp-stock_effects-object-colorize" colspan="2"/>
-                            <field name="result_simple_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids, 'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" domain="[('model_search_id', 'in', model_ids)]">
+                            <field name="result_simple_ids" colspan="4" nolabel="1" mode="tree" context="{'model_ids': model_ids, 'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search'}" domain="[('model_search_id', 'in', model_ids), ('is_in_model', '=', True)]">
                                 <tree string="Result fields" editable="top" noteditable="1">
                                     <field name="field_description" />
                                     <field name="help" />
@@ -123,7 +123,7 @@
                             </field>
                         </page>
                         <page string="Group by fields">
-                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'one2many', 'many2many')), ('is_function', '=', False)]" 
+                            <field name="group_by_ids" colspan="4" domain="[('model_search_id', 'in', model_ids), ('ttype', 'not in', ('related', 'one2many', 'many2many')), ('is_function', '=', False), ('is_in_model', '=', True)]" 
                                    nolabel="1" mode="tree,search" context="{'special_tree_id': 'object_query_ir_field_tree', 'special_search_id': 'object_query_ir_field_search', 'model_ids': model_ids}">
                                 <tree string="Group by fields" noteditable="1" editable="top">
                                     <field name="field_description" />

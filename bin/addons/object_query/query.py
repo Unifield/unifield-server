@@ -534,6 +534,46 @@ class ir_fields(osv.osv):
                 res[obj.id] = target_obj._columns[obj.name].help
         return res
 
+    def _is_in_model(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        for f in self.browse(cr, uid, ids, context=context):
+            res[f.id] = True
+            if f.name not in self.pool.get(f.model_id.model)._columns.keys():
+                res[f.id] = False
+
+        return res
+
+    def _search_is_in_model(self, cr, uid, obj, name, args, context=None):
+        '''
+        Return all fields which are a function field
+        '''
+        if not args:
+            return []
+        if context is None:
+            context = {}
+        for a in args:
+            if a[0] ['is_in_model']:
+                field_ids = []
+                all_fields_ids = []
+                model_ids = context.get('model_ids', [(6,0,[])])[0][2]
+
+                if not model_ids:
+                    model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
+
+                for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
+                    model_obj = self.pool.get(obj.model)
+                    in_model = []
+                    not_in_model = []
+                    for field in obj.field_id:
+                        if f.name not in self.pool.get(obj.model)._columns.keys():
+                            not_in_model.append(f.id)
+                        else:
+                            in_model.append(f.id)
+
+                if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
+                    return [('id', 'in', not_in_model)]
+                else:
+                    return [('id', 'in', in_model)]
 
     _columns = {
         'help': fields.function(_get_help, method=True, type='char', size='10000', string='Help'),
@@ -542,16 +582,23 @@ class ir_fields(osv.osv):
                                            method=True,
                                            type='many2one', relation='ir.model',
                                            string='Model'),
-        'is_function': fields.function(_is_function, 
-                                       fnct_search=_search_function, 
+        'is_function': fields.function(_is_function,
+                                       fnct_search=_search_function,
                                        method=True,
                                        type='boolean', string='Is function ?'),
-        'is_unsearchable': fields.function(_is_function, 
-                                       fnct_search=_search_function, 
+        'is_unsearchable': fields.function(_is_function,
+                                       fnct_search=_search_function,
                                        method=True,
                                        type='boolean', string='Is searchable ?'),
+        'is_in_model': fields.fuction(
+            _is_in_model,
+            fntc_search=_search_is_in_model,
+            method=True,
+            type='boolean',
+            string='Is in model ?',
+        ),
     }
-    
+ 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Call the view on context if there is.
