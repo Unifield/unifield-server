@@ -590,7 +590,7 @@ class ir_fields(osv.osv):
                                        fnct_search=_search_function,
                                        method=True,
                                        type='boolean', string='Is searchable ?'),
-        'is_in_model': fields.fuction(
+        'is_in_model': fields.function(
             _is_in_model,
             fntc_search=_search_is_in_model,
             method=True,
