@@ -261,6 +261,12 @@ class message_to_send(osv.osv):
                 args[obj_id] = "Initial RW Sync - Ignore"
 
         for id in obj_ids:
+            # WORK IN PROGRESSSSSSSS!!!!!!!
+            # US-1467: Check if this fo has any line, if not ignore it!
+            if 'normal_fo_create_po' in rule.remote_call:
+                args[id][0].get('order_line') == 0
+                continue            
+            
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                 if destination is False:
