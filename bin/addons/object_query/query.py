@@ -551,8 +551,30 @@ class ir_fields(osv.osv):
             return []
         if context is None:
             context = {}
+
+        def fill_in_model(model_ids):
+            inherit_model_ids = []
+            for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
+                model_obj = self.pool.get(obj.model)
+
+                if model_obj._inherits:
+                    for inh_model_name in model_obj._inherits.keys():
+                        inh_model_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', inh_model_name)], context=context)
+                        for inh_model_id in inh_model_ids:
+                            if inh_model_id not in model_ids:
+                                inherit_model_ids.append(inh_model_id)
+
+                for field in obj.field_id:
+                    if field.name not in model_obj._columns.keys():
+                        not_in_model.append(field.id)
+                    else:
+                        in_model.append(field.id)
+
+            if inherit_model_ids:
+                fill_in_model(inherit_model_ids)
+
         for a in args:
-            if a[0] ['is_in_model']:
+            if a[0] == 'is_in_model':
                 field_ids = []
                 all_fields_ids = []
                 model_ids = context.get('model_ids', [(6,0,[])])[0][2]
@@ -560,15 +582,9 @@ class ir_fields(osv.osv):
                 if not model_ids:
                     model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
 
-                for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
-                    model_obj = self.pool.get(obj.model)
-                    in_model = []
-                    not_in_model = []
-                    for field in obj.field_id:
-                        if f.name not in self.pool.get(obj.model)._columns.keys():
-                            not_in_model.append(f.id)
-                        else:
-                            in_model.append(f.id)
+                in_model = []
+                not_in_model = []
+                fill_in_model(model_ids)
 
                 if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
                     return [('id', 'in', not_in_model)]
@@ -592,7 +608,7 @@ class ir_fields(osv.osv):
                                        type='boolean', string='Is searchable ?'),
         'is_in_model': fields.function(
             _is_in_model,
-            fntc_search=_search_is_in_model,
+            fnct_search=_search_is_in_model,
             method=True,
             type='boolean',
             string='Is in model ?',
