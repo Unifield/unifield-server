@@ -633,6 +633,23 @@ class patch_scripts(osv.osv):
         cr.execute(sql)
         return True
 
+    def us_1430_patch(self, cr, uid, *a, **b):
+        up_obj = self.pool.get('sync.client.update_received')
+        trans_obj = self.pool.get('ir.translation')
+        product_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
+
+        local_is = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+        product_ids = product_obj.search(cr, uid, [('international_status', '=', local_is)])
+        for product_id in product_ids:
+            trans_ids = trans_obj.search(cr, uid, [('res_id', '=', product_id), ('name', '=', 'product.template,name')])
+            data_ids = data_obj.search(cr, uid, [('model', '=', 'ir.translation'), ('res_id', 'in', trans_ids)])
+            for data in data_obj.read(cr, uid, data_ids, ['name']):
+                up_ids = up_obj.search(cr, uid, [('model', '=', 'ir.translation'), ('sdref', '=', data['name'])], order='version desc', limit=1)
+                up_obj.write(cr, uid, up_ids, {'run': False})
+
+        return True
+
 patch_scripts()
 
 
