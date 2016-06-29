@@ -518,13 +518,17 @@ class patch_scripts(osv.osv):
 
     def another_other_translation_fix(self, cr, uid, *a, **b):
         cr.execute('''
+            DELETE FROM ir_model_data WHERE model = 'ir.translation'
+            AND res_id IN (SELECT id FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name')
+        ''')
+        cr.execute('''
             DELETE FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name'
         ''')
         return True
 
     def clean_far_updates(self, cr, uid, *a, **b):
         '''
-        US-1148: is_keep_cool has been removed on product
+        US-1148: is_keep_cool has been removed on product$
         delete FAR line update related to this old fields
         '''
         if self.pool.get('sync.server.update'):
