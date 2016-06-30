@@ -22,6 +22,7 @@ import datetime
 from osv import fields, osv
 import pooler
 import logging
+import tools
 
 
 class stock_production_lot(osv.osv):
@@ -247,6 +248,31 @@ class stock_production_lot(osv.osv):
         'removal_date': _get_date('removal_time'),
         'alert_date': _get_date('alert_time'),
     }
+
+    def import_data(self, cr, uid, fields, datas, mode='init', current_module='', noupdate=False, context=None, filename=None):
+        if context is None:
+            context = {}
+
+        if context.get('sync_update_execution'):
+            return super(stock_production_lot, self).import_data(cr, uid, fields, datas, mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename)
+
+        errors = []
+        for i, d in enumerate(datas):
+            try:
+                res = super(stock_production_lot, self).import_data(cr, uid, fields, [d], mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename)
+                if res[0] < 0:
+                    errors.append(res[2])
+            except Exception as e:
+                errors.append('Line %s: %s' % (str(i+1), tools.ustr(e)))
+
+        if errors:
+            # Do not create batch numbers if there is one error
+            cr.rollback()
+            exc_msg = '\n' + '\n'.join(str(x) for x in errors)
+            return (-1, {}, exc_msg, '')
+
+        return (len(datas)-len(errors), 0, 0, 0)
+
 stock_production_lot()
 
 class product_product(osv.osv):
