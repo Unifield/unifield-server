@@ -226,10 +226,12 @@ class account_move_line(osv.osv):
                             # US-119 deduce the rounding gap and apply it
                             # to the AJI of greater amount
                             # http://jira.unifield.org/browse/US-119?focusedCommentId=38217&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38217
-                            fixed_amount = aji_greater_amount['amount'] - (dl_total_amount_rounded - amount)
+                            # and US-1463
+                            fixed_amount = aji_greater_amount['amount'] - (round(dl_total_amount_rounded, 2) - amount)
+                            func_amount = -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, fixed_amount, round=False, context=context)
+                            func_amount = self.pool.get('finance.tools').truncate_amount(func_amount, 2)
                             fixed_amount_vals = {
-                                'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
-                                        fixed_amount, round=False, context=context),
+                                'amount': func_amount,
                                 'amount_currency': -1 * fixed_amount,
                             }
                             aal_obj.write(cr, uid, [aji_greater_amount['id']],
