@@ -237,8 +237,11 @@ class account_move_line(osv.osv):
                             # and US-1463
                             func_amount = None
                             if aji_greater_amount['iso'] > 0:  # US-1463/2
-                                diff = amount - (round(aji_greater_amount['iso'], 2) * len(distrib_lines))
-                                fixed_amount = self.pool.get('finance.tools').truncate_amount(aji_greater_amount['iso'] - diff, 2)
+                                if len(distrib_lines) > 2:
+                                    fixed_amount = amount - round(aji_greater_amount['iso'], 2) * float(len(distrib_lines)-1)
+                                else:
+                                    diff = amount - (round(aji_greater_amount['iso'], 2) * len(distrib_lines))
+                                    fixed_amount = self.pool.get('finance.tools').truncate_amount(aji_greater_amount['iso'] - diff, 2)
                             else:  # US-1463/1
                                 fixed_amount = aji_greater_amount['amount'] - (round(dl_total_amount_rounded, 2) - amount)
                                 func_amount = -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, fixed_amount, round=False, context=context)
