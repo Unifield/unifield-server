@@ -261,7 +261,7 @@ class stock_production_lot(osv.osv):
             try:
                 res = super(stock_production_lot, self).import_data(cr, uid, fields, [d], mode=mode, current_module=current_module, noupdate=noupdate, context=context, filename=filename)
                 if res[0] < 0:
-                    errors.append(res[2])
+                    errors.append(res[2].replace('Line 1', 'Line %s' % (str(i+1))))
             except Exception as e:
                 errors.append('Line %s: %s' % (str(i+1), tools.ustr(e)))
 
