@@ -525,7 +525,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     ad_lines = [len(line.analytic_distribution_id.cost_center_lines) for line in wiz.order_id.order_line if line.analytic_distribution_id]
                     max_ad_lines = ad_lines and max(ad_lines) * 4 or 0
                     nb_file_header_lines += header_ad_lines
-                    nb_file_lines_columns += max_ad_lines
+                    #nb_file_lines_columns += max_ad_lines
                     first_line_index += header_ad_lines
 
                 for line in wiz.simu_line_ids:
@@ -607,7 +607,7 @@ information must be on two columns : Column A for name of the field and column\
 
                 if len(values.get(first_line_index, [])) < nb_file_lines_columns:
                     error_msg = _('Line %s of the Excel file: This line is \
-mandatory and must have %s columns. The values on this line must be the name \
+mandatory and must have at least %s columns. The values on this line must be the name \
 of the field for PO lines.') % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
@@ -615,7 +615,7 @@ of the field for PO lines.') % (first_line_index, nb_file_lines_columns)
                     if len(values.get(x, [])) < nb_file_lines_columns:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line \
-information must be on %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
+information must be on at least %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
                         file_format_errors.append(error_msg)
 
                 nb_file_lines = len(values) - first_line_index
