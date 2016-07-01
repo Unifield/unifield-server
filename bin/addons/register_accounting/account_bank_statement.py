@@ -1767,9 +1767,6 @@ class account_bank_statement_line(osv.osv):
             ('id', '!=', st_line.first_move_line_id.id)]) # move lines that have been created AFTER import invoice wizard
         # Add new lines
         amount = abs(st_line.first_move_line_id.amount_currency)
-        sign = 1
-        if st_line.first_move_line_id.amount_currency > 0:
-            sign = -1
         res_ml_ids = []
         process_invoice_move_line_ids = []
         total_payment = True
@@ -1783,14 +1780,23 @@ class account_bank_statement_line(osv.osv):
             for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
                 amount_currency = invoice_move_line.amount_currency
 
+                sign = 1
+                if invoice_move_line.amount_currency > 0:
+                    sign = -1
+
                 if invoice_move_line.reconcile_partial_id:
                     amount_currency = 0
                     for line in invoice_move_line.reconcile_partial_id.line_partial_ids:
                         amount_currency += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
-                if abs(amount_currency) <= amount:
+
+                if amount_currency > 0 or abs(amount_currency) <= amount:
+                    # if it's a refund OR if the invoice outstanding amount <= payment amount
+                    # the amount to write corresponds to the document outstanding amount
                     amount_to_write = sign * abs(amount_currency)
                 else:
+                    # else it corresponds to the payment amount
                     amount_to_write = sign * amount
+
                 # create a new move_line corresponding to this invoice move line
                 aml_vals = {
                     'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
@@ -1809,7 +1815,18 @@ class account_bank_statement_line(osv.osv):
                 move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context, check=False)
                 res_ml_ids.append(move_line_id)
 
-                amount -= abs(amount_to_write)
+                '''
+                Determine the part of the payment that still has to be allocated
+                Note that the SR amounts are added whereas the SI amounts are deducted
+                Ex:
+                Payment amount: 100
+                Supplier Refund: -10
+                Outstanding amount on a SI: 110
+                => First loop: amount = 100 - (-10) = 110
+                => Second loop: amount = 110 - 110 = 0
+                '''
+                amount -= amount_to_write
+
                 if not amount:
                     todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
                     # remove remaining invoice lines
