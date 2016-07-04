@@ -1778,6 +1778,10 @@ class account_bank_statement_line(osv.osv):
             #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
             move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
 
+            # check if all docs have the same sign
+            same_sign = all(x.amount_currency >= 0 for x in st_line.imported_invoice_line_ids) or \
+                all(x.amount_currency < 0 for x in st_line.imported_invoice_line_ids)
+
             # supplier refunds have to be handled first, then invoices sorted by amount (smallest amount first)
             for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: x.amount_currency, reverse=True):
                 amount_currency = invoice_move_line.amount_currency
@@ -1791,8 +1795,8 @@ class account_bank_statement_line(osv.osv):
                     for line in invoice_move_line.reconcile_partial_id.line_partial_ids:
                         amount_currency += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
 
-                if amount_currency > 0 or abs(amount_currency) <= amount:
-                    # if it's a refund OR if the invoice outstanding amount <= payment amount
+                if (not same_sign and amount_currency > 0) or abs(amount_currency) <= amount:
+                    # if it's a refund imported together with invoices OR if the doc. outstanding amount <= payment amount
                     # the amount to write corresponds to the document outstanding amount
                     amount_to_write = sign * abs(amount_currency)
                 else:
