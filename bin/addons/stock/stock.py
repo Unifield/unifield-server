@@ -453,8 +453,7 @@ class stock_location(osv.osv):
                 total_amount = pool_uom._compute_qty(cr, uid, new_results[0]['product_uom'], new_results[0]['product_qty'], context.get('uom', False))
 
             if total_amount <= 0.0:
-                if total_amount != amount:
-                    continue
+                continue
 
             if total_amount > 0:
                 total_amount = min(total_amount, product_qty)
