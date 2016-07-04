@@ -377,7 +377,10 @@ class many2one(_column):
         # must be the access right of the parent form and not the linked object itself.
         if no_name_get:
             for id in res:
-                res[id] = (res[id], '')
+                if isinstance(res[id], (int, long)):
+                    res[id] = (res[id], '')
+                else:
+                    res[id] = False
         else:
             records = dict(obj.name_get(cr, 1,
                                         list(set([x for x in res.values() if isinstance(x, (int,long))])),
@@ -834,6 +837,8 @@ class function(_column):
             context = {}
         if values is None:
             values = {}
+        if no_name_get:
+            context['no_name_get'] = True
         res = {}
         if self._method:
             res = self._fnct(obj, cr, user, ids, name, self._arg, context)
@@ -845,11 +850,12 @@ class function(_column):
             res_ids = [x for x in res.values() if x and isinstance(x, (int,long))]
 
             if res_ids:
-                obj_model = obj.pool.get(self._obj)
                 if no_name_get:
                     for r in res.keys():
-                        res[r] = (res[r], '')
+                        if res[r] in res_ids:
+                            res[r] = (res[r], '')
                 else:
+                    obj_model = obj.pool.get(self._obj)
                     dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
                     for r in res.keys():
                         if res[r] and res[r] in dict_names:
@@ -967,10 +973,15 @@ class related(function):
         if self._type=='many2one':
             ids = filter(None, res.values())
             if ids:
-                ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
-                for r in res:
-                    if res[r]:
-                        res[r] = (res[r], ng[res[r]])
+                if context.get('no_name_get', False):
+                    for r in res:
+                        if res[r]:
+                            res[r] = (res[r], '')
+                else:
+                    ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
+                    for r in res:
+                        if res[r]:
+                            res[r] = (res[r], ng[res[r]])
         elif self._type in ('one2many', 'many2many'):
             for r in res:
                 if res[r]:
