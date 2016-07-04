@@ -1056,7 +1056,7 @@ class orm_template(object):
         return (position, 0, 0, 0)
 
     def read(self, cr, user, ids, fields=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         """
         Read records with given ids with the given fields
 
@@ -2204,7 +2204,7 @@ class orm_memory(orm_template):
         return True
 
     def read(self, cr, user, ids, fields_to_read=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         if context is None:
             context = {}
         if not fields_to_read:
@@ -3368,7 +3368,7 @@ class orm(orm_template):
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
     def read(self, cr, user, ids, fields=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         if not ids:
             return []
         if context is None:
@@ -3382,7 +3382,7 @@ class orm(orm_template):
             select = ids
         select = [isinstance(x, dict) and x['id'] or x for x in select]
         result = self._read_flat(cr, user, select, fields, context, load,
-                use_name_get)
+                no_name_get)
 
         for r in result:
             for key, v in r.items():
@@ -3394,7 +3394,7 @@ class orm(orm_template):
         return result
 
     def _read_flat(self, cr, user, ids, fields_to_read, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         if not ids:
             return []
         if context is None:
@@ -3519,7 +3519,7 @@ class orm(orm_template):
                     try:
                         res2 = self._columns[f].get(cr, self, ids, f, user,
                                 context=context, values=res,
-                                use_name_get=use_name_get)
+                                no_name_get=no_name_get)
                     except:
                         import pdb; pdb.set_trace()
                         print 'couscous'

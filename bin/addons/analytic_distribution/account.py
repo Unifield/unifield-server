@@ -134,7 +134,7 @@ class account_destination_summary(osv.osv):
         return view
 
     def read(self, cr, uid, ids, fields_to_read=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         first = False
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -142,7 +142,7 @@ class account_destination_summary(osv.osv):
         if fields_to_read is None:
             fields_to_read = []
         ret = super(account_destination_summary, self).read(cr, uid, ids,
-                fields_to_read, context, load, use_name_get)
+                fields_to_read, context, load, no_name_get)
         f_to_read = []
         for field in fields_to_read:
             if field.startswith('dest_'):

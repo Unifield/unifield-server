@@ -1277,7 +1277,7 @@ class stock_picking(osv.osv):
                 # Average price computation
                 if (pick.type == 'in') and (move.product_id.cost_method == 'average'):
                     product = product_obj.read(cr, uid, move.product_id.id,
-                            ['uom_id', 'qty_available'], use_name_get=False)
+                            ['uom_id', 'qty_available'], no_name_get=True)
                     move_currency_id = move.company_id.currency_id.id
                     context['currency_id'] = move_currency_id
                     qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product['uom_id'][0])
@@ -1741,7 +1741,7 @@ class stock_move(osv.osv):
                 else:
                     move_list = self.pool.get('stock.move').read(cr, uid,
                             context['move_line'][0], ['location_dest_id'],
-                            use_name_get=False)
+                            no_name_get=True)
                     return move_list and move_list['location_dest_id'][0] or False
         if context.get('address_out_id', False):
             property_out = self.pool.get('res.partner.address').browse(cr, uid, context['address_out_id'], context).partner_id.property_stock_customer
@@ -2707,7 +2707,7 @@ class stock_move(osv.osv):
                     self.write(cr, uid, [move.id], update_val)
 
         for new_move in self.read(cr, uid, res, ['product_id', 'product_qty'],
-                context=context, use_name_get=False):
+                context=context, no_name_get=True):
             for (id, name) in product_obj.name_get(cr, uid, [new_move['product_id'][0]]):
                 message = _('Product ') + " '" + name + "' "+ _("is consumed with") + " '" + str(new_move['product_qty']) + "' "+ _("quantity.")
                 self.log(cr, uid, new_move['id'], message)

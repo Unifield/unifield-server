@@ -299,9 +299,9 @@ class purchase_order_followup_line(osv.osv_memory):
     }
 
     def read(self, cr, uid, ids, fields, context=None, load='_classic_write',
-            use_name_get=True):
+            no_name_get=False):
         res = super(purchase_order_followup_line, self).read(cr, uid, ids,
-                fields, context=context, load=load, use_name_get=use_name_get)
+                fields, context=context, load=load, no_name_get=no_name_get)
 
         if context.get('export'):
             for r in res:

@@ -85,7 +85,7 @@ class ir_action_window(osv.osv):
     _inherit = 'ir.actions.act_window'
 
     def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         if context is None:
             context = {}
         obj_dept = self.pool.get('hr.department')
@@ -94,7 +94,7 @@ class ir_action_window(osv.osv):
             select = [ids]
         res = super(ir_action_window, self).read(cr, uid, select,
                 fields=fields, context=context, load=load,
-                use_name_get=use_name_get)
+                no_name_get=no_name_get)
         for r in res:
             mystring = 'department_users_get()'
             if mystring in (r.get('domain', '[]') or ''):

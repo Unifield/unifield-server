@@ -510,7 +510,7 @@ class product_product(osv.osv):
         return res
 
     def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read',
-            use_name_get=True):
+            no_name_get=False):
         '''
         Set value for each month
         '''
@@ -521,7 +521,7 @@ class product_product(osv.osv):
 
         if context.get('history_cons', False):
             res = super(product_product, self).read(cr, uid, ids, vals,
-                    context=context, load=load, use_name_get=use_name_get)
+                    context=context, load=load, no_name_get=no_name_get)
 
             if 'average' not in vals:
                 return res
@@ -669,13 +669,13 @@ class product_history_consumption_product(osv.osv):
     }
 
     def read(self, cr, uid, ids, fields, context=None, load='_classic_read',
-            use_name_get=True):
+            no_name_get=False):
         '''
         Return the result in the same order as given in ids
         '''
         res = super(product_history_consumption_product, self).read(cr, uid,
                 ids, fields, context=context, load=load,
-                use_name_get=use_name_get)
+                no_name_get=no_name_get)
 
         res_final = [None]*len(ids)
         for r in res:

@@ -227,7 +227,7 @@ class stock_picking(osv.osv):
     def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
         result = set()
         for obj in self.read(cr, uid, ids, ['picking_id'], context=context,
-                use_name_get=False):
+                no_name_get=True):
             if obj['picking_id']:
               result.add(obj['picking_id'][0])
         return list(result)
@@ -240,7 +240,7 @@ class stock_picking(osv.osv):
 
         current_company_p_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
         for pick in self.read(cr, uid, ids, ['partner_id'], context=context,
-                use_name_get=False):
+                no_name_get=True):
             res[pick['id']] = False
             if pick['partner_id'] and pick['partner_id'][0] == current_company_p_id:
                 res[pick['id']] = True
@@ -294,7 +294,7 @@ class stock_picking(osv.osv):
         res = {}
         cmp_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
         for pick in self.read(cr, uid, ids, ['partner_id2'], context=context,
-                use_name_get=False):
+                no_name_get=True):
             res[pick['id']] = pick['partner_id2'] and pick['partner_id2'][0] == cmp_partner_id or False
 
         return res
@@ -1315,7 +1315,7 @@ class stock_move(osv.osv):
                 wh_ids = self.pool.get('stock.warehouse').search(cr, uid, [])
                 if wh_ids:
                     return self.pool.get('stock.warehouse').read(cr, uid,
-                            wh_ids[0], ['lot_output_id'], use_name_get=False)['lot_output_id'][0]
+                            wh_ids[0], ['lot_output_id'], no_name_get=True)['lot_output_id'][0]
 
         return False
 
@@ -1334,7 +1334,7 @@ class stock_move(osv.osv):
         product_ids = set()
         product_ids_add = product_ids.add
         for stock_move_dict in self.read(cr, uid, ids, ('picking_id', 'product_id'),
-                                        context=context, use_name_get=False):
+                                        context=context, no_name_get=True):
             pick_ids_add(stock_move_dict['picking_id'][0])
             product_ids_add(stock_move_dict['product_id'][0])
 
@@ -1533,7 +1533,7 @@ class stock_move(osv.osv):
 
         for move in self.read(cr, uid, ids,
                 ['product_id', 'from_wkf_line', 'picking_id', 'line_number'],
-                context=context, use_name_get=False):
+                context=context, no_name_get=True):
             if move['product_id'][0] == product_tbd and move['from_wkf_line']:
                 ids.pop(ids.index(move['id']))
             else:
@@ -1556,7 +1556,7 @@ class stock_move(osv.osv):
 
     def _uom_constraint(self, cr, uid, ids, context=None):
         for move in self.read(cr, uid, ids, ['product_id', 'product_uom'],
-                context=context, use_name_get=False):
+                context=context, no_name_get=True):
             if not self.pool.get('uom.tools').check_uom(cr, uid,
                     move['product_id'][0], move['product_uom'][0], context):
                 raise osv.except_osv(_('Error'), _('You have to select a product UOM in the same category than the purchase UOM of the product !'))
@@ -1615,7 +1615,7 @@ class stock_move(osv.osv):
         if vals.get('picking_id', False):
             picking = pick_obj.read(cr, uid, vals['picking_id'],
                     ['move_sequence_id', 'type', 'reason_type_id'],
-                    context=context, use_name_get=False)
+                    context=context, no_name_get=True)
             if not vals.get('line_number', False):
                 # new number need - gather the line number form the sequence
                 sequence_id = picking['move_sequence_id'][0]
@@ -1659,7 +1659,7 @@ class stock_move(osv.osv):
         if not vals.get('partner_id2', False):
             if vals.get('address_id', False):
                 addr = addr_obj.read(cr, uid, vals['address_id'],
-                        ['partner_id'], context=context, use_name_get=False)
+                        ['partner_id'], context=context, no_name_get=True)
                 vals['partner_id2'] = addr['partner_id'] and addr['partner_id'][0] or False
             else:
                 vals['partner_id2'] = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
@@ -1765,7 +1765,7 @@ class stock_move(osv.osv):
             first_move = self.read(cr, uid, ids[0], ['partner_id', 'address_id',
                                                      'state', 'picking_id'],
                                                     context=context,
-                                                    use_name_get=False)
+                                                    no_name_get=True)
             partner_id = ['partner_id'] and first_move['partner_id'][0] or False
             picking_id = first_move['picking_id'] and first_move['picking_id'][0] or False
 
@@ -1802,7 +1802,7 @@ class stock_move(osv.osv):
                     # Change the reason type of the picking if it is not the same
                     if 'reason_type_id' in vals and picking_id:
                         pick = pick_obj.read(cr, uid, picking_id,
-                                ['reason_type_id'], context, use_name_get=False)
+                                ['reason_type_id'], context, no_name_get=True)
                         if pick['reason_type_id'][0] != vals['reason_type_id']:
                             pick_to_change_reason.add(picking_id)
                 return pick_to_change_reason
@@ -1812,7 +1812,7 @@ class stock_move(osv.osv):
                 remain_move_list = self.read(cr, uid, remain_ids, ['partner_id', 'address_id',
                                                          'state', 'picking_id'],
                                                         context=context,
-                                                        use_name_get=False)
+                                                        no_name_get=True)
                 pick_list_to_change.update(get_pick_to_change_reason(remain_move_list,
                                                                      partner_id,
                                                                      partner))
@@ -1907,7 +1907,7 @@ class stock_move(osv.osv):
                  'location_dest_id',
                  'reason_type_id',
                  'line_number',
-                 'move_cross_docking_ok',], context, use_name_get=False):
+                 'move_cross_docking_ok',], context, no_name_get=True):
             vals = {}
             move_unlinked = False
             # FEFO logic
@@ -2057,7 +2057,7 @@ class stock_move(osv.osv):
             assigned_ids = []
             # If source location == dest location THEN stock move is done.
             for line in self.read(cr, uid, done, ['location_id',
-                'location_dest_id'], use_name_get=False):
+                'location_dest_id'], no_name_get=True):
                 if line.get('location_id') and line.get('location_dest_id') and line.get('location_id') == line.get('location_dest_id'):
                     done_ids.append(line['id'])
                 else:
@@ -2802,7 +2802,7 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         pick_ids = []
 
         for wiz in self.read(cr, uid, ids, ['picking_id'], context=context,
-                use_name_get=False):
+                no_name_get=True):
             pick_ids.append(wiz['picking_id'][0])
 
         # Set the boolean 'has_to_be_resourced' to True for each picking

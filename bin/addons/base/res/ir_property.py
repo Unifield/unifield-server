@@ -157,7 +157,7 @@ class ir_property(osv.osv):
         return False
 
     def get(self, cr, uid, name, model, res_id=False, context={},
-            use_name_get=True):
+            no_name_get=False):
         domain = self._get_domain(cr, uid, name, model, context=context)
         if domain is not None:
             domain = [('res_id', '=', res_id)] + domain

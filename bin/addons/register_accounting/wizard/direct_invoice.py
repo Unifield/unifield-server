@@ -61,7 +61,7 @@ class wizard_account_invoice(osv.osv):
     }
 
     def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         """
         Avoid problem of many2many and one2many that comes from the object from which we inherit.
         BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
@@ -73,7 +73,7 @@ class wizard_account_invoice(osv.osv):
         """
         # Default behaviour
         res = super(wizard_account_invoice, self).read(cr, uid, ids, fields,
-                context, load, use_name_get)
+                context, load, no_name_get)
         # Fetch all many2many and all one2many fields
         field_to_change = []
         if self._name == 'wizard.account.invoice':
@@ -333,7 +333,7 @@ class wizard_account_invoice_line(osv.osv):
     }
 
     def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         """
         Avoid problem of many2many and one2many that comes from the object from which we inherit.
         BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
@@ -345,7 +345,7 @@ class wizard_account_invoice_line(osv.osv):
         """
         # Default behaviour
         res = super(wizard_account_invoice_line, self).read(cr, uid, ids,
-                fields, context, load, use_name_get)
+                fields, context, load, no_name_get)
         # Fetch all many2many and all one2many fields
         field_to_change = []
         if self._name == 'wizard.account.invoice.line':

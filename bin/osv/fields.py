@@ -111,7 +111,7 @@ class _column(object):
         raise Exception(_('Not implemented get_memory method !'))
 
     def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, use_name_get=True):
+            values=None, no_name_get=False):
         raise Exception(_('undefined get method !'))
 
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, context=None):
@@ -262,7 +262,7 @@ class binary(_column):
         self.filters = filters
 
     def get_memory(self, cr, obj, ids, name, user=None, context=None,
-            values=None, use_name_get=False):
+            values=None, no_name_get=True):
         if not context:
             context = {}
         if not values:
@@ -359,7 +359,7 @@ class many2one(_column):
         return result
 
     def get(self, cr, obj, ids, name, user=None, context=None, values=None,
-            use_name_get=True):
+            no_name_get=False):
         if context is None:
             context = {}
         if values is None:
@@ -375,7 +375,10 @@ class many2one(_column):
         # build a dictionary of the form {'id_of_distant_resource': name_of_distant_resource}
         # we use uid=1 because the visibility of a many2one field value (just id and name)
         # must be the access right of the parent form and not the linked object itself.
-        if use_name_get:
+        if no_name_get:
+            for id in res:
+                res[id] = (res[id], '')
+        else:
             records = dict(obj.name_get(cr, 1,
                                         list(set([x for x in res.values() if isinstance(x, (int,long))])),
                                         context=context))
@@ -384,9 +387,6 @@ class many2one(_column):
                     res[id] = (res[id], records[res[id]])
                 else:
                     res[id] = False
-        else:
-            for id in res:
-                res[id] = (res[id], '')
         return res
 
     def set(self, cr, obj_src, id, field, values, user=None, context=None):
@@ -481,7 +481,7 @@ class one2many(_column):
         raise _('Not Implemented')
 
     def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, use_name_get=True):
+            values=None, no_name_get=False):
         if context is None:
             context = {}
         if self._context:
@@ -565,7 +565,7 @@ class many2many(_column):
         self._limit = limit
 
     def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, use_name_get=True):
+            values=None, no_name_get=False):
         if not context:
             context = {}
         if not values:
@@ -829,7 +829,7 @@ class function(_column):
         return self._fnct_search(obj, cr, uid, obj, name, args, context=context)
 
     def get(self, cr, obj, ids, name, user=None, context=None, values=None,
-            use_name_get=True):
+            no_name_get=False):
         if context is None:
             context = {}
         if values is None:
@@ -846,14 +846,14 @@ class function(_column):
 
             if res_ids:
                 obj_model = obj.pool.get(self._obj)
-                if use_name_get:
+                if no_name_get:
+                    for r in res.keys():
+                        res[r] = (res[r], '')
+                else:
                     dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
                     for r in res.keys():
                         if res[r] and res[r] in dict_names:
                             res[r] = (res[r], dict_names[res[r]])
-                else:
-                    for r in res.keys():
-                        res[r] = (res[r], '')
 
         elif self._type == 'binary':
             if context.get('bin_size', False):

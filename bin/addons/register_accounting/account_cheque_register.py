@@ -27,7 +27,7 @@ from osv import fields
 
 class one2many_register(fields.one2many):
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None,
-            values=None, use_name_get=True):
+            values=None, no_name_get=False):
         if context is None:
             context = {}
 

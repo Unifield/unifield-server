@@ -151,12 +151,12 @@ class procurement_batch_cron(osv.osv):
 
 
     def read(self, cr, uid, ids, fields_to_read=None, context=None,
-            load='_classic_read', use_name_get=True):
+            load='_classic_read', no_name_get=False):
         if not fields_to_read:
             fields_to_read = []
 
         res = super(procurement_batch_cron, self).read(cr, uid, ids,
-                fields_to_read, context=context, use_name_get=use_name_get)
+                fields_to_read, context=context, no_name_get=no_name_get)
 
         if 'nextcall' in fields_to_read:
             for data in ([res] if isinstance(res, dict) else res):

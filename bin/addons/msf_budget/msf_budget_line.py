@@ -25,7 +25,7 @@ from osv import fields, osv
 class one2many_budget_lines(fields.one2many):
 
     def get(self, cr, obj, ids, name, uid=None, offset=0, context=None,
-            values=None, use_name_get=True):
+            values=None, no_name_get=False):
         """
         Use 'granularity' value in context to filter budget lines.
         If granularity is 'view', then display only budget line that have line_type = view
