@@ -28,7 +28,7 @@
         <record id="ir_export_catalogue_lines" model="ir.values">
             <field name="key2">client_print_multi</field>
             <field name="model">supplier.catalogue</field>
-            <field name="name">Export lines (csv)</field>
+            <field name="name">Export lines (Excel)</field>
             <field eval="'ir.actions.server,%d'%action_server_export_catalogue_lines" name="value" />
             <field eval="True" name="object" />
         </record>
