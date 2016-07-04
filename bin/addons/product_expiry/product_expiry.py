@@ -142,7 +142,7 @@ class stock_production_lot(osv.osv):
     def us_1469_restore_deleted_batch_for_table(self, cr, uid, table_name, field_id):
         # For each table, search for the missing batch
         # 1. Table stock_move
-        cr.execute('select lot.name, move.product_id from ' + table_name + ' move, stock_production_lot lot where move.' + field_id + ' = lot.id and move.product_id != lot.product_id group by lot.name, move.product_id order by lot.name;''')
+        cr.execute('select lot.name, move.product_id from ' + table_name + ' move, stock_production_lot lot, product_product prod where move.' + field_id +  ' = lot.id and move.product_id != lot.product_id  and move.product_id = prod.id and prod.batch_management = \'t\' group by lot.name, move.product_id order by lot.name;''')
         
         list_bn_prod = cr.dictfetchall()
         if len(list_bn_prod) == 0:
