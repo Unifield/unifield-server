@@ -47,7 +47,7 @@ class supplier_catalogue_lines_report_parser(report_sxw.rml_parse):
             self._nb_lines += len(o.order_lines)
 
     def _get_lines(self, order_brw):
-        for order_line in order_brw.order_lines:
+        for order_line in order_brw.line_ids:
             self._lines_iterator += 1
             if self.back_browse:
                 percent = float(self._lines_iterator) / float(self._nb_lines)
