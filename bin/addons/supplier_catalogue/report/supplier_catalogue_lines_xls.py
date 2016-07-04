@@ -32,7 +32,7 @@ class supplier_catalogue_lines_report_parser(report_sxw.rml_parse):
 
         self.localcontext.update({
             'getLines': self._get_lines,
-            'setLines': self._set_nb_lines,
+            'getOrders': self._get_orders,
         })
         self._nb_lines = 0
         self._lines_iterator = 0
@@ -42,18 +42,20 @@ class supplier_catalogue_lines_report_parser(report_sxw.rml_parse):
         else:
             self.back_browse = None
 
-    def _set_nb_lines(self, objs):
+    def _get_orders(self, objs):
         for o in objs:
-            self._nb_lines += len(o.order_lines)
+            self._nb_lines += len(o.line_ids)
 
-    def _get_lines(self, order_brw):
-        for order_line in order_brw.line_ids:
+        return objs
+
+    def _get_lines(self, cat_brw):
+        for cat_line in cat_brw.line_ids:
             self._lines_iterator += 1
-            if self.back_browse:
+            if self.back_browse and self._nb_lines:
                 percent = float(self._lines_iterator) / float(self._nb_lines)
                 self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
 
-            yield order_line
+            yield cat_line
 
         raise StopIteration
 

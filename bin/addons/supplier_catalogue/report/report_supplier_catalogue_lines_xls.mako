@@ -52,8 +52,7 @@
   </Style>
 </Styles>
 ## ==================================== we loop over the supplier_catalogue "objects" == supplier.catalogue  ====================================================
-setLines(objects)
-% for o in objects:
+% for o in getOrders(objects):
 <ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
