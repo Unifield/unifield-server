@@ -261,7 +261,8 @@ class binary(_column):
         _column.__init__(self, string=string, **args)
         self.filters = filters
 
-    def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
+    def get_memory(self, cr, obj, ids, name, user=None, context=None,
+            values=None, use_name_get=False):
         if not context:
             context = {}
         if not values:
