@@ -43,10 +43,22 @@ class catalogue_export_lines(osv.osv_memory):
 
         datas = {'ids': catalogue_ids}
 
+        report_name = 'supplier.catalogue.lines.xls'
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': report_name,
+            'report_name': report_name,
+        }, context=context)
+
+        context.update({
+            'background_id': background_id,
+            'background_time': 15,
+        })
+
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'supplier.catalogue.lines.xls',
+            'report_name': report_name,
             'datas': datas,
+            'nodestroy': True,
             'context': context,
         }
 

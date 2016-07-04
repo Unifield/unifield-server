@@ -52,6 +52,7 @@
   </Style>
 </Styles>
 ## ==================================== we loop over the supplier_catalogue "objects" == supplier.catalogue  ====================================================
+setLines(objects)
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 ## definition of the columns' size
@@ -76,7 +77,7 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Min. Order Qty.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
     </Row>
-    % for line in o.line_ids:
+    % for line in getLines(o):
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>

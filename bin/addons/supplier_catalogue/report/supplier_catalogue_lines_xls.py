@@ -24,6 +24,40 @@ from report import report_sxw
 from msf_supply_doc_export.msf_supply_doc_export import WebKitParser
 from msf_supply_doc_export.msf_supply_doc_export import getIds
 
+
+class supplier_catalogue_lines_report_parser(report_sxw.rml_parse):
+
+    def __init__(self, cr, uid, name, context=None):
+        super(supplier_catalogue_lines_report_parser, self).__init__(cr, uid, name, context=context)
+
+        self.localcontext.update({
+            'getLines': self._get_lines,
+            'setLines': self._set_nb_lines,
+        })
+        self._nb_lines = 0
+        self._lines_iterator = 0
+
+        if context.get('background_id'):
+            self.back_browse = self.pool.get('memory.background.report').browse(self.cr, self.uid, context['background_id'])
+        else:
+            self.back_browse = None
+
+    def _set_nb_lines(self, objs):
+        for o in objs:
+            self._nb_lines += len(o.order_lines)
+
+    def _get_lines(self, order_brw):
+        for order_line in order_brw.order_lines:
+            self._lines_iterator += 1
+            if self.back_browse:
+                percent = float(self._lines_iterator) / float(self._nb_lines)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
+
+            yield order_line
+
+        raise StopIteration
+
+
 class supplier_catalogue_lines_report_xls(WebKitParser):
 
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
@@ -44,6 +78,7 @@ supplier_catalogue_lines_report_xls(
     'report.supplier.catalogue.lines.xls',
     'supplier.catalogue',
     'addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako',
+    parser=supplier_catalogue_lines_report_parser,
 )
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
