@@ -16,7 +16,22 @@
 					<button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
 				</form>
 			</field>
-		</record>
+        </record>
+
+        <record id="action_server_export_catalogue_lines" model="ir.actions.server">
+            <field name="name">Export lines (csv)</field>
+            <field name="model_id" ref="model_catalogue_export_lines" />
+            <field name="state">code</field>
+            <field name="code">action = obj.export_file(context=context)</field>
+        </record>
+
+        <record id="ir_export_catalogue_lines" model="ir.values">
+            <field name="key2">client_print_multi</field>
+            <field name="model">supplier.catalogue</field>
+            <field name="name">Export lines (csv)</field>
+            <field eval="'ir.actions.server,%d'%action_server_export_catalogue_lines" name="value" />
+            <field eval="True" name="object" />
+        </record>
 		
 	</data>
 </openerp>

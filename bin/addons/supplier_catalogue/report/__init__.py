@@ -19,37 +19,6 @@
 #
 ##############################################################################
 
-from osv import osv
-from osv import fields
-
-
-class catalogue_export_lines(osv.osv_memory):
-    _name = 'catalogue.export.lines'
-    _description = 'Supplier catalogue export lines'
-
-    _columns = {
-        'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
-        'file_to_export': fields.binary(string='File to export'),
-    }
-
-    def export_file(self, cr, uid, ids, context=None):
-        '''
-        Export lines to file
-        '''
-        if not context:
-            context = {}
-
-        catalogue_ids = context.get('active_ids', [])
-
-        datas = {'ids': catalogue_ids}
-
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'supplier.catalogue.lines.xls',
-            'datas': datas,
-            'context': context,
-        }
-
-catalogue_export_lines()
+import supplier_catalogue_lines_csv
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
