@@ -302,8 +302,7 @@ class stock_production_lot(osv.osv):
                              ('stock_inventory_line', 'prod_lot_id'),
                              ('initial_stock_inventory_line', 'prod_lot_id'),
                              ('claim_product_line', 'lot_id_claim_product_line'),
-                             ('composition_kit', 'composition_lot_id'),
-                             ('wizard_import_in_line_simulation_screen', 'imp_batch_id')
+                             ('composition_kit', 'composition_lot_id')
                              ]
         for element in list_table_fields:
             # Tables with foreign key prod_lot_id (total 2)
@@ -314,8 +313,20 @@ class stock_production_lot(osv.osv):
         count = cr.fetchone()[0]
         if count > 0: # Only update the table if wrong bn exists
             self._logger.info("Table %s has %s batch objects (%s) and will be-mapped." %(table_name, count, batch_name,))
-            sql_update = "update " + table_name + " set " + field_id + "=" + str(lead_id) + " where " + field_id + "=" + str(wrong_id)
-            cr.execute(sql_update)
+            if table_name == 'real_average_consumption_line':
+                # Specific case for real.average.consumption.line that need to sum the quantity of old and new prodlot because of unicity constraint
+                sql_update = """
+                    UPDATE real_average_consumption_line
+                    SET product_qty = (
+                        SELECT sum(product_qty) FROM real_average_consumption_line WHERE prodlot_id IN (%s, %s))
+                    WHERE prodlot_id = %s
+                """
+                cr.execute(sql_update, (lead_id, wrong_id, lead_id))
+                del_sql_update = "DELETE FROM real_average_consumption_line WHERE prodlot_id = %s"
+                cr.execute(del_sql_update, (wrong_id,))
+            else:
+                sql_update = "update " + table_name + " set " + field_id + "=" + str(lead_id) + " where " + field_id + "=" + str(wrong_id)
+                cr.execute(sql_update)
         else:
             self._logger.info("Table %s has NO duplicate batch (%s)." %(table_name, batch_name,))
 
