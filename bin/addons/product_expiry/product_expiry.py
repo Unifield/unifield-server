@@ -218,30 +218,23 @@ class stock_production_lot(osv.osv):
 
         '''
 
-        cr.execute('''select id, name from stock_production_lot where name in
-                (select name from (select name, product_id, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1) order by name, id;''')
-        all_dup_batches = cr.dictfetchall()
-        self._logger.info("__________Start to migrate duplicate batch objects in instance: %s - with total of %s duplicate batches!" % (cr.dbname, len(all_dup_batches)))
-
         context = {}
 
-        lead_id = 0 # This id will be used as the main batch id
+        cr.execute('''select name, product_id from (select name, product_id, life_date, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1;''')
+        all_dup_batches = cr.dictfetchall()
+        self._logger.info("__________Start to migrate duplicate batch objects in instance: %s - with total of %s duplicate batches!" % (cr.dbname, len(all_dup_batches)))
+        
         to_be_deleted = []
-        same_name = None
         for r in all_dup_batches:
-            if lead_id == 0:
-                same_name = r['name']
-                lead_id = r['id']
-            else:
-                if same_name == r['name']: # same batch --> replace in all table to the lead_id
-                    # Do step 2.2, search the following tables to replace the link to the
-                    self.remap_reference_tables(cr, uid, r['id'], lead_id, same_name, context)
+            batch_ids = self.search(cr, uid, [('name', '=', r['name']), ('product_id', '=', r['product_id'])])
+            
+            lead_id = batch_ids[0]
+            for wrong_id in range(1, len(batch_ids)): 
+                # Do step 2.2, search the following tables to replace the link to the
+                self.remap_reference_tables(cr, uid, batch_ids[wrong_id], lead_id, r['name'], context)
 
-                    # 2.3: Add this wrong batch id into the list, then delete them at the end
-                    to_be_deleted.append(r['id'])
-                else:
-                    lead_id = r['id'] # when the name change --> replace by the new lead_id
-                    same_name = r['name']
+                # 2.3: Add this wrong batch id into the list, then delete them at the end
+                to_be_deleted.append(batch_ids[wrong_id])
 
         # 2.3 call to delete all the wrong batch objects
         if to_be_deleted:
