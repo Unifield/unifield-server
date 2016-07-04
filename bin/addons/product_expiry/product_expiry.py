@@ -107,6 +107,91 @@ class stock_production_lot(osv.osv):
 
         return super(stock_production_lot, self).write(cr, uid, ids, vals, context=context)
 
+    # US-1469: Restore missing batches that have been wrongly deleted in US-838
+    def us_1469_restore_deleted_batch(self, cr, uid, *a, **b):
+        self._logger.info("______________________Start to restore batch objects for instance: %s", cr.dbname)
+        
+        list_table_fields = [
+                             ('create_picking_move_processor', 'prodlot_id'),
+                             ('export_report_stock_inventory', 'prodlot_id'),
+                             ('export_report_stock_move', 'prodlot_id'),
+                             ('internal_move_processor', 'prodlot_id'),
+                             ('outgoing_delivery_move_processor', 'prodlot_id'),
+                             ('ppl_move_processor', 'prodlot_id'),
+                             ('real_average_consumption_line', 'prodlot_id'),
+                             ('return_ppl_move_processor', 'prodlot_id'),
+                             ('stock_move_in_processor', 'prodlot_id'),
+                             ('stock_move_processor', 'prodlot_id'),
+                             ('stock_move', 'prodlot_id'),
+                             ('unconsistent_stock_report_line', 'prodlot_id'),
+                             ('validate_move_processor', 'prodlot_id'),
+#                             ('stock_production_lot_revision', 'lot_id'),
+#                             ('product_likely_expire_report_item_line', 'lot_id'),
+                             ('stock_inventory_line', 'prod_lot_id'),
+                             ('initial_stock_inventory_line', 'prod_lot_id'),
+#                             ('claim_product_line', 'lot_id_claim_product_line'),
+#                             ('composition_kit', 'composition_lot_id'),
+#                             ('wizard_import_in_line_simulation_screen', 'imp_batch_id')
+                             ]
+        for element in list_table_fields:
+            self.us_1469_restore_deleted_batch_for_table(cr, uid, element[0], element[1])
+            
+        self._logger.info("______________________Finish the migration task on duplicate batch objects for instance: %s", cr.dbname)
+        return True
+
+    def us_1469_restore_deleted_batch_for_table(self, cr, uid, table_name, field_id):
+        # For each table, search for the missing batch
+        # 1. Table stock_move
+        cr.execute('select lot.name, move.product_id from ' + table_name + ' move, stock_production_lot lot where move.' + field_id + ' = lot.id and move.product_id != lot.product_id group by lot.name, move.product_id order by lot.name;''')
+        
+        list_bn_prod = cr.dictfetchall()
+        if len(list_bn_prod) == 0:
+            self._logger.info("__________NOTHING to process for this table _____: %s! \n\n" % (table_name))
+        else:
+            self._logger.info("__________Start to restore missing batch objects in table _____: %s _____ - for %s batches! \n %s \n" % (table_name, len(list_bn_prod), list_bn_prod))
+        context = {}
+
+        lot_obj = self.pool.get('stock.production.lot')
+        prod_obj = self.pool.get('product.product')
+
+        for bn_prod in list_bn_prod:
+            batch_name = bn_prod.get('name')
+            prod_id = bn_prod.get('product_id')
+            
+            self._logger.info("__Start to process the batch::::::: %s \n" % (batch_name))
+            
+            # 2. Search if this missing batch has been created in the mean time          
+            batch_id = lot_obj.search(cr, uid, [('name', '=', batch_name), ('product_id', '=', prod_id)])
+            if batch_id:
+                batch_id = batch_id[0]
+
+                sql_up = 'update ' + table_name + ' set ' + field_id + '=' + str(batch_id) + ' where id in (select move.id from ' + table_name + ' move, stock_production_lot lot where move.' + field_id + " = lot.id and lot.name= '" + batch_name + "' and move.product_id = " + str(prod_id) + ');'
+                #print "Update EXIST: ", sql_up
+                cr.execute(sql_up)
+                self._logger.info("--- Step 3: Batch already created. Now assign all the ref lines of table %s with wrong batch references to the new batch: %s"%(table_name, batch_id))
+            else:
+                # not exist, now create a new one
+                lots = lot_obj.search(cr, uid, [('name', '=', batch_name)])
+                if not lots:
+                    continue
+            
+                existing_batch = lot_obj.browse(cr, uid, lots[0])
+                # Prepare the new batch to create, with almost same values, except the product id
+                vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':existing_batch.life_date, 'type':existing_batch.type, 'sequence_id': 1}
+                batch_id = lot_obj.create(cr, uid, vals)
+                
+                self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, for the product: %s!"%(batch_name, existing_batch.product_id.default_code))
+            
+                # 3. Now search all the move lines that still have the reference to the wrong BN, assign them to the new batch_id
+                self._logger.info("--- Step 3: Now assign all the ref lines of table %s with wrong batch references to the new batch: %s"%(table_name, batch_id))
+                if batch_id:
+                    sql_up = 'update ' + table_name + ' set ' + field_id + ' = ' + str(batch_id) + ' where product_id=' + str(prod_id) + ' and ' + field_id + '=' + str(existing_batch.id) + ';'
+                    #print "Update only: ", sql_up
+                    cr.execute(sql_up)
+
+        self._logger.info("__________Finish the migration task on duplicate batch objects for table: %s", table_name)
+        return True
+
     #US-838: migrate all the duplicated batch into single batch
     '''
 
