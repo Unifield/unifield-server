@@ -1823,7 +1823,7 @@ class account_bank_statement_line(osv.osv):
 
                 '''
                 Determine the part of the payment that still has to be allocated
-                Note that the SR amounts are added whereas the SI amounts are deducted
+                Note that, if SR and SI are imported together, the SR amounts are added whereas the SI amounts are deducted
                 Ex:
                 Payment amount: 100
                 Supplier Refund: -10
@@ -1831,7 +1831,7 @@ class account_bank_statement_line(osv.osv):
                 => First loop: amount = 100 - (-10) = 110
                 => Second loop: amount = 110 - 110 = 0
                 '''
-                amount -= amount_to_write
+                amount -= same_sign and abs(amount_to_write) or amount_to_write
 
                 if not amount:
                     todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
