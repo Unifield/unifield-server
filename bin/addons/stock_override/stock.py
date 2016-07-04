@@ -484,7 +484,8 @@ class stock_picking(osv.osv):
             ids = [ids]
 
         if not vals.get('address_id') and vals.get('partner_id2'):
-            for pick in self.read(cr, uid, ids, ['partner_id'], context=context):
+            for pick in self.read(cr, uid, ids, ['partner_id'],
+                    context=context, no_name_get=True):
                 if pick['partner_id'] and pick['partner_id'][0] != vals.get('partner_id2'):
                     addr = self.pool.get('res.partner').address_get(cr, uid, vals.get('partner_id2'), ['delivery', 'default'])
                     if not addr.get('delivery'):
@@ -493,10 +494,12 @@ class stock_picking(osv.osv):
                         vals['address_id'] = addr.get('delivery')
 
         elif not vals.get('partner_id2') and vals.get('address_id'):
-            for pick in self.read(cr, uid, ids, ['address_id'], context=context):
+            for pick in self.read(cr, uid, ids, ['address_id'],
+                    context=context, no_name_get=True):
                 if pick['address_id'] and pick['address_id'][0] != vals.get('address_id'):
                     addr = self.pool.get('res.partner.address').read(cr, uid,
-                            vals.get('address_id'), ['partner_id'], context=context)
+                            vals.get('address_id'), ['partner_id'],
+                            context=context, no_name_get=True)
                     vals['partner_id2'] = addr['partner_id'] and addr['partner_id'][0] or False
 
         res = super(stock_picking, self).write(cr, uid, ids, vals, context=context)
@@ -2116,7 +2119,8 @@ class stock_move(osv.osv):
                           'prodlot_id', 'asset_id', 'composition_list_id', 'line_number']
         stock_picking_obj = self.pool.get('stock.picking')
 
-        for move_data in self.read(cr, uid, ids, fields_to_read, context=context):
+        for move_data in self.read(cr, uid, ids, fields_to_read,
+                context=context, no_name_get=True):
             search_domain = [('state', '=', 'confirmed'), ('id', '!=', move_data['id'])]
             picking_id = move_data['picking_id'] and move_data['picking_id'][0] or False
 

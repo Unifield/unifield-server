@@ -79,7 +79,8 @@ class stock_move_consume(osv.osv_memory):
             context = {}
         res = super(stock_move_consume, self).default_get(cr, uid, fields, context=context)
         move = self.pool.get('stock.move').read(cr, uid, context['active_id'],
-                ['product_id', 'product_uom', 'product_qty', 'location_id'], context=context)
+                ['product_id', 'product_uom', 'product_qty', 'location_id'],
+                context=context, no_name_get=True)
         if 'product_id' in fields:
             res.update({'product_id': move['product_id'][0]})
         if 'product_uom' in fields:
@@ -135,7 +136,8 @@ class stock_move_scrap(osv.osv_memory):
             context = {}
         res = super(stock_move_consume, self).default_get(cr, uid, fields, context=context)
         move = self.pool.get('stock.move').read(cr, uid, context['active_id'],
-                ['product_id', 'product_uom', 'product_qty'], context=context)
+                ['product_id', 'product_uom', 'product_qty'], context=context,
+                no_name_get=True)
         location_obj = self.pool.get('stock.location')
         scrpaed_location_ids = location_obj.search(cr, uid, [('scrap_location','=',True)])
 

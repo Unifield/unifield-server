@@ -220,7 +220,8 @@ class product_product(osv.osv):
         else:
             location_ids = []
             wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
-            for w in stock_warehouse_obj.read(cr, uid, wids, ['lot_stock_id'], context=context):
+            for w in stock_warehouse_obj.read(cr, uid, wids, ['lot_stock_id'],
+                    context=context, no_name_get=True):
                 location_ids.append(w['lot_stock_id'][0])
 
         # build the list of ids of children of the location given by id
@@ -270,7 +271,8 @@ class product_product(osv.osv):
             uoms_o = {}
             product2uom = {}
             uom_obj = self.pool.get('product.uom')
-            for product in self.read(cr, uid, ids, ['uom_id'], context=context):
+            for product in self.read(cr, uid, ids, ['uom_id'], context=context,
+                    no_name_get=True):
                 product2uom[product['id']] = product['uom_id'][0]
                 if product['uom_id'][0] not in uoms_o:
                     uoms_o[product['uom_id'][0]] = uom_obj.browse(cr, uid, product['uom_id'][0], context=context)

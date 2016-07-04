@@ -2402,11 +2402,12 @@ class stock_move(osv.osv):
         partial_datas=''
         picking_ids = []
         move_ids = []
-        partial_obj=self.pool.get('stock.partial.picking')
+        partial_obj = self.pool.get('stock.partial.picking')
         wf_service = netsvc.LocalService("workflow")
-        partial_id=partial_obj.search(cr,uid,[], order='NO_ORDER')
-        if partial_id:
-            partial_datas = partial_obj.read(cr, uid, partial_id, context=context)[0]
+        partial_ids = partial_obj.search(cr, uid, [], order='NO_ORDER')
+        if partial_ids:
+            partial_datas = partial_obj.read(cr, uid, partial_ids[0],
+                    context=context)
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

@@ -678,7 +678,8 @@ class product_product(osv.osv):
         if context.get('variant',False):
             fields = ['product_tmpl_id', 'active', 'variants', 'default_code',
                     'price_margin', 'price_extra']
-            data = self.read(cr, uid, id, fields=fields, context=context)
+            data = self.read(cr, uid, id, fields=fields, context=context,
+                    no_name_get=True)
             for f in fields:
                 if f in default:
                     data[f] = default[f]

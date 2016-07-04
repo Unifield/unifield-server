@@ -87,7 +87,8 @@ class stock_change_product_qty(osv.osv_memory):
         res_original = prod_obj_pool.browse(cr, uid, rec_id,
                 ['name', 'uom_id'], context=context)
         for data in self.read(cr, uid, ids,
-                ['new_quantity', 'location_id', 'prodlot_id'], context=context):
+                ['new_quantity', 'location_id', 'prodlot_id'], context=context,
+                no_name_get=True):
             inventory_id = inventry_obj.create(cr , uid, {'name': _('INV: ') + tools.ustr(res_original['name'])}, context=context)
             line_data ={
                 'inventory_id' : inventory_id,
