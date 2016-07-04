@@ -3516,13 +3516,9 @@ class orm(orm_template):
                             record[pos] = multi_fields.get(pos,[])
             else:
                 for f in val:
-                    try:
-                        res2 = self._columns[f].get(cr, self, ids, f, user,
-                                context=context, values=res,
-                                no_name_get=no_name_get)
-                    except:
-                        import pdb; pdb.set_trace()
-                        print 'couscous'
+                    res2 = self._columns[f].get(cr, self, ids, f, user,
+                            context=context, values=res,
+                            no_name_get=no_name_get)
                     for record in res:
                         if res2:
                             record[f] = res2[record['id']]
