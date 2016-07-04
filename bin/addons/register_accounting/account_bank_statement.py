@@ -1777,7 +1777,9 @@ class account_bank_statement_line(osv.osv):
             # Delete them
             #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
             move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
-            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
+
+            # supplier refunds have to be handled first, then invoices sorted by amount (smallest amount first)
+            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: x.amount_currency, reverse=True):
                 amount_currency = invoice_move_line.amount_currency
 
                 sign = 1
