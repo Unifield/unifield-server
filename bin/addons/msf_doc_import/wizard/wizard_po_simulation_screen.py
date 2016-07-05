@@ -516,17 +516,8 @@ class wizard_import_po_simulation_screen(osv.osv):
                 nb_file_lines_columns = NB_LINES_COLUMNS
                 first_line_index = nb_file_header_lines + 1
                 if wiz.with_ad == 'yes' and wiz.filetype != 'xml':
-                    if not wiz.order_id.analytic_distribution_id:
-                        header_ad_lines = 0
-                        header_ad_columns = 0
-                    else:
-                        header_ad_lines = 2#len(wiz.order_id.analytic_distribution_id.cost_center_lines) + 1
-                        header_ad_columns = len(wiz.order_id.analytic_distribution_id.cost_center_lines) * 4
-                    ad_lines = [len(line.analytic_distribution_id.cost_center_lines) for line in wiz.order_id.order_line if line.analytic_distribution_id]
-                    max_ad_lines = ad_lines and max(ad_lines) * 4 or 0
-                    nb_file_header_lines += header_ad_lines
-                    #nb_file_lines_columns += max_ad_lines
-                    first_line_index += header_ad_lines
+                    nb_file_header_lines += 2
+                    first_line_index += 2
 
                 for line in wiz.simu_line_ids:
                     # Put data in cache
@@ -597,7 +588,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                 for x in xrange(1, nb_file_header_lines+1):
                     nb_to_check = 2
                     if x > NB_OF_HEADER_LINES and x <= nb_file_header_lines:
-                        nb_to_check = header_ad_columns + 1
+                        continue
                     if len(values.get(x, [])) != nb_to_check:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The header \

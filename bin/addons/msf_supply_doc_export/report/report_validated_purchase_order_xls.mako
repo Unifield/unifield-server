@@ -193,6 +193,20 @@
             <Cell ss:Index="${(i*4+5)|x}" ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</Data></Cell>
         % endfor
         </Row>
+    % else:
+        <Row>
+            <Cell ss:MergeDown="1" ss:StyleID="header" ><Data ss:Type="String">${_('Analytic Distribution')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+        </Row>
+        <Row>
+            <Cell ss:StyleID="line" />
+            <Cell ss:StyleID="line" />
+            <Cell ss:StyleID="line" />
+            <Cell ss:StyleID="line" />
+        </Row>
     % endif
 
     <Row>

@@ -42,16 +42,16 @@
         <field name="origin">${o.origin or ''|x}</field>
         <field name="project_ref">${o.fnct_project_ref or ''|x}</field>
         <field name="message_esc">${o.message_esc or ''|x}</field>
-        % if need_ad and o.analytic_distribution_id:
         <field name="analytic_distribution_id">
-            % for ccl in o.analytic_distribution_id.cost_center_lines:
-            <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
-            <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
-            <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
-            <field name="ad_subtotal">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</field>
-            % endfor
+            % if need_ad and o.analytic_distribution_id:
+                % for ccl in o.analytic_distribution_id.cost_center_lines:
+                <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
+                <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
+                <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
+                <field name="ad_subtotal">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</field>
+                % endfor
+            % endif
         </field>
-        % endif
         <field name="order_line">
         % for l in o.order_line:
             <record>
@@ -94,16 +94,16 @@
                 <field name="project_ref">${l.fnct_project_ref or ''|x}</field>
                 <field name="message_esc1"></field>
                 <field name="message_esc2"></field>
-                % if need_ad and l.analytic_distribution_id:
                 <field name="analytic_distribution_id">
-                    % for ccl in l.analytic_distribution_id.cost_center_lines:
-                    <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
-                    <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
-                    <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
-                    <field name="ad_subtotal">${((ccl.percentage/100.00)*l.price_subtotal or 0.00)|x}</field>
-                    % endfor
-                </field>
+                % if need_ad and l.analytic_distribution_id:
+                        % for ccl in l.analytic_distribution_id.cost_center_lines:
+                        <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
+                        <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
+                        <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
+                        <field name="ad_subtotal">${((ccl.percentage/100.00)*l.price_subtotal or 0.00)|x}</field>
+                        % endfor
                 % endif
+                </field>
             </record>
         % endfor
         </field>
