@@ -140,7 +140,7 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
-    def us_1061_patch(self, cr, uid, *a, **b):
+    def us_1454_patch(self, cr, uid, *a, **b):
         '''setup the size on all attachment'''
         attachment_obj = self.pool.get('ir.attachment')
         attachment_ids = attachment_obj.search(cr, uid, [])
