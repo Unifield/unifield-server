@@ -120,11 +120,12 @@ class account_move_line(osv.osv):
         """
         Create analytic lines on analytic-a-holic accounts that have an analytical distribution.
         """
-        # Some verifications
         if context is None:
             context = {}
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+        ft_obj = self.pool.get('finance.tools')
+
         obj_fields = [
             'debit_currency',
             'credit_currency',
@@ -142,6 +143,7 @@ class account_move_line(osv.osv):
             'is_write_off',
             'account_id',
         ]
+
         for obj_line in self.read(cr, uid, ids, obj_fields, context=context):
             # Prepare some values
             amount = obj_line.get('debit_currency', 0.0) - obj_line.get('credit_currency', 0.0)
@@ -174,7 +176,15 @@ class account_move_line(osv.osv):
                         'amount': 0.,
                         'is': False,
                         'id': False,
+                        'iso': 0.,
                     }
+
+                    # US-1463/2: are all lines eguals by amount ?
+                    if distrib_lines:
+                        amounts = list(set([dl.percentage*amount/100 for dl in distrib_lines ]))
+                        if len(amounts) == 1:
+                            aji_greater_amount['iso'] = amounts[0]
+
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
@@ -226,12 +236,28 @@ class account_move_line(osv.osv):
                             # US-119 deduce the rounding gap and apply it
                             # to the AJI of greater amount
                             # http://jira.unifield.org/browse/US-119?focusedCommentId=38217&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38217
-                            fixed_amount = aji_greater_amount['amount'] - (dl_total_amount_rounded - amount)
+                            # and US-1463
+                            fixed_amount = aji_greater_amount['amount'] - (round(dl_total_amount_rounded, 2) - amount)
+                            func_amount = None
+
+                            if aji_greater_amount['iso'] > 0:
+                                # US-1463/2
+                                # AD lines with same ratio/amount
+                                # and 50/50 breakdown
+                                if len(distrib_lines) == 2:
+                                    diff = (round(dl_total_amount_rounded, 2) - amount)
+                                    if (abs(diff)) < 0.00999999999999:
+                                        diff = 0.  # non significative gap
+                                    fixed_amount = ft_obj.truncate_amount(aji_greater_amount['iso'] + diff, 2)
+                            else:
+                                # US-1463/1
+                                func_amount = -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, fixed_amount, round=False, context=context)
+                                func_amount = ft_obj.truncate_amount(func_amount, 2)
                             fixed_amount_vals = {
-                                'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
-                                        fixed_amount, round=False, context=context),
                                 'amount_currency': -1 * fixed_amount,
                             }
+                            if func_amount is not None:
+                                fixed_amount_vals['amount'] = func_amount
                             aal_obj.write(cr, uid, [aji_greater_amount['id']],
                                 fixed_amount_vals, context=context)
 
