@@ -230,13 +230,13 @@ class stock_production_lot(osv.osv):
 
         context = {}
 
-        cr.execute('''select name, product_id from (select name, product_id, life_date, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1;''')
+        cr.execute('''select name, product_id, life_date from (select name, product_id, life_date, count(name) as amount_bn from stock_production_lot group by name, product_id, life_date) as foo_bn where amount_bn>1;''')
         all_dup_batches = cr.dictfetchall()
         self._logger.info("__________Start to migrate duplicate batch objects in instance: %s - with total of %s duplicate batches!\n" % (cr.dbname, len(all_dup_batches)))
         
         to_be_deleted = []
         for r in all_dup_batches:
-            batch_ids = self.search(cr, uid, [('name', '=', r['name']), ('product_id', '=', r['product_id'])])
+            batch_ids = self.search(cr, uid, [('name', '=', r['name']), ('product_id', '=', r['product_id']), ('life_date', '=', r['life_date'])])
             
             lead_id = batch_ids[0]
             for wrong_id in range(1, len(batch_ids)): 
