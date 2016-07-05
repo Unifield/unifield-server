@@ -22,14 +22,18 @@
     </template>
 
     <stylesheet>
+        <blockTableStyle id="Signature">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" thickness="1.0" />
+        </blockTableStyle>
+
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
             <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
             <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="8,0" stop="8,-1" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="ItemsTitle">
@@ -246,14 +250,8 @@
         </blockTable>
 
 
-        <blockTable colWidths="125.0,5.5,200.0,5.5,200.0,5.5,200.0,5.5,25.0" >
+        <blockTable colWidths="200.0,5.5,200.0,5.5,200.0,11.0,150.0" style="OrderInformations">
             <tr>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
                 <td>
                     <para style="TextInformation"><u>Shipper :</u></para>
                 </td>
@@ -278,12 +276,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
                     <para style="TextInformation">[[ objects[0].shipper_name ]]</para>
                 </td>
                 <td>
@@ -306,12 +298,6 @@
                 </td>
             </tr>
             <tr>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
                 <td>
                     <para style="TextInformation3">[[ objects[0].shipper_address ]]</para>
                 </td>
@@ -336,12 +322,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
                     <para style="TextInformation">[[ objects[0].shipper_phone ]]</para>
                 </td>
                 <td>
@@ -364,12 +344,6 @@
                 </td>
             </tr>
             <tr>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
                 <td>
                     <para style="TextInformation"></para>
                 </td>
@@ -400,12 +374,6 @@
                     <para style="TextInformation"></para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
                     <para style="TextInformation">Driver : [[ objects[0].driver_name ]]</para>
                 </td>
                 <td>
@@ -423,19 +391,13 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"> </para>
+                    <para style="TextInformation">Date:</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation">Date:</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -452,19 +414,21 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
+                    <blockTable colWidths="180.00" style="Signature" rowHeights="30">
+                        <tr>
+                            <td><para style="TextInformation"> </para></td>
+                        </tr>
+                    </blockTable>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation"></para>
+                    <blockTable colWidths="180.00" style="Signature" rowHeights="30">
+                        <tr>
+                            <td><para style="TextInformation"> </para></td>
+                        </tr>
+                    </blockTable>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
