@@ -229,12 +229,19 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
-        % for x in range(1, max_ad_lines+1):
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
-        % endfor
+        % if max_ad_lines:
+            % for x in range(1, max_ad_lines+1):
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+            % endfor
+        % else:
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+        % endif
     </Row>
     % for line in o.order_line:
     <% len_cc_lines = line.analytic_distribution_id and len(line.analytic_distribution_id.cost_center_lines) or 0 %>
