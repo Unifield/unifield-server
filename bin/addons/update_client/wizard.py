@@ -12,6 +12,7 @@ import tarfile
 from osv import osv, fields
 from tools.translate import _
 import tools
+import base64
 from tools import config
 from updater import *
 
@@ -82,15 +83,39 @@ class upgrade(osv.osv_memory):
             'state' : 'need-install',
         }, context=context)
 
-    def do_upgrade(self, cr, uid, ids, context=None):
+    def do_upgrade(self, cr, uid, ids, context=None, sync_type='manual'):
         """Actualy, prepare the upgrade to be done at server restart"""
+        # backup before patching
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid,
+                'beforepatching', context=context, force=True)
+
+        connection_module = self.pool.get("sync.client.sync_server_connection")
+        proxy = connection_module.get_connection(cr, uid, "sync.server.sync_manager")
+        # in case of automatic patching,  create a file to store the actual
+        # SYNC_SERVER connection credentials to be able to automatically
+        # reconnect to the SYNC_SERVER after an upgrade
+        automatic_patching = sync_type=='automatic' and\
+                connection_module.is_automatic_patching_allowed(cr, uid)
+        if automatic_patching:
+            password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
+            password = base64.encodestring(password)
+            db_name = base64.encodestring(cr.dbname)
+            credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
+            f = open(credential_filepath, 'w')
+            f.write(db_name)
+            f.write(password)
+            f.close()
+
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         if next_state != 'need-install':
-            return self.write(cr, uid, ids, {
-                'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
-                'state' : next_state,
-            }, context=context)
+            if next_state == 'need-download' and automatic_patching:
+                self.download(cr, uid, ids, context)
+            else:
+                return self.write(cr, uid, ids, {
+                    'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),
+                    'state' : next_state,
+                }, context=context)
         next_revisions = self.pool.get('sync_client.version')._get_next_revisions(cr, uid, context=context)
         ## Prepare
         (status, message, values) = do_prepare(cr, next_revisions)

@@ -51,6 +51,15 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_993_patch(self, cr, uid, *a, **b):
+        # set no_update to True on USB group_type not to delete it on
+        # existing instances
+        cr.execute("""
+        UPDATE ir_model_data SET noupdate='t'
+        WHERE model='sync.server.group_type' AND
+        name='sync_remote_warehouse_rule_group_type'
+        """)
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:
@@ -395,6 +404,35 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def us_1024_send_bar_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        ir_ui_obj = self.pool.get('ir.ui.view')
+        data_obj = self.pool.get('ir.model.data')
+        rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
+        if rule_ids:
+            data_ids = data_obj.search(cr, uid, [
+                ('module', '=', 'sd'),
+                ('model', '=', 'msf_button_access_rights.button_access_rule'),
+                ('res_id', 'in', rule_ids)
+                ])
+            if rule_ids:
+                data_obj.unlink(cr, uid, data_ids)
+            for rule in rules_obj.read(cr, uid, rule_ids, ['type', 'name']):
+                xmlname = ir_ui_obj._get_xmlname(cr, uid, rule['type'], rule['name'])
+                rules_obj.write(cr, uid, rule['id'], {'xmlname': xmlname})
+
+        if usr and usr.company_id and usr.company_id.instance_id and usr.company_id.instance_id.level == 'section':
+            cr.execute('''update ir_model_data
+                set touched='[''active'']', last_modification=NOW()
+                where module='sd' and model='msf_button_access_rights.button_access_rule'
+            ''')
+
     def update_volume_patch(self, cr, uid, *a, **b):
         """
         Update the volume from dm³ to m³ for OCB databases
@@ -478,6 +516,16 @@ class patch_scripts(osv.osv):
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
         return True
 
+    def another_other_translation_fix(self, cr, uid, *a, **b):
+        cr.execute('''
+            DELETE FROM ir_model_data WHERE model = 'ir.translation'
+            AND res_id IN (SELECT id FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name')
+        ''')
+        cr.execute('''
+            DELETE FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name'
+        ''')
+        return True
+
     def clean_far_updates(self, cr, uid, *a, **b):
         '''
         US-1148: is_keep_cool has been removed on product
@@ -502,6 +550,112 @@ class patch_scripts(osv.osv):
                 account_obj.write(cr, uid, ids, {
                     'display_in_reports': False,
                 })
+
+    def us_1263_patch(self, cr, uid, *a, **b):
+        ms_obj = self.pool.get('stock.mission.report')
+        msl_obj = self.pool.get('stock.mission.report.line')
+
+        ms_touched = "['name']"
+        msl_touched = "['internal_qty']"
+
+        ms_ids = ms_obj.search(cr, uid, [('local_report', '=', True)])
+        if not ms_ids:
+            return True
+
+        # Touched Mission stock reports
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE model =  'stock.mission.report' AND res_id in %s''', (ms_touched, tuple(ms_ids),))
+        # Touched Mission stock report lines
+        cr.execute('''UPDATE ir_model_data
+                      SET touched = %s, last_modification = now()
+                      WHERE
+                          model = 'stock.mission.report.line'
+                          AND
+                          res_id IN (SELECT l.id
+                                     FROM stock_mission_report_line l
+                                     WHERE
+                                       l.mission_report_id IN %s
+                                       AND (l.internal_qty != 0.00
+                                       OR l.stock_qty != 0.00
+                                       OR l.central_qty != 0.00
+                                       OR l.cross_qty != 0.00
+                                       OR l.secondary_qty != 0.00
+                                       OR l.cu_qty != 0.00
+                                       OR l.in_pipe_qty != 0.00
+                                       OR l.in_pipe_coor_qty != 0.00))''', (msl_touched, tuple(ms_ids)))
+        return True
+
+    def us_1273_patch(self, cr, uid, *a, **b):
+        # Put all internal requests import_in_progress field to False
+        ir_obj = self.pool.get('sale.order')
+        context = {'procurement_request': True}
+        ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
+        if ir_ids:
+            ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
+
+    def us_1297_patch(self, cr, uid, *a, **b):
+        """
+        Correct budgets with View Type Cost Center (consolidation)
+        """
+        budget_obj = self.pool.get('msf.budget')
+        # apply the patch only if there are budgets on several fiscal years
+        sql_count_fy = "SELECT COUNT(DISTINCT(fiscalyear_id)) FROM msf_budget;"
+        cr.execute(sql_count_fy)
+        count_fy = cr.fetchone()[0]
+        if count_fy > 1:
+            # get only budgets already validated
+            sql_budgets = "SELECT id FROM msf_budget WHERE type != 'view' AND state != 'draft';"
+            cr.execute(sql_budgets)
+            budgets = cr.fetchall()
+            if budgets:
+                budget_to_correct_ids = [x and x[0] for x in budgets]
+                # update the parent budgets
+                budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
+        return True
+
+    def us_1427_patch(self, cr, uid, *a, **b):
+        """
+        Put active all inactive products with stock quantities in internal locations
+        """
+        sql = """
+        UPDATE product_product SET active = 't' WHERE id IN (
+            SELECT DISTINCT(q.product_id) FROM (
+            SELECT location_id, product_id, sum(sm.product_qty) AS qty
+                FROM (
+                    (
+                        SELECT location_id, product_id, sum(-product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_id, product_id
+                    )
+                    UNION
+                    (
+                        SELECT location_dest_id, product_id, sum(product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_dest_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_dest_id, product_id
+                    )
+                ) AS sm GROUP BY location_id, product_id) AS q
+            LEFT JOIN product_product pp ON q.product_id = pp.id WHERE q.qty > 0 AND pp.active = 'f' ORDER BY q.product_id)
+        """
+        cr.execute(sql)
+        return True
+
+    def us_1452_patch(self, cr, uid, *a, **b):
+        """
+        Put 1.00 as cost price for all product with cost price = 0.00
+        """
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_br = setup_obj.get_config(cr, uid)
+        sale_percent = 1.00
+        if setup_br:
+            sale_percent = 1 + (setup_br.sale_price/100.00)
+
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        cr.execute(sql, (sale_percent,))
+        return True
 
 patch_scripts()
 

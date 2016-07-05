@@ -588,7 +588,7 @@ class stock_picking(osv.osv):
             raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_name
         uom_id = uom_ids[0]
         
-
+        # US-838: RW, need to check the new mechanism of the BN and ED object!!!!!!!
         batch_id = False
         if data['prodlot_id']:
             batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)

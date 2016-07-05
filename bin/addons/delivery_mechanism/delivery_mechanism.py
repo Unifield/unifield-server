@@ -1596,7 +1596,7 @@ class procurement_order(osv.osv):
         # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
         sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
-            if sol.order_id.procurement_request and not sol.product_id and sol.comment:
+            if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
                              'comment': sol.comment,

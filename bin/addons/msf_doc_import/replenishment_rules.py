@@ -68,7 +68,7 @@ class automatic_supply_rule(osv.osv):
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'Auto Supply template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
-                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
+                                             'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],
                                              'state': 'draft',}, context=context)
 
@@ -114,7 +114,7 @@ class order_cycle_rule(osv.osv):
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'Order Cycle template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
-                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
+                                             'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],
                                              'state': 'draft',}, context=context)
 
@@ -160,7 +160,7 @@ class threshold_value_rule(osv.osv):
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'Threshold value template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
-                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
+                                             'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],
                                              'state': 'draft',}, context=context)
 
@@ -206,7 +206,7 @@ class stock_warehouse_orderpoint_rule(osv.osv):
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'Minimum Stock Rules template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
-                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
+                                             'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in cols])),
                                              'rule_id': ids[0],
                                              'state': 'draft',}, context=context)
 

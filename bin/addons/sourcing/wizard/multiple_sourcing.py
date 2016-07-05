@@ -54,6 +54,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
             _SELECTION_PO_CFT,
             string='PO/CFT',
         ),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
+        ),
         'location_id': fields.many2one(
             'stock.location',
             string='Location',
@@ -70,6 +74,9 @@ class multiple_sourcing_wizard(osv.osv_memory):
         'error_on_lines': fields.boolean(
             string='Error',
             help="If there is line without need sourcing on selected lines",
+        ),
+        'related_sourcing_ok': fields.boolean(
+            string='Related sourcing OK',
         ),
     }
 
@@ -101,13 +108,17 @@ class multiple_sourcing_wizard(osv.osv_memory):
             'run_scheduler': po_auto_cfg_obj.get_po_automation(cr, uid, context=context),
             'type': 'make_to_stock',
             'po_cft': False,
+            'related_sourcing_ok': False,
         })
 
         # Check if all lines are with the same type, then set that type, otherwise set make_to_order
         # Ignore all lines which have already been sourced, if there are some already sourced lines, a message
         # will be displayed at the top of the wizard
-        loc = -1  # first location flag
-        supplier = -1  # first location flag
+        res['type'] = 'make_to_stock'
+        res['po_cft'] = False
+        loc = -1 # first location flag
+        supplier = -1 # first location flag
+        group = None
         for line in sol_obj.browse(cr, uid, active_ids, context=context):
             if line.state == 'draft' and line.sale_order_state == 'validated':
                 res['line_ids'].append(line.id)
@@ -127,10 +138,20 @@ class multiple_sourcing_wizard(osv.osv_memory):
                         supplier = temp
                     elif supplier != temp:
                         supplier = False
+
+                if not line.related_sourcing_ok or not line.related_sourcing_id:
+                    group = False
+                else:
+                    temp = line.related_sourcing_id.id
+                    if group is None:
+                        group = temp
+                    elif group != temp:
+                        group = False
+
             else:
-                # UTP-1021: Calculate the location to set into the wizard view if all lines
-                # are sourced from the same location
-                supplier = False  # if source from stock, always set False to partner
+                # UTP-1021: Calculate the location to set into the wizard view if all lines are sourced from the same location
+                supplier = False # if source from stock, always set False to partner
+                group = False
                 temploc = line.location_id.id
                 if loc == -1:  # first location
                     loc = temploc
@@ -142,6 +163,10 @@ class multiple_sourcing_wizard(osv.osv_memory):
             res['location_id'] = loc
         if supplier != -1:
             res['supplier_id'] = supplier
+        if group is not None:
+            res['related_sourcing_id'] = group
+
+        res['related_sourcing_ok'] = sol_obj._check_related_sourcing_ok(cr, uid, supplier, res['type'], context=context)
 
         if not res['line_ids']:
             raise osv.except_osv(
@@ -152,6 +177,18 @@ class multiple_sourcing_wizard(osv.osv_memory):
         res['company_id'] = user_obj.browse(cr, uid, uid, context=context).company_id.id
 
         return res
+
+    def _get_related_sourcing_id(self, wiz):
+        """
+        Return the ID of a related.sourcing record or False
+        :param wiz: browse_record of multiple.sourcing.wizard
+        :return: ID of a related.sourcing record or False
+        """
+        if wiz.related_sourcing_id and wiz.supplier_id and wiz.supplier_id.partner_type == 'esc' \
+           and wiz.supplier_id.split_po == 'yes':
+            return wiz.related_sourcing_id.id
+
+        return False
 
     def save_lines(self, cr, uid, ids, context=None):
         """
@@ -195,6 +232,7 @@ class multiple_sourcing_wizard(osv.osv_memory):
                             'type': wiz.type,
                             'po_cft': wiz.po_cft,
                             'supplier': wiz.supplier_id and wiz.supplier_id.id or False,
+                            'related_sourcing_id': self._get_related_sourcing_id(wiz),
                             'location_id': wiz.location_id.id and wiz.location_id.id or False,
                         }, context=context)
                     except osv.except_osv, e:
@@ -272,13 +310,14 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {'type': 'ir.actions.act_window_close'}
 
-    def change_type(self, cr, uid, ids, l_type, context=None):
+    def change_type(self, cr, uid, ids, l_type, supplier, context=None):
         """
         Unset the other fields if the type is 'from stock'
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls the method
         :param ids: List of ID of multiple.sourcing.wizard on which field values has to be changed
         :param l_type: Value of the field 'type'
+        :param supplier: Value of the field 'supplier'
         :param context: Context of the call
         :return: A dictionary that contains the field names to change as keys and the value for these fields as values.
         """
@@ -289,9 +328,21 @@ class multiple_sourcing_wizard(osv.osv_memory):
             context = {}
 
         if l_type == 'make_to_order':
-            return {'value': {'location_id': False}}
+            return {
+                'value': {
+                    'location_id': False,
+                    'related_sourcing_ok': sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
+                },
+            }
 
-        res = {'value': {'po_cft': False, 'supplier_id': False}}
+        res = {
+            'value': {
+                'po_cft': False,
+                'supplier_id': False,
+                'related_sourcing_ok': False,
+                'related_sourcing_id': False,
+            },
+        }
         if not context or not context[0] or not context[0][2]:
             return res
 
@@ -313,9 +364,24 @@ class multiple_sourcing_wizard(osv.osv_memory):
                 all_line_empty = False
 
         if all_line_empty:  # by default, and if all lines has no location, then set by default Stock
-            return {'value': {'po_cft': False, 'supplier_id': False, 'location_id': stock_loc}}
+            return {
+                'value': {
+                    'po_cft': False,
+                    'supplier_id': False,
+                    'location_id': stock_loc,
+                    'related_sourcing_ok': False,
+                    'related_sourcing_id': False,
+                },
+            }
 
-        return {'value': {'po_cft': False, 'supplier_id': False}}
+        return {
+            'value': {
+                'po_cft': False,
+                'supplier_id': False,
+                'related_sourcing_ok': False,
+                'related_sourcing_id': False,
+            },
+        }
 
     def change_po_cft(self, cr, uid, ids, po_cft, context=None):
         """
@@ -332,23 +398,27 @@ class multiple_sourcing_wizard(osv.osv_memory):
 
         return {}
 
-    def change_supplier(self, cr, uid, ids, supplier, context=None):
+    def change_supplier(self, cr, uid, ids, supplier, l_type, context=None):
         """
         Check if the partner has an address.
         :param cr: Cursor to the database
         :param uid: ID of the res.users that calls the method
         :param ids: List of ID of multiple.sourcing.wizard on which field values has to be changed
         :param supplier: Value of the field 'supplier_id'
+        :param l_type: Value of the field 'type'
         :param context: Context of the call
         :return: A dictionary that contains the field names to change as keys and the value for these fields as values.
         """
         partner_obj = self.pool.get('res.partner')
+        sol_obj = self.pool.get('sale.order.line')
 
         if context is None:
             context = {}
 
         result = {}
+        related_sourcing_ok = False
         if supplier:
+            related_sourcing_ok = sol_obj._check_related_sourcing_ok(cr, uid, supplier, l_type, context=context)
             partner = partner_obj.browse(cr, uid, supplier, context)
             # Check if the partner has addresses
             if not partner.address:
@@ -356,6 +426,14 @@ class multiple_sourcing_wizard(osv.osv_memory):
                     'title': _('Warning'),
                     'message': _('The chosen partner has no address. Please define an address before continuing.'),
                 }
+
+        result['value'] = {
+            'related_sourcing_ok': related_sourcing_ok,
+        }
+
+        if not related_sourcing_ok:
+            result['value']['related_sourcing_id'] = False
+
         return result
 
     def change_location(self, cr, uid, ids, location_id, line_ids, context=None):

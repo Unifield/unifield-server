@@ -36,7 +36,11 @@ def getIds(self, cr, uid, ids, limit=5000, context=None):
         context = {}
     if context.get('from_domain') and 'search_domain' in context and not context.get('export_selected'):
         table_obj = pooler.get_pool(cr.dbname).get(self.table)
-        ids = table_obj.search(cr, uid, context.get('search_domain'), limit=limit)
+        domain = context.get('search_domain')
+        if table_obj._name == 'account.move.line':
+            # US-1290: JI export search result always exclude IB entries
+            domain = [('period_id.number', '>', 0)] + domain
+        ids = table_obj.search(cr, uid, domain, limit=limit)
     return ids
 
 def getObjects(self, cr, uid, ids, context):
@@ -154,7 +158,6 @@ class parser_account_move_line(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
         super(parser_account_move_line, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
-            'reconcile_name': self.reconcile_name,
             #'getSub': self.getSub,
         })
 
@@ -182,14 +185,6 @@ class parser_account_move_line(report_sxw.rml_parse):
         if context is None:
             context = {}
         return super(parser_account_move_line, self).create(cr, uid, ids, data, context=context)
-
-    def reconcile_name(self, r_id=None, context=None):
-        if not r_id:
-            return None
-        res = self.pool.get('account.move.reconcile').name_get(self.cr, self.uid, [r_id])
-        if res and res[0] and res[0][1]:
-            return res[0][1]
-        return None
 
 account_move_line_report_xls('report.account.move.line_xls','account.move.line','addons/account_mcdb/report/report_account_move_line_xls.mako', parser=parser_account_move_line)
 

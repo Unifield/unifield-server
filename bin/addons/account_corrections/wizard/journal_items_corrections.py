@@ -62,6 +62,21 @@ class journal_items_corrections_lines(osv.osv_memory):
             res[line_br.id] = line_br.account_id and line_br.account_id.is_analytic_addicted or False
         return res
 
+    def _get_is_account_correctible(self, cr, uid, ids, name, args,  context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for line_br in self.browse(cr, uid, ids, context=context):
+            res[line_br.id] = True
+            if line_br.move_line_id \
+                and line_br.move_line_id.last_cor_was_only_analytic:
+                res[line_br.id] = False
+            elif line_br.account_id and line_br.account_id.is_not_hq_correctible:
+                res[line_br.id] = False
+        return res
+
     _columns = {
         'move_line_id': fields.many2one('account.move.line', string="Account move line", readonly=True, required=True),
         'wizard_id': fields.many2one('wizard.journal.items.corrections', string="wizard"),
@@ -82,15 +97,15 @@ class journal_items_corrections_lines(osv.osv_memory):
             selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
             string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'is_analytic_target': fields.function(_get_is_analytic_target, type='boolean', string='Is analytic target', method=True, invisible=True),
-        'last_cor_was_only_analytic': fields.related('move_line_id', 
-            'last_cor_was_only_analytic',
-            type='boolean', relation='account.move.line', readonly=True,
-            string="AD Corrected?"),
+        'is_account_correctible': fields.function(_get_is_account_correctible,
+            type='boolean', string='Is account correctible',
+            method=True, invisible=True),
     }
 
     _defaults = {
         'from_donation': lambda *a: False,
         'is_analytic_target': lambda *a: False,
+        'is_account_correctible': lambda *a: True,
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

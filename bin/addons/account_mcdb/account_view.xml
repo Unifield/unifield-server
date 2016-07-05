@@ -177,10 +177,6 @@
                             <field name="balance_currency" string="Debit/Credit Booking" select='1'/>
                         </group>
                         <newline/>
-                        <group expand="0" string="Extended Filters..." col="20" colspan="6">
-                            <field name="narration" select="1"/>
-                        </group>
-                        <newline/>
                         <group expand="0" string="Group By..." colspan="4" col="20">
                             <filter string="3rd party Partner" icon="terp-partner" domain="[]" context="{'group_by':'partner_id'}"/>
                             <filter string="3rd party Employee" icon="terp-personal-" domain="[]" context="{'group_by': 'employee_id'}"/>
@@ -303,44 +299,6 @@
             <field name="view_id" ref="view_move_line_tree_from_move"/>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
             <field name="domain">[('move_id', 'in', [active_id])]</field>
-        </record>
-
-    <!-- Account analytic line search view -->
-        <record id="mcdb_view_account_analytic_line_filter" model="ir.ui.view">
-            <field name="name">mcdb.account.analytic.line.select</field>
-            <field name="model">account.analytic.line</field>
-            <field name="type">search</field>
-            <field name="inherit_id" ref="account.view_account_analytic_line_filter"/>
-            <field name="arch" type="xml">
-                <xpath expr="/search/group[1]/filter[@name='others']" position="before">
-                    <filter name="intl_engagements" string="ENGI"
-                            domain="[('imported_commitment', '=', True), ('journal_id.type', '=', 'engagement'), ('journal_id.code', '=', 'ENGI')]"
-                            icon="terp-folder-violet"
-                            help="Analytic Journal Items related to an ENGI journal."
-                            />
-                </xpath>
-                <xpath expr="/search/group[1]/field[@name='date']" position='after'>
-                    <field name="document_date" select="1"/>
-                    <newline/>
-                </xpath>
-                <xpath expr="/search/group[1]/field[@name='user_id']" position="replace">
-                </xpath>
-                <xpath expr="/search/group[2]/field[@name='product_id']" position="replace">
-                    <field name="amount_currency"/>
-                </xpath>
-                <xpath expr="/search/group[3]/filter[@string='User']" position="replace">
-                </xpath>
-                <xpath expr="/search/group[3]/filter[@string='Product']" position="replace">
-                </xpath>
-                <xpath expr="/search/group[3]/filter[@string='Account']" position="replace">
-                    <filter string="CC" context="{'group_by':'cost_center_id'}" icon="terp-folder-green"/>
-                </xpath>
-                <xpath expr="/search/group[3]/filter[@string='Fin.Account']" position='replace'>
-                    <filter string='G/L account' context="{'group_by':'general_account_id'}" icon="terp-folder-green"/>
-                    <separator orientation="vertical"/>
-                    <filter string="Proprietary Instance" icon="terp-stage" domain="[]" context="{'group_by': 'instance_id'}"/>
-                </xpath>
-            </field>
         </record>
 
     <!-- Account Analytic Account Action -->

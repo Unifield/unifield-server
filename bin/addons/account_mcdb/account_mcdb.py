@@ -300,7 +300,7 @@ class account_mcdb(osv.osv):
                     domain.append((m2m[1], operator, tuple([x.id for x in getattr(wiz, m2m[0])])))
             # Then MANY2ONE fields
             for m2o in [('abs_id', 'statement_id'), ('partner_id', 'partner_id'), ('employee_id', 'employee_id'),
-                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id'), ('reconcile_id', 'reconcile_id')]:
+                ('transfer_journal_id', 'transfer_journal_id'), ('booking_currency_id', 'currency_id')]:
                 if getattr(wiz, m2o[0]):
                     domain.append((m2o[1], '=', getattr(wiz, m2o[0]).id))
             # Finally others fields
@@ -329,15 +329,15 @@ class account_mcdb(osv.osv):
                 if getattr(wiz, inf[0]):
                     domain.append((inf[1], '<=', getattr(wiz, inf[0])))
             # RECONCILE field
-            if wiz.reconciled:
-                if wiz.reconciled == 'reconciled':
-                    domain.append(('reconcile_id', '!=', False))
-                elif wiz.reconciled == 'unreconciled':
-                    domain.append(('reconcile_id', '=', False))
             if wiz.reconcile_id:
-                domain.append('|')
-                domain.append(('reconcile_id', '=', wiz.reconcile_id.id))
-                domain.append(('reconcile_partial_id', '=', wiz.reconcile_id.id))
+                # total or partial and override  reconciled status
+                domain.append(('reconcile_total_partial_id', '=', wiz.reconcile_id.id))
+            elif wiz.reconciled:
+                if wiz.reconciled == 'reconciled':
+                    domain.append(('reconcile_id', '!=', False))  # only full reconcile
+                elif wiz.reconciled == 'unreconciled':
+                    domain.append(('reconcile_id', '=', False))   # partial or not reconcile (dont take care of reconcile_partial_id state)
+
             # REALLOCATION field
             if wiz.reallocated:
                 if wiz.reallocated == 'reallocated':
@@ -419,15 +419,21 @@ class account_mcdb(osv.osv):
             # Return result in a search view
             view = 'account_move_line_mcdb_search_result'
             search_view = 'mcdb_view_account_move_line_filter'
+            search_model = 'account_mcdb'
             name = _('Selector - G/L')
             if res_model == 'account.analytic.line':
                 view = 'account_analytic_line_mcdb_search_result'
-                search_view = 'mcdb_view_account_analytic_line_filter'
+                search_view = 'view_account_analytic_line_filter'
+                search_model = 'account'
                 name = _('Selector - Analytic')
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', view)
             view_id = view_id and view_id[1] or False
-            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_mcdb', search_view)
+            search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, search_model, search_view)
             search_view_id = search_view_id and search_view_id[1] or False
+
+            if res_model == 'account.move.line':
+                # US-1290: JI export search result always exclude IB entries
+                domain = [ ('period_id.number', '>', 0), ] + domain
 
             context['target_filename_prefix'] = name
 

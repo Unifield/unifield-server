@@ -25,6 +25,7 @@ from osv import osv
 from osv import fields
 from tools.translate import _
 from account_override import ACCOUNT_RESTRICTED_AREA
+import tools
 
 
 class res_partner(osv.osv):
@@ -53,7 +54,8 @@ class res_partner(osv.osv):
                 context=context)
             new_name = vals.get('name', False)
             for r in current_name_recs:
-                if new_name != r['name']:
+                #US-1350: convert both into the same format before comparing them
+                if tools.ustr(new_name) != tools.ustr(r['name']):
                     # check if partner is linked to a posted entry
                     # if the case forbid its name modification
                     if self._is_linked_to_any_posted_accounting_entry(cr, uid,

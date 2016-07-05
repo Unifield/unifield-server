@@ -109,6 +109,7 @@ import addons
 #----------------------------------------------------------
 
 import service.http_server
+import updater
 
 if not ( tools.config["stop_after_init"] or \
     tools.config["translate_in"] or \
@@ -219,7 +220,7 @@ for signum in SIGNALS:
 if os.name == 'posix':
     signal.signal(signal.SIGQUIT, dumpstacks)
 
-def quit(restart=False):
+def quit(restart=False, db_name=''):
     if restart:
         time.sleep(updater.restart_delay)
     netsvc.Agent.quit()
@@ -248,6 +249,7 @@ def quit(restart=False):
                         thread._Thread__stop()
                     except:
                         logger.info(str(thread.getName()) + ' could not be terminated')
+
     if not restart:
         sys.exit(0)
     elif os.name == 'nt':
@@ -278,6 +280,7 @@ if tools.config['pidfile']:
 netsvc.Server.startAll()
 
 logger.info('OpenERP server is running, waiting for connections...')
+updater.reconnect_sync_server()
 
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
     mainthread_sleep(5)

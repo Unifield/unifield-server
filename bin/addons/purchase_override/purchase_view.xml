@@ -379,6 +379,7 @@
                         <html colspan="4">
                             <p>All information of the PO template will be written in the new PO,</p>
                             <p>except the Delivery Requested date which will be the earliest date of all POs.</p>
+                            <p>Any sourcing group will be lost.</p>
                         </html>
                         <newline />
                         <group colspan="4" col="4" attrs="{'invisible': [('unmatched_categ', '=', False)]}">

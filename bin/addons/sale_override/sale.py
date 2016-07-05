@@ -1381,7 +1381,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 }, context=context)
                 # check that each line must have a supplier specified
                 if  line.type == 'make_to_order':
-                    if not line.product_id:
+                    if not line.product_id and line.supplier.partner_type != 'esc':
                         raise osv.except_osv(_('Warning'), _("""You can't confirm a Sale Order that contains
                         lines with procurement method 'On Order' and without product. Please check the line %s
                         """) % line.line_number)
@@ -2277,7 +2277,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
-    def _get_procurement_order_data(self, line, order, rts_date, context=None):
+    def _get_related_sourcing_id(self, line):
+        """
+        Return the ID of the related.sourcing document if any
+        :param line: browse_record of FO/IR line
+        :return: ID of a related.sourcing record or False
+        """
+        if line.related_sourcing_ok and line.related_sourcing_id:
+            return line.related_sourcing_id.id
+
+        return False
+
+    def _get_procurement_order_data(self, line, order, rts_date, product_id=False, context=None):
         """
         Get data for the  procurement order creation according to
         sale.order.line and sale.order values.
@@ -2315,6 +2326,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'company_id': order.company_id.id,
             'supplier': line.supplier and line.supplier.id or False,
             'po_cft': line.po_cft or False,
+            'related_sourcing_id': self._get_related_sourcing_id(line),
             'date_planned': rts_date,
             'from_yml_test': order.from_yml_test,
             'so_back_update_dest_po_id_procurement_order': line.so_back_update_dest_po_id_sale_order_line.id,
@@ -2340,8 +2352,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 'tender_id': line.created_by_tender and line.created_by_tender.id or False,
             })
 
-        if line.product_id:
-            proc_data['product_id'] = line.product_id.id
+        if not product_id and line.product_id:
+            product_id = line.product_id.id
+
+        if product_id:
+            proc_data['product_id'] = product_id
 
         return proc_data
 
@@ -2371,6 +2386,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         proc_obj = self.pool.get('procurement.order')
         pol_obj = self.pool.get('purchase.order.line')
         tl_obj = self.pool.get('tender.line')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
@@ -2451,9 +2467,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # when the line is sourced, we already get a procurement for the line
                 # when the line is confirmed, the corresponding procurement order has already been processed
                 # if the line is draft, either it is the first call, or we call the method again after having added a line in the procurement's po
-                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id) and line.product_id:
+                if line.state not in ['sourced', 'confirmed', 'done'] and not (line.created_by_po_line and line.procurement_id):
+                    if not line.product_id and order.procurement_request:
+                        continue
+
+                    product_id = line.product_id.id
+                    if not order.procurement_request and not line.product_id and line.comment:
+                        product_id = \
+                            data_obj.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+
                     rts = self._get_date_planned(order, line, prep_lt, db_date_format)
-                    proc_data = self._get_procurement_order_data(line, order, rts, context=context)
+                    proc_data = self._get_procurement_order_data(line, order, rts, product_id=product_id, context=context)
                     proc_id = proc_obj.create(cr, uid, proc_data, context=context)
                     # set the flag for log message
                     if line.so_back_update_dest_po_id_sale_order_line or line.created_by_po:
@@ -2540,7 +2564,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Update the context to get IR lines
         context['procurement_request'] = True
 
-        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line'], context=context):
+        for order in self.read(cr, uid, ids, ['from_yml_test', 'order_line', 'procurement_request'], context=context):
             if not self._get_ready_to_cancel(cr, uid, [order['id']], order['order_line'], context=context)[order['id']]:
                 return False
 
@@ -2548,15 +2572,21 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if order['from_yml_test']:
                 continue
 
-            line_error = line_obj.search(cr, uid, [
+            domain = [
                 ('order_id', '=', order['id']),
-                ('product_id', '!=', False),
-                ('type', '=', 'make_to_order',),
+                ('type', '=', 'make_to_order'),
                 ('state', '!=', 'confirmed'),
+            ]
+            if order['procurement_request']:
+                domain.append(('product_id', '!=', False))
+
+            domain.extend([
                 '|',
                 ('procurement_id', '=', 'False'),
                 ('procurement_id.state', '!=', 'cancel'),
-            ], limit=1, order='NO_ORDER', context=context)
+            ])
+
+            line_error = line_obj.search(cr, uid, domain, limit=1, order='NO_ORDER', context=context)
 
             if line_error:
                 return False
@@ -2744,7 +2774,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         if use_new_cursor:
             cr.commit()
-            cr.close()
+            cr.close(True)
 
         return True
 

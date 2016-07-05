@@ -39,6 +39,7 @@
         'security/ir.model.access.csv',
         'data/cron.xml',
         'data/alert_email.xml',
+        'data/automated_import_sync_groups.xml',
     ],
     'demo_xml': [
     ],

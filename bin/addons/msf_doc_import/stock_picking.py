@@ -100,7 +100,7 @@ class stock_picking(osv.osv):
         export_id = wiz_obj.create(cr, uid, {'file': file,
                                              'filename_template': 'template.xls',
                                              'filename': 'Lines_Not_Imported.xls',
-                                             'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in cols])),
+                                             'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in cols])),
                                              'picking_id': ids[0],
                                              'state': 'draft',}, context=context)
 

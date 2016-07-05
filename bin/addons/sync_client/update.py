@@ -291,11 +291,11 @@ class update_received(osv.osv):
         'source': fields.char('Source Instance', size=128, readonly=True),
         'owner': fields.char('Owner Instance', size=128, readonly=True),
         'model' : fields.char('Model', size=64, readonly=True, select=True),
-        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True),
+        'sdref' : fields.char('SD ref', size=128, readonly=True, required=True, select=1),
         'is_deleted' : fields.boolean('Is deleted?', readonly=True, select=True),
         'force_recreation' : fields.boolean('Force record recreation', readonly=True),
         'sequence_number' : fields.integer('Sequence', readonly=True, group_operator='count'),
-        'rule_sequence' : fields.integer('Rule Sequence', readonly=True),
+        'rule_sequence' : fields.integer('Rule Sequence', readonly=True, select=1),
         'version' : fields.integer('Version', readonly=True),
         'fancy_version' : fields.function(fancy_integer, method=True, string="Version", type='char', readonly=True),
         'fields' : fields.text("Fields"),
@@ -482,6 +482,15 @@ class update_received(osv.osv):
             # Prepare updates
             # TODO: skip updates not preparable
             for update in updates:
+                if self.search(cr, uid, [('sdref', '=', update.sdref), ('is_deleted', '=', False), ('run', '=', False),
+                        ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)], limit=1, order='NO_ORDER'):
+                    # previous not run on the same (sdref, rule_sequence): do not execute
+                    self.write(cr, uid, [update.id], {
+                        'execution_date': datetime.now(),
+                        'run' : False,
+                        'log' : "Cannot execute due to previous not run on the same record/rule."
+                    }, context=context)
+                    continue
 
                 row = eval(update.values)
 
@@ -642,7 +651,20 @@ class update_received(osv.osv):
             obj, do_deletion, force_recreation = self.pool.get(updates[0].model), updates[0].is_deleted, updates[0].force_recreation
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
             # Remove updates about deleted records in the list
-            sdref_update_ids = dict((update.sdref, update.id) for update in updates)
+            duplicates = []
+            sdref_update_ids = {}
+            for update in updates:
+                if do_deletion and update.sdref in sdref_update_ids:
+                    duplicates.append(update.id)
+                else:
+                    sdref_update_ids[update.sdref] = update.id
+            if duplicates:
+                self.write(cr, uid, duplicates, {
+                    'execution_date': datetime.now(),
+                    'editable' : False,
+                    'run' : True,
+                    'log' : "This update has been ignored because it is duplicated.",
+                }, context=context)
             # For bi-private rules, it is possible that the sdref doesn't exists /!\
             # - In case of import update, if sdref doesn't exists, the initial
             #   value is False in order to keep it for group execution
@@ -655,6 +677,7 @@ class update_received(osv.osv):
             for key in sdref_update_ids:
                 update_id_are_deleted[sdref_update_ids[key]] = sdref_are_deleted[key]
             deleted_update_ids = [update_id for update_id, is_deleted in update_id_are_deleted.items() if is_deleted]
+
 
             if deleted_update_ids:
                 sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
@@ -733,7 +756,7 @@ class update_received(osv.osv):
             if not updates:
                 continue
             elif do_deletion:
-                group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates))
+                group_unlink_update_execution(obj, dict((update.sdref, update.id) for update in updates if update.id not in duplicates))
                 deleted += len(updates)
             else:
                 error_message += group_import_update_execution(obj, updates)

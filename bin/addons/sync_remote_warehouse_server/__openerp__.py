@@ -10,9 +10,6 @@
         'views/sync_update_rule.xml',
         'views/sync_message_rule.xml',
     ],
-    'init_xml': [
-        'data/rule_group_type.xml',
-    ],
     'depends': ['sync_server'],
     'installable': True,
 }

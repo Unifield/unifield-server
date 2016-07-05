@@ -234,7 +234,7 @@
           </para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[ get_prop_instances(data) ]]</para>
+          <para style="terp_default_Centre_8">[[ get_prop_instances() ]]</para>
         </td>
         <td>
           <para style="terp_default_Centre_8">[[ get_target_move(data) ]]</para>
@@ -331,7 +331,7 @@
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=True), 'line') ]]</para>
         <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
-          [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
+          [[ o.displayed or removeParentNode('blockTable') ]]
           <tr>
             <td>
               <para style="terp_default_9_Right">[[ o.code or '' ]]</para>
@@ -361,7 +361,7 @@
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(o, initial_balance_mode=False), 'line') ]]</para>
         <blockTable colWidths="114.0,80.0,92.0,60.0,110.0,110.0,110.0,110.0" style="Table9">
-          [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
+          [[ o.displayed or removeParentNode('blockTable') ]]
           <tr>
             <td>
               <para style="terp_default_8">[[ line['move'] or '' ]]</para>
@@ -394,7 +394,7 @@
       <section>
       <para style="terp_default_8">[[ repeatIn(o.get_currencies(), 'ccy') ]]</para>
       <blockTable colWidths="40.0,246.0,60.0,110.0,110.0,110.0,110.0" style="Table8_subtotal_ccy">
-        [[ show_node_in_report(o) or removeParentNode('blockTable') ]]
+        [[ o.displayed or removeParentNode('blockTable') ]]
         <tr>
           <td>
               <para style="terp_default_9_Right">[[ o.code or '' ]]</para>

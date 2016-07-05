@@ -119,7 +119,7 @@ class sale_order(osv.osv):
         export_id = self.pool.get('wizard.import.ir.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
-                                                                            'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_ir_line_import]), ),
+                                                                            'message': """%s %s"""  % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_ir_line_import]), ),
                                                                             'fo_id': ids[0],
                                                                             'state': 'draft',}, context)
         return {'type': 'ir.actions.act_window',
@@ -146,7 +146,7 @@ class sale_order(osv.osv):
         export_id = self.pool.get('wizard.import.fo.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
-                                                                            'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_fo_line_import]), ),
+                                                                            'message': """%s %s"""  % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_fo_line_import]), ),
                                                                             'fo_id': ids[0],
                                                                             'state': 'draft',}, context)
         return {'type': 'ir.actions.act_window',

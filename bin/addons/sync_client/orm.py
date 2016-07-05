@@ -310,6 +310,9 @@ sql_params)
             data_base_values = {}
 
         def touch(data_ids, touched_fields):
+            # (US-1242) Trigger the sync. if the third party (journal, employee) has been modified in a register line
+            if 'partner_type' in touched_fields and self._name == 'account.bank.statement.line':
+                touched_fields.append('transfer_journal_id')
             if synchronize:
                 data.write(cr, uid, data_ids,
                     dict(data_base_values, touched=str(sorted(touched_fields))),

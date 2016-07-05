@@ -81,7 +81,7 @@
                                     <field name="notes" />
                                     <field name="display_confirm_button" invisible="1" />
                                     <field name="type" on_change="requested_type_change(product_id, type)"
-                                           attrs="{'readonly': ['|', ('fake_state', 'not in', ['draft', 'validated']), ('display_confirm_button', '=', False)]}"
+                                           attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated']), ('display_confirm_button', '=', False)]}"
                                     />
                                     <field name="my_company_id" invisible="1" />
                                     <!-- utp-357: the supplier will be selected in the sourcing tool -->

@@ -59,6 +59,7 @@ class account_balance_report(osv.osv_memory):
         'export_format': 'pdf',
         'account_type': 'all',
         'journal_ids': _get_journals,
+        'display_account': 'bal_movement',  # by default only result with JIs
     }
 
     def default_get(self, cr, uid, fields, context=None):
