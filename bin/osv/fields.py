@@ -110,8 +110,7 @@ class _column(object):
     def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
         raise Exception(_('Not implemented get_memory method !'))
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, no_name_get=False):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
         raise Exception(_('undefined get method !'))
 
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, context=None):
@@ -261,8 +260,7 @@ class binary(_column):
         _column.__init__(self, string=string, **args)
         self.filters = filters
 
-    def get_memory(self, cr, obj, ids, name, user=None, context=None,
-            values=None, no_name_get=True):
+    def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
         if not context:
             context = {}
         if not values:
@@ -358,8 +356,7 @@ class many2one(_column):
             result[id] = obj.datas[id].get(name, False)
         return result
 
-    def get(self, cr, obj, ids, name, user=None, context=None, values=None,
-            no_name_get=False):
+    def get(self, cr, obj, ids, name, user=None, context=None, values=None):
         if context is None:
             context = {}
         if values is None:
@@ -375,21 +372,14 @@ class many2one(_column):
         # build a dictionary of the form {'id_of_distant_resource': name_of_distant_resource}
         # we use uid=1 because the visibility of a many2one field value (just id and name)
         # must be the access right of the parent form and not the linked object itself.
-        if no_name_get:
-            for id in res:
-                if isinstance(res[id], (int, long)):
-                    res[id] = (res[id], '')
-                else:
-                    res[id] = False
-        else:
-            records = dict(obj.name_get(cr, 1,
-                                        list(set([x for x in res.values() if isinstance(x, (int,long))])),
-                                        context=context))
-            for id in res:
-                if res[id] in records:
-                    res[id] = (res[id], records[res[id]])
-                else:
-                    res[id] = False
+        records = dict(obj.name_get(cr, 1,
+                                    list(set([x for x in res.values() if isinstance(x, (int,long))])),
+                                    context=context))
+        for id in res:
+            if res[id] in records:
+                res[id] = (res[id], records[res[id]])
+            else:
+                res[id] = False
         return res
 
     def set(self, cr, obj_src, id, field, values, user=None, context=None):
@@ -483,8 +473,7 @@ class one2many(_column):
     def search_memory(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, operator='like', context=None):
         raise _('Not Implemented')
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, no_name_get=False):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
         if context is None:
             context = {}
         if self._context:
@@ -567,8 +556,7 @@ class many2many(_column):
         self._id2 = id2
         self._limit = limit
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, no_name_get=False):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
         if not context:
             context = {}
         if not values:
@@ -831,14 +819,11 @@ class function(_column):
             return []
         return self._fnct_search(obj, cr, uid, obj, name, args, context=context)
 
-    def get(self, cr, obj, ids, name, user=None, context=None, values=None,
-            no_name_get=False):
+    def get(self, cr, obj, ids, name, user=None, context=None, values=None):
         if context is None:
             context = {}
         if values is None:
             values = {}
-        if no_name_get:
-            context['no_name_get'] = True
         res = {}
         if self._method:
             res = self._fnct(obj, cr, user, ids, name, self._arg, context)
@@ -850,16 +835,11 @@ class function(_column):
             res_ids = [x for x in res.values() if x and isinstance(x, (int,long))]
 
             if res_ids:
-                if no_name_get:
-                    for r in res.keys():
-                        if res[r] in res_ids:
-                            res[r] = (res[r], '')
-                else:
-                    obj_model = obj.pool.get(self._obj)
-                    dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
-                    for r in res.keys():
-                        if res[r] and res[r] in dict_names:
-                            res[r] = (res[r], dict_names[res[r]])
+                obj_model = obj.pool.get(self._obj)
+                dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
+                for r in res.keys():
+                    if res[r] and res[r] in dict_names:
+                        res[r] = (res[r], dict_names[res[r]])
 
         elif self._type == 'binary':
             if context.get('bin_size', False):
@@ -973,15 +953,10 @@ class related(function):
         if self._type=='many2one':
             ids = filter(None, res.values())
             if ids:
-                if context.get('no_name_get', False):
-                    for r in res:
-                        if res[r]:
-                            res[r] = (res[r], '')
-                else:
-                    ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
-                    for r in res:
-                        if res[r]:
-                            res[r] = (res[r], ng[res[r]])
+                ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
+                for r in res:
+                    if res[r]:
+                        res[r] = (res[r], ng[res[r]])
         elif self._type in ('one2many', 'many2many'):
             for r in res:
                 if res[r]:

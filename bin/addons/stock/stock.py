@@ -400,7 +400,7 @@ class stock_location(osv.osv):
             temp.remove(location_dest_id)
             temp.append(location_dest_id)
 
-        for loc_id in temp:
+        for id in temp:
             if lock:
                 try:
                     # Must lock with a separate select query because FOR UPDATE can't be used with
@@ -419,7 +419,7 @@ class stock_location(osv.osv):
                                              location_dest_id<>%s AND
                                              state in ('done', 'assigned'))
                                           )
-                                  FOR UPDATE of stock_move NOWAIT""", (product_id, loc_id, loc_id, loc_id, loc_id), log_exceptions=False)
+                                  FOR UPDATE of stock_move NOWAIT""", (product_id, id, id, id, id), log_exceptions=False)
                 except Exception:
                     # Here it's likely that the FOR UPDATE NOWAIT failed to get the LOCK,
                     # so we ROLLBACK to the SAVEPOINT to restore the transaction to its earlier
@@ -430,34 +430,44 @@ class stock_location(osv.osv):
                     logger.debug("Trace of the failed product reservation attempt: ", exc_info=True)
                     return False
 
-
-            query = """SELECT product_uom, sum(product_qty)
-            + (SELECT -sum(product_qty) AS product_qty
-               FROM stock_move
-               WHERE location_id=%s AND
-                     location_dest_id<>%s AND
-                     product_id=%s AND
-                     state in ('done', 'assigned')
-               GROUP BY product_uom) AS product_qty
+            # XXX TODO: rewrite this with one single query, possibly even the quantity conversion
+            cr.execute("""SELECT product_uom, sum(product_qty) AS product_qty
                           FROM stock_move
                           WHERE location_dest_id=%s AND
                                 location_id<>%s AND
                                 product_id=%s AND
                                 state='done'
                           GROUP BY product_uom
-                       """
-            cr.execute(query, (loc_id, loc_id, product_id, loc_id, loc_id, product_id))
-            new_results = cr.dictfetchall()
-            total_amount = 0.0
-            if new_results:
-                total_amount = pool_uom._compute_qty(cr, uid, new_results[0]['product_uom'], new_results[0]['product_qty'], context.get('uom', False))
+                       """,
+                       (id, id, product_id))
+            results = cr.dictfetchall()
+            cr.execute("""SELECT product_uom,-sum(product_qty) AS product_qty
+                          FROM stock_move
+                          WHERE location_id=%s AND
+                                location_dest_id<>%s AND
+                                product_id=%s AND
+                                state in ('done', 'assigned')
+                          GROUP BY product_uom
+                       """,
+                       (id, id, product_id))
+            results += cr.dictfetchall()
+            total = 0.0
+            results2 = 0.0
 
-            if total_amount <= 0.0:
+            for r in results:
+                amount = pool_uom._compute_qty(cr, uid, r['product_uom'], r['product_qty'], context.get('uom', False))
+                results2 += amount
+                total += amount
+
+            if total <= 0.0:
                 continue
 
-            if total_amount > 0:
-                total_amount = min(total_amount, product_qty)
-                return self._hook_proct_reserve(cr, uid, product_qty, result, total_amount, loc_id, ids)
+            amount = results2
+            if amount > 0:
+                if amount > min(total, product_qty):
+                    amount = min(product_qty, total)
+
+                return self._hook_proct_reserve(cr,uid,product_qty,result,amount, id, ids)
 
         return False
 
@@ -1276,8 +1286,7 @@ class stock_picking(osv.osv):
 
                 # Average price computation
                 if (pick.type == 'in') and (move.product_id.cost_method == 'average'):
-                    product = product_obj.read(cr, uid, move.product_id.id,
-                            ['uom_id', 'qty_available'], no_name_get=True)
+                    product = product_obj.read(cr, uid, move.product_id.id, ['uom_id', 'qty_available'])
                     move_currency_id = move.company_id.currency_id.id
                     context['currency_id'] = move_currency_id
                     qty = uom_obj._compute_qty(cr, uid, product_uom, product_qty, product['uom_id'][0])
@@ -1739,9 +1748,7 @@ class stock_move(osv.osv):
                 if isinstance(context['move_line'][0], (tuple, list)):
                     return context['move_line'][0][2] and context['move_line'][0][2].get('location_dest_id',False)
                 else:
-                    move_list = self.pool.get('stock.move').read(cr, uid,
-                            context['move_line'][0], ['location_dest_id'],
-                            no_name_get=True)
+                    move_list = self.pool.get('stock.move').read(cr, uid, context['move_line'][0], ['location_dest_id'])
                     return move_list and move_list['location_dest_id'][0] or False
         if context.get('address_out_id', False):
             property_out = self.pool.get('res.partner.address').browse(cr, uid, context['address_out_id'], context).partner_id.property_stock_customer
@@ -2402,12 +2409,11 @@ class stock_move(osv.osv):
         partial_datas=''
         picking_ids = []
         move_ids = []
-        partial_obj = self.pool.get('stock.partial.picking')
+        partial_obj=self.pool.get('stock.partial.picking')
         wf_service = netsvc.LocalService("workflow")
-        partial_ids = partial_obj.search(cr, uid, [], order='NO_ORDER')
-        if partial_ids:
-            partial_datas = partial_obj.read(cr, uid, partial_ids[0],
-                    context=context)
+        partial_id=partial_obj.search(cr,uid,[], order='NO_ORDER')
+        if partial_id:
+            partial_datas = partial_obj.read(cr, uid, partial_id, context=context)[0]
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -2707,8 +2713,7 @@ class stock_move(osv.osv):
                     }
                     self.write(cr, uid, [move.id], update_val)
 
-        for new_move in self.read(cr, uid, res, ['product_id', 'product_qty'],
-                context=context, no_name_get=True):
+        for new_move in self.read(cr, uid, res, ['product_id', 'product_qty'], context=context):
             for (id, name) in product_obj.name_get(cr, uid, [new_move['product_id'][0]]):
                 message = _('Product ') + " '" + name + "' "+ _("is consumed with") + " '" + str(new_move['product_qty']) + "' "+ _("quantity.")
                 self.log(cr, uid, new_move['id'], message)

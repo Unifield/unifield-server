@@ -46,9 +46,7 @@ class stock_move_track(osv.osv_memory):
         @param context: A standard dictionary
         @return:
         """
-        if not isinstance(ids, (list, tuple)):
-            ids = [ids]
-        datas = self.read(cr, uid, ids[0])
+        datas = self.read(cr, uid, ids)[0]
         move_obj = self.pool.get('stock.move')
         move_obj._track_lines(cr, uid, context['active_id'], datas, context=context)
         return {'type': 'ir.actions.act_window_close'}
@@ -78,17 +76,15 @@ class stock_move_consume(osv.osv_memory):
         if context is None:
             context = {}
         res = super(stock_move_consume, self).default_get(cr, uid, fields, context=context)
-        move = self.pool.get('stock.move').read(cr, uid, context['active_id'],
-                ['product_id', 'product_uom', 'product_qty', 'location_id'],
-                context=context, no_name_get=True)
+        move = self.pool.get('stock.move').browse(cr, uid, context['active_id'], context=context)
         if 'product_id' in fields:
-            res.update({'product_id': move['product_id'][0]})
+            res.update({'product_id': move.product_id.id})
         if 'product_uom' in fields:
-            res.update({'product_uom': move['product_uom'][0]})
+            res.update({'product_uom': move.product_uom.id})
         if 'product_qty' in fields:
-            res.update({'product_qty': move['product_qty']})
+            res.update({'product_qty': move.product_qty})
         if 'location_id' in fields:
-            res.update({'location_id': move['location_id'][0]})
+            res.update({'location_id': move.location_id.id})
 
         return res
 
@@ -105,7 +101,7 @@ class stock_move_consume(osv.osv_memory):
             context = {}
         move_obj = self.pool.get('stock.move')
         move_ids = context['active_ids']
-        for data in self.read(cr, uid, ids, ['product_qty', 'location_id']):
+        for data in self.read(cr, uid, ids):
             move_obj.action_consume(cr, uid, move_ids,
                              data['product_qty'], data['location_id'],
                              context=context)
@@ -135,18 +131,16 @@ class stock_move_scrap(osv.osv_memory):
         if context is None:
             context = {}
         res = super(stock_move_consume, self).default_get(cr, uid, fields, context=context)
-        move = self.pool.get('stock.move').read(cr, uid, context['active_id'],
-                ['product_id', 'product_uom', 'product_qty'], context=context,
-                no_name_get=True)
+        move = self.pool.get('stock.move').browse(cr, uid, context['active_id'], context=context)
         location_obj = self.pool.get('stock.location')
         scrpaed_location_ids = location_obj.search(cr, uid, [('scrap_location','=',True)])
 
         if 'product_id' in fields:
-            res.update({'product_id': move['product_id'][0]})
+            res.update({'product_id': move.product_id.id})
         if 'product_uom' in fields:
-            res.update({'product_uom': move['product_uom'][0]})
+            res.update({'product_uom': move.product_uom.id})
         if 'product_qty' in fields:
-            res.update({'product_qty': move['product_qty']})
+            res.update({'product_qty': move.product_qty})
         if 'location_id' in fields:
             if scrpaed_location_ids:
                 res.update({'location_id': scrpaed_location_ids[0]})
@@ -168,7 +162,7 @@ class stock_move_scrap(osv.osv_memory):
             context = {}
         move_obj = self.pool.get('stock.move')
         move_ids = context['active_ids']
-        for data in self.read(cr, uid, ids, ['product_qty', 'location_id']):
+        for data in self.read(cr, uid, ids):
             move_obj.action_scrap(cr, uid, move_ids,
                              data['product_qty'], data['location_id'],
                              context=context)
@@ -249,15 +243,15 @@ class split_in_production_lot(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         new_move = []
         for data in self.browse(cr, uid, ids, context=context):
-            if data.use_exist:
-                lines = [l for l in data.line_exist_ids if l]
-            else:
-                lines = [l for l in data.line_ids if l]
             for move in move_obj.browse(cr, uid, move_ids, context=context):
                 move_qty = move.product_qty
                 quantity_rest = move.product_qty
                 uos_qty_rest = move.product_uos_qty
                 new_move = []
+                if data.use_exist:
+                    lines = [l for l in data.line_exist_ids if l]
+                else:
+                    lines = [l for l in data.line_ids if l]
                 total_move_qty = 0.0
                 for line in lines:
                     quantity = line.quantity

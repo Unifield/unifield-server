@@ -661,14 +661,14 @@ class res_partner(osv.osv):
             ]
             check_ccy_ids = []
             for r in self.read(cr, uid, ids, fields_pricelist,
-                context=context, no_name_get=True):
+                context=context):
                 for f in fields_pricelist:
                     if r[f] and r[f][0] not in check_pricelist_ids:
                         check_pricelist_ids.append(r[f][0])
             if check_pricelist_ids:
                 for cpl_r in self.pool.get('product.pricelist').read(cr,
                     uid, check_pricelist_ids, ['currency_id'],
-                    context=context, no_name_get=True):
+                    context=context):
                     if cpl_r['currency_id'] and \
                         cpl_r['currency_id'][0] not in check_ccy_ids:
                         check_ccy_ids.append(cpl_r['currency_id'][0])
@@ -754,8 +754,7 @@ class res_partner(osv.osv):
             if 'product_id' in context:
                 supinfo_ids = supinfo_obj.search(cr, uid, [('name', 'in', res_in_prod), ('product_product_ids', '=', context.get('product_id'))], order='sequence')
 
-                for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name'],
-                        no_name_get=True):
+                for result in supinfo_obj.read(cr, uid, supinfo_ids, ['name']):
                     try:
                         tmp_res.remove(result['name'][0])
                         new_res.append(result['name'][0])

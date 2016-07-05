@@ -462,8 +462,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
 
         return res
 
-    def read(self, cr, uid, ids, vals, context=None, load='_classic_read',
-            no_name_get=False):
+    def read(self, cr, uid, ids, vals, context=None, load='_classic_read'):
         '''
         Read the RfQ lines related to each tender line and each supplier
         and put values on the wizard lines.
@@ -487,8 +486,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 vals.append(ffld)
 
         res = super(wizard_compare_rfq_line, self).\
-            read(cr, uid, ids, vals, context=context, load=load,
-                    no_name_get=no_name_get)
+            read(cr, uid, ids, vals, context=context, load=load)
 
         t_id = context.get('tender_id', False)
         s_ids = []
