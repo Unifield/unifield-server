@@ -202,10 +202,10 @@
             <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
         </Row>
         <Row>
-            <Cell ss:StyleID="line" />
-            <Cell ss:StyleID="line" />
-            <Cell ss:StyleID="line" />
-            <Cell ss:StyleID="line" />
+            <Cell ss:Index="2" ss:StyleID="line" />
+            <Cell ss:Index="3" ss:StyleID="line" />
+            <Cell ss:Index="4" ss:StyleID="line" />
+            <Cell ss:Index="5" ss:StyleID="line" />
         </Row>
     % endif
 
@@ -229,14 +229,12 @@
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Project Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 1')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('ESC Message 2')}</Data></Cell>
-        % if need_ad:
-            % for x in range(1, max_ad_lines+1):
-            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
-            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
-            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
-            <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
-            % endfor
-        % endif
+        % for x in range(1, max_ad_lines+1):
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Destination')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Cost Center')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('%')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Subtotal')}</Data></Cell>
+        % endfor
     </Row>
     % for line in o.order_line:
     <% len_cc_lines = line.analytic_distribution_id and len(line.analytic_distribution_id.cost_center_lines) or 0 %>
@@ -277,18 +275,23 @@
         % if need_ad:
             % if line.analytic_distribution_id:
                 % for ccl in line.analytic_distribution_id.cost_center_lines:
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.destination_id.code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String">${(ccl.analytic_id.code or '')|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${(ccl.percentage or 0.00)|x}</Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="Number">${((ccl.percentage/100.00) * line.price_subtotal or 0.00)|x}</Data></Cell>
+                % endfor
+                % for x in range(0, max_ad_lines-len_cc_lines):
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
                 % endfor
             % endif
-            % for x in range(0, max_ad_lines-len_cc_lines):
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
-            % endfor
+        % else:
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
+            <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
     </Row>
     % endfor
