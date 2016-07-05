@@ -181,7 +181,7 @@ class account_move_line(osv.osv):
 
                     # US-1463/2: are all lines eguals by amount ?
                     if distrib_lines:
-                        amounts = list(set([dl.percentage*amount/100 for dl in distrib_lines ]))
+                        amounts = list(set([ dl.percentage*amount/100 for dl in distrib_lines ]))
                         if len(amounts) == 1:
                             aji_greater_amount['iso'] = amounts[0]
 
