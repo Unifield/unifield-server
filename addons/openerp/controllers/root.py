@@ -153,7 +153,7 @@ class Root(SecuredController):
                 .get_controller('/openerp/widgets')\
                 .user_home_widgets(ctx)
         display_shortcut = True
-        if next == '/openerp/pref/update_password' and force_password_change:
+        if next == '/openerp/pref/update_password' and force_password_change and tools:
             cherrypy.session['terp_shortcuts']=[]
             tree.tree.onselection = None
             tree.tree.onheaderclick = None
