@@ -25,15 +25,14 @@
         <blockTableStyle id="Signature">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
-            <lineStyle kind="OUTLINE" colorName="black" thickness="1.0" />
         </blockTableStyle>
 
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
-            <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="3,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="5,0" stop="5,-1" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="ItemsTitle">
@@ -250,8 +249,11 @@
         </blockTable>
 
 
-        <blockTable colWidths="200.0,5.5,200.0,5.5,200.0,11.0,150.0" style="OrderInformations">
+        <blockTable colWidths="80.5,200.0,5.5,200.0,5.5,200.0,11.0,69.5" style="OrderInformations">
             <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
                 <td>
                     <para style="TextInformation"><u>Shipper :</u></para>
                 </td>
@@ -276,6 +278,9 @@
             </tr>
             <tr>
                 <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
                     <para style="TextInformation">[[ objects[0].shipper_name ]]</para>
                 </td>
                 <td>
@@ -298,6 +303,9 @@
                 </td>
             </tr>
             <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
                 <td>
                     <para style="TextInformation3">[[ objects[0].shipper_address ]]</para>
                 </td>
@@ -322,6 +330,9 @@
             </tr>
             <tr>
                 <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
                     <para style="TextInformation">[[ objects[0].shipper_phone ]]</para>
                 </td>
                 <td>
@@ -344,6 +355,9 @@
                 </td>
             </tr>
             <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
                 <td>
                     <para style="TextInformation"></para>
                 </td>
@@ -368,6 +382,9 @@
             </tr>
             <tr>
                 <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
                     <para style="TextInformation"></para>
                 </td>
                 <td>
@@ -391,6 +408,9 @@
             </tr>
             <tr>
                 <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
                     <para style="TextInformation">Date:</para>
                 </td>
                 <td>
@@ -414,6 +434,10 @@
             </tr>
             <tr>
                 <td>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Signature:</para>
                     <blockTable colWidths="180.00" style="Signature" rowHeights="30">
                         <tr>
                             <td><para style="TextInformation"> </para></td>
@@ -424,6 +448,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
+                    <para style="TextInformation">Signature:</para>
                     <blockTable colWidths="180.00" style="Signature" rowHeights="30">
                         <tr>
                             <td><para style="TextInformation"> </para></td>
