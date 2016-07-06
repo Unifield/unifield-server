@@ -185,11 +185,19 @@ class stock_production_lot(osv.osv):
                     continue
             
                 existing_batch = lot_obj.browse(cr, uid, lots[0])
-                # Prepare the new batch to create, with almost same values, except the product id
-                vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type, 'sequence_id': 1}
-                batch_id = lot_obj.create(cr, uid, vals)
+                # US-1476: treat differently for internal batch. No need to create if same product and same date exists!
+                if existing_batch.type == 'internal':
+                    batch_id = lot_obj.search(cr, uid, [('product_id', '=', prod_id), ('life_date', '=', life_date)])
+                    if batch_id:
+                        batch_id = batch_id[0]
+                        self._logger.info("--- Step 2: Internal Batch existed.\n")                        
                 
-                self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, for the product: %s, and expiry date %s!\n"%(batch_name, existing_batch.product_id.default_code, life_date))
+                if not batch_id:
+                    # Prepare the new batch to create, with almost same values, except the product id
+                    vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type, 'sequence_id': 1}
+                    batch_id = lot_obj.create(cr, uid, vals)
+                
+                    self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, for the product: %s, and expiry date %s!\n"%(batch_name, existing_batch.product_id.default_code, life_date))
             
                 # 3. Now search all the move lines that still have the reference to the wrong BN, assign them to the new batch_id
                 self._logger.info("--- Step 3: Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
