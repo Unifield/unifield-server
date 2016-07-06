@@ -60,9 +60,14 @@ class account_move_line(osv.osv):
             if j.get('default_credit_account_id', False) and j.get('default_credit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_credit_account_id')[0])
 
+        cached_move = {}
+        acc_corr = {}
+        reconcile_accounts = self.pool.get('account.account').search(cr, uid, [('reconcile', '=', True)], order='NO_ORDER')
+
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
+            acc_corr.setdefault(ml.account_id.id, ml.account_id.user_type.not_correctible)
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
                 res[ml.id] = False
@@ -72,7 +77,7 @@ class account_move_line(osv.osv):
                 res[ml.id] = False
                 continue
             # False if account type code (User type) is set as non correctible
-            if ml.account_id.user_type.not_correctible is True:
+            if acc_corr.get(ml.account_id.id):
                 res[ml.id] = False
                 continue
             # False if line have been corrected
@@ -95,11 +100,6 @@ class account_move_line(osv.osv):
                 if ml.account_id.id in accounts:
                     res[ml.id] = False
                     continue
-            # False if one of move line account is reconciliable and reconciled
-            for aml in ml.move_id.line_id:
-                if aml.account_id.reconcile and (aml.reconcile_id or aml.reconcile_partial_id):
-                    res[aml.id] = False
-                    continue
             # False if this line come from a write-off
             if ml.is_write_off:
                 res[ml.id] = False
@@ -120,6 +120,27 @@ class account_move_line(osv.osv):
             if ml.journal_id.type in ('revaluation', 'system', ):
                 res[ml.id] = False
                 continue
+            # False if one of move line account is reconciliable and reconciled
+            if ml.move_id.id in cached_move.keys():
+                if cached_move.get(ml.move_id.id):
+                    res[ml.id] = False
+                continue
+            else:
+                cached_move.setdefault(ml.move_id.id, False)
+                reconciled_moves = self.search(cr, uid, [
+                    ('account_id', 'in', reconcile_accounts),
+                    ('move_id', '=', ml.move_id.id),
+                    '|',
+                    ('reconcile_id', '!=', False),
+                    ('reconcile_partial_id', '!=', False),
+                ], order='NO_ORDER', limit=1, context=context)
+
+                if reconciled_moves:
+                    cached_move[ml.move_id.id] = True
+                    res[ml.id] = False
+                    continue
+
+        del cached_move
         return res
 
     _columns = {

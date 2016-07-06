@@ -1940,8 +1940,10 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
-        if state  == 'hard':
-            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context or context.get('sync_update_execution', False):
+        if state == 'hard':
+            if values.get('partner_move_ids') or values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
+                    (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
+                    'from_correction' in context or context.get('sync_update_execution', False):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
@@ -2014,7 +2016,8 @@ class account_bank_statement_line(osv.osv):
                         # copy distribution
                         new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, new_distrib, {}, context=context)
                         # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
-                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
+                        # US-1343: The account to be updated must the new one, not the old account of the move line!
+                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': values.get('account_id')}, check=False, update_check=False)
 
         # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update
         # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
@@ -2070,6 +2073,7 @@ class account_bank_statement_line(osv.osv):
             'transfer_currency': False,
             'down_payment_id': False,
             'cash_return_move_line_id': False,  # BKLG-60
+            'partner_move_ids': [],
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
