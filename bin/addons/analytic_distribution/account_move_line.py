@@ -141,6 +141,7 @@ class account_move_line(osv.osv):
             'corrected_line_id',
             'is_write_off',
             'account_id',
+            'period_id',
         ]
         for obj_line in self.read(cr, uid, ids, obj_fields, context=context):
             # Prepare some values
@@ -188,22 +189,23 @@ class account_move_line(osv.osv):
                         else:
                             aji_greater_amount['is'] = False
                         line_vals = {
-                                     'name': obj_line.get('name', ''),
-                                     'date': obj_line.get('date', False),
-                                     'ref': obj_line.get('ref', False),
-                                     'journal_id': journal.get('analytic_journal_id', [False])[0],
-                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
-                                        anal_amount, round=False, context=context),
-                                     'amount_currency': -1 * anal_amount,
-                                     'account_id': distrib_line.analytic_id.id,
-                                     'general_account_id': account.get('id'),
-                                     'move_id': obj_line.get('id'),
-                                     'distribution_id': distrib_obj.id,
-                                     'user_id': uid,
-                                     'currency_id': obj_line.get('currency_id', [False])[0],
-                                     'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
-                                     'document_date': obj_line.get('document_date', False),
-                                     'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                             'name': obj_line.get('name', ''),
+                             'date': obj_line.get('date', False),
+                             'ref': obj_line.get('ref', False),
+                             'journal_id': journal.get('analytic_journal_id', [False])[0],
+                             'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
+                                anal_amount, round=False, context=context),
+                             'amount_currency': -1 * anal_amount,
+                             'account_id': distrib_line.analytic_id.id,
+                             'general_account_id': account.get('id'),
+                             'move_id': obj_line.get('id'),
+                             'distribution_id': distrib_obj.id,
+                             'user_id': uid,
+                             'currency_id': obj_line.get('currency_id', [False])[0],
+                             'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
+                             'document_date': obj_line.get('document_date', False),
+                             'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                             'real_period_id': obj_line['period_id'] and obj_line['period_id'][0] or False,  # US-945/2
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
