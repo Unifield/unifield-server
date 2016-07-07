@@ -1757,7 +1757,7 @@ class stock_move(osv.osv):
             first_move = self.read(cr, uid, ids[0], ['partner_id', 'address_id',
                                                      'state', 'picking_id'],
                                                     context=context)
-            partner_id = ['partner_id'] and first_move['partner_id'][0] or False
+            partner_id = first_move['partner_id'] and first_move['partner_id'][0] or False
             picking_id = first_move['picking_id'] and first_move['picking_id'][0] or False
 
             same_values_ids = self.search(cr, uid,
