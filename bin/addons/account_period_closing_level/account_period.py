@@ -514,7 +514,9 @@ class account_period(osv.osv):
 
     # Intermission voucher OUT
     def button_intermission_out(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'out_invoice', 'journal_type': 'intermission'})
+        domain_ivo = [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
+        context_ivo = {'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}
+        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), domain=domain_ivo, context=context_ivo)
 
     def button_supplier_refunds(self, cr, uid, ids, context=None):
         """
