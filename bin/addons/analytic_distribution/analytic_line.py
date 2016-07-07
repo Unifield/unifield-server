@@ -206,6 +206,8 @@ class analytic_line(osv.osv):
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
         'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        # US-945: real physical period wrapper for the period_id calculated field
+        'real_period_id': fields.many2one('account.period', 'Real period', invisible=True),
     }
 
     _defaults = {
