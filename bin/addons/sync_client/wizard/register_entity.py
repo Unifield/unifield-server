@@ -59,6 +59,10 @@ class client_entity_group(osv.osv_memory):
             index = parent_name.index('OC')
             oc_name = parent_name[index:index+3] # ie. 'OCA' or 'OCG', ...
 
+        # remove all created groups this is usefull in case the user goes on
+        # previous step to change the parent instance
+        self.unlink(cr, uid, self.search(cr, uid, []))
+
         for data in data_list:
             if oc_name and oc_name not in data['name']:
                 continue
