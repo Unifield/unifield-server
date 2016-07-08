@@ -1311,15 +1311,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
+            # Comment
+            write_vals['imp_comment'] = values[14] and values[14].strip()
+
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
             pol_ids = None
             if line.in_line_number:
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
-                if not pol_ids:
+                if not pol_ids and not (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
                     errors.append(_('Line no is not consistent with validated PO.'))
                     write_vals['in_line_number'] = False
                     write_vals['type_change'] = 'error'
+
+            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
+                if not pol_ids:
+                    write_vals['type_change'] = 'error'
+                    if line.in_line_number:
+                        errors.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
+                    else:
+                        errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
+                else:
+                    write_vals['type_change'] = 'del'
 
             if not line.in_line_number and not write_vals.get('imp_external_ref'):
                 errors.append(_('The line should have a Line no. or an Ext Ref.'))
@@ -1455,18 +1468,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 err_msg = _('Incorrect date value for field \'Delivery Confirmed Date\'')
                 errors.append(err_msg)
                 write_vals['type_change'] = 'error'
-
-            # Comment
-            write_vals['imp_comment'] = values[14] and values[14].strip()
-            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
-                if not pol_ids:
-                    write_vals['type_change'] = 'error'
-                    if line.in_line_number:
-                        errors.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
-                    else:
-                        errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
-                else:
-                    write_vals['type_change'] = 'del'
 
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
