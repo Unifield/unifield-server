@@ -555,6 +555,9 @@ class users(osv.osv):
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
 
+        The write of the new password is done with uid=1 to prevent raise it
+        the current logged user don't have permission on res_users.
+
         :return: True
         :raise: security.ExceptionNoTb when old password is wrong
         :raise: except_osv when new password is not set or empty
@@ -570,7 +573,7 @@ class users(osv.osv):
                 'password': new_passwd,
                 'force_password_change': False,
             }
-            return self.write(cr, uid, uid, vals)
+            return self.write(cr, 1, uid, vals)
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
     def get_admin_profile(self, cr, uid, context=None):
