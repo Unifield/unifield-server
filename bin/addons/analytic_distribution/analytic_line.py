@@ -164,9 +164,15 @@ class analytic_line(osv.osv):
                     period = period_obj.browse(cr, uid, [p_id])[0]
                     if arg[1] == 'not in':
                         new_args.append('|')
+                        new_args.append('|')
                         new_args.append(('date', '<', period.date_start))
                         new_args.append(('date', '>', period.date_stop))
+                        new_args.append('&')
+                        new_args.append(('real_period_id', '!=', False))
+                        new_args.append(('real_period_id', '!=', p_id))
                     else:
+                        new_args.append('|')
+                        new_args.append(('real_period_id', '=', p_id))
                         new_args.append('&')
                         new_args.append(('date', '>=', period.date_start))
                         new_args.append(('date', '<=', period.date_stop))
