@@ -1313,6 +1313,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
+            pol_ids = None
             if line.in_line_number:
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
                 if not pol_ids:
@@ -1458,7 +1459,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             # Comment
             write_vals['imp_comment'] = values[14] and values[14].strip()
             if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
-                write_vals['type_change'] = 'del'
+                if not pol_ids:
+                    write_vals['type_change'] = 'error'
+                    if line.in_line_number:
+                        errors.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
+                    else:
+                        errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
+                else:
+                    write_vals['type_change'] = 'del'
 
             # Project Ref.
             write_vals['imp_project_ref'] = values[16]
