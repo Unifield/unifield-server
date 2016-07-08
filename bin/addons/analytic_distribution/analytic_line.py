@@ -107,17 +107,22 @@ class analytic_line(osv.osv):
         - commitment_line_id
         """
         # Checks
-        if not context:
+        if context is None:
             context = {}
         # Prepare some values
         res = {}
         period_obj = self.pool.get('account.period')
         for al in self.browse(cr, uid, ids, context):
             res[al.id] = False
-            # UTP-943: Since this ticket, we search period regarding analytic line posting date.
-            period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
-            if period_ids:
-                res[al.id] = period_ids[0]
+            # US-945: Consider IN PRIORITY the new physical real period field
+            # (else keep default behaviour)
+            if al.real_period_id:
+                res[al.id] = al.real_period_id.id
+            else:
+                # UTP-943: Since this ticket, we search period regarding analytic line posting date.
+                period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
+                if period_ids:
+                    res[al.id] = period_ids[0]
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
@@ -138,7 +143,7 @@ class analytic_line(osv.osv):
         ['&', '|', ('date', '<', '2016-01-01'), ('date', '>', '2016-01-31'), '|', ('date', '<', '2015-10-01'), ('date', '>', '2015-10-31')]
         """
         # Checks
-        if not context:
+        if context is None:
             context = {}
         if not args:
             return []
