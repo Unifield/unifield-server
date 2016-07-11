@@ -471,7 +471,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               )
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
-                AND ((not a.is_analytic_addicted and aml.period_id = %s) or (a.is_analytic_addicted and (al.real_period_id = %s or (al.date >= %s and al.date <= %s))))
+                AND ((not a.is_analytic_addicted and aml.period_id = %s) or (a.is_analytic_addicted and (al.real_period_id = %s or (al.real_period_id is NULL and al.date >= %s and al.date <= %s))))
                 AND j.type not in %s
                 AND al.exported in %s
                 AND al.instance_id in %s;
