@@ -346,7 +346,11 @@ class Search(Form):
 
                 else:
                     if not 'm2o_' in value:
-                        operator = 'ilike'
+                        if value.startswith('='):
+                            operator = '='
+                            value = value[1:]
+                        else:
+                            operator = 'ilike'
                         if '__' in value:
                             value, operator = value.split('__')
                             value = int(value)
