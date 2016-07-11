@@ -655,6 +655,7 @@ class account_move(osv.osv):
             help="This field contains the information related to the numbering of the lines of this journal entry."),
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
+        'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
     }
 
     _defaults = {

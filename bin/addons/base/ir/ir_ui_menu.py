@@ -254,6 +254,7 @@ class ir_ui_menu(osv.osv):
 
     _columns = {
         'name': fields.char('Menu', size=64, required=True, translate=True),
+        'active': fields.boolean(string='Active'),
         'sequence': fields.integer('Sequence'),
         'child_id' : fields.one2many('ir.ui.menu', 'parent_id','Child IDs'),
         'parent_id': fields.many2one('ir.ui.menu', 'Parent Menu', select=True),
@@ -289,6 +290,7 @@ class ir_ui_menu(osv.osv):
         'icon' : 'STOCK_OPEN',
         'icon_pict': ('stock', ('STOCK_OPEN','ICON_SIZE_MENU')),
         'sequence' : 10,
+        'active': lambda *a: True,
     }
     _order = "sequence,id"
 ir_ui_menu()

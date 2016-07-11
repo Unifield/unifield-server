@@ -870,4 +870,11 @@ class hr_employee(osv.osv):
             return super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
                 table_name, res_id)
 
+    def unlink(self, cr, uid, ids, context=None):
+        super(hr_employee, self).unlink(cr, uid, ids, context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute("delete from ir_model_data where model=%s and res_id in %s", (self._name, tuple(ids)))
+        return True
+
 hr_employee()

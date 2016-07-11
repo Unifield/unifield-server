@@ -135,8 +135,17 @@ class stock_picking(osv.osv):
             xmlid = batch_values['id']
             if 'life_date' not in batch_values and 'batch_numer' in xmlid: # it must have the 'batch_numer' as prefix
                 prod_code = "_" + prod.default_code + "_" + prod.default_code + "_" # This is how the old xmlid has been made: using double prod.default_code
-                indexOfProdCode = xmlid.find(prod_code) + len(prod_code)
-                batch_name = xmlid[indexOfProdCode:]
+                len_code = xmlid.find(prod_code)
+                batch_name = 'batch_not_found'
+                if len_code != -1:
+                    indexOfProdCode = len_code  + len(prod_code)
+                    batch_name = xmlid[indexOfProdCode:]
+                else: # US-1449+1435, if the product code is not found in this batch number xmlid value, then try to find another way
+                    temp = xmlid[len('sd.batch_numer'):]
+                    bn_id = xmlid.rfind('_', 0, len(xmlid))
+                    if bn_id != -1:
+                        batch_name = xmlid[bn_id + 1:]
+                
                 existing_bn = prodlot_obj.search(cr, uid, [('name', '=', batch_name), ('product_id', '=', product_id)], context=context)
                 if existing_bn:
                     batch_id = existing_bn[0]

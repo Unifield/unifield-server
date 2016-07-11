@@ -516,6 +516,16 @@ class patch_scripts(osv.osv):
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
         return True
 
+    def another_other_translation_fix(self, cr, uid, *a, **b):
+        cr.execute('''
+            DELETE FROM ir_model_data WHERE model = 'ir.translation'
+            AND res_id IN (SELECT id FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name')
+        ''')
+        cr.execute('''
+            DELETE FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name'
+        ''')
+        return True
+
     def clean_far_updates(self, cr, uid, *a, **b):
         '''
         US-1148: is_keep_cool has been removed on product
@@ -583,6 +593,68 @@ class patch_scripts(osv.osv):
         ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
         if ir_ids:
             ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
+
+    def us_1297_patch(self, cr, uid, *a, **b):
+        """
+        Correct budgets with View Type Cost Center (consolidation)
+        """
+        budget_obj = self.pool.get('msf.budget')
+        # apply the patch only if there are budgets on several fiscal years
+        sql_count_fy = "SELECT COUNT(DISTINCT(fiscalyear_id)) FROM msf_budget;"
+        cr.execute(sql_count_fy)
+        count_fy = cr.fetchone()[0]
+        if count_fy > 1:
+            # get only budgets already validated
+            sql_budgets = "SELECT id FROM msf_budget WHERE type != 'view' AND state != 'draft';"
+            cr.execute(sql_budgets)
+            budgets = cr.fetchall()
+            if budgets:
+                budget_to_correct_ids = [x and x[0] for x in budgets]
+                # update the parent budgets
+                budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
+        return True
+
+    def us_1427_patch(self, cr, uid, *a, **b):
+        """
+        Put active all inactive products with stock quantities in internal locations
+        """
+        sql = """
+        UPDATE product_product SET active = 't' WHERE id IN (
+            SELECT DISTINCT(q.product_id) FROM (
+            SELECT location_id, product_id, sum(sm.product_qty) AS qty
+                FROM (
+                    (
+                        SELECT location_id, product_id, sum(-product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_id, product_id
+                    )
+                    UNION
+                    (
+                        SELECT location_dest_id, product_id, sum(product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_dest_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_dest_id, product_id
+                    )
+                ) AS sm GROUP BY location_id, product_id) AS q
+            LEFT JOIN product_product pp ON q.product_id = pp.id WHERE q.qty > 0 AND pp.active = 'f' ORDER BY q.product_id)
+        """
+        cr.execute(sql)
+        return True
+
+    def us_1452_patch(self, cr, uid, *a, **b):
+        """
+        Put 1.00 as cost price for all product with cost price = 0.00
+        """
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_br = setup_obj.get_config(cr, uid)
+        sale_percent = 1.00
+        if setup_br:
+            sale_percent = 1 + (setup_br.sale_price/100.00)
+
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        cr.execute(sql, (sale_percent,))
         return True
 
 patch_scripts()

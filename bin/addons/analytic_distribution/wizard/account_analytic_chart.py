@@ -57,8 +57,10 @@ class account_analytic_chart(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', 'Currency', help="Only display items from the given currency"),
         'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscal year', help = 'Keep empty for all open fiscal years'),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
-        'period_from': fields.many2one('account.period', 'From'),  # UTP-1030/13
-        'period_to': fields.many2one('account.period', 'To'),  # UTP-1030/13
+        'period_from': fields.many2one('account.period', 'From',
+            domain="[('fiscalyear_id', '=', fiscalyear)]"),
+        'period_to': fields.many2one('account.period', 'To',
+            domain="[('fiscalyear_id', '=', fiscalyear)]"),
 
         # US-1179 fields
         'granularity': fields.selection([
@@ -93,20 +95,29 @@ class account_analytic_chart(osv.osv_memory):
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
         res = {}
         res['value'] = {}
+
+        # restrict periods to fiscal year
+        domain = fiscalyear_id \
+            and [ ('fiscalyear_id', '=', fiscalyear_id), ] or False
+        res['domain'] = {
+            'period_from': domain,
+            'period_to': domain,
+        }
+
         if fiscalyear_id:
             start_period = end_period = False
             cr.execute('''
                 SELECT * FROM (SELECT p.id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s
+                               WHERE f.id = %s and number != 0
                                ORDER BY p.date_start ASC
                                LIMIT 1) AS period_start
                 UNION
                 SELECT * FROM (SELECT p.id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s
+                               WHERE f.id = %s and number != 0
                                AND p.date_start < NOW()
                                ORDER BY p.date_stop DESC
                                LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
