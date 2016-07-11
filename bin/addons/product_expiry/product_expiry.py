@@ -111,6 +111,10 @@ class stock_production_lot(osv.osv):
     # US-1469: Restore missing batches that have been wrongly deleted in US-838
     def us_1469_restore_deleted_batch(self, cr, uid, *a, **b):
         self._logger.info("\n\n______________________Start to restore batch objects for instance: %s\n", cr.dbname)
+
+        # Reset the constraint just in case the previous update has changed again to the original
+        cr.execute('''ALTER TABLE stock_production_lot DROP CONSTRAINT stock_production_lot_batch_name_uniq,
+                ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE (name, product_id, life_date);''')
         
         list_table_fields = [
                              ('stock_move', 'prodlot_id'),
