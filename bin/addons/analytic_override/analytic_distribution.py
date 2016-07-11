@@ -270,6 +270,13 @@ class distribution_line(osv.osv):
             amount_cur = (move_line.credit_currency - move_line.debit_currency) * line.percentage / 100
             ctx = {'date': source_date or date}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+
+            # US-945: deduce real period id from date
+            # TO NOTE that, in correction wizard:
+            # in December we are well in December, never in 13, 14, 15, 16
+            period_ids = self.pool.get('account.period').get_period_from_date(
+                cr, uid, date=date, context=context)
+
             vals = {
                 'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
@@ -289,6 +296,7 @@ class distribution_line(osv.osv):
                 'distribution_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
                 'ref': ref or move_line.move_id.name or False,
+                'real_period_id':  period_ids and period_ids[0] or False,  # US-945
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({

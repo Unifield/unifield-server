@@ -26,20 +26,34 @@ from osv import osv
 def get_period_from_date(self, cr, uid, date=False, context=None):
     """
     Get period in which this date could go into, otherwise return last open period.
-    Do not select special periods (Period 13, 14 and 15).
     """
     # Some verifications
     if not context:
         context = {}
     if not date:
         return False
+
+    if context.get('from_correction', False):
+        # US-945 AJI correction are never processed on special periods
+        number_criteria = ('number', '<', 13)
+    else:
+        number_criteria = ('number', '!=', 16)
+
     # Search period in which this date come from
-    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('number', '!=', 16)], limit=1,
+    period_ids = self.pool.get('account.period').search(cr, uid, [
+            ('date_start', '<=', date),
+            ('date_stop', '>=', date),
+            number_criteria,
+        ], limit=1,
         order='date_start asc, name asc', context=context) or []
     # Get last period if no period found
     if not period_ids:
-        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('number', '!=', 16)], limit=1,
-            order='date_stop desc, name desc', context=context) or []
+        period_ids = self.pool.get('account.period').search(cr, uid, [
+                ('state', '=', 'open'),
+                number_criteria,
+        ], limit=1,
+        order='date_stop desc, name desc', context=context) or []
+
     if isinstance(period_ids, (int, long)):
         period_ids = [period_ids]
     return period_ids
