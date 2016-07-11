@@ -1877,6 +1877,9 @@ class orm_template(object):
             return len(res)
         return res
 
+    def search_web(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
+        return self.search(cr, user, args, offset, limit, order, context, count)
+
     def search(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
         """
         Search for records based on a search domain.

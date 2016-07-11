@@ -196,6 +196,19 @@ class update(osv.osv):
         return True
 #        return self._cache_pullers.merge(cr, uid, context)
 
+    def search_web(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
+        # if the domain exists, check that it contains at least one exact search
+        if args:
+            exact_search = False
+            for sub_domain in args:
+                if len(sub_domain) > 1 and sub_domain[1] == '=':
+                    exact_search = True
+                    break
+            if not exact_search:
+                raise osv.except_osv(_("Error!"), _("You Can't search updates without using at least one exact search term (precede your search with the character '=')."))
+        return super(update, self).search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+
     def unfold_package(self, cr, uid, entity, packet, context=None):
         """
             Called by receive_package() when client instance try to push its updates.
