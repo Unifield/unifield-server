@@ -173,7 +173,9 @@ class analytic_line(osv.osv):
                     else:
                         new_args.append('|')
                         new_args.append(('real_period_id', '=', p_id))
-                        new_args.append('&')
+                        # or no real period and in period range
+                        # for previous US-945 entries
+                        new_args.append(('real_period_id', '=', False))
                         new_args.append(('date', '>=', period.date_start))
                         new_args.append(('date', '<=', period.date_stop))
         return new_args
