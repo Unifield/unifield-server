@@ -932,6 +932,8 @@ class account_move(osv.osv):
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', i)])
             if not ml_ids:
                 raise osv.except_osv(_('Warning'), _('No line found. Please add some lines before Journal Entry validation!'))
+            elif len(ml_ids) < 2:
+                raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':

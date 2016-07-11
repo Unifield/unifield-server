@@ -73794,3 +73794,9 @@ msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la
 #, python-format
 msgid "Not Created"
 msgstr "Non Créé"
+
+#. module: account_override
+#: code:addons/account_override/account.py:0
+#, python-format
+msgid "The entry must have at least two lines."
+msgstr "L'écriture doit avoir au moins deux lignes."
