@@ -73,11 +73,15 @@
         <record id="us_1452_patch" model="patch.scripts">
             <field name="method">us_1452_patch</field>
         </record>
-        
+
         <record id="us_1469_patch" model="patch.scripts">
             <field name="method">us_1469_restore_deleted_batch</field>
             <field name="model">stock.production.lot</field>
         </record>
-        
+
+        <record id="us_1421_lower_login" model="patch.scripts">
+            <field name="method">us_1421_lower_login</field>
+        </record>
+
     </data>
 </openerp>

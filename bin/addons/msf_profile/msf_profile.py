@@ -51,6 +51,20 @@ class patch_scripts(osv.osv):
             getattr(model_obj, method)(cr, uid, *a, **b)
             self.write(cr, uid, [ps['id']], {'run': True})
 
+    def us_1421_lower_login(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        logger = logging.getLogger('update login')
+        cr.execute('select id, login from res_users')
+        for d in cr.fetchall():
+            lower_login = tools.ustr(d[1]).lower()
+            if tools.ustr(d[1]) == lower_login:
+                continue
+            if user_obj.search(cr, uid, [('login', '=', lower_login), ('active', 'in', ['t', 'f'])]):
+                logger.warn('Login of user id %s not changed because of duplicates' % (d[0], ))
+            else:
+                cr.execute('update res_users set login=%s where id=%s', (lower_login, d[0]))
+        return True
+
     def us_993_patch(self, cr, uid, *a, **b):
         # set no_update to True on USB group_type not to delete it on
         # existing instances
