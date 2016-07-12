@@ -60,6 +60,7 @@ class account_mcdb(osv.osv):
         'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id',
             string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
+        'is_not_reconciled_at': fields.date("Not reconciled at"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Exclude account selection'),
@@ -337,6 +338,8 @@ class account_mcdb(osv.osv):
                     domain.append(('reconcile_id', '!=', False))  # only full reconcile
                 elif wiz.reconciled == 'unreconciled':
                     domain.append(('reconcile_id', '=', False))   # partial or not reconcile (dont take care of reconcile_partial_id state)
+            if wiz.is_not_reconciled_at:
+                domain.append(('is_not_reconciled_at', '<=', wiz.is_not_reconciled_at))
 
             # REALLOCATION field
             if wiz.reallocated:
