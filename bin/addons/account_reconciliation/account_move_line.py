@@ -31,10 +31,37 @@ from tools.misc import flatten
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     _name = 'account.move.line'
+
+    def _get_fake(self, cr, uid, ids, name, args, context=None):
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_is_not_reconciled_at(self, cr, uid, obj, name, args,
+        context=None):
+        res = []
+        if not len(args):
+            return res
+        if len(args) != 1 or args[0][1] != '<=':
+            msg = _("Please select only a stop value for 'Not reconciled at'" \
+                " filter")
+            raise osv.except_osv(_('Error'), msg)
+
+        # not reconciled at date <=> reconcilde date > date
+        return [ ('reconcile_date', '>', args[0][2]), ]
     
     _columns = {
         'reconcile_date': fields.date('Reconcile date',
             help="Date of reconciliation"),
+        'is_not_reconciled_at': fields.function(_get_fake,
+            fnct_search=_search_is_not_reconciled_at,
+            method=True, type="date", readonly=True,
+            string="Not reconciled at"),
     }
 
     def check_imported_invoice(self, cr, uid, ids, context=None):
