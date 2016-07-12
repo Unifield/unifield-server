@@ -44,14 +44,14 @@ class purchase_order(osv.osv):
             amount_total = 0.00
             amount_received = 0.00
             for line in order.order_line:
-                amount_total += line.product_qty*line.price_unit
+                amount_total += line.product_qty
                 for move in line.move_ids:
                     if move.state == 'done':
                         move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
                         if move.type == 'out':
-                            amount_received -= move_qty*line.price_unit
+                            amount_received -= move_qty
                         elif move.type == 'in':
-                            amount_received += move_qty*line.price_unit
+                            amount_received += move_qty
                         elif move.type == 'internal':
                             # not taken into account
                             pass
