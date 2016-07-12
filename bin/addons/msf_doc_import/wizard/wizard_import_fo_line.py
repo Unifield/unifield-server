@@ -108,7 +108,15 @@ class wizard_import_fo_line(osv.osv_memory):
                 order_currency_code = fo_browse.pricelist_id.currency_id.name
                 currency_index = 6
                 rows = file_obj.getRows()
-                rows.next()  # skip header line
+
+                header_row = rows.next()
+                if header_row:
+                    for i, h_name in enumerate(columns_for_fo_line_import):
+                        if header_row[i] != h_name:
+                            msg = "You can not import this file because the header of columns doesn't match with the expected headers: %s" % ','.join(columns_for_fo_line_import)
+                            error_list.append(msg)
+                            break
+
                 lines_to_correct = check_line.check_lines_currency(rows,
                     currency_index, order_currency_code)
                 if lines_to_correct > 0:
@@ -121,12 +129,13 @@ class wizard_import_fo_line(osv.osv_memory):
                     # iterator on rows
                     rows = file_obj.getRows()
                     # ignore the first row
-                    rows.next()
+
                     line_num = 0
                     to_write = {}
                     total_line_num = len([row for row in file_obj.getRows()])
                     percent_completed = 0
                     for row in rows:
+                            
                         line_num += 1
                         # default values
                         to_write = {
