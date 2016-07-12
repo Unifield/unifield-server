@@ -9,7 +9,7 @@ import os
 import sys
 from hashlib import md5
 from datetime import datetime
-from base64 import b64decode
+from base64 import b64decode, decodestring
 from StringIO import StringIO
 import logging
 import time
@@ -448,18 +448,18 @@ def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
     """
-    import tools
-    credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
+    from tools import config
+    logger.info("[AUTOMATIC-PATCHING] Re-connect to the sync_server using credentials...")
+    credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
     if os.path.isfile(credential_filepath):
-        import base64
         import pooler
         f = open(credential_filepath, 'r')
         lines = f.readlines()
         f.close()
         if lines:
             try:
-                dbname = base64.decodestring(lines[0])
-                password = base64.decodestring(lines[1])
+                dbname = decodestring(lines[0])
+                password = decodestring(lines[1])
                 logger.info('dbname = %s' % dbname)
                 db, pool = pooler.get_db_and_pool(dbname)
                 db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
@@ -477,9 +477,19 @@ def reconnect_sync_server():
                     # in caes of automatic patching, relaunch the sync
                     # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
                     if connection_module.is_automatic_patching_allowed(cr, 1):
+                        logger.info("[AUTOMATIC-PATCHING] Re-launch a synchronization...")
                         pool.get('sync.client.entity').sync_withbackup(cr, 1)
+                    else:
+                        logger.info("[AUTOMATIC-PATCHING] do not re-launch "
+                                "sync as automatic patching is not allowed")
                     cr.close()
             except Exception as e:
                 message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
                 logger.error(message % (unicode(e)))
-
+        else:
+                logger.error("The credential file is empty. Impossible to "
+                        "automatically re-connect to the SYNC_SERVER using "
+                        "credentials file.")
+    else:
+        logger.info("No credential file found, the connection manager will "
+                "not be reconnected.")

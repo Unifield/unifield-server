@@ -94,7 +94,7 @@ class upgrade(osv.osv_memory):
         # in case of automatic patching,  create a file to store the actual
         # SYNC_SERVER connection credentials to be able to automatically
         # reconnect to the SYNC_SERVER after an upgrade
-        automatic_patching = sync_type=='automatic' and\
+        automatic_patching = sync_type == 'automatic' and\
                 connection_module.is_automatic_patching_allowed(cr, uid)
         if automatic_patching:
             password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
@@ -105,12 +105,15 @@ class upgrade(osv.osv_memory):
             f.write(db_name)
             f.write(password)
             f.close()
+            self._logger.info("[AUTOMATIC-PATCHING] Credentials informations "
+                    "stored for automatic login and modules update on next restart.")
 
         ## Check if revision upgrade applies
         next_state = self._get_state(cr, uid, context=context)
         if next_state != 'need-install':
             if next_state == 'need-download' and automatic_patching:
                 self.download(cr, uid, ids, context)
+                self._logger.info("[AUTOMATIC-PATCHING] Patch downloaded.")
             else:
                 return self.write(cr, uid, ids, {
                     'message' : _("Cannot install now.\n\n%s") % self._generate(cr, uid, context=context),

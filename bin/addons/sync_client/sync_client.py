@@ -84,7 +84,12 @@ class BackgroundProcess(Thread):
                             connection.is_automatic_patching_allowed(cr, uid)
                     if not automatic_patching:
                         cr.commit()
+                        logging.getLogger('sync.client').info("[AUTOMATIC-PATCHING] automatic-patching not allowed, "
+                            "sync_type=%s, automatic_patchin_allowed=%s" % (sync_type,
+                                connection.is_automatic_patching_allowed(cr, uid)))
                         raise osv.except_osv(_('Error!'), _(up_to_date[1]))
+                    else:
+                        logging.getLogger('sync.client').info("[AUTOMATIC-PATCHING] automatic-patching is allowed")
         except BaseException, e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
@@ -211,16 +216,20 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                             automatic_patching = sync_type == 'automatic' and\
                                     connection_module.is_automatic_patching_allowed(cr, uid)
                             if not up_to_date[0] and not automatic_patching:
+                                self._logger.info("[AUTOMATIC-PATCHING] automatic-patching not allowed, "
+                                    "sync_type=%s, automatic_patchin_allowed=%s" % (sync_type,
+                                        connection_module.is_automatic_patching_allowed(cr, uid)))
                                 raise osv.except_osv(_("Error!"), _("Cannot check for updates: %s") % up_to_date[1])
                             elif 'last' not in up_to_date[1].lower():
                                 logger.append( _("Update(s) available: %s") % _(up_to_date[1]) )
                                 if automatic_patching:
+                                    self._logger.info("[AUTOMATIC-PATCHING] automatic-patching is allowed")
                                     upgrade_module = self.pool.get('sync_client.upgrade')
                                     upgrade_id = upgrade_module.create(cr, uid, {})
                                     upgrade_module.do_upgrade(cr, uid,
                                             [upgrade_id], sync_type=context.get('sync_type', 'manual'))
                                     raise osv.except_osv(_('Sync aborted'),
-                                            _("Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."))
+                                            _("[AUTOMATIC-PATCHING] Current synchronization has been aborted because there is update(s) to install. The sync will be restarted after update."))
                     else:
                         context['offline_synchronization'] = True
 
@@ -907,6 +916,7 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         context['sync_type'] = 'automatic'
+        self._logger.info("Start automatic sync...")
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync_recover(cr, uid, context=context)
@@ -922,10 +932,10 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         context['sync_type'] = 'manual'
-        #Check for a backup before automatic sync
+        #Check for a backup before manual sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
         self.sync_recover(cr, uid, context=context)
-        #Check for a backup after automatic sync
+        #Check for a backup after manual sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
@@ -961,6 +971,7 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         context['sync_type'] = 'automatic'
+        self._logger.info("Start automatic sync...")
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync(cr, uid, context=context)
@@ -973,13 +984,13 @@ class Entity(osv.osv):
         """
         Call both pull_all_data and recover_message functions - used in manual sync wizard
         """
-        #Check for a backup before automatic sync
+        #Check for a backup before manual sync
         if context is None:
             context = {}
         context['sync_type'] = 'manual'
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
         self.sync(cr, uid, context=context)
-        #Check for a backup after automatic sync
+        #Check for a backup after manual sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'aftermanualsync', context=context)
         return {'type': 'ir.actions.act_window_close'}
 
