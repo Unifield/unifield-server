@@ -67,8 +67,9 @@
                     &account;
                     <separator string="Reconciliation" colspan="4"/>
                     <field name="reconciled"/>
+                    <field name="reconcile_date" string="At"/>
                     <field name="reconcile_id"/>
-                    <field name="is_not_reconciled_at"/>
+
                     &currency;
                     <group colspan="4" col="6">
                         <separator string="Third Party" colspan="6"/>

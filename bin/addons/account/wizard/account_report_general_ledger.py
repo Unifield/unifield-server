@@ -56,6 +56,7 @@ class account_report_general_ledger(osv.osv_memory):
 
         'unreconciled': fields.boolean("Unreconciled",
             help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+        'reconcile_date': fields.date("Reconciled at"),
 
         'account_ids': fields.many2many('account.account',
             'account_report_general_ledger_account_account_rel',
@@ -163,7 +164,8 @@ class account_report_general_ledger(osv.osv_memory):
 
         form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
             'output_currency', 'instance_ids', 'export_format',
-            'account_type', 'unreconciled', 'account_ids', ]
+            'account_type', 'unreconciled', 'reconcile_date',
+            'account_ids', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         # US-822: safe initial balance check box

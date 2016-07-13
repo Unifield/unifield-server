@@ -107,11 +107,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
+
         # unreconciled: not reconciled or partial reconciled
-        # (partial: reconcile_partia_id set vs reconcile_id)
-        self.unreconciled_filter = \
-            self._get_data_form(data, 'unreconciled', False) \
-            and " AND reconcile_id is null AND a.reconcile='t'" or ''
+        # (partial: reconcile_partial_id set vs reconcile_id)
+        self.unreconciled_filter = ''
+        unreconciled = self._get_data_form(data, 'unreconciled', False)
+        if unreconciled:
+            self.unreconciled_filter = " AND reconcile_id is null" \
+                " AND a.reconcile='t'"
 
         self.context['state'] = data['form']['target_move']
 
