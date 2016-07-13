@@ -110,20 +110,27 @@ class wizard_import_fo_line(osv.osv_memory):
                 rows = file_obj.getRows()
 
                 header_row = rows.next()
+                header_error = False
                 if header_row:
                     for i, h_name in enumerate(columns_for_fo_line_import):
-                        if header_row[i] != h_name:
-                            msg = "You can not import this file because the header of columns doesn't match with the expected headers: %s" % ','.join(columns_for_fo_line_import)
-                            error_list.append(msg)
-                            break
+                        if len(header_row) > i and str(header_row[i]) != h_name:
+                            header_error = True
+                            if str(header_row[i]).upper() == h_name.upper():
+                                error_list.append(_("\n\tPlease check spelling on column '%s'.") % header_row[i])
 
-                lines_to_correct = check_line.check_lines_currency(rows,
-                    currency_index, order_currency_code)
-                if lines_to_correct > 0:
-                    msg = "You can not import this file because it contains" \
-                        " line(s) with currency (Column F) not of the order currency (%s)" % (
-                        order_currency_code, )
+                if header_error:
+                    msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join(columns_for_fo_line_import)
                     error_list.append(msg)
+                    msg = _("\n\tPlease ensure that all these columns are in this exact order.")
+                    error_list.append(msg)
+                else:
+                    lines_to_correct = check_line.check_lines_currency(rows,
+                        currency_index, order_currency_code)
+                    if lines_to_correct > 0:
+                        msg = "You can not import this file because it contains" \
+                            " line(s) with currency (Column F) not of the order currency (%s)" % (
+                            order_currency_code, )
+                        error_list.append(msg)
 
                 if not error_list:
                     # iterator on rows
@@ -328,7 +335,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'fo_id': fo_id, 'header_index': header_index})
-                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_fo_line_import)
+                res, res1 = wiz_common_import.check_header_values(cr, uid, ids, context, header_index, columns_for_fo_line_import, origin='FO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:
