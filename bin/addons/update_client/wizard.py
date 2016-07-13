@@ -4,7 +4,7 @@ import os
 import logging
 import urllib2
 import threading
-from base64 import b64decode
+from base64 import b64decode, encodestring
 import hashlib
 from StringIO import StringIO
 import tarfile
@@ -12,7 +12,6 @@ import tarfile
 from osv import osv, fields
 from tools.translate import _
 import tools
-import base64
 from tools import config
 from updater import *
 
@@ -98,8 +97,8 @@ class upgrade(osv.osv_memory):
                 connection_module.is_automatic_patching_allowed(cr, uid)
         if automatic_patching:
             password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
-            password = base64.encodestring(password)
-            db_name = base64.encodestring(cr.dbname)
+            password = encodestring(password)
+            db_name = encodestring(cr.dbname)
             credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
             f = open(credential_filepath, 'w')
             f.write(db_name)
