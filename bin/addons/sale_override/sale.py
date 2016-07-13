@@ -1331,10 +1331,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Display validation message to the user
         for order in order_brw_list:
             if not order.procurement_request:
-                self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
+                if order.split_type_sale_order == 'original_sale_order':
+                    self.log(cr, uid, order.id, 'The Field order \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
                 self.infolog(cr, uid, "The Field order id:%s (%s) has been validated." % (order.id, order.name))
             else:
-                self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
+                if order.split_type_sale_order == 'original_sale_order':
+                    self.log(cr, uid, order.id, 'The Internal Request \'%s\' has been validated (nb lines: %s).' % (order.name, len(order.order_line)), context=context)
                 self.infolog(cr, uid, "The Internal request id:%s (%s) has been validated." % (order.id, order.name))
 
         return True

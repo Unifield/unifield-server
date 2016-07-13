@@ -88,6 +88,15 @@ class sale_order_line(osv.osv):
 
         return result
 
+    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
+        result = super(sale_order_line, self).requested_product_id_change(cr, uid, ids, product_id, comment, context)
+        if product_id:
+            prod_obj = self.pool.get('product.product')
+            if prod_obj.browse(cr, uid, product_id).is_ssl:
+                warning = {'title': 'Short Shelf Life product', 'message': _(SHORT_SHELF_LIFE_MESS)}
+                result.update(warning=warning)
+        return result
+
 sale_order_line()
 
 
