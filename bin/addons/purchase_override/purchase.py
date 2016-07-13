@@ -1118,6 +1118,7 @@ stock moves which are already processed : '''
                                   'validator' : uid,
                                   'date_confirm': strftime('%Y-%m-%d')}, context=context)
 
+        self.ssl_products_in_line(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
 
         return True
