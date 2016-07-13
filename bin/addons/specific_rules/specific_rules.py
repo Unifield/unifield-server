@@ -115,7 +115,7 @@ class sale_order(osv.osv):
 
         can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
-            if can_break:
+            if order.split_type_sale_order != 'original_sale_order' or can_break
                 break
             for line in obj.order_line:
                 # log the message
