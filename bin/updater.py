@@ -9,7 +9,7 @@ import os
 import sys
 from hashlib import md5
 from datetime import datetime
-from base64 import b64decode
+from base64 import b64decode, decodestring
 from StringIO import StringIO
 import logging
 import time
@@ -448,38 +448,59 @@ def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
     """
-    import tools
-    credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
-    if os.path.isfile(credential_filepath):
-        import base64
-        import pooler
+    # do not execute this code on server side
+    if pool.get("sync.server.entity"):
+        return False
+
+    from tools import config
+    logger.info("[AUTOMATIC-PATCHING] Re-connect to the sync_server using credentials...")
+    credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
+    if not os.path.isfile(credential_filepath):
+        logger.info("No credential file found, the connection manager will "
+                "not be reconnected.")
+        return False
+
+    try:
         f = open(credential_filepath, 'r')
-        lines = f.readlines()
-        f.close()
-        if lines:
-            try:
-                dbname = base64.decodestring(lines[0])
-                password = base64.decodestring(lines[1])
-                logger.info('dbname = %s' % dbname)
-                db, pool = pooler.get_db_and_pool(dbname)
-                db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
-                                                       # strange behaviour with the connection on web interface
+    except IOError as e:
+        message = "Can't open the file %s for reading : %%s" % credential_filepath
+        logger.error(message % (unicode(e)))
+        return False
 
-                # do not execute this code on server side
-                if not pool.get("sync.server.entity"):
-                    cr = db.cursor()
-                    # delete the credential file
-                    os.remove(credential_filepath)
-                    # reconnect to SYNC_SERVER
-                    connection_module = pool.get("sync.client.sync_server_connection")
-                    connection_module.connect(cr, 1, password=password)
+    lines = f.readlines()
+    f.close()
+    if not lines:
+        logger.error("The credential file is empty. Impossible to "
+                "automatically re-connect to the SYNC_SERVER using "
+                "credentials file.")
+        return False
+    cr = None
+    try:
+        import pooler
+        dbname = decodestring(lines[0])
+        password = decodestring(lines[1])
+        logger.info('dbname = %s' % dbname)
+        db, pool = pooler.get_db_and_pool(dbname)
+        db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
+                                               # strange behaviour with the connection on web interface
+        cr = db.cursor()
+        # reconnect to SYNC_SERVER
+        connection_module = pool.get("sync.client.sync_server_connection")
+        connection_module.connect(cr, 1, password=password)
 
-                    # in caes of automatic patching, relaunch the sync
-                    # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
-                    if connection_module.is_automatic_patching_allowed(cr, 1):
-                        pool.get('sync.client.entity').sync_withbackup(cr, 1)
-                    cr.close()
-            except Exception as e:
-                message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
-                logger.error(message % (unicode(e)))
-
+        # in caes of automatic patching, relaunch the sync
+        # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
+        if connection_module.is_automatic_patching_allowed(cr, 1):
+            logger.info("[AUTOMATIC-PATCHING] Re-launch a synchronization...")
+            pool.get('sync.client.entity').sync_withbackup(cr, 1)
+        else:
+            logger.info("[AUTOMATIC-PATCHING] do not re-launch "
+                    "sync as automatic patching is not allowed")
+    except Exception as e:
+        message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
+        logger.error(message % (unicode(e)))
+    finally:
+        # delete the credential file
+        os.remove(credential_filepath)
+        if cr:
+            cr.close()
