@@ -30,6 +30,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from datetime import date
 from decimal import Decimal, ROUND_UP
+import math
 
 import netsvc
 
@@ -852,6 +853,10 @@ class finance_tools(osv.osv):
             else:
                 msg = _('Document date should be in posting date FY')
             raise osv.except_osv(_('Error'), msg)
+
+    def truncate_amount(self, amount, digits):
+        stepper = pow(10.0, digits)
+        return math.trunc(stepper * amount) / stepper
 
 finance_tools()
 
