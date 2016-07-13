@@ -2617,6 +2617,7 @@ class stock_picking_cancel_wizard(osv.osv_memory):
             self.infolog(cr, uid, "The %s id:%s (%s) has been canceled%s." % (
                 wiz.picking_id.type == 'out' and msg_type.get('out', {}).get(wiz.picking_id.subtype, '') or msg_type.get(wiz.picking_id.type),
                 wiz.picking_id.id,
+                wiz.picking_id.name,
                 wiz.picking_id.has_to_be_resourced and ' and resourced' or '',
             ))
 
