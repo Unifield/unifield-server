@@ -200,14 +200,14 @@ class stock_production_lot(osv.osv):
                         # If the product is ED only, and no batch existed for it, create a new one
                         vals = {'name': existing_batch.name,'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':'internal', 'sequence_id': 1}
                         batch_id = lot_obj.create(cr, uid, vals)
-                        self._logger.info("--- Step 2: A new INTERNAL batch has been DUPLICATED from the batch %s and expiry date %s!\n"%(batch_name, life_date))
+                        self._logger.info("--- Step 2: A new INTERNAL batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id, life_date))
                 
                 if not batch_id:
                     # Prepare the new batch to create, with almost same values, except the product id
                     vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type}
                     batch_id = lot_obj.create(cr, uid, vals)
                 
-                    self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s and expiry date %s!\n"%(batch_name, life_date))
+                    self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id,life_date))
             
                 # 3. Now search all the move lines that still have the reference to the wrong BN, assign them to the new batch_id
                 self._logger.info("--- Step 3: Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
