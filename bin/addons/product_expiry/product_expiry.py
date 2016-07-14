@@ -206,7 +206,6 @@ class stock_production_lot(osv.osv):
                     # Prepare the new batch to create, with almost same values, except the product id
                     vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type}
                     batch_id = lot_obj.create(cr, uid, vals)
-                
                     self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id,life_date))
             
                 # 3. Now search all the move lines that still have the reference to the wrong BN, assign them to the new batch_id
@@ -214,7 +213,6 @@ class stock_production_lot(osv.osv):
                 if batch_id:
                     sql_up = 'update ' + table_name + ' set ' + field_id + ' = ' + str(batch_id) + ' where product_id=' + str(prod_id) + ' and ' + field_id + '=' + str(existing_batch.id)  
                     sql_up = sql_up + " and " + field_expiry_name + "='" + life_date + "';"
-                    #print "Update only: ", sql_up
                     cr.execute(sql_up)
 
         self._logger.info("__________Finish the migration task on duplicate batch objects for table: %s\n", table_name)
