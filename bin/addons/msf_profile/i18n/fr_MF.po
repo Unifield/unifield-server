@@ -73800,3 +73800,9 @@ msgstr "Non Créé"
 #, python-format
 msgid "The entry must have at least two lines."
 msgstr "L'écriture doit avoir au moins deux lignes."
+
+#. module: account
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must be balanced."
+msgstr "L'écriture doit être équilibrée."
