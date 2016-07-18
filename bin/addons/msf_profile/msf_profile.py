@@ -657,6 +657,39 @@ class patch_scripts(osv.osv):
         cr.execute(sql, (sale_percent,))
         return True
 
+    def us_1430_patch(self, cr, uid, *a, **b):
+        """
+        Resync. all ir.translation related to product.template,name of Local products
+        """
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'coordo':
+            cr.execute("""
+                UPDATE ir_model_data
+                    SET touched = '[''src'']', last_modificatioN = now()
+                    WHERE model = 'ir.translation' AND res_id IN (
+                        SELECT t.id FROM ir_translation t
+                            LEFT JOIN product_template pt ON pt.id = t.res_id
+                            LEFT JOIN product_product pp ON pp.product_tmpl_id = pt.id
+                            LEFT JOIN product_international_status s ON s.id = pp.international_status
+                            LEFT JOIN ir_model_data d ON d.res_id = s.id
+                        WHERE
+                            t.name = 'product.template,name'
+                          AND
+                            d.model = 'product.international.status'
+                          AND
+                            d.name = 'int_4'
+                          AND
+                            d.module = 'product_attributes')""")
+
+        return True
+
 patch_scripts()
 
 
