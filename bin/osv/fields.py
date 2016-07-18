@@ -784,12 +784,12 @@ class function(_column):
             self._symbol_f = float._symbol_f
             self._symbol_set = float._symbol_set
 
-        if type == 'boolean':
+        elif type == 'boolean':
             self._symbol_c = boolean._symbol_c
             self._symbol_f = boolean._symbol_f
             self._symbol_set = boolean._symbol_set
 
-        if type in ['integer','integer_big']:
+        elif type in ['integer','integer_big']:
             self._symbol_c = integer._symbol_c
             self._symbol_f = integer._symbol_f
             self._symbol_set = integer._symbol_set
