@@ -134,6 +134,8 @@ class RPCGateway(object):
                 common.error('updater.py', err.code)
             elif err.code.startswith('ServerUpdate'):
                 common.error('ServerUpdate', err.code)
+            elif err.code.startswith('PatchFailed'):
+                common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
                 raise openobject.errors.AccessDenied(err.code, _('Access Denied'))
             else:
@@ -308,6 +310,8 @@ class RPCSession(object):
                 return -2
             elif e.title == 'ServerUpdate':
                 return -3
+            elif e.title == 'PatchFailed':
+                return -4
             return -1
 
         if uid <= 0:
