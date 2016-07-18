@@ -145,10 +145,24 @@ class patch_scripts(osv.osv):
         attachment_obj = self.pool.get('ir.attachment')
         attachment_ids = attachment_obj.search(cr, uid, [])
         vals = {}
+        deleted_count = 0
+        logger = logging.getLogger('update')
         for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            # check existance of the linked document, if the linked document
+            # don't exist anymore, delete the attachement
+            model_obj = self.pool.get(attachment.res_model)
+            if not model_obj or not model_obj.search(cr, uid,
+                    [('id', '=', attachment.res_id),]):
+                attachment_obj.unlink(cr, uid, attachment.id)
+                logger.warn('deleting attachment %s' % attachment.id)
+                deleted_count += 1
+                continue
+
             if attachment.datas and not attachment.size:
                 vals['size'] = attachment_obj.get_size(attachment.datas)
                 attachment_obj.write(cr, uid, attachment.id, vals)
+        if deleted_count:
+            logger.warn('%s attachment(s) deleted.' % deleted_count)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
