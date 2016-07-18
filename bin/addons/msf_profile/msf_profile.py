@@ -662,8 +662,9 @@ class patch_scripts(osv.osv):
         if setup_br:
             sale_percent = 1 + (setup_br.sale_price/100.00)
 
+
         sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
-        cr.execute(sql, (sale_percent,))
+        cr.execute(sql, (sale_percent, ))
         return True
 
 patch_scripts()
