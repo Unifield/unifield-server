@@ -53,6 +53,7 @@ class msf_instance_setup(osv.osv_memory):
                     'first_run': False,
             }
             self.write(cr, uid, [ids[0]], vals, context)
+            self.action_next(cr, uid, ids, context=context)
         return {
             'view_type': 'form',
             "view_mode": 'form',
