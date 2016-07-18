@@ -22,6 +22,9 @@
 ##############################################################################
 
 ACCOUNT_RESTRICTED_AREA = {
+
+    # Note: some domains are defined directly inside the method _search_restricted_area (account_override/account.py)
+
     # REGISTER LINES
     'register_lines': [
         ('type', '!=', 'view'),
@@ -100,7 +103,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'intermission_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
-        ('user_type_code', '=', 'expense'),
+        ('user_type_code', 'in', ['expense', 'income', 'receivables']),
         ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
     ],
     # RECURRING MODELS
