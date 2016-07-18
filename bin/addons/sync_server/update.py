@@ -147,6 +147,28 @@ class update(osv.osv):
     
     _logger = logging.getLogger('sync.server')
 
+    def _get_puller_ids(self, cr, uid, ids, field_name, args, context=None):
+        pass
+
+    def _src_puller_ids(self, cr, uid, obj, name, args, context=None):
+        res = []
+        server_entity_obj = self.pool.get('sync.server.entity')
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'fancy_puller_ids':
+                search_string = arg[2]
+                if ';' not in search_string:
+                    entity_id = server_entity_obj.search(cr, uid, [('name',
+                            '=', arg[2])]) or None
+                    if entity_id:
+                        res.append(('puller_ids', '=', entity_id))
+                else:
+                    list_of_pullers = search_string.split(';')
+                    list_of_ids = server_entity_obj.search(cr, uid, [('name',
+                            'in', tuple(list_of_pullers))])
+                    if list_of_ids:
+                        res.append(('puller_ids', 'in', list_of_ids))
+        return res
+
     _columns = {
         'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
         'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
@@ -162,6 +184,9 @@ class update(osv.osv):
         'values': fields.text("Values"),
         'create_date': fields.datetime('Synchro Date/Time', readonly=True),
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
+        'fancy_puller_ids': fields.function(_get_puller_ids,
+            fnct_search=_src_puller_ids, method=True,
+            string="Pulled by", type='char', store=False),
         'is_deleted' : fields.boolean('Is deleted?', select=True),
         'force_recreation' : fields.boolean('Force record recreation'),
         'handle_priority': fields.boolean('Handle Priority'),
@@ -201,13 +226,41 @@ class update(osv.osv):
         if args:
             exact_search = False
             for sub_domain in args:
-                if len(sub_domain) > 1 and sub_domain[1] == '=':
+                if len(sub_domain) > 1 and sub_domain[1] in ('=', '<=', '>='):
                     exact_search = True
                     break
             if not exact_search:
                 raise osv.except_osv(_("Error!"), _("You Can't search updates without using at least one exact search term (precede your search with the character '=')."))
-        return super(update, self).search(cr, uid, args, offset, limit,
+        return self.search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
+
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        if there is fancy_puller_ids search parameter, do corresponding special
+        treatment.
+        '''
+        new_args = []
+        puller_ids = False
+        puller_ids_args = False
+        if args:
+            for sub_domain in args:
+                if sub_domain[0] == 'fancy_puller_ids':
+                    puller_ids = True
+                    puller_ids_arg = self._src_puller_ids(cr, uid, None, None, args)
+                else:
+                    new_args.append(sub_domain)
+        ids = super(update, self).search(cr, uid, new_args, offset, limit,
+                order, context=context, count=count)
+        if puller_ids and ids and len(puller_ids_arg[0])>2:
+            cr.execute("""SELECT sync_server_update.id
+            FROM sync_server_update INNER JOIN sync_server_entity_rel ON
+            sync_server_update.id=sync_server_entity_rel.update_id
+            WHERE sync_server_update.id IN %s
+            AND sync_server_entity_rel.entity_id IN %s
+            """, (tuple(ids), tuple(puller_ids_arg[0][2])))
+            result = cr.fetchall()
+            ids = [x[0] for x in result]
+        return ids
 
     def unfold_package(self, cr, uid, entity, packet, context=None):
         """
