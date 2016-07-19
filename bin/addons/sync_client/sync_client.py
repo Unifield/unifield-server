@@ -916,7 +916,6 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         context['sync_type'] = 'automatic'
-        self._logger.info("Start automatic sync...")
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync_recover(cr, uid, context=context)
@@ -951,7 +950,8 @@ class Entity(osv.osv):
         # US_394: force synchronization lang to en_US
         context['lang'] = 'en_US'
         logger = context.get('logger')
-        self._logger.info("Start synchronization")
+        sync_type = context.get('sync_type', '')
+        self._logger.info("Start %s synchronization" % sync_type)
         self.set_rules(cr, uid, context=context)
         self.pull_update(cr, uid, context=context)
         self.pull_message(cr, uid, context=context)
@@ -971,7 +971,6 @@ class Entity(osv.osv):
         if context is None:
             context = {}
         context['sync_type'] = 'automatic'
-        self._logger.info("Start automatic sync...")
         #Check for a backup before automatic sync
         self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforeautomaticsync', context=context)
         self.sync(cr, uid, context=context)

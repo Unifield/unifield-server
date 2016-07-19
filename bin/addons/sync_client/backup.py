@@ -139,7 +139,7 @@ class BackupConfig(osv.osv):
                     error = "Backup Error: %s %s. Please provide the correct path or deactivate the backup feature." %(e.strerror, e.filename)
                 else:
                     error = "Backup Error: %s. Please provide the correct path or deactivate the backup feature." % e
-                self._logger.exception('Cannot perform the backup %s.' % error)
+                self._logger.exception('Cannot perform the backup : %s' % error)
                 raise osv.except_osv(_('Error! Cannot perform the backup.'), error)
 
             res = tools.pg_dump(cr.dbname, outfile)
