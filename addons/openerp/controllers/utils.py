@@ -150,6 +150,9 @@ def secured(fn):
                 nb_mod = rpc.session.number_update_modules(db) or ''
                 return login(cherrypy.request.path_info, message=_('The server is updating %s modules, please wait ...') % (nb_mod,),
                     db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            if action == 'login' and login_ret == -4:
+                return login(cherrypy.request.path_info, message=_('A script during patch failed! Login is forbidden for the moment. Please contact your administrator'),
+                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
             elif login_ret <= 0:
                 # Bad login attempt
                 if action == 'login':
