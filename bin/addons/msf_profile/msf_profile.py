@@ -501,7 +501,6 @@ class patch_scripts(osv.osv):
         if self.pool.get('sync.client.update_received'):
             cr.execute("update sync_client_update_received set rule_sequence=-rule_sequence where is_deleted='t'")
 
-
     def another_translation_fix(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
             ir_trans = self.pool.get('ir.translation')
@@ -514,6 +513,17 @@ class patch_scripts(osv.osv):
                 res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
                 if res_id:
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
+        return True
+
+    def another_other_translation_fix_bis(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.name or ''
+        logger = logging.getLogger('update')
+        if instance_name.startswith('OCG'):
+            logger.warn('Execute US-1527 script')
+            self.another_other_translation_fix(cr, uid, *a, **b)
+        else:
+            logger.warn('Do not execute US-1527 script')
         return True
 
     def another_other_translation_fix(self, cr, uid, *a, **b):
