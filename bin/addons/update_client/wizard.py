@@ -84,10 +84,6 @@ class upgrade(osv.osv_memory):
 
     def do_upgrade(self, cr, uid, ids, context=None, sync_type='manual'):
         """Actualy, prepare the upgrade to be done at server restart"""
-        # backup before patching
-        self.pool.get('backup.config').exp_dump_for_state(cr, uid,
-                'beforepatching', context=context, force=True)
-
         connection_module = self.pool.get("sync.client.sync_server_connection")
         proxy = connection_module.get_connection(cr, uid, "sync.server.sync_manager")
         # in case of automatic patching,  create a file to store the actual
@@ -95,6 +91,10 @@ class upgrade(osv.osv_memory):
         # reconnect to the SYNC_SERVER after an upgrade
         automatic_patching = sync_type == 'automatic' and\
                 connection_module.is_automatic_patching_allowed(cr, uid)
+
+        # backup before patching
+        self.pool.get('backup.config').exp_dump_for_state(cr, uid,
+                'beforepatching', context=context, force=automatic_patching)
         if automatic_patching:
             password = connection_module._get_password(cr, uid, [proxy], None, None, None).values()[0]
             password = encodestring(password)

@@ -43,7 +43,7 @@ logger = logging.getLogger('updater')
 def restart_server():
     """Restart OpenERP server"""
     global restart_required
-    logger.info("Restaring OpenERP Server in %d seconds..." % restart_delay)
+    logger.info("Restarting OpenERP Server in %d seconds..." % restart_delay)
     restart_required = True
 
 def isset_lock(file=None):
@@ -448,16 +448,12 @@ def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
     """
-    # do not execute this code on server side
-    if pool.get("sync.server.entity"):
-        return False
-
     from tools import config
     logger.info("[AUTOMATIC-PATCHING] Re-connect to the sync_server using credentials...")
     credential_filepath = os.path.join(config['root_path'], 'unifield-socket.py')
     if not os.path.isfile(credential_filepath):
-        logger.info("No credential file found, the connection manager will "
-                "not be reconnected.")
+        logger.info("[AUTOMATIC-PATCHING] No credential file found, the "
+                "connection manager will not be reconnected.")
         return False
 
     try:
@@ -481,6 +477,9 @@ def reconnect_sync_server():
         password = decodestring(lines[1])
         logger.info('dbname = %s' % dbname)
         db, pool = pooler.get_db_and_pool(dbname)
+        # do not execute this code on server side
+        if pool.get("sync.server.entity"):
+            return False
         db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
                                                # strange behaviour with the connection on web interface
         cr = db.cursor()
@@ -497,7 +496,8 @@ def reconnect_sync_server():
             logger.info("[AUTOMATIC-PATCHING] do not re-launch "
                     "sync as automatic patching is not allowed")
     except Exception as e:
-        message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
+        message = "[AUTOMATIC-PATCHING] Impossible to automatically "\
+                "re-connect to the SYNC_SERVER using credentials file : %s"
         logger.error(message % (unicode(e)))
     finally:
         # delete the credential file
