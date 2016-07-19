@@ -239,14 +239,18 @@ class fields_tools(osv.osv):
                 index += 1
         return -1
 
-    def domain_remove_field(self, domain, field_name):
+    def domain_remove_field(self, domain, field_names):
         """
-        remove field tuple(s) in domain
+        remove field(s) tuple(s) in domain
+        :param field_names: field(s) to remove
+        :type field_names: str/list/tuple
         :return: new domain
         """
+        if not isinstance(field_names, (list, tuple, )):
+            field_names = [ field_names, ]
         res = []
         for t in domain:
-            if t[0] != field_name:
+            if t[0] not in field_names:
                 res.append(t)
         return res
 

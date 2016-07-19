@@ -63,10 +63,11 @@ class account_move_line(osv.osv):
                         and not args[is_reconciled_index][2]:
                         # 2)
                         reconcile_date = args[reconciled_date_index][2]
-                        args = ft_obj.domain_remove_field(args,
-                            'is_reconciled')
-                        args = ft_obj.domain_remove_field(args,
-                            'reconcile_date')
+                        args = ft_obj.domain_remove_field(args, [
+                            'is_reconciled',
+                            'reconcile_id',
+                            'reconcile_date',
+                        ])
                         domain = [
                             '|',
                             ('reconcile_date', '>', reconcile_date),

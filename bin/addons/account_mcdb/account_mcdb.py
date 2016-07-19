@@ -334,12 +334,17 @@ class account_mcdb(osv.osv):
                 # total or partial and override  reconciled status
                 domain.append(('reconcile_total_partial_id', '=', wiz.reconcile_id.id))
             elif wiz.reconciled:
+                # US-533: new search matrix
+                # http://jira.unifield.org/browse/US-533?focusedCommentId=50218&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50218
+                # search always regarding FULL reconcile (is_reconciled do that)
                 if wiz.reconciled == 'reconciled':
-                    domain.append(('reconcile_id', '!=', False))  # only full reconcile
+                    domain.append(('is_reconciled', '=', True))
                 elif wiz.reconciled == 'unreconciled':
-                    domain.append(('reconcile_id', '=', False))   # partial or not reconcile (dont take care of reconcile_partial_id state)
+                    domain.append(('is_reconciled', '=', False))
             if wiz.reconcile_date:
                 domain.append(('reconcile_date', '<=', wiz.reconcile_date))
+            # note that for US-533 JI search is overrided in
+            # account_reconcile/account_move_line.py
 
             # REALLOCATION field
             if wiz.reallocated:
