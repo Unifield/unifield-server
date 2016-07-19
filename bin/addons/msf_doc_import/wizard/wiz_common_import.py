@@ -87,14 +87,14 @@ class wiz_common_import(osv.osv_memory):
         """
         Check that the columns in the header will be taken into account.
         """
+        translated_headers = [_(f) for f in real_columns]
+        upper_translated_headers = translated_headers
         if origin == 'FO':
-            translated_headers = [_(f).upper() for f in real_columns]
-        else:
-            translated_headers = [_(f) for f in real_columns]
+            upper_translated_headers = [_(f).upper() for f in real_columns]
         for k,v in header_index.items():
             if origin == 'FO':
                 k = k.upper()
-            if k not in translated_headers:
+            if k not in upper_translated_headers:
                 if origin:
                     # special case from document origin
                     if origin == 'PO' and k == 'Delivery requested date' \
