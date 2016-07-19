@@ -1896,6 +1896,7 @@ class stock_move(osv.osv):
                  'location_dest_id',
                  'reason_type_id',
                  'line_number',
+                 'move_dest_id',
                  'move_cross_docking_ok',], context):
             vals = {}
             move_unlinked = False
