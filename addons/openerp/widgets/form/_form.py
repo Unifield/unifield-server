@@ -952,7 +952,7 @@ class Form(TinyInputWidget):
                     continue
                 try:
                     fields[name]['link'] = attrs.get('link', '1')
-                    if fields[name].get('no_write_access') and 'attrs' in attrs and 'readonly' in attrs:
+                    if fields[name].get('no_write_access') and 'attrs' in attrs and 'readonly' in attrs['attrs']:
                         attrs_dict = eval(attrs['attrs'])
                         if 'readonly' in attrs_dict:
                             del attrs_dict['readonly']
