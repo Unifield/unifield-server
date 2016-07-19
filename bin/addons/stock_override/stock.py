@@ -1882,22 +1882,23 @@ class stock_move(osv.osv):
             compare_date = datetime(today.year, today.month, today.day)
 
         for move in self.read(cr, uid, ids,
-                ['state',
-                 'prodlot_id',
-                 'product_qty',
-                 'location_id',
-                 'product_id',
-                 'product_uom',
-                 'name',
-                 'sale_line_id',
-                 'picking_id',
+                ['date',
                  'date_expected',
-                 'date',
-                 'location_dest_id',
-                 'reason_type_id',
+                 'expired_date',
                  'line_number',
+                 'location_dest_id',
+                 'location_id',
+                 'move_cross_docking_ok',
                  'move_dest_id',
-                 'move_cross_docking_ok',], context):
+                 'name',
+                 'picking_id',
+                 'prodlot_id',
+                 'product_id',
+                 'product_qty',
+                 'product_uom',
+                 'reason_type_id',
+                 'sale_line_id',
+                 'state'], context):
             vals = {}
             move_unlinked = False
             # FEFO logic
