@@ -25,8 +25,8 @@
                 <newline/>
                 <field name="account_type" />
                 <newline/>
-                <field name="unreconciled" />
-                <field name="reconcile_date" string="At" />
+                <field name="reconciled" />
+                <field name="reconcile_date" />
                 <newline/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
