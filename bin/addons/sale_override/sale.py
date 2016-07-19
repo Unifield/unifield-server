@@ -2049,13 +2049,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         UF-1155: Divided the cancel of the move in two times to avaid the cancelation of the field order
                         """
                         if line.procurement_id.move_id:
-                            cancel_move_id = line.procurement_id.move_id.id
+                            move_to_cancel.add(line.procurement_id.move_id.id)
 
                         # Update corresponding procurement order with the new stock move
                         proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
-
-                        if cancel_move_id:
-                            move_to_cancel.add(line.procurement_id.move_id.id)
 
                         if line.type == 'make_to_order':
                             pol_update_ids = pol_obj.search(cr, uid,
