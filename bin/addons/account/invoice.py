@@ -1622,7 +1622,7 @@ class account_invoice_line(osv.osv):
         if not line:
             return False
         qty = line.quantity
-        # remove '.0' if it's an integer value (typically UOM Category: 'Unit'), and convert to string
+        # remove '.0' if it's an integer value, and convert to string
         qty_str = '%s' % (int(qty) == qty and int(qty) or qty)
         qty_len = len(qty_str)
         trimmed_name = line.name[:64 - qty_len - 2]
