@@ -225,6 +225,31 @@ class fields_tools(osv.osv):
             tpl_drop_const = "alter table %s drop constraint %s" % sql_params
             cr.execute(tpl_drop_const)
 
+    def domain_get_field_index(self, domain, field_name):
+        """
+        get field tuple index in domain
+        :return: index or < 0 if not found
+        :rtype: int
+        """
+        index = 0
+        if domain:
+            for t in domain:
+                if t[0] == field_name:
+                    return index
+                index += 1
+        return -1
+
+    def domain_remove_field(self, domain, field_name):
+        """
+        remove field tuple(s) in domain
+        :return: new domain
+        """
+        res = []
+        for t in domain:
+            if t[0] != field_name:
+                res.append(t)
+        return res
+
 fields_tools()
 
 

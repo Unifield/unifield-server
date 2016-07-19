@@ -344,7 +344,7 @@
             <field name="view_id" ref="account_mcdb_tree"/>
             <field name="search_view_id" ref="account_mcdb_search"/>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
-            <field name="context">{'search_default_user': uid}</field>
+            <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
         </record>
 
         <record id="action_account_mcdb_analytic" model="ir.actions.act_window">
@@ -367,7 +367,7 @@
             <field name="view_id" ref="account_mcdb_form"/>
             <field name="search_view_id" ref="account_mcdb_search"/>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
-            <field name="context">{'search_default_user': uid}</field>
+            <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
         </record>
 
         <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">
