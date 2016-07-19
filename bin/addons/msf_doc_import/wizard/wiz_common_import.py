@@ -92,9 +92,10 @@ class wiz_common_import(osv.osv_memory):
         if origin == 'FO':
             upper_translated_headers = [_(f).upper() for f in real_columns]
         for k,v in header_index.items():
+            upper_k = k
             if origin == 'FO':
-                k = k.upper()
-            if k not in upper_translated_headers:
+                upper_k = k.upper()
+            if upper_k not in upper_translated_headers:
                 if origin:
                     # special case from document origin
                     if origin == 'PO' and k == 'Delivery requested date' \
