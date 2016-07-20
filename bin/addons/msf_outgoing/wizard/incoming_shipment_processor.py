@@ -423,7 +423,8 @@ class stock_move_in_processor(osv.osv):
 
         # get related move ids and map them to ids
         moves_to_ids = {}
-        for r in self.read(cr, uid, ids, ['move_id'], context=context):
+        for r in self.read(cr, uid, ids, ['move_id'], context=context,
+                name_get=False):
             if r['move_id']:
                 moves_to_ids[r['move_id'][0]] = r['id']
 
@@ -433,12 +434,13 @@ class stock_move_in_processor(osv.osv):
         # store the result as most of the time lines have same order_id
         move_purchase_line = self.pool.get('stock.move').read(cr,
                 uid,moves_to_ids.keys(), ['purchase_line_id'],
-                context=context)
+                context=context, name_get=False)
         purchaine_line_list = [x['purchase_line_id'][0] for x in
                 move_purchase_line]
 
         purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
-                uid, purchaine_line_list, ['order_id'], context=context)
+                uid, purchaine_line_list, ['order_id'], context=context,
+                name_get=False)
         purchase_line_order_dict = dict([(x['id'], x['order_id'][0]) for x in
             purchase_line_order_id])
 
