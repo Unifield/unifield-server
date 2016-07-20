@@ -439,6 +439,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if line:
                 infos.append(line)
 
+        # reconcile / reconcile date
+        reconciled = self._get_data_form(data, 'reconciled')
+        if reconciled and reconciled != 'empty':
+            dt = self._get_data_form(data, 'reconcile_date')
+            if dt:
+                dt = ' ' + self.formatLang(dt, date=True)
+            infos.append(_("Reconcile %s%s") % (reconciled.title(), dt or '', ))
+
         return infos and ", \n".join(infos) or _('No Filter')
 
     def _get_line_debit(self, line, booking=False):
