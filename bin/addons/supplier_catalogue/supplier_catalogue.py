@@ -1113,8 +1113,7 @@ class supplier_catalogue_line(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, fields=None, context=None,
-            load="_classic_write", name_get=True):
+    def read(self, cr, uid, ids, fields=None, context=None, load="_classic_write"):
         if context is None:
             context = {}
         if context.get('catalogue_ids', False):
@@ -1131,8 +1130,7 @@ class supplier_catalogue_line(osv.osv):
 
                     line_dict[line_name].update({period_name: '%s' % line.unit_price})
 
-            res = super(supplier_catalogue_line, self).read(cr, uid, ids,
-                    fields, context=context, name_get=name_get)
+            res = super(supplier_catalogue_line, self).read(cr, uid, ids, fields, context=context)
 
             for r in res:
                 line_name = '%s_%s_%s' % (r['product_id'][0], r['min_qty'], r['line_uom_id'][0])
@@ -1140,8 +1138,7 @@ class supplier_catalogue_line(osv.osv):
                     r.update({period: line_dict[line_name][period]})
 
         else:
-            res = super(supplier_catalogue_line, self).read(cr, uid, ids,
-                    fields, context=context, name_get=name_get)
+            res = super(supplier_catalogue_line, self).read(cr, uid, ids, fields, context=context)
 
         return res
 

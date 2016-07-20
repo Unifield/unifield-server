@@ -494,9 +494,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
              not context.get('sync_update_creation')))
 
         if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
-            current_values = dict((x['id'], x) for x in self.read(cr, uid,
-                [id], values.keys()+funct_field, context=context,
-                name_get=False))
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
 
         if audit_rule_ids:
             audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
@@ -536,13 +534,12 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
             # FIXME: add fields.function for track changes
-            previous_values = self.read(cr, uid, ids,
-                    values.keys()+funct_field, context=context, name_get=False)
+            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
 
         result = original_write(self, cr, uid, ids, values,context=context)
         current_values = dict((x['id'], x) for x in self.read(
             cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
-            values.keys()+funct_field, context=context, name_get=False)
+            values.keys()+funct_field, context=context)
         )
 
         if audit_rule_ids:

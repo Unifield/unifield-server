@@ -423,45 +423,30 @@ class stock_move_in_processor(osv.osv):
 
         # get related move ids and map them to ids
         moves_to_ids = {}
-        for r in self.read(cr, uid, ids, ['move_id'], context=context,
-                name_get=False):
+        for r in self.read(cr, uid, ids, ['move_id'], context=context):
             if r['move_id']:
                 moves_to_ids[r['move_id'][0]] = r['id']
 
         # scan moves' purchase line and check if associated with a SO/FO
         po_obj = self.pool.get('purchase.order')
         sol_obj = self.pool.get('sale.order.line')
-        # store the result as most of the time lines have same order_id
-        move_purchase_line = self.pool.get('stock.move').read(cr,
-                uid,moves_to_ids.keys(), ['purchase_line_id'],
-                context=context, name_get=False)
-        purchaine_line_list = [x['purchase_line_id'][0] for x in
-                move_purchase_line]
-
-        purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
-                uid, purchaine_line_list, ['order_id'], context=context,
-                name_get=False)
-        purchase_line_order_dict = dict([(x['id'], x['order_id'][0]) for x in
-            purchase_line_order_id])
-
-        order_id_set = [x['order_id'][0] for x in purchase_line_order_id]
-        order_id_set = list(set(order_id_set))
-
-        order_id_location_dict = {}
-        for order_id in order_id_set:
-            is_from_fo = False
+        for move in self.pool.get('stock.move').browse(cr, uid,
+            moves_to_ids.keys(), context=context):
             location_ids = [main_stock_id] if main_stock_id else []
-            sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
-                    [order_id], context=context)
-            if sol_ids:
-                # move associated with a SO, check not with an IR (so is FO)
-                is_from_fo = True
-                for sol in sol_obj.browse(cr, uid, sol_ids,
-                    context=context):
-                    if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
-                        # from an IR then not from FO
-                        is_from_fo = False
-                        break
+            is_from_fo = False
+
+            if move.purchase_line_id and move.purchase_line_id.order_id:
+                sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
+                        [move.purchase_line_id.order_id.id], context=context)
+                if sol_ids:
+                    # move associated with a SO, check not with an IR (so is FO)
+                    is_from_fo = True
+                    for sol in sol_obj.browse(cr, uid, sol_ids,
+                        context=context):
+                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
+                            # from an IR then not from FO
+                            is_from_fo = False
+                            break
 
             if is_from_fo:
                 if not cd_id:
@@ -469,14 +454,8 @@ class stock_move_in_processor(osv.osv):
                         cr, uid, 'msf_cross_docking',
                         'stock_location_cross_docking')[1]
                 location_ids.append(cd_id)
-            order_id_location_dict[order_id] = location_ids
 
-        for elem in move_purchase_line:
-            move_id = elem['id']
-            purchase_line_id = elem['purchase_line_id'][0]
-            order_id = purchase_line_order_dict[purchase_line_id]
-            location_ids = order_id_location_dict[order_id]
-            res[moves_to_ids[move_id]] = ','.join(map(lambda id: str(id), location_ids))
+            res[moves_to_ids[move.id]] = ','.join(map(lambda id: str(id), location_ids))
 
         # set ids default value for ids with no specific location
         for id in ids:

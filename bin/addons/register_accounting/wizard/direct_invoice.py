@@ -60,8 +60,7 @@ class wizard_account_invoice(osv.osv):
         'state': lambda *a: 'draft',
     }
 
-    def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
         """
         Avoid problem of many2many and one2many that comes from the object from which we inherit.
         BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
@@ -72,8 +71,7 @@ class wizard_account_invoice(osv.osv):
           - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
         """
         # Default behaviour
-        res = super(wizard_account_invoice, self).read(cr, uid, ids, fields,
-                context, load, name_get)
+        res = super(wizard_account_invoice, self).read(cr, uid, ids, fields, context, load)
         # Fetch all many2many and all one2many fields
         field_to_change = []
         if self._name == 'wizard.account.invoice':
@@ -332,8 +330,7 @@ class wizard_account_invoice_line(osv.osv):
         'product_code': fields.function(_get_product_code, method=True, store=False, string="Product Code", type='char'),
     }
 
-    def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
         """
         Avoid problem of many2many and one2many that comes from the object from which we inherit.
         BUG (found in REF-70): The ORM give the same value for m2m and o2m from the inherit object that have the same ID.
@@ -344,8 +341,7 @@ class wizard_account_invoice_line(osv.osv):
           - when you read wizard.account.invoice that have the same ID, it will return the same value of the purchase_ids field than account.invoice 2!
         """
         # Default behaviour
-        res = super(wizard_account_invoice_line, self).read(cr, uid, ids,
-                fields, context, load, name_get)
+        res = super(wizard_account_invoice_line, self).read(cr, uid, ids, fields, context, load)
         # Fetch all many2many and all one2many fields
         field_to_change = []
         if self._name == 'wizard.account.invoice.line':
