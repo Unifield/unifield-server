@@ -399,17 +399,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 up_exp_rate = rate
                 up_exp_amount = analytic_line.amount_currency
 
-                if period.number in (12, 13, 14, 15, 1, ) \
-                    and 'Revaluation - FY' in analytic_line.name:
-                    # US-953 Yearly revaluation entries are build with
-                    # an external ccy table: compute back rate instead of
-                    # using exported period rate
-                    if currency == func_currency:
-                        up_exp_rate = 1.
-                    elif analytic_line.amount_currency != 0.:
-                        up_exp_rate = round(1 / (abs(analytic_line.amount_currency) \
-                            / abs(analytic_line.amount)), 8)
-                elif is_analytic_rev_entry:
+                if is_analytic_rev_entry:
                     # US-1008 for up_expenses (file 2), match REV AJIs to JIs:
                     # display AJIs booked on REV journal in func ccy and rate 1
                     # as already done here for JIs of up_balances (file 3)
