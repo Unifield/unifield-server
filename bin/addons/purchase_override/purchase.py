@@ -1051,17 +1051,23 @@ stock moves which are already processed : '''
         # objects
         sol_obj = self.pool.get('sale.order.line')
         # procurement ids list
-        proc_ids = []
+        proc_ids = set()
         # sale order lines list
         sol_ids = []
 
-        for po in self.browse(cr, uid, ids, context=context):
-            for line in po.order_line:
-                if line.procurement_id:
-                    proc_ids.append(line.procurement_id.id)
+        pol_obj = self.pool.get('purchase.order.line')
+        for po in self.read(cr, uid, ids, ['order_line'], context=context):
+            result = pol_obj.read(cr, uid, po['order_line'], ['procurement_id'],
+                    context=context, name_get=False)
+            result = dict([(x['id'], x['procurement_id'][0]) for x in result if x['procurement_id']])
+            if result:
+                for line_id, procurement_id in result.items():
+                    proc_ids.add(procurement_id)
+
         # get the corresponding sale order line list
         if proc_ids:
-            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in', proc_ids)], context=context)
+            sol_ids = sol_obj.search(cr, uid, [('procurement_id', 'in',
+                list(proc_ids))], context=context)
         return sol_ids
 
     # @@@override purchase->purchase.py>purchase_order>wkf_confirm_order
