@@ -133,14 +133,16 @@ class account_destination_summary(osv.osv):
             view['arch'] = etree.tostring(form)
         return view
 
-    def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
+    def read(self, cr, uid, ids, fields_to_read=None, context=None,
+            load='_classic_read', name_get=True):
         first = False
         if isinstance(ids, (int, long)):
             ids = [ids]
             first = True
         if fields_to_read is None:
             fields_to_read = []
-        ret = super(account_destination_summary, self).read(cr, uid, ids, fields_to_read, context, load)
+        ret = super(account_destination_summary, self).read(cr, uid, ids,
+                fields_to_read, context, load, name_get)
         f_to_read = []
         for field in fields_to_read:
             if field.startswith('dest_'):

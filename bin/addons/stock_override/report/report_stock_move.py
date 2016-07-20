@@ -215,13 +215,15 @@ class report_stock_move(osv.osv):
                )
         """)
 
-    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, uid, ids, fields=None, context=None,
+            load='_classic_read', name_get=True):
         if context is None:
             context = {}
         if fields is None:
             fields = []
         context['with_expiry'] = 1
-        return super(report_stock_move, self).read(cr, uid, ids, fields, context, load)
+        return super(report_stock_move, self).read(cr, uid, ids, fields,
+                context, load, name_get)
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''

@@ -298,8 +298,10 @@ class purchase_order_followup_line(osv.osv_memory):
         'return_move': fields.boolean(string='Is a return move ?'),
     }
 
-    def read(self, cr, uid, ids, fields, context=None, load='_classic_write'):
-        res = super(purchase_order_followup_line, self).read(cr, uid, ids, fields, context=context, load=load)
+    def read(self, cr, uid, ids, fields, context=None, load='_classic_write',
+            name_get=True):
+        res = super(purchase_order_followup_line, self).read(cr, uid, ids,
+                fields, context=context, load=load, name_get=name_get)
 
         if context.get('export'):
             for r in res:
