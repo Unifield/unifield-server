@@ -382,7 +382,7 @@ class many2one(_column):
             records = dict.fromkeys(res_list, False)
         else:
             records = dict(obj.name_get(cr, 1, res_list, context=context))
-        if len(res_list) == 1:
+        if len(res_list) == 1 and records:
             res = dict.fromkeys(ids, records.items()[0])
         else:
             for id in res:
