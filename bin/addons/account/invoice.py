@@ -1613,23 +1613,26 @@ class account_invoice_line(osv.osv):
                 res[-1]['tax_amount'] = cur_obj.compute(cr, uid, inv.currency_id.id, company_currency, tax_amount, context={'date': inv.date_invoice})
         return res
 
-    def _get_line_name_with_qty(self, line):
+    def _get_line_name(self, line):
         '''
         Returns the String to use for the "name" field in JI and AJI lines:
-        - add 'xQty' at the end of the description
+        - if the line is linked to a product: add 'xQty' at the end of the description
         - if necessary trim the string to get 64 characters max.
         '''
         if not line:
             return False
-        qty = line.quantity
-        # remove '.0' if it's an integer value, and convert to string
-        qty_str = '%s' % (int(qty) == qty and int(qty) or qty)
-        qty_len = len(qty_str)
-        trimmed_name = line.name[:64 - qty_len - 2]
-        return ''.join((trimmed_name, ' x', qty_str))
+        elif not line.product_id:
+            return line.name[:64]
+        else:
+            qty = line.quantity
+            # remove '.0' if it's an integer value, and convert to string
+            qty_str = '%s' % (int(qty) == qty and int(qty) or qty)
+            qty_len = len(qty_str)
+            trimmed_name = line.name[:64 - qty_len - 2]
+            return ''.join((trimmed_name, ' x', qty_str))
 
     def move_line_get_item(self, cr, uid, line, context=None):
-        line_name = self._get_line_name_with_qty(line)
+        line_name = self._get_line_name(line)
         return {
             'type':'src',
             'name': line_name,
