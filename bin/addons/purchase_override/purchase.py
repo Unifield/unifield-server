@@ -1058,7 +1058,7 @@ stock moves which are already processed : '''
         pol_obj = self.pool.get('purchase.order.line')
         for po in self.read(cr, uid, ids, ['order_line'], context=context):
             result = pol_obj.read(cr, uid, po['order_line'], ['procurement_id'],
-                    context=context, name_get=False)
+                    context=context)
             result = dict([(x['id'], x['procurement_id'][0]) for x in result if x['procurement_id']])
             if result:
                 for line_id, procurement_id in result.items():

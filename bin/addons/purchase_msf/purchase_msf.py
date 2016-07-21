@@ -74,11 +74,10 @@ class purchase_order_line(osv.osv):
                 result[i].update({f:False,})
 
         line_result = self.read(cr, uid, ids, ['product_id', 'order_id'],
-                context=context, name_get=False)
+                context=context)
         product_list = [x['product_id'][0] for x in line_result if x['product_id']]
         product_dict = dict((x['id'], x) for x in prod_obj.read(cr, uid, product_list,
-                ['default_code', 'name', 'seller_ids'], context=context,
-                name_get=False))
+                ['default_code', 'name', 'seller_ids'], context=context))
         sellers_dict = {}
         seller_dict = {}
         order_id_dict = {}
@@ -105,7 +104,7 @@ class purchase_order_line(osv.osv):
                     else:
                         partner_id = order_obj.read(cr, uid,
                                 order_id,['partner_id'],
-                                context=context, name_get=False)['partner_id'][0]
+                                context=context)['partner_id'][0]
                         order_id_dict[order_id] = partner_id
                     if prod['seller_ids'] in sellers_dict:
                         sellers = sellers_dict[prod['seller_ids']]
