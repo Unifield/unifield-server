@@ -401,6 +401,13 @@ class hq_entries_validation(osv.osv_memory):
                     "\n".join(account_partner_not_compat_log))
 
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
+                # for December HQ Entries: use the period selected in the wizard
+                if line.period_id.number == 12 and wiz.period_id:
+                    if line.period_id.fiscalyear_id != wiz.period_id.fiscalyear_id:
+                        raise osv.except_osv(_("Error"), _("The period used to book the December Entries must be in "
+                                                           "Fiscal Year %s.") % (line.period_id.fiscalyear_id.name,))
+                    else:
+                        line.period_id = wiz.period_id
                 #UF-1956: interupt validation if currency is inactive
                 if line.currency_id.active is False:
                     self.write(cr, uid, [wiz.id], {'running': False})
