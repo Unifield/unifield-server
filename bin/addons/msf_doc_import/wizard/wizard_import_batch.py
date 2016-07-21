@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2011 MSF, TeMPO Consulting.
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,8 +19,26 @@
 #
 ##############################################################################
 
-import in_simulation_screen_report_xls
-import po_simulation_screen_report
-import po_simulation_screen_report_xls
+from osv import osv
+from tools.translate import _
 
-import import_batch_template
+IMPORT_BATCH_HEADERS = [
+    (_('Name'), 'String'),
+    (_('Product Code'), 'String'),
+    (_('Product Description'), 'String'),
+    (_('Life Date'), 'Date'),
+    (_('Type'), 'String'),
+]
+
+class wizard_import_batch(osv.osv):
+    _name = 'wizard.import.batch'
+    _description = 'Import batch numbers'
+    _inherit = 'abstract.wizard.import'
+    _auto = True
+
+    _defaults = {
+        'model_name': 'stock.production.lot',
+        'template_filename': 'Import_batch_number_tpl.csv',
+    }
+
+wizard_import_batch()

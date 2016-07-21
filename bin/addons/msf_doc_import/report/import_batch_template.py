@@ -19,8 +19,22 @@
 #
 ##############################################################################
 
-import in_simulation_screen_report_xls
-import po_simulation_screen_report
-import po_simulation_screen_report_xls
+from report import report_sxw
+from report_webkit.webkit_report import XlsWebKitParser
+from ..wizard.wizard_import_batch import IMPORT_BATCH_HEADERS
 
-import import_batch_template
+
+class import_batch_template_parser(report_sxw.rml_parse):
+    def __init__(self, cr, uid, name, context=None):
+        super(import_batch_template_parser, self).__init__(cr, uid, name, context=context)
+        self.localcontext.update({
+            'header_columns': IMPORT_BATCH_HEADERS,
+        })
+
+XlsWebKitParser(
+    'report.wizard.import.batch.template',
+    'wizard.import.batch',
+    'addons/msf_doc_import/report/import_batch_template.mako',
+    parser=import_batch_template_parser)
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
