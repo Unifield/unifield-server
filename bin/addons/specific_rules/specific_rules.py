@@ -2250,15 +2250,13 @@ CREATE OR REPLACE view report_stock_inventory AS (
         'expired_date': fields.date(string='Expiry Date',),
     }
 
-    def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
         if context is None:
             context = {}
         if fields is None:
             fields = []
         context['with_expiry'] = 1
-        return super(report_stock_inventory, self).read(cr, uid, ids, fields,
-                context, load, name_get)
+        return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''

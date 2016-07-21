@@ -104,11 +104,9 @@ class ir_attachment(osv.osv):
             return len(ids)
         return ids
 
-    def read(self, cr, uid, ids, fields_to_read=None, context=None,
-            load='_classic_read', name_get=True):
+    def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
         self.check(cr, uid, ids, 'read', context=context)
-        return super(ir_attachment, self).read(cr, uid, ids, fields_to_read,
-                context, load, name_get)
+        return super(ir_attachment, self).read(cr, uid, ids, fields_to_read, context, load)
 
     def write(self, cr, uid, ids, vals, context=None):
         self.check(cr, uid, ids, 'write', context=context, values=vals)
