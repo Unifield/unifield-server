@@ -1051,18 +1051,26 @@ stock moves which are already processed : '''
         # objects
         sol_obj = self.pool.get('sale.order.line')
         # procurement ids list
-        proc_ids = set()
         # sale order lines list
         sol_ids = []
 
         pol_obj = self.pool.get('purchase.order.line')
+        order_lines = set()
         for po in self.read(cr, uid, ids, ['order_line'], context=context):
-            result = pol_obj.read(cr, uid, po['order_line'], ['procurement_id'],
-                    context=context)
-            result = dict([(x['id'], x['procurement_id'][0]) for x in result if x['procurement_id']])
-            if result:
-                for line_id, procurement_id in result.items():
-                    proc_ids.add(procurement_id)
+            for line in po['order_line']:
+                order_lines.add(line)
+
+        proc_ids = set()
+        result = pol_obj.read(cr, uid, list(order_lines), ['procurement_id'],
+                context=context)
+        result = dict([(x['id'], x['procurement_id'][0]) for x in result if x['procurement_id']])
+        if result:
+            print "QUUUUERY!!!!", result
+            import traceback
+            traceback.print_stack()
+
+            for line_id, procurement_id in result.items():
+                proc_ids.add(procurement_id)
 
         # get the corresponding sale order line list
         if proc_ids:
