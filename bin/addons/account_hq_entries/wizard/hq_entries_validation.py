@@ -32,7 +32,8 @@ class hq_entries_validation(osv.osv_memory):
 
     def _get_default_period(self, cr, uid, context=None):
         '''
-        Get the "first" period open among December periods, i.e. in order of priority: 12, 13, 14 or 15 (or None)
+        Get the "first" period open or field-closed among December periods,
+        i.e. in order of priority: 12, 13, 14 or 15 (or None)
         '''
         args = [('number', 'in', range(12, 16)), ('state', 'not in', ['created', 'mission-closed', 'done'])]
         period_obj = self.pool.get('account.period')
