@@ -172,8 +172,8 @@ class sync_monitor(osv.osv):
         if not instance:
             return dict.fromkeys(ids, False)
         ret = {}
-        for msg in self.read(cr, uid, ids, ['instance']):
-            ret[msg['id']] = msg['instance'] and msg['instance'][0] == instance.id
+        for msg in self.read(cr, uid, ids, ['instance_id']):
+            ret[msg['id']] = msg['instance_id'] and msg['instance_id'][0] == instance.id
 
         return ret
 
