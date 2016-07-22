@@ -131,7 +131,7 @@ def sync_subprocess(step='status', defaults_logger={}):
             logger.switch(step, 'in-progress')
             logger.write()
             try:
-                chk_tz_msg = check_tz().exp_check_timezome()
+                chk_tz_msg = check_tz().exp_check_timezone()
                 if chk_tz_msg:
                     raise BaseException(chk_tz_msg)
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
