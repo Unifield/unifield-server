@@ -165,8 +165,8 @@ netrpcd = None
 
 def init_servers():
     if True:
-        from service.web_services import db as check_tz
-        tz_chk_msg = check_tz().exp_check_timezone()
+        from service.web_services import check_tz
+        tz_chk_msg = check_tz()
         if tz_chk_msg:
             netsvc.Logger().notifyChannel("web-services", netsvc.LOG_ERROR, tz_chk_msg)
             sys.exit(0)

@@ -180,8 +180,8 @@ if tools.config["stop_after_init"]:
 #----------------------------------------------------------
 # Check Postgreql timezone and system timezone
 #----------------------------------------------------------
-from service.web_services import db as check_tz
-tz_chk_msg = check_tz().exp_check_timezone()
+from service.web_services import check_tz
+tz_chk_msg = check_tz()
 if tz_chk_msg:
     logger.error(tz_chk_msg)
     sys.exit(0)

@@ -37,7 +37,7 @@ from psycopg2 import OperationalError
 
 import logging
 from sync_common import sync_log, get_md5, check_md5
-from service.web_services import db as check_tz
+from service.web_services import check_tz
 
 from threading import Thread, RLock, Lock
 import pooler
@@ -64,7 +64,7 @@ class BackgroundProcess(Thread):
         self.db, pool = pooler.get_db_and_pool(cr.dbname)
         connected = True
         try:
-            chk_tz_msg = check_tz().exp_check_timezone()
+            chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
             entity = pool.get('sync.client.entity')
@@ -131,7 +131,7 @@ def sync_subprocess(step='status', defaults_logger={}):
             logger.switch(step, 'in-progress')
             logger.write()
             try:
-                chk_tz_msg = check_tz().exp_check_timezone()
+                chk_tz_msg = check_tz()
                 if chk_tz_msg:
                     raise BaseException(chk_tz_msg)
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
@@ -167,7 +167,7 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
         @functools.wraps(fn)
         def wrapper(self, cr, uid, *args, **kwargs):
-            chk_tz_msg = check_tz().exp_check_timezone()
+            chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
             # First, check if we can acquire the lock or return False
