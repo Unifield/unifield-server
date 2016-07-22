@@ -232,6 +232,21 @@ class account_account(osv.osv):
                 arg.append(x)
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+
+        # Restrict to Expense/Income/Receivable accounts for Intermission Vouchers OUT or Stock Transfer Vouchers
+        context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+        context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+            not context.get('is_debit_note', False)
+        if context_ivo or context_stv:
+            arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
+
+        # Restrict to Expense accounts only for Intermission Vouchers IN
+        context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+        if context_ivi:
+            arg.append(('user_type_code', '=', 'expense'))
+
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
@@ -655,6 +670,7 @@ class account_move(osv.osv):
             help="This field contains the information related to the numbering of the lines of this journal entry."),
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
+        'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
     }
 
     _defaults = {

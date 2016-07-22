@@ -93,40 +93,87 @@ class account_chart(osv.osv_memory):
 
     _defaults = {
         'show_inactive': lambda *a: False,
-        'fiscalyear': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, datetime.date.today(), False, c),
-        'is_initial_balance_available': True,
+        'fiscalyear': lambda *a: False,
+        'is_initial_balance_available': lambda *a: False,
         'account_type': 'all',
         'granularity': 'parent',
     }
+
+    def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id, context=None):
+        res = super(account_chart, self).onchange_fiscalyear(cr, uid, ids,
+            fiscalyear_id, context=context)
+        if res is None:
+            res = {}
+
+        # restrict periods to fiscal year
+        domain = fiscalyear_id \
+            and [ ('fiscalyear_id', '=', fiscalyear_id), ] or False
+        res['domain'] = {
+            'period_from': domain,
+            'period_to': domain,
+        }
+
+        # IB available if a FY picked
+        ib_available = fiscalyear_id or False
+        if not 'value' in res:
+            res['value'] = {}
+        res['value']['is_initial_balance_available'] = ib_available
+        if not ib_available:
+            res['value']['initial_balance'] = False
+
+        return res
 
     def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
         context=None):
         res = {}
 
-        ib_available = fiscalyear_id
+        ib_available = fiscalyear_id or False
         if ib_available:
             if period_from:
-                # allow IB entries if a FY selected and period start = FY 1st period
+                # allow IB entries if a FY picked
+                # and period start = FY 1st period
+                # if period_from not picked will be included (implicit FY start)
                 fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
                     fiscalyear_id, context=context)
                 period_from_rec = self.pool.get('account.period').browse(cr,
                     uid, period_from, context=context)
                 ib_available = period_from_rec.date_start == fy_rec.date_start
-            else:
-                ib_available = False
 
         res['value'] = {'is_initial_balance_available': ib_available, }
         if not ib_available:
             res['value']['initial_balance'] = False
+
         return res
 
     def _update_context(self, cr, uid, rec, context=None):
         if isinstance(rec, (list, tuple, )):
             rec = self.browse(cr, uid, rec[0], context=context)
 
+        if context is None:
+            context = {}
+
+        context['filter_inactive_accounts'] = not rec.show_inactive
+        if rec.currency_id:
+            context['currency_id'] = rec.currency_id.id
+        if rec.instance_ids:
+            context['instance_ids'] = [x.id for x in rec.instance_ids]
+        if rec.target_move and rec.target_move != 'all':
+            context['move_state'] = rec.target_move
+        if rec.output_currency_id:
+            context['output_currency_id'] = rec.output_currency_id.id
+        if rec.fiscalyear:
+            context['fiscalyear'] = rec.fiscalyear.id
+        if rec.period_from:
+            context['period_from'] = rec.period_from.id
+        if rec.period_to:
+            context['period_to'] = rec.period_to.id
+
         if rec.initial_balance:
             # include IB entries
             context['period0'] = True
+        if not context.get('fiscalyear', False):
+            # US-1377: active cross FY (for account.move._query_get())
+            context['report_cross_fy'] = True
 
     def _get_account_type_ids(self, cr, uid, account_type_val, context=None):
         """
@@ -162,11 +209,8 @@ class account_chart(osv.osv_memory):
         # add 'active_test' to the result's context; this allows to show or hide inactive items
         data = self.read(cr, uid, ids, [], context=context)[0]
         context = eval(result['context'])
-        context['filter_inactive_accounts'] = not data['show_inactive']
-        if data['currency_id']:
-            context['currency_id'] = data['currency_id']
 
-        # Search regarding move state. Delete original 'state' one
+        # view mode context properties
         if 'state' in context:
             del context['state']
         if data['target_move']:
@@ -177,6 +221,7 @@ class account_chart(osv.osv_memory):
         is_flat_view = data['granularity'] \
             and data['granularity'] == 'account' or False
 
+        # xls/view common context properties
         self._update_context(cr, uid, ids, context=context)
         result['context'] = unicode(context)
 
@@ -227,7 +272,6 @@ class account_chart(osv.osv_memory):
         target_move = ''
         for wiz in self.browse(cr, uid, ids):
             args = []
-            context['filter_inactive_accounts'] = not wiz.show_inactive
             if wiz.granularity and wiz.granularity == 'account':
                 args.append(('type', '!=', 'view'))
             account_type_ids = self._get_account_type_ids(cr, uid,
@@ -235,20 +279,7 @@ class account_chart(osv.osv_memory):
             if account_type_ids:
                 args.append(('user_type', 'in', account_type_ids))
 
-            if wiz.currency_id:
-                context.update({'currency_id': wiz.currency_id.id,})
-            if wiz.instance_ids:
-                context.update({'instance_ids': [x.id for x in wiz.instance_ids],})
-            if wiz.target_move and wiz.target_move != 'all':
-                context.update({'move_state': wiz.target_move})
-            if wiz.output_currency_id:
-                context.update({'output_currency_id': wiz.output_currency_id.id})
-            if wiz.fiscalyear:
-                context['fiscalyear'] = wiz.fiscalyear.id
-            if wiz.period_from:
-                context['period_from'] = wiz.period_from.id
-            if wiz.period_to:
-                context['period_to'] = wiz.period_to.id
+            # xls/view common context properties
             self._update_context(cr, uid, wiz, context=context)
 
             account_ids = self.pool.get('account.account').search(cr, uid, args, context=context)

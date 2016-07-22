@@ -738,6 +738,7 @@ class procurement_request_line(osv.osv):
         'my_company_id': lambda obj, cr, uid, context: obj.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.id,
         'product_ok': False,
         'comment_ok': True,
+        'fake_state': 'draft',
     }
 
     def update_supplier_on_line(self, cr, uid, ids, context=None):

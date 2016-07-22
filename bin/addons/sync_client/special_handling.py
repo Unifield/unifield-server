@@ -147,14 +147,14 @@ class account_move_line(osv.osv):
                             del vals[f]
                         else:
                             raise osv.except_osv(_('Error !'), _('You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !'))
-                t = (l.journal_id.id, l.period_id.id)
-                if t not in done:
-                    if not self._update_journal_check(cr, uid, l.journal_id.id,
-                        l.period_id.id, context=context, raise_hq_closed=False):
-                        # US 1214: HQ closed check more field not updated
-                        self._hook_call_update_check_hq_closed_rec(cr, uid, l,
-                            vals, context=context)
-                    done[t] = True
+            t = (l.journal_id.id, l.period_id.id)
+            if t not in done:
+                if not self._update_journal_check(cr, uid, l.journal_id.id,
+                    l.period_id.id, context=context, raise_hq_closed=False):
+                    # US 1214: HQ closed check more field not updated
+                    self._hook_call_update_check_hq_closed_rec(cr, uid, l,
+                        vals, context=context)
+                done[t] = True
 
     def _hook_call_update_check_hq_closed_rec(self, cr, uid, ji_rec, vals,
         context=None):

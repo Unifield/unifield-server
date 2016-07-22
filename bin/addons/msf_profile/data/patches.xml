@@ -9,6 +9,10 @@
             <field name="method">another_translation_fix</field>
         </record>
 
+        <record id="another_other_translation_fix" model="patch.scripts">
+            <field name="method">another_other_translation_fix</field>
+        </record>
+
         <record id="us_993_patch" model="patch.scripts">
             <field name="method">us_993_patch</field>
         </record>
@@ -54,5 +58,26 @@
             <field name="model">stock.production.lot</field>
         </record>
 
+        <record id="us_1024_send_bar_patch" model="patch.scripts">
+            <field name="method">us_1024_send_bar_patch</field>
+        </record>
+
+        <record id="us_1297_patch" model="patch.scripts">
+            <field name="method">us_1297_patch</field>
+        </record>
+
+        <record id="us_1427_patch" model="patch.scripts">
+            <field name="method">us_1427_patch</field>
+        </record>
+
+        <record id="us_1452_patch" model="patch.scripts">
+            <field name="method">us_1452_patch</field>
+        </record>
+        
+        <record id="us_1469_patch" model="patch.scripts">
+            <field name="method">us_1469_restore_deleted_batch</field>
+            <field name="model">stock.production.lot</field>
+        </record>
+        
     </data>
 </openerp>

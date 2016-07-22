@@ -62,10 +62,10 @@
           <td><para style="text">State</para></td>
           <td><para style="text">Opening Balance</para></td>
           <td><para style="text">Calculated Balance</para></td>
-          <td><para style="text">Register Balance</para></td>
+          <td><para style="text">[[ reg_type == 'cash' and 'Cash Box Balance' or 'Bank Statement Balance']]</para></td>
           <td><para style="text">Reg. ccy</para></td>
           <td><para style="text">Calculated Balance</para></td>
-          <td><para style="text">Register Balance</para></td>
+          <td><para style="text">[[ reg_type == 'cash' and 'Cash Box Balance' or 'Bank Statement Balance']]</para></td>
           <td><para style="text">Fun. ccy</para></td>
         </tr>
         <tr>
@@ -166,9 +166,22 @@
     </section>
 
     <!-- GRAND TOTAL -->
+    <section>
+      [[ repeatIn( getGrandTotalRegCurrency(), 'cur') ]]
+      <blockTable htmlSpans="1" style="table_header" colWidths="186mm,60mm,10mm">
+        <tr>
+          <td><para style="right"><b>Grand Total Register Currency</b></para></td>
+           <!-- total of register balances + pendinq cheque amount in register currency -->
+          <td><para style="right">[[ formatLang(getGrandTotalRegCurrency()[cur], digits=2, grouping=True) or '0.00' ]]</para></td>
+          <td><para style="text">[[ str(cur) ]]</para></td>
+        </tr>
+      </blockTable>
+    </section>
+
+    <spacer length="24"/>
     <blockTable htmlSpans="1" style="table_header" colWidths="186mm,60mm,10mm">
       <tr>
-        <td><para style="right"><b>Grand Total:</b></para></td>
+        <td><para style="right"><b>Grand Total Functional Currency</b></para></td>
          <!-- total of register balances + pendinq cheque amount in func. currency -->
         <td><para style="right">[[ formatLang(getTotalCalc() + getPendingCheques()['total_cheque'], digits=2, grouping=True) or '0.00' ]]</para></td>
         <td><para style="text">[[ getFuncCurrency() ]]</para></td>
