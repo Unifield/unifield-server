@@ -1521,7 +1521,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 # Don't do anything
                 continue
             elif line.type_change == 'del' and line.po_line_id:
-                line_obj.unlink(cr, uid, [line.po_line_id.id], context=context)
+                line_obj.fake_unlink(cr, uid, [line.po_line_id.id], context=context)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
