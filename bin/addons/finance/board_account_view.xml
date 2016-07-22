@@ -89,7 +89,7 @@
 			<field name="res_model">account.invoice</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field name="domain">[('state', '=', 'draft')]</field>
+			<field name="domain">[('state', '=', 'draft'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
             <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
             <field name="limit">5</field>
@@ -99,7 +99,7 @@
 			<field name="res_model">account.invoice</field>
 			<field name="view_type">form</field>
 			<field name="view_mode">tree,form,calendar,graph</field>
-			<field name="domain">[('state', '=', 'open')]</field>
+			<field name="domain">[('state', '=', 'open'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
             <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
             <field name="limit">5</field>
@@ -160,7 +160,7 @@
             <field name="model">account.period</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account periods" limit="5">
+                <tree string="Account periods" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
                     <field name="name"/>
                     <field name="code"/>
                     <field name="date_start"/>
@@ -187,7 +187,7 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries to be validated" limit="5">
+                <tree string="HQ Entries to be validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="date"/>
