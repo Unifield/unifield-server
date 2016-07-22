@@ -1065,10 +1065,6 @@ stock moves which are already processed : '''
                 context=context)
         result = dict([(x['id'], x['procurement_id'][0]) for x in result if x['procurement_id']])
         if result:
-            print "QUUUUERY!!!!", result
-            import traceback
-            traceback.print_stack()
-
             for line_id, procurement_id in result.items():
                 proc_ids.add(procurement_id)
 
