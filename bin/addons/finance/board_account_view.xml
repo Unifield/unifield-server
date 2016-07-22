@@ -45,7 +45,7 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Statement" limit="5">
+                <tree string="Statement" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="name"/>
                     <field name="date"/>
                     <field name="partner_id"/>
@@ -71,7 +71,7 @@
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Statement" limit="5">
+                <tree string="Statement" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="number"/>
                     <field name="name"/>
                     <field name="partner_id"/>
@@ -137,7 +137,7 @@
             <field name="model">res.currency</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Latest FX rates"  limit="5">
+                <tree string="Latest FX rates"  limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="name"/>
                     <field name="rate"/>
                     <field name="date"/>
@@ -217,7 +217,7 @@
             <field name="model">hr.payroll.msf</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Payroll Entries to be validated" limit="5">
+                <tree string="Payroll Entries to be validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="period_id"/>
@@ -286,17 +286,17 @@
                     <form string="Account Board">
                         <hpaned>
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" />
-                                <!--  DON'T SHOW LIQUIDITY FOR NOW! action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" /-->
+                                <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" btype="1"/>
+                                <!--  DON'T SHOW LIQUIDITY FOR NOW! action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" btype="1"/-->
                             </child1>
 
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" />
-                                <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
+                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" btype="1"/>
                             </child1>
                         </hpaned>
                     </form>
