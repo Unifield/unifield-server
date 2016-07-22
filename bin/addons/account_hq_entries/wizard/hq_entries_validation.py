@@ -69,21 +69,22 @@ class hq_entries_validation(osv.osv_memory):
         if context is None:
             context = {}
         view = super(hq_entries_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
-        # get December Periods (12 to 15) if they are not Draft, Mission-Closed or HQ-Closed
-        view['fields']['period_id']['domain'] = [('number', 'in', range(12, 16)),
-                                                 ('state', 'not in', ['created', 'mission-closed', 'done'])]
-        lines = self.browse(cr, uid, context.get('active_id', False), context).line_ids
-        # if there is at least one HQ Entry in December, the period_id (used to book the entry) is required,
-        # else the field isn't displayed
-        hq_entries_in_dec = False
-        for l in lines:
-            if l.period_id and l.period_id.number == 12:
-                hq_entries_in_dec = True
-                break
-        if hq_entries_in_dec:
-            view['fields']['period_id']['required'] = True
-        else:
-            view['fields']['period_id']['invisible'] = True
+        if 'period_id' in view['fields'] and 'active_id' in context:
+            # get December Periods (12 to 15) if they are not Draft, Mission-Closed or HQ-Closed
+            view['fields']['period_id']['domain'] = [('number', 'in', range(12, 16)),
+                                                     ('state', 'not in', ['created', 'mission-closed', 'done'])]
+            lines = self.browse(cr, uid, context.get('active_id', False), context).line_ids
+            # if there is at least one HQ Entry in December, the period_id (used to book the entry) is required,
+            # else the field isn't displayed
+            hq_entries_in_dec = False
+            for l in lines:
+                if l.period_id and l.period_id.number == 12:
+                    hq_entries_in_dec = True
+                    break
+            if hq_entries_in_dec:
+                view['fields']['period_id']['required'] = True
+            else:
+                view['fields']['period_id']['invisible'] = True
         return view
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
