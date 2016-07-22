@@ -121,14 +121,14 @@ class wizard_import_fo_line(osv.osv_memory):
                 if header_error:
                     msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join(columns_for_fo_line_import)
                     error_list.append(msg)
-                    msg = _("\n\tPlease ensure that all these columns are in this exact order.")
+                    msg = _("\n\tPlease ensure that all these columns are present and in this exact order.")
                     error_list.append(msg)
                 else:
                     lines_to_correct = check_line.check_lines_currency(rows,
                         currency_index, order_currency_code)
                     if lines_to_correct > 0:
                         msg = "You can not import this file because it contains" \
-                            " line(s) with currency (Column F) not of the order currency (%s)" % (
+                            " line(s) with currency (Column G) not of the order currency (%s)" % (
                             order_currency_code, )
                         error_list.append(msg)
 
