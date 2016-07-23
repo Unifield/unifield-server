@@ -1,51 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <openerp>
     <data>
-
-        <!-- Tree for purchase displayed on the accounting board -->
-        <record id="account_purchase_order_tree" model="ir.ui.view">
-            <field name="name">account.purchase.order.tree</field>
-            <field name="model">purchase.order</field>
-            <field name="priority" eval="20"/>
-            <field name="type">tree</field>
-            <field name="arch" type="xml">
-                <tree colors="grey:state=='cancel';blue:state in ('wait','confirmed');red:state in ('except_invoice','except_picking')" string="Purchase Order">
-                    <field name="name" string="Reference"/>
-                    <field name="date_order" string="Order Date"/>
-                    <field name="partner_id"/>
-                    <field name="company_id" groups="base.group_multi_company" widget="selection"/>
-                    <field name="location_id"/>
-                    <field name="minimum_planned_date"/>
-                    <field name="origin"/>
-                    <field name="invoiced_rate" widget="progressbar"/>
-                    <field name="shipped_rate" widget="progressbar"/>
-                    <field name="amount_untaxed" sum="Total Untaxed amount"/>
-                    <field name="amount_total" sum="Total amount"/>
-                    <field name="state"/>
-                    <button name="purchase_confirmed_wait" states="confirmed" string="Confirm" icon="gtk-go-forward"/>
-                </tree>
-            </field>
-        </record>
-
-        <!-- Action that give a link to the purchase_order_tree only for accounting (priority superior to the mainly purchase_order_tree -->
-        <record id="purchase_waiting_msf" model="ir.actions.act_window">
-            <field name="name">Purchase Order Waiting Approval</field>
-            <field name="type">ir.actions.act_window</field>
-            <field name="res_model">purchase.order</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">tree,form</field>
-            <field name="view_id" ref="account_purchase_order_tree"/>
-            <field name="domain">[('date_order','&gt;',time.strftime('%Y-01-01 00:00:00')),('date_order','&lt;',time.strftime('%Y-12-31 23:59:59')), ('state','in',('wait','confirmed'))]</field>
-            <field name="search_view_id" eval="False"/>
-        </record>
-
         <!-- DashBoard -->
         <record id="account_board_commitment_voucher_view" model="ir.ui.view">
             <field name="name">account.commitment</field>
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Statement" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree limit="5" string="Commitment Voucher" noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="name"/>
                     <field name="date"/>
                     <field name="partner_id"/>
@@ -71,7 +33,7 @@
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Statement" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree limit="5"  string="Suppliers Invoices Pending Validation"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="number"/>
                     <field name="name"/>
                     <field name="partner_id"/>
@@ -84,6 +46,7 @@
                 </tree>
             </field>
         </record>
+        
         <record id="account_board_supplier_invoice_draft" model="ir.actions.act_window">
 			<field name="name">Suppliers invoices pending validation</field>
 			<field name="res_model">account.invoice</field>
@@ -94,6 +57,27 @@
             <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
             <field name="limit">5</field>
 		</record>
+		
+		<!-- US-1298: Due to a technical issue with views in Dashboard, do not merge this view def with the previous one! The Label will be wrong! btype def on dashboard -->
+        <record id="account_board_supplier_invoice_open_view" model="ir.ui.view">
+            <field name="name">account.invoice</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree limit="5"  string="Suppliers Invoices Pending Payment"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                    <field name="number"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="date_invoice"/>
+                    <field name="date_due"/>
+                    <field name="currency_id"/>
+                    <field name="amount_to_pay"/>
+                    <field name="amount_total"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+		
         <record id="account_board_supplier_invoice_open" model="ir.actions.act_window">
 			<field name="name">Suppliers invoices pending payment</field>
 			<field name="res_model">account.invoice</field>
@@ -101,7 +85,7 @@
 			<field name="view_mode">tree,form,calendar,graph</field>
 			<field name="domain">[('state', '=', 'open'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
-            <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
+            <field ref="account_board_supplier_invoice_open_view" name="view_id"/>
             <field name="limit">5</field>
 		</record>
 
@@ -110,7 +94,7 @@
             <field name="model">account.bank.statement</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Statement" colors="red: balance_negative_board!='False'">
+                <tree string="Liquidity" colors="red: balance_negative_board!='False'">
                     <field name="balance_negative_board"/>
                     <field name="instance_id"/>
                     <field name="journal_id" string="Register Code"/>
@@ -137,7 +121,7 @@
             <field name="model">res.currency</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Latest FX rates"  limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree string="Latest FX Rates"  limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="name"/>
                     <field name="rate"/>
                     <field name="date"/>
@@ -160,7 +144,7 @@
             <field name="model">account.period</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account periods" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
+                <tree string="Account Periods" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
                     <field name="name"/>
                     <field name="code"/>
                     <field name="date_start"/>
@@ -187,7 +171,7 @@
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries to be validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
+                <tree string="HQ Entries To Be Validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="date"/>
@@ -217,7 +201,7 @@
             <field name="model">hr.payroll.msf</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Payroll Entries to be validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree string="Payroll Entries To Be Validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="period_id"/>
