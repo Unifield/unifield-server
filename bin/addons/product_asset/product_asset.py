@@ -301,6 +301,7 @@ class product_asset_event(osv.osv):
                        'serial_nb': asset.serial_nb, 
                        'brand': asset.brand,
                        'model': asset.model,
+                       'proj_code': asset.orig_mission_code,
                     })
         
         return result
@@ -538,6 +539,30 @@ class stock_picking(osv.osv):
         assetId = partial_datas.get('move%s'%(move.id), {}).get('asset_id')
         if assetId:
             defaults.update({'asset_id': assetId})
+            
+            #US-1145: generate an asset event when validating an OUT        
+            asset_event_obj = self.pool.get('product.asset.event')
+
+            order_type = partial_datas.get('reason_type_for_asset', False)
+            event_type = 'other' # if the OUT is manually created --> set type to 'other'
+            
+            #US-1145: To be checked with the new order type of the current code, as this block has been made 2 years earlier! 
+            if 'Internal' in order_type:
+                event_type = 'transfer'
+            elif 'External' in order_type:
+                event_type = 'shipment'
+            elif 'Donation' in order_type:
+                event_type = 'donation'
+            elif order_type == 'Loaning':
+                event_type = 'loaning'
+            
+            asset_event_values = {
+                'date': move.date, # date of actual delivery
+                'location': partial_datas.get('location', False),  # location of the receiver
+                'event_type': event_type,
+                'asset_id': assetId,
+                }
+            asset_event_obj.create(cr, uid, asset_event_values, context=context)
         
         return defaults
 

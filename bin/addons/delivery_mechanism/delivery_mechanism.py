@@ -25,6 +25,8 @@ from osv import osv, fields
 from osv.orm import browse_record
 from tools.translate import _
 from order_types.stock import check_rw_warning
+from dateutil.relativedelta import relativedelta
+import datetime
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -1021,6 +1023,8 @@ class stock_picking(osv.osv):
                     else:
                         count += line.quantity
 
+                    #!!!!!!!!!!!!!!!!!! US-1145: WIP
+                    asset_id = partial['asset_id']
                     values['processed_stock_move'] = True
                     if not need_split:
                         need_split = True
@@ -1164,6 +1168,28 @@ class stock_picking(osv.osv):
                                 uom_processed_qty = processed_qty
 
                             remaining_out_qty -= uom_processed_qty
+
+                    #!!!!!!!!!!!!!!!!!! US-1145: WIP: START TO CREATE THE ASSET HERE! Work in progress after the merge to UF2-1-2p2!!!!!! (OLD CODE DATING 2 YEARS BACK!!!!!)                    
+                    if asset_id and pick.reason_type_id:
+                        order_type = pick.reason_type_id.name
+                        event_type = 'other' # if the OUT is manually created --> set type to 'other'
+                        if 'Supply' in order_type:
+                            event_type = 'reception'
+                        elif 'Donation' in order_type:
+                            event_type = 'reception_dep'
+                        elif order_type == 'Loan':
+                            event_type = 'loan'
+                        
+                        # UF-993: generate an asset event when validating an IN        
+                        asset_event_obj = self.pool.get('product.asset.event')
+                        asset_event_values = {
+                            'date': move.date, # actual delivery date
+                            'location': pick.company_id.name,
+                            'event_type': event_type,
+                            'asset_id': asset_id,
+                            }
+                        asset_event_obj.create(cr, uid, asset_event_values, context=context)
+                    #!!!!!!!!!!!!!!!!!! US-1145: WIP: END OF THE CHANGE BLOCK                     
 
 
                 # Decrement the inital move, cannot be less than zero

@@ -859,6 +859,23 @@ You cannot choose this supplier because some destination locations are not avail
                                 'state':'draft',
                             })
 
+            #!!!!!!!!!! US-1145: To be checked with the new order type of the current code, as this block has been made 2 years earlier! 
+            # US-1145: pass the reason type as parameter for creating the asset event when validating the OUT
+            if pick.reason_type_id:        
+                reason_asset = pick.reason_type_id.name
+                partial_datas['reason_type_for_asset'] = reason_asset
+                
+                # UF-993: it's a bit tricky, as if the type is not Internal, Loan or Donation, 
+                # AND the partner type is External or ESC, then the event type is Shipment
+                if 'Donation' or 'Loan' or 'Internal' not in reason_asset:
+                    if pick.partner_id2.partner_type in ('external', 'esc'):
+                        partial_datas['reason_type_for_asset'] = 'External'
+                    if 'inter' in pick.partner_id2.partner_type:
+                        partial_datas['reason_type_for_asset'] = 'Internal'
+                
+            # and also location of the receiver of this OUT     
+            partial_datas['location'] = pick.partner_id2.name     
+            
             for move in too_few:
                 product_qty = move_product_qty[move.id]
                 if not new_picking:
