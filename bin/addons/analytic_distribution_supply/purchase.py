@@ -360,7 +360,7 @@ class purchase_order_line(osv.osv):
                     order_dict[order_id] = order
             if order and order['from_yml_test']:
                 res[line['id']] = 'valid'
-            elif order and order['analytic_distribution_id'] and not line['analytic_distribution_id']:
+            elif order and not order['analytic_distribution_id'] and not line['analytic_distribution_id']:
                 res[line['id']] = 'none'
             else:
                 po_distrib_id = order_id and order['analytic_distribution_id'] and order['analytic_distribution_id'][0] or False
