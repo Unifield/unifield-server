@@ -64,7 +64,7 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("Password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" value="${password}" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
+                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
                                     <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
                                     <input type="hidden" name="password" id="password" />
                                     </td>
