@@ -60,7 +60,7 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="user">${_("User:")}</label></td>
-                                    <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true"/></td>
+                                    <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="show_password">${_("Password:")}</label></td>
