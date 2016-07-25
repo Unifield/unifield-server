@@ -539,7 +539,8 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                     })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
+                                                                   corrected_distrib_id, context=context)
 
             # US-1333/1 - BKLG-12 pure AD correction flag marker
             # (do this bypassing model write)
