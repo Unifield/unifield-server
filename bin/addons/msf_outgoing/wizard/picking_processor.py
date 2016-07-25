@@ -287,7 +287,8 @@ class stock_move_processor(osv.osv):
         move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids,
                                                                ['id',
                                                                 'product_id'],
-                                                               context=context)])
+                                                               context=context,
+                                                               name_get=False)])
         product_module = self.pool.get('product.product')
         product_list_dict = product_module.read(cr, uid,
                                                 move_dict.values(),

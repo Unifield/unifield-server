@@ -763,12 +763,14 @@ class product_likely_expire_report_line(osv.osv):
                 'target': 'new'}
 
 
-    def read(self, cr, uid, ids, vals, context=None, load='_classic_read'):
+    def read(self, cr, uid, ids, vals, context=None, load='_classic_read',
+            name_get=True):
         '''
         Set values for all dates
         '''
 
-        res = super(product_likely_expire_report_line, self).read(cr, uid, ids, vals, context=context, load=load)
+        res = super(product_likely_expire_report_line, self).read(cr, uid, ids,
+                vals, context=context, load=load, name_get=name_get)
 
         item_obj = self.pool.get('product.likely.expire.report.item')
         for r in res:

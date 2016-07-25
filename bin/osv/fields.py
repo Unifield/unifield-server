@@ -107,10 +107,12 @@ class _column(object):
     def set_memory(self, cr, obj, id, name, value, user=None, context=None):
         raise Exception(_('Not implemented set_memory method !'))
 
-    def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
+    def get_memory(self, cr, obj, ids, name, user=None, context=None,
+            values=None, name_get=None):
         raise Exception(_('Not implemented get_memory method !'))
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
+            values=None, name_get=None):
         raise Exception(_('undefined get method !'))
 
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, context=None):
@@ -260,7 +262,8 @@ class binary(_column):
         _column.__init__(self, string=string, **args)
         self.filters = filters
 
-    def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
+    def get_memory(self, cr, obj, ids, name, user=None, context=None,
+            values=None, name_get=None):
         if not context:
             context = {}
         if not values:
@@ -350,13 +353,15 @@ class many2one(_column):
         obj.datas.setdefault(id, {})
         obj.datas[id][field] = values
 
-    def get_memory(self, cr, obj, ids, name, user=None, context=None, values=None):
+    def get_memory(self, cr, obj, ids, name, user=None, context=None,
+            values=None, name_get=None):
         result = {}
         for id in ids:
             result[id] = obj.datas[id].get(name, False)
         return result
 
-    def get(self, cr, obj, ids, name, user=None, context=None, values=None):
+    def get(self, cr, obj, ids, name, user=None, context=None, values=None,
+            name_get=True):
         if context is None:
             context = {}
         if values is None:
@@ -372,14 +377,19 @@ class many2one(_column):
         # build a dictionary of the form {'id_of_distant_resource': name_of_distant_resource}
         # we use uid=1 because the visibility of a many2one field value (just id and name)
         # must be the access right of the parent form and not the linked object itself.
-        records = dict(obj.name_get(cr, 1,
-                                    list(set([x for x in res.values() if isinstance(x, (int,long))])),
-                                    context=context))
-        for id in res:
-            if res[id] in records:
-                res[id] = (res[id], records[res[id]])
-            else:
-                res[id] = False
+        res_list = list(set([x for x in res.values() if isinstance(x, (int,long))]))
+        if not name_get:
+            records = dict.fromkeys(res_list, False)
+        else:
+            records = dict(obj.name_get(cr, 1, res_list, context=context))
+        if len(res_list) == 1 and records:
+            res = dict.fromkeys(ids, records.items()[0])
+        else:
+            for id in res:
+                if res[id] in records:
+                    res[id] = (res[id], records[res[id]])
+                else:
+                    res[id] = False
         return res
 
     def set(self, cr, obj_src, id, field, values, user=None, context=None):
@@ -424,7 +434,8 @@ class one2many(_column):
         #one2many can't be used as condition for defaults
         assert(self.change_default != True)
 
-    def get_memory(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+    def get_memory(self, cr, obj, ids, name, user=None, offset=0, context=None,
+            values=None, name_get=None):
         if context is None:
             context = {}
         if self._context:
@@ -473,7 +484,8 @@ class one2many(_column):
     def search_memory(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, operator='like', context=None):
         raise _('Not Implemented')
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
+            values=None, name_get=None):
         if context is None:
             context = {}
         if self._context:
@@ -556,7 +568,8 @@ class many2many(_column):
         self._id2 = id2
         self._limit = limit
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
+            values=None, name_get=None):
         if not context:
             context = {}
         if not values:
@@ -657,7 +670,8 @@ class many2many(_column):
     def search(self, cr, obj, args, name, value, offset=0, limit=None, uid=None, operator='like', context=None):
         return obj.pool.get(self._obj).search(cr, uid, args+self._domain+[('name', operator, value)], offset, limit, context=context)
 
-    def get_memory(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
+    def get_memory(self, cr, obj, ids, name, user=None, offset=0, context=None,
+            values=None, name_get=None):
         result = {}
         for id in ids:
             result[id] = obj.datas[id].get(name, [])
@@ -819,12 +833,14 @@ class function(_column):
             return []
         return self._fnct_search(obj, cr, uid, obj, name, args, context=context)
 
-    def get(self, cr, obj, ids, name, user=None, context=None, values=None):
+    def get(self, cr, obj, ids, name, user=None, context=None, values=None,
+            name_get=True):
         if context is None:
             context = {}
         if values is None:
             values = {}
         res = {}
+        context['name_get'] = name_get
         if self._method:
             res = self._fnct(obj, cr, user, ids, name, self._arg, context)
         else:
@@ -836,7 +852,11 @@ class function(_column):
 
             if res_ids:
                 obj_model = obj.pool.get(self._obj)
-                dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
+                if context.get('name_get', True):
+                    dict_names = dict(obj_model.name_get(cr, user, res_ids, context))
+                else:
+                    dict_names = dict.fromkeys(res_ids, False)
+
                 for r in res.keys():
                     if res[r] and res[r] in dict_names:
                         res[r] = (res[r], dict_names[res[r]])
@@ -953,7 +973,10 @@ class related(function):
         if self._type=='many2one':
             ids = filter(None, res.values())
             if ids:
-                ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
+                if context.get('name_get', True):
+                    ng = dict(obj.pool.get(self._obj).name_get(cr, 1, ids, context=context))
+                else:
+                    ng = dict.fromkeys(ids, False)
                 for r in res:
                     if res[r]:
                         res[r] = (res[r], ng[res[r]])
@@ -1109,7 +1132,10 @@ class property(function):
 
         for rep in replaces:
             nids = obj.pool.get(rep).search(cr, uid, [('id','in',replaces[rep].keys())], context=context)
-            replaces[rep] = dict(obj.pool.get(rep).name_get(cr, uid, nids, context=context))
+            if context.get('name_get', True):
+                replaces[rep] = dict(obj.pool.get(rep).name_get(cr, uid, nids, context=context))
+            else:
+                replaces[rep] = dict.fromkeys(nids, False)
 
         for prop in prop_name:
             for id in ids:
