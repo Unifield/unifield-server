@@ -443,10 +443,8 @@ class stock_move_in_processor(osv.osv):
         purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
                 uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
 
-        purchase_line_id_by_order_id = {}
-        for ret in purchase_line_order_id:
-            if ret['order_id']:
-                purchase_line_id_by_order_id[ret['id']] = ret['order_id'][0]
+        purchase_line_id_by_order_id = dict([(ret['id'], ret['order_id'][0])
+            for ret in purchase_line_order_id])
         order_id_set = set(purchase_line_id_by_order_id.values())
 
         order_id_location_dict = {}
