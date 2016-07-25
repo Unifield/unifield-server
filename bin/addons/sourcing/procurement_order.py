@@ -110,7 +110,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
-                line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
+                line.update({'origin': origin_line.order_id.name})
             else:
                 # Update the link to the original FO to create new line on it at PO confirmation
                 procurement = kwargs['procurement']
