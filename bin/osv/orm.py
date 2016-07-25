@@ -1017,7 +1017,6 @@ class orm_template(object):
 
         if config.get('import_partial', False) and filename:
             data = pickle.load(file(config.get('import_partial')))
-            original_value = data.get(filename, 0)
 
         from osv import except_osv
         position = 0
@@ -1055,7 +1054,8 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
-    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields=None, context=None,
+            load='_classic_read', name_get=None):
         """
         Read records with given ids with the given fields
 
@@ -2202,7 +2202,8 @@ class orm_memory(orm_template):
 
         return True
 
-    def read(self, cr, user, ids, fields_to_read=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields_to_read=None, context=None,
+            load='_classic_read', name_get=True):
         if context is None:
             context = {}
         if not fields_to_read:
@@ -2241,7 +2242,9 @@ class orm_memory(orm_template):
                 todo[self._columns[f]._multi].append(f)
             for key, val in todo.items():
                 if key:
-                    res2 = self._columns[val[0]].get_memory(cr, self, ids, val, user, context=context, values=result)
+                    res2 = self._columns[val[0]].get_memory(cr, self, ids, val,
+                            user, context=context, values=result,
+                            name_get=name_get)
                     for pos in val:
                         for record in result:
                             if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
@@ -2250,7 +2253,9 @@ class orm_memory(orm_template):
                                 record[pos] = multi_fields.get(pos,[])
                 else:
                     for f in val:
-                        res2 = self._columns[f].get_memory(cr, self, ids, f, user, context=context, values=result)
+                        res2 = self._columns[f].get_memory(cr, self, ids, f,
+                                user, context=context, values=result,
+                                name_get=name_get)
                         for record in result:
                             if res2:
                                 record[f] = res2[record['id']]
@@ -3365,7 +3370,8 @@ class orm(orm_template):
                        ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
-    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields=None, context=None,
+            load='_classic_read', name_get=True):
         if not ids:
             return []
         if context is None:
@@ -3378,7 +3384,8 @@ class orm(orm_template):
         else:
             select = ids
         select = [isinstance(x, dict) and x['id'] or x for x in select]
-        result = self._read_flat(cr, user, select, fields, context, load)
+        result = self._read_flat(cr, user, select, fields, context, load,
+                name_get=name_get)
 
         for r in result:
             for key, v in r.items():
@@ -3389,7 +3396,8 @@ class orm(orm_template):
             return result and result[0] or False
         return result
 
-    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None,
+            load='_classic_read', name_get=True):
         if not ids:
             return []
         if context is None:
@@ -3502,7 +3510,8 @@ class orm(orm_template):
             todo[self._columns[f]._multi].append(f)
         for key, val in todo.items():
             if key:
-                res2 = self._columns[val[0]].get(cr, self, ids, val, user, context=context, values=res)
+                res2 = self._columns[val[0]].get(cr, self, ids, val, user,
+                        context=context, values=res, name_get=name_get)
                 for pos in val:
                     for record in res:
                         if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
@@ -3511,7 +3520,8 @@ class orm(orm_template):
                             record[pos] = multi_fields.get(pos,[])
             else:
                 for f in val:
-                    res2 = self._columns[f].get(cr, self, ids, f, user, context=context, values=res)
+                    res2 = self._columns[f].get(cr, self, ids, f, user,
+                            context=context, values=res, name_get=name_get)
                     for record in res:
                         if res2:
                             record[f] = res2[record['id']]
