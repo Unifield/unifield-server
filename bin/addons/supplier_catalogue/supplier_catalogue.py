@@ -83,21 +83,6 @@ class supplier_catalogue(osv.osv):
                                                                                         order='period_from asc',
                                                                                         limit=1,
                                                                                         context=context)
-        if period_to:
-            to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
-                                                                                         ('period_from', '<', period_to),
-                                                                                         ('currency_id', '=', currency_id),
-                                                                                         ('partner_id', '=', partner_id)],
-                                                                                         order='period_from asc',
-                                                                                         limit=1,
-                                                                                         context=context)
-        else:
-            to_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
-                                                                                         ('currency_id', '=', currency_id),
-                                                                                         ('partner_id', '=', partner_id)],
-                                                                                         order='period_from asc',
-                                                                                         limit=1,
-                                                                                         context=context)
 
         # If overrided catalogues exist, display an error message
         if equal_ids:
@@ -117,6 +102,23 @@ class supplier_catalogue(osv.osv):
                     _('You cannot have two active catalogues for the same ESC partner at the same time. Please update the active one instead.'),
                 )
 
+        if period_to:
+            to_ids = self.search(cr, uid,
+                                 [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
+                                  ('period_from', '<', period_to),
+                                  ('currency_id', '=', currency_id),
+                                  ('partner_id', '=', partner_id)],
+                                 order='period_from asc',
+                                 limit=1,
+                                 context=context)
+        else:
+            to_ids = self.search(cr, uid,
+                                 [('id', 'not in', context.get('cat_ids', [])), ('period_from', '>', period_from),
+                                  ('currency_id', '=', currency_id),
+                                  ('partner_id', '=', partner_id)],
+                                 order='period_from asc',
+                                 limit=1,
+                                 context=context)
 
         # If overrided catalogues exist, display an error message
         if to_ids:
