@@ -150,6 +150,13 @@ class Root(SecuredController):
                                       .get_controller('/openerp/widgets')\
                                       .user_home_widgets(ctx))
 
+    @expose()
+    def do_login(self, *arg, **kw):
+        target = kw.get('target') or '/'
+        if target.startswith('/openerp/do_login'):
+            target = '/'
+        raise redirect(target)
+
     @expose(allow_json=True)
     @unsecured
     def login(self, db=None, user=None, password=None, style=None, location=None, message=None, **kw):
