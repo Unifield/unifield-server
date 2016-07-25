@@ -408,6 +408,7 @@ class hq_entries_validation(osv.osv_memory):
                         raise osv.except_osv(_("Error"), _("The period used to book the December Entries must be in "
                                                            "Fiscal Year %s.") % (line.period_id.fiscalyear_id.name,))
                     else:
+                        context.update({'period_id_for_dec_hq_entries': wiz.period_id.id})
                         line.period_id = wiz.period_id
                 #UF-1956: interupt validation if currency is inactive
                 if line.currency_id.active is False:
@@ -452,8 +453,8 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                         })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
-
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
+                                                                   corrected_distrib_id, context=context)
             for line in cc_change:
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
