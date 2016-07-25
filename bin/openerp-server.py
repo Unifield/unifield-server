@@ -265,9 +265,9 @@ def quit(restart=False, db_name=''):
     else:
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
-#----------------------------------------------------------
+#-----------------------------------------------------------
 # manage some platform specific behaviour
-#----------------------------------------------------------
+#-----------------------------------------------------------
 
 if sys.platform == 'win32':
     import win32api
