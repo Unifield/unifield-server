@@ -86,8 +86,6 @@ class purchase_order_line(osv.osv):
         for result_order in results_order:
             if result_order['partner_id']:
                 order_id_to_partnerid[result_order['id']] = result_order['partner_id'][0]
-        
-        supplierinfos_by_id = dict()
 
         seller_ids = set()
         for line in line_result:
@@ -95,10 +93,9 @@ class purchase_order_line(osv.osv):
                 prod = product_dict[line['product_id'][0]]
                 for seller_id in prod['seller_ids']:
                     seller_ids.add(seller_id)
-        results_supplierinfo  = seller_obj.read(cr, uid, list(seller_ids),
-                context=context)
-        for result_supplierinfo in results_supplierinfo:
-            supplierinfos_by_id[result_supplierinfo['id']] = result_supplierinfo
+
+        supplierinfos_by_id = dict([(x('id'), x) for x in seller_obj.read(cr, uid,
+            list(seller_ids), ['name'], context=context)])
 
         for line in line_result:
             # default values
@@ -118,12 +115,11 @@ class purchase_order_line(osv.osv):
                     order_id = line['order_id'][0]
                     partner_id = order_id_to_partnerid[order_id]
 
-                    sellers = filter(lambda x: supplierinfos_by_id[x]['name'] and \
-                                       supplierinfos_by_id[x]['name'][0] == partner_id, seller_ids)
+                    sellers = [x for x in prod['seller_ids'] if
+                            supplierinfos_by_id[x]['name'][0] == partner_id]
                     if sellers:
                         seller_id = sellers[0]
                         supplierinfo = supplierinfos_by_id[seller_id]
-
                         supplier_code = supplierinfo['product_code']
                         supplier_name = supplierinfo['product_name']
             # update dic
