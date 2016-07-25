@@ -111,6 +111,13 @@ class supplier_catalogue(osv.osv):
                 raise osv.except_osv(_('Error'), _('This catalogue has the same \'From\' date than the following catalogue : %s (\'From\' : %s - \'To\' : %s) - ' \
                                                    'Please change the \'From\' date of this new catalogue or delete the other catalogue.') % (over_cat.name, over_cat_from, over_cat_to))
 
+            elif cat and cat.is_esc:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('You cannot have two active catalogues for the same ESC partner at the same time. Please update the active one instead.'),
+                )
+
+
         # If overrided catalogues exist, display an error message
         if to_ids:
             over_cat = self.browse(cr, uid, to_ids[0], context=context)
