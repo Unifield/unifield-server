@@ -94,7 +94,7 @@ class purchase_order_line(osv.osv):
                 for seller_id in prod['seller_ids']:
                     seller_ids.add(seller_id)
 
-        supplierinfos_by_id = dict([(x('id'), x) for x in seller_obj.read(cr, uid,
+        supplierinfos_by_id = dict([(x['id'], x) for x in seller_obj.read(cr, uid,
             list(seller_ids), ['name'], context=context)])
 
         for line in line_result:
