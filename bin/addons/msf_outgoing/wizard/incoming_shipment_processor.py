@@ -423,8 +423,7 @@ class stock_move_in_processor(osv.osv):
 
         # get related move ids and map them to ids
         moves_to_ids = {}
-        for r in self.read(cr, uid, ids, ['move_id'], context=context,
-                name_get=False):
+        for r in self.read(cr, uid, ids, ['move_id'], context=context):
             if r['move_id']:
                 moves_to_ids[r['move_id'][0]] = r['id']
 
@@ -433,27 +432,29 @@ class stock_move_in_processor(osv.osv):
         sol_obj = self.pool.get('sale.order.line')
         # store the result as most of the time lines have same order_id
         move_purchase_line = self.pool.get('stock.move').read(cr,
-                uid,moves_to_ids.keys(), ['purchase_line_id'],
-                context=context, name_get=False)
-        purchaine_line_list = [x['purchase_line_id'][0] for x in
-                move_purchase_line]
+                uid, moves_to_ids.keys(), ['id', 'purchase_line_id'],
+                context=context)
+
+        move_id_to_purchase_line_id = {}
+        for ret in move_purchase_line:
+            if ret['purchase_line_id']:
+                move_id_to_purchase_line_id[ret['id']] = ret['purchase_line_id'][0]
 
         purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
-                uid, purchaine_line_list, ['order_id'], context=context,
-                name_get=False)
-        purchase_line_order_dict = dict([(x['id'], x['order_id'][0]) for x in
-            purchase_line_order_id])
+                uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
 
-        order_id_set = [x['order_id'][0] for x in purchase_line_order_id]
-        order_id_set = list(set(order_id_set))
+        purchase_line_id_by_order_id = {}
+        for ret in purchase_line_order_id:
+            if ret['order_id']:
+                purchase_line_id_by_order_id[ret['id']] = ret['order_id'][0]
+        order_id_set = set(purchase_line_id_by_order_id.values())
 
         order_id_location_dict = {}
         for order_id in order_id_set:
-            is_from_fo = False
-            location_ids = [main_stock_id] if main_stock_id else []
             sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
                     [order_id], context=context)
             if sol_ids:
+                location_ids = [main_stock_id] if main_stock_id else []
                 # move associated with a SO, check not with an IR (so is FO)
                 is_from_fo = True
                 for sol in sol_obj.browse(cr, uid, sol_ids,
@@ -463,20 +464,25 @@ class stock_move_in_processor(osv.osv):
                         is_from_fo = False
                         break
 
-            if is_from_fo:
-                if not cd_id:
-                    cd_id = self.pool.get('ir.model.data').get_object_reference(
-                        cr, uid, 'msf_cross_docking',
-                        'stock_location_cross_docking')[1]
-                location_ids.append(cd_id)
-            order_id_location_dict[order_id] = location_ids
+                if is_from_fo:
+                    if not cd_id:
+                        cd_id = self.pool.get('ir.model.data').get_object_reference(
+                            cr, uid, 'msf_cross_docking',
+                            'stock_location_cross_docking')[1]
+                    location_ids.append(cd_id)
+                order_id_location_dict[order_id] = location_ids
 
-        for elem in move_purchase_line:
-            move_id = elem['id']
-            purchase_line_id = elem['purchase_line_id'][0]
-            order_id = purchase_line_order_dict[purchase_line_id]
-            location_ids = order_id_location_dict[order_id]
-            res[moves_to_ids[move_id]] = ','.join(map(lambda id: str(id), location_ids))
+        for move_id, id in moves_to_ids.iteritems():
+            location_ids = [main_stock_id] if main_stock_id else []
+
+            if move_id in move_id_to_purchase_line_id:
+                purchase_line_id = move_id_to_purchase_line_id[move_id]
+                if purchase_line_id in purchase_line_id_by_order_id:
+                    order_id = purchase_line_id_by_order_id[purchase_line_id]
+                    if order_id in order_id_location_dict:
+                        location_ids = order_id_location_dict[order_id]
+
+            res[id] = ','.join(map(lambda id: str(id), location_ids))
 
         # set ids default value for ids with no specific location
         for id in ids:

@@ -74,14 +74,35 @@ class purchase_order_line(osv.osv):
                 result[i].update({f:False,})
 
         line_result = self.read(cr, uid, ids, ['product_id', 'order_id'],
-                context=context, name_get=False)
+                context=context)
         product_list = [x['product_id'][0] for x in line_result if x['product_id']]
         product_dict = dict((x['id'], x) for x in prod_obj.read(cr, uid, product_list,
-                ['default_code', 'name', 'seller_ids'], context=context,
-                name_get=False))
-        sellers_dict = {}
-        seller_dict = {}
-        order_id_dict = {}
+                ['default_code', 'name', 'seller_ids'], context=context))
+
+        order_ids = set()
+        for line in line_result:
+            if line['order_id']:
+                order_ids.add(line['order_id'][0])
+
+        results_order = order_obj.read(cr, uid, list(order_ids), ['id', 'partner_id'],
+                context=context)
+        order_id_to_partnerid = {}
+        for result_order in results_order:
+            if result_order['partner_id']:
+                order_id_to_partnerid[result_order['id']] = result_order['partner_id'][0]
+        
+        supplierinfos_by_id = dict()
+
+        seller_ids = set()
+        for line in line_result:
+            if line['product_id']:
+                prod = product_dict[line['product_id'][0]]
+                for seller_id in prod['seller_ids']:
+                    seller_ids.add(seller_id)
+        results_supplierinfo  = seller_obj.read(cr, uid, list(seller_ids),
+                context=context)
+        for result_supplierinfo in results_supplierinfo:
+            supplierinfos_by_id[result_supplierinfo['id']] = result_supplierinfo
 
         for line in line_result:
             # default values
@@ -99,34 +120,23 @@ class purchase_order_line(osv.osv):
                 # if no supplier selected in product, there is no specific supplier info
                 if prod['seller_ids']:
                     order_id = line['order_id'][0]
-                    if order_id in order_id_dict:
-                        partner_id = order_id_dict[order_id]
+                    partner_id = order_id_to_partnerid[order_id]
 
-                    else:
-                        partner_id = order_obj.read(cr, uid,
-                                order_id,['partner_id'],
-                                context=context, name_get=False)['partner_id'][0]
-                        order_id_dict[order_id] = partner_id
-                    if prod['seller_ids'] in sellers_dict:
-                        sellers = sellers_dict[prod['seller_ids']]
-                    else:
-                        sellers = filter(lambda x: x == partner_id, prod['seller_ids'])
-                        sellers_dict[prod['seller_ids']] = sellers
+                    sellers = filter(lambda x: supplierinfos_by_id[x]['name'] and \
+                                       supplierinfos_by_id[x]['name'][0] == partner_id, seller_ids)
                     if sellers:
                         seller_id = sellers[0]
-                        if seller_id in seller_dict:
-                            seller = seller_dict[seller_id]
-                        else:
-                            seller = seller_obj.read(cr, uid, seller_id, ['product_code', 'product_name'], context=context)
-                            seller_dict[seller_id] = seller
-                        supplier_code = seller['product_code']
-                        supplier_name = seller['product_name']
+                        supplierinfo = supplierinfos_by_id[seller_id]
+
+                        supplier_code = supplierinfo['product_code']
+                        supplier_name = supplierinfo['product_name']
             # update dic
             result[line['id']].update(internal_code=internal_code,
                                   internal_name=internal_name,
                                   supplier_code=supplier_code,
                                   supplier_name=supplier_name,
                                   )
+
         return result
 
     _columns = {'internal_code': fields.function(_getProductInfo, method=True, type='char', size=1024, string='Internal code', multi='get_vals',),

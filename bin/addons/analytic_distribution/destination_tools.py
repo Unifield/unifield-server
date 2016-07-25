@@ -8,8 +8,7 @@ class many2many_sorted(fields.many2many):
     def __init__(self, obj, rel, id1, id2, string='unknown', limit=None, **args):
         super(many2many_sorted, self).__init__(obj, rel, id1, id2, string, limit, **args)
 
-    def get(self, cr, obj, ids, name, user=None, offset=0, context=None,
-            values=None, name_get=None):
+    def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
         if not context:
             context = {}
         if not values:
