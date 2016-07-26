@@ -517,7 +517,7 @@ class Selection(TinyInputWidget):
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
         #Below mentioned process should be followed for m2o as selection and for boolean field on search panel
-        if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection':
+        if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection' and not attrs.get('get_selection'):
             proxy = rpc.RPCProxy(attrs['relation'])
             try:
                 domain = attrs.get('domain', [])
