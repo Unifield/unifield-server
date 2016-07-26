@@ -788,10 +788,9 @@ class stock_mission_report_line(osv.osv):
 
     def _get_internal_val(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for line in self.browse(cr, uid, ids, context=context,
-                fields_to_fetch=['id', 'internal_qty', 'cost_price']):
-            res[line.id] = line.internal_qty * line.cost_price
-
+        for line in self.read(cr, uid, ids, ['internal_qty', 'cost_price'],
+                context=context):
+            res[line['id']] = line['internal_qty'] * line['cost_price']
         return res
 
     def xmlid_code_migration(self, cr, ids):
