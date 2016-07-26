@@ -50,7 +50,8 @@ class Preferences(Form):
         proxy = rpc.RPCProxy('res.users')
         action_id = proxy.action_get({})
 
-        action = rpc.RPCProxy('ir.actions.act_window').read([action_id], False, rpc.session.context)[0]
+        action = rpc.RPCProxy('ir.actions.act_window').read([action_id],
+                ['views', 'view_id'], rpc.session.context)[0]
 
         view_ids=[]
         if action.get('views', []):

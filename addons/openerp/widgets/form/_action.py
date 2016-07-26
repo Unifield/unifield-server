@@ -46,7 +46,9 @@ class Action(TinyInputWidget):
             raise _('Action not found!')
 
         _type=res[0]['type']
-        self.action = rpc.session.execute('object', 'execute', _type, 'read', [self.act_id], False, rpc.session.context)[0]
+        self.action = rpc.session.execute('object', 'execute', _type, 'read',
+                [self.act_id], ['view_mode', 'type', 'domain', 'context',
+                    'views', 'view_type', 'res_model'], rpc.session.context)[0]
 
         if 'view_mode' in attrs:
             self.action['view_mode'] = attrs['view_mode']
