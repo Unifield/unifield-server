@@ -276,7 +276,7 @@ class supplier_catalogue(osv.osv):
         if partner_id and self.pool.get('res.partner').read(cr, uid, partner_id, ['partner_type'], context=context)['partner_type'] == 'esc':
             equal_ids = self.search(cr, uid, [
                 ('id', 'not in', ids),
-                ('active', '=', 'f'),
+                ('active', '=', False),
                 ('partner_id', '=', partner_id),
             ], order='period_from asc', limit=1, context=context)
             if equal_ids:
