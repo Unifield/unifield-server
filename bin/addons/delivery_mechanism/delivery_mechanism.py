@@ -1396,7 +1396,7 @@ class stock_picking(osv.osv):
             }, context=context)
             if backorder_id:
                 return backorder_id
-            return wizard.picking_id.id
+            return wizard['picking_id'][0]
 
         if context.get('from_simu_screen'):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'view_picking_in_form')[1]
@@ -1405,7 +1405,7 @@ class stock_picking(osv.osv):
             return {
                 'type': 'ir.actions.act_window',
                 'res_model': 'stock.picking',
-                'res_id': wizard.picking_id.id,
+                'res_id': wizard['picking_id'][0],
                 'view_id': [view_id, tree_view_id],
                 'search_view_id': src_view_id,
                 'view_mode': 'form, tree',

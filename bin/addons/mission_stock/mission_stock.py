@@ -788,10 +788,9 @@ class stock_mission_report_line(osv.osv):
 
     def _get_internal_val(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for line in self.browse(cr, uid, ids, context=context,
-                fields_to_fetch=['id', 'internal_qty', 'cost_price']):
-            res[line.id] = line.internal_qty * line.cost_price
-
+        for line in self.read(cr, uid, ids, ['internal_qty', 'cost_price'],
+                context=context):
+            res[line['id']] = line['internal_qty'] * line['cost_price']
         return res
 
     def xmlid_code_migration(self, cr, ids):
@@ -984,7 +983,8 @@ class stock_mission_report_line(osv.osv):
             cr.execute("""UPDATE stock_mission_report_line SET
                     internal_qty=%s, stock_qty=%s,
                     central_qty=%s, cross_qty=%s, secondary_qty=%s,
-                    cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s
+                    cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
+                    wh_qty=stock_qty + central_qty
                     WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
                         line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, line_id))
         return True
