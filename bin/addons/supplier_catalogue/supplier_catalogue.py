@@ -286,7 +286,7 @@ class supplier_catalogue(osv.osv):
                         'title': _('Warning'),
                         'message': _('Warning! There is already another inactive catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check'),
                     },
-                }
+                })
 
 
 
