@@ -25,6 +25,7 @@ from osv import osv, fields
 from osv.orm import browse_record
 from tools.translate import _
 from order_types.stock import check_rw_warning
+import logging
 
 
 class stock_picking_processing_info(osv.osv_memory):
@@ -912,7 +913,7 @@ class stock_picking(osv.osv):
             new_cr.commit()
         except Exception, e:
             new_cr.rollback()
-
+            logging.getLogger('stock.picking').warn('Exception do_incoming_shipment', exc_info=True)
             for wiz in inc_proc_obj.read(new_cr, uid, wizard_ids, ['picking_id'], context=context):
                 self.update_processing_info(new_cr, uid, wiz['picking_id'][0], False, {
                     'error_msg': '%s\n\nPlease reset the incoming shipment '\
@@ -941,7 +942,6 @@ class stock_picking(osv.osv):
         sptc_obj = self.pool.get('standard.price.track.changes')
         wf_service = netsvc.LocalService("workflow")
         usb_entity = self._get_usb_entity_type(cr, uid)
-
         if context is None:
             context = {}
 

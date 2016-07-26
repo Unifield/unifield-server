@@ -22,6 +22,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import threading
 import time
+import logging
 
 import netsvc
 from osv import osv, fields
@@ -1397,6 +1398,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }, context=context)
             except osv.except_osv, e:
+                logging.getLogger('so confirmation').warn('Osv Exception', exc_info=True)
                 cr.rollback()
                 self.pool.get('sale.order').write(cr, uid, order_id,
                                                   {'sourcing_trace_ok': True,
@@ -1408,6 +1410,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'error': e.value,
                 }, context=context)
             except Exception, e:
+                logging.getLogger('so confirmation').warn('Exception', exc_info=True)
                 cr.rollback()
                 self.pool.get('sale.order').write(cr, uid, order_id,
                                                   {'sourcing_trace_ok': True,

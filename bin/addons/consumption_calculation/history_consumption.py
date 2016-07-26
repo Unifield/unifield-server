@@ -24,6 +24,7 @@ from osv import fields
 from mx.DateTime import *
 from lxml import etree
 from tools.translate import _
+import logging
 
 import time
 
@@ -262,6 +263,7 @@ class product_history_consumption(osv.osv):
             try:
                 self.pool.get('product.product').read(new_cr, uid, slice_ids, ['average'], context=context)
             except Exception, e:
+                logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
                 new_cr.rollback()
         self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
