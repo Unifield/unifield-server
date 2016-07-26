@@ -494,8 +494,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
              not context.get('sync_update_creation')))
 
         if audit_rule_ids or to_be_synchronized or hasattr(self, 'on_create'):
-            current_values = dict((x['id'], x) for x in self.read(cr, uid,
-                [id], values.keys() + funct_field or ['id'], context=context))
+            current_values = dict((x['id'], x) for x in self.read(cr, uid, [id], values.keys()+funct_field, context=context))
 
         if audit_rule_ids:
             audit_obj.audit_log(cr, uid, audit_rule_ids, self, [id], 'create', current=current_values, context=context)
