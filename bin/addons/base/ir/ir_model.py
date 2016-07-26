@@ -25,6 +25,7 @@ from operator import itemgetter
 
 from osv import fields,osv
 import ir
+import traceback
 import netsvc
 from osv.orm import except_orm, browse_record
 import tools
@@ -431,6 +432,7 @@ ir_model_fields()
 
 class ir_model_access(osv.osv):
     _name = 'ir.model.access'
+    __logger = logging.getLogger('Check Access')
     _columns = {
         'name': fields.char('Name', size=64, required=True, select=True),
         'model_id': fields.many2one('ir.model', 'Object', required=True, domain=[('osv_memory','=', False)], select=True, ondelete='cascade'),
@@ -555,13 +557,15 @@ class ir_model_access(osv.osv):
                     a.group_id is not null and perm_''' + mode, (model_name, ))
             groups = ', '.join(map(lambda x: x[0], cr.fetchall())) or '/'
             msgs = {
-                'read':   _("You can not read this document (%s) ! Be sure your user belongs to one of these groups: %s."),
-                'write':  _("You can not write in this document (%s) ! Be sure your user belongs to one of these groups: %s."),
-                'create': _("You can not create this document (%s) ! Be sure your user belongs to one of these groups: %s."),
-                'unlink': _("You can not delete this document (%s) ! Be sure your user belongs to one of these groups: %s."),
+                    'read':   _("You can not read this document (%s) ! Be sure your user (uid: %s) belongs to one of these groups: %s."),
+                'write':  _("You can not write in this document (%s) ! Be sure your user (uid: %s) belongs to one of these groups: %s."),
+                'create': _("You can not create this document (%s) ! Be sure your user (uid: %s) belongs to one of these groups: %s."),
+                'unlink': _("You can not delete this document (%s) ! Be sure your user (uid: %s) belongs to one of these groups: %s."),
             }
 
-            raise except_orm(_('AccessError'), msgs[mode] % (model_name, groups) )
+            self.__logger.info('AccessError - ' + msgs[mode] % (model_name, uid, groups) + '- Traceback: \n%s' % ''.join(x for x in traceback.format_stack()))
+
+            raise except_orm(_('AccessError'), msgs[mode] % (model_name, uid, groups) )
         return r
 
     check = tools.cache()(check)
