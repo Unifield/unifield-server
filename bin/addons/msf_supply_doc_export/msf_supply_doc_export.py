@@ -408,8 +408,17 @@ class po_follow_up_mixin(object):
 
         return res
 
+    def setTotalLines(self, po_ids):
+        if not self.total_lines:
+            self.total_lines = self.pool.get('purchase.order.line').search(self.cr, self.uid, [('order_id', 'in', [x.id for x in po_ids])], count=True, context=self.localcontext)
+        return True
+
     def yieldPoLines(self, po_line_ids):
         for pol_id in po_line_ids:
+            self.processed_lines += 1
+            if self.back_browse:
+                percent = float(self.processed_lines) / float(self.total_lines)
+                self.pool.get('memory.background.report').update_percent(self.cr, self.uid, [self.back_browse.id], percent)
             yield self.pool.get('purchase.order.line').browse(self.cr, self.uid, pol_id, context=self.localcontext)
 
         raise StopIteration
@@ -442,6 +451,7 @@ class po_follow_up_mixin(object):
                 else:
                     other_product.append(inl)
 
+            first_line_data = None
             first_line = True
             # Display information of the initial reception
             if not same_product_same_uom:
@@ -580,7 +590,7 @@ class po_follow_up_mixin(object):
 
         raise StopIteration
 
-    def getReportHeaderLine1(self):
+    def getReportHeaderLine1(self, po_ids):
         return self.datas.get('report_header')[0]
     
     def getReportHeaderLine2(self):
@@ -605,9 +615,11 @@ class parser_po_follow_up_xls(po_follow_up_mixin, report_sxw.rml_parse):
             'getPOLines': self.getPOLines,
             'getPOLineHeaders': self.getPOLineHeaders,
             'getRunParms': self.getRunParms,
+            'setTotalLines': self.setTotalLines,
         })
-
-    
+        self.total_lines = 0
+        self.processed_lines = 0
+        self.back_browse = get_back_browse(self, self.cr, self.uid, context)
 
 
 class po_follow_up_report_xls(SpreadsheetReport):
@@ -633,7 +645,11 @@ class parser_po_follow_up_rml(po_follow_up_mixin, report_sxw.rml_parse):
             'getReportHeaderLine1': self.getReportHeaderLine1,
             'getReportHeaderLine2': self.getReportHeaderLine2,
             'getRunParmsRML': self.getRunParmsRML,
+            'setTotalLines': self.setTotalLines,
         })
+        self.total_lines = 0
+        self.processed_lines = 0
+        self.back_browse = get_back_browse(self, self.cr, self.uid, context)
 
 report_sxw.report_sxw('report.po.follow.up_rml', 'purchase.order', 'addons/msf_supply_doc_export/report/report_po_follow_up.rml', parser=parser_po_follow_up_rml, header=False)
 

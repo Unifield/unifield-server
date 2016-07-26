@@ -67,8 +67,9 @@
 
     <para style="P2">
       <font color="white"> </font>
+        [[ setTotalLines(objects) ]]
     </para>
-    
+
     <para>[[repeatIn(objects,'o')]]</para>
     <blockTable colWidths="150.0,150.0,150.0,150.0,150.0,150.0" style="Tableau3">
     <tr>

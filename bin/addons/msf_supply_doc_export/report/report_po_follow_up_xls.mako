@@ -114,6 +114,7 @@
     # Cost Center
     <Column ss:AutoFitWidth="1" ss:Width="95" />
 
+    ${setTotalLines(objects)}
 <Row>
     <Cell ss:MergeAcross="11" ss:StyleID="mainheader"><Data ss:Type="String">${getRunParms()['title'] or '' |x}</Data></Cell>
 </Row>
@@ -130,7 +131,6 @@
     	    <Cell ss:StyleID="header"><Data ss:Type="String">${header}</Data></Cell>
        % endfor       
     </Row>
-    
 % for o in objects:
     
     % for line in getPOLines(o.id):

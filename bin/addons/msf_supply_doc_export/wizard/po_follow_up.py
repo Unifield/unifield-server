@@ -54,7 +54,7 @@ class po_follow_up(osv.osv_memory):
     
     _defaults = {
         'export_format': lambda *a: 'xls',
-        'background_time': lambda *a: 20,
+        'background_time': lambda *a: 5,
     }
     
     def button_validate(self, cr, uid, ids, context=None):
@@ -138,6 +138,7 @@ class po_follow_up(osv.osv_memory):
         background_id = self.pool.get('memory.background.report').create(cr, uid, {'file_name': report_name, 'report_name': report_name}, context=context)
         context['background_id'] = background_id
         context['background_time'] = wiz.background_time
+        datas['context'] = context
                                                                              
         return {                                                                
             'type': 'ir.actions.report.xml',                                    
@@ -146,7 +147,7 @@ class po_follow_up(osv.osv_memory):
             'nodestroy': True,                                                  
             'context': context,                                                 
         }
-    
+ 
 po_follow_up()
 
 
