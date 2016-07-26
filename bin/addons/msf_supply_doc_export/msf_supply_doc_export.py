@@ -503,7 +503,8 @@ class po_follow_up_mixin(object):
                 }
 
                 if first_line and not first_line_data and bo_qty:
-                    report_line['qty_backordered'] = spsul.get('product_qty', '')
+                    if spsul.get('state') != 'cancel':
+                        report_line['qty_backordered'] = spsul.get('product_qty', '')
                     first_line_data.append(report_line)
                 else:
                     report_lines.append(report_line)
@@ -534,7 +535,8 @@ class po_follow_up_mixin(object):
                 }
 
                 if first_line and not first_line_data and bo_qty:
-                    report_line['qty_backordered'] = spsul.get('product_qty', '')
+                    if spl.get('state') != 'cancel':
+                        report_line['qty_backordered'] = spsul.get('product_qty', '')
                     first_line_data.append(report_line)
                 else:
                     report_lines.append(report_line)
