@@ -442,7 +442,9 @@ class po_follow_up_mixin(object):
             same_product = []
             other_product = []
 
+            inl_index = 0
             for inl in self.getAllLineIN(line.id):
+                inl_index += 1
                 if inl.get('product_id') and inl.get('product_id') == line.product_id.id:
                     if inl.get('product_uom') and inl.get('product_uom') == line.product_uom.id:
                         same_product_same_uom.append(inl)
@@ -451,6 +453,7 @@ class po_follow_up_mixin(object):
                 else:
                     other_product.append(inl)
 
+            oneline = inl_index == 1
             first_line_data = []
             first_line = True
             # Display information of the initial reception
@@ -479,15 +482,16 @@ class po_follow_up_mixin(object):
 
             for spsul in same_product_same_uom:
                 bo_qty = spsul.get('backorder_id') and spsul.get('state') != 'done'
+                display_main_info = (first_line and not bo_qty) or oneline
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
-                    'item': first_line and not bo_qty and line.line_number or '',
-                    'code': first_line and not bo_qty and line.product_id.default_code or '',
-                    'description': first_line and not bo_qty and line.product_id.name or '',
-                    'qty_ordered': first_line and not bo_qty and line.product_qty or '',
+                    'item': display_main_info and line.line_number or '',
+                    'code': display_main_info and line.product_id.default_code or '',
+                    'description': display_main_info and line.product_id.name or '',
+                    'qty_ordered': display_main_info and line.product_qty or '',
                     'uom': line.product_uom.name or '',
                     'qty_received': spsul.get('state') == 'done' and spsul.get('product_qty', '') or '0.00',
                     'in': spsul.get('name', '') or '',
@@ -498,10 +502,9 @@ class po_follow_up_mixin(object):
                     'in_unit_price': spsul.get('price_unit'),
                 }
 
-                if first_line and not first_line_data:
+                if first_line and not first_line_data and bo_qty:
+                    report_line['qty_backordered'] = spsul.get('product_qty', '')
                     first_line_data.append(report_line)
-                    if spsul.get('backorder_id') and spsul.get('state') != 'done':
-                        report_line['qty_backordered'] = spsul.get('product_qty', '')
                 else:
                     report_lines.append(report_line)
                     if first_line:
@@ -510,15 +513,16 @@ class po_follow_up_mixin(object):
 
             for spl in same_product:
                 bo_qty = spl.get('backorder_id') and spl.get('state') != 'done'
+                display_main_info = (first_line and not bo_qty) or oneline
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
                     'order_confirmed_date': order.delivery_confirmed_date or '',
                     'order_status': self._get_states().get(order.state, ''),
-                    'item': first_line and not bo_qty and line.line_number or '',
-                    'code': first_line and not bo_qty and line.product_id.default_code or '',
-                    'description': first_line and not bo_qty and line.product_id.name or '',
-                    'qty_ordered': first_line and not bo_qty and  line.product_qty or '',
+                    'item': display_main_info and line.line_number or '',
+                    'code': display_main_info and line.product_id.default_code or '',
+                    'description': display_main_info and line.product_id.name or '',
+                    'qty_ordered': display_main_info and  line.product_qty or '',
                     'uom': uom_obj.read(self.cr, self.uid, spl.get('product_uom'), ['name'])['name'],
                     'qty_received': spl.get('state') == 'done' and spl.get('product_qty', '') or '0.00',
                     'in': spl.get('name', '') or '',
@@ -529,10 +533,9 @@ class po_follow_up_mixin(object):
                     'in_unit_price': spl.get('price_unit'),
                 }
 
-                if first_line and not first_line_data:
+                if first_line and not first_line_data and bo_qty:
+                    report_line['qty_backordered'] = spsul.get('product_qty', '')
                     first_line_data.append(report_line)
-                    if spl.get('backorder_id') and spl.get('state') != 'done':
-                        report_line['qty_backordered'] = spl.get('product_qty', '')
                 else:
                     report_lines.append(report_line)
                     if first_line:
