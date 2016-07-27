@@ -22,8 +22,14 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Import Batch Number" hide_duplicate_button="1">
-                    <button name="download_template_file" string="" icon="gtk-save" help="Download template file" type="object" />
-                    <field name="import_file" colspan="2" string="File to import" on_change="onchange_import_file(import_file)" />
+                    <group colspan="4" col="6">
+                        <label string="Select a file to import: " align="1.0" />
+                        <field name="import_file" nolabel="True" on_change="onchange_import_file(import_file)" colspan="5" />
+                        <newline />
+                        <label string="Or download a template: " align="1.0" />
+                        <button name="download_template_file" string="" icon="gtk-save" help="Download template file" type="object" />
+                        <label string=" " colspan="4" />
+                    </group>
                 </form>
             </field>
         </record>
