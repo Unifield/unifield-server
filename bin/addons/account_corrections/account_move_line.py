@@ -40,7 +40,7 @@ class account_move_line(osv.osv):
          - Item have not been reversed
          - Item come from a reconciliation that have set 'is_addendum_line' to True
          - The account is not the default credit/debit account of the attached statement (register)
-         - All items attached to the entry have no reconcile_id on reconciliable account
+         - The line isn't partially or totally reconciled
          - The line doesn't come from a write-off
          - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
         """
@@ -62,7 +62,6 @@ class account_move_line(osv.osv):
 
         cached_move = {}
         acc_corr = {}
-        reconcile_accounts = self.pool.get('account.account').search(cr, uid, [('reconcile', '=', True)], order='NO_ORDER')
 
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
@@ -72,7 +71,7 @@ class account_move_line(osv.osv):
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
                 res[ml.id] = False
                 continue
-            # False if move is posted
+            # False if move is not posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
                 continue
@@ -120,26 +119,10 @@ class account_move_line(osv.osv):
             if ml.journal_id.type in ('revaluation', 'system', ):
                 res[ml.id] = False
                 continue
-            # False if one of move line account is reconciliable and reconciled
-            if ml.move_id.id in cached_move.keys():
-                if cached_move.get(ml.move_id.id):
-                    res[ml.id] = False
+            # False if the move line is partially or totally reconciled
+            if ml.reconcile_id or ml.reconcile_partial_id:
+                res[ml.id] = False
                 continue
-            else:
-                cached_move.setdefault(ml.move_id.id, False)
-                reconciled_moves = self.search(cr, uid, [
-                    ('account_id', 'in', reconcile_accounts),
-                    ('move_id', '=', ml.move_id.id),
-                    '|',
-                    ('reconcile_id', '!=', False),
-                    ('reconcile_partial_id', '!=', False),
-                ], order='NO_ORDER', limit=1, context=context)
-
-                if reconciled_moves:
-                    cached_move[ml.move_id.id] = True
-                    res[ml.id] = False
-                    continue
-
         del cached_move
         return res
 
