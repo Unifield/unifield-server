@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
-    <data noupdate="1">
+    <data>
 
         <report
             id="in_simulation_screen_xls"
@@ -35,15 +35,15 @@
             string="PO Simulation screen" />
 
         <report
-            id="report_wizard_import_batch_template"
-            model="wizard.import.batch"
-            name="wizard.import.batch.template"
-            file="msf_doc_import/report/import_batch_template.mako"
+            id="report_wizard_import_generic_template"
+            model="abstract.wizard.import"
+            name="wizard.import.generic.template"
+            file="msf_doc_import/report/import_generic_template.mako"
             report_type="webkit"
             header="False"
             menu="False"
             auto="False"
-            string="Import Batch Numbers template" />
+            string="Import Generic template" />
 
     </data>
 </openerp>

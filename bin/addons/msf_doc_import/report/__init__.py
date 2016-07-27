@@ -23,4 +23,4 @@ import in_simulation_screen_report_xls
 import po_simulation_screen_report
 import po_simulation_screen_report_xls
 
-import import_batch_template
+import import_generic_template

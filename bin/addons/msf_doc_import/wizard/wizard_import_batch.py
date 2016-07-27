@@ -22,13 +22,17 @@
 from osv import osv
 from tools.translate import _
 
+from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
+
+
 IMPORT_BATCH_HEADERS = [
-    (_('Name'), 'String'),
-    (_('Product Code'), 'String'),
-    (_('Product Description'), 'String'),
-    (_('Life Date'), 'Date'),
-    (_('Type'), 'String'),
+     ImportHeader(name=_('Name'), type='String', size=80),
+     ImportHeader(name=_('Product Code'), type='String', size=80),
+     ImportHeader(name=_('Product Description'), type='String', size=120),
+     ImportHeader(name=_('Life Date'), type='Date', size=60),
+     ImportHeader(name=_('Type'), type='String', size=80),
 ]
+
 
 class wizard_import_batch(osv.osv):
     _name = 'wizard.import.batch'
@@ -40,5 +44,15 @@ class wizard_import_batch(osv.osv):
         'model_name': 'stock.production.lot',
         'template_filename': 'Import_batch_number_tpl.csv',
     }
+
+    def _get_template_file_data(self):
+        """
+        Return values for the import template file report generation
+        """
+        return {
+            'model': 'stock.production.lot',
+            'model_name': _('Batch numbers'),
+            'header_columns': IMPORT_BATCH_HEADERS,
+        }
 
 wizard_import_batch()

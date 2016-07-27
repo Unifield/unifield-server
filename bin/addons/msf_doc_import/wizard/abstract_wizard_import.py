@@ -21,6 +21,8 @@
 
 import base64
 
+from collections import namedtuple
+
 from osv import osv
 from osv import fields
 from tools.translate import _
@@ -38,6 +40,25 @@ def check_utf8_encoding(file_to_check, base='base64'):
         return True
     except UnicodeError:
         return False
+
+
+class ImportHeader(object):
+    """
+    Class used to export Header template.
+    """
+
+    def __new__(self, name, type='String', size=70):
+        """
+        Initialize a header column for template export.
+        :param name: Name of the field
+        :param type: Type of the field
+        :param size: Displayed size on Excel file
+        """
+        self.name = name
+        self.type = type
+        self.size = size
+
+        return (self.name, self.type, self.size)
 
 
 class abstract_wizard_import(osv.osv):
@@ -143,6 +164,11 @@ class abstract_wizard_import(osv.osv):
         'state': 'draft',
     }
 
+    def exists(self, cr, uid, ids, context=None):
+        if self._name != 'abstract.wizard.import':
+            return super(abstract_wizard_import, self).exists(cr, uid, ids, context=context)
+        return False
+
     def onchange_import_file(self, cr, uid, ids, import_file, context=None):
         """
         When the file to import is changed, check if the file is encoding in UTF-8
@@ -169,6 +195,8 @@ class abstract_wizard_import(osv.osv):
         """
         return {
             'model': self._name,
+            'model_name': self._description,
+            'header_columns': [],
         }
 
     def download_template_file(self, cr, uid, ids, context=None):
@@ -177,7 +205,7 @@ class abstract_wizard_import(osv.osv):
         """
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': '%s.template' % self._name,
+            'report_name': 'wizard.import.generic.template',
             'datas': self._get_template_file_data(),
         }
 
