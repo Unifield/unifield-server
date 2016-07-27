@@ -36,7 +36,7 @@
             </Borders>
             <Protection />
         </Style>
-        <Style ss:ID="line">
+        <Style ss:ID="String">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Borders>
               <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -46,7 +46,18 @@
             </Borders>
             <Protection ss:Protected="0" />
         </Style>
-        <Style ss:ID="short_date">
+        <Style ss:ID="Number">
+            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+            <Borders>
+              <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+              <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+            </Borders>
+            <NumberFormat ss:Format="Fixed" />
+            <Protection ss:Protected="0" />
+        </Style>
+        <Style ss:ID="DateTime">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
             <Borders>
                 <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -54,7 +65,7 @@
                 <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
                 <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
             </Borders>
-            <NumberFormat ss:Format="Short Date"/>
+            <NumberFormat ss:Format="Short Date" />
             <Protection ss:Protected="0" />
         </Style>
     </Styles>
@@ -64,7 +75,7 @@
         <Table x:FullColumns="1" x:FullRows="1">
 
         % for col in data.get('header_columns', []):
-            -*<Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" />
+            <Column ss:AutoFitWidth="1" ss:Width="${col[2] or 70|x}" ss:StyleID="${col[1]|x}" />
         % endfor
 
             <Row>
@@ -77,9 +88,7 @@
 
             <Row>
             % for col in data.get('header_columns', []):
-                <Cell ss:StyleID="${col[1] == 'Date' and 'short_date' or 'line'|x}">
-                    <Data ss:Type="${col[1]|x}"></Data>
-                </Cell>
+                <Cell ss:StyleID="${col[1]|x}" />
             % endfor
             </Row>
         </Table>
