@@ -31,6 +31,7 @@ from threading import Lock
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
+    _logger = logging.getLogger('patch_scripts')
 
     _columns = {
         'model': fields.text(string='Model', required=True),
@@ -48,8 +49,16 @@ class patch_scripts(osv.osv):
         for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
             method = ps['method']
             model_obj = self.pool.get(ps['model'])
-            getattr(model_obj, method)(cr, uid, *a, **b)
-            self.write(cr, uid, [ps['id']], {'run': True})
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
 
     def us_993_patch(self, cr, uid, *a, **b):
         # set no_update to True on USB group_type not to delete it on
@@ -663,8 +672,9 @@ class patch_scripts(osv.osv):
         if setup_br:
             sale_percent = 1 + (setup_br.sale_price/100.00)
 
+
         sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
-        cr.execute(sql, (sale_percent,))
+        cr.execute(sql, (sale_percent, ))
         return True
 
 patch_scripts()
