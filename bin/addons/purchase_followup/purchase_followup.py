@@ -299,7 +299,7 @@ class purchase_order_followup_line(osv.osv_memory):
     }
 
     def read(self, cr, uid, ids, fields, context=None, load='_classic_write',
-            name_get=True):
+            name_get=False):
         res = super(purchase_order_followup_line, self).read(cr, uid, ids,
                 fields, context=context, load=load, name_get=name_get)
 

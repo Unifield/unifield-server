@@ -2203,7 +2203,7 @@ class orm_memory(orm_template):
         return True
 
     def read(self, cr, user, ids, fields_to_read=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         if context is None:
             context = {}
         if not fields_to_read:
@@ -3371,7 +3371,7 @@ class orm(orm_template):
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
     def read(self, cr, user, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         if not ids:
             return []
         if context is None:
@@ -3397,7 +3397,7 @@ class orm(orm_template):
         return result
 
     def _read_flat(self, cr, user, ids, fields_to_read, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         if not ids:
             return []
         if context is None:

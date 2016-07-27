@@ -361,7 +361,7 @@ class many2one(_column):
         return result
 
     def get(self, cr, obj, ids, name, user=None, context=None, values=None,
-            name_get=True):
+            name_get=False):
         if context is None:
             context = {}
         if values is None:
@@ -378,10 +378,10 @@ class many2one(_column):
         # we use uid=1 because the visibility of a many2one field value (just id and name)
         # must be the access right of the parent form and not the linked object itself.
         res_list = list(set([x for x in res.values() if isinstance(x, (int,long))]))
-        if not name_get:
-            records = dict.fromkeys(res_list, False)
-        else:
+        if name_get:
             records = dict(obj.name_get(cr, 1, res_list, context=context))
+        else:
+            records = dict.fromkeys(res_list, False)
         for id in res:
             if res[id] in records:
                 res[id] = (res[id], records[res[id]])
@@ -831,7 +831,7 @@ class function(_column):
         return self._fnct_search(obj, cr, uid, obj, name, args, context=context)
 
     def get(self, cr, obj, ids, name, user=None, context=None, values=None,
-            name_get=True):
+            name_get=False):
         if context is None:
             context = {}
         if values is None:

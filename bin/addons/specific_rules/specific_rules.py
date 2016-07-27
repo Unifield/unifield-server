@@ -2251,7 +2251,7 @@ CREATE OR REPLACE view report_stock_inventory AS (
     }
 
     def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         if context is None:
             context = {}
         if fields is None:

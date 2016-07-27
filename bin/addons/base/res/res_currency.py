@@ -68,7 +68,7 @@ class res_currency(osv.osv):
     _order = "name"
 
     def read(self, cr, user, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         select = ids
         if isinstance(ids, (int, long)):
             select = [select]

@@ -67,7 +67,9 @@ class product_pricelist(report_sxw.rml_parse):
 
     def _get_currency(self, pricelist_id):
         pool = pooler.get_pool(self.cr.dbname)
-        pricelist = pool.get('product.pricelist').read(self.cr, self.uid, [pricelist_id], ['currency_id'], context=self.localcontext)[0]
+        pricelist = pool.get('product.pricelist').read(self.cr, self.uid,
+                [pricelist_id], ['currency_id'], context=self.localcontext,
+                name_get=True)[0]
         return pricelist['currency_id'][1]
 
     def _get_currency_symbol(self, pricelist_id):

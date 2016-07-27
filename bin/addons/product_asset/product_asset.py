@@ -277,7 +277,8 @@ class product_asset_event(osv.osv):
         override because no name field is defined
         '''
         result = []
-        for e in self.read(cr, uid, ids, ['asset_id', 'date'], context):
+        for e in self.read(cr, uid, ids, ['asset_id', 'date'], context,
+                name_get=True):
             # e = dict: {'asset_id': (68, u'AF/00045'), 'date': '2011-05-05', 'id': 75}
             result.append((e['id'], '%s - %s'%(e['asset_id'][1], e['date'])))
             

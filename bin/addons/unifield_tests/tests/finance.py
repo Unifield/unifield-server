@@ -742,7 +742,8 @@ class FinanceTest(UnifieldTest):
                     # 'analytic_id' <=> CC
                     # as rpc browse failed here: dirty workaround with read
                     line_ids = [ l.id for l in wizard_ad_br.line_ids ]
-                    for adwl_r in wizard_adl_obj.read(line_ids, fields):
+                    for adwl_r in wizard_adl_obj.read(line_ids, fields,
+                            name_get=True):
                         percent = adwl_r['percentage']
 
                         if percent in ad_replace_data:
@@ -788,7 +789,8 @@ class FinanceTest(UnifieldTest):
                     # 'analytic_id' <=> FP
                     # as rpc browse failed here: dirty workaround with read
                     fp_line_ids = [ l.id for l in wizard_ad_br.fp_line_ids ]
-                    for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields):
+                    for adwl_r in wizard_adfpl_obj.read(fp_line_ids, fields,
+                            name_get=True):
                         percent = adwl_r['percentage']
 
                         if percent in ad_replace_data:

@@ -151,7 +151,7 @@ class procurement_batch_cron(osv.osv):
 
 
     def read(self, cr, uid, ids, fields_to_read=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         if not fields_to_read:
             fields_to_read = []
 

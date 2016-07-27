@@ -134,7 +134,7 @@ class account_destination_summary(osv.osv):
         return view
 
     def read(self, cr, uid, ids, fields_to_read=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         first = False
         if isinstance(ids, (int, long)):
             ids = [ids]

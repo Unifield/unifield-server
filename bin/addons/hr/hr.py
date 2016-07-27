@@ -28,7 +28,8 @@ class hr_employee_category(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not ids:
             return []
-        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
+        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context,
+                name_get=True)
         res = []
         for record in reads:
             name = record['name']

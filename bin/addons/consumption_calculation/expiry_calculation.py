@@ -764,7 +764,7 @@ class product_likely_expire_report_line(osv.osv):
 
 
     def read(self, cr, uid, ids, vals, context=None, load='_classic_read',
-            name_get=True):
+            name_get=False):
         '''
         Set values for all dates
         '''

@@ -259,7 +259,7 @@ class users(osv.osv):
         }
 
     def read(self,cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         def override_password(o):
             if 'password' in o and ( 'id' not in o or o['id'] != uid ):
                 o['password'] = '********'

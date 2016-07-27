@@ -28,7 +28,8 @@ class hr_department(osv.osv):
             context = {}
         if not ids:
             return []
-        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
+        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context,
+                name_get=True)
         res = []
         for record in reads:
             name = record['name']
@@ -85,7 +86,7 @@ class ir_action_window(osv.osv):
     _inherit = 'ir.actions.act_window'
 
     def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=True):
+            load='_classic_read', name_get=False):
         if context is None:
             context = {}
         obj_dept = self.pool.get('hr.department')

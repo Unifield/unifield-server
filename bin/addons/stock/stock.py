@@ -79,7 +79,8 @@ class stock_location(osv.osv):
             context = {}
         if not len(ids):
             return []
-        reads = self.read(cr, uid, ids, ['name','location_id'], context=context)
+        reads = self.read(cr, uid, ids, ['name','location_id'],
+                context=context, name_get=True)
         for record in reads:
             name = record['name']
             if context.get('full',False):

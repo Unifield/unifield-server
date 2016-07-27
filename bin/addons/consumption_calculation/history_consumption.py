@@ -510,7 +510,7 @@ class product_product(osv.osv):
         return res
 
     def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read',
-            name_get=True):
+            name_get=False):
         '''
         Set value for each month
         '''
@@ -670,7 +670,7 @@ class product_history_consumption_product(osv.osv):
     }
 
     def read(self, cr, uid, ids, fields, context=None, load='_classic_read',
-            name_get=True):
+            name_get=False):
         '''
         Return the result in the same order as given in ids
         '''

@@ -345,7 +345,7 @@ class purchase_order_line(osv.osv):
         partner_obj = self.pool.get('res.partner')
         for line in self.read(cr, uid, ids,
                 ['order_id', 'analytic_distribution_id',
-                    'account_4_distribution'], context=context, name_get=False):
+                    'account_4_distribution'], context=context):
             order_id = line['order_id'] and line['order_id'][0] or False
             order = None
             if order_id:
@@ -353,8 +353,7 @@ class purchase_order_line(osv.osv):
                     order = order_dict[order_id]
                 else:
                     order = order_obj.read(cr, uid, order_id, ['partner_id',
-                        'from_yml_test', 'analytic_distribution_id'],
-                        context=context, name_get=False)
+                        'from_yml_test', 'analytic_distribution_id'])
                     partner_type = partner_obj.read(cr, uid, order['partner_id'][0], ['partner_type'], context=context)
                     order['partner_type'] = partner_type
                     order_dict[order_id] = order

@@ -1114,7 +1114,7 @@ class supplier_catalogue_line(osv.osv):
         return res
 
     def read(self, cr, uid, ids, fields=None, context=None,
-            load="_classic_write", name_get=True):
+            load="_classic_write", name_get=False):
         if context is None:
             context = {}
         if context.get('catalogue_ids', False):

@@ -39,7 +39,8 @@ class res_partner_category(osv.osv):
     def name_get(self, cr, uid, ids, context=None):
         if not len(ids):
             return []
-        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context)
+        reads = self.read(cr, uid, ids, ['name','parent_id'], context=context,
+                name_get=True)
         res = []
         for record in reads:
             name = record['name']
@@ -308,7 +309,8 @@ class res_partner_address(osv.osv):
         if not len(ids):
             return []
         res = []
-        for r in self.read(cr, user, ids, ['name','zip','country_id', 'city','partner_id', 'street']):
+        for r in self.read(cr, user, ids, ['name','zip','country_id',
+            'city','partner_id', 'street'], name_get=True):
             if context.get('contact_display', 'contact')=='partner' and r['partner_id']:
                 res.append((r['id'], r['partner_id'][1]))
             else:

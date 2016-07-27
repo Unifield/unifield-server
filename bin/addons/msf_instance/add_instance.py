@@ -78,7 +78,8 @@ class account_journal(osv.osv):
             if not ids:
                 return []
             ret = []
-            for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+            for journal in self.read(cr, uid, ids, ['code', 'instance_id'],
+                    name_get=True):
                 ret.append((journal['id'], '%s / %s'%(journal['instance_id'] and journal['instance_id'][1] or '', journal['code'])))
         else:
             ret = super(account_journal, self).name_get(cr, uid, ids, context=context)
@@ -169,7 +170,8 @@ class account_analytic_journal_fake(osv.osv):
             return []
 
         ret = []
-        for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+        for journal in self.read(cr, uid, ids, ['code', 'instance_id'],
+                name_get=True):
             ret.append((journal['id'], '%s / %s'%(journal['instance_id'] and journal['instance_id'][1] or '', journal['code'])))
 
         return ret
@@ -191,7 +193,8 @@ class account_journal_fake(osv.osv):
             return []
 
         ret = []
-        for journal in self.read(cr, uid, ids, ['code', 'instance_id']):
+        for journal in self.read(cr, uid, ids, ['code', 'instance_id'],
+                name_get=True):
             if context:
                 exclude_journals = context.get('exclude_journals', False)
                 if exclude_journals:

@@ -71,7 +71,7 @@ class product_nomenclature(osv.osv):
         fields = ['name', 'parent_id']
         if context.get('withnum') == 1:
             fields.append('number_of_products')
-        reads = self.read(cr, uid, ids, fields, context=context)
+        reads = self.read(cr, uid, ids, fields, context=context, name_get=True)
 
         res = []
         for record in reads:
