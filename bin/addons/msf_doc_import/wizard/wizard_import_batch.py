@@ -25,13 +25,14 @@ from tools.translate import _
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 
 
-IMPORT_BATCH_HEADERS = [
-     ImportHeader(name=_('Name'), type='String', size=80),
-     ImportHeader(name=_('Product Code'), type='String', size=80),
-     ImportHeader(name=_('Product Description'), type='String', size=120),
-     ImportHeader(name=_('Life Date'), type='Date', size=60),
-     ImportHeader(name=_('Type'), type='String', size=80),
-]
+def get_import_batch_headers():
+    return [
+         ImportHeader(name=_('Name'), type='String', size=80),
+         ImportHeader(name=_('Product Code'), type='String', size=80),
+         ImportHeader(name=_('Product Description'), type='String', size=120),
+         ImportHeader(name=_('Life Date'), type='DateTime', size=60),
+         ImportHeader(name=_('Type'), type='String', size=80),
+    ]
 
 
 class wizard_import_batch(osv.osv):
@@ -52,7 +53,7 @@ class wizard_import_batch(osv.osv):
         return {
             'model': 'stock.production.lot',
             'model_name': _('Batch numbers'),
-            'header_columns': IMPORT_BATCH_HEADERS,
+            'header_columns': get_import_batch_headers(),
         }
 
 wizard_import_batch()

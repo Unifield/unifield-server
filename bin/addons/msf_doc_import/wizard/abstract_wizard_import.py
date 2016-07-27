@@ -20,8 +20,7 @@
 ##############################################################################
 
 import base64
-
-from collections import namedtuple
+import logging
 
 from osv import osv
 from osv import fields
@@ -46,19 +45,31 @@ class ImportHeader(object):
     """
     Class used to export Header template.
     """
+    type_ok = ['String', 'Number', 'DateTime']
 
     def __new__(self, name, type='String', size=70):
         """
         Initialize a header column for template export.
         :param name: Name of the field
-        :param type: Type of the field
+        :param ftype: Type of the field
         :param size: Displayed size on Excel file
         """
-        self.name = name
-        self.type = type
-        self.size = size
+        self.fld_name = name
+        self.fld_type = type
+        self.fld_size = size
 
-        return (self.name, self.type, self.size)
+        if self.fld_type not in ImportHeader.type_ok:
+            err_msg = '''Defined type of header \'%s\' is not in the list of possible type: %s - Please contact
+your support team and give us this message.
+            ''' % (
+                self.fld_name, ', '.join(t for t in ImportHeader.type_ok)
+            )
+            raise osv.except_osv(
+                _('Error'),
+                err_msg,
+            )
+
+        return (self.fld_name, self.fld_type, self.fld_size)
 
 
 class abstract_wizard_import(osv.osv):
