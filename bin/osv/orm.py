@@ -4429,6 +4429,7 @@ class orm(orm_template):
                 order_split = order_part.strip().split(' ')
                 order_field = order_split[0].strip()
                 order_direction = order_split[1].strip() if len(order_split) == 2 else ''
+                order_field = order_field.replace('"', '')
                 new_order_by.append('"%s"."%s" %s' % (self._table, order_field, order_direction))
             if new_order_by:
                 order_by_clause = ",".join(new_order_by)
