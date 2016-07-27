@@ -382,14 +382,11 @@ class many2one(_column):
             records = dict.fromkeys(res_list, False)
         else:
             records = dict(obj.name_get(cr, 1, res_list, context=context))
-        if len(res_list) == 1 and records:
-            res = dict.fromkeys(ids, records.items()[0])
-        else:
-            for id in res:
-                if res[id] in records:
-                    res[id] = (res[id], records[res[id]])
-                else:
-                    res[id] = False
+        for id in res:
+            if res[id] in records:
+                res[id] = (res[id], records[res[id]])
+            else:
+                res[id] = False
         return res
 
     def set(self, cr, obj_src, id, field, values, user=None, context=None):
