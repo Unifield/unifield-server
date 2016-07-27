@@ -3390,7 +3390,7 @@ class orm(orm_template):
                 return f_qual
 
             fields_pre2 = map(convert_field, fields_pre)
-            order_by = self._parent_order or self._order
+            order_by = self._filter_order_by(self._parent_order or self._order)
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
             query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
             if rule_clause:
@@ -4415,14 +4415,7 @@ class orm(orm_template):
         return map(qualify, m2o_order) if isinstance(m2o_order, list) else qualify(m2o_order)
 
 
-    def _generate_order_by(self, order_spec, query):
-        """
-        Attempt to consruct an appropriate ORDER BY clause based on order_spec, which must be
-        a comma-separated list of valid field names, optionally followed by an ASC or DESC direction.
-
-        :raise" except_orm in case order_spec is malformed
-        """
-        order_by_clause = self._order
+    def _filter_order_by(self, order_by_clause):
         if order_by_clause:
             new_order_by = []
             for order_part in order_by_clause.split(','):
@@ -4433,6 +4426,18 @@ class orm(orm_template):
                 new_order_by.append('"%s"."%s" %s' % (self._table, order_field, order_direction))
             if new_order_by:
                 order_by_clause = ",".join(new_order_by)
+        return order_by_clause
+
+    def _generate_order_by(self, order_spec, query):
+        """
+        Attempt to consruct an appropriate ORDER BY clause based on order_spec, which must be
+        a comma-separated list of valid field names, optionally followed by an ASC or DESC direction.
+
+        :raise" except_orm in case order_spec is malformed
+        """
+        order_by_clause = self._order
+        if order_by_clause:
+            order_by_clause = self._filter_order_by(order_by_clause)
         if order_spec:
             order_by_elements = []
             self._check_qorder(order_spec)
