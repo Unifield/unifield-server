@@ -28,7 +28,7 @@ from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 def get_import_batch_headers():
     return [
          ImportHeader(name=_('Name'), type='String', size=80),
-         ImportHeader(name=_('Product Code'), type='Number', size=80),
+         ImportHeader(name=_('Product Code'), type='String', size=80),
          ImportHeader(name=_('Product Description'), type='String', size=120),
          ImportHeader(name=_('Life Date'), type='DateTime', size=60),
          ImportHeader(name=_('Type'), type='String', size=80),
