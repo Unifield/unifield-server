@@ -343,38 +343,39 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         if ('location' in context) and context['location'] and type(context['location']) == type(1):
-            location_info = self.pool.get('stock.location').browse(cr, uid, context['location'])
+            location_info = self.pool.get('stock.location').read(cr, uid,
+                    context['location'], ['usage'])
             fields=res.get('fields',{})
             if fields:
-                if location_info.usage == 'supplier':
+                if location_info['usage'] == 'supplier':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Receptions')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Received Qty')
 
-                elif location_info.usage == 'internal':
+                elif location_info['usage'] == 'internal':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Stock')
 
-                elif location_info.usage == 'customer':
+                elif location_info['usage'] == 'customer':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Deliveries')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Delivered Qty')
 
-                elif location_info.usage == 'inventory':
+                elif location_info['usage'] == 'inventory':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future P&L')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('P&L Qty')
 
-                elif location_info.usage == 'procurement':
+                elif location_info['usage'] == 'procurement':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Qty')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Unplanned Qty')
 
-                elif location_info.usage == 'production':
+                elif location_info['usage'] == 'production':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Productions')
                     if fields.get('qty_available'):
