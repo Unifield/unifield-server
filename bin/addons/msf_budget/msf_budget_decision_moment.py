@@ -24,7 +24,7 @@ from osv import fields, osv
 
 class msf_budget_decision_moment(osv.osv):
     _name = "msf.budget.decision.moment"
-    _order = '"order"'
+    _order = 'order'
 
     def _check_order(self, cr, uid, ids, context=None):
         if not context:
