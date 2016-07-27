@@ -119,7 +119,21 @@ class expression(object):
             working_table = table
             main_table = table
             fargs = left.split('.', 1)
-            if fargs[0] in table._inherit_fields:
+            try_join = False
+            inherited_fields = fargs[0] in table._inherit_fields
+            if not inherited_fields and len(fargs) == 2: # and '.' not in fargs[1]:
+                field = working_table._columns.get(fargs[0], False)
+                if field and field._type == 'many2one' and field.required and field._obj:
+                    working_table = working_table.pool.get(field._obj)
+                    if working_table not in self.__all_tables:
+                        self.__joins.append('%s.%s=%s.%s' % (working_table._table, 'id', main_table._table, fargs[0]))
+                        self.__all_tables.add(working_table)
+                    self.__field_tables[i] = working_table
+                    left = fargs[1]
+                    fargs = left.split('.', 1)
+                    self.__exp[i] = (left, operator, right)
+
+            if inherited_fields:
                 while True:
                     field = main_table._columns.get(fargs[0], False)
                     if field:

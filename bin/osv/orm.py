@@ -4423,6 +4423,15 @@ class orm(orm_template):
         :raise" except_orm in case order_spec is malformed
         """
         order_by_clause = self._order
+        if order_by_clause:
+            new_order_by = []
+            for order_part in order_by_clause.split(','):
+                order_split = order_part.strip().split(' ')
+                order_field = order_split[0].strip()
+                order_direction = order_split[1].strip() if len(order_split) == 2 else ''
+                new_order_by.append('"%s"."%s" %s' % (self._table, order_field, order_direction))
+            if new_order_by:
+                order_by_clause = ",".join(new_order_by)
         if order_spec:
             order_by_elements = []
             self._check_qorder(order_spec)
