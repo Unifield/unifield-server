@@ -270,7 +270,8 @@ class ICalendar(TinyWidget):
 
         ids = proxy.search(domain, 0, 0, order_by, ctx)
 
-        result = proxy.read(ids, self.fields.keys()+['__last_update'], ctx)
+        result = proxy.read(ids, self.fields.keys()+['__last_update'], ctx,
+                '_classic_read', True)
 
         ConcurrencyInfo.update(self.model, result)
         self.concurrency_info = ConcurrencyInfo(self.model, ids)

@@ -56,7 +56,8 @@ class FieldPref(SecuredController):
         txt = fields.get(field,{}).get('string', '')
 
         val_ids = values_obj.search(dom, 0, 0, False, rpc.session.context)
-        values = values_obj.read(val_ids, ['name', 'real_value', 'user_id', 'key2'], rpc.session.context)
+        values = values_obj.read(val_ids, ['name', 'real_value', 'user_id',
+            'key2'], rpc.session.context, '_classic_read', True)
         return dict(model=params.model, click_ok='', field=params.field, values=values, admin_profile=is_admin, string=txt)
 
     @expose(template="/openerp/controllers/templates/fieldresetpref.mako")

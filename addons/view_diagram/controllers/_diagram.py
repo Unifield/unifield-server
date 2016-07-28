@@ -225,7 +225,8 @@ class Connector(Form):
         if src not in conn_flds: conn_flds.append(src)
         if des not in conn_flds: conn_flds.append(des)
 
-        result = proxy_tr.read(id, conn_flds, rpc.session.context)
+        result = proxy_tr.read(id, conn_flds, rpc.session.context,
+                '_classic_read', True)
 
         data = {
             'id': result['id'],
@@ -248,7 +249,8 @@ class Connector(Form):
     def get_info(self, conn_obj, id, **kw):
         proxy_tr = rpc.RPCProxy(conn_obj)
         search_tr = proxy_tr.search([('id', '=', int(id))], 0, 0, 0, rpc.session.context)
-        data = proxy_tr.read(search_tr, [], rpc.session.context)
+        data = proxy_tr.read(search_tr, [], rpc.session.context,
+                '_classic_read', True)
 
         return dict(data=data[0])
 
@@ -331,7 +333,8 @@ class Workflow(Form):
 
         proxy_tr = rpc.RPCProxy(conn_obj)
         search_trs = proxy_tr.search([('id', 'in', list_tr)], 0, 0, 0, rpc.session.context)
-        data_trs = proxy_tr.read(search_trs, conn_flds, rpc.session.context)
+        data_trs = proxy_tr.read(search_trs, conn_flds, rpc.session.context,
+                '_classic_read', True)
 
         for tr in data_trs:
             t = connectors.get(str(tr['id']))
