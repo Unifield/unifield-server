@@ -40,7 +40,7 @@ class account_move_line(osv.osv):
          - Item have not been reversed
          - Item come from a reconciliation that have set 'is_addendum_line' to True
          - The account is not the default credit/debit account of the attached statement (register)
-         - All items attached to the entry have no reconcile_id on reconciliable account
+         - The line isn't partially or totally reconciled
          - The line doesn't come from a write-off
          - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
         """
@@ -67,7 +67,7 @@ class account_move_line(osv.osv):
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
                 res[ml.id] = False
                 continue
-            # False if move is posted
+            # False if move is not posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
                 continue
@@ -118,6 +118,10 @@ class account_move_line(osv.osv):
                 continue
             # False if this line is a revaluation or a system entry
             if ml.journal_id.type in ('revaluation', 'system', ):
+                res[ml.id] = False
+                continue
+            # False if the move line is partially or totally reconciled
+            if ml.reconcile_id or ml.reconcile_partial_id:
                 res[ml.id] = False
                 continue
         return res
