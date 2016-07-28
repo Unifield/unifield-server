@@ -4327,8 +4327,12 @@ class orm(orm_template):
             e = expression.expression(domain)
             e.parse(cr, user, self, context)
             tables = e.get_tables()
-            where_clause, where_params, left_join = e.to_sql()
-            where_clause = where_clause and [where_clause] or []
+            try:
+                where_clause, where_params, left_join = e.to_sql()
+                where_clause = where_clause and [where_clause] or []
+            except:
+                logging.getLogger('sql.error').warn('%s %s' % (self._name, domain))
+                raise
         else:
             where_clause, where_params, tables, left_join = [], [], ['"%s"' % self._table], {}
 
