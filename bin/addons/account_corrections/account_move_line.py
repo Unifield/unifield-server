@@ -60,7 +60,6 @@ class account_move_line(osv.osv):
             if j.get('default_credit_account_id', False) and j.get('default_credit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_credit_account_id')[0])
 
-        cached_move = {}
         acc_corr = {}
 
         # Skip to next element if the line is set to False
@@ -123,7 +122,6 @@ class account_move_line(osv.osv):
             if ml.reconcile_id or ml.reconcile_partial_id:
                 res[ml.id] = False
                 continue
-        del cached_move
         return res
 
     _columns = {
