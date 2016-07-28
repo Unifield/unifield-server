@@ -60,9 +60,12 @@ class account_move_line(osv.osv):
             if j.get('default_credit_account_id', False) and j.get('default_credit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_credit_account_id')[0])
 
+        acc_corr = {}
+
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
+            acc_corr.setdefault(ml.account_id.id, ml.account_id.user_type.not_correctible)
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
                 res[ml.id] = False
@@ -72,7 +75,7 @@ class account_move_line(osv.osv):
                 res[ml.id] = False
                 continue
             # False if account type code (User type) is set as non correctible
-            if ml.account_id.user_type.not_correctible is True:
+            if acc_corr.get(ml.account_id.id):
                 res[ml.id] = False
                 continue
             # False if line have been corrected
@@ -94,11 +97,6 @@ class account_move_line(osv.osv):
                 accounts.append(ml.statement_id.journal_id.default_credit_account_id and ml.statement_id.journal_id.default_credit_account_id.id)
                 if ml.account_id.id in accounts:
                     res[ml.id] = False
-                    continue
-            # False if one of move line account is reconciliable and reconciled
-            for aml in ml.move_id.line_id:
-                if aml.account_id.reconcile and (aml.reconcile_id or aml.reconcile_partial_id):
-                    res[aml.id] = False
                     continue
             # False if this line come from a write-off
             if ml.is_write_off:
