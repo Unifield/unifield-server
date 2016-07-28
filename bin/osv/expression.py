@@ -22,7 +22,7 @@
 
 from tools import flatten, reverse_enumerate
 import fields
-
+from osv import orm
 
 class expression(object):
     """
@@ -73,6 +73,7 @@ class expression(object):
         self.__field_tables = {}  # used to store the table to use for the sql generation. key = index of the leaf
         self.__all_tables = set()
         self.__joins = []
+        self.__left_joins = {}
         self.__main_table = None # 'root' table. set by parse()
         self.__DUMMY_LEAF = (1, '=', 1) # a dummy leaf that must not be parsed or sql generated
 
@@ -121,17 +122,25 @@ class expression(object):
             fargs = left.split('.', 1)
             try_join = False
             inherited_fields = fargs[0] in table._inherit_fields
-            if not inherited_fields and len(fargs) == 2: # and '.' not in fargs[1]:
+            if not isinstance(table, orm.orm_memory) and not inherited_fields and len(fargs) == 2: # and '.' not in fargs[1]:
                 field = working_table._columns.get(fargs[0], False)
-                if field and field._type == 'many2one' and field.required and field._obj:
-                    working_table = working_table.pool.get(field._obj)
-                    if working_table not in self.__all_tables:
-                        self.__joins.append('%s.%s=%s.%s' % (working_table._table, 'id', main_table._table, fargs[0]))
-                        self.__all_tables.add(working_table)
-                    self.__field_tables[i] = working_table
-                    left = fargs[1]
-                    fargs = left.split('.', 1)
-                    self.__exp[i] = (left, operator, right)
+                stop = False
+                if field and field._type == 'many2one' and field._obj: # and field.required
+                    new_working_table = working_table.pool.get(field._obj)
+                    if field.required and new_working_table not in self.__all_tables:
+                        self.__joins.append('%s.%s=%s.%s' % (new_working_table._table, 'id', main_table._table, fargs[0]))
+                        self.__all_tables.add(new_working_table)
+                    elif not field.required:
+                        if new_working_table._table in [x[0] for x in self.__left_joins.get('"%s"'%main_table._table, [])]:
+                            stop = True
+                        else:
+                            self.__left_joins.setdefault('"%s"'%main_table._table, []).append((new_working_table._table, fargs[0], 'id', 'LEFT JOIN'))
+                    if not stop:
+                        working_table = new_working_table
+                        self.__field_tables[i] = working_table
+                        left = fargs[1]
+                        fargs = left.split('.', 1)
+                        self.__exp[i] = (left, operator, right)
 
             if inherited_fields:
                 while True:
@@ -528,7 +537,7 @@ class expression(object):
         joins = ' AND '.join(self.__joins)
         if joins:
             query = '(%s) AND (%s)' % (joins, query)
-        return (query, flatten(params))
+        return (query, flatten(params), self.__left_joins)
 
     def get_tables(self):
         return ['"%s"' % t._table for t in self.__all_tables]

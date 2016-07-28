@@ -4327,12 +4327,12 @@ class orm(orm_template):
             e = expression.expression(domain)
             e.parse(cr, user, self, context)
             tables = e.get_tables()
-            where_clause, where_params = e.to_sql()
+            where_clause, where_params, left_join = e.to_sql()
             where_clause = where_clause and [where_clause] or []
         else:
-            where_clause, where_params, tables = [], [], ['"%s"' % self._table]
+            where_clause, where_params, tables, left_join = [], [], ['"%s"' % self._table], {}
 
-        return Query(tables, where_clause, where_params)
+        return Query(tables, where_clause, where_params, joins=left_join)
 
     def _check_qorder(self, word):
         if not regex_order.match(word):

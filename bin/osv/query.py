@@ -102,12 +102,12 @@ class Query(object):
 
         def add_joins_for_table(table, query_from):
             for (dest_table, lhs_col, col, join) in self.joins.get(table,[]):
-                tables_to_process.remove(dest_table)
+                if dest_table in tables_to_process:
+                    tables_to_process.remove(dest_table)
                 query_from += ' %s %s ON (%s."%s" = %s."%s")' % \
                     (join, dest_table, table, lhs_col, dest_table, col)
                 query_from = add_joins_for_table(dest_table, query_from)
             return query_from
-
         for table in tables_to_process:
             query_from += table
             if table in self.joins:
