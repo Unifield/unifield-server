@@ -438,7 +438,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         ], limit=1, context=context)
                     if not period_ids:
                         raise osv.except_osv(_('Warning'),
-                            _('The date chosen in the wizard is not in the same period than the imported entries.'))
+                            _('The date chosen in the wizard is not in the same period as the imported entries.'))
                     period = period_obj.browse(
                         cr, uid, period_ids[0], context=context)
                     if period.state in ('created', 'done', ):
