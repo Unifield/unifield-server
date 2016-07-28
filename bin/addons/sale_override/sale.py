@@ -840,12 +840,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
         res = {}
 
-        for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = True
-            for line in order.order_line:
-                res[order.id] = False
-                break
-            # better: if order.order_line: res[order.id] = False
+        for order in self.read(cr, uid, ids, ['order_line'], context=context):
+            res[order['id']] = True
+            if order['order_line']:
+                res[order['id']] = False
 
         return res
 
