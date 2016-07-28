@@ -330,8 +330,7 @@ class TinyForm(object):
                                 many_to_many_fields.append(name)
                         if many_to_many_fields:
                             relation_objects = Relation.read(o2m_ids,
-                                    many_to_many_fields, rpc.session.context,
-                                    '_classic_read', True)
+                                    many_to_many_fields, rpc.session.context)
                             for relation_record in relation_objects:
                                 for field_name, field_value in relation_record.items():
                                     if field_name != 'id':
