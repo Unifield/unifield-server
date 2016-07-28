@@ -429,6 +429,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 continue
                             r_fp = fp_ids[0]
                     # US-937: use period of import file
+                    if line[cols['Period']] == 'Period 16':
+                        raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
                     period_ids = period_obj.search(
                         cr, uid, [
                             ('id', 'in', wiz_period_ids),
