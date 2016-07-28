@@ -662,6 +662,21 @@ class patch_scripts(osv.osv):
         cr.execute(sql)
         return True
 
+    def us_1452_patch(self, cr, uid, *a, **b):
+        """
+        Put 1.00 as cost price for all product with cost price = 0.00
+        """
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_br = setup_obj.get_config(cr, uid)
+        sale_percent = 1.00
+        if setup_br:
+            sale_percent = 1 + (setup_br.sale_price/100.00)
+
+
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        cr.execute(sql, (sale_percent, ))
+        return True
+
 patch_scripts()
 
 
