@@ -249,7 +249,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         'amount_discrepancy': fields.function(_get_totals, method=True,
                                            type='float', string='Discrepancy',
                                            readonly=True, store=False, multi='simu'),
-        'imp_nb_po_lines': fields.function(_get_import_lines, methode=True,
+        'imp_nb_po_lines': fields.function(_get_import_lines, method=True,
                                            type='integer', string='Nb Import lines',
                                            readonly=True),
         'simu_line_ids': fields.one2many('wizard.import.po.simulation.screen.line',
