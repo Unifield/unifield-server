@@ -180,7 +180,8 @@ class expression(object):
                     # values in the database, so we must ignore it : we generate a dummy leaf
                     self.__exp[i] = self.__DUMMY_LEAF
                 else:
-                    subexp = field.search(cr, uid, table, left, [self.__exp[i]], context=context)
+                    # TODO test: fields.related on inherited fields
+                    subexp = field.search(cr, uid, working_table, left, [self.__exp[i]], context=context)
                     if not subexp:
                         self.__exp[i] = self.__DUMMY_LEAF
                     else:
@@ -188,8 +189,12 @@ class expression(object):
                         # we create a dummy leaf for forcing the parsing of the resulting expression
                         self.__exp[i] = '&'
                         self.__exp.insert(i + 1, self.__DUMMY_LEAF)
+                        new_fields = {}
                         for j, se in enumerate(subexp):
                             self.__exp.insert(i + 2 + j, se)
+                            if self.__field_tables.get(i+j):
+                                self.__field_tables[i+2+j] = self.__field_tables[i+j]
+                                del self.__field_tables[i+j]
             # else, the value of the field is store in the database, so we search on it
 
             elif field._type == 'one2many':
