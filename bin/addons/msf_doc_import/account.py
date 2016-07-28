@@ -184,13 +184,14 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
 
             # Check wizard data
+            period_obj = self.pool.get('account.period')
             period_ctx = context.copy()
             period_ctx['extend_december'] = True
             for wiz in self.browse(cr, uid, ids):
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00})
                 # UF-2045: Check that the given date is in an open period
-                wiz_period_ids = self.pool.get('account.period').get_period_from_date(
+                wiz_period_ids = period_obj.get_period_from_date(
                     cr, uid, wiz.date, period_ctx)
                 if not wiz_period_ids:
                     raise osv.except_osv(_('Warning'), _('No period found!'))
@@ -427,19 +428,19 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
                                 continue
                             r_fp = fp_ids[0]
-                        # US-937: use period of import file
-                        period_ids = self.pool.get('account.period').search(
-                            cr, uid, [
-                                ('id', 'in', wiz_period_ids),
-                                ('name', '=', line[cols['Period']]),
-                            ], context=context)
-                        if not period_ids:
-                            raise osv.except_osv(_('Warning'),
-                                _('Date chosen in wizard is not in same month than imported entries.'))
-                        period = self.pool.get('account.period').browse(
-                            cr, uid, period_ids[0], context=context)
-                        if period.state in ('created', 'done', ):
-                            raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
+                    # US-937: use period of import file
+                    period_ids = period_obj.search(
+                        cr, uid, [
+                            ('id', 'in', wiz_period_ids),
+                            ('name', '=', line[cols['Period']]),
+                        ], limit=1, context=context)
+                    if not period_ids:
+                        raise osv.except_osv(_('Warning'),
+                            _('The date chosen in the wizard is not in the same period than the imported entries.'))
+                    period = period_obj.browse(
+                        cr, uid, period_ids[0], context=context)
+                    if period.state in ('created', 'done', ):
+                        raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
                             
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
