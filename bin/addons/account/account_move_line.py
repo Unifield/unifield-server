@@ -1160,14 +1160,22 @@ class account_move_line(osv.osv):
         #self._update_check(cr, uid, ids, context)
         self.check_unlink(cr, uid, ids, context)
         result = False
+        move_ids = set()
         for line in self.browse(cr, uid, ids, context=context):
             context['journal_id'] = line.journal_id.id
             context['period_id'] = line.period_id.id
             result = super(account_move_line, self).unlink(cr, uid, [line.id], context=context)
+            if not context.get('sync_update_execution'):
+                move_ids.add(line.move_id.id)
             if check:
                 move_obj.validate(cr, uid, [line.move_id.id], context=context)
             elif context.get('sync_update_execution'):
                 move_obj.validate_sync(cr, uid, [line.move_id.id], context=context)
+
+        if move_ids:
+            # to delete a JI you should have access right to write on JE
+            self.pool.get('account.move').write(cr, uid, list(move_ids), {'faked_field': True}, context=context)
+
         return result
 
     def _check_date(self, cr, uid, vals, context=None, check=True):
