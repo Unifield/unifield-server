@@ -2043,61 +2043,44 @@ class stock_picking(osv.osv):
         get functional values
         '''
         result = {}
+        if not isinstance(fields, (list, tuple)):
+            fields = [fields]
 
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
-            values = {
-                'total_amount': 0.0,
-                'currency_id': False,
-                'is_dangerous_good': '',
-                'is_keep_cool': '',
-                'is_narcotic': '',
-                'num_of_packs': 0,
-                'total_volume': 0.0,
-                'total_weight': 0.0,
-                # 'is_completed': False,
-            }
-            result[stock_picking['id']] = values
+            current_id = stock_picking['id']
+            result[current_id] = {}
 
-            if stock_picking['pack_family_memory_ids']:
+            # calculate only if field is asked
+            if set(('num_of_packs', 'total_weight',
+                'total_volume')).intersection(fields) and\
+                        stock_picking['pack_family_memory_ids']:
                 for family in self.pool.get('pack.family.memory').browse(cr, uid, stock_picking['pack_family_memory_ids'], context=context):
-                    if family.shipment_id and family.shipment_id.parent_id and family.not_shipped:
+                    if family.shipment_id and family.not_shipped and family.shipment_id.parent_id:
                         continue
                     # number of packs from pack_family
                     num_of_packs = family['num_of_packs']
-                    values['num_of_packs'] += int(num_of_packs)
+                    if not 'num_of_packs' in result[current_id]:
+                        result[current_id]['num_of_packs'] = 0
+                    result[current_id]['num_of_packs'] += int(num_of_packs)
                     # total_weight
                     total_weight = family['total_weight']
-                    values['total_weight'] += float(total_weight)
+                    if not 'total_weight' in result[current_id]:
+                        result[current_id]['total_weight'] = 0
+                    result[current_id]['total_weight'] += float(total_weight)
                     total_volume = family['total_volume']
-                    values['total_volume'] += float(total_volume)
+                    if not 'total_volume' in result[current_id]:
+                        result[current_id]['total_volume'] = 0
+                    result[current_id]['total_volume'] += float(total_volume)
 
-            if stock_picking['move_lines']:
-
-                for move in self.pool.get('stock.move').read(cr, uid, stock_picking['move_lines'], ['total_amount', 'currency_id', 'is_dangerous_good', 'is_keep_cool', 'is_narcotic', 'product_qty'], context=context):
-                    # total amount (float)
-                    total_amount = move['total_amount']
-                    values['total_amount'] = total_amount
-                    # currency
-                    values['currency_id'] = move['currency_id'] or False
-                    # dangerous good
-                    values['is_dangerous_good'] = values['is_dangerous_good'] or move['is_dangerous_good']
-                    # keep cool - if heat_sensitive_item is True
-                    values['is_keep_cool'] = values['is_dangerous_good'] or move['is_keep_cool']
-                    # narcotic
-                    values['is_narcotic'] = values['is_dangerous_good'] or move['is_narcotic']
-
-            # completed field - based on the previous_step_ids field, recursive call from picking to draft packing and packing
-            # - picking checks that the corresponding ppl is completed
-            # - ppl checks that the corresponding draft packing and packings are completed
-            # the recursion stops there because packing does not have previous_step_ids values
-#            completed = stock_picking.state in ('done', 'cancel')
-#            if completed:
-#                for next_step in stock_picking.previous_step_ids:
-#                    if not next_step.is_completed:
-#                        completed = False
-#                        break
-#
-#            values['is_completed'] = completed
+            # get only the fields asked:
+            if fields and stock_picking['move_lines']:
+                move_obj = self.pool.get('stock.move')
+                # initialyse the dict
+                result[current_id][field] = dict.fromkeys(fields, '')
+                for move in move_obj.read(cr, uid, stock_picking['move_lines'],
+                        fields, context):
+                    for field in fields:
+                        result[current_id][field] = result[current_id][field] or move[field]
 
         return result
 
@@ -2265,11 +2248,13 @@ class stock_picking(osv.osv):
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'),  # old_multi get_vals
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
-                'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals'),
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals'),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals'),
-                'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals'),
-                'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals'),
+                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
+                'is_dangerous_good': fields.function(_vals_get, method=True,
+                    type='char', size=8, string='Dangerous Good', multi=False),
+                'is_keep_cool': fields.function(_vals_get, method=True,
+                    type='char', size=8, string='Keep Cool', multi=False),
+                'is_narcotic': fields.function(_vals_get, method=True,
+                    type='char', size=8, string='CS', multi=False),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
                                     store={'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10), }),
                 'line_state': fields.function(_get_lines_state, method=True, type='selection',
@@ -4574,12 +4559,10 @@ class stock_move(osv.osv):
                 num_of_packs = 0
             else:
                 num_of_packs = move.to_pack - move.from_pack + 1
+                if num_of_packs:
+                    values['qty_per_pack'] = move.product_qty / num_of_packs
             values['num_of_packs'] = num_of_packs
             # quantity per pack
-            if num_of_packs:
-                values['qty_per_pack'] = move.product_qty / num_of_packs
-            else:
-                values['qty_per_pack'] = 0
             # total amount (float)
             total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
             if move.sale_line_id:
@@ -4663,7 +4646,7 @@ class stock_move(osv.osv):
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',),  # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals',),
+                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals'),
                 'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals',),
                 'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals',),
                 'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',),  # old_multi get_vals
@@ -4915,7 +4898,9 @@ class pack_family_memory(osv.osv):
         '''
         result = {}
         compute_moves = not fields or 'move_lines' in fields
-        for pf_memory in self.browse(cr, uid, ids, context=context):
+        for pf_memory in self.read(cr, uid, ids, ['num_of_packs',
+                'total_amount', 'weight', 'length', 'width', 'height'],
+                context=context):
             values = {
                 'amount': 0.0,
                 'total_weight': 0.0,
@@ -4923,13 +4908,13 @@ class pack_family_memory(osv.osv):
             }
             if compute_moves:
                 values['move_lines'] = []
-            num_of_packs = pf_memory.num_of_packs
+            num_of_packs = pf_memory['num_of_packs']
             if num_of_packs:
-                values['amount'] = pf_memory.total_amount / num_of_packs
-            values['total_weight'] = pf_memory.weight * num_of_packs
-            values['total_volume'] = (pf_memory.length * pf_memory.width * pf_memory.height * num_of_packs) / 1000.0
+                values['amount'] = pf_memory['total_amount'] / num_of_packs
+            values['total_weight'] = pf_memory['weight'] * num_of_packs
+            values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
 
-            result[pf_memory.id] = values
+            result[pf_memory['id']] = values
 
         if compute_moves and ids:
             if isinstance(ids, (int, long)):
