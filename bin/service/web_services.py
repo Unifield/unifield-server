@@ -168,6 +168,9 @@ class db(netsvc.ExportService):
         self.actions[id]['thread'] = create_thread
         return id
 
+    def exp_check_timezone(self):
+        return check_tz()
+
     def exp_get_progress(self, id):
         if self.actions[id]['thread'].isAlive():
 #           return addons.init_progress[db_name]
