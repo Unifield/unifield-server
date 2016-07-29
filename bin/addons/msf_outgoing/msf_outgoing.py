@@ -2038,7 +2038,31 @@ class stock_picking(osv.osv):
             result[i[0]] = i[1] or 0
         return result
 
-    def _vals_get(self, cr, uid, ids, field, arg, context=None):
+    def _is_one_of_the_move_lines(self, cr, uid, ids, field, arg, context=None):
+        result = {}
+        move_obj = self.pool.get('stock.move')
+        for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
+            current_id = stock_picking['id']
+            result[current_id] = ''
+            for move in move_obj.read(cr, uid, stock_picking['move_lines'],
+                    [field], context):
+                if move[field]:
+                    result[current_id] = move[field]
+                    break
+        return result
+
+    def _get_currency(self, cr, uid, ids, field, arg, context=None):
+        move_obj = self.pool.get('stock.move')
+        result = {}
+        move_obj = self.pool.get('stock.move')
+        for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
+            current_id = stock_picking['id']
+            currency_id = move_obj.read(cr, uid, stock_picking['move_lines'][0], [field], context)
+            result[current_id] = currency_id
+        return result
+
+
+    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
         '''
@@ -2046,11 +2070,7 @@ class stock_picking(osv.osv):
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
             current_id = stock_picking['id']
             result[current_id] = ''
-
-            # calculate only if field is asked
-            if field in ('num_of_packs', 'total_weight',
-                'total_volume') and\
-                        stock_picking['pack_family_memory_ids']:
+            if stock_picking['pack_family_memory_ids']:
                 for family in self.pool.get('pack.family.memory').browse(cr, uid, stock_picking['pack_family_memory_ids'], context=context):
                     if family.shipment_id and family.not_shipped and family.shipment_id.parent_id:
                         continue
@@ -2068,21 +2088,6 @@ class stock_picking(osv.osv):
                     if not 'total_volume' in result[current_id]:
                         result[current_id] = 0
                     result[current_id] += float(total_volume)
-
-            elif field == 'currency_id':
-                currency_id = move_obj.read(cr, uid, stock_picking['move_lines'][0], [field], context)
-                result[current_id][field] = currency_id
-
-            elif field in ('is_dangerous_good', 'is_keep_cool', 'is_narcotic') and stock_picking['move_lines']:
-                move_obj = self.pool.get('stock.move')
-                # initialyse the dict
-                result[current_id] = '' 
-                for move in move_obj.read(cr, uid, stock_picking['move_lines'],
-                        [field], context):
-                    if move[field]:
-                        result[current_id] = move[field]
-                        break
-
         return result
 
     def is_completed(self, cr, uid, ids, context=None):
@@ -2246,16 +2251,16 @@ class stock_picking(osv.osv):
                 # flag for converted picking
                 'converted_to_standard': fields.boolean(string='Converted to Standard'),
                 # functions
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X'),  # old_multi get_vals
+                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals'),
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
-                'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
-                'is_dangerous_good': fields.function(_vals_get, method=True,
-                    type='char', size=8, string='Dangerous Good', multi=False),
-                'is_keep_cool': fields.function(_vals_get, method=True,
-                    type='char', size=8, string='Keep Cool', multi=False),
-                'is_narcotic': fields.function(_vals_get, method=True,
-                    type='char', size=8, string='CS', multi=False),
+                'currency_id': fields.function(_get_currency, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
+                'is_dangerous_good': fields.function(_is_one_of_the_move_lines, method=True,
+                    type='char', size=8, string='Dangerous Good'),
+                'is_keep_cool': fields.function(_is_one_of_the_move_lines, method=True,
+                    type='char', size=8, string='Keep Cool'),
+                'is_narcotic': fields.function(_is_one_of_the_move_lines, method=True,
+                    type='char', size=8, string='CS'),
                 'overall_qty': fields.function(_get_overall_qty, method=True, fnct_search=_qty_search, type='float', string='Overall Qty',
                                     store={'stock.move': (_get_picking_ids, ['product_qty', 'picking_id'], 10), }),
                 'line_state': fields.function(_get_lines_state, method=True, type='selection',
