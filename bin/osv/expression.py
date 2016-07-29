@@ -141,6 +141,9 @@ class expression(object):
                         left = fargs[1]
                         fargs = left.split('.', 1)
                         self.__exp[i] = (left, operator, right)
+                        inherited_fields = fargs[0] in working_table._inherit_fields
+                        if inherited_fields:
+                            main_table = working_table
 
             if inherited_fields:
                 while True:
