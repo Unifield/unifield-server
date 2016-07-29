@@ -465,6 +465,14 @@ class expression(object):
 
             if right == False and (leaf[0] in table._columns)  and table._columns[leaf[0]]._type=="boolean"  and (operator == '='):
                 query = '(%s.%s IS NULL or %s.%s = false )' % (table._table, left,table._table, left)
+                if self.__main_table._table != table._table:
+                    joined_info = []
+                    for joined_table in self.__left_joins.get('"%s"'%self.__main_table._table, []):
+                        if joined_table[0] == table._table:
+                            joined_info = joined_table
+                            break
+                    if joined_info:
+                        query = '(%s.%s IS NOT NULL AND (%s))' % (joined_info[0], joined_info[2], query)
             elif (((right == False) and (type(right)==bool)) or (right is None)) and (operator == '='):
                 query = '%s.%s IS NULL ' % (table._table, left)
             elif right == False and (leaf[0] in table._columns)  and table._columns[leaf[0]]._type=="boolean"  and (operator in ['<>', '!=']):
