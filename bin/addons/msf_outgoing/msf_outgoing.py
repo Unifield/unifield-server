@@ -2038,21 +2038,18 @@ class stock_picking(osv.osv):
             result[i[0]] = i[1] or 0
         return result
 
-    def _vals_get(self, cr, uid, ids, fields, arg, context=None):
+    def _vals_get(self, cr, uid, ids, field, arg, context=None):
         '''
         get functional values
         '''
         result = {}
-        if not isinstance(fields, (list, tuple)):
-            fields = [fields]
-
         for stock_picking in self.read(cr, uid, ids, ['pack_family_memory_ids', 'move_lines'], context=context):
             current_id = stock_picking['id']
-            result[current_id] = {}
+            result[current_id] = ''
 
             # calculate only if field is asked
-            if set(('num_of_packs', 'total_weight',
-                'total_volume')).intersection(fields) and\
+            if field in ('num_of_packs', 'total_weight',
+                'total_volume') and\
                         stock_picking['pack_family_memory_ids']:
                 for family in self.pool.get('pack.family.memory').browse(cr, uid, stock_picking['pack_family_memory_ids'], context=context):
                     if family.shipment_id and family.not_shipped and family.shipment_id.parent_id:
@@ -2060,27 +2057,31 @@ class stock_picking(osv.osv):
                     # number of packs from pack_family
                     num_of_packs = family['num_of_packs']
                     if not 'num_of_packs' in result[current_id]:
-                        result[current_id]['num_of_packs'] = 0
-                    result[current_id]['num_of_packs'] += int(num_of_packs)
+                        result[current_id] = 0
+                    result[current_id] += int(num_of_packs)
                     # total_weight
                     total_weight = family['total_weight']
                     if not 'total_weight' in result[current_id]:
-                        result[current_id]['total_weight'] = 0
-                    result[current_id]['total_weight'] += float(total_weight)
+                        result[current_id] = 0
+                    result[current_id] += float(total_weight)
                     total_volume = family['total_volume']
                     if not 'total_volume' in result[current_id]:
-                        result[current_id]['total_volume'] = 0
-                    result[current_id]['total_volume'] += float(total_volume)
+                        result[current_id] = 0
+                    result[current_id] += float(total_volume)
 
-            # get only the fields asked:
-            if fields and stock_picking['move_lines']:
+            elif field == 'currency_id':
+                currency_id = move_obj.read(cr, uid, stock_picking['move_lines'][0], [field], context)
+                result[current_id][field] = currency_id
+
+            elif field in ('is_dangerous_good', 'is_keep_cool', 'is_narcotic') and stock_picking['move_lines']:
                 move_obj = self.pool.get('stock.move')
                 # initialyse the dict
-                result[current_id] = dict.fromkeys(fields, '')
+                result[current_id] = '' 
                 for move in move_obj.read(cr, uid, stock_picking['move_lines'],
-                        fields, context):
-                    for field in fields:
-                        result[current_id][field] = result[current_id][field] or move[field]
+                        [field], context):
+                    if move[field]:
+                        result[current_id] = move[field]
+                        break
 
         return result
 
