@@ -2076,7 +2076,7 @@ class stock_picking(osv.osv):
             if fields and stock_picking['move_lines']:
                 move_obj = self.pool.get('stock.move')
                 # initialyse the dict
-                result[current_id][field] = dict.fromkeys(fields, '')
+                result[current_id] = dict.fromkeys(fields, '')
                 for move in move_obj.read(cr, uid, stock_picking['move_lines'],
                         fields, context):
                     for field in fields:
