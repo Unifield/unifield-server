@@ -1001,6 +1001,27 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         res = super(sale_order, self).onchange_partner_id(cr, uid, ids, part)
 
         if part and order_type:
+            p_obj = self.pool.get('res.partner')
+            p_domain = [
+                ('id', '=', part),
+                ('customer', '=', True),
+                ('check_partner_so', '=', {'order_type': order_type, 'partner_id': part}),
+            ]
+            if not p_obj.search(cr, uid, p_domain, limit=1, order='NO_ORDER'):
+                res.setdefault('value', {})
+                res['value'].update({
+                    'partner_id': False,
+                    'partner_type': False,
+                    'partner_order_id': False,
+                    'partner_invoice_id': False,
+                    'partner_shipping_id': False,
+                    'pricelist_id': False,
+                })
+                res['warning'] = {
+                    'title': _('Bad partner'),
+                    'message': _('You cannot select this partner because it\'s not a customer or have a partner type not compatible with order type'),
+                }
+
             res2 = self.onchange_order_type(cr, uid, ids, order_type, part)
             if res2.get('value'):
                 if res.get('value'):
