@@ -769,7 +769,6 @@ class stock_move(osv.osv):
                                                               'cs_txt',
                                                               'batch_management',
                                                               'perishable',
-                                                              'prodlot_id',
                                                               'type',
                                                               'subtype',],
                                                              context=context)
@@ -797,9 +796,9 @@ class stock_move(osv.osv):
             # will be false if the kit is batch management and a composition list already uses this batch number
             # only one composition list can  use a given batch number for a given product
             if product['type'] == 'product' and product['subtype'] == 'kit':
-                if product['prodlot_id']:
+                if stock_move_dict['prodlot_id']:
                     # search if composition list already use this batch number
-                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', product['prodlot_id'])], context=context)
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', stock_move_dict['prodlot_id'])], context=context)
                     if not kit_ids:
                         result[stock_move_id]['kit_check'] = True
                 else:
