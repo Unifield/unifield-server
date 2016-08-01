@@ -769,6 +769,7 @@ class stock_move(osv.osv):
                                                               'cs_txt',
                                                               'batch_management',
                                                               'perishable',
+                                                              'prodlot_id',
                                                               'type',
                                                               'subtype',],
                                                              context=context)
