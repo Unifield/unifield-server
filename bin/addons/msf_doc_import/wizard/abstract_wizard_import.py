@@ -316,6 +316,12 @@ class abstract_wizard_import(osv.osv_memory):
         :param wizard_brw: browse_record of an import wizard
         :return: An iterator on the rows of the file
         """
+        if not wizard_brw.import_file:
+            raise osv.except_osv(
+                _('Error'),
+                _('No file to import. Please select a file or download the template file and fill it.')
+            )
+
         if not self.check_utf8_encoding(wizard_brw.import_file):
             raise osv.except_osv(
                 _('Error'),
