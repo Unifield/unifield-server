@@ -70,7 +70,7 @@ class account_period(osv.osv):
         curr_rate_obj = self.pool.get('res.currency.rate')
 
         # previous state of the period
-        ap_dict = self.read(cr, uid, ids)[0]
+        ap_dict = self.read(cr, uid, ids, ['state'])[0]
         previous_state = ap_dict['state']
 
 

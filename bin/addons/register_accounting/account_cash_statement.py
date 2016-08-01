@@ -137,7 +137,7 @@ class account_cash_statement(osv.osv):
                     if not r['closing_balance_frozen']:
                         if r['journal_id']:
                             jtype = self.pool.get('account.journal').read(cr,
-                                uid, [r['journal_id'][0]],
+                                uid, [r['journal_id'][0]], ['type'],
                                 context=context)[0]['type']
                             if jtype != 'cash':
                                 args = [('prev_reg_id', '=', r['id'])]
