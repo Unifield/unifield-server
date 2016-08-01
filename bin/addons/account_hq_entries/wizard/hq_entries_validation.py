@@ -315,7 +315,7 @@ class hq_entries_validation(osv.osv_memory):
 
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
-            res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
+            res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date, context=context)
             acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
             if not acor_journal_ids:
                 raise osv.except_osv(_('Error'), _('No correction journal found!'))
@@ -471,7 +471,7 @@ class hq_entries_validation(osv.osv_memory):
                     ('move_id', '=', all_lines[line.id])
                     ])
                 # UTP-943: Add original date as reverse date
-                res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines, posting_date=line.date)
+                res_reverse = ana_line_obj.reverse(cr, uid, fp_old_lines, posting_date=line.date, context=context)
                 # Give them analytic correction journal (UF-1385 in comments)
                 if not acor_journal_id:
                     self.write(cr, uid, [wiz.id], {'running': False})
