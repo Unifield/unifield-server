@@ -159,7 +159,7 @@ class abstract_wizard_import(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context=context):
             if wiz.state == 'done':
-                res[wiz.id] = 1.00
+                res[wiz.id] = 100.00
             elif wiz.state == 'draft':
                 res[wiz.id] = 0.00
             else:
@@ -319,7 +319,13 @@ class abstract_wizard_import(osv.osv_memory):
         if not wizard_brw.import_file:
             raise osv.except_osv(
                 _('Error'),
-                _('No file to import. Please select a file or download the template file and fill it.')
+                _('No file to import. Please select a file or download the template file and fill it.'),
+            )
+
+        if wizard_brw.state != 'draft':
+            raise osv.except_osv(
+                _('Error'),
+                _('Import can be run only on draft wizard.'),
             )
 
         if not self.check_utf8_encoding(wizard_brw.import_file):

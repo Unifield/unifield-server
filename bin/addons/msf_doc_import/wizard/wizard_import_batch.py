@@ -136,16 +136,16 @@ class wizard_import_batch(osv.osv_memory):
         def save_error(errors):
             if not isinstance(errors, list):
                 errors = [errors]
-            import_errors.setdefault(row_index+1, [])
-            import_errors[row_index+1].extend(errors)
+            import_errors.setdefault(row_index+2, [])
+            import_errors[row_index+2].extend(errors)
 
         # Manage warnings
         import_warnings = {}
         def save_warnings(warnings):
             if not isinstance(warnings, list):
                 warnings = [warnings]
-            import_warnings.setdefault(row_index+1, [])
-            import_warnings[row_index+1].extend(warnings)
+            import_warnings.setdefault(row_index+2, [])
+            import_warnings[row_index+2].extend(warnings)
 
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers)
@@ -253,6 +253,9 @@ class wizard_import_batch(osv.osv_memory):
                 err_msg += _('Line %s: %s') % (lnum, err)
                 err_msg += '\n'
 
+        if err_msg:
+            cr.rollback()
+
         self.write(cr, uid, [import_brw.id], {
             'error_message': err_msg,
             'warning_message': warn_msg,
@@ -260,7 +263,7 @@ class wizard_import_batch(osv.osv_memory):
             'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
         }, context=context)
 
-        cr.rollback()
+        cr.commit()
         cr.close()
 
         return True
