@@ -14,17 +14,19 @@
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU Affero General Public License for more details.
 #
-#    You should have received a..wizard.wizard_import_batch import IMPORT_BATCH_HEADERS copy of the GNU Affero General Public License
+#    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
 
 import base64
-import logging
+import string
 
 from osv import osv
 from osv import fields
 from tools.translate import _
+
+from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
 def check_utf8_encoding(file_to_check, base='base64'):
@@ -47,29 +49,27 @@ class ImportHeader(object):
     """
     type_ok = ['String', 'Number', 'DateTime']
 
-    def __new__(self, name, type='String', size=70):
+    def __new__(cls, name, ftype='String', size=70, tech_name=None, required=False):
         """
         Initialize a header column for template export.
         :param name: Name of the field
         :param ftype: Type of the field
         :param size: Displayed size on Excel file
+        :param techn_name: Technical name of the field to compute
+        :param required: Is the field should be set or not ?
         """
-        self.fld_name = name
-        self.fld_type = type
-        self.fld_size = size
-
-        if self.fld_type not in ImportHeader.type_ok:
-            err_msg = '''Defined type of header \'%s\' is not in the list of possible type: %s - Please contact
+        if ftype not in ImportHeader.type_ok:
+            err_msg = _('''Defined type of header \'%s\' is not in the list of possible type: %s - Please contact
 your support team and give us this message.
-            ''' % (
-                self.fld_name, ', '.join(t for t in ImportHeader.type_ok)
+            ''') % (
+                name, ', '.join(t for t in ImportHeader.type_ok)
             )
             raise osv.except_osv(
                 _('Error'),
                 err_msg,
             )
 
-        return (self.fld_name, self.fld_type, self.fld_size)
+        return name, ftype, size, tech_name
 
 
 class abstract_wizard_import(osv.osv):
@@ -145,7 +145,7 @@ class abstract_wizard_import(osv.osv):
             _get_progression,
             method=True,
             type='float',
-            digits=(16,2),
+            digits=(16, 2),
             string='Progression',
             store=False,
             readonly=False,
@@ -175,30 +175,12 @@ class abstract_wizard_import(osv.osv):
         'state': 'draft',
     }
 
+    errors = {}
+
     def exists(self, cr, uid, ids, context=None):
         if self._name != 'abstract.wizard.import':
             return super(abstract_wizard_import, self).exists(cr, uid, ids, context=context)
         return False
-
-    def onchange_import_file(self, cr, uid, ids, import_file, context=None):
-        """
-        When the file to import is changed, check if the file is encoding in UTF-8
-        """
-        res = {}
-
-        if import_file:
-            if not check_utf8_encoding(import_file):
-                res.update({
-                    'warning': {
-                        'title': _('Bad encoding'),
-                        'message': _('The given file is not encoding in UTF-8. Please verify its encoding before retry'),
-                    },
-                    'values': {
-                        'import_file': False,
-                    },
-                })
-
-        return res
 
     def _get_template_file_data(self):
         """
@@ -219,6 +201,110 @@ class abstract_wizard_import(osv.osv):
             'report_name': 'wizard.import.generic.template',
             'datas': self._get_template_file_data(),
         }
+
+    def run_import(self, cr, uid, ids, context=None):
+        raise osv.except_osv(
+            _('Error'),
+            _('No \'run_import\' action is defined for the object \'%s\'!') % self._name,
+        )
+
+    def check_utf8_encoding(self, import_file, base='base64'):
+        """
+        Check if the given file is an good UTF-8 file
+        """
+        if base == 'base64':
+            import_file = base64.decodestring(import_file)
+
+        try:
+            import_file.decode('utf-8')
+            return True
+        except UnicodeError:
+            return False
+
+    def read_file(self, wizard_brw):
+        """
+        Open the Spreadsheet XML file
+        :param wizard_brw: browse_record of an import wizard
+        :return: An iterator on the rows of the file
+        """
+        if not self.check_utf8_encoding(wizard_brw.import_file):
+            raise osv.except_osv(
+                _('Error'),
+                _('The given file seems not to be encoding in UTF-8. Please check the encoding of the file and re-try.')
+            )
+
+        file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wizard_brw.import_file))
+        # iterator on rows
+        return file_obj.getRows()
+
+    def check_headers(self, headers_row, headers_title):
+        """
+        Check if the header in the first row of the file are the same as the expected headers
+        :param headers_row: Row that contains the header on the Excel file
+        :param headers_title: List of expected headers
+        :return: True or raise an error
+        """
+        if len(headers_row) != len(headers_title):
+            raise osv.except_osv(
+                _('Error'),
+                _('The number of columns in the Excel file (%s) is different than the expected number '\
+                        'of columns (%s).\nColumns should be in this order: %s') % (
+                    len(headers_row),
+                    len(headers_title),
+                    '\n * '.join(h[0] for h in headers_title),
+                ),
+            )
+
+        errors = []
+        headers_title_up = [x[0].upper() for x in headers_title]
+        headers_row_up = [_(headers_row[i].data).upper() for i in range(0, len(headers_row))]
+        for h_index, h in enumerate(headers_title_up):
+            if h not in headers_row_up:
+                errors.append(
+                    _('The column \'%s\' is not present in the file.') % headers_title[h_index][0]
+                )
+            elif headers_row_up[h_index] != h:
+                errors.append(
+                    _('The column \'%s\' of the Excel file should be \'%s\', not \'%s\'.') % (
+                        string.uppercase[h_index],
+                        headers_title[h_index][0],
+                        _(headers_row[h_index]),
+                    )
+                )
+        if errors:
+            raise osv.except_osv(
+                _('Error'),
+                '\n'.join(err for err in errors),
+            )
+
+        return True
+
+    def check_error_on_row(self, wizard_id, row, headers):
+        """
+        Check if the required cells are set and if this the data are well formatted
+        :param wizard_id: ID of the import wizard
+        :param row: Row of the Excel file
+        :param headers: Required headers
+        :return: True
+        """
+        try:
+            line_content = row.cells
+        except ValueError, e:
+            return (-1, _('Line is empty'))
+
+        if len(line_content) > len(headers):
+            return (-1, _('Number of columns (%s) in the line are larger than expected (%s).') % (
+                len(line_content), len(headers)
+            ))
+
+        for col_index, col_value in enumerate(line_content):
+            cell_data = col_value.data
+            cell_type = col_value.type
+
+            print cell_data, cell_type
+
+        return (0, None)
+
 
     def copy(self, cr, uid, old_id, defaults=None, context=None):
         """
