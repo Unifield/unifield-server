@@ -184,17 +184,18 @@ class account_move_line(osv.osv):
                     if distrib_lines:
                         amounts = list(set([ dl.percentage*amount/100 for dl in distrib_lines ]))
                         if len(amounts) == 1:
-                            aji_greater_amount['iso'] = amounts[0]
+                            aji_greater_amount['iso'] = round(amounts[0], 2)
 
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
                         anal_amount = distrib_line.percentage*amount/100
-                        dl_total_amount_rounded += round(anal_amount, 2)
-                        if anal_amount > aji_greater_amount['amount']:
+                        anal_amount_rounded = round(anal_amount, 2)
+                        dl_total_amount_rounded += anal_amount_rounded
+                        if anal_amount_rounded > aji_greater_amount['amount']:
                             # US-119: breakdown by fp line or free 1, free2
                             # register the aji that will have the greatest amount
-                            aji_greater_amount['amount'] = anal_amount
+                            aji_greater_amount['amount'] = anal_amount_rounded
                             aji_greater_amount['is'] = True
                         else:
                             aji_greater_amount['is'] = False
@@ -205,7 +206,7 @@ class account_move_line(osv.osv):
                              'journal_id': journal.get('analytic_journal_id', [False])[0],
                              'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
                                 anal_amount, round=False, context=context),
-                             'amount_currency': -1 * anal_amount,
+                             'amount_currency': -1 * anal_amount_rounded,
                              'account_id': distrib_line.analytic_id.id,
                              'general_account_id': account.get('id'),
                              'move_id': obj_line.get('id'),
@@ -247,14 +248,16 @@ class account_move_line(osv.osv):
                                 # AD lines with same ratio/amount
                                 # and 50/50 breakdown
                                 if len(distrib_lines) == 2:
-                                    diff = (round(dl_total_amount_rounded, 2) - amount)
-                                    if (abs(diff)) < 0.00999999999999:
+                                    diff = round(dl_total_amount_rounded - amount, 2)
+                                    #print 'difff', diff, 'rounded', dl_total_amount_rounded, 'amount', amount
+                                    if (abs(diff)) < 0.001:
                                         diff = 0.  # non significative gap
-                                    fixed_amount = ft_obj.truncate_amount(aji_greater_amount['iso'] + diff, 2)
+                                    fixed_amount = round(aji_greater_amount['iso'] - diff, 2)
+                                    #print 'fixed_amount', fixed_amount, 'aji_greater_amount', aji_greater_amount['iso']
                             else:
                                 # US-1463/1
                                 func_amount = -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, fixed_amount, round=False, context=context)
-                                func_amount = ft_obj.truncate_amount(func_amount, 2)
+                                func_amount = round(func_amount, 2)
                             fixed_amount_vals = {
                                 'amount_currency': -1 * fixed_amount,
                             }
