@@ -22,25 +22,13 @@
 import base64
 import string
 
+from mx import DateTime
+
 from osv import osv
 from osv import fields
 from tools.translate import _
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-
-
-def check_utf8_encoding(file_to_check, base='base64'):
-    """
-    Check if the given file is an good UTF-8 file
-    """
-    if base == 'base64':
-        file_to_check = base64.decodestring(file_to_check)
-
-    try:
-        file_to_check.decode('utf-8')
-        return True
-    except UnicodeError:
-        return False
 
 
 class ImportHeader(object):
@@ -55,7 +43,7 @@ class ImportHeader(object):
         :param name: Name of the field
         :param ftype: Type of the field
         :param size: Displayed size on Excel file
-        :param techn_name: Technical name of the field to compute
+        :param tech_name: Technical name of the field to compute
         :param required: Is the field should be set or not ?
         """
         if ftype not in ImportHeader.type_ok:
@@ -70,6 +58,77 @@ your support team and give us this message.
             )
 
         return name, ftype, size, tech_name
+
+    @classmethod
+    def get_date_from_str(cls, date_value):
+        """
+        Try to construct a date from a string and return a formatted string date
+        :param date_value: String value to compute
+        :return: A datetime instance or False
+        """
+        date_format = [
+            '%Y-%m-%d',
+            '%Y-%m/%d',
+            '%d-%m-%Y',
+            '%d/%m/%Y',
+            '%d-%b-%Y',
+            '%d/%b-%Y',
+        ]
+
+        d = False
+        for dformat in date_format:
+            try:
+                d = str(DateTime.strptime(date_value, dformat))
+            except ValueError as e:
+                continue
+
+        return d
+
+    @classmethod
+    def check_value(cls, header, value, vtype):
+        """
+        Check the value of the column according to header
+        :param value: Value to check
+        :param vtype: Type of the data given
+        :return: A tuple with the result of the check, the formatted value and the error message if any
+        """
+        if header[1] == 'String':
+            if vtype == 'str':
+                return (0, value, None)
+            else:
+                try:
+                    return (0, str(value), None)
+                except Exception as e:
+                    return (-1, value, e)
+        elif header[1] == 'DateTime':
+            if vtype == 'datetime':
+                return (0, value, None)
+            elif vtype == 'str':
+                d = ImportHeader.get_date_from_str(value)
+                if d:
+                    return (0, d, None)
+                else:
+                    return (-1, value, _('The date format was not correct'))
+            else:
+                return (-1, value, _('The date format was not correct'))
+        elif header[1] == 'Integer':
+            if vtype == 'number':
+                return (0, value, None)
+            else:
+                try:
+                    return (0, int(value), None)
+                except Exception as e:
+                    return (-1, value, e)
+        elif header[1] == 'Float':
+            if vtype == 'number':
+                return (0, value, None)
+            else:
+                try:
+                    return (0, float(value), None)
+                except Exception as e:
+                    return (-1, value, e)
+
+        return (0, value, None)
 
 
 class abstract_wizard_import(osv.osv):
@@ -279,7 +338,7 @@ class abstract_wizard_import(osv.osv):
 
         return True
 
-    def check_error_on_row(self, wizard_id, row, headers):
+    def check_error_and_format_row(self, wizard_id, row, headers):
         """
         Check if the required cells are set and if this the data are well formatted
         :param wizard_id: ID of the import wizard
@@ -297,13 +356,16 @@ class abstract_wizard_import(osv.osv):
                 len(line_content), len(headers)
             ))
 
+        data = []
+        errors = []
+
         for col_index, col_value in enumerate(line_content):
-            cell_data = col_value.data
-            cell_type = col_value.type
+            chk_res = ImportHeader.check_value(headers[col_index], col_value.data, col_value.type)
+            data.append(chk_res[1])
+            if chk_res[0] < 0:
+                errors.append(chk_res[2])
 
-            print cell_data, cell_type
-
-        return (0, None)
+        return (len(errors) and -1 or 0, errors, data)
 
 
     def copy(self, cr, uid, old_id, defaults=None, context=None):

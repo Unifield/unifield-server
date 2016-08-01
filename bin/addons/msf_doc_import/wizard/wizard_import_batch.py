@@ -75,8 +75,6 @@ class wizard_import_batch(osv.osv):
         for wiz in self.browse(cr, uid, ids, context=context):
             rows = self.read_file(wiz)
 
-            import pdb
-            pdb.set_trace()
             head = rows.next()
             self.check_headers(head, expected_headers)
 
@@ -100,13 +98,18 @@ class wizard_import_batch(osv.osv):
 
         self.errors.setdefault(import_brw.id, {})
 
-        def save_error(error, line_number):
+        def save_error(errors, line_number):
+            if not isinstance(errors, list):
+                errors = [errors]
             self.errors[import_brw.id].setdefault(line_number+1, [])
-            self.errors[import_brw.id][line_number+1].append(error)
+            self.errors[import_brw.id][line_number+1].extend(errors)
 
         for row_index, row in enumerate(rows):
-            res, error = self.check_error_on_row(import_brw.id, row, headers)
+            res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers)
             if res < 0:
-                save_error(error, row_index)
+                save_error(errors, row_index)
+
+            print line_data
+
 
 wizard_import_batch()
