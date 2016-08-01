@@ -2057,7 +2057,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
             current_id = stock_picking['id']
-            currency_id = move_obj.read(cr, uid, stock_picking['move_lines'][0], [field], context)
+            currency_id = move_obj.read(cr, uid, stock_picking['move_lines'][0], [field], context)[field]
             result[current_id] = currency_id
         return result
 
@@ -4542,55 +4542,69 @@ class stock_move(osv.osv):
         result = dict([move_id, virtual[result[move_id]]] for move_id in result.keys())
         return result
 
+    def _get_qty_per_pack(self, cr, uid, ids, field, arg, context=None):
+        result = {}
+        for move in self.read(cr, uid, ids, ['to_pack', 'from_pack', 'product_qty'], context=context):
+            result[move['id']] = {}
+            # number of packs with from/to values (integer)
+            if move['to_pack'] == 0:
+                num_of_packs = 0
+            else:
+                num_of_packs = move['to_pack'] - move['from_pack'] + 1
+                if num_of_packs:
+                    result[move['id']]['qty_per_pack'] = move['product_qty'] / num_of_packs
+            result[move['id']]['num_of_packs'] = num_of_packs
+        return result
+
+    def _get_danger(self, cr, uid, ids, fields, arg, context=None):
+        result = {}
+        product_obj = self.pool.get('product.product')
+        for move in self.read(cr, uid, ids, ['product_id'], context=context):
+            result[move['id']] = {}
+            if move['product_id']:
+                product = product_obj.read(cr, uid, move['product_id'][0],
+                        ['dg_txt', 'kc_txt', 'cs_txt'], context=context)
+            result[move['id']]['is_dangerous_good'] = move['product_id'] and product['dg_txt'] or ''
+            # keep cool - if heat_sensitive_item is True
+            result[move['id']]['is_keep_cool'] = move['product_id'] and product['kc_txt'] or ''
+            # narcotic
+            result[move['id']]['is_narcotic'] = move['product_id'] and product['cs_txt'] or ''
+        return result
+
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
         '''
         result = {}
         uom_obj = self.pool.get('product.uom')
-        for move in self.browse(cr, uid, ids, context=context):
-            values = {'qty_per_pack': 0.0,
-                      'total_amount': 0.0,
-                      'amount': 0.0,
-                      'currency_id': False,
-                      'num_of_packs': 0,
-                      'is_dangerous_good': '',
-                      'is_keep_cool': '',
-                      'is_narcotic': '',
-                      'sale_order_line_number': 0,
-                      }
-            result[move.id] = values
-            # number of packs with from/to values (integer)
-            if move.to_pack == 0:
-                num_of_packs = 0
-            else:
-                num_of_packs = move.to_pack - move.from_pack + 1
-                if num_of_packs:
-                    values['qty_per_pack'] = move.product_qty / num_of_packs
-            values['num_of_packs'] = num_of_packs
+        for move in self.read(cr, uid, ids,
+                    ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'],
+                     context=context):
+            result[move['id']] = {}
+            result[move['id']]['sale_order_line_number'] = 0
             # quantity per pack
             # total amount (float)
-            total_amount = move.sale_line_id and move.sale_line_id.price_unit * move.product_qty or 0.0
-            if move.sale_line_id:
-                total_amount = uom_obj._compute_price(cr, uid, move.sale_line_id.product_uom.id, total_amount, move.product_uom.id)
-            values['total_amount'] = total_amount
+            total_amount = 0.0
+            if move['sale_line_id']:
+                sol_obj = self.pool.get('sale.order.line')
+                sale_line = sol_obj.read(cr, uid, move['sale_line_id'][0],
+                        ['product_uom', 'currency_id', 'price_unit'], context=context)
+                total_amount = sale_line['price_unit'] * move['product_qty'] or 0.0
+                total_amount = uom_obj._compute_price(cr, uid, sale_line['product_uom'][0], total_amount, move['product_uom'][0])
+            result[move['id']]['total_amount'] = total_amount
             # amount for one pack
+            if move['to_pack'] == 0:
+                num_of_packs = 0
+            else:
+                num_of_packs = move['to_pack'] - move['from_pack'] + 1
+            result[move['id']]['num_of_packs'] = num_of_packs
             if num_of_packs:
                 amount = total_amount / num_of_packs
             else:
                 amount = 0
-            values['amount'] = amount
-            # currency
-            values['currency_id'] = move.sale_line_id and move.sale_line_id.currency_id and move.sale_line_id.currency_id.id or False
-            # dangerous good
-            values['is_dangerous_good'] = move.product_id and move.product_id.dg_txt or ''
-            # keep cool - if heat_sensitive_item is True
-            values['is_keep_cool'] = move.product_id and move.product_id.kc_txt or ''
-            # narcotic
-            values['is_narcotic'] = move.product_id and move.product_id.cs_txt or ''
-            # sale_order_line_number
-            values['sale_order_line_number'] = move.sale_line_id and move.sale_line_id.line_number or 0
-
+            result[move['id']]['amount'] = amount
+            result[move['id']]['currency_id'] = move['sale_line_id'] and sale_line['currency_id'] and sale_line['currency_id'][0] or False
         return result
 
     def default_get(self, cr, uid, fields, context=None):
@@ -4602,6 +4616,7 @@ class stock_move(osv.osv):
 
         res = super(stock_move, self).default_get(cr, uid, fields, context=context)
 
+        warehouse_obj = self.pool.get('stock.warehouse')
         partner_id = context.get('partner_id')
         auto_company = False
         if partner_id:
@@ -4611,23 +4626,23 @@ class stock_move(osv.osv):
         if 'warehouse_id' in context and context.get('warehouse_id'):
             warehouse_id = context.get('warehouse_id')
         else:
-            warehouse_id = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)[0]
+            warehouse_id = warehouse_obj.search(cr, uid, [], context=context)[0]
         if not auto_company:
-            res.update({'location_output_id': self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id})
+            res.update({'location_output_id': warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_output_id'][0]})
 
         loc_virtual_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Virtual Locations')])
         loc_virtual_id = len(loc_virtual_ids) > 0 and loc_virtual_ids[0] or False
         res.update({'location_virtual_id': loc_virtual_id})
 
         if 'type' in context and context.get('type', False) == 'out':
-            loc_stock_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_stock_id.id
+            loc_stock_id = warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_stock_id'][0]
             res.update({'location_id': loc_stock_id})
 
         if 'subtype' in context and context.get('subtype', False) == 'picking':
-            loc_packing_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_packing_id.id
+            loc_packing_id = warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_packing_id'][0]
             res.update({'location_dest_id': loc_packing_id})
         elif 'subtype' in context and context.get('subtype', False) == 'standard' and not auto_company:
-            loc_output_id = self.pool.get('stock.warehouse').browse(cr, uid, warehouse_id, context=context).lot_output_id.id
+            loc_output_id = warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_output_id'][0]
             res.update({'location_dest_id': loc_output_id})
 
         return res
@@ -4647,15 +4662,15 @@ class stock_move(osv.osv):
                 'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
-                'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p', multi='get_vals',),
+                'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p', multi='qty_pack',),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals_X',),  # old_multi get_vals
+                'num_of_packs': fields.function(_get_qty_per_pack, method=True, type='integer', string='#Packs', multi='qty_pack',),  # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'is_dangerous_good': fields.function(_vals_get, method=True, type='char', size=8, string='Dangerous Good', multi='get_vals'),
-                'is_keep_cool': fields.function(_vals_get, method=True, type='char', size=8, string='Keep Cool', multi='get_vals',),
-                'is_narcotic': fields.function(_vals_get, method=True, type='char', size=8, string='CS', multi='get_vals',),
-                'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals_X',),  # old_multi get_vals
+                'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
+                'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
+                'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
+                'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals',),  # old_multi get_vals
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
@@ -4777,11 +4792,11 @@ class stock_move(osv.osv):
 
         proc_obj = self.pool.get('procurement.order')
         proc_ids = proc_obj.search(cr, uid, [('move_id', 'in', ids)], context=context)
-        for proc in proc_obj.browse(cr, uid, proc_ids, context=context):
-            if proc.state == 'draft':
-                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_confirm', cr)
+        for proc in proc_obj.read(cr, uid, proc_ids, ['state'], context=context):
+            if proc['state'] == 'draft':
+                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_confirm', cr)
             else:
-                wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
+                wf_service.trg_validate(uid, 'procurement.order', proc['id'], 'button_check', cr)
 
         for ptc in pick_obj.browse(cr, uid, list(pick_to_check), context=context):
             if ptc.subtype == 'picking' and ptc.state == 'draft' and not pick_obj.has_picking_ticket_in_progress(cr, uid, [ptc.id], context=context)[ptc.id] and all(m.state == 'cancel' or m.product_qty == 0.00 for m in ptc.move_lines):
