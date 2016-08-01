@@ -31,6 +31,10 @@ from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 
+class UnifieldImportException(Exception):
+    pass
+
+
 class ImportHeader(object):
     """
     Class used to export Header template.
@@ -251,6 +255,15 @@ class abstract_wizard_import(osv.osv):
             'header_columns': [],
         }
 
+    def copy(self, cr, uid, old_id, defaults=None, context=None):
+        """
+        Don't allow copy method
+        """
+        raise osv.except_osv(
+            _('Not allowed'),
+            _('You cannot duplicate a %s document!') % self._description,
+        )
+
     def download_template_file(self, cr, uid, ids, context=None):
         """
         Download the template file
@@ -367,14 +380,22 @@ class abstract_wizard_import(osv.osv):
 
         return (len(errors) and -1 or 0, errors, data)
 
+    def get_product_by_default_code(self, cr, uid, default_code, context=None):
+        """
+        Return the ID of the product.product related to the default_code parameter
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param default_code: Code of the product to find
+        :param context: Context of the call
+        :return: The ID of the product.product
+        """
+        p_obj = self.pool.get('product.product')
+        p_ids = p_obj.search(cr, uid, [
+            ('default_code', '=', default_code),
+        ], limit=1, order='NO_ORDER', context=context)
+        if not p_ids:
+            raise UnifieldImportException(_('No product found for the code \'%s\'') % default_code)
 
-    def copy(self, cr, uid, old_id, defaults=None, context=None):
-        """
-        Don't allow copy method
-        """
-        raise osv.except_osv(
-            _('Not allowed'),
-            _('You cannot duplicate a %s document!') % self._description,
-        )
+        return p_ids[0]
 
 abstract_wizard_import()

@@ -19,9 +19,11 @@
 #
 ##############################################################################
 
-from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from osv import osv
 from tools.translate import _
+
+from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
+from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
 
 
 def get_import_batch_headers():
@@ -96,20 +98,45 @@ class wizard_import_batch(osv.osv):
         if context is None:
             context = {}
 
-        self.errors.setdefault(import_brw.id, {})
+        # Get header list and information
+        header_index_by_name = {}
+        for i, h in enumerate(headers):
+            header_index_by_name[h[3]] = i
 
-        def save_error(errors, line_number):
+        def get_cell(field):
+            return line_data[header_index_by_name[field]]
+
+        # Manage errors
+        import_errors = {}
+        def save_error(errors):
             if not isinstance(errors, list):
                 errors = [errors]
-            self.errors[import_brw.id].setdefault(line_number+1, [])
-            self.errors[import_brw.id][line_number+1].extend(errors)
+            import_errors.setdefault(row_index+1, [])
+            import_errors[row_index+1].extend(errors)
 
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers)
             if res < 0:
-                save_error(errors, row_index)
+                save_error(errors)
+                continue
 
-            print line_data
+            # Product
+            product_id = None
+            try:
+                product_id = self.get_product_by_default_code(cr, uid, get_cell('product_id'), context=context)
+            except UnifieldImportException as e:
+                save_error(e.message)
+
+            # Batch number type
+            batch_type = get_cell('type')
+            if batch_type.upper() not in (_('Standard').upper(), _('Internal').upper()):
+                save_error(
+                    _('The Type of the batch number should be \'Standard\' or \'Internal\''),
+                )
+
+        print import_errors
+
+        return True
 
 
 wizard_import_batch()
