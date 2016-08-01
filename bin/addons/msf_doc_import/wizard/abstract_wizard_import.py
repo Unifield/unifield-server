@@ -61,7 +61,7 @@ your support team and give us this message.
                 err_msg,
             )
 
-        return name, ftype, size, tech_name
+        return name, ftype, size, tech_name, required
 
     @classmethod
     def get_date_from_str(cls, date_value):
@@ -96,7 +96,11 @@ your support team and give us this message.
         :param vtype: Type of the data given
         :return: A tuple with the result of the check, the formatted value and the error message if any
         """
-        if header[1] == 'String':
+        if not value and header[4]:
+            return (-1, value, _('The column \'%s\' is required') % header[0])
+        elif not value:
+            return (0, value, None)
+        elif header[1] == 'String':
             if vtype == 'str':
                 return (0, value, None)
             else:
@@ -135,7 +139,7 @@ your support team and give us this message.
         return (0, value, None)
 
 
-class abstract_wizard_import(osv.osv):
+class abstract_wizard_import(osv.osv_memory):
     _name = 'abstract.wizard.import'
     _description = 'Generic import wizard'
     _auto = False
@@ -159,7 +163,7 @@ class abstract_wizard_import(osv.osv):
             elif wiz.state == 'draft':
                 res[wiz.id] = 0.00
             else:
-                res[wiz.id] = float(wiz.total_lines_imported) / float(wiz.total_lines_to_import)
+                res[wiz.id] = float(wiz.total_lines_imported) / float(wiz.total_lines_to_import) * 100
 
         return res
 
@@ -193,7 +197,11 @@ class abstract_wizard_import(osv.osv):
             string='File to import',
         ),
         'error_message': fields.text(
-            string='Error',
+            string='Errors',
+            readonly=True,
+        ),
+        'warning_message': fields.text(
+            string='Warnings',
             readonly=True,
         ),
         'total_lines_to_import': fields.integer(
@@ -238,7 +246,16 @@ class abstract_wizard_import(osv.osv):
         'state': 'draft',
     }
 
-    errors = {}
+    def update(self, cr, uid, ids, context=None):
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'target': 'keep_same', # Just to keep reload of the page
+            'context': context,
+        }
 
     def exists(self, cr, uid, ids, context=None):
         if self._name != 'abstract.wizard.import':
@@ -306,8 +323,10 @@ class abstract_wizard_import(osv.osv):
             )
 
         file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wizard_brw.import_file))
+
+        file_obj.getNbRows()
         # iterator on rows
-        return file_obj.getRows()
+        return file_obj.getRows(), file_obj.getNbRows()
 
     def check_headers(self, headers_row, headers_title):
         """
@@ -361,7 +380,7 @@ class abstract_wizard_import(osv.osv):
         """
         try:
             line_content = row.cells
-        except ValueError, e:
+        except ValueError as e:
             return (-1, _('Line is empty'))
 
         if len(line_content) > len(headers):
@@ -371,8 +390,8 @@ class abstract_wizard_import(osv.osv):
 
         data = []
         errors = []
-
         for col_index, col_value in enumerate(line_content):
+            # Check data values according to expected type
             chk_res = ImportHeader.check_value(headers[col_index], col_value.data, col_value.type)
             data.append(chk_res[1])
             if chk_res[0] < 0:

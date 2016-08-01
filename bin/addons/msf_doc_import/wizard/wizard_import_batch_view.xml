@@ -34,7 +34,9 @@
                     <group colspan="4" attrs="{'invisible': [('import_file', '=', False)]}">
                         <separator colspan="4" string="Actions" />
                         <button name="run_import" type="object" string="Run import" icon="gtk-execute" />
+                        <button name="update" type="object" string="Update" icon="gtk-execute" />
                     </group>
+                    <field name="error_message" nolabel="1" colspan="4" />
                 </form>
             </field>
         </record>
