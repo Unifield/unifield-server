@@ -322,20 +322,12 @@ class TinyForm(object):
                             o2m_ids = [o2m_ids]
 
                         Relation = rpc.RPCProxy(attrs['relation'])
+                        relation_objects = Relation.read(o2m_ids, [], rpc.session.context)
                         relation_fields = Relation.fields_get(False, rpc.session.context)
-                        # get only many2many fields :
-                        many_to_many_fields = []
-                        for name, values_dict in relation_fields.items():
-                            if values_dict['type'] == 'many2many':
-                                many_to_many_fields.append(name)
-                        if many_to_many_fields:
-                            relation_objects = Relation.read(o2m_ids,
-                                    many_to_many_fields, rpc.session.context,
-                                    '_classic_read', True)
-                            for relation_record in relation_objects:
-                                for field_name, field_value in relation_record.items():
-                                    if field_name != 'id':
-                                        relation_record[field_name] = [OneToMany.replace_all(*field_value)]
+                        for relation_record in relation_objects:
+                            for field_name, field_value in relation_record.items():
+                                if field_name in relation_fields and relation_fields[field_name]['type'] == 'many2many':
+                                    relation_record[field_name] = [OneToMany.replace_all(*field_value)]
 
                         value = []
                         for relation_record in relation_objects:
