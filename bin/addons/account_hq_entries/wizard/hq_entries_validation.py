@@ -30,15 +30,27 @@ class hq_entries_validation(osv.osv_memory):
     _name = 'hq.entries.validation'
     _description = 'HQ entries validation'
 
+    def _get_default_period(self, cr, uid, context=None):
+        '''
+        Get the "first" period open or field-closed among December periods,
+        i.e. in order of priority: 12, 13, 14 or 15 (or None)
+        '''
+        args = [('number', 'in', range(12, 16)), ('state', 'not in', ['created', 'mission-closed', 'done'])]
+        period_obj = self.pool.get('account.period')
+        period_ids = period_obj.search(cr, uid, args, limit=1, order='number asc', context=context)
+        return period_ids and period_ids[0] or None
+
     _columns = {
         'txt': fields.char("Text", size=128, readonly="1"),
         'line_ids': fields.many2many('hq.entries', 'hq_entries_validation_rel', 'wizard_id', 'line_id', "Selected lines", help="Lines previously selected by the user", readonly=True),
         'process_ids': fields.many2many('hq.entries', 'hq_entries_validation_process_rel', 'wizard_id', 'line_id', "Valid lines", help="Lines that would be processed", readonly=True),
         'running': fields.boolean('Is running'),
+        'period_id': fields.many2one('account.period', 'Period to book December HQ entries', required=False),
     }
 
     _defaults = {
         'running': False,
+        'period_id': _get_default_period,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -52,6 +64,28 @@ class hq_entries_validation(osv.osv_memory):
 
         return super(hq_entries_validation, self).default_get(cr, uid, fields,
             context=context)
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        view = super(hq_entries_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if 'period_id' in view['fields'] and 'active_id' in context:
+            # get December Periods (12 to 15) if they are not Draft, Mission-Closed or HQ-Closed
+            view['fields']['period_id']['domain'] = [('number', 'in', range(12, 16)),
+                                                     ('state', 'not in', ['created', 'mission-closed', 'done'])]
+            lines = self.browse(cr, uid, context.get('active_id', False), context).line_ids
+            # if there is at least one HQ Entry in December, the period_id (used to book the entry) is required,
+            # else the field isn't displayed
+            hq_entries_in_dec = False
+            for l in lines:
+                if l.period_id and l.period_id.number == 12:
+                    hq_entries_in_dec = True
+                    break
+            if hq_entries_in_dec:
+                view['fields']['period_id']['required'] = True
+            else:
+                view['fields']['period_id']['invisible'] = True
+        return view
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
     def create_distribution_id(self, cr, uid, currency_id, line, account):
@@ -368,6 +402,14 @@ class hq_entries_validation(osv.osv_memory):
                     "\n".join(account_partner_not_compat_log))
 
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
+                # for December HQ Entries: use the period selected in the wizard
+                if line.period_id.number == 12 and wiz.period_id:
+                    if line.period_id.fiscalyear_id != wiz.period_id.fiscalyear_id:
+                        raise osv.except_osv(_("Error"), _("The period used to book the December Entries must be in "
+                                                           "Fiscal Year %s.") % (line.period_id.fiscalyear_id.name,))
+                    else:
+                        context.update({'period_id_for_dec_hq_entries': wiz.period_id.id})
+                        line.period_id = wiz.period_id
                 #UF-1956: interupt validation if currency is inactive
                 if line.currency_id.active is False:
                     self.write(cr, uid, [wiz.id], {'running': False})
@@ -411,8 +453,8 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                         })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
-
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
+                                                                   corrected_distrib_id, context=context)
             for line in cc_change:
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
@@ -497,7 +539,8 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                     })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
+                                                                   corrected_distrib_id, context=context)
 
             # US-1333/1 - BKLG-12 pure AD correction flag marker
             # (do this bypassing model write)
