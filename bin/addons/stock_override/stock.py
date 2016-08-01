@@ -1331,7 +1331,8 @@ class stock_move(osv.osv):
         product_ids_add = product_ids.add
         for stock_move_dict in self.read(cr, uid, ids, ('picking_id', 'product_id'),
                                         context=context):
-            pick_ids_add(stock_move_dict['picking_id'][0])
+            if stock_move_dict['picking_id']:
+                pick_ids_add(stock_move_dict['picking_id'][0])
             product_ids_add(stock_move_dict['product_id'][0])
 
         product_ids = product_ids.difference((product_tbd,))
