@@ -137,49 +137,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
 
         return res
 
-    def _get_last_yearly_reval_period_id(self, cr, uid, fy_id, context=None):
-        """
-        for given fy has been any revaluation liquidity/BS processed ?
-        :return tuple period/False, is liquidity
-        :rtype: tuple (account.period/False, boolean)
-        """
-        res = False
-
-        # get rev journal of instance
-        instance_id = self.pool.get('res.users').browse(cr, uid, uid,
-            context=context).company_id.instance_id.id
-        domain = [
-            ('type', '=', 'revaluation'),
-            ('instance_id', '=', instance_id),
-        ]
-        rev_journal_id = self.pool.get('account.journal').search(
-            cr, uid, domain, context=context)[0]
-
-        # get potential target periods (13, 14, 15)
-        domain = [
-            ('fiscalyear_id', '=', fy_id),
-            ('state', '!=', 'created'),
-            ('number', '>', 12),
-            ('number', '<', 16),
-        ]
-        period_ids = self.pool.get('account.period').search(
-            cr, uid, domain, context=context)
-
-        # end year REV moves ?
-        ji_obj = self.pool.get('account.move.line')
-        fy_rec = self.pool.get('account.fiscalyear').browse(
-            cr, uid, fy_id, context=context)
-        domain = [
-            ('period_id', 'in', period_ids),
-            ('name', 'like', "Revaluation - %s" % (fy_rec.name, )),
-        ]
-        ids = ji_obj.search(cr, uid, domain, context=context)
-        if ids:
-            # any moves: get period of last yearly reval (liquidity or bs)
-            res = ji_obj.browse(cr, uid, ids[0], context=context).period_id
-
-        return res
-
     def _is_revaluated(self, cr, uid, period_id, revaluation_method=False,
         context=None):
         """
