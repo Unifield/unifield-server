@@ -223,7 +223,7 @@ class shipment(osv.osv):
         pack_obj = self.pool.get('stock.picking')
         result = []
         for packing in pack_obj.read(cr, uid, ids, ['shipment_id'], context=context):
-            if packing.shipment_id and packing['shipment_id'][0] not in result:
+            if packing['shipment_id'] and packing['shipment_id'][0] not in result:
                 result.append(packing['shipment_id'][0])
         return result
 
