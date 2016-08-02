@@ -253,7 +253,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'statement_id': st_id,
                     'account_id': line.account_id.id,
                     'partner_id': line.partner_id.id,
-                    'amount': line.amount_currency < 0 and -line.amount or line.amount,
+                    'amount': line.amount_to_pay < 0 and -line.amount or line.amount,
                     'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
                 }
 
