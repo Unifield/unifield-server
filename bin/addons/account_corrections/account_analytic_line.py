@@ -40,7 +40,7 @@ class account_analytic_line(osv.osv):
             res[aml.id] = True
             if aml.is_reallocated or aml.is_reversal or aml.journal_type == 'engagement' or \
                     (aml.real_period_id and aml.real_period_id.special) or \
-                    (aml.move_id and not aml.move_id.is_corrigible):
+                    not aml.move_id or not aml.move_id.is_corrigible:
                 res[aml.id] = False
         return res
 
