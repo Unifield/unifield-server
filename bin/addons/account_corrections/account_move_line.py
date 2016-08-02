@@ -678,8 +678,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
 
         # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
-            context=context, limit=1, order='date_start, name')
+        period_obj = self.pool.get('account.period')
+        period_ids = period_obj.search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
+                                                                context=context, limit=1, order='date_start, name')
+        period_number = period_ids and period_obj.browse(cr, uid, period_ids, context)[0].number or False
 
         # Browse all given move line for correct them
         for ml in self.browse(cr, uid, ids, context=context):
@@ -731,15 +733,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
                 if check_accounts and aal.account_id.id in check_accounts:
                     raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
+            # (US-815) use the right period for December HQ Entries
+            period_id_dec_hq_entry = False
+            if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
+                period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
             # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
+            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_id_dec_hq_entry or period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
             # Prepare default value for new line
             vals = {
                 'move_id': move_id,
                 'date': date,
                 'document_date': ml.document_date,
                 'journal_id': journal_id,
-                'period_id': period_ids[0],
+                'period_id': period_id_dec_hq_entry or period_ids[0],
             }
             # Copy the line
             context.update({'omit_analytic_distribution': False})
