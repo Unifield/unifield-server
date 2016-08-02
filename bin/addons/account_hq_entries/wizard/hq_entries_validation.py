@@ -123,7 +123,8 @@ class hq_entries_validation(osv.osv_memory):
                 self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
         return distrib_id
 
-    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None, journal=None, orig_acct=None, context=None):
+    def create_move(self, cr, uid, ids, period_id=False, currency_id=False,
+        date=None, journal=None, orig_acct=None, doc_date=None, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -159,7 +160,7 @@ class hq_entries_validation(osv.osv_memory):
             # create move
             move_id = self.pool.get('account.move').create(cr, uid, {
                 'date': date,
-                'document_date': date,
+                'document_date': doc_date or date,
                 'journal_id': journal_id,
                 'period_id': period_id,
             })
@@ -215,7 +216,7 @@ class hq_entries_validation(osv.osv_memory):
                 'move_id': move_id,
                 'date': date,
                 'date_maturity': date,
-                'document_date': date,
+                'document_date': doc_date or date,
                 'name': 'HQ Entry Counterpart',
                 'currency_id': currency_id,
             })
@@ -268,7 +269,7 @@ class hq_entries_validation(osv.osv_memory):
         # Create the original line as it is (and its reverse)
         for line in original_lines:
             # PROCESS ORIGINAL LINES
-            res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, context=context)
+            res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, doc_date=line.document_date, context=context)
             original_move = aml_obj.browse(cr, uid, res_move[line.id])
 
             move_id = original_move.move_id.id
@@ -282,7 +283,7 @@ class hq_entries_validation(osv.osv_memory):
             aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
             original_account_id = original_move.account_id.id
 
-            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id, orig_acct=original_account_id)
+            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, doc_date=line.document_date, journal=od_journal_id, orig_acct=original_account_id)
             # original move line
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
@@ -311,6 +312,7 @@ class hq_entries_validation(osv.osv_memory):
                 'reversal_line_id': original_move.id,
                 'partner_txt': original_move.partner_txt or '',
                 'reference': line.ref or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
+                'document_date': line.document_date,  # US-1361
                 }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
