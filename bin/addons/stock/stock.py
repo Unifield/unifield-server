@@ -685,6 +685,8 @@ class stock_picking(osv.osv):
         return res
     
     def action_process(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None: context = {}
         partial_id = self.pool.get("stock.partial.picking").create(
             cr, uid, {}, context=dict(context, active_ids=ids))
@@ -743,6 +745,8 @@ class stock_picking(osv.osv):
         """ Confirms picking.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self.write(cr, uid, ids, {'state': 'confirmed'})
         todo = []
         todo_set = set()
@@ -790,6 +794,8 @@ class stock_picking(osv.osv):
         """ Changes state of picking to available if all moves are confirmed.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
         move_obj = self.pool.get('stock.move')
@@ -806,6 +812,8 @@ class stock_picking(osv.osv):
         """ Changes state of picking to available if moves are confirmed or waiting.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
         for pick in self.read(cr, uid, ids, ['move_lines']):
@@ -822,6 +830,8 @@ class stock_picking(osv.osv):
         """ Confirms picking directly from draft state.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         for pick in self.read(cr, uid, ids, ['move_lines']):
             if not pick['move_lines']:
@@ -834,6 +844,8 @@ class stock_picking(osv.osv):
         """ Validates picking directly from draft state.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
         self.draft_force_assign(cr, uid, ids)
@@ -846,6 +858,8 @@ class stock_picking(osv.osv):
         """ Cancels picking and moves.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         wf_service = netsvc.LocalService("workflow")
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids):
@@ -866,6 +880,8 @@ class stock_picking(osv.osv):
         """ Tests whether the move is in done or cancel state or not.
         @return: True or False
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         move_obj = self.pool.get('stock.move')
         move_to_write = []
         move_ids = move_obj.search(cr, uid,
@@ -887,6 +903,8 @@ class stock_picking(osv.osv):
         """ Tests whether the move is in assigned state or not.
         @return: True or False
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         ok = True
         for pick in self.browse(cr, uid, ids):
             mt = pick.move_type
@@ -902,6 +920,8 @@ class stock_picking(osv.osv):
         """ Changes picking state to cancel.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         move_obj = self.pool.get('stock.move')
         for pick in self.read(cr, uid, ids, ['move_lines'], context=context):
             move_obj.action_cancel(cr, uid, pick['move_lines'], context)
@@ -924,6 +944,8 @@ class stock_picking(osv.osv):
         """ Changes move state to assigned.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids, context=context):
             todo = []
@@ -1186,6 +1208,8 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are done or not.
         @return: True or False
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         ok = False
 
         move_obj = self.pool.get('stock.move')
@@ -1209,11 +1233,15 @@ class stock_picking(osv.osv):
         """ Test whether the move lines are canceled or not.
         @return: True or False
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if self.pool.get('stock.move').search_exist(cr, uid, [('picking_id', 'in', ids), ('state', '!=', 'cancel')]):
             return False
         return True
 
     def allow_cancel(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for pick in self.browse(cr, uid, ids, context=context):
             if not pick.move_lines:
                 return True
@@ -1223,6 +1251,8 @@ class stock_picking(osv.osv):
         return True
     def unlink(self, cr, uid, ids, context=None):
         move_obj = self.pool.get('stock.move')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
         for pick in self.read(cr, uid, ids, ['state', 'move_lines'], context=context):
@@ -1251,6 +1281,8 @@ class stock_picking(osv.osv):
             context = {}
         else:
             context = dict(context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = {}
         move_obj = self.pool.get('stock.move')
         product_obj = self.pool.get('product.product')
@@ -1427,6 +1459,8 @@ class stock_picking(osv.osv):
         @param ids: List of Picking Ids
         @param context: A standard dictionary for contextual values
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if context is None:
             context = {}
         user_obj = self.pool.get('res.users')

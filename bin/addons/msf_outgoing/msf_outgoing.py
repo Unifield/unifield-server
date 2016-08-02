@@ -2052,15 +2052,17 @@ class stock_picking(osv.osv):
         return result
 
     def _get_currency(self, cr, uid, ids, field, arg, context=None):
-        move_obj = self.pool.get('stock.move')
         result = {}
         move_obj = self.pool.get('stock.move')
         for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
             current_id = stock_picking['id']
-            currency_id = move_obj.read(cr, uid, stock_picking['move_lines'][0], [field], context)[field]
-            result[current_id] = currency_id
+            result[current_id] = False
+            for move in move_obj.read(cr, uid, stock_picking['move_lines'],
+                    [field], context):
+                if move[field]:
+                    result[current_id] = move[field]
+                    break
         return result
-
 
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
