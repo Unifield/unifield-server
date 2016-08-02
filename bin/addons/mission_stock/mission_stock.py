@@ -719,7 +719,7 @@ class stock_mission_report(osv.osv):
                     s_nv_data  += replace_all(line['s_nv_data'] % (product_amc, reviewed_consumption))
                     s_v_data   += replace_all(line['s_v_data'] % (product_amc, reviewed_consumption))
                 except Exception, e:
-                    logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file. Data: \n %s""" % line)
+                    logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file : %s\n""" % e, exc_info=True)
 
             for data, field in [(ns_nv_data, 'ns_nv_vals'), (ns_v_data, 'ns_v_vals'), (s_nv_data, 's_nv_vals'), (s_v_data, 's_v_vals')]:
                 self.write(cr, uid, [report_id], {field: data}, context=context)
