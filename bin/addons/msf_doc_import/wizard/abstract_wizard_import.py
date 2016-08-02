@@ -83,7 +83,7 @@ your support team and give us this message.
         for dformat in date_format:
             try:
                 d = str(DateTime.strptime(date_value, dformat))
-            except ValueError as e:
+            except ValueError:
                 continue
 
         return d
@@ -92,6 +92,7 @@ your support team and give us this message.
     def check_value(cls, header, value, vtype):
         """
         Check the value of the column according to header
+        :param header: Header used to check if value is required or not
         :param value: Value to check
         :param vtype: Type of the data given
         :return: A tuple with the result of the check, the formatted value and the error message if any
@@ -262,7 +263,7 @@ class abstract_wizard_import(osv.osv_memory):
             return super(abstract_wizard_import, self).exists(cr, uid, ids, context=context)
         return False
 
-    def _get_template_file_data(self):
+    def _get_template_file_data(self, context=None):
         """
         Return values for the import template file report generation
         """
@@ -288,7 +289,7 @@ class abstract_wizard_import(osv.osv_memory):
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'wizard.import.generic.template',
-            'datas': self._get_template_file_data(),
+            'datas': self._get_template_file_data(context=context),
         }
 
     def run_import(self, cr, uid, ids, context=None):

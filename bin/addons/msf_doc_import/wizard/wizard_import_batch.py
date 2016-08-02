@@ -31,7 +31,7 @@ from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
 
 
-def get_import_batch_headers():
+def get_import_batch_headers(context=None):
     return [
          ImportHeader(name=_('Name'), ftype='String', size=80, tech_name='name', required=False),
          ImportHeader(name=_('Product Code'), ftype='String', size=80, tech_name='product_id', required=True),
@@ -44,6 +44,7 @@ def get_import_batch_headers():
 header_index_by_name = {}
 for i, h in enumerate(get_import_batch_headers()):
     header_index_by_name[h[3]] = i
+
 
 def get_cell(line_data, field):
     cell_data = line_data[header_index_by_name[field]]
@@ -63,14 +64,14 @@ class wizard_import_batch(osv.osv_memory):
         'template_filename': 'Import_batch_number_tpl.csv',
     }
 
-    def _get_template_file_data(self):
+    def _get_template_file_data(self, context=None):
         """
         Return values for the import template file report generation
         """
         return {
             'model': 'stock.production.lot',
             'model_name': _('Batch numbers'),
-            'header_columns': get_import_batch_headers(),
+            'header_columns': get_import_batch_headers(context=context),
         }
 
     def run_import(self, cr, uid, ids, context=None):
@@ -133,6 +134,7 @@ class wizard_import_batch(osv.osv_memory):
 
         # Manage errors
         import_errors = {}
+
         def save_error(errors):
             if not isinstance(errors, list):
                 errors = [errors]
@@ -141,6 +143,7 @@ class wizard_import_batch(osv.osv_memory):
 
         # Manage warnings
         import_warnings = {}
+
         def save_warnings(warnings):
             if not isinstance(warnings, list):
                 warnings = [warnings]
@@ -184,7 +187,8 @@ class wizard_import_batch(osv.osv_memory):
 
             if not product_brw['batch_management'] and not product_brw['perishable']:
                 save_error(
-                    _('You cannot create a batch number for a product that is not \'Perishable\' nor \'Batch mandatory\'')
+                    _('You cannot create a batch number for a product that is not \'Perishable\''
+                      ' nor \'Batch mandatory\'')
                 )
                 continue
             elif product_brw['batch_management'] and batch_type == 'internal':
@@ -222,7 +226,8 @@ class wizard_import_batch(osv.osv_memory):
             if batch_type == 'internal':
                 if name:
                     save_warnings(
-                        _('Name of the batch will be ignored because the batch is \'Internal\' so name is created by the system')
+                        _('Name of the batch will be ignored because the batch is \'Internal\' so'
+                          'name is created by the system')
                     )
                 name = sequence_obj.get(cr, uid, 'stock.lot.serial')
 

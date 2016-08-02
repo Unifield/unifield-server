@@ -54,7 +54,7 @@
             src_model="wizard.import.batch"
             view_mode="tree,form"
             target="current"
-            key2="client_action_multi"
+            key2="False"
             id="action_wizard_import_batch" />
 
         <menuitem
