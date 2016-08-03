@@ -270,8 +270,7 @@ class browse_record(object):
                         else:
                             new_data[field_name] = browse_null()
                     elif field_column._type in ('one2many', 'many2many') and len(result_line[field_name]):
-                        new_data[field_name] =
-                        self._list_class([browse_record(self._cr, self._uid,
+                        new_data[field_name] = self._list_class([browse_record(self._cr, self._uid,
                             obj_id, self._table.pool.get(field_column._obj),
                             self._cache, context=self._context,
                             list_class=self._list_class,
@@ -292,8 +291,7 @@ class browse_record(object):
                                 ref_id = long(ref_id)
                                 if ref_id:
                                     obj = self._table.pool.get(ref_obj)
-                                    new_data[field_name] =
-                                    browse_record(self._cr, self._uid, ref_id,
+                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id,
                                             obj, self._cache,
                                             context=self._context,
                                             list_class=self._list_class,
