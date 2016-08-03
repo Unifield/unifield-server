@@ -31,6 +31,7 @@ class analytic_distribution(osv.osv):
         """
         Return distribution state
         """
+        print 'enter in bin/addons/analytic_distribution/analytic_distribution.py with distrib_id=%s, parent_id=%s, account_id=%s' % (distrib_id, parent_id,account_id) 
         if context is None:
             context = {}
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
