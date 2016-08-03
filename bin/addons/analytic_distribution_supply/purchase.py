@@ -343,6 +343,7 @@ class purchase_order_line(osv.osv):
         order_dict = {}
         order_obj = self.pool.get('purchase.order')
         partner_obj = self.pool.get('res.partner')
+        ditrib_id_dict = {}
         for line in self.read(cr, uid, ids,
                 ['order_id', 'analytic_distribution_id', 'account_4_distribution'], context=context):
             order_id = line['order_id'] and line['order_id'][0] or False
@@ -366,7 +367,10 @@ class purchase_order_line(osv.osv):
                 if not account_id:
                     res[line['id']] = 'invalid'
                     continue
-                res[line['id']] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+                distrib_key = (distrib_id, po_distrib_id, account_id)
+                if distrib_key not in ditrib_id_dict:
+                    ditrib_id_dict[distrib_key] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
+                res[line['id']] = ditrib_id_dict[distrib_key]
 
                 # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
 #                if res[line.id] == 'valid' and not is_intermission:
