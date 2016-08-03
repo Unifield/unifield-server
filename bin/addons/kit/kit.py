@@ -1435,14 +1435,15 @@ class stock_location(osv.osv):
             # class report_stock_inventory(osv.osv): in specific_rules.py
             cr.execute("""
                         SELECT subs.product_uom, subs.prodlot_id, subs.expired_date, sum(subs.product_qty) AS product_qty FROM
-                            (SELECT product_uom, prodlot_id, expired_date, sum(product_qty) AS product_qty
-                                FROM stock_move
-                                WHERE location_dest_id=%s AND
-                                location_id<>%s AND
-                                product_id=%s AND
-                                state='done'
+                            (SELECT pt.uom_id AS product_uom, psa.prodlot_id, spl.life_date AS expired_date, sum(psa.quantity) AS product_qty
+                               FROM product_stock_availability psa
+                                LEFT JOIN product_product pp ON psa.id = pp.id
+                                LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                                LEFT JOIN stock_production_lot spl ON psa.prodlot_id = spl.id
+                                WHERE psa.location_id = %s AND
+                                      psa.product_id = %s
                                 GROUP BY product_uom, prodlot_id, expired_date
-                            
+
                                 UNION
                             
                                 SELECT product_uom, prodlot_id, expired_date, -sum(product_qty) AS product_qty
@@ -1450,12 +1451,12 @@ class stock_location(osv.osv):
                                 WHERE location_id=%s AND
                                 location_dest_id<>%s AND
                                 product_id=%s AND
-                                state in ('done', 'assigned')
+                                state in ('assigned')
                                 GROUP BY product_uom, prodlot_id, expired_date) as subs
                         GROUP BY product_uom, prodlot_id, expired_date
                         ORDER BY prodlot_id asc, expired_date asc
                        """,
-                       (id, id, product_id, id, id, product_id))
+                       (id, product_id, id, id, product_id))
             results = cr.dictfetchall()
             # merge results according to uom if needed
             for r in results:

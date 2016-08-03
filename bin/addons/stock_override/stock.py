@@ -1228,9 +1228,23 @@ You cannot choose this supplier because some destination locations are not avail
             context = {}
         move_obj = self.pool.get('stock.move')
         if not context.get('already_checked'):
-            for pick in self.browse(cr, uid, ids, context=context):
+            cr.execute('''
+                SELECT m.id AS id FROM
+                  stock_move m
+                LEFT JOIN
+                  product_product pp
+                  ON pp.id = m.product_id
+                WHERE pp.perishable = 't'
+                AND m.picking_id in %s
+            ''', (tuple(ids), ))
+            move_ids = [x[0] for x in cr.fetchall()]
+            #move_ids = self.pool.get('stock.move').search(cr, uid, [
+            #    ('product_id.perishable', '=', True),
+            #    ('picking_id', 'in', ids),
+            #], context=context)
+            #for pick in self.browse(cr, uid, ids, context=context):
                 # perishable for perishable or batch management
-                move_obj.fefo_update(cr, uid, [move.id for move in pick.move_lines if move.product_id.perishable], context)  # FEFO
+            move_obj.fefo_update(cr, uid, move_ids, context)  # FEFO
         context['already_checked'] = True
         return super(stock_picking, self)._hook_action_assign_batch(cr, uid, ids, context=context)
 
