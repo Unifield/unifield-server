@@ -61567,6 +61567,13 @@ msgstr "Mouvement de stock correspondant"
 msgid "Information"
 msgstr "Information"
 
+#. module: msf_doc_import
+#: field:abstract.wizard.import,info_message:0
+#: view:wizard.import.batch:0
+#: field:wizard.import.batch,info_message:0
+msgid "Information"
+msgstr "Informations"
+
 #. module: base
 #: code:addons/base/module/wizard/base_language_install.py:55
 #, python-format
@@ -73946,7 +73953,7 @@ msgid "Run import"
 msgstr "Démarrer l'import"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:322
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:336
 #, python-format
 msgid "No file to import. Please select a file or download the template file and fill it."
 msgstr "Aucun fichier à importer. Veuillez sélectionner un fichier ou télécharger le modèle et le remplir."
@@ -74015,8 +74022,8 @@ msgid "A batch number with the same parameters already exists in the system"
 msgstr "Un numéro de lot avec les mêmes paramèters existe déjà dans le système"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:247
-#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:253
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:258
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:264
 #, python-format
 msgid "Line %s: %s"
 msgstr "Ligne %s : %s"
@@ -74038,8 +74045,8 @@ msgid "The column '%s' is required"
 msgstr "La colonne '%s' est obligatoire"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:119
-#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:121
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:120
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:122
 #, python-format
 msgid "The date format was not correct"
 msgstr "Le format de date n'est pas correct"
@@ -74222,3 +74229,81 @@ msgstr "Date d'expiration"
 #, python-format
 msgid "Type"
 msgstr "Type"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,show_error:0
+#: field:wizard.import.batch,show_error:0
+msgid "Show error message ?"
+msgstr "Voir les messages d'erreurs ?"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,show_warning:0
+#: field:wizard.import.batch,show_warning:0
+msgid "Show warning message ?"
+msgstr "Voir les avertissements ?"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:260
+#, python-format
+msgid "Select a file to import and click on 'Run import' button."
+msgstr "Sélectionnez un fichier à importer et cliquez sur le bouton 'Démarrer l'import'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:276
+#, python-format
+msgid "imported"
+msgstr "importées"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:276
+#, python-format
+msgid "without errors"
+msgstr "sans erreurs"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:269
+#, python-format
+msgid "Processing of file completed in %s second(s)!\n"
+"- Total lines to import: %s\n"
+"- Total lines %s: %s %s\n"
+"- Total lines with errors: %s %s\n"
+"        "
+msgstr "Traitement du fichier terminé en %s seconde(s) !\n"
+"- Nombre de lignes à importer : %s\n"
+"- Nombre de lignes %s : %s %s\n"
+"- Nombre de lignes avec erreurs : %s %s\n"
+"        "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:279
+#, python-format
+msgid "(%s line(s) with warning - see warning messages below)"
+msgstr "(%s ligne(s) avec des avertissements - voir les avertissements ci-dessous)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:283
+#, python-format
+msgid "(see error messages below)"
+msgstr "(voir les erreurs ci-dessous)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:234
+#, python-format
+msgid "Name of the batch will be ignored because the batch is 'Internal' so name is created by the system"
+msgstr "Le nom du batch sera ignoré car le batch est 'Interne' donc son nom sera créé par le système"
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Warning messages"
+msgstr "Messages d'avertissement"
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Error messages"
+msgstr "Messages d'erreur"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:104
+#, python-format
+msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue tu use Unifield"
+msgstr "Traitement en cours, veuillez laisser cette fenêtre ouverte et cliquez sur le bouton 'Mettre à jour' pour voir la progression de l'import. Sinon, vous pouvez continuer d'utiliser Unifield"

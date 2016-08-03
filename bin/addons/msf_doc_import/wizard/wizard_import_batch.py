@@ -101,7 +101,10 @@ class wizard_import_batch(osv.osv_memory):
                 'total_lines_to_import': nb_rows,
                 'state': 'progress',
                 'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'info_message': _('Import in progress, please leave this window open and press the button \'Update\' '
+                                  'to show the progression of the import. Otherwise, you can continue tu use Unifield'),
             }, context=context)
+            wiz.total_lines_to_import = nb_rows
 
             thread = threading.Thread(
                 target=self.bg_import,
@@ -150,6 +153,8 @@ class wizard_import_batch(osv.osv_memory):
             import_warnings.setdefault(row_index+2, [])
             import_warnings[row_index+2].extend(warnings)
 
+        start_time = time.time()
+        nb_lines_ok = 0
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers)
             if res < 0:
@@ -226,7 +231,7 @@ class wizard_import_batch(osv.osv_memory):
             if batch_type == 'internal':
                 if name:
                     save_warnings(
-                        _('Name of the batch will be ignored because the batch is \'Internal\' so'
+                        _('Name of the batch will be ignored because the batch is \'Internal\' so '
                           'name is created by the system')
                     )
                 name = sequence_obj.get(cr, uid, 'stock.lot.serial')
@@ -239,6 +244,7 @@ class wizard_import_batch(osv.osv_memory):
             }
             try:
                 prodlot_obj.create(cr, uid, create_vals, context=context)
+                nb_lines_ok += 1
             except Exception as e:
                 save_error(e)
                 cr.rollback()
@@ -261,9 +267,28 @@ class wizard_import_batch(osv.osv_memory):
         if err_msg:
             cr.rollback()
 
+        info_msg = _('''Processing of file completed in %s second(s)!
+- Total lines to import: %s
+- Total lines %s: %s %s
+- Total lines with errors: %s %s
+        ''') % (
+            str(round(time.time() - start_time)),
+            import_brw.total_lines_to_import,
+            err_msg and _('without errors') or _('imported'),
+            nb_lines_ok,
+            warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
+                len(import_warnings.keys()) or '',
+            ),
+            err_msg and len(import_errors.keys()) or '',
+            err_msg and _('(see error messages below)'),
+        )
+
         self.write(cr, uid, [import_brw.id], {
             'error_message': err_msg,
+            'show_error': err_msg and True or False,
             'warning_message': warn_msg,
+            'show_warning': warn_msg and True or False,
+            'info_message': info_msg,
             'state': 'done',
             'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
         }, context=context)

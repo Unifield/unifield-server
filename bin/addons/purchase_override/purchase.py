@@ -2614,8 +2614,8 @@ class purchase_order_merged_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
         'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
-
     def create(self, cr, uid, vals, context=None):
+
         '''
         Set the line number to 0
         '''

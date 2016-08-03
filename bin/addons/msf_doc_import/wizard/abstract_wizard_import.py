@@ -197,12 +197,24 @@ class abstract_wizard_import(osv.osv_memory):
         'import_file': fields.binary(
             string='File to import',
         ),
+        'info_message': fields.text(
+            string='Information',
+            readonly=True,
+        ),
         'error_message': fields.text(
             string='Errors',
             readonly=True,
         ),
+        'show_error': fields.boolean(
+            string='Show error message ?',
+            readonly=True,
+        ),
         'warning_message': fields.text(
             string='Warnings',
+            readonly=True,
+        ),
+        'show_warning': fields.boolean(
+            string='Show warning message ?',
             readonly=True,
         ),
         'total_lines_to_import': fields.integer(
@@ -245,6 +257,7 @@ class abstract_wizard_import(osv.osv_memory):
         'total_lines_to_import': 0,
         'total_lines_imported': 0,
         'state': 'draft',
+        'info_message': _('Select a file to import and click on \'Run import\' button.')
     }
 
     def update(self, cr, uid, ids, context=None):
