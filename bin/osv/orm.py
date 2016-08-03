@@ -474,6 +474,7 @@ class orm_template(object):
                 'selectable': (f.selectable and True) or False,
                 'translate': (f.translate and True) or False,
                 'relation_field': (f._type=='one2many' and isinstance(f, fields.one2many)) and f._fields_id or '',
+                'state': 'base',
             }
 
             # When its a custom field,it does not contain f.select
@@ -511,7 +512,7 @@ class orm_template(object):
                     if cols[k][key] != vals[key]:
                         cr.execute("""UPDATE ir_model_fields SET
                             model_id=%s, field_description=%s, ttype=%s, relation=%s,
-                            view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s
+                            view_load=%s, select_level=%s, readonly=%s ,required=%s, selectable=%s, relation_field=%s, translate=%s, state='base'
                         WHERE
                             model=%s AND name=%s""", (
                                 vals['model_id'], vals['field_description'], vals['ttype'],
