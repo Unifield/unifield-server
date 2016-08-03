@@ -457,11 +457,11 @@ class purchase_order_line(osv.osv):
         if context is None:
             context = {}
         obj_data = self.pool.get('ir.model.data')
-        tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
         message = ''
         if not context.get('import_in_progress') and not context.get('button'):
             if vals.get('product_uom') or vals.get('nomen_manda_0') or vals.get('nomen_manda_1') or vals.get('nomen_manda_2'):
                 if vals.get('product_uom'):
+                    tbd_uom = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
                     if vals.get('product_uom') == tbd_uom:
                         message += _('You have to define a valid UOM, i.e. not "To be defined".')
                 if vals.get('nomen_manda_0'):
