@@ -182,7 +182,11 @@ class ir_translation(osv.osv):
             return u''
         if isinstance(types, basestring):
             types = (types,)
+
         if source:
+            if source.startswith('The date format'):
+                import pdb
+                pdb.set_trace()
             query = """SELECT value
                        FROM ir_translation
                        WHERE lang=%s

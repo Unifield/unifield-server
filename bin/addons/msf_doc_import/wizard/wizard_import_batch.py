@@ -92,10 +92,10 @@ class wizard_import_batch(osv.osv_memory):
         expected_headers = get_import_batch_headers()
 
         for wiz in self.browse(cr, uid, ids, context=context):
-            rows, nb_rows = self.read_file(wiz)
+            rows, nb_rows = self.read_file(wiz, context=context)
 
             head = rows.next()
-            self.check_headers(head, expected_headers)
+            self.check_headers(head, expected_headers, context=context)
 
             self.write(cr, uid, [wiz.id], {
                 'total_lines_to_import': nb_rows,
@@ -156,7 +156,7 @@ class wizard_import_batch(osv.osv_memory):
         start_time = time.time()
         nb_lines_ok = 0
         for row_index, row in enumerate(rows):
-            res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers)
+            res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
             if res < 0:
                 save_error(errors)
                 continue
@@ -273,13 +273,13 @@ class wizard_import_batch(osv.osv_memory):
 - Total lines with errors: %s %s
         ''') % (
             str(round(time.time() - start_time)),
-            import_brw.total_lines_to_import,
+            import_brw.total_lines_to_import-1,
             err_msg and _('without errors') or _('imported'),
             nb_lines_ok,
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
                 len(import_warnings.keys()) or '',
             ),
-            err_msg and len(import_errors.keys()) or '',
+            err_msg and len(import_errors.keys()) or 0,
             err_msg and _('(see error messages below)'),
         )
 

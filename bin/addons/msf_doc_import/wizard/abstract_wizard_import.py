@@ -89,7 +89,7 @@ your support team and give us this message.
         return d
 
     @classmethod
-    def check_value(cls, header, value, vtype):
+    def check_value(cls, header, value, vtype, context=None):
         """
         Check the value of the column according to header
         :param header: Header used to check if value is required or not
@@ -253,12 +253,23 @@ class abstract_wizard_import(osv.osv_memory):
         ),
     }
 
-    _defaults = {
-        'total_lines_to_import': 0,
-        'total_lines_imported': 0,
-        'state': 'draft',
-        'info_message': _('Select a file to import and click on \'Run import\' button.')
-    }
+    def default_get(self, cr, uid, fields, context=None):
+        """
+        Return default values for some fields
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param fields: Technical name of the fields on which system must put a default value
+        :param context: Context of the call
+        :return: A dictionary with field names as keys
+        """
+        res = super(abstract_wizard_import, self).default_get(cr, uid, fields, context=context)
+        res.update({
+            'total_lines_to_import': 0,
+            'total_lines_imported': 0,
+            'state': 'draft',
+            'info_message': _('Select a file to import and click on \'Run import\' button.'),
+        })
+        return res
 
     def update(self, cr, uid, ids, context=None):
         return {
@@ -324,7 +335,7 @@ class abstract_wizard_import(osv.osv_memory):
         except UnicodeError:
             return False
 
-    def read_file(self, wizard_brw):
+    def read_file(self, wizard_brw, context=None):
         """
         Open the Spreadsheet XML file
         :param wizard_brw: browse_record of an import wizard
@@ -354,7 +365,7 @@ class abstract_wizard_import(osv.osv_memory):
         # iterator on rows
         return file_obj.getRows(), file_obj.getNbRows()
 
-    def check_headers(self, headers_row, headers_title):
+    def check_headers(self, headers_row, headers_title, context=None):
         """
         Check if the header in the first row of the file are the same as the expected headers
         :param headers_row: Row that contains the header on the Excel file
@@ -396,7 +407,7 @@ class abstract_wizard_import(osv.osv_memory):
 
         return True
 
-    def check_error_and_format_row(self, wizard_id, row, headers):
+    def check_error_and_format_row(self, wizard_id, row, headers, context=None):
         """
         Check if the required cells are set and if this the data are well formatted
         :param wizard_id: ID of the import wizard
@@ -418,7 +429,7 @@ class abstract_wizard_import(osv.osv_memory):
         errors = []
         for col_index, col_value in enumerate(line_content):
             # Check data values according to expected type
-            chk_res = ImportHeader.check_value(headers[col_index], col_value.data, col_value.type)
+            chk_res = ImportHeader.check_value(headers[col_index], col_value.data, col_value.type, context=context)
             data.append(chk_res[1])
             if chk_res[0] < 0:
                 errors.append(chk_res[2])
