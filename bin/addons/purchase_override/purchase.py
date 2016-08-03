@@ -1118,6 +1118,7 @@ stock moves which are already processed : '''
                                   'validator' : uid,
                                   'date_confirm': strftime('%Y-%m-%d')}, context=context)
 
+        self.ssl_products_in_line(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
 
         return True
@@ -1320,8 +1321,9 @@ stock moves which are already processed : '''
             if exp_sol.po_id and exp_sol.po_id.id not in all_po_ids:
                 all_po_ids.append(exp_sol.po_id.id)
         list_po_name = ', '.join([linked_po.name for linked_po in self.browse(cr, uid, all_po_ids, context) if linked_po.id != ids[0]])
-        self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
-                                 ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
+        if list_po_name:
+            self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
+                    ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
         # sale order lines with modified state
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
