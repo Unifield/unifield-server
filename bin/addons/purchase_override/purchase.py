@@ -2680,19 +2680,22 @@ class purchase_order_merged_line(osv.osv):
         Update the quantity and the unit price according to the new qty
         '''
         line = self.browse(cr, uid, p_id, context=context)
-        change_price_ok = True
-        if not po_line_id:
-            change_price_ok = context.get('change_price_ok', True)
-        else:
-            po_line = self.pool.get('purchase.order.line').browse(cr, uid, po_line_id, context=context)
-            change_price_ok = po_line.change_price_ok
-            if 'change_price_ok' in context:
-                change_price_ok = context.get('change_price_ok')
 
         # If no PO line attached to this merged line, remove the merged line
         if not line.order_line_ids:
             self.unlink(cr, uid, [p_id], context=context)
             return False, False
+
+        change_price_ok = True
+        if not po_line_id:
+            change_price_ok = context.get('change_price_ok', True)
+        else:
+            if 'change_price_ok' in context:
+                change_price_ok = context.get('change_price_ok')
+            else:
+                po_line = self.pool.get('purchase.order.line').read(cr, uid,
+                        po_line_id, ['change_price_ok'], context=context)
+                change_price_ok = po_line['change_price_ok']
 
         new_price = False
         new_qty = line.product_qty + float(product_qty)
@@ -2786,6 +2789,14 @@ class purchase_order_line(osv.osv):
 
         # If it's an update of a line
         if vals and line_id:
+
+            # apparently, some fields are needed to update the merged lines,
+            # without this fields nothing will be done. Start by checking at
+            # least one of this field is present before to do computation.
+            required_fields = set(['product_id', 'product_uom', 'product_qty'])
+            if not required_fields.intersection(vals.keys()):
+                return vals
+
             line = self.read(cr, uid, line_id,
                     ['product_uom',
                      'product_qty',
@@ -3132,48 +3143,80 @@ class purchase_order_line(osv.osv):
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
 
-        for line in self.browse(cr, uid, ids, context=context):
+        fields_to_read = ['order_id', 'product_qty', 'state', 'origin',
+                'procurement_id']
+
+        if not context.get('import_in_progress', False):
+            fields_to_read.extend(['product_id', 'product_uom'])
+
+        line_list = self.read(cr, uid, ids, fields_to_read, context=context)
+
+        # get all order_id's
+        order_id_set = set()
+        for line in line_list:
+            order_id_set.add(line['order_id'][0])
+        order_id_list = list(order_id_set)
+
+        # get data from orders
+        order_obj = self.pool.get('purchase.order')
+        order_list = order_obj.read(cr, uid, order_id_list, ['rfq_ok',
+            'po_from_fo', 'po_from_ir'], context=context)
+        order_dict = dict((x['id'], x) for x in order_list)
+        grouped_write = []
+
+        #for line in self.browse(cr, uid, ids, context=context):
+        for line in line_list:
             new_vals = vals.copy()
+            order_id = line['order_id'][0]
             # check qty
-            if vals.get('product_qty', line.product_qty) <= 0.0 and \
-                not line.order_id.rfq_ok and \
-                'noraise' not in context and line.state != 'cancel':
+            if vals.get('product_qty', line['product_qty']) <= 0.0 and \
+                    'noraise' not in context and line['state'] != 'cancel' and\
+                    not order_dict[order_id]['rfq_ok']:
                 raise osv.except_osv(
                     _('Error'),
                     _('You can not have an order line with a negative or zero quantity')
                 )
 
-            if vals.get('origin', line.origin):
+            proc_id =  vals.get('procurement_id', line['procurement_id'] and line['procurement_id'][0] or False)
+            if vals.get('origin', line['origin']):
                 proc = False
-                if vals.get('procurement_id', line.procurement_id.id):
-                    proc = self.pool.get('procurement.order').browse(cr, uid, vals.get('procurement_id', line.procurement_id.id))
-                if not proc or not proc.sale_id:
-                    link_so_dict = self.update_origin_link(cr, uid, vals.get('origin', line.origin), context=context)
-                    new_vals.update(link_so_dict)
+                if proc_id:
+                    proc = self.pool.get('procurement.order').read(cr, uid,
+                            proc_id, ['sale_id'])
+                    if not proc or not proc['sale_id']:
+                        link_so_dict = self.update_origin_link(cr, uid,
+                                vals.get('origin', line['origin']), context=context)
+                        new_vals.update(link_so_dict)
 
-            if line.order_id and not line.order_id.rfq_ok and (line.order_id.po_from_fo or line.order_id.po_from_ir):
+            if order_id and not order_dict[order_id]['rfq_ok'] and\
+                    (order_dict[order_id]['po_from_fo'] or\
+                     order_dict[order_id]['po_from_ir']):
                 new_vals['from_fo'] = True
 
             if not context.get('update_merge'):
-                new_vals.update(self._update_merged_line(cr, uid, line.id, vals, context=dict(context, skipResequencing=True, noraise=True)))
+                new_vals.update(self._update_merged_line(cr, uid, line['id'], vals, context=dict(context, skipResequencing=True, noraise=True)))
 
-            res = super(purchase_order_line, self).write(cr, uid, [line.id], new_vals, context=context)
+            if vals != new_vals:
+                res = super(purchase_order_line, self).write(cr, uid, [line['id']], new_vals, context=context)
+            else:
+                grouped_write.append(line['id'])
 
-            if self._name != 'purchase.order.merged.line' and vals.get('origin') and not vals.get('procurement_id', line.procurement_id):
+            if self._name != 'purchase.order.merged.line' and\
+                    vals.get('origin') and not proc_id:
                 so_ids = so_obj.search(cr, uid, [('name', '=', vals.get('origin'))], order='NO_ORDER', context=context)
                 for so_id in so_ids:
                     exp_sol_obj.create(cr, uid, {
                         'order_id': so_id,
-                        'po_line_id': line.id,
+                        'po_line_id': line['id'],
                     }, context=context)
 
-        # Check the selected product UoM
-        if not context.get('import_in_progress', False):
-            for pol_read in self.read(cr, uid, ids, ['product_id', 'product_uom']):
-                if pol_read.get('product_id'):
-                    product_id = pol_read['product_id'][0]
-                    uom_id = pol_read['product_uom'][0]
-                    self._check_product_uom(cr, uid, product_id, uom_id, context=context)
+            if line['product_id'] and False:
+                self._check_product_uom(cr, uid, line['product_id'][0],
+                        line['product_uom'][0], context=context)
+
+        if grouped_write:
+            res = super(purchase_order_line, self).write(cr, uid, [line['id']],
+                    new_vals, context=context)
 
         return res
 
@@ -3516,13 +3559,12 @@ class purchase_order_line(osv.osv):
         Returns True if the price can be changed by the user
         '''
         res = {}
-
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = True
-            stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id, context=context)
-            if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and stages and not line.order_id.rfq_ok:
-                res[line.id] = False
-
+            if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and not line.order_id.rfq_ok:
+                stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id, context=context)
+                if stages:
+                    res[line.id] = False
         return res
 
     def on_change_select_fo(self, cr, uid, ids, fo_id, context=None):
