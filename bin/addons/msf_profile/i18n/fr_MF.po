@@ -23010,10 +23010,19 @@ msgid "You cannot have a register on the same period and the same journal!"
 msgstr "Vous ne pouvez pas avoir un registre sur la même période et le même journal !"
 
 #. module: register_accounting
-#: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Journal code:"
 msgstr "Code du Journal:"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Bank journal code:"
+msgstr "Code du Journal de Banque :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Cheque journal code:"
+msgstr "Code du Journal de Chèques :"
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
@@ -29694,6 +29703,16 @@ msgstr "Le Délai de Paiement du Fournisseur ne contient pas de lignes de Délai
 #: report:bank.reconciliation:0
 msgid "Bank statement balance:"
 msgstr "Solde Registre de Banque: "
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Total amount of pending cheque:"
+msgstr "Montant total des chèques en attente :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Calculated Balance - Pending cheque:"
+msgstr "Solde calculé - Chèques en attente :"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:922
