@@ -384,8 +384,6 @@ class abstract_wizard_import(osv.osv_memory):
             )
 
         errors = []
-        import pdb
-        pdb.set_trace()
         headers_title_up = [_(x[0]).upper() for x in headers_title]
         headers_row_up = [_(headers_row[i].data).upper() for i in range(0, len(headers_row))]
         for h_index, h in enumerate(headers_title_up):

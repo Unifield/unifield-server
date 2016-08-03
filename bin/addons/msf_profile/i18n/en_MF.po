@@ -822,7 +822,7 @@ msgstr "Product Description"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
 #, python-format
 msgid "get_import_batch_headers_life_date"
-msgstr "Expiry date"
+msgstr "Life Date"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:40
