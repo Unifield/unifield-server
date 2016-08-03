@@ -163,6 +163,8 @@ class object_query(osv.osv):
             domain = []
             default_search = {}
             for filter_v in query.selection_data:
+                if filter_v.field_id.state == 'deprecated':
+                    continue
                 dom = False
                 forced_values.append(filter_v.field_id.id)
 
@@ -195,17 +197,23 @@ class object_query(osv.osv):
                     else:
                         domain.append(dom)
             for filter in query.selection_ids:
+                if filter.state == 'deprecated':
+                    continue
                 if filter.id not in forced_values:
                     search_filters += "<field name='%s' />" % (filter.name)
                     search_filters += "\n"
 
             for result in query.result_ids:
+                if result.field_id.state == 'deprecated':
+                    continue
                 tree_fields += "<field name='%s' />" % (result.field_id.name)
                 tree_fields += "\n"
                 tree_field_ids.append(result.field_id.id)
                 export_line_obj.create(cr, uid, {'name': result.field_id.name, 'export_id': export_id})
 
             for group in query.group_by_ids:
+                if group.state == 'deprecated':
+                    continue
                 search_group += "<filter context=\"{'group_by': '%s'}\" string='%s' domain=\"[]\" />" % (group.name, group.field_description)
                 search_group += "\n"
                 if group.id not in tree_field_ids:
@@ -461,7 +469,6 @@ class ir_fields(osv.osv):
             return []
 
         model_ids = []
-        res_ids = []
 
         for a in args:
             if a[0] == 'model_search_id' and a[1] == 'in' and a[2]:
@@ -470,9 +477,9 @@ class ir_fields(osv.osv):
                         for model_id in arg[2]:
                             model_ids.append(model_id)
 
-            res_ids = self.search(cr, uid, [('model_id', 'in', model_ids)])
+            return [('model_id', 'in', model_ids), ('state', '!=', 'deprecated')]
 
-        return [('id', 'in', res_ids)]
+        return [('id', '=', 0)]
 
     def _is_function(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -534,63 +541,6 @@ class ir_fields(osv.osv):
                 res[obj.id] = target_obj._columns[obj.name].help
         return res
 
-    def _is_in_model(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for f in self.browse(cr, uid, ids, context=context):
-            res[f.id] = True
-            if f.name not in self.pool.get(f.model_id.model)._columns.keys():
-                res[f.id] = False
-
-        return res
-
-    def _search_is_in_model(self, cr, uid, obj, name, args, context=None):
-        '''
-        Return all fields which are a function field
-        '''
-        if not args:
-            return []
-        if context is None:
-            context = {}
-
-        def fill_in_model(model_ids):
-            inherit_model_ids = []
-            for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
-                model_obj = self.pool.get(obj.model)
-
-                if model_obj._inherits:
-                    for inh_model_name in model_obj._inherits.keys():
-                        inh_model_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', inh_model_name)], context=context)
-                        for inh_model_id in inh_model_ids:
-                            if inh_model_id not in model_ids:
-                                inherit_model_ids.append(inh_model_id)
-
-                for field in obj.field_id:
-                    if field.name not in model_obj._columns.keys():
-                        not_in_model.append(field.id)
-                    else:
-                        in_model.append(field.id)
-
-            if inherit_model_ids:
-                fill_in_model(inherit_model_ids)
-
-        for a in args:
-            if a[0] == 'is_in_model':
-                field_ids = []
-                all_fields_ids = []
-                model_ids = context.get('model_ids', [(6,0,[])])[0][2]
-
-                if not model_ids:
-                    return [('id', '=', 0)]
-                    #model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
-
-                in_model = []
-                not_in_model = []
-                fill_in_model(model_ids)
-
-                if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
-                    return [('id', 'in', not_in_model)]
-                else:
-                    return [('id', 'in', in_model)]
 
     _columns = {
         'help': fields.function(_get_help, method=True, type='char', size='10000', string='Help'),
@@ -607,13 +557,6 @@ class ir_fields(osv.osv):
                                        fnct_search=_search_function,
                                        method=True,
                                        type='boolean', string='Is searchable ?'),
-        'is_in_model': fields.function(
-            _is_in_model,
-            fnct_search=_search_is_in_model,
-            method=True,
-            type='boolean',
-            string='Is in model ?',
-        ),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

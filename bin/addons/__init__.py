@@ -845,7 +845,7 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
         if 'base' in tools.config['update'] or 'all' in tools.config['update']:
             cr.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename = 'ir_model_fields'")
             if cr.fetchone():
-                cr.execute("update ir_model_fields set state='deprecated'")
+                cr.execute("update ir_model_fields set state='deprecated' where state='base'")
             cr.execute("update ir_module_module set state=%s where name=%s and state=%s", ('to upgrade', 'base', 'installed'))
 
         # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps) 
