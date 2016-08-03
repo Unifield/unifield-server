@@ -33,11 +33,11 @@ from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
 
 def get_import_batch_headers(context=None):
     return [
-         ImportHeader(name=_('Name'), ftype='String', size=80, tech_name='name', required=False),
-         ImportHeader(name=_('Product Code'), ftype='String', size=80, tech_name='product_id', required=True),
-         ImportHeader(name=_('Product Description'), ftype='String', size=120, required=True),
-         ImportHeader(name=_('Life Date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
-         ImportHeader(name=_('Type'), ftype='String', size=80, tech_name='type', required=True),
+         ImportHeader(name=_('get_import_batch_headers_name'), ftype='String', size=80, tech_name='name', required=False),
+         ImportHeader(name=_('get_import_batch_headers_product_code'), ftype='String', size=80, tech_name='product_id', required=True),
+         ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=True),
+         ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
+         ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
     ]
 
 # Get header list and information
@@ -89,7 +89,7 @@ class wizard_import_batch(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        expected_headers = get_import_batch_headers()
+        expected_headers = get_import_batch_headers(context=context)
 
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)

@@ -857,6 +857,9 @@ class cache(object):
                 if self.multi:
                     kwargs2[self.multi] = notincache.keys()
 
+                if key == (('dbname', 'us-792_us-792_HQ1C1'), ('false_if_no_trad', False), ('lang', u'fr_MF'), ('name', None), ('source', u'Name'), ('types', ('code', 'sql_constraint'))):
+                    import pdb
+                    pdb.set_trace()
                 result2 = fn(self2, cr, *args[:self.skiparg-2], **kwargs2)
                 if not self.multi:
                     key = notincache[None]

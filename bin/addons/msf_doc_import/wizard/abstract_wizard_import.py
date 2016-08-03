@@ -61,7 +61,7 @@ your support team and give us this message.
                 err_msg,
             )
 
-        return name, ftype, size, tech_name, required
+        return _(name), ftype, size, tech_name, required
 
     @classmethod
     def get_date_from_str(cls, date_value):
@@ -384,18 +384,20 @@ class abstract_wizard_import(osv.osv_memory):
             )
 
         errors = []
-        headers_title_up = [x[0].upper() for x in headers_title]
+        import pdb
+        pdb.set_trace()
+        headers_title_up = [_(x[0]).upper() for x in headers_title]
         headers_row_up = [_(headers_row[i].data).upper() for i in range(0, len(headers_row))]
         for h_index, h in enumerate(headers_title_up):
             if h not in headers_row_up:
                 errors.append(
-                    _('The column \'%s\' is not present in the file.') % headers_title[h_index][0]
+                    _('The column \'%s\' is not present in the file.') % _(headers_title[h_index][0])
                 )
             elif headers_row_up[h_index] != h:
                 errors.append(
                     _('The column \'%s\' of the Excel file should be \'%s\', not \'%s\'.') % (
                         string.uppercase[h_index],
-                        headers_title[h_index][0],
+                        _(headers_title[h_index][0]),
                         _(headers_row[h_index]),
                     )
                 )

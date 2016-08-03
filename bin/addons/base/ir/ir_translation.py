@@ -184,9 +184,6 @@ class ir_translation(osv.osv):
             types = (types,)
 
         if source:
-            if source.startswith('The date format'):
-                import pdb
-                pdb.set_trace()
             query = """SELECT value
                        FROM ir_translation
                        WHERE lang=%s

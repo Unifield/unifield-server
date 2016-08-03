@@ -74195,8 +74195,32 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:36
 #, python-format
-msgid "Name"
+msgid "get_import_batch_headers_name"
 msgstr "Nom"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
+#, python-format
+msgid "get_import_batch_headers_product_code"
+msgstr "Code du produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:38
+#, python-format
+msgid "get_import_batch_headers_product_desc"
+msgstr "Description du produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
+#, python-format
+msgid "get_import_batch_headers_life_date"
+msgstr "Date d'expiration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:40
+#, python-format
+msgid "get_import_batch_headers_type"
+msgstr "Type"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
@@ -74307,3 +74331,15 @@ msgstr "Messages d'erreur"
 #, python-format
 msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue tu use Unifield"
 msgstr "Traitement en cours, veuillez laisser cette fenêtre ouverte et cliquez sur le bouton 'Mettre à jour' pour voir la progression de l'import. Sinon, vous pouvez continuer d'utiliser Unifield"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:385
+#, python-format
+msgid "The column '%s' of the Excel file should be '%s', not '%s'."
+msgstr "La colonne '%s' du fichier Excel doit être '%s', pas '%s'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:381
+#, python-format
+msgid "The column '%s' is not present in the file."
+msgstr "La colonne '%s' n'est pas présente dans le fichier."
