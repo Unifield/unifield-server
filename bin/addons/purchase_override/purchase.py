@@ -552,8 +552,7 @@ class purchase_order(osv.osv):
         '''
         Remove the possibility to make a PO to user's company
         '''
-        user_company_id = self.pool.get('res.users').read(cr, uid, uid,
-                ['company_id'], context=context)['company_id'][0]
+        user_company_id = self.pool.get('res.users').read(cr, uid, uid, ['company_id'], context=context)['company_id'][0]
         if company_id == user_company_id:
             raise osv.except_osv(_('Error'), _('You cannot made a purchase order to your own company !'))
 
@@ -569,8 +568,7 @@ class purchase_order(osv.osv):
 
 
         res_partner_obj = self.pool.get('res.partner')
-        for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'],
-                context=context):
+        for order in self.read(cr, uid, ids, ['partner_id', 'warehouse_id'], context=context):
             partner_type = res_partner_obj.read(cr, uid, vals.get('partner_id', order['partner_id'][0]), ['partner_type'], context=context)['partner_type']
             if vals.get('order_type'):
                 if vals.get('order_type') in ['donation_exp', 'donation_st', 'loan']:
@@ -2208,8 +2206,7 @@ stock moves which are already processed : '''
                 )
 
         if not vals.get('cross_docking_ok', False):
-            vals.update({'location_id': stock_warehouse_obj.read(cr, uid,
-                warehouse_id, ['lot_input_id'], context=context)['lot_input_id'][0]})
+            vals.update({'location_id': stock_warehouse_obj.read(cr, uid, warehouse_id, ['lot_input_id'], context=context)['lot_input_id'][0]})
         elif vals.get('cross_docking_ok', False):
             vals.update({'location_id': self.pool.get('stock.location').get_cross_docking_location(cr, uid)})
 
@@ -2984,8 +2981,7 @@ class purchase_order_line(osv.osv):
         if vals.get('origin'):
             proc = False
             if vals.get('procurement_id'):
-                proc = self.pool.get('procurement.order').read(cr, uid,
-                        vals.get('procurement_id'), ['sale_id'])
+                proc = self.pool.get('procurement.order').read(cr, uid, vals.get('procurement_id'), ['sale_id'])
             if not proc or not proc['sale_id']:
                 vals.update(self.update_origin_link(cr, uid, vals.get('origin'), context=context))
 
@@ -3228,8 +3224,7 @@ class purchase_order_line(osv.osv):
         else:
             view_id = data_obj.get_object_reference(cr, uid, 'purchase_override', 'purchase_order_line_unlink_wizard_form_view')[1]
 
-        for line in self.read(cr, uid, ids, ['procurement_id', 'origin',
-            'move_dest_id'], context=context):
+        for line in self.read(cr, uid, ids, ['procurement_id', 'origin', 'move_dest_id'], context=context):
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line['id']], context=context)
             exp_sol_ids = self.get_exp_sol_ids_from_pol_ids(cr, uid, [line['id']], context=context)
             if (sol_ids or exp_sol_ids) and not context.get('from_del_wizard'):
@@ -3456,8 +3451,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         order_ids = []
-        for line in self.read(cr, uid, ids, ['id', 'order_id'],
-                context=context):
+        for line in self.read(cr, uid, ids, ['id', 'order_id'], context=context):
             tmp_skip_resourcing = context.get('skipResourcing', False)
             context['skipResourcing'] = True
             # we want to skip resequencing because unlink is performed on merged purchase order lines
@@ -3716,8 +3710,7 @@ class purchase_order_line(osv.osv):
                 all_qty -= line_id['product_qty']
 
         if product and not uom:
-            uom = self.pool.get('product.product').read(cr, uid, product,
-                    ['uom_id'])['uom_id'][0]
+            uom = self.pool.get('product.product').read(cr, uid, product, ['uom_id'])['uom_id'][0]
 
         if context and context.get('purchase_id') and state == 'draft' and product:
             domain = [('product_id', '=', product),
@@ -3736,8 +3729,7 @@ class purchase_order_line(osv.osv):
 
         func_curr_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
         if pricelist:
-            currency_id = self.pool.get('product.pricelist').read(cr, uid,
-                    pricelist, ['currency_id'])['currency_id'][0]
+            currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
         else:
             currency_id = func_curr_id
 
@@ -3751,10 +3743,8 @@ class purchase_order_line(osv.osv):
         res['value'].update({'product_qty': qty})
         if product and not res.get('value', {}).get('price_unit', False) and all_qty != 0.00 and qty != 0.00:
             # Display a warning message if the quantity is under the minimal qty of the supplier
-            currency_id = self.pool.get('product.pricelist').read(cr, uid,
-                    pricelist, ['currency_id'])['currency_id'][0]
-            tmpl_id = self.pool.get('product.product').read(cr, uid, product,
-                    ['product_tmpl_id'])['product_tmpl_id'][0]
+            currency_id = self.pool.get('product.pricelist').read(cr, uid, pricelist, ['currency_id'])['currency_id'][0]
+            tmpl_id = self.pool.get('product.product').read(cr, uid, product, ['product_tmpl_id'])['product_tmpl_id'][0]
             info_prices = []
             suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', tmpl_id)], context=context)
             domain = [('uom_id', '=', uom),
@@ -3797,8 +3787,7 @@ class purchase_order_line(osv.osv):
                                  'nomen_manda_2': False, 'nomen_manda_3': False, 'nomen_sub_0': False,
                                  'nomen_sub_1': False, 'nomen_sub_2': False, 'nomen_sub_3': False,
                                  'nomen_sub_4': False, 'nomen_sub_5': False})
-            product_result = product_obj.read(cr, uid, product, ['uom_id',
-                'standard_price'])
+            product_result = product_obj.read(cr, uid, product, ['uom_id', 'standard_price'])
             st_uom = product_result['uom_id'][0]
             st_price = product_result['standard_price']
             st_price = self.pool.get('res.currency').compute(cr, uid, func_curr_id, currency_id, st_price, round=False, context=context)
@@ -3915,8 +3904,7 @@ class purchase_order_line(osv.osv):
         # sale order lines list
         sol_ids = []
 
-        for line in self.read(cr, uid, ids, ['procurement_id'],
-                context=context):
+        for line in self.read(cr, uid, ids, ['procurement_id'], context=context):
             if line['procurement_id']:
                 proc_ids.append(line['procurement_id'][0])
         # get the corresponding sale order line list

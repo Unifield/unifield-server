@@ -258,15 +258,13 @@ class users(osv.osv):
                 }
         }
 
-    def read(self,cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=False):
+    def read(self,cr, uid, ids, fields=None, context=None, load='_classic_read'):
         def override_password(o):
             if 'password' in o and ( 'id' not in o or o['id'] != uid ):
                 o['password'] = '********'
             return o
 
-        result = super(users, self).read(cr, uid, ids, fields, context, load,
-                name_get)
+        result = super(users, self).read(cr, uid, ids, fields, context, load)
         canwrite = self.pool.get('ir.model.access').check(cr, uid, 'res.users', 'write', raise_exception=False)
         if not canwrite:
             if isinstance(ids, (int, float)):

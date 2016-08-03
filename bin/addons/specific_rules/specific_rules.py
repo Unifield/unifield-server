@@ -796,9 +796,9 @@ class stock_move(osv.osv):
             # will be false if the kit is batch management and a composition list already uses this batch number
             # only one composition list can  use a given batch number for a given product
             if product['type'] == 'product' and product['subtype'] == 'kit':
-                if product['prodlot_id']:
+                if stock_move_dict['prodlot_id']:
                     # search if composition list already use this batch number
-                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', product['prodlot_id'])], context=context)
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', stock_move_dict['prodlot_id'])], context=context)
                     if not kit_ids:
                         result[stock_move_id]['kit_check'] = True
                 else:
@@ -2250,15 +2250,13 @@ CREATE OR REPLACE view report_stock_inventory AS (
         'expired_date': fields.date(string='Expiry Date',),
     }
 
-    def read(self, cr, uid, ids, fields=None, context=None,
-            load='_classic_read', name_get=False):
+    def read(self, cr, uid, ids, fields=None, context=None, load='_classic_read'):
         if context is None:
             context = {}
         if fields is None:
             fields = []
         context['with_expiry'] = 1
-        return super(report_stock_inventory, self).read(cr, uid, ids, fields,
-                context, load, name_get)
+        return super(report_stock_inventory, self).read(cr, uid, ids, fields, context, load)
 
     def read_group(self, cr, uid, domain, fields, groupby, offset=0, limit=None, context=None, orderby=False):
         '''

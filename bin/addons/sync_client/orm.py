@@ -731,8 +731,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
                     if ids_list:
                         new_ids = []
                         new_ids_append = new_ids.append
-                        for data in sub_obj.read(cr, user, ids_list, [field],
-                                context=context, name_get=True):
+                        for data in sub_obj.read(cr, user, ids_list, [field], context=context):
                             if isinstance(data[field], (tuple, list)) \
                                and len(data[field]) == 2 \
                                and isinstance(data[field][0], (int, long)) \
@@ -765,8 +764,7 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         field = self.fields_get(cr, uid, context=context).get(dest_field)
 
         if field['type'] == 'many2one' and not field['relation'] == 'msf.instance':
-            for rec in self.read(cr, uid, ids, [dest_field], context,
-                    name_get=True):
+            for rec in self.read(cr, uid, ids, [dest_field], context):
                 if rec[dest_field]: result[rec['id']] = rec[dest_field][1]
 
         else:

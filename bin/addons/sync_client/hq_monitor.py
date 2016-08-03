@@ -71,8 +71,7 @@ On %s, the system detected Not Run data:
             max_instance_id = template.last_instance_id
 
         found = False
-        for monitor in monitor_obj.read(cr, uid, monitor_ids, ['instance_id',
-            'nb_msg_not_run', 'nb_data_not_run'], name_get=True):
+        for monitor in monitor_obj.read(cr, uid, monitor_ids, ['instance_id', 'nb_msg_not_run', 'nb_data_not_run']):
             if monitor['nb_msg_not_run'] >= template.not_run_msg or monitor['nb_data_not_run'] >= template.not_run_data:
                 found = True
                 body += "  - "

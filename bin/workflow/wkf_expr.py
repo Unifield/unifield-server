@@ -74,8 +74,7 @@ def check(cr, workitem, ident, transition, signal):
     uid = ident[0]
     if transition['group_id'] and uid != 1:
         pool = pooler.get_pool(cr.dbname)
-        user_groups = pool.get('res.users').read(cr, uid, [uid], ['groups_id'],
-                name_get=True)[0]['groups_id']
+        user_groups = pool.get('res.users').read(cr, uid, [uid], ['groups_id'])[0]['groups_id']
         if not transition['group_id'] in user_groups:
             return False
 

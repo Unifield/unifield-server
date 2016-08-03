@@ -441,8 +441,7 @@ class stock_move_in_processor(osv.osv):
                 move_id_to_purchase_line_id[ret['id']] = ret['purchase_line_id'][0]
 
         purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
-                uid, set(move_id_to_purchase_line_id.values()), ['id',
-                    'order_id'], context=context)
+                uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
 
         purchase_line_id_by_order_id = dict([(ret['id'], ret['order_id'][0])
             for ret in purchase_line_order_id])

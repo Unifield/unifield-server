@@ -60,6 +60,8 @@ class procurement_order(osv.osv):
         """ Confirms procurement and writes exception message if any.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         move_obj = self.pool.get('stock.move')
         data_obj = self.pool.get('ir.model.data')
 
@@ -226,6 +228,8 @@ class stock_picking(osv.osv):
 
     def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
         result = set()
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for obj in self.read(cr, uid, ids, ['picking_id'], context=context):
             if obj['picking_id']:
               result.add(obj['picking_id'][0])
@@ -236,6 +240,8 @@ class stock_picking(osv.osv):
 
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         current_company_p_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.partner_id.id
         for pick in self.read(cr, uid, ids, ['partner_id'], context=context):
@@ -391,6 +397,8 @@ class stock_picking(osv.osv):
         '''
         Check if the stock picking contains a line with an inactive products
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         product_tbd = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
         inactive_lines = self.pool.get('stock.move').search(cr, uid, [('product_id.active', '=', False),
                                                                       ('product_id', '!=', product_tbd),
@@ -626,6 +634,8 @@ You cannot choose this supplier because some destination locations are not avail
 
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_picking, self).force_assign(cr, uid, ids)
         for pick in self.read(cr, uid, ids, ['name'], context=context):
             self.infolog(cr, uid, 'Force availability ran on stock.picking id:%s (%s)' % (
@@ -635,6 +645,8 @@ You cannot choose this supplier because some destination locations are not avail
 
     @check_cp_rw
     def action_assign(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_picking, self).action_assign(cr, uid, ids, context=context)
         for pick in self.read(cr, uid, ids, ['name'], context=context):
             self.infolog(cr, uid, 'Check availability ran on stock.picking id:%s (%s)' % (
@@ -644,6 +656,8 @@ You cannot choose this supplier because some destination locations are not avail
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, *args, **kwargs):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_picking, self).cancel_assign(cr, uid, ids)
         for pick in self.read(cr, uid, ids, ['name']):
             self.infolog(cr, uid, 'Cancel availability ran on stock.picking id:%s (%s)' % (
@@ -657,6 +671,8 @@ You cannot choose this supplier because some destination locations are not avail
         '''
         Call the wizard of cancelation (ask user if he wants to resource goods)
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for pick_data in self.read(cr, uid, ids, ['sale_id', 'purchase_id', 'subtype', 'state'], context=context):
             # if draft and shipment is in progress, we cannot cancel
             if pick_data['subtype'] == 'picking' and pick_data['state'] in ('draft',):
@@ -991,6 +1007,8 @@ You cannot choose this supplier because some destination locations are not avail
         '''
         Confirm all stock moves
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_picking, self).draft_force_assign(cr, uid, ids)
 
         move_obj = self.pool.get('stock.move')
@@ -1084,11 +1102,11 @@ You cannot choose this supplier because some destination locations are not avail
         """
         Create automatically invoice or NOT (regarding some criteria in is_invoice_needed)
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_picking, self).action_done(cr, uid, ids, context=context)
 
         if res:
-            if isinstance(ids, (int, long)):
-                ids = [ids]
             for sp in self.browse(cr, uid, ids):
                 prog_id = self.update_processing_info(cr, uid, sp.id, False, {
                    'close_in': _('Invoice creation in progress'),
@@ -1221,6 +1239,8 @@ You cannot choose this supplier because some destination locations are not avail
         """ Changes picking state to assigned.
         @return: True
         """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self.write(cr, uid, ids, {'state': 'shipped'})
         self.log_picking(cr, uid, ids, context=context)
         move_obj = self.pool.get('stock.move')
@@ -1331,7 +1351,8 @@ class stock_move(osv.osv):
         product_ids_add = product_ids.add
         for stock_move_dict in self.read(cr, uid, ids, ('picking_id', 'product_id'),
                                         context=context):
-            pick_ids_add(stock_move_dict['picking_id'][0])
+            if stock_move_dict['picking_id']:
+                pick_ids_add(stock_move_dict['picking_id'][0])
             product_ids_add(stock_move_dict['product_id'][0])
 
         product_ids = product_ids.difference((product_tbd,))
@@ -1499,7 +1520,8 @@ class stock_move(osv.osv):
     def confirm_and_force_assign(self, cr, uid, ids, context=None):
         '''avoid multiple write by calling it only once'''
 
-        ids = isinstance(ids, (int, long)) and [ids] or ids
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self.check_product_quantity(cr, uid, ids, context=context)
         vals = {'already_confirmed': True}
 
@@ -1526,6 +1548,8 @@ class stock_move(osv.osv):
 
         picking_name_dict = {}
         pick_obj = self.pool.get('stock.picking')
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for move in self.read(cr, uid, ids,
                 ['product_id', 'from_wkf_line', 'picking_id', 'line_number'], context=context):
@@ -1546,10 +1570,14 @@ class stock_move(osv.osv):
 
     @check_cp_rw
     def force_assign(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self.prepare_force_assign(cr, uid, ids, context=context)
         return super(stock_move, self).force_assign(cr, uid, ids, context=context)
 
     def _uom_constraint(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         for move in self.read(cr, uid, ids, ['product_id', 'product_uom'], context=context):
             if not self.pool.get('uom.tools').check_uom(cr, uid,
                     move['product_id'][0], move['product_uom'][0], context):
@@ -2000,6 +2028,8 @@ class stock_move(osv.osv):
         '''
         check that all move have a product quantity > 0
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         no_product = self.search(cr, uid, [
             ('id', 'in', ids),
             ('product_qty', '<=', 0.00),
@@ -2098,6 +2128,8 @@ class stock_move(osv.osv):
 
     @check_cp_rw
     def cancel_assign(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         res = super(stock_move, self).cancel_assign(cr, uid, ids, context=context)
         res = []
 
@@ -2561,6 +2593,8 @@ class stock_location(osv.osv):
             return []
         if context is None:
             context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         prod_obj = self.pool.get('product.product').read(cr, uid, arg[0][2], ['type'])
         if prod_obj['type'] == 'service_recep':
             ids = self.pool.get('stock.location').search(cr, uid, [('usage',
@@ -2626,6 +2660,8 @@ class stock_location(osv.osv):
     def _hook_proct_reserve(self, cr, uid, product_qty, result, amount, id, ids):
         result.append((amount, id, True))
         product_qty -= amount
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if product_qty <= 0.0:
             return result
         else:
@@ -2687,6 +2723,8 @@ class stock_move_cancel_wizard(osv.osv_memory):
         pick_obj = self.pool.get('stock.picking')
 
         wf_service = netsvc.LocalService("workflow")
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for wiz in self.browse(cr, uid, ids, context=context):
             move_id = wiz.move_id.id
@@ -2719,6 +2757,8 @@ class stock_move_cancel_wizard(osv.osv_memory):
         '''
         Call the cancel and resource method of the stock move
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # Objects
         move_obj = self.pool.get('stock.move')
 
@@ -2761,6 +2801,8 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         '''
         Just call the cancel of the stock.picking
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         msg_type = {
             'in': 'Incoming Shipment',
             'internal': 'Internal Picking',
@@ -2786,6 +2828,8 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         '''
         Call the cancel and resource method of the picking
         '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         # objects declarations
         pick_obj = self.pool.get('stock.picking')
 

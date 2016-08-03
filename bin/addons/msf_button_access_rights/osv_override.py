@@ -76,7 +76,8 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
                     access = False
 
                     if groups:
-                        user = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'])
+                        user = self.pool.get('res.users').read(cr, 1, uid,
+                                ['groups_id'])
                         if set(user['groups_id']).intersection(groups):
                             access = True
                     else:

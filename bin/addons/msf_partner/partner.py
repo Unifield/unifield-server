@@ -550,7 +550,7 @@ class res_partner(osv.osv):
             +[com_vouch['name']+_(' (Commitment Voucher)') for com_vouch in com_vouch_obj.read(cr, uid, com_vouch_ids, ['name'], context) if com_vouch['name']]
             +[ship['name']+_(' (Shipment)') for ship in ship_obj.read(cr, uid, ship_ids, ['name'], context) if ship['name']]
             +[absl.name + '(' + absl.statement_id.name + _(' Register)') for absl in absl_obj.browse(cr, uid, absl_ids, context) if absl.name and absl.statement_id and absl.statement_id.name]
-            +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'], name_get=True)]
+            +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
     def write(self, cr, uid, ids, vals, context=None):

@@ -259,7 +259,7 @@ class browse_record(object):
                                         # the target is not loaded yet.
                                         continue
                                     new_data[field_name] = browse_record(self._cr,
-                                        self._uid, value, obj, {},
+                                        self._uid, value, obj, self._cache,
                                         context=self._context,
                                         list_class=self._list_class,
                                         fields_process=self._fields_process)
@@ -270,7 +270,13 @@ class browse_record(object):
                         else:
                             new_data[field_name] = browse_null()
                     elif field_column._type in ('one2many', 'many2many') and len(result_line[field_name]):
-                        new_data[field_name] = self._list_class([browse_record(self._cr, self._uid, id, self._table.pool.get(field_column._obj), {}, context=self._context, list_class=self._list_class, fields_process=self._fields_process) for id in result_line[field_name]], self._context)
+                        new_data[field_name] =
+                        self._list_class([browse_record(self._cr, self._uid,
+                            obj_id, self._table.pool.get(field_column._obj),
+                            self._cache, context=self._context,
+                            list_class=self._list_class,
+                            fields_process=self._fields_process) for obj_id in\
+                                    result_line[field_name]], self._context)
                     elif field_column._type in ('reference'):
                         if result_line[field_name]:
                             if isinstance(result_line[field_name], browse_record):
@@ -286,7 +292,12 @@ class browse_record(object):
                                 ref_id = long(ref_id)
                                 if ref_id:
                                     obj = self._table.pool.get(ref_obj)
-                                    new_data[field_name] = browse_record(self._cr, self._uid, ref_id, obj, {}, context=self._context, list_class=self._list_class, fields_process=self._fields_process)
+                                    new_data[field_name] =
+                                    browse_record(self._cr, self._uid, ref_id,
+                                            obj, self._cache,
+                                            context=self._context,
+                                            list_class=self._list_class,
+                                            fields_process=self._fields_process)
                                 else:
                                     new_data[field_name] = browse_null()
                         else:
@@ -1017,6 +1028,7 @@ class orm_template(object):
 
         if config.get('import_partial', False) and filename:
             data = pickle.load(file(config.get('import_partial')))
+            original_value = data.get(filename, 0)
 
         from osv import except_osv
         position = 0
@@ -1054,8 +1066,7 @@ class orm_template(object):
             self._parent_store_compute(cr)
         return (position, 0, 0, 0)
 
-    def read(self, cr, user, ids, fields=None, context=None,
-            load='_classic_read', name_get=None):
+    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         """
         Read records with given ids with the given fields
 
@@ -2202,8 +2213,7 @@ class orm_memory(orm_template):
 
         return True
 
-    def read(self, cr, user, ids, fields_to_read=None, context=None,
-            load='_classic_read', name_get=False):
+    def read(self, cr, user, ids, fields_to_read=None, context=None, load='_classic_read'):
         if context is None:
             context = {}
         if not fields_to_read:
@@ -2242,9 +2252,7 @@ class orm_memory(orm_template):
                 todo[self._columns[f]._multi].append(f)
             for key, val in todo.items():
                 if key:
-                    res2 = self._columns[val[0]].get_memory(cr, self, ids, val,
-                            user, context=context, values=result,
-                            name_get=name_get)
+                    res2 = self._columns[val[0]].get_memory(cr, self, ids, val, user, context=context, values=result)
                     for pos in val:
                         for record in result:
                             if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
@@ -2253,9 +2261,7 @@ class orm_memory(orm_template):
                                 record[pos] = multi_fields.get(pos,[])
                 else:
                     for f in val:
-                        res2 = self._columns[f].get_memory(cr, self, ids, f,
-                                user, context=context, values=result,
-                                name_get=name_get)
+                        res2 = self._columns[f].get_memory(cr, self, ids, f, user, context=context, values=result)
                         for record in result:
                             if res2:
                                 record[f] = res2[record['id']]
@@ -3370,8 +3376,7 @@ class orm(orm_template):
                        ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
-    def read(self, cr, user, ids, fields=None, context=None,
-            load='_classic_read', name_get=False):
+    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
         if not ids:
             return []
         if context is None:
@@ -3384,8 +3389,7 @@ class orm(orm_template):
         else:
             select = ids
         select = [isinstance(x, dict) and x['id'] or x for x in select]
-        result = self._read_flat(cr, user, select, fields, context, load,
-                name_get=name_get)
+        result = self._read_flat(cr, user, select, fields, context, load)
 
         for r in result:
             for key, v in r.items():
@@ -3396,8 +3400,7 @@ class orm(orm_template):
             return result and result[0] or False
         return result
 
-    def _read_flat(self, cr, user, ids, fields_to_read, context=None,
-            load='_classic_read', name_get=False):
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         if not ids:
             return []
         if context is None:
@@ -3510,8 +3513,7 @@ class orm(orm_template):
             todo[self._columns[f]._multi].append(f)
         for key, val in todo.items():
             if key:
-                res2 = self._columns[val[0]].get(cr, self, ids, val, user,
-                        context=context, values=res, name_get=name_get)
+                res2 = self._columns[val[0]].get(cr, self, ids, val, user, context=context, values=res)
                 for pos in val:
                     for record in res:
                         if isinstance(res2[record['id']], str): res2[record['id']] = eval(res2[record['id']]) #TOCHECK : why got string instend of dict in python2.6
@@ -3520,8 +3522,7 @@ class orm(orm_template):
                             record[pos] = multi_fields.get(pos,[])
             else:
                 for f in val:
-                    res2 = self._columns[f].get(cr, self, ids, f, user,
-                            context=context, values=res, name_get=name_get)
+                    res2 = self._columns[f].get(cr, self, ids, f, user, context=context, values=res)
                     for record in res:
                         if res2:
                             record[f] = res2[record['id']]
