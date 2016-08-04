@@ -202,7 +202,6 @@ class browse_record(object):
             else:
                 fields_to_fetch = [(name, col)]
             ids = filter(lambda id: name not in self._data[id], self._data.keys())
-            #ids = [self._id]
             # read the results
             if self._fields_to_fetch:
                 if name not in self._fields_to_fetch:
@@ -304,25 +303,20 @@ class browse_record(object):
                     else:
                         new_data[field_name] = result_line[field_name]
                 self._data[result_line['id']].update(new_data)
-        else:
-            print 'using cache for id:%s, name:%s, table:%s' % (self._id, name,
-                    self._table)
 
-        if name not in self._data[self._id]:
+        if not name in self._data[self._id]:
             # How did this happen? Could be a missing model due to custom fields used too soon, see above.
             self.logger.notifyChannel("browse_record", netsvc.LOG_ERROR,
                     "Fields to fetch: %s, Field values: %s"%(field_names, field_values))
             self.logger.notifyChannel("browse_record", netsvc.LOG_ERROR,
                     "Cached: %s, Table: %s"%(self._data[self._id], self._table))
             raise KeyError(_('Unknown attribute %s in %s ') % (name, self))
-
         return self._data[self._id][name]
 
     def __getattr__(self, name):
         try:
             return self[name]
         except KeyError, e:
-            import pdb; pdb.set_trace()
             raise AttributeError(e)
 
     def __contains__(self, name):

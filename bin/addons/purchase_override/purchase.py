@@ -804,9 +804,6 @@ class purchase_order(osv.osv):
         Check analytic distribution validity for given PO.
         Also check that partner have a donation account (is PO is in_kind)
         """
-        import time
-        start1 = time.time()
-        print 'enter in check_analytic_distribution with ids=%s' % ids
         # Objects
         ad_obj = self.pool.get('analytic.distribution')
         ccdl_obj = self.pool.get('cost.center.distribution.line')
@@ -873,8 +870,6 @@ class purchase_order(osv.osv):
                         'partner_type': pol.order_id.partner_id.partner_type,
                     })
 
-        print 'temps : %s' % str(time.time() - start1)
-        raise
         return True
 
     def wkf_picking_done(self, cr, uid, ids, context=None):
@@ -1097,8 +1092,6 @@ stock moves which are already processed : '''
         todo = []
         reset_soq = []
 
-        print "BEGINNING"
-
         for po in self.browse(cr, uid, ids, context=context):
             line_error = []
             if po.order_type == 'regular':
@@ -1111,8 +1104,6 @@ stock moves which are already processed : '''
             if len(line_error) > 0:
                 errors = ' / '.join(str(x) for x in line_error)
                 raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price or 0.00 Subtotal. Lines in exception : %s') % errors)
-
-            print "CHECK PRICELIST"
 
             # Check if the pricelist of the order is good according to currency of the partner
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid,
@@ -1127,15 +1118,11 @@ stock moves which are already processed : '''
             if po.order_type == 'purchase_list' and po.amount_total == 0:  # UFTP-69
                 raise osv.except_osv(_('Error'), _('You can not validate a purchase list with a total amount of 0.'))
 
-            print "ITERATE OVER LINES"
-
             for line in po.order_line:
                 if line.state=='draft':
                     todo.append(line.id)
                 if line.soq_updated:
                     reset_soq.append(line.id)
-
-            print "END ITERATION"
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
@@ -1145,23 +1132,14 @@ stock moves which are already processed : '''
             # hook for corresponding Fo update
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po)
 
-        print "ACTION CONFIRM"
-        import pdb; pdb.set_trace()
-
         po_line_obj.action_confirm(cr, uid, todo, context)
-        print "PO LINE WRITE"
         po_line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
 
-        print "PO CONFIRM"
         self.write(cr, uid, ids, {'state' : 'confirmed',
                                   'validator' : uid,
                                   'date_confirm': strftime('%Y-%m-%d')}, context=context)
 
-        print "CHECK DISTRIB"
-        # XXX pourquoi ne pas faire ce check au début ?
         self.check_analytic_distribution(cr, uid, ids, context=context)
-
-        print "END"
 
         return True
 
@@ -2742,7 +2720,6 @@ class purchase_order_merged_line(osv.osv):
             values.update({'price_unit': price})
             new_price = price
 
-        import pdb; pdb.set_trace()
         # Update the unit price and the quantity of the merged line
         if not no_update:
             self.write(cr, uid, [p_id], values, context=context)
@@ -3135,7 +3112,6 @@ class purchase_order_line(osv.osv):
         '''
         Update merged line
         '''
-        import pdb; pdb.set_trace()
         so_obj = self.pool.get('sale.order')
         exp_sol_obj = self.pool.get('expected.sale.order.line')
 
@@ -3146,20 +3122,14 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         res = False
-        if self._table == "purchase_order_line":
-            print "(A)", len(ids)
 
         # [imported from the 'analytic_distribution_supply']
         # Don't save filtering data
         self._relatedFields(cr, uid, vals, context)
         # [/]
-        if self._table == "purchase_order_line":
-            print "(B)", len(ids)
 
         # Update the name attribute if a product is selected
         self._update_name_attr(cr, uid, vals, context=context)
-        if self._table == "purchase_order_line":
-            print "(C)", len(ids)
 
         if 'price_unit' in vals:
             vals.update({'old_price_unit': vals.get('price_unit')})
@@ -3172,11 +3142,6 @@ class purchase_order_line(osv.osv):
         # Remove SoQ updated flag in case of manual modification
         if not 'soq_updated' in vals:
             vals['soq_updated'] = False
-        if self._table == "purchase_order_line":
-            print "(D)", len(ids)
-
-        if self._table == "purchase_order_line":
-            print "(E)", len(ids)
 
         fields_to_read = ['order_id', 'product_qty', 'state', 'origin',
                 'procurement_id']
@@ -3228,12 +3193,9 @@ class purchase_order_line(osv.osv):
                      order_dict[order_id]['po_from_ir']):
                 new_vals['from_fo'] = True
 
-            # XXX bcp de requettes
             if not context.get('update_merge'):
                 new_vals.update(self._update_merged_line(cr, uid, line['id'], vals, context=dict(context, skipResequencing=True, noraise=True)))
 
-
-            # XXX verifier ce que vaut vals pour grouper les write
             if vals != new_vals:
                 res = super(purchase_order_line, self).write(cr, uid, [line['id']], new_vals, context=context)
             else:
@@ -3251,10 +3213,6 @@ class purchase_order_line(osv.osv):
             if line['product_id'] and False:
                 self._check_product_uom(cr, uid, line['product_id'][0],
                         line['product_uom'][0], context=context)
-                print 'product_id:%s, product_uom:%s' % (line['product_id'][0],
-                        line['product_uom'][0])
-        if self._table == "purchase_order_line":
-            print "(G)", len(ids)
 
         if grouped_write:
             res = super(purchase_order_line, self).write(cr, uid, [line['id']],

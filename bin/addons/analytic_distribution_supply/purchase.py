@@ -327,8 +327,6 @@ class purchase_order_line(osv.osv):
          - if no distribution on purchase line and purchase, then "none"
          - all other case are "invalid"
         """
-        print 'enter in _get_distribution_state with ids=%s, name=%s' % (ids,
-                name)
         # Some verifications
         if not context:
             context = {}
@@ -385,7 +383,6 @@ class purchase_order_line(osv.osv):
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
-        print 'enter in _get_distribution_state_recap with ids=%s, name=%s' % (ids, name)
         res = {}
         get_sel = self.pool.get('ir.model.fields').get_selection
         for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
