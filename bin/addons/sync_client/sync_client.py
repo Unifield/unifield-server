@@ -51,6 +51,13 @@ MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
 
+def check_patch_scripts(cr, uid, context=None):
+    if pooler.get_pool(cr.dbname).get('patch.scripts').search(cr, uid, [('run', '=', False)], limit=1, context=context):
+        return _('PatchFailed: A script during upgrade has failed. Synchronization is forbidden. Please contact your administrator')
+    else:
+        return ''
+
+
 class SkipStep(StandardError):
     pass
 
@@ -67,6 +74,9 @@ class BackgroundProcess(Thread):
             chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
+            patch_failed = check_patch_scripts(cr, uid, context=context)
+            if patch_failed:
+                raise osv.except_osv(_('Error'), patch_failed)
             entity = pool.get('sync.client.entity')
             # Lookup method to call
             self.call_method = getattr(entity, method)
@@ -134,6 +144,10 @@ def sync_subprocess(step='status', defaults_logger={}):
                 chk_tz_msg = check_tz()
                 if chk_tz_msg:
                     raise BaseException(chk_tz_msg)
+                patch_failed = check_patch_scripts(cr, uid, context=context)
+                if patch_failed:
+                    raise BaseException(patch_failed)
+
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
             except osv.except_osv, e:
                 logger.switch(step, 'failed')
@@ -170,6 +184,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
+            patch_failed = check_patch_scripts(cr, uid, context=kwargs.get('context', {}))
+            if patch_failed:
+                raise osv.except_osv(_('Error'), patch_failed)
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
             if not sync_lock.acquire(blocking=False):
