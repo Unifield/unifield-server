@@ -319,6 +319,7 @@ def get_hardware_id():
                 if line.find('Ether') > -1:
                     mac.append(line.split()[4])
         mac.sort()
+        logging.getLogger('sync.client').info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
         hw_hash = hashlib.md5(''.join(mac)).hexdigest()
         logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
         return hw_hash
