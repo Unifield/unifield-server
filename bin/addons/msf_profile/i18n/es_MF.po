@@ -29446,10 +29446,14 @@ msgstr "Have account changed?"
 msgid "Create Period"
 msgstr "Crear periodo"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,remark:0
+msgid "Comment"
+msgstr "Observación"
+
 #. modules: consumption_calculation, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:364
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:75
-#: field:real.average.consumption.line,remark:0
 #: report:msf.consumption_report:0
 #, python-format
 msgid "Remark"

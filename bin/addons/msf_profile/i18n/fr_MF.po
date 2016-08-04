@@ -10083,9 +10083,13 @@ msgstr "S. Georgia & S. Sandwich Isls."
 msgid "Module Name"
 msgstr "Nom du Module"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,inactive_error:0
+msgid "System message"
+msgstr "Message système"
+
 #. modules: register_accounting, msf_field_access_rights, consumption_calculation, kit, analytic_distribution_invoice, msf_button_access_rights, msf_doc_import, tender_flow
 #: field:account.invoice.line,inactive_error:0
-#: field:real.average.consumption.line,inactive_error:0
 #: field:composition.item,inactive_error:0
 #: field:msf_button_access_rights.button_access_rule,comment:0
 #: field:initial.stock.inventory.line,inactive_error:0
@@ -38388,10 +38392,14 @@ msgstr "Line %s ignored: an error appeared in the Excel file. Details: %s\n"
 msgid "Currency table name"
 msgstr "Nom de la Table de la Devise"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,remark:0
+msgid "Comment"
+msgstr "Remarque"
+
 #. modules: consumption_calculation, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:359
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:75
-#: field:real.average.consumption.line,remark:0
 #: report:msf.consumption_report:0
 #, python-format
 msgid "Remark"
