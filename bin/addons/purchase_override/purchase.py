@@ -2793,7 +2793,8 @@ class purchase_order_line(osv.osv):
             # apparently, some fields are needed to update the merged lines,
             # without this fields nothing will be done. Start by checking at
             # least one of this field is present before to do computation.
-            required_fields = set(['product_id', 'product_uom', 'product_qty'])
+            required_fields = set(['product_id', 'product_uom', 'product_qty',
+                                   'price_unit'])
             if not required_fields.intersection(vals.keys()):
                 return vals
 
@@ -3183,10 +3184,10 @@ class purchase_order_line(osv.osv):
                 if proc_id:
                     proc = self.pool.get('procurement.order').read(cr, uid,
                             proc_id, ['sale_id'])
-                    if not proc or not proc['sale_id']:
-                        link_so_dict = self.update_origin_link(cr, uid,
-                                vals.get('origin', line['origin']), context=context)
-                        new_vals.update(link_so_dict)
+                if not proc or not proc['sale_id']:
+                    link_so_dict = self.update_origin_link(cr, uid,
+                            vals.get('origin', line['origin']), context=context)
+                    new_vals.update(link_so_dict)
 
             if order_id and not order_dict[order_id]['rfq_ok'] and\
                     (order_dict[order_id]['po_from_fo'] or\
@@ -3210,9 +3211,10 @@ class purchase_order_line(osv.osv):
                         'po_line_id': line['id'],
                     }, context=context)
 
-            if line['product_id'] and False:
-                self._check_product_uom(cr, uid, line['product_id'][0],
-                        line['product_uom'][0], context=context)
+            if not context.get('import_in_progress', False):
+                if line['product_id']:
+                    self._check_product_uom(cr, uid, line['product_id'][0],
+                            line['product_uom'][0], context=context)
 
         if grouped_write:
             res = super(purchase_order_line, self).write(cr, uid, grouped_write,
