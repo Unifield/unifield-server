@@ -391,6 +391,11 @@ class Search(Form):
         if filter_status:
             search_data['filter_status'] = filter_status
         ncustom_domain = openobject.i18n.format.convert_date_format_in_domain(ncustom_domain, res, context)
+
+        # (US-1360) Get the original domain used, convert it from String to List, and store it in the context
+        original_domain = all_domains.get('original_domain') and expr_eval(all_domains.get('original_domain')) or []
+        ctx.update({'original_domain': original_domain})
+
         return dict(domain=ustr(domain), context=ustr(ctx), search_data=ustr(search_data), filter_domain=ustr(ncustom_domain))
 
     @expose()
