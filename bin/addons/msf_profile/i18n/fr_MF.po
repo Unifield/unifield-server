@@ -73832,3 +73832,16 @@ msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
 #, python-format
 msgid "The value in the field \"Repeat\" must be greater than 0!"
 msgstr "La valeur dans le champ \"Périodicité\" doit être supérieure à 0 !"
+
+#. modules: account_override, account
+#: code:addons/account_override/account.py:0
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must have at least two lines."
+msgstr "L'écriture doit avoir au moins deux lignes."
+
+#. module: account
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must be balanced."
+msgstr "L'écriture doit être équilibrée."
