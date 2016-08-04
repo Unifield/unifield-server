@@ -255,6 +255,7 @@ class hq_entries_validation(osv.osv_memory):
         od_journal_id = od_journal_ids[0]
         all_lines = set()
         pure_ad_cor_ji_ids = []
+        original_aji_ids = []
 
         # Split lines into 2 groups:
         #+ original ones
@@ -290,7 +291,7 @@ class hq_entries_validation(osv.osv_memory):
             new_expense_ml_ids = new_res_move.values()
             pure_ad_cor_ji_ids += new_expense_ml_ids
             corr_name = 'COR1 - ' + original_move.name
-            aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name }, context=context, check=False, update_check=False)
+            aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name, 'have_an_historic': True}, context=context, check=False, update_check=False)
 
             # get the move_id
             corr_moves = aml_obj.browse(cr, uid, new_expense_ml_ids, context=context)
@@ -317,6 +318,7 @@ class hq_entries_validation(osv.osv_memory):
 
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
+            original_aji_ids += initial_ana_ids
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
             acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
             if not acor_journal_ids:
@@ -347,6 +349,12 @@ class hq_entries_validation(osv.osv_memory):
         if pure_ad_cor_ji_ids:
             osv.osv.write(aml_obj, cr, uid, list(set(pure_ad_cor_ji_ids)),
                 {'last_cor_was_only_analytic': True,})
+
+        # US-857: mark splitted original lines as reallocated
+        # (like any corrected AJI)
+        if original_aji_ids:
+            osv.osv.write(ana_line_obj, cr, uid, original_aji_ids,
+                {'is_reallocated': True})
 
         # Mark ALL lines as user_validated
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
@@ -384,7 +392,6 @@ class hq_entries_validation(osv.osv_memory):
             cc_change = []
             cc_account_change = []
             split_change = []
-            current_date = strftime('%Y-%m-%d')
             pure_ad_cor_ji_ids = []
 
             # US-672/2 account/partner compatible check pass
@@ -489,11 +496,10 @@ class hq_entries_validation(osv.osv_memory):
                 cor_vals = {'last_corrected_id': fp_old_lines[0]}
                 # Add COR before analytic line name (UTP-1118: missing info)
                 cor_data = ana_line_obj.read(cr, uid, cor_ids, ['name'])
-                for piece_of_cor_data in cor_data:
-                    cor_name = cor_data.get('name', '')
-                    new_name = self.pool.get('account.move.line').join_without_redundancy(cor_name, 'COR')
-                    if new_name:
-                        cor_vals.update({'name': new_name})
+                cor_name = cor_data.get('name', '')
+                new_name = self.pool.get('account.move.line').join_without_redundancy(cor_name, 'COR')
+                if new_name:
+                    cor_vals.update({'name': new_name})
                 ana_line_obj.write(cr, uid, cor_ids, cor_vals)
                 # UTP-1118: Change entry sequence so that it's compatible with analytic journal (correction)
                 if isinstance(cor_ids, (int, long)):
@@ -552,7 +558,7 @@ class hq_entries_validation(osv.osv_memory):
                     {'last_cor_was_only_analytic': True,})
 
             # Do split lines process
-            original_move_ids = self.process_split(cr, uid, split_change, context=context)
+            self.process_split(cr, uid, split_change, context=context)
 
             # Return HQ Entries Tree View in current view
             action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')
