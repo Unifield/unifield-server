@@ -3215,8 +3215,8 @@ class purchase_order_line(osv.osv):
                         line['product_uom'][0], context=context)
 
         if grouped_write:
-            res = super(purchase_order_line, self).write(cr, uid, [line['id']],
-                    new_vals, context=context)
+            res = super(purchase_order_line, self).write(cr, uid, grouped_write,
+                    vals, context=context)
 
         return res
 
