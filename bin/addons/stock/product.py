@@ -176,6 +176,53 @@ class product_product(osv.osv):
             return _('Products: ')+self.pool.get('stock.location').browse(cr, user, context['active_id'], context).name
         return res
 
+    def get_product_pas(self, cr, uid, ids, location_ids, prodlot_id, context=None):
+        """
+        Compute the available quantities for products by using the intermediate table product_stock_availability
+        @param cr: Cursor to the database
+        @param uid: ID of the user that calls the method
+        @param ids: List of ID of product.product
+        @param location_ids: List of ID of stock.location where the quantities must be computed
+        @param prodlot_id: ID of the stock.production.lot on which the quantities must be computed
+        @param context: Context of the call
+        @return: A dictionary with the ID of products as keys and the computed quantities as values.
+        """
+        uom_obj = self.pool.get('product.uom')
+        prd_obj = self.pool.get('product.product')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if isinstance(location_ids, (int, long)):
+            location_ids = [location_ids]
+
+        sql_req = '''
+            SELECT product_id, sum(quantity)
+            FROM product_stock_availability
+            WHERE location_id IN %%s
+              AND product_id IN %%s
+              %s
+            GROUP BY product_id''' % (prodlot_id and 'AND prodlot_id = %%s' or '')
+        where = [tuple(location_ids), tuple(ids)]
+        if prodlot_id:
+            where.append(prodlot_id)
+        cr.execute(sql_req, tuple(where))
+        results = cr.dictfetchall()
+        res = {}
+        for r in results:
+            if context.get('uom', False):
+                prd_brw = prd_obj.browse(cr, uid, r['product_id'], context=context)
+                uom_brw = uom_obj.browse(cr, uid, context.get('uom'), context=context)
+                res[r['product_id']] = uom_obj.\
+                    _compute_qty_obj(cr, uid, prd_brw.uom_id, r['sum'], uom_brw, context=context)
+            res[r['product_id']] = r['sum']
+
+        if not res:
+            for prd_id in ids:
+                res[prd_id] = 0.00
+
+        return res
+
     def get_product_available(self, cr, uid, ids, context=None):
         """ Finds whether product is available or not in particular warehouse.
         @return: Dictionary of values
