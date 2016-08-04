@@ -244,6 +244,7 @@ class product_product(osv.osv):
         @return: A dictionary with the ID of products as keys and the computed quantities as values.
         """
         uom_obj = self.pool.get('product.uom')
+        prd_obj = self.pool.get('product.product')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
