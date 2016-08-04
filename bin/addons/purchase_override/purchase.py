@@ -3163,7 +3163,10 @@ class purchase_order_line(osv.osv):
         order_list = order_obj.read(cr, uid, order_id_list, ['rfq_ok',
             'po_from_fo', 'po_from_ir'], context=context)
         order_dict = dict((x['id'], x) for x in order_list)
-        grouped_write = []
+
+        # use a dict to group the write. The key is the vals dict and values
+        # are a corresponding list of ids to write.
+        group_write_dict = {}
 
         #for line in self.browse(cr, uid, ids, context=context):
         for line in line_list:
@@ -3197,10 +3200,11 @@ class purchase_order_line(osv.osv):
             if not context.get('update_merge'):
                 new_vals.update(self._update_merged_line(cr, uid, line['id'], vals, context=dict(context, skipResequencing=True, noraise=True)))
 
-            if vals != new_vals:
-                res = super(purchase_order_line, self).write(cr, uid, [line['id']], new_vals, context=context)
+            key = tuple(sorted(new_vals.items()))
+            if key in group_write_dict:
+                group_write_dict[key].append(line['id'])
             else:
-                grouped_write.append(line['id'])
+                group_write_dict[key] = [line['id']]
 
             if self._name != 'purchase.order.merged.line' and\
                     vals.get('origin') and not proc_id:
@@ -3216,9 +3220,11 @@ class purchase_order_line(osv.osv):
                     self._check_product_uom(cr, uid, line['product_id'][0],
                             line['product_uom'][0], context=context)
 
-        if grouped_write:
-            res = super(purchase_order_line, self).write(cr, uid, grouped_write,
-                    vals, context=context)
+        if group_write_dict:
+            for key, id_list in group_write_dict.items():
+                vals = dict(key)
+                res = super(purchase_order_line, self).write(cr, uid, id_list,
+                        vals, context=context)
 
         return res
 

@@ -532,14 +532,16 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 
+        fields_to_read = values.keys() + funct_field
+
         if to_be_synchronized or hasattr(self, 'on_change') or audit_rule_ids:
             # FIXME: add fields.function for track changes
-            previous_values = self.read(cr, uid, ids, values.keys()+funct_field, context=context)
+            previous_values = self.read(cr, uid, ids, fields_to_read, context=context)
 
         result = original_write(self, cr, uid, ids, values,context=context)
         current_values = dict((x['id'], x) for x in self.read(
             cr, uid, isinstance(ids, (int, long)) and [ids] or ids,
-            values.keys()+funct_field, context=context)
+            fields_to_read, context=context)
         )
 
         if audit_rule_ids:
