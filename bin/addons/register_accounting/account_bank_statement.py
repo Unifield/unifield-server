@@ -1974,7 +1974,7 @@ class account_bank_statement_line(osv.osv):
         # (US-1043) In case the line corresponds to a Group Import: prevent amount modification to avoid partial payment
         for absl in self.read(cr, uid, ids, ['imported_invoice_line_ids', 'amount_in', 'amount_out'], context=context):
             if len(absl.get('imported_invoice_line_ids', False)) > 1 and \
-                    (absl['amount_out'] != values['amount_out'] or absl['amount_in'] != values['amount_in']):
+                    (abs(absl['amount_out'] - values['amount_out']) > 10**-3 or abs(absl['amount_in'] - values['amount_in']) > 10**-3):
                 raise osv.except_osv(_('Warning'), _('You can\'t edit the amount of a line automatically generated \n'
                                                      'by the functionality "Import Group By Partner".'))
         values = self._update_amount(values=values)
