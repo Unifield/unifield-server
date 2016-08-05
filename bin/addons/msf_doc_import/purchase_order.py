@@ -124,15 +124,15 @@ class purchase_order(osv.osv):
         '''
         Check if the Purchase order contains a line with an inactive products
         '''
-        inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                               ('order_id', 'in', ids),
-                                                                               ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        #inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
+        #                                                                       ('order_id', 'in', ids),
+        #                                                                       ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
 
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
-            raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
-            return False
+        #if inactive_lines:
+        #    plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
+        #    l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+        #    raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
+        #    return False
         return True
 
     _constraints = [
