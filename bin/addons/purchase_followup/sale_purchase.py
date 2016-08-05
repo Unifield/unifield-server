@@ -26,41 +26,91 @@ from osv import fields
 class purchase_order(osv.osv):
     _name = 'purchase.order'
     _inherit = 'purchase.order'
-    
+
     def _shipped_rate(self, cr, uid, ids, name, arg, context=None):
         uom_obj = self.pool.get('product.uom')
         if not ids: return {}
         res = {}
-        
-        for order in self.browse(cr, uid, ids, context=context):
-            # Direct PO is 100.00% received when a user confirm the reception at customer side
-            if order.order_type == 'direct' and order.state == 'done':
-                res[order.id] = 100.00
+        res2 = {}
+        pol_obj = self.pool.get('purchase.order.line')
+        stock_move_obj = self.pool.get('stock.move')
+
+        # do all the requests first and store the result. Then iterate over the result
+        # this avoid doing a lot of time the sames requests
+
+        # get all the purchase orders
+        order_list = self.read(cr, uid, ids, ['state', 'order_type', 'order_line'],
+                context=context)
+        order_dict = dict((x['id'], x) for x in order_list)
+
+        # get all the purchase order lines
+        total_order_line_ids = set()
+        for order in order_list:
+            total_order_line_ids.update(order['order_line'])
+        line_list = pol_obj.read(cr, uid, list(total_order_line_ids),
+                ['product_qty', 'price_unit', 'move_ids', 'product_uom'], context=context)
+        line_dict = dict((x['id'], x) for x in line_list)
+
+        # get all the stock moves
+        stock_move_dict = {}
+        total_move_ids = set()
+        for line in line_list:
+            total_move_ids.update(line['move_ids'])
+            stock_move_dict.update(dict((x, line['id']) for x in line['move_ids']))
+
+        # remove the move with state!='done' or 'type' not in ('out', 'in') because
+        # they are not take into account for calculation
+        total_move_ids = stock_move_obj.search(cr, uid,
+                [('id', 'in', list(total_move_ids)),
+                 ('state', '=', 'done'),
+                 ('type', 'in', ('out', 'in'))], context=context, order='NO_ORDER')
+        stock_move_list = stock_move_obj.read(cr, uid, total_move_ids,
+                ['state', 'product_uom', 'product_qty', 'type'],
+                context=context)
+        stock_move_dict = dict((x['id'], x) for x in stock_move_list)
+
+        # get all the product uom
+        product_uom_dict = {}
+        product_uom_list = [x['product_uom'][0] for x in line_list]
+        product_uom_list = list(set(product_uom_list).union([x['product_uom'][0] for x in stock_move_list]))
+        product_uom_read_result = uom_obj.read(cr, uid, product_uom_list,
+                ['category_id', 'factor', 'rounding'], context=context)
+        product_uom_dict = dict((x['id'], x) for x in
+                product_uom_read_result)
+
+        # do the calcul
+        for order in order_list:
+            if order['order_type'] == 'direct' and order['state'] == 'done':
+                res[order['id']] = 100.00
                 continue
-            elif order.order_type == 'direct' and order.state != 'done':
-                res[order.id] = 0.00
+            elif order['order_type'] == 'direct' and order['state'] != 'done':
+                res[order['id']] = 0.00
                 continue
-            res[order.id] = 0.00
+            res[order['id']] = 0.00
             amount_total = 0.00
             amount_received = 0.00
-            for line in order.order_line:
-                amount_total += line.product_qty*line.price_unit
-                for move in line.move_ids:
-                    if move.state == 'done':
-                        move_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
-                        if move.type == 'out':
-                            amount_received -= move_qty*line.price_unit
-                        elif move.type == 'in':
-                            amount_received += move_qty*line.price_unit
-                        elif move.type == 'internal':
-                            # not taken into account
-                            pass
-                    
+            amount_total = 0
+            for line_id in order_dict[order['id']]['order_line']:
+                line = line_dict[line_id]
+                amount_total += line['product_qty'] * line['price_unit']
+                for move_id in line['move_ids']:
+                    if move_id not in stock_move_dict:
+                        # that's a move not done or not of type 'out' or 'in'
+                        continue
+                    move = stock_move_dict[move_id]
+                    move_qty = uom_obj._compute_qty_dict(cr, uid,
+                            product_uom_dict[move['product_uom'][0]], move['product_qty'],
+                            product_uom_dict[line['product_uom'][0]])
+                    if move['type'] == 'out':
+                        amount_received -= move_qty * line['price_unit']
+                    elif move['type'] == 'in':
+                        amount_received += move_qty * line['price_unit']
+
             if amount_total:
-                res[order.id] = (amount_received/amount_total)*100
-            
+                res[order['id']] = (amount_received/amount_total)*100
+
         return res
-    
+
     _columns = {
             'shipped_rate': fields.function(_shipped_rate, method=True, string='Received', type='float'),
     }

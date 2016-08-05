@@ -124,10 +124,33 @@ class product_uom(osv.osv):
         ('factor_gt_zero', 'CHECK (factor!=0)', 'The conversion ratio for a unit of measure cannot be 0!'),
     ]
 
+    def _compute_qty_dict(self, cr, uid, from_uom_dict, qty, to_uom_dict=False):
+        if not from_uom_dict or not qty or not to_uom_dict:
+            return qty
+        from_unit, to_unit = from_uom_dict, to_uom_dict
+        return self._compute_qty_obj_dict(cr, uid, from_unit, qty, to_unit)
+
+    def _compute_qty_obj_dict(self, cr, uid, from_unit_dict, qty, to_unit_dict, context=None):
+        if context is None:
+            context = {}
+        if from_unit_dict['category_id'][0] <> to_unit_dict['category_id'][0]:
+            if context.get('raise-exception', True):
+                raise osv.except_osv(_('Error !'), _('Conversion from Product UoM m to Default UoM PCE is not possible as they both belong to different Category!.'))
+            else:
+                return qty
+        amount = qty / from_unit_dict['factor']
+        if to_unit_dict:
+            amount = rounding(amount * to_unit_dict['factor'], to_unit_dict['rounding'])
+        return amount
+
+
     def _compute_qty(self, cr, uid, from_uom_id, qty, to_uom_id=False):
         if not from_uom_id or not qty or not to_uom_id:
             return qty
-        uoms = self.browse(cr, uid, [from_uom_id, to_uom_id])
+        uoms = self.browse(cr, uid, [from_uom_id, to_uom_id],
+                fields_to_fetch=['category_id', 'factor', 'rounding'])
+        # XXX I (fabien) don't understand this following line. For me it cannot
+        # be different of True because we just browse uoms[0] with from_uom_id
         if uoms[0].id == from_uom_id:
             from_unit, to_unit = uoms[0], uoms[-1]
         else:
