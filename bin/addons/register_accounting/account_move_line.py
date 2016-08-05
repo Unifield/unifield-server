@@ -109,7 +109,11 @@ class account_move_line(osv.osv):
         for move_line in self.browse(cr, uid, ids, context=context):
             res[move_line.id] = 0.0
             # (US-1043) Documents imported through the "Import Group By Partner" button can't be partial
-            if context.get('group_import') and move_line.imported_invoice_line_ids:
+            stop = False
+            for reg_line in move_line.imported_invoice_line_ids:
+                if len(reg_line.imported_invoice_line_ids) > 1:
+                    stop = True
+            if stop:
                 continue
             if move_line.reconcile_id:
                 continue

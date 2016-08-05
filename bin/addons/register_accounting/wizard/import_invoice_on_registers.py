@@ -164,7 +164,6 @@ class wizard_import_invoice(osv.osv_memory):
                 if abs(line.amount_residual_import_inv) != abs(line.amount_currency):
                     raise osv.except_osv(_('Warning'), _('This document: %s %s has already been partially paid. '
                                                          'Please use "Single Import" to import it.') % (line.ref or '', line.amount_currency))
-                context.update({'group_import': True})
                 key = "%s-%s-%s"%("all", line.partner_id.id, line.account_id.id)
             else:
                 key = line.id
