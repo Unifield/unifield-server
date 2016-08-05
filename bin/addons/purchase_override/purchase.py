@@ -1140,7 +1140,6 @@ stock moves which are already processed : '''
                                   'date_confirm': strftime('%Y-%m-%d')}, context=context)
 
         self.check_analytic_distribution(cr, uid, ids, context=context)
-
         return True
 
     def common_code_from_wkf_approve_order(self, cr, uid, ids, context=None):
@@ -4032,13 +4031,12 @@ class product_product(osv.osv):
 
     def _product_price(self, cr, uid, ids, field_name, args, context=None):
         res = super(product_product, self)._product_price(cr, uid, ids, field_name, args, context=context)
-
-        for product in res:
-            if res[product] == 0.00:
-                try:
-                    res[product] = self.pool.get('product.product').read(cr, uid, [product], ['standard_price'], context=context)[0]['standard_price']
-                except:
-                    pass
+        if field_name != 'standard_price':
+            product_without_price = [obj_id for obj_id, value in res.items() if value == 0.00]
+            if product_without_price:
+                product_list = self.pool.get('product.product').read(cr, uid, product_without_price, ['standard_price'], context=context)
+                for product in product_list:
+                    res[product['id']] = product['standard_price']
 
         return res
 
