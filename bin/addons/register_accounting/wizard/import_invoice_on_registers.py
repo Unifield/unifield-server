@@ -71,12 +71,12 @@ class wizard_import_invoice_lines(osv.osv_memory):
         msg = False
 
         # Amount check
-        for l in self.read(cr, uid, ids, ['amount_to_pay']):
+        for l in self.read(cr, uid, ids, ['amount_to_pay', 'line_ids']):
             if vals['amount'] < 0:
                 msg = _('Negative amount are forbidden!')
             elif vals['amount'] > abs(l['amount_to_pay']):
                 msg = _("Amount %.2f can't be greater than 'Amount to pay': %.2f") % (vals['amount'], abs(l['amount_to_pay']))
-            elif context.get('group_import', False) and vals['amount'] != abs(l['amount_to_pay']):
+            elif len(l['line_ids']) > 1 and vals['amount'] != abs(l['amount_to_pay']):
                 msg = _('You can\'t edit the amount of a line automatically generated \n'
                         'by the functionality "Import Group By Partner".')
             if msg:
