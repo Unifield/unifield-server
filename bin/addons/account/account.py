@@ -1526,12 +1526,13 @@ class account_move(osv.osv):
 
             # When clicking on "Save" for a Manual Journal Entry:
             # IF there are JI, check that there are at least 2 lines and that the entry is balanced
-            if context.get('from_web_menu', False) and move.line_id \
-                    and context.get('journal_id', False) and not context.get('button', False):
-                if len(move.line_id) < 2:
-                    raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
-                elif abs(amount) > 10 ** -4:
-                    raise osv.except_osv(_('Warning'), _('The entry must be balanced.'))
+            # FIXME: can't duplicate a JE
+            #if context.get('from_web_menu', False) and move.line_id \
+            #        and context.get('journal_id', False) and not context.get('button', False):
+            #    if len(move.line_id) < 2:
+            #        raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
+            #    elif abs(amount) > 10 ** -4:
+            #        raise osv.except_osv(_('Warning'), _('The entry must be balanced.'))
 
             if abs(amount) < 10 ** -4:
                 # If the move is balanced
