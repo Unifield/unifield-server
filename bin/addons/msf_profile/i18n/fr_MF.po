@@ -10083,9 +10083,13 @@ msgstr "S. Georgia & S. Sandwich Isls."
 msgid "Module Name"
 msgstr "Nom du Module"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,inactive_error:0
+msgid "System message"
+msgstr "Message système"
+
 #. modules: register_accounting, msf_field_access_rights, consumption_calculation, kit, analytic_distribution_invoice, msf_button_access_rights, msf_doc_import, tender_flow
 #: field:account.invoice.line,inactive_error:0
-#: field:real.average.consumption.line,inactive_error:0
 #: field:composition.item,inactive_error:0
 #: field:msf_button_access_rights.button_access_rule,comment:0
 #: field:initial.stock.inventory.line,inactive_error:0
@@ -23010,10 +23014,19 @@ msgid "You cannot have a register on the same period and the same journal!"
 msgstr "Vous ne pouvez pas avoir un registre sur la même période et le même journal !"
 
 #. module: register_accounting
-#: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Journal code:"
 msgstr "Code du Journal:"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Bank journal code:"
+msgstr "Code du Journal de Banque :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Cheque journal code:"
+msgstr "Code du Journal de Chèques :"
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
@@ -29694,6 +29707,16 @@ msgstr "Le Délai de Paiement du Fournisseur ne contient pas de lignes de Délai
 #: report:bank.reconciliation:0
 msgid "Bank statement balance:"
 msgstr "Solde Registre de Banque: "
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Total amount of pending cheque:"
+msgstr "Montant total des chèques en attente :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Calculated Balance - Pending cheque:"
+msgstr "Solde calculé - Chèques en attente :"
 
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:922
@@ -38369,10 +38392,14 @@ msgstr "Line %s ignored: an error appeared in the Excel file. Details: %s\n"
 msgid "Currency table name"
 msgstr "Nom de la Table de la Devise"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,remark:0
+msgid "Comment"
+msgstr "Remarque"
+
 #. modules: consumption_calculation, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:359
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:75
-#: field:real.average.consumption.line,remark:0
 #: report:msf.consumption_report:0
 #, python-format
 msgid "Remark"
@@ -73794,3 +73821,35 @@ msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la
 #, python-format
 msgid "Not Created"
 msgstr "Non Créé"
+
+#. module: account
+#: code:addons/account/wizard/account_subscription_generate.py:0
+#, python-format
+msgid "The Recurring Model %s has no accounting lines!"
+msgstr "Le Modèle périodique %s n'a pas de lignes comptables !"
+
+#. module: account
+#: code:addons/account/wizard/account_subscription_generate.py:0
+#, python-format
+msgid "The entry is not balanced for the Recurring Model %s!"
+msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_subscription.py:41
+#: code:addons/account_subscription/account_subscription.py:48
+#, python-format
+msgid "The value in the field \"Repeat\" must be greater than 0!"
+msgstr "La valeur dans le champ \"Périodicité\" doit être supérieure à 0 !"
+
+#. modules: account_override, account
+#: code:addons/account_override/account.py:0
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must have at least two lines."
+msgstr "L'écriture doit avoir au moins deux lignes."
+
+#. module: account
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must be balanced."
+msgstr "L'écriture doit être équilibrée."

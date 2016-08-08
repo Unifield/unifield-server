@@ -291,8 +291,9 @@ class hq_entries_split(osv.osv_memory):
             total = 0.00
             for line in wiz.line_ids:
                 total += line.amount
-            if abs(wiz.original_amount - total) > 10**-2:
-                raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
+            if abs(abs(wiz.original_amount) - abs(total)) > 0.000000000001:
+                # US-1361 tolerate minimal python rounding gap
+                raise osv.except_osv(_('Error'), _('Wrong total: %f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
 
             self.write(cr, uid, [wiz.id], {'running': True})
             # If all is OK, do process of lines

@@ -217,7 +217,8 @@
                 </td>
             </tr>
             <tr>
-            [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
+                [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
+                [[  line.state == 'cancel' and removeParentNode('tr') ]]
                 <td>
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>
