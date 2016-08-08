@@ -125,6 +125,10 @@ class fakeUid(int):
     def __init__(self, fakeUid, realUid):
         self.realUid = realUid
 
+    def __reduce__(self):
+        res = super(fakeUid, self).__reduce__()
+        return (res[0], (res[1][1], res[1][1], self.realUid))
+
 super_execute_cr = osv.object_proxy.execute_cr
 
 def execute_cr(self, cr, uid, obj, method, *args, **kw):

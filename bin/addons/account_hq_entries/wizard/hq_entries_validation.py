@@ -30,15 +30,27 @@ class hq_entries_validation(osv.osv_memory):
     _name = 'hq.entries.validation'
     _description = 'HQ entries validation'
 
+    def _get_default_period(self, cr, uid, context=None):
+        '''
+        Get the "first" period open or field-closed among December periods,
+        i.e. in order of priority: 12, 13, 14 or 15 (or None)
+        '''
+        args = [('number', 'in', range(12, 16)), ('state', 'not in', ['created', 'mission-closed', 'done'])]
+        period_obj = self.pool.get('account.period')
+        period_ids = period_obj.search(cr, uid, args, limit=1, order='number asc', context=context)
+        return period_ids and period_ids[0] or None
+
     _columns = {
         'txt': fields.char("Text", size=128, readonly="1"),
         'line_ids': fields.many2many('hq.entries', 'hq_entries_validation_rel', 'wizard_id', 'line_id', "Selected lines", help="Lines previously selected by the user", readonly=True),
         'process_ids': fields.many2many('hq.entries', 'hq_entries_validation_process_rel', 'wizard_id', 'line_id', "Valid lines", help="Lines that would be processed", readonly=True),
         'running': fields.boolean('Is running'),
+        'period_id': fields.many2one('account.period', 'Period to book December HQ entries', required=False),
     }
 
     _defaults = {
         'running': False,
+        'period_id': _get_default_period,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -52,6 +64,28 @@ class hq_entries_validation(osv.osv_memory):
 
         return super(hq_entries_validation, self).default_get(cr, uid, fields,
             context=context)
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        if context is None:
+            context = {}
+        view = super(hq_entries_validation, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        if 'period_id' in view['fields'] and 'active_id' in context:
+            # get December Periods (12 to 15) if they are not Draft, Mission-Closed or HQ-Closed
+            view['fields']['period_id']['domain'] = [('number', 'in', range(12, 16)),
+                                                     ('state', 'not in', ['created', 'mission-closed', 'done'])]
+            lines = self.browse(cr, uid, context.get('active_id', False), context).line_ids
+            # if there is at least one HQ Entry in December, the period_id (used to book the entry) is required,
+            # else the field isn't displayed
+            hq_entries_in_dec = False
+            for l in lines:
+                if l.period_id and l.period_id.number == 12:
+                    hq_entries_in_dec = True
+                    break
+            if hq_entries_in_dec:
+                view['fields']['period_id']['required'] = True
+            else:
+                view['fields']['period_id']['invisible'] = True
+        return view
 
     # UTP-1101: Extract the method to create AD for being called also for the REV move
     def create_distribution_id(self, cr, uid, currency_id, line, account):
@@ -89,7 +123,8 @@ class hq_entries_validation(osv.osv_memory):
                 self.pool.get('free.2.distribution.line').create(cr, uid, common_vals)
         return distrib_id
 
-    def create_move(self, cr, uid, ids, period_id=False, currency_id=False, date=None, journal=None, orig_acct=None, context=None):
+    def create_move(self, cr, uid, ids, period_id=False, currency_id=False,
+        date=None, journal=None, orig_acct=None, doc_date=None, context=None):
         """
         Create a move with given hq entries lines
         Return created lines (except counterpart lines)
@@ -125,7 +160,7 @@ class hq_entries_validation(osv.osv_memory):
             # create move
             move_id = self.pool.get('account.move').create(cr, uid, {
                 'date': date,
-                'document_date': date,
+                'document_date': doc_date or date,
                 'journal_id': journal_id,
                 'period_id': period_id,
             })
@@ -181,7 +216,7 @@ class hq_entries_validation(osv.osv_memory):
                 'move_id': move_id,
                 'date': date,
                 'date_maturity': date,
-                'document_date': date,
+                'document_date': doc_date or date,
                 'name': 'HQ Entry Counterpart',
                 'currency_id': currency_id,
             })
@@ -220,6 +255,7 @@ class hq_entries_validation(osv.osv_memory):
         od_journal_id = od_journal_ids[0]
         all_lines = set()
         pure_ad_cor_ji_ids = []
+        original_aji_ids = []
 
         # Split lines into 2 groups:
         #+ original ones
@@ -234,7 +270,7 @@ class hq_entries_validation(osv.osv_memory):
         # Create the original line as it is (and its reverse)
         for line in original_lines:
             # PROCESS ORIGINAL LINES
-            res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, context=context)
+            res_move = self.create_move(cr, uid, line.id, line.period_id.id, line.currency_id.id, date=line.date, doc_date=line.document_date, context=context)
             original_move = aml_obj.browse(cr, uid, res_move[line.id])
 
             move_id = original_move.move_id.id
@@ -248,14 +284,14 @@ class hq_entries_validation(osv.osv_memory):
             aml_obj.write(cr, uid, original_move.id, {'corrected': True, 'have_an_historic': True} , context=context)
             original_account_id = original_move.account_id.id
 
-            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, journal=od_journal_id, orig_acct=original_account_id)
+            new_res_move = self.create_move(cr, uid, [x.id for x in line.split_ids], line.period_id.id, line.currency_id.id, date=line.date, doc_date=line.document_date, journal=od_journal_id, orig_acct=original_account_id)
             # original move line
             original_ml_result = res_move[line.id]
             # Mark new journal items as corrections for the first one
             new_expense_ml_ids = new_res_move.values()
             pure_ad_cor_ji_ids += new_expense_ml_ids
             corr_name = 'COR1 - ' + original_move.name
-            aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name }, context=context, check=False, update_check=False)
+            aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name, 'have_an_historic': True}, context=context, check=False, update_check=False)
 
             # get the move_id
             corr_moves = aml_obj.browse(cr, uid, new_expense_ml_ids, context=context)
@@ -277,10 +313,12 @@ class hq_entries_validation(osv.osv_memory):
                 'reversal_line_id': original_move.id,
                 'partner_txt': original_move.partner_txt or '',
                 'reference': line.ref or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
+                'document_date': line.document_date,  # US-1361
                 }, context=context, check=False, update_check=False)
 
             # create the analytic lines as a reversed copy of the original
             initial_ana_ids = ana_line_obj.search(cr, uid, [('move_id.move_id', '=', move_id)])  # original move_id
+            original_aji_ids += initial_ana_ids
             res_reverse = ana_line_obj.reverse(cr, uid, initial_ana_ids, posting_date=line.date)
             acor_journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'correction'), ('is_current_instance', '=', True)])
             if not acor_journal_ids:
@@ -311,6 +349,12 @@ class hq_entries_validation(osv.osv_memory):
         if pure_ad_cor_ji_ids:
             osv.osv.write(aml_obj, cr, uid, list(set(pure_ad_cor_ji_ids)),
                 {'last_cor_was_only_analytic': True,})
+
+        # US-857: mark splitted original lines as reallocated
+        # (like any corrected AJI)
+        if original_aji_ids:
+            osv.osv.write(ana_line_obj, cr, uid, original_aji_ids,
+                {'is_reallocated': True})
 
         # Mark ALL lines as user_validated
         self.pool.get('hq.entries').write(cr, uid, list(all_lines), {'user_validated': True}, context=context)
@@ -348,7 +392,6 @@ class hq_entries_validation(osv.osv_memory):
             cc_change = []
             cc_account_change = []
             split_change = []
-            current_date = strftime('%Y-%m-%d')
             pure_ad_cor_ji_ids = []
 
             # US-672/2 account/partner compatible check pass
@@ -368,6 +411,14 @@ class hq_entries_validation(osv.osv_memory):
                     "\n".join(account_partner_not_compat_log))
 
             for line in self.pool.get('hq.entries').browse(cr, uid, active_ids, context=context):
+                # for December HQ Entries: use the period selected in the wizard
+                if line.period_id.number == 12 and wiz.period_id:
+                    if line.period_id.fiscalyear_id != wiz.period_id.fiscalyear_id:
+                        raise osv.except_osv(_("Error"), _("The period used to book the December Entries must be in "
+                                                           "Fiscal Year %s.") % (line.period_id.fiscalyear_id.name,))
+                    else:
+                        context.update({'period_id_for_dec_hq_entries': wiz.period_id.id})
+                        line.period_id = wiz.period_id
                 #UF-1956: interupt validation if currency is inactive
                 if line.currency_id.active is False:
                     self.write(cr, uid, [wiz.id], {'running': False})
@@ -411,8 +462,8 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                         })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
-
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
+                                                                   corrected_distrib_id, context=context)
             for line in cc_change:
                 # actual distrib_id
                 distrib_id = self.pool.get('account.move.line').read(cr, uid, all_lines[line.id], ['analytic_distribution_id'])['analytic_distribution_id'][0]
@@ -445,11 +496,10 @@ class hq_entries_validation(osv.osv_memory):
                 cor_vals = {'last_corrected_id': fp_old_lines[0]}
                 # Add COR before analytic line name (UTP-1118: missing info)
                 cor_data = ana_line_obj.read(cr, uid, cor_ids, ['name'])
-                for piece_of_cor_data in cor_data:
-                    cor_name = cor_data.get('name', '')
-                    new_name = self.pool.get('account.move.line').join_without_redundancy(cor_name, 'COR')
-                    if new_name:
-                        cor_vals.update({'name': new_name})
+                cor_name = cor_data.get('name', '')
+                new_name = self.pool.get('account.move.line').join_without_redundancy(cor_name, 'COR')
+                if new_name:
+                    cor_vals.update({'name': new_name})
                 ana_line_obj.write(cr, uid, cor_ids, cor_vals)
                 # UTP-1118: Change entry sequence so that it's compatible with analytic journal (correction)
                 if isinstance(cor_ids, (int, long)):
@@ -497,7 +547,8 @@ class hq_entries_validation(osv.osv_memory):
                                 'destination_id': line.destination_id.id,
                             })]
                     })
-                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id, corrected_distrib_id)
+                self.pool.get('account.move.line').correct_account(cr, uid, all_lines[line.id], line.date, line.account_id.id,
+                                                                   corrected_distrib_id, context=context)
 
             # US-1333/1 - BKLG-12 pure AD correction flag marker
             # (do this bypassing model write)
@@ -507,7 +558,7 @@ class hq_entries_validation(osv.osv_memory):
                     {'last_cor_was_only_analytic': True,})
 
             # Do split lines process
-            original_move_ids = self.process_split(cr, uid, split_change, context=context)
+            self.process_split(cr, uid, split_change, context=context)
 
             # Return HQ Entries Tree View in current view
             action_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'account_hq_entries', 'action_hq_entries_tree')

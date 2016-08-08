@@ -398,6 +398,10 @@ class procurement_request(osv.osv):
         Update date_planned of lines
         '''
         res = True
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
             if req.procurement_request and 'delivery_requested_date' in vals:
@@ -545,6 +549,8 @@ class procurement_request(osv.osv):
         line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
         line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
+
+        self.ssl_products_in_line(cr, uid, ids, context=context)
 
         return True
 

@@ -37,6 +37,7 @@ from psycopg2 import OperationalError
 
 import logging
 from sync_common import sync_log, get_md5, check_md5
+from service.web_services import check_tz
 
 from threading import Thread, RLock, Lock
 import pooler
@@ -63,6 +64,9 @@ class BackgroundProcess(Thread):
         self.db, pool = pooler.get_db_and_pool(cr.dbname)
         connected = True
         try:
+            chk_tz_msg = check_tz()
+            if chk_tz_msg:
+                raise osv.except_osv(_('Error'), chk_tz_msg)
             entity = pool.get('sync.client.entity')
             # Lookup method to call
             self.call_method = getattr(entity, method)
@@ -127,6 +131,9 @@ def sync_subprocess(step='status', defaults_logger={}):
             logger.switch(step, 'in-progress')
             logger.write()
             try:
+                chk_tz_msg = check_tz()
+                if chk_tz_msg:
+                    raise BaseException(chk_tz_msg)
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
             except osv.except_osv, e:
                 logger.switch(step, 'failed')
@@ -160,7 +167,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
         @functools.wraps(fn)
         def wrapper(self, cr, uid, *args, **kwargs):
-
+            chk_tz_msg = check_tz()
+            if chk_tz_msg:
+                raise osv.except_osv(_('Error'), chk_tz_msg)
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
             if not sync_lock.acquire(blocking=False):
@@ -179,7 +188,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                 # get the logger
                 logger = context.get('logger')
                 make_log = logger is None
-
                 # we have to make the log
                 if make_log:
                     # get a whole new logger from sync.monitor object
@@ -311,6 +319,7 @@ def get_hardware_id():
                 if line.find('Ether') > -1:
                     mac.append(line.split()[4])
         mac.sort()
+        logging.getLogger('sync.client').info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
         hw_hash = hashlib.md5(''.join(mac)).hexdigest()
         logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
         return hw_hash

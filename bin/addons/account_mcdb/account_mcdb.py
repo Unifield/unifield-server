@@ -314,9 +314,11 @@ class account_mcdb(osv.osv):
             if wiz.document_code and wiz.document_code != '':
                 document_code_field = 'move_id.name'
                 if res_model == 'account.analytic.line':
-                    domain.append(('|'))
+                    domain.append('|')
+                    domain.append('|')
                     domain.append(('move_id.move_id.name', 'ilike', '%%%s%%' % wiz.document_code))
                     domain.append(('commitment_line_id.commit_id.name', 'ilike', '%%%s%%' % wiz.document_code))
+                    domain.append(('entry_sequence', 'ilike', '%s' % wiz.document_code))
                 else:
                     domain.append((document_code_field, 'ilike', '%%%s%%' % wiz.document_code))
             if wiz.document_state and wiz.document_state != '':
