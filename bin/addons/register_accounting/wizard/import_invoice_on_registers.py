@@ -187,7 +187,7 @@ class wizard_import_invoice(osv.osv_memory):
             new_lines.append({
                 'line_ids': [(6, 0, [x.id for x in ordered_lines[key]])],
                 'partner_id': ordered_lines[key][0].partner_id.id or None,
-                'ref': ' / '.join([x.ref and x.ref for x in ordered_lines[key]])[:size],
+                'ref': ' / '.join([x.ref and x.ref or '' for x in ordered_lines[key]])[:size] or False,
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
                 'document_date': wizard.date or time.strftime('%Y-%m-%d'),
