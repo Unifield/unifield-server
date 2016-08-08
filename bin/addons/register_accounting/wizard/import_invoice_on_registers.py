@@ -76,7 +76,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
                 msg = _('Negative amount are forbidden!')
             elif vals['amount'] > abs(l['amount_to_pay']):
                 msg = _("Amount %.2f can't be greater than 'Amount to pay': %.2f") % (vals['amount'], abs(l['amount_to_pay']))
-            elif len(l['line_ids']) > 1 and vals['amount'] != abs(l['amount_to_pay']):
+            elif len(l['line_ids']) > 1 and abs(vals['amount'] - abs(l['amount_to_pay'])) > 10**-3:
                 msg = _('You can\'t edit the amount of a line automatically generated \n'
                         'by the functionality "Import Group By Partner".')
             if msg:
@@ -161,7 +161,7 @@ class wizard_import_invoice(osv.osv_memory):
             if line.id in already:
                 raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
-                if abs(line.amount_residual_import_inv) != abs(line.amount_currency):
+                if abs(abs(line.amount_residual_import_inv) - abs(line.amount_currency)) > 10**-3:
                     raise osv.except_osv(_('Warning'), _('This document: %s %s has already been partially paid. '
                                                          'Please use "Single Import" to import it.') % (line.ref or '', line.amount_currency))
                 key = "%s-%s-%s"%("all", line.partner_id.id, line.account_id.id)
