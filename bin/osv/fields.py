@@ -435,7 +435,11 @@ class one2many(_column):
         res = {}
         for id in ids:
             res[id] = []
-        ids2 = obj.pool.get(self._obj).search(cr, user, [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
+        order = None
+        if len(ids) == 1:
+            order = 'NO_ORDER'
+        ids2 = obj.pool.get(self._obj).search(cr, user, [(self._fields_id,
+            'in', ids)], order=order, limit=self._limit, context=context)
         for r in obj.pool.get(self._obj).read(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
             if r[self._fields_id] in res:
                 res[r[self._fields_id]].append(r['id'])
@@ -486,7 +490,11 @@ class one2many(_column):
         for id in ids:
             res[id] = []
 
-        ids2 = obj.pool.get(self._obj).search(cr, user, self._domain + [(self._fields_id, 'in', ids)], limit=self._limit, context=context)
+        order = None
+        if len(ids) == 1:
+            order = 'NO_ORDER'
+        ids2 = obj.pool.get(self._obj).search(cr, user, self._domain +
+                [(self._fields_id, 'in', ids)], order=order, limit=self._limit, context=context)
         for r in obj.pool.get(self._obj)._read_flat(cr, user, ids2, [self._fields_id], context=context, load='_classic_write'):
             if r[self._fields_id] in res:
                 res[r[self._fields_id]].append(r['id'])
@@ -1050,9 +1058,12 @@ class property(function):
 
         domain = [('fields_id.model', '=', obj._name), ('fields_id.name','in',prop_name)]
         #domain = prop._get_domain(cr, uid, prop_name, obj._name, context)
+        order = None
         if vids:
             domain = [('res_id', 'in', vids)] + domain
-        return prop.search(cr, uid, domain, context=context)
+            if len(vids) == 1:
+                order='NO_ORDER'
+        return prop.search(cr, uid, domain, order=order, context=context)
 
     # TODO: to rewrite more clean
     def _fnct_write(self, obj, cr, uid, id, prop_name, id_val, obj_dest, context=None):
@@ -1108,7 +1119,13 @@ class property(function):
                     res[prop.res_id.id][prop.fields_id.name] = False
 
         for rep in replaces:
-            nids = obj.pool.get(rep).search(cr, uid, [('id','in',replaces[rep].keys())], context=context)
+            id_list = replaces[rep].keys()
+            order = None
+            if len(id_list) == 1:
+                order = 'NO_ORDER'
+            nids = obj.pool.get(rep).search(cr, uid,
+                    [('id', 'in', id_list)], order=order,
+                    context=context)
             replaces[rep] = dict(obj.pool.get(rep).name_get(cr, uid, nids, context=context))
 
         for prop in prop_name:
