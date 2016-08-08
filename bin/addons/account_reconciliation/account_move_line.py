@@ -265,50 +265,12 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
-        # Prepare some values
-        to_reverse = []
-        # Retrieve all addendum lines
-        # First search all reconciliation ids to find ALL move lines (some could be not selected but unreconciled after
-        reconcile_ids = [(x.reconcile_id and x.reconcile_id.id) or (x.reconcile_partial_id and x.reconcile_partial_id.id) or None for x in self.browse(cr, uid, move_ids, context=context)]
+        reconcile_ids = [x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id']]
         if reconcile_ids:
-            # Search all account move line for this reconcile_ids
-            operator = 'in'
-            if len(reconcile_ids) == 1:
-                operator = '='
-            ml_ids = self.search(cr, uid, [('reconcile_id', operator, reconcile_ids)])
-            # Search addendum line to delete
-            for line in self.browse(cr, uid, ml_ids, context=context):
-                if line.is_addendum_line:
-                    lines = [x.id for x in line.move_id.line_id]
-                    to_reverse.append(lines)
-        # Retrieve default behaviour
-        res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
-        # If success, verify that no addendum line exists
-        if res and to_reverse:
-            # Delete doublons
-            to_reverse = flatten(to_reverse)
-            # Reverse move
-            context.update({'from': 'reverse_addendum'})
-            success_ids, move_ids = self.reverse_move(cr, uid, to_reverse, context=context)
-            # Search all move lines attached to given move_ids
-            moves = self.pool.get('account.move').browse(cr, uid, move_ids, context=context)
-            lines = []
-            for move in moves:
-                lines += [x.id for x in move.line_id]
-            lines = flatten(lines)
-            # Set booking debit/credit to 0 for these lines
-            sql = """
-                UPDATE account_move_line
-                SET debit_currency=%s, credit_currency=%s, amount_currency=%s
-                WHERE id IN %s
-            """
-            cr.execute(sql, [0.0, 0.0, 0.0, tuple(lines)])
-            # Reconcile lines
-            all_lines = flatten([to_reverse, lines])
-            to_reconcile = self.pool.get('account.move.line').search(cr, uid, [('id', 'in', all_lines), ('account_id.reconcile', '=', True)])
-            if to_reconcile:
-                self.pool.get('account.move.line').reconcile(cr, uid, to_reconcile)
-        return res
+            if self.search(cr, uid, [('reconcile_id', 'in', reconcile_ids), ('is_addendum_line', '=', True)], limit=1, order='NO_ORDER', context=context):
+                raise osv.except_osv(_('Error'), _('You cannot unreconcile entries with FX adjustment.'))
+
+        return super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
 
 account_move_line()
 
