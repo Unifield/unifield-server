@@ -488,6 +488,12 @@ class ImpEx(SecuredController):
 
         if not params.ids or all_records:
             domain = params.search_domain or []
+
+            # (US-1360) Use not only the domain corresponding to the filters selected but also
+            # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
+            if 'original_domain' in ctx:
+                domain.extend(ctx['original_domain'])
+
             if params.model == 'product.product':
                 ids = proxy.search(domain, 0, None, 0, ctx)
             else:
