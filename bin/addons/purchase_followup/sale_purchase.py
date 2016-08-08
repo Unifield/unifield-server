@@ -31,7 +31,6 @@ class purchase_order(osv.osv):
         uom_obj = self.pool.get('product.uom')
         if not ids: return {}
         res = {}
-        res2 = {}
         pol_obj = self.pool.get('purchase.order.line')
         stock_move_obj = self.pool.get('stock.move')
 
@@ -99,7 +98,8 @@ class purchase_order(osv.osv):
                         continue
                     move = stock_move_dict[move_id]
                     move_qty = uom_obj._compute_qty_dict(cr, uid,
-                            product_uom_dict[move['product_uom'][0]], move['product_qty'],
+                            product_uom_dict[move['product_uom'][0]],
+                            move['product_qty'],
                             product_uom_dict[line['product_uom'][0]])
                     if move['type'] == 'out':
                         amount_received -= move_qty * line['price_unit']
