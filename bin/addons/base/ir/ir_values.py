@@ -207,39 +207,51 @@ class ir_values(osv.osv):
         if not result:
             return []
 
-        def _result_get(x, keys):
-            if x[1] in keys:
-                return False
-            keys.append(x[1])
-            if x[3]:
-                model,id = x[2].split(',')
-                # FIXME: It might be a good idea to opt-in that kind of stuff
-                # FIXME: instead of arbitrarily removing random fields
-                fields = [
-                    field
-                    for field in self.pool.get(model).fields_get_keys(cr, uid)
-                    if field not in EXCLUDED_FIELDS]
+        def _result_get(result):
+            model_dict = {}
+            final_result = []
+            obj_dict = {}
 
+            # extract models
+            for res in result:
+                if res[3]:
+                    model, object_id = res[2].split(',')
+                    object_id = int(object_id)
+                    obj_dict[object_id] = (res[0], res[1], res[4])
+                    if model not in model_dict:
+                        model_dict[model] = []
+                    if object_id not in model_dict[model]:
+                        model_dict[model].append(object_id)
+                else:
+                    if False not in obj_dict:
+                        obj_dict[False] = []
+                    final_result.append((res[0], res[1],
+                        pickle.loads(res[2].encode('utf-8'))))
+            for model, id_list in model_dict.items():
+                fields = [field for field in self.pool.get(model).fields_get_keys(cr, uid)
+                            if field not in EXCLUDED_FIELDS]
                 try:
-                    datas = self.pool.get(model).read(cr, uid, [int(id)], fields, context)
+                    datas = self.pool.get(model).read(cr, uid, id_list, fields, context)
                 except except_orm, e:
-                    return False
-                datas = datas and datas[0]
-                if not datas:
-                    return False
-            else:
-                datas = pickle.loads(x[2].encode('utf-8'))
-            if meta:
-                return (x[0], x[1], datas, pickle.loads(x[4]))
-            return (x[0], x[1], datas)
-        keys = []
-        res = filter(None, map(lambda x: _result_get(x, keys), result))
+                    return []
+                for data in datas:
+                    if not data:
+                        continue
+                    if data['id'] in obj_dict:
+                        res1, res2, res3 = obj_dict[data['id']]
+                        if meta:
+                            final_result.append((res1, res2, data,
+                                pickle.loads(res3)))
+                        else:
+                            final_result.append((res1, res2, data))
+            return final_result
+        res = _result_get(result)
         res2 = res[:]
         for r in res:
             if isinstance(r[2], dict) and r[2].get('type') in ('ir.actions.report.xml','ir.actions.act_window','ir.actions.wizard'):
                 groups = r[2].get('groups_id')
                 if groups:
-                    cr.execute('SELECT COUNT(1) FROM res_groups_users_rel WHERE gid IN %s AND uid=%s',(tuple(groups), uid))
+                    cr.execute('SELECT 1 FROM res_groups_users_rel WHERE gid IN %s AND uid=%s',(tuple(groups), uid))
                     cnt = cr.fetchone()[0]
                     if not cnt:
                         res2.remove(r)
