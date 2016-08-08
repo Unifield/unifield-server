@@ -666,7 +666,8 @@ class purchase_order_line(osv.osv):
         res = {}
         cur_obj=self.pool.get('res.currency')
         tax_obj = self.pool.get('account.tax')
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, fields_to_fetch=['taxes_id',
+        'price_unit', 'product_qty', 'order_id'], context=context):
             taxes = tax_obj.compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty)
             cur = line.order_id.pricelist_id.currency_id
             res[line.id] = cur_obj.round(cr, uid, cur.rounding, taxes['total'])
