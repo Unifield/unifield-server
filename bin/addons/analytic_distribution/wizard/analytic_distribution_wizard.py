@@ -1003,12 +1003,13 @@ class analytic_distribution_wizard(osv.osv_memory):
             return st_obj.button_open_invoice(cr, uid, st_id, context=context)
         return False
 
-    def button_confirm(self, cr, uid, ids, context=None):
+    def button_confirm(self, cr, button_uid, ids, context=None):
         """
         Calculate total of lines and verify that it's equal to total_amount
         """
         if not context:
             context = {}
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz2 = self.browse(cr, uid, ids, context=context)[0]
