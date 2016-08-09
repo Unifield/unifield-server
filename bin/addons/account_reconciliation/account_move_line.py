@@ -32,6 +32,54 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
     _name = 'account.move.line'
 
+    _columns = {
+        'reconcile_date': fields.date('Reconcile date',
+            help="Date of reconciliation"),
+    }
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None,
+        context=None, count=False):
+        if context is None:
+            context = {}
+
+        # US-533: to answer http://jira.unifield.org/browse/US-533?focusedCommentId=50218&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50218
+        # always consider:
+        # 1) reconcile empty to cancel the reconcile date criteria
+        # 2) reconcile 'No' filter: become reconciled since (day+1)
+        #    or not reconciled (cases 6/9 of Jira comment matrix)
+        if context.get('from_web_menu', True):
+            ft_obj = self.pool.get('fields.tools')
+            if ft_obj.domain_get_field_index(args, 'reconcile_date') >= 0:
+                is_reconciled_index = ft_obj.domain_get_field_index(args,
+                    'is_reconciled')
+                if is_reconciled_index < 0:
+                    # 1)
+                    args = ft_obj.domain_remove_field(args, 'reconcile_date')
+                else:
+                    reconciled_date_index = ft_obj.domain_get_field_index(args,
+                        'reconcile_date')
+                    if  reconciled_date_index >= 0 \
+                        and args[is_reconciled_index][1] == '=' \
+                        and not args[is_reconciled_index][2]:
+                        # 2)
+                        reconcile_date = args[reconciled_date_index][2]
+                        args = ft_obj.domain_remove_field(args, [
+                            'is_reconciled',
+                            'reconcile_id',
+                            'reconcile_date',
+                        ])
+                        domain = [
+                            '|',
+                            ('reconcile_date', '>', reconcile_date),
+                            ('reconcile_id', '=', False),
+                            ('account_id.reconcile', '=', True),
+                        ]
+                        args = domain + args
+
+        return super(account_move_line, self).search(cr, uid, args,
+            offset=offset, limit=limit, order=order, context=context,
+            count=count)
+
     def check_imported_invoice(self, cr, uid, ids, context=None):
         """
         Check that for these IDS, no one is used in imported invoice.
@@ -119,11 +167,16 @@ class account_move_line(osv.osv):
             'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
             'is_multi_instance': different_level,
         })
-        
+        # US-533: date of JI reconciliation for line_partial_ids linked with
+        # above (4, 0)
+        self.pool.get('account.move.line').write(cr, uid, merges+unmerge, {
+                'reconcile_date': time.strftime('%Y-%m-%d'),
+            })
+
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
             self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
-        
+
         move_rec_obj.reconcile_partial_check(cr, uid, [r_id] + merges_rec, context=context)
         # @@@end
         return True
@@ -212,7 +265,7 @@ class account_move_line(osv.osv):
             raise osv.except_osv(_('Error'), _('The account is not defined to be reconciled !'))
         if r[0][1] != None:
             raise osv.except_osv(_('Error'), _('Some entries are already reconciled !'))
-        
+
         if abs(func_balance) > 10**-3: # FIX UF-1903 problem
             partner_line_id = self.create_addendum_line(cr, uid, [x.id for x in unrec_lines], func_balance)
             if partner_line_id:
@@ -226,11 +279,17 @@ class account_move_line(osv.osv):
             'is_multi_instance': different_level,
             'multi_instance_level_creation': multi_instance_level_creation,
         })
-        
+
+        # US-533: date of JI reconciliation for total reconciliation linked
+        # with above (4, 0)
+        self.pool.get('account.move.line').write(cr, uid, ids, {
+                'reconcile_date': time.strftime('%Y-%m-%d'),
+            })
+
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
             self.pool.get('account.move.line').synchronize(cr, uid, ids, context=context)
-        
+
         wf_service = netsvc.LocalService("workflow")
         # the id of the move.reconcile is written in the move.line (self) by the create method above
         # because of the way the line_id are defined: (4, x, False)

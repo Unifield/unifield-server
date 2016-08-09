@@ -161,9 +161,12 @@
                             <field name="partner_id" select='1' string="3RD Party Partner"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
                             <field name="transfer_journal_id" select='1' string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
+                        </group>
+                        <newline/>
+                        <group>
                             <field name="is_reconciled" select='1'/>
                             <field name="reconcile_total_partial_id" select='1'/>
-                            <newline/>
+                            <field name="reconcile_date" select='1' string="At"/>
                         </group>
                         <newline/>
                         <group>
