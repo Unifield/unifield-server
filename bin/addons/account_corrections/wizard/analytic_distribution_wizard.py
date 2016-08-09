@@ -277,7 +277,6 @@ class analytic_distribution_wizard(osv.osv_memory):
         match_amount_diff = total_rounded_amount - abs(wizard.amount)
         if abs(match_amount_diff) > 0.001:
             greater_amount['gap_amount'] = match_amount_diff
-
         to_reverse_ids = []
         for wiz_line in self.pool.get('funding.pool.distribution.line').browse(cr, uid, [x for x in old_line_ids if x not in old_line_ok]):
             # distribution line deleted by user
@@ -484,7 +483,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                         and aji_rec['currency_id'][0] or False
 
                     # fix booking amount
-                    fix_aji_amount_currency = greater_amount['wl'].amount \
+                    fix_aji_amount_currency = round(greater_amount['wl'].amount, 2) \
                         - greater_amount['gap_amount']
                     if fix_aji_old_amount < 0:
                         fix_aji_amount_currency *= -1
