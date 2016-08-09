@@ -490,7 +490,7 @@ class users(osv.osv):
         try:
             cr.execute('SELECT 1 FROM res_users WHERE id=%s AND password=%s AND active=%s',
                         (int(uid), passwd, True))
-            res = cr.fetchone()[0]
+            res = cr.fetchone()
             if not res:
                 raise security.ExceptionNoTb('AccessDenied')
             if self._uid_cache.has_key(db):

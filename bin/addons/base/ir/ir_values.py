@@ -252,7 +252,7 @@ class ir_values(osv.osv):
                 groups = r[2].get('groups_id')
                 if groups:
                     cr.execute('SELECT 1 FROM res_groups_users_rel WHERE gid IN %s AND uid=%s',(tuple(groups), uid))
-                    cnt = cr.fetchone()[0]
+                    cnt = cr.fetchone()
                     if not cnt:
                         res2.remove(r)
                     if r[1] == 'Menuitem' and not res2:
