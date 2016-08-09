@@ -124,13 +124,29 @@ class purchase_order(osv.osv):
         '''
         Check if the Purchase order contains a line with an inactive products
         '''
-        inactive_lines = self.pool.get('purchase.order.line').search(cr, uid, [('product_id.active', '=', False),
-                                                                               ('order_id', 'in', ids),
-                                                                               ('order_id.state', 'not in', ['draft', 'cancel', 'done'])], context=context)
+        new_ids = []
+        inactive_product_list = []
+        order_result = self.read(cr, uid, ids, ['state'], context=context)
+        for order in order_result:
+            if order['state'] not in ('draft', 'cancel', 'done'):
+                new_ids.append(order['id'])
+        if new_ids:
+            pol_obj = self.pool.get('purchase.order.line')
+            lines_ids = pol_obj.search(cr, uid, [('order_id', 'in', new_ids)],
+                    order='NO_ORDER', context=context)
+            if not lines_ids:
+                return True
+            # get product of lines
+            product_id_list = [x['product_id'][0] for x in pol_obj.read(cr, uid,
+                lines_ids, ['product_id'], context=context) if x['product_id']]
+            if product_id_list:
+                inactive_product_list = self.pool.get('product.product').search(cr, uid,
+                        [('id', 'in', product_id_list),
+                         ('active', '=', False)], order='NO_ORDER', context=context)
 
-        if inactive_lines:
-            plural = len(inactive_lines) == 1 and _('A product has') or _('Some products have')
-            l_plural = len(inactive_lines) == 1 and _('line') or _('lines')
+        if inactive_product_list:
+            plural = len(inactive_product_list) == 1 and _('A product has') or _('Some products have')
+            l_plural = len(inactive_product_list) == 1 and _('line') or _('lines')
             raise osv.except_osv(_('Error'), _('%s been inactivated. If you want to validate this document you have to remove/correct the line containing those inactive products (see red %s of the document)') % (plural, l_plural))
             return False
         return True
