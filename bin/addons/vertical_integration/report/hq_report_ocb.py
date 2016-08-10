@@ -60,28 +60,31 @@ class finance_archive(finance_export.finance_archive):
         new_data = []
         dbname = cr.dbname
         pool = pooler.get_pool(dbname)
-        column_number = 0
         partner_obj = pool.get('res.partner')
-        partner_name_column_number = 10
-        partner_id_column_number = 21
-        employee_name_column = 22
+
+        # define column number corresponding to properties
+        partner_name_cl = 9
+        partner_id_cl = 20
+        empl_id_cl = 19
+        empl_name_cl = 21
+
         for line in data:
             tmp_line = list(line)
-            line_ids = str(line[column_number])
-            tmp_line[column_number] = self.get_hash(cr, uid, line_ids, model)
+            line_ids = str(line[0])
+            tmp_line[0] = self.get_hash(cr, uid, line_ids, model)
             # Check if we have a partner_id in last column
             partner_id_present = False
             partner_id = False
             partner_hash = ''
-            if len(tmp_line) > (partner_id_column_number - 1):
-                partner_id = tmp_line[partner_id_column_number - 1]
+            if len(tmp_line) > partner_id_cl:
+                partner_id = tmp_line[partner_id_cl]
                 if partner_id:
                     partner_id_present = True
                     # US-497: extract name from partner_id (better than partner_txt)
-                    tmp_line[partner_name_column_number - 1] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
+                    tmp_line[partner_name_cl] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
             # If not partner_id, then check 'Third Party' column to search it by name
             if not partner_id_present:
-                partner_name = tmp_line[partner_name_column_number - 1]
+                partner_name = tmp_line[partner_name_cl]
                 # Search only if partner_name is not empty
                 if partner_name:
                     # UFT-8 encoding
@@ -98,25 +101,25 @@ class finance_archive(finance_export.finance_archive):
             # Complete last column with partner_hash
             if not partner_id_present:
                 tmp_line.append('')
-            emplid = tmp_line[partner_id_column_number - 2]
+            emplid = tmp_line[empl_id_cl]
 
-            if not emplid and not partner_id and tmp_line[partner_name_column_number - 1]:
+            if not emplid and not partner_id and tmp_line[partner_name_cl]:
                 employee_obj = pool.get('hr.employee')
                 # we don't have partner and employee, if update employee creation is not run check if he duplicates in the DB
-                partner_name = tmp_line[partner_name_column_number - 1]
+                partner_name = tmp_line[partner_name_cl]
                 if isinstance(partner_name, unicode):
                     partner_name = partner_name.encode('utf-8')
                 emp_ids = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
                 if emp_ids:
                     empl_code = employee_obj.read(cr, uid, emp_ids[0], ['identification_id'])['identification_id']
                     if empl_code:
-                        tmp_line[partner_id_column_number - 2] = empl_code
+                        tmp_line[empl_id_cl] = empl_code
 
             if emplid:
                 partner_hash = ''
-                if tmp_line[employee_name_column - 1]:
-                    tmp_line[partner_name_column_number - 1] = tmp_line[employee_name_column - 1]
-            tmp_line[partner_id_column_number - 1] = partner_hash
+                if tmp_line[empl_name_cl]:
+                    tmp_line[partner_name_cl] = tmp_line[empl_name_cl]
+            tmp_line[partner_id_cl] = partner_hash
             del(tmp_line[employee_name_column - 1])
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
