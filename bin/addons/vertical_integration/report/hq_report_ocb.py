@@ -134,8 +134,7 @@ class finance_archive(finance_export.finance_archive):
             del(tmp_line[empl_name_cl])
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
-        res = self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
-        return res
+        return new_data
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
