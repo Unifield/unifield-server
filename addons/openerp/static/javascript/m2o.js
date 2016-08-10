@@ -287,7 +287,7 @@ ManyToOne.prototype.on_keydown = function(evt) {
             } else {
                 w = jQuery(evt.currentTarget).width() + jQuery(idSelector(this.name + '_select')).width();
             }
-            jQuery('div.autoTextResults[id$="' + this.name + '"]').width(w)
+            jQuery('div.autoTextResults[id$="' + this.name + '"]').css('min-width', w);
         }
     }
 
