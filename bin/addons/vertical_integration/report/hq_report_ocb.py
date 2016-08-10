@@ -76,6 +76,7 @@ class finance_archive(finance_export.finance_archive):
             if len(tmp_line) > (partner_id_column_number - 1):
                 partner_id = tmp_line[partner_id_column_number - 1]
                 if partner_id:
+                    partner_id_present = True
                     # US-497: extract name from partner_id (better than partner_txt)
                     tmp_line[partner_name_column_number - 1] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
             # If not partner_id, then check 'Third Party' column to search it by name
