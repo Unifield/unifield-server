@@ -43,6 +43,18 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
+        """
+        change the implementation of the finance.ocb.export ir_sequence to be
+        psql (instead of no_gap
+        """
+        seq_obj = self.pool.get('ir.sequence')
+        # get the ir_sequence id
+        seq_id_list = seq_obj.search(cr, uid,
+                [('code', '=', 'finance.ocb.export')])
+        if seq_id_list:
+            seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
+
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
         ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
