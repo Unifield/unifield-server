@@ -41,7 +41,6 @@ class finance_archive(finance_export.finance_archive):
         """
         # Prepare some values
         new_data = []
-        pool = pooler.get_pool(cr.dbname)
         for line in data:
             tmp_line = list(line)
             p_id = line[0]
@@ -58,7 +57,6 @@ class finance_archive(finance_export.finance_archive):
           - id
         """
         # Prepare some values
-        context = {}
         new_data = []
         dbname = cr.dbname
         pool = pooler.get_pool(dbname)
@@ -565,7 +563,6 @@ class hq_report_ocb(report_sxw.report_sxw):
         # TIP & TRICKS:
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
-        instance = pool.get('msf.instance').browse(cr, uid, instance_id)
         instance_name = 'OCB'  # since US-949
         processrequests = [
             {
