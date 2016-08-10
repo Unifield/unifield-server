@@ -68,39 +68,46 @@ class finance_archive(finance_export.finance_archive):
         empl_id_cl = 19
         empl_name_cl = 21
 
+        partner_search_dict = {}
+        employee_search_dict = {}
+        employee_code_dict = {}
+
         for line in data:
             tmp_line = list(line)
             line_ids = str(line[0])
             tmp_line[0] = self.get_hash(cr, uid, line_ids, model)
             # Check if we have a partner_id in last column
-            partner_id_present = False
             partner_id = False
             partner_hash = ''
+
             if len(tmp_line) > partner_id_cl:
                 partner_id = tmp_line[partner_id_cl]
                 if partner_id:
-                    partner_id_present = True
                     # US-497: extract name from partner_id (better than partner_txt)
                     tmp_line[partner_name_cl] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
-            # If not partner_id, then check 'Third Party' column to search it by name
-            if not partner_id_present:
-                partner_name = tmp_line[partner_name_cl]
-                # Search only if partner_name is not empty
-                if partner_name:
-                    # UFT-8 encoding
-                    if isinstance(partner_name, unicode):
-                        partner_name = partner_name.encode('utf-8')
-                    partner_ids = partner_obj.search(cr, uid, [('name', '=ilike', partner_name), ('active', 'in', ['t', 'f'])], order='id')
-                    if partner_ids:
-                        partner_id = partner_ids[0]
+
+            partner_name = tmp_line[partner_name_cl]
+            # Search only if partner_name is not empty
+            if partner_name:
+                # UFT-8 encoding
+                if isinstance(partner_name, unicode):
+                    partner_name = partner_name.encode('utf-8')
+                if not partner_name in partner_search_dict:
+                    partner_search_dict[partner_name] = partner_obj.search(cr, uid,
+                        [('name', '=ilike', partner_name),
+                         ('active', 'in', ['t', 'f'])],
+                         order='id')
+                partner_ids = partner_search_dict[partner_name]
+                if partner_ids:
+                    partner_id = partner_ids[0]
+
             # If we get some ids, fetch the partner hash
             if partner_id:
                 if isinstance(partner_id, (int, long)):
                     partner_id = [partner_id]
                 partner_hash = self.get_hash(cr, uid, partner_id, 'res.partner')
             # Complete last column with partner_hash
-            if not partner_id_present:
-                tmp_line.append('')
+            tmp_line.append('')
             emplid = tmp_line[empl_id_cl]
 
             if not emplid and not partner_id and tmp_line[partner_name_cl]:
@@ -109,9 +116,17 @@ class finance_archive(finance_export.finance_archive):
                 partner_name = tmp_line[partner_name_cl]
                 if isinstance(partner_name, unicode):
                     partner_name = partner_name.encode('utf-8')
-                emp_ids = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
-                if emp_ids:
-                    empl_code = employee_obj.read(cr, uid, emp_ids[0], ['identification_id'])['identification_id']
+
+                if partner_name not in employee_search_dict:
+                    employee_search = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
+                    if employee_search:
+                        employee_search = employee_search[0]
+                    employee_search_dict[partner_name] = employee_search
+                emp_id = employee_search_dict[partner_name]
+                if emp_id:
+                    if emp_id not in employee_code_dict:
+                        employee_code_dict[emp_id] = employee_obj.read(cr, uid, emp_id, ['identification_id'])['identification_id']
+                    empl_code = employee_code_dict[emp_id]
                     if empl_code:
                         tmp_line[empl_id_cl] = empl_code
 
@@ -120,7 +135,7 @@ class finance_archive(finance_export.finance_archive):
                 if tmp_line[empl_name_cl]:
                     tmp_line[partner_name_cl] = tmp_line[empl_name_cl]
             tmp_line[partner_id_cl] = partner_hash
-            del(tmp_line[employee_name_column - 1])
+            del(tmp_line[empl_name_cl])
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
         res = self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
