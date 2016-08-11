@@ -10,7 +10,7 @@
       <field name="model">sync.client.update_received</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:run == False" string="Instance Tree">
+        <tree colors="red:run == False" string="Instance Tree" hide_new_button="1">
           <field name="sequence_number"/>
           <field name="source"/>
           <field name="model"/>
@@ -31,7 +31,7 @@
       <field name="type">form</field>
       <field name="priority">1</field>
       <field name="arch" type="xml">
-        <form string="Update Received">
+        <form string="Update Received" hide_new_button="1" hide_duplicate_button="1" >
           <group col="2" colspan="2">
             <separator string="Record" colspan="2"/>
             <field name="model"/>
@@ -135,7 +135,7 @@
       <field name="model">sync.client.update_to_send</field>
       <field name="type">tree</field>
       <field name="arch" type="xml">
-        <tree colors="red:sent == False">
+        <tree colors="red:sent == False" hide_new_button="1">
           <field name="session_id"/>
           <field name="model"/>
           <field name="sdref"/>
@@ -154,7 +154,7 @@
       <field name="model">sync.client.update_to_send</field>
       <field name="type">form</field>
       <field name="arch" type="xml">
-        <form string="Instance Form">
+        <form string="Instance Form" hide_new_button="1" hide_duplicate_button="1" >
           <group colspan="2" col="2">
             <separator string="Record" colspan="2"/>
             <field name="model"/>

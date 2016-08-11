@@ -256,7 +256,9 @@
       <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
       <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
       <Column ss:AutoFitWidth="0" ss:Width="60.5" ss:Span="1"/>
-      <Column ss:AutoFitWidth="0" ss:Width="70.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
+      <Column ss:AutoFitWidth="0" ss:Width="82" ss:Span="1"/>
+      <Column ss:AutoFitWidth="0" ss:Width="75.75"/>
 
       <% period = getPeriod() %>
       <Row>
@@ -323,7 +325,11 @@
           <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Balance in register currency')}</Data>
+          % if reg_type == 'cash':
+            <Data ss:Type="String">${_('Cash Box Balance in register currency')}</Data>
+          % else:
+            <Data ss:Type="String">${_('Bank Statement Balance in register currency')}</Data>
+          % endif
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Register Currency')}</Data>
@@ -332,7 +338,11 @@
           <Data ss:Type="String">${_('Calculated Balance in functional currency')}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Balance in functional currency')}</Data>
+          % if reg_type == 'cash':
+            <Data ss:Type="String">${_('Cash Box Balance in functional currency')}</Data>
+          % else:
+            <Data ss:Type="String">${_('Bank Statement Balance in functional currency')}</Data>
+          % endif
         </Cell>
         <Cell ss:StyleID="s34">
           <Data ss:Type="String">${_('Functional Currency')}</Data>
@@ -570,6 +580,7 @@
       <!-- GRAND TOTAL -->
       <Row></Row>
       <Row></Row>
+      % for cur in getGrandTotalRegCurrency():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
@@ -580,7 +591,30 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:MergeAcross="1" ss:StyleID="s52">
-          <Data ss:Type="String">Grand Total:</Data>
+          <Data ss:Type="String">Grand Total Register Currency</Data>
+        </Cell>
+        <Cell ss:StyleID="s50">
+          <!-- total of register balances + pendinq cheque amount in register currency -->
+          <Data ss:Type="Number">${ formatLang(getGrandTotalRegCurrency()[cur], digits=2, grouping=True) or '0.00' }</Data>
+        </Cell>
+        <Cell ss:StyleID="s51">
+          <Data ss:Type="String">${ str(cur) }</Data>
+        </Cell>
+      </Row>
+      % endfor
+
+      <Row></Row>
+      <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:StyleID="s25c"/>
+        <Cell ss:MergeAcross="1" ss:StyleID="s52">
+          <Data ss:Type="String">Grand Total Functional Currency</Data>
         </Cell>
         <Cell ss:StyleID="s50">
           <!-- total of register balances + pendinq cheque amount in func. currency -->

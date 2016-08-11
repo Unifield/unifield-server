@@ -269,7 +269,6 @@
 </Table>
 
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Header x:Margin="0.4921259845"/>
@@ -280,6 +279,7 @@
    <Print>
     <ValidPrinterInfo/>
     <PaperSizeIndex>9</PaperSizeIndex>
+    <Scale>50</Scale>
     <HorizontalResolution>600</HorizontalResolution>
     <VerticalResolution>600</VerticalResolution>
    </Print>

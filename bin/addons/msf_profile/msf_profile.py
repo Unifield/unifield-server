@@ -31,6 +31,7 @@ from threading import Lock
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
+    _logger = logging.getLogger('patch_scripts')
 
     _columns = {
         'model': fields.text(string='Model', required=True),
@@ -48,8 +49,16 @@ class patch_scripts(osv.osv):
         for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
             method = ps['method']
             model_obj = self.pool.get(ps['model'])
-            getattr(model_obj, method)(cr, uid, *a, **b)
-            self.write(cr, uid, [ps['id']], {'run': True})
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
 
     def us_993_patch(self, cr, uid, *a, **b):
         # set no_update to True on USB group_type not to delete it on
@@ -404,6 +413,35 @@ class patch_scripts(osv.osv):
         for view in view_to_gen:
             view_obj.generate_button_access_rules(cr, uid, view)
 
+    def us_1024_send_bar_patch(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        ir_ui_obj = self.pool.get('ir.ui.view')
+        data_obj = self.pool.get('ir.model.data')
+        rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
+
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
+        if rule_ids:
+            data_ids = data_obj.search(cr, uid, [
+                ('module', '=', 'sd'),
+                ('model', '=', 'msf_button_access_rights.button_access_rule'),
+                ('res_id', 'in', rule_ids)
+                ])
+            if rule_ids:
+                data_obj.unlink(cr, uid, data_ids)
+            for rule in rules_obj.read(cr, uid, rule_ids, ['type', 'name']):
+                xmlname = ir_ui_obj._get_xmlname(cr, uid, rule['type'], rule['name'])
+                rules_obj.write(cr, uid, rule['id'], {'xmlname': xmlname})
+
+        if usr and usr.company_id and usr.company_id.instance_id and usr.company_id.instance_id.level == 'section':
+            cr.execute('''update ir_model_data
+                set touched='[''active'']', last_modification=NOW()
+                where module='sd' and model='msf_button_access_rights.button_access_rule'
+            ''')
+
     def update_volume_patch(self, cr, uid, *a, **b):
         """
         Update the volume from dm³ to m³ for OCB databases
@@ -472,7 +510,6 @@ class patch_scripts(osv.osv):
         if self.pool.get('sync.client.update_received'):
             cr.execute("update sync_client_update_received set rule_sequence=-rule_sequence where is_deleted='t'")
 
-
     def another_translation_fix(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
             ir_trans = self.pool.get('ir.translation')
@@ -485,6 +522,27 @@ class patch_scripts(osv.osv):
                 res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
                 if res_id:
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
+        return True
+
+    def another_other_translation_fix_bis(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.name or ''
+        logger = logging.getLogger('update')
+        if instance_name.startswith('OCG'):
+            logger.warn('Execute US-1527 script')
+            self.another_other_translation_fix(cr, uid, *a, **b)
+        else:
+            logger.warn('Do not execute US-1527 script')
+        return True
+
+    def another_other_translation_fix(self, cr, uid, *a, **b):
+        cr.execute('''
+            DELETE FROM ir_model_data WHERE model = 'ir.translation'
+            AND res_id IN (SELECT id FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name')
+        ''')
+        cr.execute('''
+            DELETE FROM ir_translation WHERE res_id = 0 AND name = 'product.template,name'
+        ''')
         return True
 
     def clean_far_updates(self, cr, uid, *a, **b):
@@ -554,6 +612,69 @@ class patch_scripts(osv.osv):
         ir_ids = ir_obj.search(cr, uid, [('import_in_progress', '=', True)], context=context)
         if ir_ids:
             ir_obj.write(cr, uid, ir_ids, {'import_in_progress': False})
+        return True
+
+    def us_1297_patch(self, cr, uid, *a, **b):
+        """
+        Correct budgets with View Type Cost Center (consolidation)
+        """
+        budget_obj = self.pool.get('msf.budget')
+        # apply the patch only if there are budgets on several fiscal years
+        sql_count_fy = "SELECT COUNT(DISTINCT(fiscalyear_id)) FROM msf_budget;"
+        cr.execute(sql_count_fy)
+        count_fy = cr.fetchone()[0]
+        if count_fy > 1:
+            # get only budgets already validated
+            sql_budgets = "SELECT id FROM msf_budget WHERE type != 'view' AND state != 'draft';"
+            cr.execute(sql_budgets)
+            budgets = cr.fetchall()
+            if budgets:
+                budget_to_correct_ids = [x and x[0] for x in budgets]
+                # update the parent budgets
+                budget_obj.update_parent_budgets(cr, uid, budget_to_correct_ids)
+        return True
+
+    def us_1427_patch(self, cr, uid, *a, **b):
+        """
+        Put active all inactive products with stock quantities in internal locations
+        """
+        sql = """
+        UPDATE product_product SET active = 't' WHERE id IN (
+            SELECT DISTINCT(q.product_id) FROM (
+            SELECT location_id, product_id, sum(sm.product_qty) AS qty
+                FROM (
+                    (
+                        SELECT location_id, product_id, sum(-product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_id, product_id
+                    )
+                    UNION
+                    (
+                        SELECT location_dest_id, product_id, sum(product_qty) AS product_qty
+                        FROM stock_move
+                        WHERE location_dest_id IN (SELECT id FROM stock_location WHERE usage = 'internal') AND state = 'done'
+                        GROUP BY location_dest_id, product_id
+                    )
+                ) AS sm GROUP BY location_id, product_id) AS q
+            LEFT JOIN product_product pp ON q.product_id = pp.id WHERE q.qty > 0 AND pp.active = 'f' ORDER BY q.product_id)
+        """
+        cr.execute(sql)
+        return True
+
+    def us_1452_patch(self, cr, uid, *a, **b):
+        """
+        Put 1.00 as cost price for all product with cost price = 0.00
+        """
+        setup_obj = self.pool.get('unifield.setup.configuration')
+        setup_br = setup_obj.get_config(cr, uid)
+        sale_percent = 1.00
+        if setup_br:
+            sale_percent = 1 + (setup_br.sale_price/100.00)
+
+
+        sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
+        cr.execute(sql, (sale_percent, ))
         return True
 
 patch_scripts()

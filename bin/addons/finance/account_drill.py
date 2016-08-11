@@ -267,12 +267,12 @@ class AccountDrill(object):
                         for k in keys:
                             node.data[ccy_name][k] = 0.
 
-                    node.data[ccy_name]['debit'] += float(debit)
-                    node.data[ccy_name]['credit'] += float(credit)
-                    node.data[ccy_name]['debit_ccy'] += float(debit_ccy)
-                    node.data[ccy_name]['credit_ccy'] += float(credit_ccy)
-                    total_debit += float(debit)
-                    total_credit += float(credit)
+                    node.data[ccy_name]['debit'] += float(debit or 0.)
+                    node.data[ccy_name]['credit'] += float(credit or 0.)
+                    node.data[ccy_name]['debit_ccy'] += float(debit_ccy or 0.)
+                    node.data[ccy_name]['credit_ccy'] += float(credit_ccy or 0.)
+                    total_debit += float(debit or 0.)
+                    total_credit += float(credit or 0.)
 
                 # total functional all currencies
                 node.data['*']['debit'] += total_debit
