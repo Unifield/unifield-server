@@ -2866,7 +2866,8 @@ class account_bank_statement_line(osv.osv):
             return False
         if isinstance(ids, (int, long)):
             ids = [ids]
-        return self.unlink(cr, uid, ids, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        return self.unlink(cr, real_uid, ids, context=context)
 
     def _check_account_partner_compat(self, cr, uid, vals, context=None):
         # US-672/2
