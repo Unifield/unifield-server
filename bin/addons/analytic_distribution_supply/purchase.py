@@ -388,7 +388,7 @@ class purchase_order_line(osv.osv):
         d_state_dict = {}
         from_header = _(" (from header)")
         for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
-            key = (self._name, pol['analytic_distribution_state'])
+            key = pol['analytic_distribution_state']
             if key not in d_state_dict:
                 d_state_dict[key] = get_sel(cr, uid, self._name, 'analytic_distribution_state', pol['analytic_distribution_state'], context)
             res[pol['id']] = "%s%s"%(d_state_dict[key], pol['have_analytic_distribution_from_header'] and from_header or "")
