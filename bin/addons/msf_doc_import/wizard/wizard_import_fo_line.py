@@ -135,11 +135,12 @@ class wizard_import_fo_line(osv.osv_memory):
                 if not error_list:
                     # iterator on rows
                     rows = file_obj.getRows()
+                    rows.next() # skip header
                     # ignore the first row
 
                     line_num = 0
                     to_write = {}
-                    total_line_num = len([row for row in file_obj.getRows()])
+                    total_line_num = file_obj.countRows()
                     percent_completed = 0
                     for row in rows:
                             
@@ -343,6 +344,8 @@ class wizard_import_fo_line(osv.osv_memory):
                 osv_name = osv_error.name
                 message = "%s: %s\n" % (osv_name, osv_value)
                 return self.write(cr, uid, ids, {'message': message})
+            except StopIteration:
+                return self.write(cr, uid, ids, {'message': _('The file has not row, nothing to import')})
             # we close the PO only during the import process so that the user can't update the PO in the same time (all fields are readonly)
             sale_obj.write(cr, uid, fo_id, {'state': 'done', 'import_in_progress': True}, context)
         if not context.get('yml_test', False):
