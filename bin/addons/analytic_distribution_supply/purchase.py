@@ -385,9 +385,13 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         res = {}
         get_sel = self.pool.get('ir.model.fields').get_selection
+        d_state_dict = {}
+        from_header = _(" (from header)")
         for pol in self.read(cr, uid, ids, ['analytic_distribution_state', 'have_analytic_distribution_from_header']):
-            d_state = get_sel(cr, uid, self._name, 'analytic_distribution_state', pol['analytic_distribution_state'], context)
-            res[pol['id']] = "%s%s"%(d_state, pol['have_analytic_distribution_from_header'] and _(" (from header)") or "")
+            key = (self._name, pol['analytic_distribution_state'])
+            if key not in d_state_dict:
+                d_state_dict[key] = get_sel(cr, uid, self._name, 'analytic_distribution_state', pol['analytic_distribution_state'], context)
+            res[pol['id']] = "%s%s"%(d_state_dict[key], pol['have_analytic_distribution_from_header'] and from_header or "")
         return res
 
     def _get_distribution_account(self, cr, uid, ids, name, arg, context=None):
