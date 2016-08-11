@@ -766,12 +766,12 @@ class stock_move_processor(osv.osv):
             'ordered_quantity': move.product_qty,
             'uom_id': move.product_uom.id,
             'line_number': move.line_number,
-            'asset_id': move.asset_id and move.asset_id.id,
-            'composition_list_id': move.composition_list_id and move.composition_list_id.id,
-            'prodlot_id': move.prodlot_id and move.prodlot_id.id,
+            'asset_id': move.asset_id and move.asset_id.id or False,
+            'composition_list_id': move.composition_list_id and move.composition_list_id.id or False,
+            'prodlot_id': move.prodlot_id and move.prodlot_id.id or False,
             'cost': move.price_unit,
             'currency': move.price_currency_id.id,
-            'location_id': move.location_id and move.location_id.id,
+            'location_id': move.location_id and move.location_id.id or False,
         }
 
         return line_data
