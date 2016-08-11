@@ -22,6 +22,7 @@
 import time
 
 from osv import fields, osv
+from tools.translate import _
 
 class account_subscription_generate(osv.osv_memory):
 
@@ -36,12 +37,27 @@ class account_subscription_generate(osv.osv_memory):
     def action_generate(self, cr, uid, ids, context=None):
         mod_obj = self.pool.get('ir.model.data')
         act_obj = self.pool.get('ir.actions.act_window')
+        sub_line_obj = self.pool.get('account.subscription.line')
         moves_created=[]
         for data in  self.read(cr, uid, ids, context=context):
-             cr.execute('select id from account_subscription_line where date<%s and move_id is null', (data['date'],))
-             line_ids = map(lambda x: x[0], cr.fetchall())
-             moves = self.pool.get('account.subscription.line').move_create(cr, uid, line_ids, context=context)
-             moves_created.extend(moves)
+            cr.execute('select id from account_subscription_line where date<%s and move_id is null', (data['date'],))
+            line_ids = map(lambda x: x[0], cr.fetchall())
+            # check that the entry is valid before creating it
+            for sub_line in sub_line_obj.browse(cr, uid, line_ids, context=context):
+                acc_model = sub_line.subscription_id.model_id
+                acc_model_lines = acc_model.lines_id or []
+                if not acc_model_lines:
+                    raise osv.except_osv(_('Warning'), _('The Recurring Model %s has no accounting lines!') % (acc_model.name))
+                else:
+                    credit = 0.0
+                    debit = 0.0
+                    for line in acc_model_lines:
+                        credit += line.credit or 0.0
+                        debit += line.debit or 0.0
+                    if abs(debit - credit) > 10 ** -4:
+                        raise osv.except_osv(_('Warning'), _('The entry is not balanced for the Recurring Model %s!') % (acc_model.name))
+            moves = self.pool.get('account.subscription.line').move_create(cr, uid, line_ids, context=context)
+            moves_created.extend(moves)
         result = mod_obj.get_object_reference(cr, uid, 'account', 'action_move_line_form')
         id = result and result[1] or False
         result = act_obj.read(cr, uid, [id], context=context)[0]

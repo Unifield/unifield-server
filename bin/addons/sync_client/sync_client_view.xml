@@ -10,7 +10,7 @@
             <field name="model">sync.client.sync_server_connection</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Instance Tree">
+                <tree string="Instance Tree"  hide_new_button="1" hide_delete_button="1" >
                     <field name="host"/>
                     <field name="database"/>
                     <field name="login"/>
@@ -23,7 +23,7 @@
             <field name="model">sync.client.sync_server_connection</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Instance Form">
+                <form string="Instance Form"  hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1" >
                     <separator string="Connection information" colspan="4"/>
                     <field name="host" required="1" on_change="change_host(host, protocol)"/>
                     <field name="port" required="1"/>
@@ -36,6 +36,12 @@
                     <label string="" colspan="2" />
                     <field name="netrpc_retry" required="1" />
                     <field name="xmlrpc_retry" required="1" />
+                    <separator string="Upgrade information" colspan="4"/>
+                    <field name="automatic_patching" />
+                    <group  colspan="2">
+                        <field name="automatic_patching_hour_from" widget="float_time" on_change="on_change_upgrade_hour(automatic_patching_hour_from, automatic_patching_hour_to)" attrs="{'readonly':[('automatic_patching','=',False)], 'required':[('automatic_patching','=',True)]}"/>
+                        <field name="automatic_patching_hour_to" widget="float_time" on_change="on_change_upgrade_hour(automatic_patching_hour_from, automatic_patching_hour_to)" attrs="{'readonly':[('automatic_patching','=',False)], 'required':[('automatic_patching','=',True)]}"/>
+                    </group>
                     <separator string="Connection state" colspan="4"/>
                     <!-- the following line break the 6.1 web client backport because its a functional field of type integer -->
                     <!-- <field name="uid" invisible="1"/> -->

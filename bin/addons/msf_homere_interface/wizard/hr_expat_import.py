@@ -37,7 +37,7 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
         'filename': fields.char(string="Imported filename", size=256),
     }
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, uid, ids, context=None, auto_import=False):
         """
         Import XLS file
         """
@@ -46,12 +46,22 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 line.cells[cell_index] and line.cells[cell_index].data \
                 or False
 
+        def manage_error(line_index, msg, name='', code='', status=''):
+            if auto_import:
+                rejected_lines.append((line_index, [name, code, status], msg))
+            else:
+                raise osv.except_osv(_('Error'), _(msg))
+
+        processed_lines = []
+        rejected_lines = []
+        headers = [_('Name'), _('Code'), _('Status')]
         hr_emp_obj = self.pool.get('hr.employee')
         # Some verifications
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+
         for wiz in self.browse(cr, uid, ids):
             # Prepare some values
             created = 0
@@ -72,25 +82,28 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 # get cells
                 name = get_xml_spreadheet_cell_value(0)
                 if not name:
+                    manage_error(line_index, 'No name defined')
                     continue
                 code = get_xml_spreadheet_cell_value(1)
                 if not code:
                     msg = "At least one employee in the import file does not" \
                         " have an ID number; make sure all employees in the" \
                         " file have an ID number and run the import again."
-                    raise osv.except_osv(_('Error'), _(msg))
+                    manage_error(line_index, msg, name)
                 active_str = get_xml_spreadheet_cell_value(2)
                 if not active_str:
-                    msg = "Active column is missing or empty at line %d"
-                    raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
+                    msg = "Active column is missing or empty at line %d" % line_index
+                    manage_error(line_index, msg, name, code)
                 active_str = active_str.lower()
                 if active_str not in ('active', 'inactive'):
                     msg = "Active column invalid value line %d" \
-                        " (should be Active/Inactive)"
-                    raise osv.except_osv(_('Error'), _(msg) % (line_index, ))
+                        " (should be Active/Inactive)" % line_index
+                    manage_error(line_index, msg, name, code, active_str)
                 active = active_str == 'active' or False
 
                 processed += 1
+                if auto_import:
+                    processed_lines.append((line_index, [name, code, active_str]))
 
                 ids = hr_emp_obj.search(cr, uid,
                     [('identification_id', '=', code)])
@@ -113,6 +126,9 @@ class hr_expat_employee_import_wizard(osv.osv_memory):
                 line_index += 1
 
             context.update({'message': ' ', 'from': 'expat_import'})
+
+            if auto_import:
+                return processed_lines, rejected_lines, headers
 
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
             view_id = view_id and view_id[1] or False

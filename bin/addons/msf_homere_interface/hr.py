@@ -326,5 +326,20 @@ class hr_employee(osv.osv):
 
         return super(hr_employee, self).name_search(cr, uid, name, args, operator, context, limit)
 
+    def auto_import(self, cr, uid, file_to_import):
+        import base64
+        import os
+        processed = []
+        rejected = []
+        headers = []
+
+        import_obj = self.pool.get('hr.expat.employee.import')
+        import_id = import_obj.create(cr, uid, {
+            'file': base64.encodestring(open(file_to_import, 'r').read()),
+            'filename': os.path.split(file_to_import)[1],
+        })
+        processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)
+        return processed, rejected, headers
+
 hr_employee()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

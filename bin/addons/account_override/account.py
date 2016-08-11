@@ -232,6 +232,21 @@ class account_account(osv.osv):
                 arg.append(x)
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+
+        # Restrict to Expense/Income/Receivable accounts for Intermission Vouchers OUT or Stock Transfer Vouchers
+        context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+        context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+            not context.get('is_debit_note', False)
+        if context_ivo or context_stv:
+            arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
+
+        # Restrict to Expense accounts only for Intermission Vouchers IN
+        context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+        if context_ivi:
+            arg.append(('user_type_code', '=', 'expense'))
+
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
@@ -655,6 +670,7 @@ class account_move(osv.osv):
             help="This field contains the information related to the numbering of the lines of this journal entry."),
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
+        'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
     }
 
     _defaults = {
@@ -797,8 +813,59 @@ class account_move(osv.osv):
         """
         Check that we can write on this if we come from web menu or synchronisation.
         """
-        if not context:
+        def check_update_sequence(rec, new_journal_id, new_period_id):
+            """
+            returns new sequence move vals (sequence_id, name) or None
+            :rtype : dict/None
+            """
+            if m.state != 'draft':
+                return None
+
+            period_obj = self.pool.get('account.period')
+            period_rec = False
+            do_update = False
+
+            # journal or FY has changed ?
+            if new_journal_id and m.journal_id.id != new_journal_id:
+                do_update = True
+            if new_period_id and m.period_id.id != new_period_id:
+                period_rec = period_obj.browse(cr, uid, new_period_id)
+                do_update = do_update or period_rec.fiscalyear_id.id \
+                    != m.period_id.fiscalyear_id.id  # FY changed
+            if not do_update:
+                return None
+
+            # get instance and journal/period
+            instance_rec = self.pool.get('res.users').browse(cr, uid, uid,
+                context).company_id.instance_id
+            if not instance_rec.move_prefix:
+                raise osv.except_osv(_('Warning'),
+                    _('No move prefix found for this instance!' \
+                        ' Please configure it on Company view.'))
+            journal_rec = self.pool.get('account.journal').browse(cr, uid,
+                new_journal_id or m.journal_id.id)
+            period_rec = period_rec or m.period_id
+            if period_rec.state == 'created':
+                raise osv.except_osv(_('Error !'),
+                    _("Period '%s' is not open!' \
+                     ' No Journal Entry is updated") % (period_rec.name, ))
+
+            # get new sequence number and return related vals
+            sequence_number = self.pool.get('ir.sequence').get_id(
+                cr, uid, journal_rec.sequence_id.id,
+                context={ 'fiscalyear_id': period_rec.fiscalyear_id.id })
+            if instance_rec and journal_rec and sequence_number:
+                return {
+                    'sequence_id': journal_rec.sequence_id.id,
+                    'name': "%s-%s-%s" % (instance_rec.move_prefix,
+                        journal_rec.code, sequence_number, ),
+                }
+            return None
+
+        if context is None:
             context = {}
+        new_sequence_vals_by_move_id = {}
+
         if context.get('from_web_menu', False) or context.get('sync_update_execution', False):
             # by default, from synchro, we just need to update period_id and journal_id
             fields = ['journal_id', 'period_id']
@@ -811,6 +878,20 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                     if m.journal_id.type == 'system':
                         raise osv.except_osv(_('Warning'), _('You can not edit a Journal Entry on a system journal'))
+
+                if context.get('from_web_menu', False) \
+                    and not context.get('sync_update_execution', False):
+                    # US-932: journal or FY changed ?
+                    # typical UC: manual JE from UI: journal/period changed
+                    # after a duplicate.
+                    # check sequence and update it if needed. (we do not update
+                    # it during on_change() to prevent sequence jumps)
+                    new_seq = check_update_sequence(m,
+                        vals.get('journal_id', False),
+                        vals.get('period_id', False))
+                    if new_seq:
+                        new_sequence_vals_by_move_id[m.id] = new_seq
+
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
                 ml_vals = {}
@@ -818,15 +899,24 @@ class account_move(osv.osv):
                     if el in vals:
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
+
                 # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
                 if 'manual_name' in vals:
                     ml_vals.update({'name': vals.get('manual_name', '')})
+
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
                     self.pool.get('account.move.line').write(cr, uid,
                             ml_id_list, ml_vals, context, False, False)
-        res = super(account_move, self).write(cr, uid, ids, vals, context=context)
+
+        res = super(account_move, self).write(cr, uid, ids, vals,
+            context=context)
+        if new_sequence_vals_by_move_id:
+            for id in new_sequence_vals_by_move_id:
+                osv.osv.write(self, cr, uid, id,
+                    new_sequence_vals_by_move_id[id], context=context)  # US-932
+
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
         return res
@@ -857,6 +947,8 @@ class account_move(osv.osv):
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', i)])
             if not ml_ids:
                 raise osv.except_osv(_('Warning'), _('No line found. Please add some lines before Journal Entry validation!'))
+            elif len(ml_ids) < 2:
+                raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
@@ -888,7 +980,7 @@ class account_move(osv.osv):
             'state': 'draft',
             'document_date': je.document_date,
             'date': je.date,
-            'name': ''
+            'name': '',
         }
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
@@ -939,18 +1031,29 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
+        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
-            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):
                     ml_ids = [ml_ids]
-                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
-        self.unlink(cr, uid, to_delete, context, check=False)
+                self.pool.get('account.move.line').unlink(cr, user_id, ml_ids, context, check=False)
+        self.unlink(cr, user_id, to_delete, context, check=False)
         return True
 
     def get_valid_but_unbalanced(self, cr, uid, context=None):
-        cr.execute("select move_id, sum(debit-credit) from account_move_line where state='valid' group by move_id having abs(sum(debit-credit)) > 0.00001")
+        cr.execute("""select l.move_id, sum(l.debit-l.credit) from account_move_line l,
+            account_move m,
+            account_journal j
+            where
+                l.move_id = m.id and
+                l.state='valid' and
+                m.journal_id = j.id and
+                j.type != 'system'
+            group by l.move_id
+            having abs(sum(l.debit-l.credit)) > 0.00001
+        """)
         return [x[0] for x in cr.fetchall()]
 
 

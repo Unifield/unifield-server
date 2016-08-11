@@ -43,6 +43,15 @@
 	</Borders>
 </Style>
 
+<Style ss:ID="line_right">
+	<Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+	<Borders>
+	  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+	</Borders>
+</Style>
 
 <Style ss:ID="lineN">
 	<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
@@ -106,11 +115,52 @@
 	<Font ss:Bold="1"/>
 </Style>
 
-
+<!-- Grand Total Styles -->
+<Style ss:ID="grand_total_left_part">
+    <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+	<Font ss:Bold="1"/>
+	<Borders>
+	  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" />
+	  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="2" />
+	  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" />
+	</Borders>
+</Style>
+<Style ss:ID="grand_total_string_central_part">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+	<Font ss:Bold="1"/>
+	<Borders>
+	  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" />
+	  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" />
+	</Borders>
+</Style>
+<Style ss:ID="grand_total_number_central_part">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+	<Font ss:Bold="1"/>
+	<Borders>
+	  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" />
+	  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" />
+	</Borders>
+	<NumberFormat ss:Format="Standard"/>
+</Style>
+<Style ss:ID="grand_total_right_part">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+	<Font ss:Bold="1"/>
+	<Borders>
+	  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" />
+	  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+	  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2" />
+	  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="2" />
+	</Borders>
+</Style>
 
 </Styles>
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${sheet_name("%s"%( o.name.split('/')[-1] +'_'+str(o.id) or 'Sheet1'))|x}">
 
 <Table>
   <Column ss:Width="73.5" ss:Span="1"/>
@@ -127,8 +177,13 @@
 
   <Row>
     <Cell ss:StyleID="s25" ><Data ss:Type="String">${_('PENDING CHEQUE')}</Data></Cell>
+    <Cell ss:StyleID="title"><Data ss:Type="String">${(o.period_id.name and o.period_id.name.upper() or '')|x}</Data></Cell>
   </Row>
   <Row ss:Index="3">
+    <Cell ss:StyleID="title"><Data ss:Type="String">${_('Period end date:')}</Data></Cell>
+    <Cell ss:StyleID="short_date2"><Data ss:Type="DateTime">${o.period_id.date_stop|n}T00:00:00.000</Data></Cell>
+  </Row>
+  <Row>
     <Cell ss:StyleID="title" ><Data ss:Type="String">${_('Instance:')}</Data></Cell>
     <Cell ss:StyleID="title" ><Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
   </Row>
@@ -193,10 +248,27 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${line.is_reconciled and _('YES') or _('NO')|x}</Data></Cell>
     </Row>
     % endfor
+
+    <!-- TOTAL -->
+    <% totals = getTotals(o) %>
+    <Row>
+        <Cell ss:StyleID="line_right" ss:Index="9"><Data ss:Type="String">${_('TOTAL')}</Data></Cell>
+        <Cell ss:StyleID="lineN"><Data ss:Type="Number">${totals['amount_in'] or 0.00|x}</Data></Cell>
+        <Cell ss:StyleID="lineN"><Data ss:Type="Number">${totals['amount_out'] or 0.00|x}</Data></Cell>
+        <Cell ss:StyleID="lineN"><Data ss:Type="Number">${totals['func_in'] or 0.00|x}</Data></Cell>
+        <Cell ss:StyleID="lineN"><Data ss:Type="Number">${totals['func_out'] or 0.00|x}</Data></Cell>
+    </Row>
+    <Row></Row>
+    <Row>
+        <Cell ss:StyleID="grand_total_left_part" ss:Index="9"><Data ss:Type="String">${_('GRAND TOTAL')}</Data></Cell>
+        <Cell ss:StyleID="grand_total_number_central_part"><Data ss:Type="Number">${(totals['amount_in'] - totals['amount_out']) or 0.00|x}</Data></Cell>
+        <Cell ss:StyleID="grand_total_string_central_part"><Data ss:Type="String">${(o.currency and o.currency.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="grand_total_number_central_part"><Data ss:Type="Number">${(totals['func_in'] - totals['func_out']) or 0.00|x}</Data></Cell>
+        <Cell ss:StyleID="grand_total_right_part"><Data ss:Type="String">${(company.currency_id and company.currency_id.name or '')|x}</Data></Cell>
+    </Row>
 </Table>
 
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
-   <FitToPage/>
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
     <Header x:Margin="0.4921259845"/>
@@ -207,6 +279,7 @@
    <Print>
     <ValidPrinterInfo/>
     <PaperSizeIndex>9</PaperSizeIndex>
+    <Scale>50</Scale>
     <HorizontalResolution>600</HorizontalResolution>
     <VerticalResolution>600</VerticalResolution>
    </Print>

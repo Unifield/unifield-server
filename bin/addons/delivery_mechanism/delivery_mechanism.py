@@ -929,6 +929,7 @@ class stock_picking(osv.osv):
         # Objects
         inc_proc_obj = self.pool.get('stock.incoming.processor')
         move_proc_obj = self.pool.get('stock.move.in.processor')
+        proc_obj = self.pool.get('procurement.order')
         loc_obj = self.pool.get('stock.location')
         uom_obj = self.pool.get('product.uom')
         move_obj = self.pool.get('stock.move')
@@ -1195,6 +1196,7 @@ class stock_picking(osv.osv):
                             move_obj.write(cr, uid, [proc.move_id.id],
                                 {'product_qty': diff_qty}, context=context)
                         else:
+                            proc_obj.write(cr, uid, [proc.id], {'move_id': move.id}, context=context)
                             # note: do not close move until a diff qty is applied above
                             move_obj.write(cr, uid, [proc.move_id.id], {'product_qty': 0.00, 'state': 'done'}, context=context)
 
@@ -1596,7 +1598,7 @@ class procurement_order(osv.osv):
         # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
         sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
-            if sol.order_id.procurement_request and not sol.product_id and sol.comment:
+            if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
                              'comment': sol.comment,

@@ -384,15 +384,16 @@ class sale_order_sync(osv.osv):
             orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
 
             # Generate messages for cancel lines
-            available_solc_ids = solc_obj.search(cr, uid, eval(solccl_rule.domain),
-                    order='NO_ORDER', context=context)
-            for asolc in solc_obj.browse(cr, uid, available_solc_ids, context=context):
-                sol_ids = sol_obj.search(cr, uid, [
-                    ('order_id', '=', original_id),
-                    ('sync_order_line_db_id', '=', asolc.resource_sync_line_db_id),
-                ], context=context)
-                if sol_ids:
-                    generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner_name)
+            if solccl_rule:
+                available_solc_ids = solc_obj.search(cr, uid, eval(solccl_rule.domain),
+                        order='NO_ORDER', context=context)
+                for asolc in solc_obj.browse(cr, uid, available_solc_ids, context=context):
+                    sol_ids = sol_obj.search(cr, uid, [
+                        ('order_id', '=', original_id),
+                        ('sync_order_line_db_id', '=', asolc.resource_sync_line_db_id),
+                    ], context=context)
+                    if sol_ids:
+                        generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner_name)
 
             if nfo_model_obj and nfo_rule:
                 available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),

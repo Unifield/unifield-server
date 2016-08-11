@@ -224,6 +224,7 @@ class message_to_send(osv.osv):
         'generate_message' : True,
     }
 
+    _logger = logging.getLogger('sync.client.message_to_send')
 
     """
         Creation from rule
@@ -261,6 +262,12 @@ class message_to_send(osv.osv):
                 args[obj_id] = "Initial RW Sync - Ignore"
 
         for id in obj_ids:
+            # US-1467: Check if this fo has any line, if not just ignore it and show a warning message in log file!
+            if 'normal_fo_create_po' in rule.remote_call and args[id] and args[id][0]:
+                if len(args[id][0].get('order_line')) == 0:
+                    self._logger.warn("::::WARNING: The FO %s (state: %s) has no line! Cannot be synced!" % (args[id][0].get('name'), args[id][0].get('state')))
+                    continue
+
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                 if destination is False:

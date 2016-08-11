@@ -30,6 +30,7 @@ from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from datetime import date
 from decimal import Decimal, ROUND_UP
+import math
 
 import netsvc
 
@@ -624,10 +625,7 @@ class ir_translation(osv.osv):
         tr_split = name.split(',')
         res_id = self.pool.get('ir.model.data').find_sd_ref(cr, 1, sdref, field='res_id', context=context)
         if res_id and tr_split[0] == 'product.template':
-            prod = self.pool.get('product.product').read(cr, 1, [res_id], ['product_tmpl_id'], context=context)
-            if not prod:
-                return False
-            prod = prod[0]
+            prod = self.pool.get('product.product').read(cr, 1, [res_id], ['product_tmpl_id'], context=context)[0]
             if prod['product_tmpl_id']:
                 return prod['product_tmpl_id'][0]
         return res_id
@@ -648,6 +646,8 @@ class ir_translation(osv.osv):
             domain.append('&')
             domain.append('&')
 
+            if vals.get('type') != 'model' and vals.get('src'):
+                domain.append(('src', '=', vals['src']))
             if vals.get('lang'):
                 domain.append(('lang', '=', vals['lang']))
             if vals.get('name'):
@@ -853,6 +853,10 @@ class finance_tools(osv.osv):
             else:
                 msg = _('Document date should be in posting date FY')
             raise osv.except_osv(_('Error'), msg)
+
+    def truncate_amount(self, amount, digits):
+        stepper = pow(10.0, digits)
+        return math.trunc(stepper * amount) / stepper
 
 finance_tools()
 

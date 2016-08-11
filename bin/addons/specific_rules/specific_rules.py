@@ -88,6 +88,15 @@ class sale_order_line(osv.osv):
 
         return result
 
+    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
+        result = super(sale_order_line, self).requested_product_id_change(cr, uid, ids, product_id, comment, context)
+        if product_id:
+            prod_obj = self.pool.get('product.product')
+            if prod_obj.browse(cr, uid, product_id).is_ssl:
+                warning = {'title': 'Short Shelf Life product', 'message': _(SHORT_SHELF_LIFE_MESS)}
+                result.update(warning=warning)
+        return result
+
 sale_order_line()
 
 
@@ -97,21 +106,26 @@ class sale_order(osv.osv):
     '''
     _inherit = 'sale.order'
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def ssl_products_in_line(self, cr, uid, ids, context=None):
         '''
         display message if contains short shelf life
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.split_type_sale_order != 'original_sale_order' or can_break:
+                break
             for line in obj.order_line:
                 # log the message
                 if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
+                    can_break = True
+                    break
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        return True
 
 sale_order()
 
@@ -178,21 +192,26 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def ssl_products_in_line(self, cr, uid, ids, context=None):
         '''
         display message if contains short shelf life
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
+            if can_break:
+                break
             for line in obj.order_line:
                 # log the message
                 if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
+                    can_break = True
+                    break
 
-        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+        return True
 
 purchase_order()
 
@@ -1385,7 +1404,7 @@ class stock_production_lot(osv.osv):
             if not batch.delete_ok:
                 raise osv.except_osv(_('Error'), _('You cannot remove a batch number which has stock !'))
 
-        return super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
+        return super(stock_production_lot, self).unlink(cr, uid, ids, context=context)
 
 
 stock_production_lot()

@@ -52,4 +52,5 @@ import account
 import stock_picking
 import replenishment_rules
 import product_list
+import supplier_catalogue
 import report

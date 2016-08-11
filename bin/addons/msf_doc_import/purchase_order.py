@@ -275,7 +275,7 @@ class purchase_order(osv.osv):
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_po_line_import]),),
+                                                                            'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_po_line_import]),),
                                                                             'state': 'draft', },
                                                                    context)
         return {'type': 'ir.actions.act_window',

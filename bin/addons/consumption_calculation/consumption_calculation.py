@@ -316,6 +316,11 @@ class real_average_consumption(osv.osv):
        
         # check and update lines
         for rac in self.browse(cr, uid, ids, context=context):
+            if rac.state != 'draft':
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Only draft Consumption reports can be processed. Maybe this one has been already processed.'),
+                )
             if DateFrom(rac.period_to) > now():
                 raise osv.except_osv(_('Error'), _('"Period to" can\'t be in the future.'))
 
@@ -770,14 +775,14 @@ class real_average_consumption_line(osv.osv):
         'date_mandatory': fields.boolean(string='DM'),
         'asset_id': fields.integer(string='Asset'),
         'asset_mandatory': fields.boolean('AM'),
-        'remark': fields.char(size=256, string='Remark'),
+        'remark': fields.char(size=256, string='Comment'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
         }
 
     _defaults = {

@@ -54,17 +54,30 @@ def _get_number_modules(cr, testlogin=False):
 def login(db, login, password):
     cr = pooler.get_db_only(db).cursor()
     nb = _get_number_modules(cr, testlogin=True)
+    patch_failed = [0]
+    cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='patch_scripts'")
+    if cr.rowcount:
+        cr.execute("SELECT count(id) FROM patch_scripts WHERE run = \'f\'")
+        patch_failed = cr.fetchone()
     to_update = False
     if not nb:
         to_update = updater.test_do_upgrade(cr)
     cr.close()
     if nb or to_update:
-        s = threading.Thread(target=pooler.get_pool, args=(db,))
+        s = threading.Thread(target=pooler.get_pool, args=(db,),
+                kwargs={'threaded': True})
         s.start()
         raise Exception("ServerUpdate: Server is updating modules ...")
+
+
     pool = pooler.get_pool(db)
     user_obj = pool.get('res.users')
-    return user_obj.login(db, login, password)
+    user_res = user_obj.login(db, login, password)
+
+    if user_res != 1 and patch_failed[0]:
+        raise Exception("PatchFailed: A script during upgrade has failed. Login is forbidden. Please contact your administrator")
+
+    return user_res
 
 def check_super(passwd):
     if passwd == tools.config['admin_passwd']:
