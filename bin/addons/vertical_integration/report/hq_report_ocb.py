@@ -105,7 +105,6 @@ class finance_archive(finance_export.finance_archive):
                     if partner_ids:
                         partner_id = partner_ids[0]
 
-
                 # If we get some ids, fetch the partner hash
                 if partner_id:
                     if isinstance(partner_id, (int, long)):
