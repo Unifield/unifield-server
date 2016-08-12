@@ -200,6 +200,25 @@ class patch_scripts(osv.osv):
         period_ids = period_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
         period_state_obj.update_state(cr, uid, period_ids)
 
+    def sync_down_msfid(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            # TEST ONLY
+            cr.execute('update product_product set msfid=id')
+
+            # on prod: only UniData product
+            cr.execute("""update ir_model_data set touched='[''msfid'']',
+                last_modification=now()
+                where module='sd' and model='product.product' """)
+        return True
+
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
         user_obj = self.pool.get('res.users')
