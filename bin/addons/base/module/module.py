@@ -88,8 +88,8 @@ class module(osv.osv):
 
     def _get_latest_version(self, cr, uid, ids, field_name=None, arg=None, context=None):
         res = dict.fromkeys(ids, '')
-        for m in self.browse(cr, uid, ids):
-            res[m.id] = self.get_module_info(m.name).get('version', '')
+        for module in self.read(cr, uid, ids, ['name']):
+            res[module['id']] = self.get_module_info(module['name']).get('version', '')
         return res
 
     def _get_views(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -554,14 +554,16 @@ class module(osv.osv):
 
         Returns a list of a tuple of addon names and addon versions.
         """
-        return [
-            (module['name'], module['installed_version'])
-            for module in self.browse(cr, uid,
-                self.search(cr, uid,
-                    [('web', '=', True),
-                     ('state', 'in', ['installed','to upgrade','to remove'])],
-                    context=context),
-                context=context)]
+        result = []
+        ids_to_read = self.search(cr, uid,
+                [('web', '=', True),
+                 ('state', 'in', ['installed','to upgrade','to remove'])],
+                context=context)
+        for module in self.read(cr, uid, ids_to_read,
+                ['name', 'installed_version'], context=context):
+            result.append((module['name'], module['installed_version']))
+        return result
+
     def _web_dependencies(self, cr, uid, module, context=None):
         for dependency in module.dependencies_id:
             (parent,) = self.browse(cr, uid, self.search(cr, uid,
