@@ -272,10 +272,10 @@ class product_nomenclature(osv.osv):
         Returns the first category of the nomenclature
         '''
         res = {}
-        for nom in self.browse(cr, uid, ids, context=context):
-            res[nom.id] = False
-            if nom.category_ids:
-                res[nom.id] = nom.category_ids[0].id
+        for nom in self.read(cr, uid, ids, ['category_ids'], context=context):
+            res[nom['id']] = False
+            if nom['category_ids']:
+                res[nom['id']] = nom['category_ids'][0]
 
         return res
 
