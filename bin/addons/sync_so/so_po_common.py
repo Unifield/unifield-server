@@ -332,6 +332,22 @@ class so_po_common(osv.osv_memory):
 
         return header_result
 
+    def get_product_id(self, cr, uid, data, context):
+        prod_obj = self.pool.get('product.product')
+        if hasattr(data, 'msfid') and data.msfid:
+            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', data.msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
+            if len(prod_ids) == 1:
+                return prod_ids[0]
+            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', data.msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
+            if len(prod_ids) == 1:
+                return prod_ids[0]
+            raise Exception("Duplicate product for msfid %s" % data.msfid)
+
+        elif hasattr(data, 'id'):
+            return prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data.id), context=context)
+
+        return False
+
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
@@ -394,7 +410,7 @@ class so_po_common(osv.osv_memory):
                 values['cost_price'] = line.cost_price
 
             if line_dict.get('product_id'):
-                rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
+                rec_id = self.get_product_id(cr, uid, line.product_id, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
@@ -594,7 +610,7 @@ class so_po_common(osv.osv_memory):
                 values['date_expected'] = line.date_expected
 
             if line_dict.get('product_id'):
-                rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
+                rec_id = self.get_product_id(cr, uid, line.product_id, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
