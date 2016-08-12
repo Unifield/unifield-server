@@ -182,9 +182,16 @@ class purchase_order_sync(osv.osv):
         """fields.function 'is_confirmed_and_synced'."""
         if context is None:
             context = {}
-        res = {}
+        res = dict.fromkeys(ids, False)
         sync_msg_obj = self.pool.get('sync.client.message_to_send')
-        for po in self.browse(cr, uid, ids, context=context):
+
+        # get confirmed po
+        ids_confirmed = self.search(cr, uid,
+                [('id', 'in', ids),
+                 ('state', '=', 'confirmed')],
+                context=context)
+
+        for po in self.browse(cr, uid, ids_confirmed, context=context):
             res[po.id] = False
             if po.state == 'confirmed' \
                 and po.partner_id and po.partner_id.partner_type != 'esc':  # uftp-88 PO for ESC partner are never to synchronised, no warning msg in PO form
