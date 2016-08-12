@@ -1562,22 +1562,28 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        # objects
-        kit_obj = self.pool.get('composition.kit')
+
         result = {}
-        for obj in self.browse(cr, uid, ids, context=context):
-            result[obj.id] = {'kit_pol_check': False}
+        read_list = self.read(cr, uid, ids, ['product_id'], context=context)
+        # get product_list
+        product_id_list = list(set([x['product_id'][0] for x in read_list if x['product_id']]))
+        product_obj = self.pool.get('product.product')
+        product_list = product_obj.read(cr, uid, product_id_list, ['type',
+            'subtype'], context=context) 
+        product_dict = dict((x['id'], x) for x in product_list)
+
+
+        for obj in read_list:
+            result[obj['id']] = {'kit_pol_check': False}
             # we want the possibility to explose the kit within the purchase order
             # - the product is a kit AND
             # - at least one theoretical kit exists for this product - is displayed anyway, because the user can now add products not from the theoretical template
-            product = obj.product_id
-            if product and product.type == 'product' and product.subtype == 'kit':
-                result[obj.id].update({'kit_pol_check': True})
-#                kit_ids = kit_obj.search(cr, uid, [('composition_type', '=', 'theoretical'), ('state', '=', 'completed'), ('composition_product_id', '=', product.id)], context=context)
-#                if kit_ids:
-#                    result[obj.id].update({'kit_pol_check': True})
+            product = product_dict[obj['product_id'][0]]
+            if product and product['type'] == 'product' and product['subtype'] == 'kit':
+                result[obj['id']].update({'kit_pol_check': True})
+
         return result
-    
+
     _columns = {'kit_pol_check' : fields.function(_vals_get, method=True, string='Kit Mem Check', type='boolean', readonly=True, multi='get_vals_kit'),
                 }
 
