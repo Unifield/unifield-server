@@ -931,9 +931,9 @@ class stock_picking(osv.osv):
         model_obj = self.pool.get(rule.model)
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
+        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
         arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
         call = rule.remote_call
-        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
 
         identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, ids, rule.server_id, context=context)
         if not identifiers or not update_destinations:
@@ -980,7 +980,7 @@ class stock_picking(osv.osv):
             # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
             # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:
-                so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
+                so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner, context)
         return res
 
     def msg_close(self, cr, uid, source, stock_picking, context=None):
