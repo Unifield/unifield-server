@@ -441,7 +441,8 @@ class purchase_order(osv.osv):
     def _check_po_from_fo(self, cr, uid, ids, context=None):
         if not context:
             context = {}
-        for po in self.browse(cr, uid, ids, context=context):
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['partner_id',
+            'po_from_fo'], context=context):
             if po.partner_id.partner_type == 'internal' and po.po_from_fo:
                 return False
         return True
@@ -908,7 +909,7 @@ class purchase_order(osv.osv):
         args = [ids]
         kwargs = {}
 
-        for obj in self.browse(cr, uid, ids, context=context):
+        for obj in self.browse(cr, uid, ids, fields_to_fetch=['partner_id'], context=context):
             if obj.partner_id.partner_type in ('internal', 'section', 'intermission'):
                 # open the wizard
                 wiz_obj = self.pool.get('wizard')
@@ -1029,7 +1030,7 @@ stock moves which are already processed : '''
                 if data['order_id'][0] not in so_ids:
                     so_ids.append(data['order_id'][0])
 
-        for po in self.browse(cr, uid, ids, context=context):
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
             for line in po.order_line:
                 if line.procurement_id and line.procurement_id.sale_id and line.procurement_id.sale_id.id not in so_ids:
                     so_ids.append(line.procurement_id.sale_id.id)
@@ -1694,7 +1695,7 @@ stock moves which are already processed : '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for po in self.browse(cr, uid, ids, context=context):
+        for po in self.browse(cr, uid, ids, fields_to_fetch=['order_line'], context=context):
             if po.order_line:
                 for line in po.order_line:
                     if not line.product_id:
@@ -3568,7 +3569,9 @@ class purchase_order_line(osv.osv):
         Returns True if the price can be changed by the user
         '''
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids,
+                fields_to_fetch=['order_id', 'merged_id', 'product_id',
+                'product_uom'], context=context):
             res[line.id] = True
             if line.merged_id and len(line.merged_id.order_line_ids) > 1 and line.order_id.state != 'confirmed' and not line.order_id.rfq_ok:
                 stages = self._get_stages_price(cr, uid, line.product_id.id, line.product_uom.id, line.order_id, context=context)
@@ -3634,7 +3637,7 @@ class purchase_order_line(osv.osv):
             ids = [ids]
 
         result = {}
-        for obj in self.browse(cr, uid, ids, context=context):
+        for obj in self.browse(cr, uid, ids, fields_to_fetch=['order_id'], context=context):
             # default values
             result[obj.id] = {'order_state_purchase_order_line': False}
             # order_state_purchase_order_line
@@ -3654,7 +3657,8 @@ class purchase_order_line(osv.osv):
         for line_id in ids:
             res[line_id] = ''
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, line_id, context=context)
-            for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
+            for sol in self.pool.get('sale.order.line').browse(cr, uid,
+                    sol_ids, fields_to_fetch=['order_id'], context=context):
                 if sol.order_id and sol.order_id.client_order_ref:
                     if res[line_id]:
                         res[line_id] += ' - '
