@@ -140,19 +140,26 @@ class purchase_order_line(osv.osv):
         '''
         return 'KC' if cold chain or 'DG' if dangerous goods
         '''
-        result = {}
-        for id in ids:
-            result[id] = ''
+        # initialise the dict with default values
+        result = dict.fromkeys(ids, '')
 
-        for pol in self.browse(cr, uid, ids, context=context):
-            if pol.product_id:
-                if pol.product_id.kc_txt:
-                    result[pol.id] += pol.product_id.is_kc and 'KC' or 'KC ?'
-                if pol.product_id.dg_txt:
+        read_list = self.read(cr, uid, ids, ['product_id'], context=context)
+        # get all products
+        product_id_list = list(set([x['product_id'][0] for x in read_list if x['product_id']]))
+        product_obj = self.pool.get('product.product')
+        product_list = product_obj.read(cr, uid, product_id_list,
+                ['kc_txt', 'is_kc', 'dg_txt', 'is_dg'], context=context)
+        product_dict = dict((x['id'], x) for x in product_list)
+
+        for pol in read_list:
+            if pol['product_id']:
+                product_id = pol['product_id'][0]
+                if product_dict[product_id]['kc_txt']:
+                    result[pol.id] += product_dict[product_id]['is_kc'] and 'KC' or 'KC ?'
+                if product_dict[product_id]['dg_txt']:
                     if result[pol.id]:
                         result[pol.id] += ' / '
                     result[pol.id] += pol.product_id.is_dg and 'DG' or 'DG ?'
-
         return result
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
