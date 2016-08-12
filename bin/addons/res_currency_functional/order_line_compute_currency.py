@@ -146,23 +146,29 @@ class purchase_order_compute_currency(osv.osv):
     def _amount_currency(self, cr, uid, ids, field_name, arg, context=None):
         cur_obj = self.pool.get('res.currency')
         res = {}
-        for order in self.browse(cr, uid, ids, context=context):
+        for order in self.read(cr, uid, ids,
+                ['date_approve', 'currency_id', 'functional_currency_id',
+                'amount_untaxed', 'amount_tax', 'amount_total'],
+                context=context):
             # The approved date, if present, is used as a "freeze" date
             # for the currency rate
             ctx = {}
-            if order.date_approve:
-                ctx['date'] = order.date_approve
+            if order['date_approve']:
+                ctx['date'] = order['date_approve']
             try:
-                res[order.id] = {
-                                'functional_amount_untaxed':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                            order.functional_currency_id.id, order.amount_untaxed, round=True, context=ctx),
-                                'functional_amount_tax':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                        order.functional_currency_id.id, order.amount_tax, round=True, context=ctx),
-                                'functional_amount_total':cur_obj.compute(cr, uid, order.currency_id.id,
-                                                                          order.functional_currency_id.id, order.amount_total, round=True, context=ctx),
-                                }
+                (functional_amount_untaxed, functional_amount_tax,
+                        functional_amount_total) = cur_obj.compute(cr,
+                        uid, order['currency_id'] and order['currency_id'][0] or False,
+                        order['functional_currency_id'] and order['functional_currency_id'][0] or False,
+                        [order['amount_untaxed'], order['amount_tax'],
+                            order['amount_total']], round=True, context=ctx)
+                res[order['id']] = {
+                    'functional_amount_untaxed': functional_amount_untaxed,
+                    'functional_amount_tax': functional_amount_tax,
+                    'functional_amount_total': functional_amount_total
+                }
             except osv.except_osv:
-                res[order.id] = {
+                res[order['id']] = {
                                  'functional_amount_untaxed':0,
                                  'functional_amount_tax':0,
                                  'functional_amount_total':0

@@ -113,24 +113,38 @@ class res_currency(osv.osv):
                     'at the date: %s') % (currency_name, date))
         return to_currency['rate']/from_currency['rate']
 
-    def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
+    def compute(self, cr, uid, from_currency_id, to_currency_id,
+            from_amount_list, round=True, context=None):
         if not from_currency_id:
             from_currency_id = to_currency_id
         if not to_currency_id:
             to_currency_id = from_currency_id
+
+        one_amount = False
+        if isinstance(from_amount_list, (int, long, float)):
+            one_amount = True
         from_currency = self.read(cr, uid, from_currency_id, ['rounding', 'name', 'rate'], context=context)
         to_currency = self.read(cr, uid, to_currency_id, ['rounding', 'name', 'rate'], context=context)
         if to_currency_id == from_currency_id:
             if round:
-                return self.round(cr, uid, to_currency['rounding'], from_amount)
+                if one_amount:
+                    return self.round(cr, uid, to_currency['rounding'],
+                            from_amount_list)
+                return [self.round(cr, uid, to_currency['rounding'], x) for \
+                        x in from_amount_list]
             else:
-                return from_amount
+                return from_amount_list
         else:
             rate = self._get_conversion_rate(cr, uid, from_currency, to_currency, context=context)
             if round:
-                return self.round(cr, uid, to_currency['rounding'], from_amount * rate)
+                if one_amount:
+                    return self.round(cr, uid, to_currency['rounding'], from_amount * rate)
+                return [self.round(cr, uid, to_currency['rounding'],
+                    x * rate) for x in from_amount_list]
             else:
-                return (from_amount * rate)
+                if one_amount:
+                    return (from_amount * rate)
+                return [(x * rate) for x in from_amount_list]
 
     def name_search(self, cr, uid, name, args=[], operator='ilike', context={}, limit=100):
         args = args[:]
