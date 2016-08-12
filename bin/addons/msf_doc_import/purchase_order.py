@@ -356,16 +356,34 @@ class purchase_order_line(osv.osv):
         '''
         Fill the error message if the product of the line is inactive
         '''
-        res = {}
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {'inactive_product': False,
-                            'inactive_error': ''}
-            if line.text_error:
-                res[line.id] = {'inactive_error': line.comment}
-            if line.order_id and line.order_id.state not in ('cancel', 'done') and line.product_id and not line.product_id.active:
-                res[line.id] = {'inactive_product': True,
-                                'inactive_error': _('The product in line is inactive !')}
+        res = dict.fromkeys(ids, {'inactive_product': False,
+                                  'inactive_error': ''})
 
+        line_result = self.read(cr, uid, ids, ['comment', 'text_error',
+            'product_id', 'order_id'], context=context)
+        order_id_list = list(set([x['order_id'][0] for x in line_result if x['order_id']]))
+
+        # check order id state
+        order_obj = self.pool.get('purchase.order')
+        order_list = order_obj.read(cr, uid, order_id_list, ['state'],
+                context=context)
+        product_dict = {}
+
+        order_dict = dict((x['id'], x['state'] not in ('cancel', 'done')) for x in order_list)
+        if any(order_dict.values()):
+            # get the product_list
+            prod_obj = self.pool.get('product.product')
+            product_id_list = list(set([x['product_id'][0] for x in line_result if
+                x['product_id']]))
+            product_list = prod_obj.read(cr, uid, product_id_list, ['active'], context=context)
+            product_dict = dict((x['id'], x) for x in product_list)
+
+        for line in line_result:
+            if line['order_id'] and order_dict[line['order_id'][0]] and line['product_id'] and not product_dict[line['product_id'][0]]['active']:
+                res[line['id']] = {'inactive_product': True,
+                                   'inactive_error': _('The product in line is inactive !')}
+            elif line['text_error']:
+                    res[line['id']] = {'inactive_error': line.comment}
         return res
 
     _columns = {
