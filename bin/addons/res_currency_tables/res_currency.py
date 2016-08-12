@@ -69,7 +69,8 @@ class res_currency(osv.osv):
         return super(res_currency, self).search(cr, uid, args, offset, limit,
                 order, context, count=count)
 
-    def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
+    def compute(self, cr, uid, from_currency_id, to_currency_id,
+            from_amount_list, round=True, context=None):
         if context is None:
             context={}
         if context.get('currency_table_id', False):
@@ -81,7 +82,8 @@ class res_currency(osv.osv):
             new_to_currency_id = self._get_table_currency(cr, uid, to_currency_id, context['currency_table_id'], context=context)
             if new_to_currency_id:
                 to_currency_id = new_to_currency_id
-        return super(res_currency, self).compute(cr, uid, from_currency_id, to_currency_id, from_amount, round, context=context)
+        return super(res_currency, self).compute(cr, uid, from_currency_id,
+                to_currency_id, from_amount_list, round, context=context)
 
     def create_associated_pricelist(self, cr, uid, currency_id, context=None):
         '''
