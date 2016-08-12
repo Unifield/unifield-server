@@ -36,22 +36,28 @@ def _order_nomenclature_get_product_code_name(module, cr, uid, ids, fieldname, a
     res = {}
     if not ids:
         return res
+
     fields = {  # field to read /res field
         'default_code': 'default_code',
         'name': 'default_name',
     }
     if isinstance(ids, (int, long)):
         ids = [ids]
-    for rpol in module.read(cr, uid, ids, ['product_id'], context=context):
-        res[rpol['id']] = {}
-        for f in fields:
-            res[rpol['id']][fields[f]] = ''
+
+    obj_list = module.read(cr, uid, ids, ['product_id'], context=context)
+    product_id_list = list(set([x['product_id'][0] for x in obj_list if
+        x['product_id']]))
+    product_list = module.pool.get('product.product').read(cr, uid,
+            product_id_list, fields.keys(), context=context)
+    product_dict = dict((x['id'], x) for x in product_list)
+
+    for rpol in obj_list:
+        res[rpol['id']] = dict.fromkeys(fields.values(), '')
         if rpol['product_id']:
-            rp = module.pool.get('product.product').read(cr, uid,
-                [rpol['product_id'][0]], fields.keys(), context=context)
-            if rp and rp[0]:
-                for f in fields:
-                   res[rpol['id']][fields[f]] = rp[0].get(f, '')
+            product_id = rpol['product_id'][0]
+            rp = product_dict[product_id]
+            for field in fields:
+                res[rpol['id']][fields[field]] = rp[field]
     return res
 
 #
