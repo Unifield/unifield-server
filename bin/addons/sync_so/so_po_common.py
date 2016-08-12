@@ -343,7 +343,7 @@ class so_po_common(osv.osv_memory):
                 return prod_ids[0]
             raise Exception("Duplicate product for msfid %s" % data.msfid)
 
-        elif hasattr(data, 'id'):
+        if hasattr(data, 'id'):
             return prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data.id), context=context)
 
         return False
