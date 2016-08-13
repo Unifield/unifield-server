@@ -210,13 +210,18 @@ class patch_scripts(osv.osv):
             level_current = usr.company_id.instance_id.level
 
         if level_current == 'section':
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
             # TEST ONLY
-            cr.execute('update product_product set msfid=id')
+            #cr.execute('update product_product set msfid=id')
 
             # on prod: only UniData product
             cr.execute("""update ir_model_data set touched='[''msfid'']',
                 last_modification=now()
-                where module='sd' and model='product.product' """)
+                where module='sd' and model='product.product' and
+                res_id in (
+                    select id from product_product where international_status = %s
+                )""", (unidata_id, ))
         return True
 
     def us_332_patch(self, cr, uid, *a, **b):
