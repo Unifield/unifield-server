@@ -333,18 +333,34 @@ class so_po_common(osv.osv_memory):
         return header_result
 
     def get_product_id(self, cr, uid, data, context):
+        # us-1586: use msfid to search product in intersection flow, else use sdref
         prod_obj = self.pool.get('product.product')
-        if hasattr(data, 'msfid') and data.msfid:
-            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', data.msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
-            if len(prod_ids) == 1:
-                return prod_ids[0]
-            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', data.msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
-            if len(prod_ids) == 1:
-                return prod_ids[0]
-            raise Exception("Duplicate product for msfid %s" % data.msfid)
+        msfid = False
+        pid = False
 
-        if hasattr(data, 'id'):
-            return prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data.id), context=context)
+        # ouch data could be an object or a dict
+        # if msfid is in data this is an intersection message, 1st use msfid
+        if hasattr(data, 'msfid') and data.msfid:
+            msfid = data.msfid
+        elif isinstance(data, dict) and data.get('msfid'):
+            msfid = data['msfid']
+        if msfid:
+            # msfid has no uniq constraint if only 1 active product: ok, elif more than 1 product found raise
+            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
+            if len(prod_ids) == 1:
+                return prod_ids[0]
+            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
+            if len(prod_ids) == 1:
+                return prod_ids[0]
+            raise Exception("Duplicate product for msfid %s" % msfid)
+
+        if hasattr(data, 'id') and data.id:
+            pid = data.id
+        elif isinstance(data, dict) and data.get('id'):
+            pid = data['id']
+
+        if pid:
+            return prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(pid), context=context)
 
         return False
 
