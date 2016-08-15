@@ -74223,6 +74223,12 @@ msgid "get_import_batch_headers_type"
 msgstr "Type"
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:285
+#, python-format
+msgid "no data will be imported until all the error messages are corrected"
+msgstr "aucune donnée ne sera importée tant que toutes les erreurs ne seront pas corrigées"
+
+#. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:54
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:57
