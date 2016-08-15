@@ -52,6 +52,7 @@ MAX_EXECUTED_MESSAGES = 500
 
 
 def check_patch_scripts(cr, uid, context=None):
+    return ''
     if pooler.get_pool(cr.dbname).get('patch.scripts').search(cr, uid, [('run', '=', False)], limit=1, context=context):
         return _('PatchFailed: A script during upgrade has failed. Synchronization is forbidden. Please contact your administrator')
     else:
