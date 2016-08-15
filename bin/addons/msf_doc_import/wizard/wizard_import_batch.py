@@ -34,10 +34,10 @@ from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
 def get_import_batch_headers(context=None):
     return [
          ImportHeader(name=_('get_import_batch_headers_name'), ftype='String', size=80, tech_name='name', required=False),
+         ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
+         ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
          ImportHeader(name=_('get_import_batch_headers_product_code'), ftype='String', size=80, tech_name='product_id', required=True),
          ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=True),
-         ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
-         ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
     ]
 
 # Get header list and information
@@ -271,6 +271,7 @@ class wizard_import_batch(osv.osv_memory):
 - Total lines to import: %s
 - Total lines %s: %s %s
 - Total lines with errors: %s %s
+%s
         ''') % (
             str(round(time.time() - start_time)),
             import_brw.total_lines_to_import-1,
@@ -281,6 +282,7 @@ class wizard_import_batch(osv.osv_memory):
             ),
             err_msg and len(import_errors.keys()) or 0,
             err_msg and _('(see error messages below)'),
+            err_msg and _("no data will be imported until all the error messages are corrected") or '',
         )
 
         self.write(cr, uid, [import_brw.id], {

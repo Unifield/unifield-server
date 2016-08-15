@@ -26,8 +26,8 @@
     <Styles>
         <Style ss:ID="header">
             <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Interior ss:Color="#DA3A38" ss:Pattern="Solid"/>
-            <Font ss:Bold="1" ss:Color="#FFFFFF" />
+            <Interior ss:Color="#ffcc99" ss:Pattern="Solid"/>
+            <Font ss:Bold="1" ss:Color="#000000" />
             <Borders>
               <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
               <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />

@@ -74196,7 +74196,7 @@ msgstr "Aucun produit trouvé pour le code '%s'"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:36
 #, python-format
 msgid "get_import_batch_headers_name"
-msgstr "Nom"
+msgstr "Numéro de lot"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
