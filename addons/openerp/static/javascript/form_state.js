@@ -177,8 +177,8 @@ function form_hookAttrChange() {
                     expr_fields[field.id] = 1;
                     // events disconnected during hook_onStateChange,
                     // don't redisconnect or may break onStateChange
-                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
-                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
+                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
                 }
             });
         }
@@ -231,8 +231,8 @@ function list_hookAttrChange(list_name) {
                 var name = prefix + n[0];
                 var field = openobject.dom.get(name);
                 if (row_is_editable) {
-                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
-                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
+                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
                 }
                 return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
             });
