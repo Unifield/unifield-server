@@ -349,10 +349,11 @@ class so_po_common(osv.osv_memory):
             prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
             if len(prod_ids) == 1:
                 return prod_ids[0]
-            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
-            if len(prod_ids) == 1:
-                return prod_ids[0]
-            raise Exception("Duplicate product for msfid %s" % msfid)
+            elif len(prod_ids) > 1:
+                prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
+                if len(prod_ids) == 1:
+                    return prod_ids[0]
+                raise Exception("Duplicate product for msfid %s" % msfid)
 
         if hasattr(data, 'id') and data.id:
             pid = data.id
