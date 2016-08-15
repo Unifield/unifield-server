@@ -2747,6 +2747,15 @@ class orm(orm_template):
         """
         pass
 
+    def _clean_cache(self):
+        '''
+        This method is called everytime a cache based on
+         this object has to be cleaned because data has been updated.
+
+        The default behaviour is to do nothing.
+        '''
+        pass
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -3666,6 +3675,7 @@ class orm(orm_template):
                 if rids:
                     obj._store_set_values(cr, uid, rids, fields, context)
 
+        self._clean_cache()
         return True
 
     #
@@ -3955,6 +3965,7 @@ class orm(orm_template):
         wf_service = netsvc.LocalService("workflow")
         for current_id in ids:
             wf_service.trg_write(user, self._name, current_id, cr)
+        self._clean_cache()
         return True
 
     def _call_store_function(self, cr, uid, ids, keys=None, result=None, bypass=True, context=None):
@@ -4153,6 +4164,7 @@ class orm(orm_template):
             self.log(cr, user, id_new, message, True, context=context)
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_create(user, self._name, id_new, cr)
+        self._clean_cache()
         return id_new
 
     def _store_get_values(self, cr, uid, ids, fields, context=None):
