@@ -1012,8 +1012,13 @@ class read_cache(object):
 
             previous_context = kwargs2['context']
 
+            # we have to check if we discard some values from the context
+            simplified_context = {}
+            for key, value in previous_context.iteritems():
+                if key in self._context:
+                    simplified_context[key] = value
+
             # we have to remove from the context what doesn't impact the results
-            simplified_context = dict(filter(lambda (key, value) : key not in self._context, previous_context.iteritems()))
             kwargs2['context'] = simplified_context
 
             result = []

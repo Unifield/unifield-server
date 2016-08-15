@@ -152,7 +152,7 @@ class act_window(osv.osv):
     _sequence = 'ir_actions_id_seq'
     _order = 'name'
 
-    @tools.read_cache(prefetch=[], context=[], timeout=8000, size=2000)
+    @tools.read_cache(prefetch=[], context=['active_model', 'department_id', '_terp_view_name', 'client', 'active_ids', 'active_id', 'lang', 'tz'], timeout=8000, size=2000)
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(act_window, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 

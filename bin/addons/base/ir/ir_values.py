@@ -32,7 +32,7 @@ EXCLUDED_FIELDS = set((
 class ir_values(osv.osv):
     _name = 'ir.values'
 
-    @tools.read_cache(prefetch=[], context=[], timeout=8000, size=2000)
+    @tools.read_cache(prefetch=[], context=['lang', 'client', 'tz', 'department_id', 'active_model', '_terp_view_name', 'active_ids', 'active_id'], timeout=8000, size=2000)
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(ir_values, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 
