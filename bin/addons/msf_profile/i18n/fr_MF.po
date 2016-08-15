@@ -74297,11 +74297,13 @@ msgid "Processing of file completed in %s second(s)!\n"
 "- Total lines to import: %s\n"
 "- Total lines %s: %s %s\n"
 "- Total lines with errors: %s %s\n"
+"%s"
 "        "
 msgstr "Traitement du fichier terminé en %s seconde(s) !\n"
 "- Nombre de lignes à importer : %s\n"
 "- Nombre de lignes %s : %s %s\n"
 "- Nombre de lignes avec erreurs : %s %s\n"
+"%s"
 "        "
 
 #. module: msf_doc_import
