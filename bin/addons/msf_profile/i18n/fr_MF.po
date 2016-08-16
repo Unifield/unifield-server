@@ -73853,3 +73853,9 @@ msgstr "L'écriture doit avoir au moins deux lignes."
 #, python-format
 msgid "The entry must be balanced."
 msgstr "L'écriture doit être équilibrée."
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:56
+#, python-format
+msgid "PatchFailed: A script during upgrade has failed. Synchronization is forbidden. Please contact your administrator"
+msgstr "PatchFailed: Un script a échoué pendant la mise à jour. La synchronizsation est désactivée. Veuillez contacter votre administrateur"

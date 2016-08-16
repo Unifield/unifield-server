@@ -107,11 +107,33 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
-        # unreconciled: not reconciled or partial reconciled
-        # (partial: reconcile_partia_id set vs reconcile_id)
-        self.unreconciled_filter = \
-            self._get_data_form(data, 'unreconciled', False) \
-            and " AND reconcile_id is null AND a.reconcile='t'" or ''
+
+        # US-533 reconciled filter:
+        # decision matrix
+        # http://jira.unifield.org/browse/US-533?focusedCommentId=50246&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50246
+        reconcile_date = self._get_data_form(data, 'reconcile_date', False)
+        reconciled = self._get_data_form(data, 'reconciled', 'empty')
+        self.reconciled_filter = ''
+        if reconciled == 'empty':
+            # no reconcile criteria: get rid of reconcile date filter
+            if reconcile_date:
+                del data['form']['reconcile_date']
+                reconcile_date = False
+        elif reconciled == 'no':
+            # reconcile 'No' filter: become reconciled since (day+1)
+            # or not reconciled (cases 6/9 of Jira comment matrix)
+            not_reconciled = "l.reconcile_id is null AND a.reconcile='t'"
+            if reconcile_date:
+                self.reconciled_filter = \
+                    " AND (l.reconcile_date > '%s' or (%s))" % (
+                        reconcile_date, not_reconciled, )
+            else:
+                self.reconciled_filter = " AND %s" % (not_reconciled, )
+        elif reconciled == 'yes':
+            self.reconciled_filter = " AND l.reconcile_id is not null"
+            if reconcile_date:
+                self.reconciled_filter += " AND l.reconcile_date <= '%s'" % (
+                    reconcile_date, )
 
         self.context['state'] = data['form']['target_move']
 
@@ -161,8 +183,8 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     self.cr, self.uid, self.account_ids)
 
         query = self.query
-        if self.unreconciled_filter:
-            query += self.unreconciled_filter
+        if self.reconciled_filter:
+            query += self.reconciled_filter
 
         move_states = [ 'posted', ] if self.target_move == 'posted' \
             else [ 'draft', 'posted', ]
@@ -171,7 +193,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             include_accounts=self.account_ids,
             account_report_types=self.account_report_types,
             with_balance_only=self.display_account == 'bal_solde',
-            reconcile_filter=self.unreconciled_filter,
+            reconcile_filter=self.reconciled_filter,
             context=used_context)
 
         return res
@@ -248,7 +270,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if node.is_zero \
                 and (self.account_ids
                     or self.account_report_types
-                    or self.unreconciled_filter
+                    or self.reconciled_filter
                     or self.display_account == 'bal_movement'):
             # hide zero amounts for above filters on
             # no movements <=> no amount
@@ -332,7 +354,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_account a on (a.id=l.account_id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
-            sql = sql.replace('{{reconcile}}', self.unreconciled_filter)
+            sql = sql.replace('{{reconcile}}', self.reconciled_filter)
             self.cr.execute(sql, (account.id, ))
             res = self.cr.dictfetchall()
         else:
@@ -417,6 +439,14 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             if line:
                 infos.append(line)
 
+        # reconcile / reconcile date
+        reconciled = self._get_data_form(data, 'reconciled')
+        if reconciled and reconciled != 'empty':
+            dt = self._get_data_form(data, 'reconcile_date')
+            if dt:
+                dt = ' ' + self.formatLang(dt, date=True)
+            infos.append(_("Reconcile %s%s") % (reconciled.title(), dt or '', ))
+
         return infos and ", \n".join(infos) or _('No Filter')
 
     def _get_line_debit(self, line, booking=False):
@@ -489,7 +519,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # reconciled account
         info_data.append((_('Unreconciled'),
-            self.unreconciled_filter and yes_str or no_str, ))
+            self.reconciled_filter and yes_str or no_str, ))
 
         display_account = all_str
         if 'display_account' in data['form']:

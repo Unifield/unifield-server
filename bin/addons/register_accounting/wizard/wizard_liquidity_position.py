@@ -31,7 +31,7 @@ class wizard_liquidity_position(osv.osv_memory):
     _name = 'wizard.liquidity.position'
 
     def _get_default_period(self, cr, uid, context=None):
-        args = [('state', '!=', 'created')]
+        args = [('state', '!=', 'created'), ('number', 'not in', range(13, 17))]
         period = self.pool.get('account.period')
         period_ids = period.search(cr, uid, args, limit=1, order='number desc',
                                    context=context)
@@ -39,7 +39,7 @@ class wizard_liquidity_position(osv.osv_memory):
 
     _columns = {
         'period_id': fields.many2one('account.period', 'Period', required=True,
-                                     domain="[('state', '!=', 'created')]"),
+                                     domain="[('state', '!=', 'created'), ('number', 'not in', range(13, 17))]"),
         'export_type': fields.selection(
                                         (('excel', 'Excel'),
                                          ('pdf', 'PDF')),

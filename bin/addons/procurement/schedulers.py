@@ -66,6 +66,7 @@ class procurement_order(osv.osv):
 
         try:
             if use_new_cursor:
+                cr.commit()
                 cr = pooler.get_db(use_new_cursor).cursor()
             wf_service = netsvc.LocalService("workflow")
 

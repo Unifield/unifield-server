@@ -66,6 +66,10 @@ class account_move_line(osv.osv):
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
             acc_corr.setdefault(ml.account_id.id, ml.account_id.user_type.not_correctible)
+            # False if special (or implicitly system period)
+            if ml.period_id.special:
+                res[ml.id] = False
+                continue
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
                 res[ml.id] = False

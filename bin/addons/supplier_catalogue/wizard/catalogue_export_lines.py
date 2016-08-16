@@ -26,23 +26,42 @@ from osv import fields
 class catalogue_export_lines(osv.osv_memory):
     _name = 'catalogue.export.lines'
     _description = 'Supplier catalogue export lines'
-    
+
     _columns = {
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True),
         'file_to_export': fields.binary(string='File to export'),
     }
-    
+
     def export_file(self, cr, uid, ids, context=None):
         '''
         Export lines to file
         '''
         if not context:
             context = {}
-        
-        for wiz in self.browse(cr, uid, ids, context=context):
-            pass
-            # TODO: Export file            
-        
-        return {'type': 'ir.actions.act_window_close'}
+
+        catalogue_ids = context.get('active_ids', [])
+
+        report_name = 'supplier.catalogue.lines.xls'
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': report_name,
+            'report_name': report_name,
+        }, context=context)
+
+        context.update({
+            'background_id': background_id,
+            'background_time': 15,
+        })
+
+        datas = {'ids': catalogue_ids, 'context': context}
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': datas,
+            'nodestroy': True,
+            'context': context,
+        }
+
+catalogue_export_lines()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
