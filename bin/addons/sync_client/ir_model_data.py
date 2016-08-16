@@ -99,8 +99,9 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         # loop on objects that don't match the models to ignore domain in sync common
         result = set()
         ir_model = self.pool.get('ir.model')
+        model_ids = ir_model.search(cr, 1, WHITE_LIST_MODEL)
 
-        for model in ir_model.browse(cr, 1, WHITE_LIST_MODEL):
+        for model in ir_model.browse(cr, 1, model_ids):
 
             obj = self.pool.get(model.model)
 
