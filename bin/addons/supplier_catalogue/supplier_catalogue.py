@@ -195,6 +195,12 @@ class supplier_catalogue(osv.osv):
         catalogue = self.browse(cr, uid, [res], context=context)[0]
         if not catalogue.partner_id.active:
             self.write(cr, uid, [res], {'active': False}, context=context)
+        elif vals.get('active') and catalogue.partner_id.partner_type == 'esc':
+            if self.search(cr, uid, [('partner_id', '=', catalogue.partner_id.id), ('active', '=', True)], count=True, context=context) > 1:
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Warning! There is already another active catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check.'),
+                )
 
         return res
 
@@ -478,24 +484,9 @@ class supplier_catalogue(osv.osv):
         '''
         Check if the To date is older than the From date
         '''
-        p_id = []
         for catalogue in self.browse(cr, uid, ids):
             if catalogue.period_to and catalogue.period_to < catalogue.period_from:
                 return False
-            if catalogue.active and catalogue.partner_id and catalogue.partner_id.partner_type == 'esc':
-                p_id.append(catalogue.partner_id.id)
-        if p_id:
-            cr.execute("""select partner_id, count(*)
-                from supplier_catalogue
-                where partner_id in %s and active='t'
-                group by partner_id""", (tuple(p_id), ))
-            for x in cr.fetchall():
-                if x[1] and x[1] > 1:
-                    partner_name = self.pool.get('res.partner').read(cr, uid, x[0], ['name'])['name']
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('Warning! There is already another active catalogue for this Supplier %s! This could have implications on the synching of catalogue to instances below, please check.' % (partner_name, )),
-                    )
         return True
 
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
