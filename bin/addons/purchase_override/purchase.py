@@ -3202,11 +3202,10 @@ class purchase_order_line(osv.osv):
             if not context.get('update_merge'):
                 new_vals.update(self._update_merged_line(cr, uid, line['id'], vals, context=dict(context, skipResequencing=True, noraise=True)))
 
-            key = tuple(sorted(new_vals.items()))
-            if key in group_write_dict:
-                group_write_dict[key].append(line['id'])
-            else:
-                group_write_dict[key] = [line['id']]
+            key = repr(tuple(sorted(new_vals.items())))
+            if key not in group_write_dict:
+                group_write_dict[key] = []
+            group_write_dict[key].append(line['id'])
 
             if self._name != 'purchase.order.merged.line' and\
                     vals.get('origin') and not proc_id:
@@ -3224,7 +3223,7 @@ class purchase_order_line(osv.osv):
 
         if group_write_dict:
             for key, id_list in group_write_dict.items():
-                vals = dict(key)
+                vals = dict(eval(key))
                 res = super(purchase_order_line, self).write(cr, uid, id_list,
                         vals, context=context)
 
