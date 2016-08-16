@@ -195,7 +195,7 @@ class supplier_catalogue(osv.osv):
         catalogue = self.browse(cr, uid, [res], context=context)[0]
         if not catalogue.partner_id.active:
             self.write(cr, uid, [res], {'active': False}, context=context)
-        elif vals.get('active') and catalogue.partner_id.partner_type == 'esc':
+        elif not context.get('sync_update_execution') and vals.get('active') and catalogue.partner_id.partner_type == 'esc':
             if self.search(cr, uid, [('partner_id', '=', catalogue.partner_id.id), ('active', '=', True)], count=True, context=context) > 1:
                 raise osv.except_osv(
                     _('Error'),
