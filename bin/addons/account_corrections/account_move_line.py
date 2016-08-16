@@ -175,6 +175,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'reversal': False,
             'last_cor_was_only_analytic': False,
         })
+        if 'exported' not in default:
+            default['exported'] = False
+
         # Add default date if no one given
         if not 'date' in default:
             default.update({'date': strftime('%Y-%m-%d')})
