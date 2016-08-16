@@ -58,6 +58,33 @@ class supplier_catalogue(osv.osv):
 
         return False
 
+    def open_new_catalogue_form(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        context['partner_id'] = ids[0]
+        partner_obj = self.pool.get('res.partner')
+        if partner_obj.search(cr, uid, [('id', '=', ids[0]), ('partner_type', '=', 'esc')], context=context):
+            user = self.pool.get('res.users').browse(cr, uid, uid,context=context)
+            level = user and user.company_id and user.company_id.instance_id and user.company_id.instance_id.level or False
+            if level != 'section':
+                raise osv.except_osv(
+                    _('Error'),
+                    'For an ESC Supplier you must create the catalogue on a HQ instance.'
+                )
+            elif self.search(cr, uid, [('active', '=', True), ('partner_id', '=', ids[0])]):
+                raise osv.except_osv(
+                    _('Error'),
+                    _('Warning! There is already another active catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check.'),
+                )
+
+        return {
+            'res_model': 'supplier.catalogue',
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'type': 'ir.actions.act_window',
+            'context': context,
+            'domain': [('partner_id', '=', ids[0])],
+        }
     def _update_other_catalogue(self, cr, uid, cat_id, period_from, currency_id, partner_id, period_to=False, context=None):
         '''
         Check if other catalogues with the same partner/currency exist and are defined in the period of the
@@ -411,7 +438,7 @@ class supplier_catalogue(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Name', required=True),
         'partner_id': fields.many2one('res.partner', string='Partner', required=True,
-                                      domain=[('supplier', '=', True)]),
+                                      domain=[('supplier', '=', True)], select=1),
         'period_from': fields.date(string='From',
                                    help='Starting date of the catalogue.'),
         'period_to': fields.date(string='To',
@@ -451,9 +478,24 @@ class supplier_catalogue(osv.osv):
         '''
         Check if the To date is older than the From date
         '''
+        p_id = []
         for catalogue in self.browse(cr, uid, ids):
             if catalogue.period_to and catalogue.period_to < catalogue.period_from:
                 return False
+            if catalogue.active and catalogue.partner_id and catalogue.partner_id.partner_type == 'esc':
+                p_id.append(catalogue.partner_id.id)
+        if p_id:
+            cr.execute("""select partner_id, count(*)
+                from supplier_catalogue
+                where partner_id in %s and active='t'
+                group by partner_id""", (tuple(p_id), ))
+            for x in cr.fetchall():
+                if x[1] and x[1] > 1:
+                    partner_name = self.pool.get('res.partner').read(cr, uid, x[0], ['name'])['name']
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('Warning! There is already another active catalogue for this Supplier %s! This could have implications on the synching of catalogue to instances below, please check.' % (partner_name, )),
+                    )
         return True
 
     _constraints = [(_check_period, 'The \'To\' date mustn\'t be younger than the \'From\' date !', ['period_from', 'period_to'])]
