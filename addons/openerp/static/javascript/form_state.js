@@ -155,18 +155,19 @@ function form_hookAttrChange() {
         } catch(e){
             return;
         }
+        var cache_values = {};
 
         for (var attr in attrs) {
             var expr_fields = {}; // check if field appears more then once in the expr
 
             if (attrs[attr] == ''){
-                return form_onAttrChange(container, widget, attr, attrs[attr], $this);
+                return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
             }
 
             forEach(attrs[attr], function(n){
 
                 if (typeof(n) == "number") { // {'invisible': [1]}
-                    return form_onAttrChange(container, widget, attr, n, $this);
+                    return form_onAttrChange(container, widget, attr, n, $this, cache_values);
                 }
 
                 var name = prefix + n[0];
@@ -176,8 +177,8 @@ function form_hookAttrChange() {
                     expr_fields[field.id] = 1;
                     // events disconnected during hook_onStateChange,
                     // don't redisconnect or may break onStateChange
-                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
-                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
+                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
                 }
             });
         }
@@ -209,7 +210,11 @@ function list_hookAttrChange(list_name) {
             return;
         }
 
-        var row_is_editable = $this.parents('tr.grid-row').is('.editors')
+        // check if an editor exists
+        var editor_exists = $(".editors").length;
+        var cache_values = {};
+
+        var row_is_editable = editor_exists && $this.parents('tr.grid-row').is('.editors');
         for (var attr in attrs) {
             if (!row_is_editable && attr != 'invisible') {
                 // when row is not in editable mode we only care about invisible attributes
@@ -217,30 +222,31 @@ function list_hookAttrChange(list_name) {
                 continue;
             }
             if (attrs[attr] == '') {
-                return form_onAttrChange(container, widget, attr, attrs[attr], $this);
+                return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
             }
             forEach(attrs[attr], function(n) {
                 if (typeof(n) == "number") { // {'invisible': [1]}
-                    return form_onAttrChange(container, widget, attr, n, $this);
+                    return form_onAttrChange(container, widget, attr, n, $this, cache_values);
                 }
                 var name = prefix + n[0];
                 var field = openobject.dom.get(name);
                 if (row_is_editable) {
-                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
-                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this));
+                    var $field = jQuery(field).bind('onAttrChange', partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
+                    $field.change(partial(form_onAttrChange, container, widget, attr, attrs[attr], $this, {}));
                 }
-                return form_onAttrChange(container, widget, attr, attrs[attr], $this);
+                return form_onAttrChange(container, widget, attr, attrs[attr], $this, cache_values);
             });
         }
     });
 }
 
-function form_onAttrChange(container, widgetName, attr, expr, elem) {
+function form_onAttrChange(container, widgetName, attr, expr, elem, cache_values) {
+    var cache_values = cache_values || {};
 
     var prefix = widgetName.slice(0, widgetName.lastIndexOf('/') + 1);
     var widget = openobject.dom.get(widgetName) || elem;
 
-    var result = form_evalExpr(prefix, expr, elem);
+    var result = form_evalExpr(prefix, expr, elem, cache_values);
 
     switch (attr) {
         case 'readonly':
@@ -260,115 +266,181 @@ function form_onAttrChange(container, widgetName, attr, expr, elem) {
     }
 }
 
-function form_find_field_in_context(prefix, field, ref_elem) {
-    // try to find field in the context of reference element (ref_elem)
-    var elem = null;
-    if (ref_elem.parents('table.grid').length) {
-        var parent = ref_elem.parents('tr.grid-row');
-        elem = parent.find(idSelector(prefix + field));
-
-        if (!elem || !elem.length) {
-            var parent_selector = '[name='+prefix + field +']';
-            elem = parent.find(parent_selector);
-        }
-
-        if (!elem || !elem.length) {
-            // try getting with _terp_listfields/TABLE_ID/FIELD_NAME
-            var parent_table_id = ref_elem.parents('table.grid')[0].id;
-            if (parent_table_id && parent_table_id.match('_grid$')) {
-                parent_table_id = parent_table_id.slice(0, parent_table_id.length - 5);
-            }
-            if (parent_table_id == '_terp_list') {
-                // in case list name if '_terp_list' this means we're not inside a o2m/m2m fields,
-                // and we no need need to prefix with parent_table_id name
-                parent_table_id = ''
-            } else {
-                parent_table_id = parent_table_id + '/'
-            }
-            var parent_relative_fieldname = '[name=_terp_listfields/' + parent_table_id + prefix + field + ']';
-            elem = parent.find(parent_relative_fieldname);
-        }
+function ret_cache_if_available(cache, key, func_eval)
+{
+    if(cache[key] == undefined){
+        val = func_eval()
+        cache[key] = val;
+        return val;
+    }else{
+        return cache[key];
     }
-    if (!elem || !elem.length) {
-        elem = jQuery(idSelector(prefix + field));
-    }
-    return elem;
 }
 
-function form_evalExpr(prefix, expr, ref_elem) {
+function form_find_field_in_context(prefix, field, ref_elem, cache_values) {
+    // try to find field in the context of reference element (ref_elem)
+    var elem = null;
 
+    var key_cache = 'bigcache_' + prefix + '_' + field;
+
+    return ret_cache_if_available(cache_values, key_cache, function(){
+
+        var parents_grid = ret_cache_if_available(cache_values, 'closest_table.grid', function(){
+            return ref_elem.closest('table.grid');
+        });
+
+        if (parents_grid.length) {
+
+            var parent = ret_cache_if_available(cache_values, 'tr.grid-row', function(){
+                return ref_elem.closest('tr.grid-row');
+            });
+
+            elem = parent.find(idSelector(prefix + field));
+
+            if (!elem || !elem.length) {
+                var parent_selector = '[name='+prefix + field +']';
+                elem = parent.find(parent_selector);
+            }
+
+            if (!elem || !elem.length) {
+                // try getting with _terp_listfields/TABLE_ID/FIELD_NAME
+                var parent_table_id = parents_grid[0].id;
+                if (parent_table_id && parent_table_id.match('_grid$')) {
+                    parent_table_id = parent_table_id.slice(0, parent_table_id.length - 5);
+                }
+                if (parent_table_id == '_terp_list') {
+                    // in case list name if '_terp_list' this means we're not inside a o2m/m2m fields,
+                    // and we no need need to prefix with parent_table_id name
+                    parent_table_id = ''
+                } else {
+                    parent_table_id = parent_table_id + '/'
+                }
+                var parent_relative_fieldname = '[name=_terp_listfields/' + parent_table_id + prefix + field + ']';
+                elem = parent.find(parent_relative_fieldname);
+            }
+        }
+        if (!elem || !elem.length) {
+            elem = jQuery(idSelector(prefix + field));
+        }
+        cache_values[key_cache] = elem;
+        return elem;
+    });
+}
+
+
+function form_evalExpr(prefix, expr, ref_elem, cache_values) {
+
+    // the stack contains future that can be evaluated when it's required
     var stack = [];
     for (var i = 0; i < expr.length; i++) {
 
         var ex = expr[i];
         var op = ex[1];
-        var elem = form_find_field_in_context(prefix, ex[0], ref_elem);
+
+        // it's an operator, we don't need to find its value in the page
         if (ex.length==1) {
-            stack.push(ex[0]);
+
+            function val_gen(ret_val){
+                return function(){
+                    return ret_val;
+                }
+            }
+
+
+            stack.push(val_gen(ex[0]));
             continue;
         }
-        if (!elem || !elem.length) {
-            continue
-        }
-        var val = ex[2];
 
-        var elem_value;
-        if(elem.is(':input')) {
-            elem_value = elem.val();
-        } else {
-            elem_value = elem.attr('value') || elem.text();
-        }
+        // create a future in order to evaluate it only if required
+        function fetch_value(_op, _prefix, ex_0, ex_2, ref_elem){
 
-        switch (op.toLowerCase()) {
-            case '=':
-            case '==':
-                stack.push(elem_value == val);
-                break;
-            case '!=':
-            case '<>':
-                stack.push(elem_value != val);
-                break;
-            case '<':
-                stack.push(elem_value < val);
-                break;
-            case '>':
-                stack.push(elem_value > val);
-                break;
-            case '<=':
-                stack.push(elem_value <= val);
-                break;
-            case '>=':
-                stack.push(elem_value >= val);
-                break;
-            case 'in':
-                stack.push(MochiKit.Base.findIdentical(val, elem_value) > -1);
-                break;
-            case 'not in':
-                stack.push(MochiKit.Base.findIdentical(val, elem_value) == -1);
-                break;
-        }
+            return function(){
+                var elem = form_find_field_in_context(_prefix, ex_0, ref_elem, cache_values);
+
+                if (!elem || !elem.length) {
+                    return null;
+                }
+                var val = ex_2;
+
+                var elem_value;
+                if(elem.is(':input')) {
+                    elem_value = elem.val();
+                } else {
+                    elem_value = elem.attr('value') || elem.text();
+                }
+
+                switch (_op.toLowerCase()) {
+                    case '=':
+                    case '==':
+                        return elem_value == val;
+                    case '!=':
+                    case '<>':
+                        return elem_value != val;
+                    case '<':
+                        return elem_value < val;
+                    case '>':
+                        return elem_value > val;
+                    case '<=':
+                        return elem_value <= val;
+                    case '>=':
+                        return elem_value >= val;
+                    case 'in':
+                        return MochiKit.Base.findIdentical(val, elem_value) > -1;
+                    case 'not in':
+                        return MochiKit.Base.findIdentical(val, elem_value) == -1;
+                }
+
+                return null;
+            };
+        };
+
+        stack.push(fetch_value(op, prefix, ex[0], ex[2], ref_elem));
     }
-    stack = eval_stack(stack, 0);
-    
-    // shouldn't find any `false` left at this point
-    return stack.indexOf(false) == -1;
+
+    ret = true;
+    position = 0;
+
+    while(ret && position < stack.length){
+        result = eval_stackNew(stack, position, false)
+
+        ret = result.value;
+        position = result.next;
+    }
+
+    return ret;
 }
 
-function eval_stack(stack, i) {
-    for (var j=i; j<stack.length; j++) {
-        if (stack[j] == '|') {
-            stack = eval_stack(stack,j+1);
-            stack = eval_stack(stack,j+2);
-            stack.splice(j, 3, stack[j+1] || stack[j+2]);
-        } else if (stack[j] == '&') {
-            stack = eval_stack(stack,j+1);
-            stack = eval_stack(stack,j+2);
-            stack.splice(j, 3, stack[j+1] && stack[j+2]);
-        } else {
-            return stack;
+function eval_stackNew(stack, i, fuzzy) {
+
+    if(stack.length <= i){
+        return {value: true, next: i+1};
+    }else{
+        value = stack[i]()
+
+        if(value === null){
+            return eval_stackNew(stack, i+1, fuzzy);
+        }else if(value === false || value === true){
+            return {value: value, next: i+1};
+        }else if(value === '|'){
+            var val1 = eval_stackNew(stack, i+1, false)
+            var val2 = eval_stackNew(stack, val1.next, false)
+            return {value: val1.value || val2.value, next: val2.next};
+        }else if(value === '&'){
+        
+            if(fuzzy){
+                var val1 = eval_stackNew(stack, i+1, true)
+                if(!val1.value)
+                    return {value: false, next: undefined};
+                else
+                    return {value: eval_stackNew(stack, val1.next, true), next: undefined};
+            }else{
+                var val1 = eval_stackNew(stack, i+1, false)
+                var val2 = eval_stackNew(stack, val1.next, false)
+                return {value: val1.value && val2.value, next: val2.next};
+            }
+
         }
     }
-    return stack
 }
 
 function form_setReadonly(container, fieldName, readonly) {
