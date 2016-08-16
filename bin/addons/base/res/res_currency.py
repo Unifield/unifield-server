@@ -138,12 +138,13 @@ class res_currency(osv.osv):
             rate = self._get_conversion_rate(cr, uid, from_currency, to_currency, context=context)
             if round:
                 if one_amount:
-                    return self.round(cr, uid, to_currency['rounding'], from_amount * rate)
+                    return self.round(cr, uid, to_currency['rounding'],
+                            from_amount_list * rate)
                 return [self.round(cr, uid, to_currency['rounding'],
                     x * rate) for x in from_amount_list]
             else:
                 if one_amount:
-                    return (from_amount * rate)
+                    return (from_amount_list * rate)
                 return [(x * rate) for x in from_amount_list]
 
     def name_search(self, cr, uid, name, args=[], operator='ilike', context={}, limit=100):
