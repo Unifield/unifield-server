@@ -155,11 +155,11 @@ class purchase_order_line(osv.osv):
             if pol['product_id']:
                 product_id = pol['product_id'][0]
                 if product_dict[product_id]['kc_txt']:
-                    result[pol.id] += product_dict[product_id]['is_kc'] and 'KC' or 'KC ?'
+                    result[pol['id']] += product_dict[product_id]['is_kc'] and 'KC' or 'KC ?'
                 if product_dict[product_id]['dg_txt']:
-                    if result[pol.id]:
-                        result[pol.id] += ' / '
-                    result[pol.id] += pol.product_id.is_dg and 'DG' or 'DG ?'
+                    if result[pol['id']]:
+                        result[pol['id']] += ' / '
+                    result[pol['id']] += product_dict[product_id]['is_dg'] and 'DG' or 'DG ?'
         return result
 
     _columns = {'kc_dg': fields.function(_kc_dg, method=True, string='KC/DG', type='char'),}
