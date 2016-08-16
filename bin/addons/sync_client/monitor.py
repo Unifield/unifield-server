@@ -168,6 +168,8 @@ class sync_monitor(osv.osv):
 
 
     def _get_my_instance(self, cr, uid, ids, field_name, args, context=None):
+        #REMARK: I've never achieved to execute this method. Is it normal?
+        # Even in the sync monitor it's never displayed/executed.
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         if not instance:
             return dict.fromkeys(ids, False)

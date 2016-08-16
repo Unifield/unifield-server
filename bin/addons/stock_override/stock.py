@@ -60,6 +60,7 @@ class procurement_order(osv.osv):
         """ Confirms procurement and writes exception message if any.
         @return: True
         """
+        #REMARK: Why do we need that here? Since the method hasn't been changed.
         if isinstance(ids, (int, long)):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
@@ -227,6 +228,8 @@ class stock_picking(osv.osv):
         return res
 
     def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
+        # REMARK: When I create an IN from scratch I'm part of the DPO IDs...
+        # is it normal?
         result = set()
         if isinstance(ids, (int, long)):
             ids = [ids]

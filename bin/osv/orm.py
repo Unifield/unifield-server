@@ -129,8 +129,7 @@ class browse_record_list(list):
 
 class browse_record(object):
     logger = netsvc.Logger()
-    def __init__(self, cr, uid, id, table, cache, context=None,
-            list_class=None, fields_process=None, fields_to_fetch=None):
+    def __init__(self, cr, uid, id, table, cache, context=None, list_class=None, fields_process=None, fields_to_fetch=None):
         '''
         table : the object (inherited from orm)
         context : dictionary with an optional context
@@ -205,6 +204,8 @@ class browse_record(object):
             # read the results
             if self._fields_to_fetch:
                 if name not in self._fields_to_fetch:
+                    #QUESTION: Could we risk logging to much information? If a function
+                    #  with the wrong fields_to_fetch is called several times every second?
                     self.__logger.warn("fields_to_fetch has been defined in "
                             "browse() for object %s, but field %s is not member "
                             "of it" % (self, name))
@@ -217,6 +218,7 @@ class browse_record(object):
             # TODO: improve this, very slow for reports
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
+                # Why english is not a language to 
                 if lang != 'en_US':
                     lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
                     if not lang_obj_ids:
@@ -649,6 +651,8 @@ class orm_template(object):
                         model_data = self.pool.get('ir.model.data')
                         dom_search = [('model', '=', r._table_name), ('res_id', '=', r['id'])]
                         data_ids = model_data.search(cr, uid, dom_search+[('module', '=', 'sd')])
+                        #REMARK: So if we don't find anything in terms of module, we look for any id. Is it correct?
+                        #  The previous behaviour seemed to be different.
                         if not data_ids:
                             data_ids = model_data.search(cr, uid, dom_search)
                         if len(data_ids):
@@ -1007,6 +1011,9 @@ class orm_template(object):
                     if isinstance(field_value, tuple):
                         (module, model, ref_xml_id) = (field_value[0], field_value[1], field_value[2])
                         ir_model_data_obj = self.pool.get('ir.model.data')
+                        #REMARK: If ir_model_data_obj.read doesn't return any value
+                        # ref_db_id will be equal to "[]" although it was None before (see try except)
+                        # Is it correct?
                         try:
                             ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
                             ref_db_id = ir_model_data_obj.read(cr, uid,
@@ -1410,6 +1417,8 @@ class orm_template(object):
                                 'fields': xfields
                             }
                     attrs = {'views': views}
+                    # I don't understand this new clause. I assume it's related to the widget Selection but for me it never use get_selection as an attribute
+                    #  I must be wrong...
                     if node.get('widget') and node.get('widget') == 'selection' and not node.get('get_selection'):
                         # Prepare the cached selection list for the client. This needs to be
                         # done even when the field is invisible to the current user, because
@@ -3460,6 +3469,8 @@ class orm(orm_template):
                     execute_request(res, query, rule_clause, sub_ids)
 
             context_lang = context and context.get('lang', False) or 'en_US'
+            #REMARK: Why don't we have to take into account the en_US language?
+            #  Is it because no translation is needed in that case?
             if context_lang != 'en_US':
                 for f in fields_pre:
                     if f == self.CONCURRENCY_CHECK_FIELD:
