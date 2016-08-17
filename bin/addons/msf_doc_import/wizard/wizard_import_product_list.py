@@ -41,8 +41,7 @@ class wizard_import_product_list(osv.osv):
         res = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        for id in ids:
-            res[id] = False
+        res = dict.fromkeys(ids, False)
         return res
 
         """
