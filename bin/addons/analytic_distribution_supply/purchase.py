@@ -334,16 +334,11 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-#         try:
-#             intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-#                                     'analytic_account_project_intermission')[1]
-#         except ValueError:
-#             intermission_cc = 0
-        ana_dist_obj = self.pool.get('analytic.distribution')
         order_dict = {}
-        order_obj = self.pool.get('purchase.order')
-        partner_obj = self.pool.get('res.partner')
         ditrib_id_dict = {}
+        ana_dist_obj = self.pool.get('analytic.distribution')
+        order_obj = self.pool.get('purchase.order')
+
         for line in self.read(cr, uid, ids,
                 ['order_id', 'analytic_distribution_id', 'account_4_distribution'], context=context):
             order_id = line['order_id'] and line['order_id'][0] or False
@@ -352,9 +347,7 @@ class purchase_order_line(osv.osv):
                 if order_id in order_dict:
                     order = order_dict[order_id]
                 else:
-                    order = order_obj.read(cr, uid, order_id, ['partner_id', 'from_yml_test', 'analytic_distribution_id'], context=context)
-                    partner_type = partner_obj.read(cr, uid, order['partner_id'][0], ['partner_type'], context=context)
-                    order['partner_type'] = partner_type
+                    order = order_obj.read(cr, uid, order_id, ['from_yml_test', 'analytic_distribution_id'], context=context)
                     order_dict[order_id] = order
             if order and order['from_yml_test']:
                 res[line['id']] = 'valid'
@@ -371,13 +364,6 @@ class purchase_order_line(osv.osv):
                 if distrib_key not in ditrib_id_dict:
                     ditrib_id_dict[distrib_key] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
                 res[line['id']] = ditrib_id_dict[distrib_key]
-
-                # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
-#                if res[line.id] == 'valid' and not is_intermission:
-#                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
-#                    if cr.rowcount > 0:
-#                        res[line.id] = 'invalid'
-
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
