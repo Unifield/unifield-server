@@ -227,11 +227,11 @@ class shipment(osv.osv):
         return the list of ids of shipment object which need to get their state field updated
         '''
         pack_obj = self.pool.get('stock.picking')
-        result = []
+        result = set()
         for packing in pack_obj.read(cr, uid, ids, ['shipment_id'], context=context):
-            if packing['shipment_id'] and packing['shipment_id'][0] not in result:
-                result.append(packing['shipment_id'][0])
-        return result
+            if packing['shipment_id']:
+                result.add(packing['shipment_id'][0])
+        return list(result)
 
     def _packs_search(self, cr, uid, obj, name, args, context=None):
         """
