@@ -82,10 +82,7 @@ class purchase_order_line(osv.osv):
         order_ids = set([line['order_id'][0] for line in line_result])
         results_order = order_obj.read(cr, uid, list(order_ids), ['id', 'partner_id'],
                 context=context)
-        order_id_to_partnerid = {}
-        for result_order in results_order:
-            if result_order['partner_id']:
-                order_id_to_partnerid[result_order['id']] = result_order['partner_id'][0]
+        order_id_to_partnerid = dict((x['id'], x['partner_id'][0]) for x in results_order if x['partner_id'])
 
         seller_ids = set()
         for line in line_result:
