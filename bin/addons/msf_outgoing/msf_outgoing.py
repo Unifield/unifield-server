@@ -131,18 +131,21 @@ class shipment(osv.osv):
         multi function for global shipment values
         '''
         picking_obj = self.pool.get('stock.picking')
+        add_items = self.pool.get('shipment.additionalitems')
 
         result = {}
+        default_values = {
+            'total_amount': 0.0,
+            'currency_id': False,
+            'num_of_packs': 0,
+            'total_weight': 0.0,
+            'total_volume': 0.0,
+            'state': 'draft',
+            'backshipment_id': False,
+        }
+        result = dict.fromkeys(ids, default_values)
         for shipment in self.read(cr, uid, ids, ['pack_family_memory_ids', 'state', 'additional_items_ids'], context=context):
-            values = {'total_amount': 0.0,
-                      'currency_id': False,
-                      'num_of_packs': 0,
-                      'total_weight': 0.0,
-                      'total_volume': 0.0,
-                      'state': 'draft',
-                      'backshipment_id': False,
-                      }
-            result[shipment['id']] = values
+            current_result = result[shipment['id']]
             # gather the state from packing objects, all packing must have the same state for shipment
             # for draft shipment, we can have done packing and draft packing
             packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment['id']), ], context=context)
@@ -188,8 +191,8 @@ class shipment(osv.osv):
                     # special state corresponding to delivery validated
                     state = 'delivered'
 
-            values['state'] = state
-            values['backshipment_id'] = backshipment_id
+            current_result['state'] = state
+            current_result['backshipment_id'] = backshipment_id
 
             pack_fam_ids = shipment['pack_family_memory_ids']
             for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_fam_ids, ['not_shipped', 'state', 'num_of_packs', 'total_weight', 'total_volume', 'total_amount', 'currency_id']):
@@ -197,21 +200,24 @@ class shipment(osv.osv):
                 if not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
                     # num of packs
                     num_of_packs = memory_family['num_of_packs']
-                    values['num_of_packs'] += int(num_of_packs)
+                    current_result['num_of_packs'] += int(num_of_packs)
                     # total weight
                     total_weight = memory_family['total_weight']
-                    values['total_weight'] += int(total_weight)
+                    current_result['total_weight'] += int(total_weight)
                     # total volume
                     total_volume = memory_family['total_volume']
-                    values['total_volume'] += float(total_volume)
+                    current_result['total_volume'] += float(total_volume)
                     # total amount
                     total_amount = memory_family['total_amount']
-                    values['total_amount'] += total_amount
+                    current_result['total_amount'] += total_amount
                     # currency
                     currency_id = memory_family['currency_id'] or False
-                    values['currency_id'] = currency_id
-            for item in shipment['additional_items_ids']:
-                values['total_weight'] += item.weight
+                    current_result['currency_id'] = currency_id
+            if shipment['additional_items_ids']:
+                item_list = add_items.read(cr, uid, shipment['additional_items_ids'],
+                               ['weight'], context=context)
+                for item in item_list:
+                    current_result['total_weight'] += item['weight']
         return result
 
     def _get_shipment_ids(self, cr, uid, ids, context=None):
