@@ -417,6 +417,7 @@ class stock_move_in_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        res = dict.fromkeys(ids, False)
         main_stock_id = self.pool.get('ir.model.data').get_object_reference(cr,
             uid, 'stock', 'stock_location_stock')[1]
         cd_id = False
@@ -470,7 +471,7 @@ class stock_move_in_processor(osv.osv):
                     location_ids.append(cd_id)
                 order_id_location_dict[order_id] = location_ids
 
-        for move_id, id in moves_to_ids.iteritems():
+        for move_id, obj_id in moves_to_ids.iteritems():
             location_ids = [main_stock_id] if main_stock_id else []
 
             if move_id in move_id_to_purchase_line_id:
@@ -480,12 +481,8 @@ class stock_move_in_processor(osv.osv):
                     if order_id in order_id_location_dict:
                         location_ids = order_id_location_dict[order_id]
 
-            res[id] = ','.join(map(lambda id: str(id), location_ids))
+            res[obj_id] = ','.join(map(lambda loc_id: str(loc_id), location_ids))
 
-        # set ids default value for ids with no specific location
-        for id in ids:
-            if id not in res:
-                res[id] = False
         return res
 
     _columns = {
