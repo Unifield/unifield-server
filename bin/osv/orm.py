@@ -206,6 +206,12 @@ class browse_record(object):
                 if name not in self._fields_to_fetch:
                     #QUESTION: Could we risk logging to much information? If a function
                     #  with the wrong fields_to_fetch is called several times every second?
+                    #ANSWER: yes, with a call with wrong fields every seconds
+                    # it will generate one log line every seconds...
+                    # but frankly, I don't think it is the case, this parameter
+                    # is unknow by other developper (only me uses it until now)
+                    # and I just grep all the logs of tests, this never occurs
+                    # I also grep all the RB logs without finding any.
                     self.__logger.warn("fields_to_fetch has been defined in "
                             "browse() for object %s, but field %s is not member "
                             "of it" % (self, name))
@@ -219,6 +225,11 @@ class browse_record(object):
             if self._fields_process:
                 lang = self._context.get('lang', 'en_US') or 'en_US'
                 # Why english is not a language to 
+                # ANSWER: english is the reference language and don't need to
+                # be translated. Something not translated is by default en_US.
+                # A lot of code is done with this language (in synchro for
+                # example) so this change permit to avoid a lot of useless
+                # effort.
                 if lang != 'en_US':
                     lang_obj_ids = self.pool.get('res.lang').search(self._cr, self._uid, [('code', '=', lang)])
                     if not lang_obj_ids:
@@ -653,6 +664,9 @@ class orm_template(object):
                         data_ids = model_data.search(cr, uid, dom_search+[('module', '=', 'sd')])
                         #REMARK: So if we don't find anything in terms of module, we look for any id. Is it correct?
                         #  The previous behaviour seemed to be different.
+                        #ANSWER: not correct. If we don't find anything in
+                        # terms of module, we look for ids matching dom_search
+                        # (like before), see folowing code :
                         if not data_ids:
                             data_ids = model_data.search(cr, uid, dom_search)
                         if len(data_ids):
@@ -1014,6 +1028,13 @@ class orm_template(object):
                         #REMARK: If ir_model_data_obj.read doesn't return any value
                         # ref_db_id will be equal to "[]" although it was None before (see try except)
                         # Is it correct?
+                        #ANSWER: What I guess is that the try/except is here to
+                        # catch the execption raised by _get_id in case the id
+                        # is not found. So we should keep it. About the
+                        # behaviour difference, it works the same as if read
+                        # returned [], the condition :
+                        #    model and ref_db_id and.... is the same if
+                        # ref_db_id is equal to None or []
                         try:
                             ir_model_data_id = ir_model_data_obj._get_id(cr, 1, module, ref_xml_id)
                             ref_db_id = ir_model_data_obj.read(cr, uid,
@@ -1419,6 +1440,7 @@ class orm_template(object):
                     attrs = {'views': views}
                     # I don't understand this new clause. I assume it's related to the widget Selection but for me it never use get_selection as an attribute
                     #  I must be wrong...
+                    #ANSWER: we don't need to execute this code in case of get_selection, this avoid heavy requests on a big DB.
                     if node.get('widget') and node.get('widget') == 'selection' and not node.get('get_selection'):
                         # Prepare the cached selection list for the client. This needs to be
                         # done even when the field is invisible to the current user, because
@@ -3471,6 +3493,7 @@ class orm(orm_template):
             context_lang = context and context.get('lang', False) or 'en_US'
             #REMARK: Why don't we have to take into account the en_US language?
             #  Is it because no translation is needed in that case?
+            #ANSWER: exactly
             if context_lang != 'en_US':
                 for f in fields_pre:
                     if f == self.CONCURRENCY_CHECK_FIELD:

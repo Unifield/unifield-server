@@ -170,6 +170,11 @@ class sync_monitor(osv.osv):
     def _get_my_instance(self, cr, uid, ids, field_name, args, context=None):
         #REMARK: I've never achieved to execute this method. Is it normal?
         # Even in the sync monitor it's never displayed/executed.
+        #ANSWER check
+        # http://bazaar.launchpad.net/~fabien-morin/unifield-server/perf_improvement_merged/revision/3844#bin/addons/sync_client/monitor.py
+        # this is a JF change after runing his script that check read
+        # performance on all objects. This is probably never call but was
+        # buggy.
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         if not instance:
             return dict.fromkeys(ids, False)

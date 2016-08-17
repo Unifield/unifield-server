@@ -36,9 +36,8 @@ class purchase_report(osv.osv):
     def _invoiced(self, cursor, user, ids, name, arg, context=None):
         res = {}
         #COMMENT: Are you sure? It looks like a new way to optimize a code
-        for id in ids:
-            res[id] = False
-        return res
+        #ANSWER: of course this is a mistake. Thanks for finding it. I
+        # updated the stable and prospection branche
         for purchase in self.browse(cursor, user, ids, context=context):
             invoiced = False
             if purchase.invoiced_rate == 100.00:

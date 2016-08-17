@@ -61,6 +61,12 @@ class procurement_order(osv.osv):
         @return: True
         """
         #REMARK: Why do we need that here? Since the method hasn't been changed.
+        #ANSWER: The method haven't changed but this is related to the method
+        # calls and some of them had changed/been added. I probably had one case
+        # where ids was not a list. It is always safer to protect in this way
+        # if it crashes when ids is not a list. (And to keep more consistency
+        # with the rest of the code, see def action_confirm() line 2074 of
+        # bin/addons/stock/stock.py of trunk.
         if isinstance(ids, (int, long)):
             ids = [ids]
         move_obj = self.pool.get('stock.move')
@@ -230,6 +236,10 @@ class stock_picking(osv.osv):
     def _get_dpo_picking_ids(self, cr, uid, ids, context=None):
         # REMARK: When I create an IN from scratch I'm part of the DPO IDs...
         # is it normal?
+        #ANSWER: as we discuss on skype, there is no connection between this
+        # remark and my changes. Maybe this method don't do the right job, or is
+        # buggy but it should do the same job than before my changes (just
+        # faster)
         result = set()
         if isinstance(ids, (int, long)):
             ids = [ids]
