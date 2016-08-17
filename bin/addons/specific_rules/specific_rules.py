@@ -824,7 +824,7 @@ class stock_move(osv.osv):
             if product['type'] == 'product' and product['subtype'] == 'kit':
                 if stock_move_dict['prodlot_id']:
                     # search if composition list already use this batch number
-                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', stock_move_dict['prodlot_id'])], context=context)
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', stock_move_dict['prodlot_id'][0])], context=context)
                     if not kit_ids:
                         result[stock_move_id]['kit_check'] = True
                 else:
