@@ -4297,15 +4297,13 @@ class orm(orm_template):
                                     if not field_flag:
                                         field_flag = True
         todo = {}
-        keys = []
-        keys_append = keys.append
+        keys = set()
+        keys_add = keys.add
         for f in fields:
             key = self._columns[f]._multi
-            if key not in keys:
-                keys_append(key)
-        todo = dict((k, []) for k in keys)
-        for f in fields:
-            key = self._columns[f]._multi
+            keys_add(key)
+            if key not in todo:
+                todo[key] = []
             todo[key].append(f)
 
         for key in keys:
