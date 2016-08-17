@@ -1576,7 +1576,6 @@ stock moves which are already processed : '''
                                 'move_id': line.move_dest_id.id,
                             }, context=context)
                             if out_pick_id:
-                                move_obj.write(cr, uid, [out_move_id.id], {'state': 'draft'})
                                 picks_to_check.setdefault(out_pick_id, [])
                                 picks_to_check[out_pick_id].append(out_move_id.id)
                             else:
