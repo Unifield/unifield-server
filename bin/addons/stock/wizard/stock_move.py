@@ -106,7 +106,7 @@ class stock_move_consume(osv.osv_memory):
         move_ids = context['active_ids']
         for data in self.read(cr, uid, ids, ['product_qty', 'location_id']):
             move_obj.action_consume(cr, uid, move_ids,
-                             data['product_qty'], data['location_id'],
+                             data['product_qty'], data['location_id'][0],
                              context=context)
         return {'type': 'ir.actions.act_window_close'}
 
@@ -168,7 +168,7 @@ class stock_move_scrap(osv.osv_memory):
         move_ids = context['active_ids']
         for data in self.read(cr, uid, ids, ['product_qty', 'location_id']):
             move_obj.action_scrap(cr, uid, move_ids,
-                             data['product_qty'], data['location_id'],
+                             data['product_qty'], data['location_id'][0],
                              context=context)
         return {'type': 'ir.actions.act_window_close'}
 
