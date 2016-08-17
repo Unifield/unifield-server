@@ -2045,11 +2045,10 @@ class stock_picking(osv.osv):
         return result
 
     def _is_one_of_the_move_lines(self, cr, uid, ids, field, arg, context=None):
-        result = {}
         move_obj = self.pool.get('stock.move')
+        result = dict.fromkeys(ids, '')
         for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
             current_id = stock_picking['id']
-            result[current_id] = ''
             for move in move_obj.read(cr, uid, stock_picking['move_lines'],
                     [field], context):
                 if move[field]:
@@ -2058,11 +2057,10 @@ class stock_picking(osv.osv):
         return result
 
     def _get_currency(self, cr, uid, ids, field, arg, context=None):
-        result = {}
         move_obj = self.pool.get('stock.move')
+        result = dict.fromkeys(ids, False)
         for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
             current_id = stock_picking['id']
-            result[current_id] = False
             for move in move_obj.read(cr, uid, stock_picking['move_lines'],
                     [field], context):
                 if move[field]:
@@ -2074,7 +2072,6 @@ class stock_picking(osv.osv):
         '''
         get functional values
         '''
-        result = {}
 
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
@@ -2089,8 +2086,8 @@ class stock_picking(osv.osv):
 
         family_dict = dict((x['id'], x) for x in family_read_result)
 
+        result = dict.fromkeys(ids, {})
         for current_id, family_ids in picking_to_families.items():
-            result[current_id] = {}
             if family_ids:
                 for family_id in family_ids:
                     if family_id in family_dict:
@@ -2159,9 +2156,10 @@ class stock_picking(osv.osv):
             context = {}
         stock_pickings = self.pool.get('stock.picking').search(cr, uid, [], context=context)
         # result dic
-        result = {}
-        for stock_picking in self.browse(cr, uid, stock_pickings, context=context):
-            result[stock_picking.id] = 0.0
+        result = dict.fromkeys(stock_pickings, 0.0)
+        for stock_picking in self.browse(cr, uid, stock_pickings,
+                                         fields_to_fetch=['move_lines'],
+                                         context=context):
             for move in stock_picking.move_lines:
                 result[stock_picking.id] += move.product_qty
         # construct the request
@@ -2179,25 +2177,23 @@ class stock_picking(osv.osv):
 
         self is stock.move object
         '''
-        result = []
+        result = set()
         for obj in self.read(cr, uid, ids, ['picking_id'], context=context):
-            if obj['picking_id'] and obj['picking_id'][0] not in result:
-                result.append(obj['picking_id'][0])
-        return result
+            if obj['picking_id']:
+                result.add(obj['picking_id'][0])
+        return list(result)
 
     def _get_draft_moves(self, cr, uid, ids, field_name, args, context=None):
         '''
         Returns True if there is draft moves on Picking Ticket
         '''
-        res = {}
-
-        for pick in self.browse(cr, uid, ids, context=context):
-            res[pick.id] = False
+        res = dict.fromkeys(ids, False)
+        for pick in self.browse(cr, uid, ids, fields_to_fetch=['move_lines'],
+                                context=context):
             for move in pick.move_lines:
                 if move.state == 'draft':
                     res[pick.id] = True
                     continue
-
         return res
 
     def _get_lines_state(self, cr, uid, ids, field_name, args, context=None):
@@ -2316,7 +2312,7 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self).onchange_move(cr, uid, ids, context=context)
 
         if ids:
-            has_draft_moves = self._get_draft_moves(cr, uid, ids, 'has_draft_moves', False)[ids[0]]
+            has_draft_moves = self._get_draft_moves(cr, uid, [ids[0]], 'has_draft_moves', False)[ids[0]]
             res.setdefault('value', {}).update({'has_draft_moves': has_draft_moves})
 
         return res
@@ -2416,13 +2412,15 @@ class stock_picking(osv.osv):
         '''
         Confirm all stock moves of the picking
         '''
-        moves_to_confirm = []
+        moves_to_confirm = set()
         for pick in self.browse(cr, uid, ids, context=context):
             for move in pick.move_lines:
                 if move.state == 'draft':
-                    moves_to_confirm.append(move.id)
+                    moves_to_confirm.add(move.id)
 
-        self.pool.get('stock.move').action_confirm(cr, uid, moves_to_confirm, context=context)
+        self.pool.get('stock.move').action_confirm(cr, uid,
+                                                   list(moves_to_confirm),
+                                                   context=context)
 
         return True
 
@@ -2500,7 +2498,6 @@ class stock_picking(osv.osv):
         with one dic per from/to with a 'move_ids' entry
         '''
         assert bool(from_pack) == bool(to_pack), 'from_pack and to_pack must be either both filled or empty'
-        result = {}
 
 
         if object_type == 'shipment':
@@ -2513,8 +2510,8 @@ class stock_picking(osv.osv):
         else:
             assert False, 'Should not reach this line'
 
+        result = dict.fromkeys(pick_ids, {})
         for pick in self.browse(cr, uid, pick_ids, context=context):
-            result[pick.id] = {}
             for move in pick.move_lines:
                 if not from_pack or move.from_pack == from_pack:
                     if not to_pack or move.to_pack == to_pack:
@@ -3130,7 +3127,7 @@ class stock_picking(osv.osv):
         move_obj = self.pool.get('stock.move')
         data_obj = self.pool.get('ir.model.data')
 
-        move_to_update = []
+        move_to_update = set()
 
         view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_form')
         tree_view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_tree')
@@ -3139,14 +3136,16 @@ class stock_picking(osv.osv):
         search_view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'view_picking_ticket_search')
         search_view_id = search_view_id and search_view_id[1] or False
 
-        for out in self.browse(cr, uid, ids, context=context):
-            if out.subtype == 'picking':
+        for out in self.read(cr, uid, ids,
+                             ['subtype', 'state', 'name', 'move_lines'],
+                             context=context):
+            if out['subtype'] == 'picking':
                 raise osv.except_osv(
                     _('Bad document'),
                     _('The document you want to convert is already a Picking Ticket')
                 )
-            if out.state in ('cancel', 'done'):
-                raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out.state == 'cancel' and _('Canceled') or _('Done')))
+            if out['state'] in ('cancel', 'done'):
+                raise osv.except_osv(_('Error'), _('You cannot convert %s delivery orders') % (out['state'] == 'cancel' and _('Canceled') or _('Done')))
 
             # log a message concerning the conversion
             new_name = self.pool.get('ir.sequence').get(cr, uid, 'picking.ticket')
@@ -3162,25 +3161,23 @@ class stock_picking(osv.osv):
                                                                           'padding':2}, context=context)
                            }
 
-            self.write(cr, uid, [out.id], default_vals, context=context)
+            self.write(cr, uid, [out['id']], default_vals, context=context)
             wf_service = netsvc.LocalService("workflow")
-            wf_service.trg_validate(uid, 'stock.picking', out.id, 'convert_to_picking_ticket', cr)
+            wf_service.trg_validate(uid, 'stock.picking', out['id'], 'convert_to_picking_ticket', cr)
             # we force availability
 
-            self.log(cr, uid, out.id, _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out.name, new_name), context={'view_id': view_id, 'picking_type': 'picking'})
+            self.log(cr, uid, out['id'], _('The Delivery order (%s) has been converted to draft Picking Ticket (%s).') % (out['name'], new_name), context={'view_id': view_id, 'picking_type': 'picking'})
             self.infolog(cr, uid, "The Delivery order id:%s (%s) has been converted to draft Picking Ticket id:%s (%s)." % (
-                out.id, out.name, out.id, new_name,
+                out['id'], out['name'], out['id'], new_name,
             ))
-
-            for move in out.move_lines:
-                move_to_update.append(move.id)
+            move_to_update.update(out['move_lines'])
 
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
-        move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
+        move_obj.write(cr, uid, list(move_to_update), {'location_dest_id': pack_loc_id}, context=context)
 
         # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
         if not context.get('sync_message_execution', False):
-            self._hook_create_rw_out_sync_messages(cr, uid, [out.id], context, False)
+            self._hook_create_rw_out_sync_messages(cr, uid, [out['id']], context, False)
 
         context.update({'picking_type': 'picking', 'search_view_id': search_view_id})
         return {'name': _('Picking Tickets'),
@@ -3189,7 +3186,7 @@ class stock_picking(osv.osv):
                 'search_view_id': search_view_id,
                 'view_type': 'form',
                 'res_model': 'stock.picking',
-                'res_id': out.id,
+                'res_id': out['id'],
                 'type': 'ir.actions.act_window',
                 'target': 'crush',
                 'domain': [('type', '=', 'out'), ('subtype', '=', 'picking')],
