@@ -823,7 +823,7 @@ class fallback_values(osv.osv):
 
     def _get_fallback_value(self, cr, uid, context=None):
         model = self.pool.get('ir.model')
-        ids = model.search(cr, uid, ('id', 'not in', WHITE_LIST_MODEL)
+        ids = model.search(cr, uid, [('id', 'not in', WHITE_LIST_MODEL)])
         res = model.read(cr, uid, ids, ['model'], context)
         return [(r['model'], r['model']) for r in res]
 
