@@ -300,22 +300,22 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         res = {}
-        for id in ids:
-            res[id] = {}.fromkeys(field_names, 0.0)
-        for f in field_names:
+        for product_id in ids:
+            res[product_id] = {}.fromkeys(field_names, 0.0)
+        for field in field_names:
             c = context.copy()
-            if f == 'qty_available':
+            if field == 'qty_available':
                 c.update({ 'states': ('done',), 'what': ('in', 'out') })
-            elif f == 'virtual_available':
+            elif field == 'virtual_available':
                 c.update({ 'states': ('confirmed','waiting','assigned','done'), 'what': ('in', 'out') })
-            elif f == 'incoming_qty':
+            elif field == 'incoming_qty':
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('in',) })
-            elif f == 'outgoing_qty':
+            elif field == 'outgoing_qty':
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('out',) })
             stock = self.get_product_available(cr, uid, ids, context=c)
             if any(stock.values()):
-                for id in ids:
-                    res[id][f] = stock.get(id, 0.0)
+                for product_id in ids:
+                    res[product_id][field] = stock.get(product_id, 0.0)
         return res
 
     _columns = {
