@@ -967,8 +967,7 @@ class stock_picking(osv.osv):
         product_availability = {}
         picking_ids = []
 
-        for wizard in inc_proc_obj.read(cr, uid, wizard_ids, ['picking_id',
-            'id'], context=context):
+        for wizard in inc_proc_obj.read(cr, uid, wizard_ids, ['picking_id'], context=context):
 
             picking_id = wizard['picking_id'][0]
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
