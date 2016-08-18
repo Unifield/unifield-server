@@ -282,11 +282,8 @@ class stock_move_processor(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = {}
-
         move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids,
-                                                               ['id',
-                                                                'product_id'],
+                                                               ['product_id'],
                                                                context=context)])
         product_module = self.pool.get('product.product')
         product_list_dict = product_module.read(cr, uid,
@@ -302,32 +299,32 @@ class stock_move_processor(osv.osv):
                                                 context=context)
         procuct_dict = dict([(x['id'], x) for x in product_list_dict])
 
+        default_values = {
+            'lot_check': False,
+            'exp_check': False,
+            'asset_check': False,
+            'kit_check': False,
+            'kc_check': '',
+            'ssl_check': '',
+            'dg_check': '',
+            'np_check': '',
+        }
+        res = dict.fromkeys(ids, default_values)
         for move_id, product_id in move_dict.items():
             if product_id in procuct_dict.keys():
                 product = procuct_dict[product_id]
                 res[move_id] = {
                     'lot_check': product['batch_management'],
                     'exp_check': product['perishable'],
-                    'asset_check': product['type'] == 'product' and
+                    'asset_check': product['type'] == 'product' and \
                                          product['subtype'] == 'asset',
-                    'kit_check': product['type'] == 'product' and
-                                         product['subtype'] == 'kit' and not
+                    'kit_check': product['type'] == 'product' and \
+                                         product['subtype'] == 'kit' and not \
                                          product['perishable'],
                     'kc_check': product['kc_txt'],
                     'ssl_check': product['ssl_txt'],
                     'dg_check': product['dg_txt'],
                     'np_check': product['cs_txt'],
-                }
-            else:
-                res[move_id] = {
-                    'lot_check': False,
-                    'exp_check': False,
-                    'asset_check': False,
-                    'kit_check': False,
-                    'kc_check': '',
-                    'ssl_check': '',
-                    'dg_check': '',
-                    'np_check': '',
                 }
         return res
 
