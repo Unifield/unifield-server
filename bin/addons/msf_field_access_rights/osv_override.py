@@ -90,7 +90,7 @@ def create(self, cr, uid, vals, context=None):
 
         if create_result:
             access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
-            if not access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+            if not access_line_obj.search_exist(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
                 return create_result
             instance_level = _get_instance_level(self, cr, uid)
 
@@ -104,13 +104,23 @@ def create(self, cr, uid, vals, context=None):
                 if not rules_pool:
                     return create_result
                     
-                rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
+                rules_search = rules_pool.search(cr, 1, ['&',
+                                                         ('model_name', '=', model_name),
+                                                         ('instance_level', '=', instance_level),
+                                                         '|',
+                                                         ('group_ids', 'in', groups),
+                                                         ('group_ids', '=', False)],
+                                                 order='NO_ORDER',
+                                                )
                 
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
                     field_changed = False
-                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
+                    line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search),
+                                                                ('value_not_synchronized_on_create', '=', True)],
+                                                      order='NO_ORDER',
+                                                     )
                     if not line_ids:
                         return create_result
                     rules_search = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
