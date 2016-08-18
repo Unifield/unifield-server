@@ -91,5 +91,9 @@
             <field name="method">sync_down_msfid</field>
         </record>
 
+        <record id="us_1421_lower_login" model="patch.scripts">
+            <field name="method">us_1421_lower_login</field>
+        </record>
+
     </data>
 </openerp>

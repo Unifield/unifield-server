@@ -356,6 +356,11 @@ class users(osv.osv):
     # User can write to a few of her own fields (but not her groups for example)
     SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
 
+    def create(self, cr, uid, values, context=None):
+        if values.get('login'):
+            values['login'] = tools.ustr(values['login']).lower()
+        return super(users, self).create(cr, uid, values, context)
+
     def write(self, cr, uid, ids, values, context=None):
         if not hasattr(ids, '__iter__'):
             ids = [ids]
@@ -368,6 +373,8 @@ class users(osv.osv):
                     if not (values['company_id'] in self.read(cr, 1, uid, ['company_ids'], context=context)['company_ids']):
                         del values['company_id']
                 uid = 1 # safe fields only, so we write as super-user to bypass access rights
+        if values.get('login'):
+            values['login'] = tools.ustr(values['login']).lower()
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
@@ -438,6 +445,7 @@ class users(osv.osv):
     def login(self, db, login, password):
         if not password:
             return False
+        login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
         try:
             # autocommit: our single request will be performed atomically.
@@ -453,9 +461,9 @@ class users(osv.osv):
             cr.execute("""SELECT id from res_users
                           WHERE login=%s AND password=%s
                                 AND active FOR UPDATE NOWAIT""",
-                       (tools.ustr(login), tools.ustr(password)), log_exceptions=False)
+                       (login, tools.ustr(password)), log_exceptions=False)
             cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
-                    (tools.ustr(login), tools.ustr(password)))
+                    (login, tools.ustr(password)))
         except Exception:
             # Failing to acquire the lock on the res_users row probably means
             # another request is holding it - no big deal, we skip the update
@@ -464,7 +472,7 @@ class users(osv.osv):
             cr.execute("""SELECT id from res_users
                           WHERE login=%s AND password=%s
                                 AND active""",
-                       (tools.ustr(login), tools.ustr(password)))
+                       (login, tools.ustr(password)))
         finally:
             res = cr.fetchone()
             cr.close()
