@@ -75,7 +75,7 @@ class upgrade(osv.osv_memory):
             if not rev.patch:
                 patch = proxy.get_zip( uuid,  self.pool.get("sync.client.entity")._hardware_id, rev.sum )
                 if not patch[0]:
-                    raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!" % rev))
+                    raise osv.except_osv(_("Error!"), _("Can't retrieve the patch %(name)s (%(sum)s)!") % rev)
                 revisions.write(cr, uid, rev.id, {'patch':patch[1]})
                 cr.commit()
         return self.write(cr, uid, ids, {
