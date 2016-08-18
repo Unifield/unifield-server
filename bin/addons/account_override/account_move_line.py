@@ -235,6 +235,10 @@ class account_move_line(osv.osv):
 
         return []
 
+    def _init_status_move(self, cr, ids, *a, **b):
+        cr.execute('update account_move_line l set status_move = (select status from account_move m where m.id = l.move_id)')
+
+
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
         'move_state': fields.related('move_id', 'state', string="Move state", type="selection", selection=[('draft', 'Unposted'), ('posted', 'Posted')],
@@ -276,6 +280,7 @@ class account_move_line(osv.osv):
             help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
             help="Invoice line which have produced this line.", ondelete="cascade"),
+        'status_move': fields.related('move_id', 'status', type='char', readonly=True, size=128, store=True, write_relate=False, string="JE status", _fnct_migrate=_init_status_move),
     }
 
     _defaults = {
