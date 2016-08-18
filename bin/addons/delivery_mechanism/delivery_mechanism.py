@@ -1360,7 +1360,8 @@ class stock_picking(osv.osv):
             wiz = self.create_picking(cr, uid, [picking_id], context=context)
             wiz_obj = self.pool.get(wiz['res_model'])
             wiz_context = wiz.get('context', {})
-            moves_picking = wiz_obj.browse(cr, uid, wiz['res_id'], context=wiz_context).move_ids
+            moves_picking = wiz_obj.read(cr, uid, wiz['res_id'], ['move_ids'],
+                                         context=wiz_context)['move_ids']
 
             if moves_picking:
                 # We copy all data in lines
