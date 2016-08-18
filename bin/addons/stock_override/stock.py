@@ -1359,14 +1359,17 @@ class stock_move(osv.osv):
         product_module = self.pool.get('product.product')
         inactive_product_ids = product_module.search(cr, uid,
                 [('id', 'in', list(product_ids)), ('active', '=', False)],
+                order='NO_ORDER',
                 context=context)
         pick_ids = self.pool.get('stock.picking').search(cr,
                 uid, [('id', 'in', list(pick_ids)), ('state', 'not in', ('cancel', 'done'))],
+                order='NO_ORDER',
                 context=context)
         stock_move_inactive_prod_ids = self.search(cr, uid,
                                                    [('id', 'in', ids),
                                                     ('picking_id', 'in', pick_ids),
                                                     ('product_id', 'in', inactive_product_ids)],
+                                                   order='NO_ORDER',
                                                    context=context)
         for stock_move_id in stock_move_inactive_prod_ids:
             res[stock_move_id]={'inactive_product': True,
