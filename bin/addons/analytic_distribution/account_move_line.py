@@ -415,6 +415,8 @@ class account_move_line(osv.osv):
         """
         Check line if we come from web (from_web_menu)
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

@@ -495,6 +495,8 @@ class Object(object):
         return self.__send__('search_count', domain, context)
 
     def write(self, ids, values, context=None):
+        if not ids:
+            return True
         if not isinstance(ids, (tuple, list)):
             ids = [ids]
         arguments = self.__add_context([ids, values], context)

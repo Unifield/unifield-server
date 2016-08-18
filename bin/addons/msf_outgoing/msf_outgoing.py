@@ -455,6 +455,8 @@ class shipment(osv.osv):
         """
         Force values for carrier if carrier_id is filled
         """
+        if not ids:
+            return True
         if vals.get('carrier_id'):
             test_fields = [
                 'carrier_name', 'carrier_address',
@@ -3176,7 +3178,8 @@ class stock_picking(osv.osv):
                 move_to_update.append(move.id)
 
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
-        move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
+        if move_to_update:
+            move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
 
         # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
         if not context.get('sync_message_execution', False):

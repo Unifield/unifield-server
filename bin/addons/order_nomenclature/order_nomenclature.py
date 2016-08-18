@@ -194,6 +194,8 @@ class purchase_order_line(osv.osv):
         '''
         override write. don't save filtering data
         '''
+        if not ids:
+            return True
         self._relatedFields(cr, uid, vals, context)
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
@@ -452,6 +454,8 @@ class sale_order_line(osv.osv):
         '''
         override write. don't save filtering data
         '''
+        if not ids:
+            return True
         self._relatedFields(cr, uid, vals, context)
 
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)

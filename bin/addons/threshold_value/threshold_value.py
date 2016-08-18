@@ -254,6 +254,8 @@ class threshold_value(osv.osv):
         return self.pool.get('product.nomenclature').get_nomen(cr, uid, self, id, field, context={'withnum': 1})
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('sublist_id',False):
             vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
         if vals.get('nomen_manda_0',False):
@@ -311,6 +313,8 @@ class threshold_value_line(osv.osv):
         '''
         Add the second link to the threshold value rule
         '''
+        if not ids:
+            return True
         if 'threshold_value_id' in vals:
             vals.update({'threshold_value_id2': vals['threshold_value_id']})
         elif 'threshold_value_id2' in vals:

@@ -262,6 +262,8 @@ class ir_translation(osv.osv):
         return ids
 
     def write(self, cursor, user, ids, vals, clear=True, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

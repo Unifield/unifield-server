@@ -242,6 +242,8 @@ class msf_instance(osv.osv):
             self.log(cr, uid, ids[0], msg)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if 'code' in vals: #US-972: If the user clicks on Save button, then perform this check

@@ -577,6 +577,8 @@ class real_average_consumption(osv.osv):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
     
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('sublist_id',False):
             vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
         if vals.get('nomen_manda_0',False):
@@ -817,6 +819,8 @@ class real_average_consumption_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1272,6 +1276,8 @@ class monthly_review_consumption(osv.osv):
                 'context': context}
     
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('sublist_id',False):
             vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
         if vals.get('nomen_manda_0',False):
@@ -1375,6 +1381,8 @@ class monthly_review_consumption_line(osv.osv):
         return super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

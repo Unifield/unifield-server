@@ -554,6 +554,8 @@ class res_partner(osv.osv):
         )
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         if isinstance(ids, (int, long)):
             ids = [ids]

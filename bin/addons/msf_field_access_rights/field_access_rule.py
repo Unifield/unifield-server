@@ -89,6 +89,8 @@ class field_access_rule(osv.osv):
         return super(field_access_rule, self).create(cr, user, vals, context=context)
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
 
         if not isinstance(ids, (list, tuple)):
             ids = [ids]

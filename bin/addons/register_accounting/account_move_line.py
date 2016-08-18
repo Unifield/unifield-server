@@ -339,6 +339,8 @@ class account_move_line(osv.osv):
         """
         Add partner_txt to vals.
         """
+        if not ids:
+            return True
         # Some verifications
         if not context:
             context = {}

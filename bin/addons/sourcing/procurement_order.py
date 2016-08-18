@@ -411,6 +411,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         '''
         override for workflow modification
         '''
+        if not ids:
+            return True
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
 
     def get_delay_qty(self, product, partner):
