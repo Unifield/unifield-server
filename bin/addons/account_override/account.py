@@ -461,6 +461,8 @@ class account_account(osv.osv):
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self._check_date(vals, context=context)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
@@ -813,6 +815,8 @@ class account_move(osv.osv):
         """
         Check that we can write on this if we come from web menu or synchronisation.
         """
+        if not ids:
+            return True
         def check_update_sequence(rec, new_journal_id, new_period_id):
             """
             returns new sequence move vals (sequence_id, name) or None

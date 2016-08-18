@@ -907,6 +907,8 @@ class composition_item(osv.osv):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
+        if not ids:
+            return True
         vals = self._common_update(cr, uid, vals, context=context)
         return super(composition_item, self).write(cr, uid, ids, vals, context=context)
     

@@ -457,6 +457,8 @@ class hq_entries(osv.osv):
         """
         Change Expat salary account is not allowed
         """
+        if not ids:
+            return True
         if context is None:
             context={}
 

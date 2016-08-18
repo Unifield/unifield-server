@@ -181,6 +181,8 @@ class product_nomenclature(osv.osv):
         override write method to check the validity of selected
         parent
         '''
+        if not ids:
+            return True
         self._nomenclatureCheck(vals)
         # save the data to db
         return super(product_nomenclature, self).write(cr, user, ids, vals, context=context)
@@ -742,6 +744,8 @@ stock moves will be posted in this account. If not set on the product, the one f
         '''
         Set the category according to the Family
         '''
+        if not ids:
+            return True
         if vals.get('nomen_manda_2'):
             vals['categ_id'] = self.pool.get('product.nomenclature').browse(cr, uid, vals['nomen_manda_2'], context=context).category_id.id
         return super(product_template, self).write(cr, uid, ids, vals, context)
@@ -856,6 +860,8 @@ class product_product(osv.osv):
         '''
         override to complete nomenclature_description
         '''
+        if not ids:
+            return True
         sale = self.pool.get('sale.order.line')
         sale._setNomenclatureInfo(cr, uid, vals, context)
 

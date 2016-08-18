@@ -37,6 +37,8 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
         account_bank_statement_line_obj = self.pool.get('account.bank.statement.line')
         for statement in self.browse(cr, uid, ids, context):

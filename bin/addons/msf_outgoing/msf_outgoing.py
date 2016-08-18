@@ -455,6 +455,8 @@ class shipment(osv.osv):
         """
         Force values for carrier if carrier_id is filled
         """
+        if not ids:
+            return True
         if vals.get('carrier_id'):
             test_fields = [
                 'carrier_name', 'carrier_address',
@@ -2072,7 +2074,6 @@ class stock_picking(osv.osv):
         '''
         get functional values
         '''
-
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
         family_set = set()
@@ -3173,7 +3174,8 @@ class stock_picking(osv.osv):
             move_to_update.update(out['move_lines'])
 
         pack_loc_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
-        move_obj.write(cr, uid, list(move_to_update), {'location_dest_id': pack_loc_id}, context=context)
+        if move_to_update:
+            move_obj.write(cr, uid, move_to_update, {'location_dest_id': pack_loc_id}, context=context)
 
         # Create a sync message for RW when converting the OUT back to PICK, except the caller of this method is sync
         if not context.get('sync_message_execution', False):

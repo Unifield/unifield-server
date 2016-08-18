@@ -1820,6 +1820,8 @@ class stock_move(osv.osv):
     }
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
                     

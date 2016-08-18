@@ -341,6 +341,8 @@ to import well some data (e.g: Product Categories needs Product nomenclatures)."
         :param context: Context of the call
         :return: True
         """
+        if not ids:
+            return True
         cron_obj = self.pool.get('ir.cron')
 
         if context is None:

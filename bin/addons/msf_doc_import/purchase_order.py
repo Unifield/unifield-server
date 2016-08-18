@@ -487,7 +487,7 @@ class purchase_order_line(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
-            return False
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:

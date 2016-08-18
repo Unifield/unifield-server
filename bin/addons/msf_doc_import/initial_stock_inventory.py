@@ -500,6 +500,8 @@ class stock_inventory_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         comment = ''
 
         line = self.browse(cr, uid, ids[0], context=context)
@@ -1016,6 +1018,8 @@ class initial_stock_inventory_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         comment = ''
 
         line = self.browse(cr, uid, ids[0], context=context)

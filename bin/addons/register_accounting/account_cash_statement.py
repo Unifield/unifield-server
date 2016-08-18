@@ -120,6 +120,8 @@ class account_cash_statement(osv.osv):
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -423,6 +425,8 @@ class account_bank_statement_line(osv.osv):
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if 'cash_register_op_advance_po_id' in values:
             if values['cash_register_op_advance_po_id']:
                 domain = [

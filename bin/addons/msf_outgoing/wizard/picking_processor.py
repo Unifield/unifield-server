@@ -737,6 +737,8 @@ class stock_move_processor(osv.osv):
         If a batch number is specified and the expiry date is empty, fill the expiry date
         with the expiry date of the batch
         """
+        if not ids:
+            return True
         vals = self._fill_expiry_date(cr, uid, vals.get('prodlot_id', False), vals.get('expiry_date', False), vals=vals, context=context)
         return super(stock_move_processor, self).write(cr, uid, ids, vals, context=context)
 

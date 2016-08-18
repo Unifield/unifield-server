@@ -164,6 +164,8 @@ class BackupConfig(osv.osv):
             self.exp_dump(cr, uid, bkp_ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         toret = super(BackupConfig, self).write(cr, uid, ids, vals, context=context)
         backups = self.browse(cr, uid, ids, context=context)
         #if context:
@@ -187,6 +189,8 @@ class ir_cron(osv.osv):
     _inherit = 'ir.cron'
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
         crons = self.browse(cr, uid, ids, context=context)
         if crons and crons[0] and crons[0].model=='backup.config':

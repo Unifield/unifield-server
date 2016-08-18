@@ -64,6 +64,8 @@ class wizard_import_invoice_lines(osv.osv_memory):
           - should be superior to amount to pay (but absolute value)
           - in case of a Group Import: shoudn't be a partial payment (US-1043)
         """
+        if not ids:
+            return True
         if isinstance(ids, (long, int)):
             ids = [ids]
         if context is None:

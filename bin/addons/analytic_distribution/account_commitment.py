@@ -139,6 +139,8 @@ class account_commitment(osv.osv):
         Update analytic lines date if date in vals for validated commitment voucher.
         """
         # Some verifications
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -547,6 +549,8 @@ class account_commitment_line(osv.osv):
         Verify amount sign.
         """
         # Some verifications
+        if not ids:
+            return True
         if not context:
             context = {}
         if 'account_id' in vals:

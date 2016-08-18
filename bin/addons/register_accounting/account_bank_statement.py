@@ -218,6 +218,8 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function.
         """
+        if not ids:
+            return True
         return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1947,6 +1949,8 @@ class account_bank_statement_line(osv.osv):
         """
         Write some existing account bank statement lines with 'values'.
         """
+        if not ids:
+            return True
 
         if isinstance(ids, (int, long)):
             ids = [ids]

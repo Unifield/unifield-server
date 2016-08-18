@@ -1362,7 +1362,6 @@ class stock_picking(osv.osv):
             wiz_context = wiz.get('context', {})
             moves_picking = wiz_obj.read(cr, uid, wiz['res_id'], ['move_ids'],
                                          context=wiz_context)['move_ids']
-
             if moves_picking:
                 # We copy all data in lines
                 wiz_obj.copy_all(cr, uid, [wiz['res_id']], context=wiz_context)
@@ -1536,6 +1535,8 @@ class stock_picking(osv.osv):
         without that, the displaying of the wizard waits that the background
         process (SQL LOCK on row)
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
 

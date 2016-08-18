@@ -269,6 +269,8 @@ def write(self, cr, uid, ids, vals, context=None):
     Check if user has write_access for each field in target record with applicable Field Access Rules. If not, throw exception.
     Also if syncing, check if field value should be synced on write, based on Field Access Rules.
     """
+    if not ids:
+        return True
     
     context = context or {}
     

@@ -342,6 +342,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         Calculate amount and percentage regarding context content
         """
         # Some verifications
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

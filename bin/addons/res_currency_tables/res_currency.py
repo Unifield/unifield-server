@@ -157,6 +157,8 @@ class res_currency(osv.osv):
         '''
         Active/De-active pricelists according to activation/de-activation of the currency
         '''
+        if not ids:
+            return True
         pricelist_obj = self.pool.get('product.pricelist')
         version_obj = self.pool.get('product.pricelist.version')
 

@@ -564,6 +564,8 @@ class purchase_order(osv.osv):
         Check if the partner is correct.
         # UTP-114 demand purchase_list PO to be "from picking" as invoice_method
         '''
+        if not ids:
+            return True
         if 'partner_id' in vals:
             self._check_user_company(cr, uid, vals['partner_id'], context=context)
 
@@ -1576,6 +1578,7 @@ stock moves which are already processed : '''
                                 'move_id': line.move_dest_id.id,
                             }, context=context)
                             if out_pick_id:
+                                move_obj.write(cr, uid, [out_move_id.id], {'state': 'draft'})
                                 picks_to_check.setdefault(out_pick_id, [])
                                 picks_to_check[out_pick_id].append(out_move_id.id)
                             else:
@@ -2655,6 +2658,8 @@ class purchase_order_merged_line(osv.osv):
         '''
         Update unit price of PO lines attached to the merged line
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
         new_context = context.copy()
@@ -3114,6 +3119,8 @@ class purchase_order_line(osv.osv):
         '''
         Update merged line
         '''
+        if not ids:
+            return True
         so_obj = self.pool.get('sale.order')
         exp_sol_obj = self.pool.get('expected.sale.order.line')
 

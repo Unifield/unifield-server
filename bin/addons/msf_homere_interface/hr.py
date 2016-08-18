@@ -177,6 +177,8 @@ class hr_employee(osv.osv):
         Block write for local staff if no 'from' in context.
         Allow only analytic distribution changes (cost center, funding pool, free 1 and free 2)
         """
+        if not ids:
+            return True
         # Some verifications
         if not context:
             context = {}

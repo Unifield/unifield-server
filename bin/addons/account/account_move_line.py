@@ -1207,6 +1207,8 @@ class account_move_line(osv.osv):
             self._update_check(cr, uid, ids, context)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if context is None:
             context={}
         move_obj = self.pool.get('account.move')
