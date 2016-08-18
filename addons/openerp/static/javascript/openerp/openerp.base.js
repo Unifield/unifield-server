@@ -356,6 +356,20 @@ jQuery(document).delegate('[callback], [onchange_default]', 'change', function (
  * @param info a map of {model: {id: concurrency info}} serialized into the existing concurrency info inputs
  */
 function updateConcurrencyInfo(info) {
+
+    // we cache all the IDs because we know we are going to access them
+    //  several times. If we don't use that we'll have to browse the DOM dozens
+    //  of times.
+    var input_by_id = {}
+    var elements_by_id = jQuery("#view_form *[id]");
+
+    elements_by_id.each(function(id){
+        var id_elem = $(this).attr("id");
+        var lst = input_by_id[id_elem] || []
+        lst.push($(this))
+        input_by_id[id_elem] = lst;
+    });
+
     jQuery.each(info, function (model, model_data) {
         jQuery.each(model_data, function (id, concurrency_data) {
             var formatted_key = "'" + model + ',' + id + "'";
@@ -364,8 +378,12 @@ function updateConcurrencyInfo(info) {
                             "'" + concurrency_data + "'" +
                             ")"
                     );
-            jQuery("#view_form").find('#' + model.replace(/\./g, '-') + '-' + id)
-                    .val(formatted_concurrency_value);
+
+            var id_to_look_for = model.replace(/\./g, '-') + '-' + id;
+
+            $.each(input_by_id[id_to_look_for] || [], function(a,b){
+                b.val(formatted_concurrency_value);
+            });
         });
     });
 }
