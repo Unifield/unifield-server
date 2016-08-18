@@ -74,9 +74,6 @@ class BackgroundProcess(Thread):
             chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
-            patch_failed = check_patch_scripts(cr, uid, context=context)
-            if patch_failed:
-                raise osv.except_osv(_('Error'), patch_failed)
             entity = pool.get('sync.client.entity')
             # Lookup method to call
             self.call_method = getattr(entity, method)
@@ -99,6 +96,9 @@ class BackgroundProcess(Thread):
                     if not automatic_patching:
                         cr.commit()
                         raise osv.except_osv(_('Error!'), _(up_to_date[1]))
+            patch_failed = check_patch_scripts(cr, uid, context=context)
+            if patch_failed:
+                raise osv.except_osv(_('Error'), patch_failed)
         except BaseException, e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
@@ -184,9 +184,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
-            patch_failed = check_patch_scripts(cr, uid, context=kwargs.get('context', {}))
-            if patch_failed:
-                raise osv.except_osv(_('Error'), patch_failed)
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
             if not sync_lock.acquire(blocking=False):
@@ -251,6 +248,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
                     # more information
                     add_information(logger)
+                patch_failed = check_patch_scripts(cr, uid, context=kwargs.get('context', {}))
+                if patch_failed:
+                    raise osv.except_osv(_('Error'), patch_failed)
 
                 # ah... we can now call the function!
                 logger.switch(step, 'in-progress')
