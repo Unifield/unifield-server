@@ -1262,7 +1262,7 @@ class stock_move(osv.osv):
             hidden_creation_qty_stock_move = 0
             if stock_move_dict['kit_creation_id_stock_move']:
                 kit_creation = self.pool.get('kit.creation').read(cr, uid,
-                                                   stock_move_dict['kit_creation_id_stock_move'],
+                                                   stock_move_dict['kit_creation_id_stock_move'][0],
                                                    ['state', 'qty_kit_creation'], context=context)
                 hidden_creation_state = kit_creation['state']
                 hidden_creation_qty_stock_move = kit_creation['qty_kit_creation']
