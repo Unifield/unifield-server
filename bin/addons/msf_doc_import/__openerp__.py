@@ -74,7 +74,8 @@
         'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
         'workflow/procurement_request_workflow.xml',
-        'doc_import_report.xml'
+        'doc_import_report.xml',
+        'wizard/wizard_import_batch_view.xml',
     ],
     "demo_xml": [],
     "test": [

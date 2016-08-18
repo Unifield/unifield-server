@@ -140,7 +140,7 @@ class wizard_import_fo_line(osv.osv_memory):
 
                     line_num = 0
                     to_write = {}
-                    total_line_num = file_obj.countRows()
+                    total_line_num = file_obj.getNbRows()
                     percent_completed = 0
                     for row in rows:
                             

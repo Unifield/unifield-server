@@ -19,8 +19,12 @@
 #
 ##############################################################################
 
-import in_simulation_screen_report_xls
-import po_simulation_screen_report
-import po_simulation_screen_report_xls
+from report_webkit.webkit_report import XlsWebKitParser
 
-import import_generic_template
+XlsWebKitParser(
+    'report.wizard.import.generic.template',
+    'abstract.wizard.import',
+    'addons/msf_doc_import/report/import_generic_template.mako',
+)
+
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
