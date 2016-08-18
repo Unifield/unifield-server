@@ -96,9 +96,6 @@ class BackgroundProcess(Thread):
                     if not automatic_patching:
                         cr.commit()
                         raise osv.except_osv(_('Error!'), _(up_to_date[1]))
-            patch_failed = check_patch_scripts(cr, uid, context=context)
-            if patch_failed:
-                raise osv.except_osv(_('Error'), patch_failed)
         except BaseException, e:
             logger = pool.get('sync.monitor').get_logger(cr, uid, context=context)
             logger.switch('status', 'failed')
