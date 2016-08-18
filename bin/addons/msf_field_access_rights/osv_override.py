@@ -290,7 +290,7 @@ def write(self, cr, uid, ids, vals, context=None):
     update_execution = context.get('sync_update_execution')
     # do not do unecessary work : return in some condition
     if uid == 1 or update_execution and \
-       not access_line_obj.search(cr, uid, [('value_not_synchronized_on_write', '=', True)]):
+       not access_line_obj.search_exist(cr, uid, [('value_not_synchronized_on_write', '=', True)]):
         return super_write(self, cr, uid, ids, vals, context=context)
 
     groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
@@ -330,7 +330,10 @@ def write(self, cr, uid, ids, vals, context=None):
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if update_execution:
-            line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_write', '=', True)])
+            line_ids = access_line_obj.search(cr, uid,
+                                              [('field_access_rule', 'in', rules_search),
+                                               ('value_not_synchronized_on_write', '=', True)],
+                                             order='NO_ORDER')
             if not line_ids:
                 return super_write(self, cr, uid, ids, vals, context=context)
 
