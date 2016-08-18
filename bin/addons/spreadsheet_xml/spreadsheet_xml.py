@@ -132,6 +132,11 @@ class SpreadsheetXML(SpreadsheetTools):
             ret.append(self.get(wb, 'Name'))
         return ret
 
+    def countRows(self,worksheet=1):
+        table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
+        ns = {'schema': self.defaultns}
+        return len(table[0].xpath('//schema:Row', namespaces=ns))
+
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
         return SpreadsheetRow(table[0].getiterator(etree.QName(self.defaultns, 'Row')))
