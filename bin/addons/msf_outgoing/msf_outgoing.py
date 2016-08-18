@@ -133,7 +133,6 @@ class shipment(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         add_items = self.pool.get('shipment.additionalitems')
 
-        result = {}
         default_values = {
             'total_amount': 0.0,
             'currency_id': False,
@@ -2045,7 +2044,7 @@ class stock_picking(osv.osv):
         return result
 
     def _is_one_of_the_move_lines(self, cr, uid, ids, field, arg, context=None):
-        result = {}
+        result = dict.fromkeys(ids, '')
         move_obj = self.pool.get('stock.move')
         for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
             current_id = stock_picking['id']
@@ -2058,7 +2057,7 @@ class stock_picking(osv.osv):
         return result
 
     def _get_currency(self, cr, uid, ids, field, arg, context=None):
-        result = {}
+        result = dict.fromkeys(ids, False)
         move_obj = self.pool.get('stock.move')
         for stock_picking in self.read(cr, uid, ids, ['move_lines'], context=context):
             current_id = stock_picking['id']
@@ -2074,8 +2073,13 @@ class stock_picking(osv.osv):
         '''
         get functional values
         '''
-        result = {}
+        default_values = {
+            'num_of_packs': 0,
+            'total_weight': 0.0,
+            'total_volume': 0.0,
 
+        }
+        result = dict.fromkeys(ids, default_values)
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
         family_set = set()
@@ -2090,7 +2094,6 @@ class stock_picking(osv.osv):
         family_dict = dict((x['id'], x) for x in family_read_result)
 
         for current_id, family_ids in picking_to_families.items():
-            result[current_id] = {}
             if family_ids:
                 for family_id in family_ids:
                     if family_id in family_dict:
@@ -4560,9 +4563,12 @@ class stock_move(osv.osv):
         return result
 
     def _get_qty_per_pack(self, cr, uid, ids, field, arg, context=None):
-        result = {}
+        default_values = {
+            'qty_per_pack': 0.0,
+            'num_of_packs': 0,
+        }
+        result = dict.fromkeys(ids, default_values)
         for move in self.read(cr, uid, ids, ['to_pack', 'from_pack', 'product_qty'], context=context):
-            result[move['id']] = {}
             # number of packs with from/to values (integer)
             if move['to_pack'] == 0:
                 num_of_packs = 0
@@ -4576,10 +4582,14 @@ class stock_move(osv.osv):
         return result
 
     def _get_danger(self, cr, uid, ids, fields, arg, context=None):
-        result = {}
+        default_values = {
+            'is_dangerous_good': '',
+            'is_keep_cool': '',
+            'is_narcotic': '',
+        }
+        result = dict.fromkeys(ids, default_values)
         product_obj = self.pool.get('product.product')
         for move in self.read(cr, uid, ids, ['product_id'], context=context):
-            result[move['id']] = {}
             if move['product_id']:
                 product = product_obj.read(cr, uid, move['product_id'][0],
                         ['dg_txt', 'kc_txt', 'cs_txt'], context=context)
@@ -4595,13 +4605,18 @@ class stock_move(osv.osv):
         '''
         get functional values
         '''
-        result = {}
+        default_values = {
+            'total_amount': 0.0,
+            'amount': 0.0,
+            'currency_id': False,
+            'num_of_packs': 0,
+            'sale_order_line_number': 0,
+        }
+        result = dict.fromkeys(ids, default_values)
         uom_obj = self.pool.get('product.uom')
         for move in self.read(cr, uid, ids,
                     ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'],
                      context=context):
-            result[move['id']] = {}
-            result[move['id']]['sale_order_line_number'] = 0
             # quantity per pack
             # total amount (float)
             total_amount = 0.0
