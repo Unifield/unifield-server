@@ -1720,6 +1720,8 @@ class stock_move(osv.osv):
         '''
         Update the partner or the address according to the other
         '''
+        if not ids:
+            return True
         # Objects
         prod_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
