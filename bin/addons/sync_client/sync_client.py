@@ -52,7 +52,6 @@ MAX_EXECUTED_MESSAGES = 500
 
 
 def check_patch_scripts(cr, uid, context=None):
-    return ''
     if pooler.get_pool(cr.dbname).get('patch.scripts').search(cr, uid, [('run', '=', False)], limit=1, context=context):
         return _('PatchFailed: A script during upgrade has failed. Synchronization is forbidden. Please contact your administrator')
     else:
@@ -75,9 +74,6 @@ class BackgroundProcess(Thread):
             chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
-            patch_failed = check_patch_scripts(cr, uid, context=context)
-            if patch_failed:
-                raise osv.except_osv(_('Error'), patch_failed)
             entity = pool.get('sync.client.entity')
             # Lookup method to call
             self.call_method = getattr(entity, method)
@@ -185,9 +181,6 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
             chk_tz_msg = check_tz()
             if chk_tz_msg:
                 raise osv.except_osv(_('Error'), chk_tz_msg)
-            patch_failed = check_patch_scripts(cr, uid, context=kwargs.get('context', {}))
-            if patch_failed:
-                raise osv.except_osv(_('Error'), patch_failed)
             # First, check if we can acquire the lock or return False
             sync_lock = self.sync_lock
             if not sync_lock.acquire(blocking=False):
@@ -252,6 +245,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
                     # more information
                     add_information(logger)
+                patch_failed = check_patch_scripts(cr, uid, context=kwargs.get('context', {}))
+                if patch_failed:
+                    raise osv.except_osv(_('Error'), patch_failed)
 
                 # ah... we can now call the function!
                 logger.switch(step, 'in-progress')
