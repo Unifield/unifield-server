@@ -94,21 +94,6 @@ class wizard_import_po_simulation_screen(osv.osv):
 
         return res
 
-    def _get_import_lines(self,cr, uid, ids, field_name, args, context=None):
-        '''
-        Return the number of lines after the import
-        '''
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        res = {}
-        for wiz in self.browse(cr, uid, ids, context=context):
-            res[wiz.id] = 0
-            if wiz.state == 'done':
-                res[wiz.id] = len(wiz.line_ids)
-
-        return res
-
     def _get_totals(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return the totals after the simulation
@@ -249,9 +234,6 @@ class wizard_import_po_simulation_screen(osv.osv):
         'amount_discrepancy': fields.function(_get_totals, method=True,
                                            type='float', string='Discrepancy',
                                            readonly=True, store=False, multi='simu'),
-        'imp_nb_po_lines': fields.function(_get_import_lines, method=True,
-                                           type='integer', string='Nb Import lines',
-                                           readonly=True),
         'simu_line_ids': fields.one2many('wizard.import.po.simulation.screen.line',
                                          'simu_id', string='Lines', readonly=True),
     }
