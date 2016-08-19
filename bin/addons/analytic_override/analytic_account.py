@@ -450,14 +450,14 @@ class analytic_account(osv.osv):
 
         ###### US-113: I have moved the block that sql updates on the name causing the problem of sync (touched not update). The block is now moved to after the write
 
-        # US-399: First read the value from the database, and check if vals contains any of these values, use them for unicity check 
-        new_values = self.read(cr, uid, ids, ['category', 'name', 'code'], context=context)[0]
+        # US-399: First read the value from the database, and check if vals contains any of these values, use them for unicity check
+        new_values = self.read(cr, uid, ids[0], ['category', 'name', 'code'], context=context)
         if vals.get('name', False):
-            new_values['name'] = vals.get('name') 
+            new_values['name'] = vals.get('name')
         if vals.get('category', False):
-            new_values['category'] = vals.get('category') 
+            new_values['category'] = vals.get('category')
         if vals.get('code', False):
-            new_values['code'] = vals.get('code') 
+            new_values['code'] = vals.get('code')
 
         ######################################################
         # US-399: Now perform the check unicity manually!
