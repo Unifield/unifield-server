@@ -333,6 +333,7 @@ class hq_report_oca(report_sxw.report_sxw):
             currency = analytic_line.currency_id
             func_currency = analytic_line.move_id.functional_currency_id
             rate = ""
+            rate_for_raw_data = ""
 
             # US-478 - US-274/9 accrual account always refer to previous period
             # base on doc date instead posting in this case
@@ -348,9 +349,18 @@ class hq_report_oca(report_sxw.report_sxw):
                 ldate = analytic_line.document_date or analytic_line.date
 
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, ldate))
+                rate_req = "SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1"
+                cr.execute(rate_req, (currency.id, ldate))
                 if cr.rowcount:
                     rate = round(1 / cr.fetchall()[0][0], 8)
+
+                if analytic_line.journal_id.code == 'OD' and analytic_line.source_date:
+                    # US-1525 For the Correction entries display the rate of the entry period corrected
+                    # ONLY for Raw_Data.csv (no impact on the rate displayed in the other files)
+                    origin_date = analytic_line.source_date
+                    cr.execute(rate_req, (currency.id, origin_date))
+                    if cr.rowcount:
+                        rate_for_raw_data = round(1 / cr.fetchall()[0][0], 8)
 
             is_analytic_cur_adj_entry = analytic_line.journal_id \
                 and analytic_line.journal_id.type == 'cur_adj' or False
@@ -380,7 +390,7 @@ class hq_report_oca(report_sxw.report_sxw):
                               analytic_line.amount > 0 and ZERO_CELL_CONTENT or round(-analytic_line.amount, 2),
                               analytic_line.amount > 0 and round(analytic_line.amount, 2) or ZERO_CELL_CONTENT,
                               func_currency and func_currency.name or "",
-                              rate]
+                              rate_for_raw_data or rate]
             first_result_lines.append(formatted_data)
             if is_analytic_cur_adj_entry or is_analytic_rev_entry:
                 # US-788/1 and US-478/3: FXA/REV raw data override
