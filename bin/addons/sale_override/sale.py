@@ -1109,6 +1109,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Remove the possibility to make a SO to user's company
         '''
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
@@ -3422,6 +3424,8 @@ class sale_order_line(osv.osv):
         Override write method so that the procurement method is on order if no product is selected.
         If it is a procurement request, we update the cost price.
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 

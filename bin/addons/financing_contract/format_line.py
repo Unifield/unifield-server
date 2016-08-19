@@ -465,6 +465,8 @@ class financing_contract_format_line(osv.osv):
         return super(financing_contract_format_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

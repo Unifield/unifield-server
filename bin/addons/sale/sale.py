@@ -355,6 +355,8 @@ class sale_order(osv.osv):
         return {'value': {'invoice_quantity': inv_qty}}
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('order_policy', False):
             if vals['order_policy'] == 'prepaid':
                 vals.update({'invoice_quantity': 'order'})

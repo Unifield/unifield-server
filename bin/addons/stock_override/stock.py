@@ -485,6 +485,8 @@ class stock_picking(osv.osv):
         '''
         Update the partner or the address according to the other
         '''
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
 

@@ -494,6 +494,8 @@ class initial_stock_inventory_line(osv.osv):
         '''
         Set the UoM with the default UoM of the product
         '''
+        if not ids:
+            return True
         if vals.get('product_id', False):
             prod_obj = self.pool.get('product.product')
             product = prod_obj.browse(cr, uid, vals['product_id'], context=context)

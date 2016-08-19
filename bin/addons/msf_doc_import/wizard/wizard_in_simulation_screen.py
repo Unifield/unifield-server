@@ -162,6 +162,8 @@ class wizard_import_in_simulation_screen(osv.osv):
         '''
         Remove the concurrency access warning
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
 

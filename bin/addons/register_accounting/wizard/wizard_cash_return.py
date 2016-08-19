@@ -211,6 +211,8 @@ class wizard_advance_line(osv.osv_memory):
         """
         Check vals. If employee_id given, add new analytic distribution
         """
+        if not ids:
+            return True
         # Some checks
         if context is None:
             context = {}

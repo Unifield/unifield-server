@@ -1536,6 +1536,8 @@ class stock_picking(osv.osv):
         without that, the displaying of the wizard waits that the background
         process (SQL LOCK on row)
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
 

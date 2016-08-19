@@ -42,6 +42,8 @@ class account_subscription(osv.osv):
         return super(account_subscription, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if 'period_nbr' in vals and vals['period_nbr'] < 1:

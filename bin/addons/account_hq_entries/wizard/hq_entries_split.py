@@ -187,6 +187,8 @@ class hq_entries_split_lines(osv.osv_memory):
         Check that amount is not Null.
         """
         # Checks
+        if not ids:
+            return True
         if context is None:
             context = {}
 

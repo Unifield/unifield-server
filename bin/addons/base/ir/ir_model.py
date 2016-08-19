@@ -139,6 +139,8 @@ class ir_model(osv.osv):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if context:
             context.pop('__last_update', None)
         return super(ir_model,self).write(cr, user, ids, vals, context)
@@ -291,6 +293,8 @@ class ir_model_fields(osv.osv):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if context and context.get('manual',False):

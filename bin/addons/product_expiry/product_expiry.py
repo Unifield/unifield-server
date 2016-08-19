@@ -98,6 +98,8 @@ class stock_production_lot(osv.osv):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

@@ -1258,6 +1258,8 @@ class product_attributes(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         data_obj = self.pool.get('ir.model.data')
 
         if context is None:
@@ -1739,6 +1741,8 @@ class product_template(osv.osv):
         :param context: Context of the call
         :return: super write() method.
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 

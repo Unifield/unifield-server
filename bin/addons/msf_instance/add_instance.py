@@ -135,6 +135,8 @@ class account_journal(osv.osv):
         return super(account_journal, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         analytic_obj = self.pool.get('account.analytic.journal')
         if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
@@ -265,6 +267,8 @@ class account_analytic_line(osv.osv):
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
@@ -312,6 +316,8 @@ class account_move(osv.osv):
         return super(account_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id', [False])[0]
@@ -351,6 +357,8 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
@@ -401,6 +409,8 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
@@ -423,6 +433,8 @@ class account_bank_statement_line(osv.osv):
         return super(account_bank_statement_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'statement_id' in vals:
             register = self.pool.get('account.bank.statement').read(cr, uid, vals['statement_id'], ['instance_id'], context=context)
             vals['instance_id'] = register.get('instance_id')[0]
@@ -463,6 +475,8 @@ class account_cashbox_line(osv.osv):
         return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'starting_id' in vals:
             register = self.pool.get('account.bank.statement').read(cr, uid, vals['starting_id'], ['instance_id'], context=context)
             vals['instance_id'] = register.get('instance_id')[0]
@@ -546,6 +560,8 @@ class account_analytic_account(osv.osv):
         """
         Check FPs
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 

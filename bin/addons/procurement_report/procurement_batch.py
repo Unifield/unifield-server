@@ -123,6 +123,8 @@ class procurement_batch_cron(osv.osv):
         '''
         Set batch modifications on associated cron tasks 
         '''
+        if not ids:
+            return True
         cron_obj = self.pool.get('ir.cron')
         
         if isinstance(ids, (int, long)):

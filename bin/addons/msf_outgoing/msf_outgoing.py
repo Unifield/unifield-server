@@ -454,6 +454,8 @@ class shipment(osv.osv):
         """
         Force values for carrier if carrier_id is filled
         """
+        if not ids:
+            return True
         if vals.get('carrier_id'):
             test_fields = [
                 'carrier_name', 'carrier_address',

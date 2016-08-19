@@ -167,6 +167,8 @@ class supplier_catalogue(osv.osv):
         Update the supplierinfo and pricelist line according to the
         new values
         '''
+        if not ids:
+            return True
         supinfo_obj = self.pool.get('product.supplierinfo')
         price_obj = self.pool.get('pricelist.partnerinfo')
         user_obj = self.pool.get('res.users')
@@ -857,6 +859,8 @@ class supplier_catalogue_line(osv.osv):
         '''
         Update the pricelist line on product supplier information tab
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
 

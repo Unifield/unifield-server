@@ -234,6 +234,8 @@ class account_account(osv.osv):
         Add default destination to the list of destination_ids
         """
         # Prepare some values
+        if not ids:
+            return True
         if context is None:
             context = {}
         # Check default destination presence

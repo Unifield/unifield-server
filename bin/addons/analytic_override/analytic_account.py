@@ -438,6 +438,8 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account write
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

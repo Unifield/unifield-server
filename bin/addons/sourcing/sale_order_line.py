@@ -1062,6 +1062,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :return True if all is ok else False
         :rtype boolean
         """
+        if not ids:
+            return True
         # Objects
         product_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')

@@ -342,6 +342,8 @@ class account_period(osv.osv):
                     raise osv.except_osv(_('Warning'), _("Cannot reopen this period because its Fiscal Year is already in Mission-Closed."))
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
         # control conditional push-down of state from HQ. Ticket UTP-913
