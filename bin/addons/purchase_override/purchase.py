@@ -3601,9 +3601,8 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = {}
+        res = dict.fromkeys(ids, '')
         for line_id in ids:
-            res[line_id] = ''
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, line_id, context=context)
             for sol in self.pool.get('sale.order.line').browse(cr, uid, sol_ids, context=context):
                 if sol.order_id and sol.order_id.client_order_ref:
@@ -3620,7 +3619,7 @@ class purchase_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        res = {}
+        res = dict.fromkeys(ids, False)
         for line_id in ids:
             sol_ids = self.get_sol_ids_from_pol_ids(cr, uid, [line_id], context=context)
             if sol_ids:
