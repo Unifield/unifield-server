@@ -144,8 +144,8 @@ class shipment(osv.osv):
                 'state': 'draft',
                 'backshipment_id': False,
             }
+            result[shipment['id']] = default_values
             current_result = result[shipment['id']]
-            current_result = default_values
             # gather the state from packing objects, all packing must have the same state for shipment
             # for draft shipment, we can have done packing and draft packing
             packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment['id']), ], context=context)
