@@ -133,7 +133,7 @@ class shipment(osv.osv):
         picking_obj = self.pool.get('stock.picking')
         add_items = self.pool.get('shipment.additionalitems')
 
-        result = []
+        result = {}
         for shipment in self.read(cr, uid, ids, ['pack_family_memory_ids', 'state', 'additional_items_ids'], context=context):
             default_values = {
                 'total_amount': 0.0,
@@ -2074,7 +2074,7 @@ class stock_picking(osv.osv):
         '''
         get functional values
         '''
-        result = []
+        result = {}
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
         family_set = set()
@@ -4565,7 +4565,7 @@ class stock_move(osv.osv):
         return result
 
     def _get_qty_per_pack(self, cr, uid, ids, field, arg, context=None):
-        result = []
+        result = {}
         for move in self.read(cr, uid, ids, ['to_pack', 'from_pack', 'product_qty'], context=context):
             default_values = {
                 'qty_per_pack': 0.0,
@@ -4585,7 +4585,7 @@ class stock_move(osv.osv):
         return result
 
     def _get_danger(self, cr, uid, ids, fields, arg, context=None):
-        result = []
+        result = {}
         product_obj = self.pool.get('product.product')
         for move in self.read(cr, uid, ids, ['product_id'], context=context):
             default_values = {
@@ -4609,7 +4609,7 @@ class stock_move(osv.osv):
         '''
         get functional values
         '''
-        result = []
+        result = {}
         uom_obj = self.pool.get('product.uom')
         for move in self.read(cr, uid, ids,
                     ['sale_line_id', 'product_uom', 'to_pack', 'from_pack', 'product_qty'],
