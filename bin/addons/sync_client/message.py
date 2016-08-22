@@ -404,7 +404,7 @@ class message_received(osv.osv):
             changes={},
             sync_message_execution=True,
             sale_purchase_logger={})
-
+        context['lang'] = 'en_US'
         # get all ids if not specified
         if ids is None:
             ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
