@@ -98,11 +98,12 @@ class res_currency_rate_functional(osv.osv):
         if not ids:
             return True
         res = super(res_currency_rate_functional, self).write(cr, uid, ids, vals, context)
-        self.refresh_move_lines(cr, uid, ids, date=vals['name'])
-        # Also update analytic move line that don't come from a move (engagement journal lines)
-        for rate in self.browse(cr, uid, ids, context=context):
-            currency_id = rate.currency_id and rate.currency_id.id or False
-            self.refresh_analytic_lines(cr, uid, ids, date=vals['name'], currency=currency_id, context=context)
+        if 'name' in vals:
+            self.refresh_move_lines(cr, uid, ids, date=vals['name'])
+            # Also update analytic move line that don't come from a move (engagement journal lines)
+            for rate in self.browse(cr, uid, ids, context=context):
+                currency_id = rate.currency_id and rate.currency_id.id or False
+                self.refresh_analytic_lines(cr, uid, ids, date=vals['name'], currency=currency_id, context=context)
         return res
     
     def unlink(self, cr, uid, ids, context=None):
