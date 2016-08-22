@@ -246,7 +246,7 @@ class patch_scripts(osv.osv):
                 last_modification=now()
                 where module='sd' and model='product.product' and
                 res_id in (
-                    select id from product_product where international_status = %s
+                    select id from product_product where international_status = %s and coalesce(msfid,0) != 0
                 )""", (unidata_id, ))
         return True
 
