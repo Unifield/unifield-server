@@ -371,6 +371,7 @@ class update_received(osv.osv):
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
         context = dict(context or {}, sync_update_execution=True)
+        context['lang'] = 'en_US'
         local_entity = self.pool.get('sync.client.entity').get_entity(
             cr, uid, context=context)
 
