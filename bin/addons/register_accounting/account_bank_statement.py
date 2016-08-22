@@ -1767,6 +1767,9 @@ class account_bank_statement_line(osv.osv):
             ('id', '!=', st_line.first_move_line_id.id)]) # move lines that have been created AFTER import invoice wizard
         # Add new lines
         amount = abs(st_line.first_move_line_id.amount_currency)
+        sign = 1
+        if st_line.first_move_line_id.amount_currency > 0:
+            sign = -1
         res_ml_ids = []
         process_invoice_move_line_ids = []
         total_payment = True
@@ -1777,32 +1780,17 @@ class account_bank_statement_line(osv.osv):
             # Delete them
             #+ Optimization: As we post the move at the end of this method, no need to check lines after their deletion
             move_line_obj.unlink(cr, uid, move_lines, context=context, check=False)
-
-            # check if all docs have the same sign
-            same_sign = all(x.amount_currency >= 0 for x in st_line.imported_invoice_line_ids) or \
-                all(x.amount_currency < 0 for x in st_line.imported_invoice_line_ids)
-
-            # supplier refunds have to be handled first, then invoices sorted by amount (smallest amount first)
-            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: x.amount_currency, reverse=True):
+            for invoice_move_line in sorted(st_line.imported_invoice_line_ids, key=lambda x: abs(x.amount_currency)):
                 amount_currency = invoice_move_line.amount_currency
-
-                sign = 1
-                if invoice_move_line.amount_currency > 0:
-                    sign = -1
 
                 if invoice_move_line.reconcile_partial_id:
                     amount_currency = 0
                     for line in invoice_move_line.reconcile_partial_id.line_partial_ids:
                         amount_currency += (line.debit_currency or 0.0) - (line.credit_currency or 0.0)
-
-                if (not same_sign and amount_currency > 0) or abs(amount_currency) <= amount:
-                    # if it's a refund imported together with invoices OR if the doc. outstanding amount <= payment amount
-                    # the amount to write corresponds to the document outstanding amount
+                if abs(amount_currency) <= amount:
                     amount_to_write = sign * abs(amount_currency)
                 else:
-                    # else it corresponds to the payment amount
                     amount_to_write = sign * amount
-
                 # create a new move_line corresponding to this invoice move line
                 aml_vals = {
                     'name': invoice_move_line.invoice.number or st_line.first_move_line_id.name or '', # UTP-793 fix
@@ -1821,18 +1809,7 @@ class account_bank_statement_line(osv.osv):
                 move_line_id = move_line_obj.create(cr, uid, aml_vals, context=context, check=False)
                 res_ml_ids.append(move_line_id)
 
-                '''
-                Determine the part of the payment that still has to be allocated
-                Note that, if SR and SI are imported together, the SR amounts are added whereas the SI amounts are deducted
-                Ex:
-                Payment amount: 100
-                Supplier Refund: -10
-                Outstanding amount on a SI: 110
-                => First loop: amount = 100 - (-10) = 110
-                => Second loop: amount = 110 - 110 = 0
-                '''
-                amount -= same_sign and abs(amount_to_write) or amount_to_write
-
+                amount -= abs(amount_to_write)
                 if not amount:
                     todo = [x.id for x in st_line.imported_invoice_line_ids if x.id not in process_invoice_move_line_ids]
                     # remove remaining invoice lines
@@ -1969,14 +1946,7 @@ class account_bank_statement_line(osv.osv):
                     'from_correction' in context or context.get('sync_update_execution', False):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
-
         # First update amount
-        # (US-1043) In case the line corresponds to a Group Import: prevent amount modification to avoid partial payment
-        for absl in self.read(cr, uid, ids, ['imported_invoice_line_ids', 'amount_in', 'amount_out'], context=context):
-            if len(absl.get('imported_invoice_line_ids', False)) > 1 and \
-                    (abs(absl['amount_out'] - values['amount_out']) > 10**-3 or abs(absl['amount_in'] - values['amount_in']) > 10**-3):
-                raise osv.except_osv(_('Warning'), _('You can\'t edit the amount of a line automatically generated \n'
-                                                     'by the functionality "Import Group By Partner".'))
         values = self._update_amount(values=values)
         # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
