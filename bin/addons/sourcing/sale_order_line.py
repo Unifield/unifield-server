@@ -1268,7 +1268,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return True
 
-    def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None):
+    def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None, update_lines=True):
         """
         Run the confirmation of the FO/IR if all lines are confirmed
         :param cr: Cursor to the database
@@ -1295,10 +1295,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if order_data['state'] != 'validated':
                 continue
             state_to_use = order_proc and 'confirmed' or 'sourced'
-            self.write(cr, uid, [line['id']], {
-                'state': state_to_use,
-                'cf_estimated_delivery_date': line['estimated_delivery_date'],
-            }, context=context)
+            if update_lines:
+                self.write(cr, uid, [line['id']], {
+                    'state': state_to_use,
+                    'cf_estimated_delivery_date': line['estimated_delivery_date'],
+                }, context=context)
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
 

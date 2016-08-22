@@ -76,7 +76,9 @@ class account_move_line(osv.osv):
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
             ('move_state', '=', 'posted'), # UFTP-204: Exclude the Direct Invoice from the list
-            ('journal_id.type', 'not in', ['migration']),  # US-70 Open the pending payment to receivable and payable entries from all journals except for the migration journal
+            # US-70 Open the pending payment to receivable and payable entries from all journals except for the migration journal
+            # US-1378 Also exclude entries booked in Accrual journal
+            ('journal_id.type', 'not in', ['migration', 'accrual']),
             ('account_id.type_for_register', 'not in', ['down_payment', 'advance', 'donation', ]),
             # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
@@ -108,7 +110,13 @@ class account_move_line(osv.osv):
         cur_obj = self.pool.get('res.currency')
         for move_line in self.browse(cr, uid, ids, context=context):
             res[move_line.id] = 0.0
-
+            # (US-1043) Documents imported through the "Import Group By Partner" button can't be partial
+            stop = False
+            for reg_line in move_line.imported_invoice_line_ids:
+                if len(reg_line.imported_invoice_line_ids) > 1:
+                    stop = True
+            if stop:
+                continue
             if move_line.reconcile_id:
                 continue
             if not move_line.account_id.type in ('payable', 'receivable'):

@@ -62,6 +62,7 @@ class wizard_import_invoice_lines(osv.osv_memory):
         Check given amount:
           - should not be negative
           - should be superior to amount to pay (but absolute value)
+          - in case of a Group Import: shoudn't be a partial payment (US-1043)
         """
         if not ids:
             return True
@@ -72,11 +73,14 @@ class wizard_import_invoice_lines(osv.osv_memory):
         msg = False
 
         # Amount check
-        for l in self.read(cr, uid, ids, ['amount_to_pay']):
+        for l in self.read(cr, uid, ids, ['amount_to_pay', 'line_ids']):
             if vals['amount'] < 0:
                 msg = _('Negative amount are forbidden!')
             elif vals['amount'] > abs(l['amount_to_pay']):
                 msg = _("Amount %.2f can't be greater than 'Amount to pay': %.2f") % (vals['amount'], abs(l['amount_to_pay']))
+            elif len(l['line_ids']) > 1 and abs(vals['amount'] - abs(l['amount_to_pay'])) > 10**-3:
+                msg = _('You can\'t edit the amount of a line automatically generated \n'
+                        'by the functionality "Import Group By Partner".')
             if msg:
                 # reset wrong amount
                 vals = { 'amount': abs(l['amount_to_pay']) }
@@ -143,6 +147,8 @@ class wizard_import_invoice(osv.osv_memory):
         return self.group_import(cr, uid, ids, context, group=False)
 
     def group_import(self, cr, uid, ids, context=None, group=True):
+        if context is None:
+            context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
         if not wizard.line_ids:
             raise osv.except_osv(_('Warning'), _('Please add invoice lines'))
@@ -157,6 +163,9 @@ class wizard_import_invoice(osv.osv_memory):
             if line.id in already:
                 raise osv.except_osv(_('Warning'), _('This invoice: %s %s has already been added. Please choose another invoice.')%(line.name, line.amount_currency))
             if group:
+                if abs(abs(line.amount_residual_import_inv) - abs(line.amount_currency)) > 10**-3:
+                    raise osv.except_osv(_('Warning'), _('This document: %s %s has already been partially paid. '
+                                                         'Please use "Single Import" to import it.') % (line.ref or '', line.amount_currency))
                 key = "%s-%s-%s"%("all", line.partner_id.id, line.account_id.id)
             else:
                 key = line.id
@@ -189,7 +198,7 @@ class wizard_import_invoice(osv.osv_memory):
             new_lines.append({
                 'line_ids': [(6, 0, [x.id for x in ordered_lines[key]])],
                 'partner_id': ordered_lines[key][0].partner_id.id or None,
-                'ref': ' / '.join([x.ref and x.ref for x in ordered_lines[key]])[:size],
+                'ref': ' / '.join([x.ref and x.ref or '' for x in ordered_lines[key]])[:size] or False,
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
                 'document_date': wizard.date or time.strftime('%Y-%m-%d'),
@@ -255,7 +264,7 @@ class wizard_import_invoice(osv.osv_memory):
                     'statement_id': st_id,
                     'account_id': line.account_id.id,
                     'partner_id': line.partner_id.id,
-                    'amount': line.amount_currency < 0 and -line.amount or line.amount,
+                    'amount': line.amount_to_pay < 0 and -line.amount or line.amount,
                     'imported_invoice_line_ids': [(4, x.id) for x in line.line_ids],
                 }
 
