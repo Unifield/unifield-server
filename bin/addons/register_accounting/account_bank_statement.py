@@ -1933,6 +1933,8 @@ class account_bank_statement_line(osv.osv):
             ids = [ids]
         if context is None:
             context = {}
+        if not values:
+            return False
         # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method.
         #+ We prepare some boolean to test what permit to skip some checks.
         #+ SKIP_WRITE_CHECK is a param in context that permit to directly write thing without any check or changes. Use it with caution.
