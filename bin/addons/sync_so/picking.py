@@ -38,7 +38,7 @@ class stock_move(osv.osv):
 
         res = {}
         for m in self.browse(cr, uid, ids, context=context):
-            res[m.id] = m.state == 'cancel' and m.picking_id and m.picking_id.sale_id and m.picking_id.sale_id.state in ['done', 'cancel']
+            res[m.id] = m.state == 'cancel' and m.picking_id and m.picking_id.sale_id and m.picking_id.sale_id.state in ['done', 'cancel'] or False
 
         return res
 

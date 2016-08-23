@@ -3468,7 +3468,11 @@ class orm(orm_template):
                     res2 = self._columns[f].get(cr, self, ids, f, user, context=context, values=res)
                     for record in res:
                         if res2:
-                            record[f] = res2[record['id']]
+                            try:
+                                record[f] = res2[record['id']]
+                            except:
+                                self.__logger.error('Read %s field %s, record not found' % (self._name, f), exc_info=True)
+                                raise
                         else:
                             record[f] = []
         readonly = None

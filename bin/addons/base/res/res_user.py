@@ -29,6 +29,7 @@ import pooler
 from tools.translate import _
 from service import security
 import netsvc
+import logging
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -468,6 +469,7 @@ class users(osv.osv):
             # Failing to acquire the lock on the res_users row probably means
             # another request is holding it - no big deal, we skip the update
             # for this time, and let the user login anyway.
+            logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
             cr.rollback()
             cr.execute("""SELECT id from res_users
                           WHERE login=%s AND password=%s

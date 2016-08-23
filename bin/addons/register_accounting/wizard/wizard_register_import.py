@@ -33,6 +33,7 @@ import threading
 import pooler
 from ..register_tools import open_register_view
 from lxml import etree
+import logging
 
 
 class wizard_register_import(osv.osv_memory):
@@ -612,10 +613,12 @@ class wizard_register_import(osv.osv_memory):
             cr.commit()
             cr.close(True)
         except osv.except_osv as osv_error:
+            logging.getLogger('import register').warn('OSV Exception', exc_info=True)
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         except Exception as e:
+            logging.getLogger('import register').warn('Exception', exc_info=True)
             cr.rollback()
             self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
             cr.close(True)
