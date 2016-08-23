@@ -289,7 +289,7 @@ class ViewEd(SecuredController):
             return doc_src.toxml().replace('\t', '')
 
         views = rpc.RPCProxy('ir.ui.view')
-        res = views.read([view_id])[0]
+        res = views.read([view_id], ['arch', 'model', 'type'])[0]
 
         def _inherit_apply_rec(result, inherit_id):
             # get all views which inherit from (ie modify) this view

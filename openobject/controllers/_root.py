@@ -62,19 +62,6 @@ class Root(BaseController):
             # doesn't restart due to downloading new add-ons or refreshing
             # existing ones
             cherrypy.engine.autoreload.unsubscribe()
-        try:
-            obj = pooler.get_pool().get_controller("/openerp/modules")
-            if not obj:
-                raise RuntimeError(
-                    "Cannot find controller for /openerp/modules")
-            if obj.has_new_modules():
-                pooler.restart_pool()
-        except AuthenticationError:
-            pass
-
-        if autoreloader_enabled:
-            # re-enable auto-reloading if it was enabled before
-            cherrypy.engine.autoreload.subscribe()
 
         request = cherrypy.request
         self.clean_headers_params(request)

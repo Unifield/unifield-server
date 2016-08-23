@@ -44,7 +44,7 @@ class Widgets(SecuredController):
                  ('user_id', '=', False)],
                 0, 0, 0, ctx)
         return [
-            dict(widgets.read([wid['widget_id'][0]], [], ctx)[0],
+            dict(widgets.read([wid['widget_id'][0]], ['content', 'id', 'title'], ctx)[0],
                  user_widget_id=wid['id'],
                  # NULL user_id = global = non-removable
                  removable=bool(wid['user_id']))

@@ -56,7 +56,8 @@ class Attachment(SecuredController):
     @expose(content_type="application/octet-stream")
     def get(self, record=False):
         record = int(record)
-        attachment = rpc.RPCProxy('ir.attachment').read(record, [], rpc.session.context)
+        attachment = rpc.RPCProxy('ir.attachment').read(record, ['type',
+        'datas', 'url', 'name'], rpc.session.context)
 
         if attachment['type'] == 'binary':
             cherrypy.response.headers["Content-Disposition"] = 'attachment; filename="%s"' % attachment['name']

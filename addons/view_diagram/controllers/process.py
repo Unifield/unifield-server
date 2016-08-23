@@ -46,7 +46,8 @@ class Process(SecuredController):
         help = _('Help: Not Defined')
         help_ids = rpc.session.execute('object', 'execute', 'ir.actions.act_window', 'search', [('res_model','=',res_model)])
         for help_id in help_ids:
-            field = rpc.session.execute('object', 'execute', 'ir.actions.act_window', 'read', help_id)
+            field = rpc.session.execute('object', 'execute',
+                    'ir.actions.act_window', 'read', help_id, ['help', 'name'])
             if field['help'] and (field['name'] == title):
                 help = field['help']
 
