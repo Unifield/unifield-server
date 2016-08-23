@@ -32,7 +32,38 @@
         % endfor
         <tr>
             <td>&nbsp;</td>
-            <td align="right" style="padding: 0px 5px 5px 0px;"><button type="submit" class="static_boxes">${submit_text}</button></td>
+            <td align="right" style="padding: 0px 5px 5px 0px;">
+            % if not replace_password_fields:
+                <button type="submit" class="static_boxes">${submit_text}</button>
+            % else:
+                <script type="text/javascript">
+                function replace_pass_submit() {
+                    var this_form = false;
+                    % for src_field, target_field in replace_password_fields.iteritems():
+                        if (!this_form) {
+                            this_form = $("#${target_field}").attr('form');
+                            var result = true;
+                            if (this_form.onsubmit) {
+                                result = this_form.onsubmit.call(this_form);
+                            }
+                            if (!result) {
+                                return false;
+                            }
+                        }
+                        var ${src_field}_val = $("#${src_field}").val()
+                        var fake_${src_field} = jQuery('<input type="text"/>');
+                        fake_${src_field}.addClass($("#${src_field}").attr('class'));
+                        fake_${src_field}.val(Array(${src_field}_val.length+1).join('\u2022'));
+                        $("#${target_field}").val(${src_field}_val);
+                        $("#${src_field}").val(false);
+                        $("#${src_field}").replaceWith(fake_${src_field});
+                    % endfor
+                    this_form.submit();
+                }
+                </script>
+                <button type="button" class="static_boxes" onclick="replace_pass_submit()">${submit_text}</button>
+            % endif
+            </td>
         </tr>
     </table>
 </form>

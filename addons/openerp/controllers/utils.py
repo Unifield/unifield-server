@@ -94,7 +94,10 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
         info = rpc.session.execute_noauth('common', 'login_message') or ''
     except:
         pass
-    return dict(target=target, url=url, dblist=dblist, db=db, user=user, password=password,
+    do_login_page = '/openerp/do_login'
+    if target != do_login_page:
+        origArgs['target'] = target
+    return dict(target=do_login_page, url=url, dblist=dblist, db=db, user=user, password=password,
             action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
 
 def secured(fn):

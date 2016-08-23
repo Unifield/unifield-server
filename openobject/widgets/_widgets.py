@@ -226,7 +226,7 @@ class Form(FormField):
 
     template = "/openobject/widgets/templates/form.mako"
 
-    params = ['action', 'method', 'submit_text']
+    params = ['action', 'method', 'submit_text', 'replace_password_fields']
     member_widgets = ['hidden_fields', 'fields']
 
     hidden_fields = []
@@ -236,6 +236,7 @@ class Form(FormField):
     submit_text = "Submit"
     form_attrs = {}
     form = True
+    replace_password_fields = {}
 
     def __init__(self, name=None, **params):
         super(Form, self).__init__(name, **params)

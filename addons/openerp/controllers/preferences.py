@@ -34,9 +34,11 @@ from form import Form
 class PrefsPassword(database.FormPassword):
     action = "/openerp/pref/password"
     string = _('Change your password')
-    fields = [openobject.widgets.PasswordField(name='old_password', label=_('Old Password:'), validator=formencode.validators.NotEmpty()),
-              openobject.widgets.PasswordField(name='new_password', label=_('New Password:'), validator=formencode.validators.NotEmpty()),
-              openobject.widgets.PasswordField(name='confirm_password', label=_('Confirm Password:'), validator=formencode.validators.NotEmpty())]
+    fields = [
+        database.ReplacePasswordField(name='old_password', label=_('Old Password:')),
+        database.ReplacePasswordField(name='new_password', label=_('New Password:')),
+        database.ReplacePasswordField(name='confirm_password', label=_('Confirm Password:')),
+    ]
 
 int_pattern = re.compile(r'^\d+$')
 class Preferences(Form):
