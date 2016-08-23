@@ -29,7 +29,6 @@
     if object_ids and not rule_id:
       # Create the rule
       fields = ['state','reference','account_id','partner_txt','debit','credit','employee_id','analytic_distribution_id']
-
       fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.move.line'), ('name', 'in', fields)], context=context)
       field_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.move.line'), ('name', '=', 'reference')], context=context)
       field_parent = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.move.line'), ('name', '=', 'move_id')], context=context)
