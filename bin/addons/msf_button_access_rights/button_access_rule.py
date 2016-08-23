@@ -83,6 +83,8 @@ class button_access_rule(osv.osv):
         return super(button_access_rule, self).create(cr, uid, vals, context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if context.get('sync_update_execution') and vals.get('xmlname'):

@@ -53,6 +53,8 @@ class groups(osv.osv):
         return super(groups, self).copy(cr, uid, id, default, context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
@@ -363,6 +365,8 @@ class users(osv.osv):
         return super(users, self).create(cr, uid, values, context)
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if not hasattr(ids, '__iter__'):
             ids = [ids]
         if ids == [uid]:

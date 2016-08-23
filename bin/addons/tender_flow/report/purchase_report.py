@@ -38,12 +38,6 @@ class purchase_report(osv.osv):
         for id in ids:
             res[id] = False
         return res
-        for purchase in self.browse(cursor, user, ids, context=context):
-            invoiced = False
-            if purchase.invoiced_rate == 100.00:
-                invoiced = True
-            res[purchase.id] = invoiced
-        return res
 
     STATE_SELECTION = [
                        ('draft', 'Draft'),

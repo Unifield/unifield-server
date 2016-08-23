@@ -636,10 +636,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         context.update({'no_check_line': True})
         self.write(cr, uid, ids, {'delivery_confirmed_date': time.strftime('%Y-%m-%d')}, context=context)
         res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
-        for order in self.browse(cr, uid, ids, context=context):
+        for order in self.read(cr, uid, ids, ['procurement_request', 'name'], context=context):
             self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
-                order.procurement_request and  'Internal request' or 'Field order',
-                order.id, order.name,
+                order['procurement_request'] and  'Internal request' or 'Field order',
+                order['id'], order['name'],
             ))
         return res
 
@@ -839,14 +839,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-
-        for order in self.browse(cr, uid, ids, context=context):
-            res[order.id] = True
-            for line in order.order_line:
-                res[order.id] = False
-                break
-            # better: if order.order_line: res[order.id] = False
-
+        for order in self.read(cr, uid, ids, ['order_line'], context=context):
+            res[order['id']] = True
+            if order['order_line']:
+                res[order['id']] = False
         return res
 
     def _get_manually_corrected(self, cr, uid, ids, field_name, args, context=None):
@@ -1134,6 +1130,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Remove the possibility to make a SO to user's company
         '''
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
@@ -2014,6 +2012,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                'check_data': _('Done'),
             }, context=context)
+            move_to_cancel = set()
             for line in order.order_line:
                 proc_id = False
 
@@ -2073,14 +2072,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                         UF-1155: Divided the cancel of the move in two times to avaid the cancelation of the field order
                         """
                         if line.procurement_id.move_id:
-                            cancel_move_id = line.procurement_id.move_id.id
+                            move_to_cancel.add(line.procurement_id.move_id.id)
 
                         # Update corresponding procurement order with the new stock move
                         proc_obj.write(cr, uid, [line.procurement_id.id], {'move_id': move_id}, context=context)
-
-                        if cancel_move_id:
-                            # Ase action_cancel actually, because there is not stock picking or related stock moves
-                            move_obj.action_cancel(cr, uid, [line.procurement_id.move_id.id], context=context)
 
                         if line.type == 'make_to_order':
                             pol_update_ids = pol_obj.search(cr, uid,
@@ -2157,6 +2152,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                     )
                     self.infolog(cr, uid, msg)
 
+            if move_to_cancel:
+                move_obj.action_cancel(cr, uid, list(move_to_cancel), context=context)
             prog_id = self.update_sourcing_progress(cr, uid, order, False, {
                'prepare_picking': _('In Progress'),
             }, context=context)
@@ -3448,6 +3445,8 @@ class sale_order_line(osv.osv):
         Override write method so that the procurement method is on order if no product is selected.
         If it is a procurement request, we update the cost price.
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 

@@ -398,6 +398,8 @@ class account_invoice(osv.osv):
         """
         Check that all register lines are updated if this invoice is a direct invoice.
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

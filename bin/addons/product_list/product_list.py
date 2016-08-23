@@ -45,6 +45,8 @@ class product_list(osv.osv):
         '''
         Adds update date and user information
         '''
+        if not ids:
+            return True
         vals.update({
             'reviewer_id': uid,
             'last_update_date': time.strftime('%Y-%m-%d'),
@@ -487,6 +489,8 @@ product and can't be deleted"""),
                 limit, order, context, count)
 
     def write(self, cr, uid, ids, value, context=None):
+        if not ids:
+            return True
         single = False
         if isinstance(ids, (long, int)):
             ids = [ids]

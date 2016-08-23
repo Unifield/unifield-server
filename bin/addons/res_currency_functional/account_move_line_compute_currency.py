@@ -556,6 +556,8 @@ class account_move_line_compute_currency(osv.osv):
         """
         Update line values regarding date, source_date and currency rate
         """
+        if not ids:
+            return True
         # Some verifications
         if not context:
             context = {}

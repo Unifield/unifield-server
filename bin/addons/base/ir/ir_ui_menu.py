@@ -48,6 +48,16 @@ class ir_ui_menu(osv.osv):
         # radical but this doesn't frequently happen
         self._cache = {}
 
+    @tools.read_cache(prefetch=[], context=['lang', 'client', 'tz', 'department_id', 'active_model', '_terp_view_name', 'active_ids', 'active_id'], timeout=8000, size=2000)
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
+        ret = super(ir_ui_menu, self)._read_flat(cr, user, ids, fields_to_read, context, load)
+        return ret
+
+    def _clean_cache(self):
+        super(ir_ui_menu, self)._clean_cache()
+        # radical but this doesn't frequently happen
+        self._read_flat.clear_cache()
+
     def _filter_visible_menus(self, cr, uid, ids, context=None):
         """Filters the give menu ids to only keep the menu items that should be
            visible in the menu hierarchy of the current user.
@@ -254,7 +264,6 @@ class ir_ui_menu(osv.osv):
 
     _columns = {
         'name': fields.char('Menu', size=64, required=True, translate=True),
-        'active': fields.boolean(string='Active'),
         'sequence': fields.integer('Sequence'),
         'child_id' : fields.one2many('ir.ui.menu', 'parent_id','Child IDs'),
         'parent_id': fields.many2one('ir.ui.menu', 'Parent Menu', select=True),
@@ -290,7 +299,6 @@ class ir_ui_menu(osv.osv):
         'icon' : 'STOCK_OPEN',
         'icon_pict': ('stock', ('STOCK_OPEN','ICON_SIZE_MENU')),
         'sequence' : 10,
-        'active': lambda *a: True,
     }
     _order = "sequence,id"
 ir_ui_menu()

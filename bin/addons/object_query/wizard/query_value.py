@@ -47,6 +47,8 @@ class search_values(osv.osv_memory):
         return super(search_values, self).create(cr, uid, {'b_data': vals, 'query_id': context.get('query_id')}, {'no_missing': True})
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         return super(search_values, self).write(cr, uid, ids, {'b_data': vals, 'query_id': context.get('query_id')}, {'no_missing': True})

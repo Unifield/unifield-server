@@ -58,6 +58,8 @@ class related_sourcing(osv.osv):
         """
         Format the name value
         """
+        if not ids:
+            return True
         vals['name'] = filter(str.isalnum, vals.get('name', '')).upper()
         return super(related_sourcing, self).\
             write(cr, uid, ids, vals, context=context)

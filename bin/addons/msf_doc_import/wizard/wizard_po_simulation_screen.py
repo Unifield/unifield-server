@@ -262,6 +262,8 @@ class wizard_import_po_simulation_screen(osv.osv):
     }
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 

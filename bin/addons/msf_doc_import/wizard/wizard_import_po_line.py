@@ -28,6 +28,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
 from msf_doc_import import check_line
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
+import itertools
 
 
 class wizard_import_po_line(osv.osv_memory):
@@ -111,9 +112,13 @@ class wizard_import_po_line(osv.osv_memory):
             """
             order_currency_code = wiz.po_id.pricelist_id.currency_id.name
             currency_index = 6
-            rows = file_obj.getRows()
-            rows.next()  # skip header line
-            lines_to_correct = check_line.check_lines_currency(rows,
+            row_iterator = file_obj.getRows()
+
+            # don't use the original
+            row_iterator, row_iterator_line_check = itertools.tee(row_iterator)
+
+            row_iterator_line_check.next()  # skip header line
+            lines_to_correct = check_line.check_lines_currency(row_iterator_line_check,
                 currency_index, order_currency_code)
             if lines_to_correct > 0:
                 categ_log = ''
@@ -124,13 +129,11 @@ class wizard_import_po_line(osv.osv_memory):
                 error_list.append(msg)
 
             if not error_list:
-                # iterator on rows
-                rows = file_obj.getRows()
-                # ignore the first row
-                rows.next()
                 to_write = {}
-                total_line_num = len([row for row in file_obj.getRows()])
-                for line_num, row in enumerate(rows, start=1):
+                total_line_num = file_obj.countRows()
+                # ignore the header line
+                row_iterator.next()
+                for line_num, row in enumerate(row_iterator, start=1):
                     percent_completed = float(line_num) / float(total_line_num - 1) * 100.0
                     # default values
                     to_write = {
@@ -362,8 +365,7 @@ Importation completed in %s!
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
                 # iterator on rows
-                reader = fileobj.getRows()
-                reader_iterator = iter(reader)
+                reader_iterator = fileobj.getRows()
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(

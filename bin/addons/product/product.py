@@ -347,13 +347,15 @@ class product_template(osv.osv):
     }
 
     def _check_uom(self, cursor, user, ids, context=None):
-        for product in self.browse(cursor, user, ids, context=context):
+        for product in self.browse(cursor, user, ids, context=context,
+                fields_to_fetch=['uom_id', 'uom_po_id']):
             if product.uom_id.category_id.id <> product.uom_po_id.category_id.id:
                 return False
         return True
 
     def _check_uos(self, cursor, user, ids, context=None):
-        for product in self.browse(cursor, user, ids, context=context):
+        for product in self.browse(cursor, user, ids, context=context,
+                fields_to_fetch=['uos_id', 'uom_id']):
             if product.uos_id \
                     and product.uos_id.category_id.id \
                     == product.uom_id.category_id.id:
@@ -414,7 +416,9 @@ class product_product(osv.osv):
         product_uom_obj = self.pool.get('product.uom')
         for id in ids:
             res.setdefault(id, 0.0)
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['uos_id', 'id', 'uom_id', 'list_price',
+                'price_margin', 'price_extra']):
             if 'uom' in context:
                 uom = product.uos_id or product.uom_id
                 res[product.id] = product_uom_obj._compute_price(cr, uid,
@@ -424,34 +428,72 @@ class product_product(osv.osv):
             res[product.id] =  (res[product.id] or 0.0) * (product.price_margin or 1.0) + product.price_extra
         return res
 
-    def _get_partner_code_name(self, cr, uid, ids, product, partner_id, context=None):
-        for supinfo in product.seller_ids:
-            if supinfo.name.id == partner_id:
-                return {'code': supinfo.product_code or product.default_code, 'name': supinfo.product_name or product.name, 'variants': ''}
-        res = {'code': product.default_code, 'name': product.name, 'variants': product.variants}
+    def _get_partner_code(self, cr, uid, ids, partner_id, context=None):
+        '''
+        Get partner code for each product id in ids.
+        @param ids: Ids of product.
+        @param partner_id: Id of partner.
+        :return: dict with ids in keys and partner codes as values
+        '''
+        res = {}
+        if ids is not None:
+            read_result = self.read(cr, uid, ids, ['default_code', 'seller_ids'], context=context)
+            res = dict([(x['id'], x['default_code']) for x in read_result])
+            if not partner_id:
+                return dict([(x['id'], x['default_code']) for x in read_result])
+            for elem in read_result:
+                if not elem['seller_ids']:
+                    res[elem['id']] = elem['default_code']
+                else:
+                    supplierinfo_module = self.pool.get('product.supplierinfo')
+                    if partner_id in elem['seller_ids']:
+                        res[elem['id']] = supplierinfo_module.read(cr, uid, partner_id, ['product_code'], context=context)['product_code'] or elem['default_code']
+        return res
+
+    def _get_partner_code_name(self, cr, uid, ids, partner_id, context=None):
+        '''
+        Get partner code, name and variants for each product id in ids.
+        @param ids: Ids of product.
+        @param partner_id: Id of partner.
+        :return: dict with ids in keys and a dict with code, name and variants
+        as values
+        '''
+        res = {}
+        if ids is not None:
+            read_result = self.read(cr, uid, ids, ['seller_ids', 'default_code', 'name', 'variants'], context=context)
+            for elem in read_result:
+                if not elem['seller_ids'] or not partner_id:
+                    res[elem['id']] = {
+                        'code': elem['default_code'],
+                        'name': elem['name'],
+                        'variants': elem['variants'],
+                    }
+                else:
+                    supplierinfo_module = self.pool.get('product.supplierinfo')
+                    for seller_id in elem['seller_ids']:
+                        if seller_id == partner_id:
+                            supplierinfo = supplierinfo_module.read(cr, uid, seller_id, ['product_code', 'product_name'], context=context)
+                            res[elem['id']] = {
+                                'code': supplierinfo and supplierinfo['product_code'] or elem['default_code'],
+                                'name': supplierinfo and supplierinfo['product_name'] or elem['name'],
+                                'variants': elem['variants'],
+                            }
         return res
 
     def _product_code(self, cr, uid, ids, name, arg, context=None):
-        res = {}
         if context is None:
             context = {}
-        for p in self.browse(cr, uid, ids, context=context):
-            res[p.id] = self._get_partner_code_name(cr, uid, [], p, context.get('partner_id', None), context=context)['code']
-        return res
+        partner_id = context.get('partner_id', None)
+        return self._get_partner_code(cr, uid, ids, partner_id, context=context)
 
     def _product_partner_ref(self, cr, uid, ids, name, arg, context=None):
         res = {}
         if context is None:
             context = {}
-        for p in self.browse(cr, uid, ids, context=context):
-            data = self._get_partner_code_name(cr, uid, [], p, context.get('partner_id', None), context=context)
-            if not data['variants']:
-                data['variants'] = p.variants
-            if not data['code']:
-                data['code'] = p.code
-            if not data['name']:
-                data['name'] = p.name
-            res[p.id] = (data['code'] and ('['+data['code']+'] ') or '') + \
+        partner_id = context.get('partner_id', None)
+        code_names_dict = self._get_partner_code_name(cr, uid, ids, partner_id, context=context)
+        for product_id, data in code_names_dict.items():
+            res[product_id] = (data['code'] and ('['+data['code']+'] ') or '') + \
                     (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
         return res
 
@@ -490,7 +532,8 @@ class product_product(osv.osv):
     def unlink(self, cr, uid, ids, context=None):
         unlink_ids = []
         unlink_product_tmpl_ids = []
-        for product in self.browse(cr, uid, ids, context=context):
+        for product in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['product_tmpl_id', 'id']):
             tmpl_id = product.product_tmpl_id.id
             # Check if the product is last product of this template
             other_product_ids = self.search(cr, uid, [('product_tmpl_id', '=',
@@ -512,8 +555,10 @@ class product_product(osv.osv):
 
         if uom_id and uom_po_id:
             uom_obj=self.pool.get('product.uom')
-            uom=uom_obj.browse(cursor,user,[uom_id])[0]
-            uom_po=uom_obj.browse(cursor,user,[uom_po_id])[0]
+            uom=uom_obj.browse(cursor,user,[uom_id],
+                    fields_to_fetch=['category_id'])[0]
+            uom_po=uom_obj.browse(cursor,user,[uom_po_id],
+                    fields_to_fetch=['category_id'])[0]
             if uom.category_id.id != uom_po.category_id.id:
                 res['value']['uom_po_id'] = uom_id
         return res
@@ -545,7 +590,9 @@ class product_product(osv.osv):
         partner_id = context.get('partner_id', False)
 
         result = []
-        for product in self.browse(cr, user, ids, context=context):
+        for product in self.browse(cr, user, ids, context=context,
+                fields_to_fetch=['seller_ids', 'id', 'name', 'default_code',
+                'variants']):
             sellers = filter(lambda x: x.name.id == partner_id, product.seller_ids)
             if sellers:
                 for s in sellers:
@@ -595,7 +642,8 @@ class product_product(osv.osv):
         if 'currency_id' in context:
             pricetype_obj = self.pool.get('product.price.type')
             price_type_id = pricetype_obj.search(cr, uid, [('field','=',ptype)])[0]
-            price_type_currency_id = pricetype_obj.browse(cr,uid,price_type_id).currency_id.id
+            price_type_currency_id = pricetype_obj.browse(cr,uid,price_type_id,
+                    fields_to_fetch=['currency_id']).currency_id.id
 
         res = {}
         product_uom_obj = self.pool.get('product.uom')
@@ -673,7 +721,8 @@ class product_packaging(osv.osv):
 
 
     def _check_ean_key(self, cr, uid, ids, context=None):
-        for pack in self.browse(cr, uid, ids, context=context):
+        for pack in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['ean']):
             res = check_ean(pack.ean)
         return res
 
@@ -683,7 +732,8 @@ class product_packaging(osv.osv):
         if not len(ids):
             return []
         res = []
-        for pckg in self.browse(cr, uid, ids, context=context):
+        for pckg in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['ean', 'ul', 'id']):
             p_name = pckg.ean and '[' + pckg.ean + '] ' or ''
             p_name += pckg.ul.name
             res.append((pckg.id,p_name))
@@ -717,7 +767,8 @@ class product_supplierinfo(osv.osv):
     def _calc_qty(self, cr, uid, ids, fields, arg, context=None):
         result = {}
         product_uom_pool = self.pool.get('product.uom')
-        for supplier_info in self.browse(cr, uid, ids, context=context):
+        for supplier_info in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['id', 'product_uom', 'min_qty', 'product_id']):
             for field in fields:
                 result[supplier_info.id] = {field:False}
             if supplier_info.product_uom.id:
@@ -753,7 +804,9 @@ class product_supplierinfo(osv.osv):
         'product_uom': _get_uom_id,
     }
     def _check_uom(self, cr, uid, ids, context=None):
-        for supplier_info in self.browse(cr, uid, ids, context=context):
+        for supplier_info in self.browse(cr, uid, ids, context=context,
+                                         fields_to_fetch=['product_uom',
+                                                          'product_id']):
             if supplier_info.product_uom and supplier_info.product_uom.category_id.id <> supplier_info.product_id.uom_id.category_id.id:
                 return False
         return True
@@ -776,7 +829,9 @@ class product_supplierinfo(osv.osv):
         pricelist_pool = self.pool.get('product.pricelist')
         currency_pool = self.pool.get('res.currency')
         currency_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
-        for supplier in partner_pool.browse(cr, uid, supplier_ids, context=context):
+        for supplier in partner_pool.browse(cr, uid, supplier_ids,
+                context=context,
+                fields_to_fetch=['property_product_pricelist_purchase', 'id']):
             # Compute price from standard price of product
             price = product_pool.price_get(cr, uid, [product_id], 'standard_price', context=context)[product_id]
 

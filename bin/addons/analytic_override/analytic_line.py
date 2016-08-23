@@ -250,6 +250,8 @@ class account_analytic_line(osv.osv):
         Verify date for all given ids with account.
         Check document_date and date validity.
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

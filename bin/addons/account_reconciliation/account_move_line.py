@@ -376,6 +376,8 @@ class account_move_reconcile(osv.osv):
         """
         Write reconcile_txt on linked account_move_lines if any changes on this reconciliation.
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

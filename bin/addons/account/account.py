@@ -577,6 +577,8 @@ class account_account(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -685,6 +687,8 @@ class account_journal(osv.osv):
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, context=context):
@@ -975,6 +979,8 @@ class account_period(osv.osv):
         return self.name_get(cr, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'company_id' in vals:
             move_lines = self.pool.get('account.move.line').search(cr, uid, [('period_id', 'in', ids)])
             if move_lines:
@@ -1052,6 +1058,8 @@ class account_journal_period(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self._check(cr, uid, ids, context=context)
         return super(account_journal_period, self).write(cr, uid, ids, vals, context=context)
 
@@ -1288,6 +1296,8 @@ class account_move(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         c = context.copy()
@@ -1913,6 +1923,8 @@ class account_tax(osv.osv):
         return self.name_get(cr, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)

@@ -750,6 +750,35 @@ def is_hashable(h):
     except TypeError:
         return False
 
+def _generate_keys(multi, dbname, kwargs2, reset_fields=[]):
+    """
+    Generate keys depending of the arguments and the mutli value
+    """
+
+    def to_tuple(d):
+        pairs = d.items()
+        pairs.sort(key=lambda (k,v): k)
+        for i, (k, v) in enumerate(pairs):
+            if isinstance(v, dict):
+                pairs[i] = (k, to_tuple(v))
+            if isinstance(v, (list, set)):
+                pairs[i] = (k, tuple(v))
+            elif not is_hashable(v):
+                pairs[i] = (k, repr(v))
+        return tuple(pairs)
+
+    if not multi:
+        key = (('dbname', dbname),) + to_tuple(kwargs2)
+        yield key, None
+    else:
+        multis = kwargs2[multi][:]
+        for id in multis:
+            kwargs2[multi] = (id,)
+            for reset_field in reset_fields:
+                kwargs2[reset_field] = None
+            key = (('dbname', dbname),) + to_tuple(kwargs2)
+            yield key, id
+
 class cache(object):
     """
     Use it as a decorator of the function you plan to cache
@@ -771,34 +800,6 @@ class cache(object):
         self.fun = None
         cache.__caches.append(self)
 
-
-    def _generate_keys(self, dbname, kwargs2):
-        """
-        Generate keys depending of the arguments and the self.mutli value
-        """
-
-        def to_tuple(d):
-            pairs = d.items()
-            pairs.sort(key=lambda (k,v): k)
-            for i, (k, v) in enumerate(pairs):
-                if isinstance(v, dict):
-                    pairs[i] = (k, to_tuple(v))
-                if isinstance(v, (list, set)):
-                    pairs[i] = (k, tuple(v))
-                elif not is_hashable(v):
-                    pairs[i] = (k, repr(v))
-            return tuple(pairs)
-
-        if not self.multi:
-            key = (('dbname', dbname),) + to_tuple(kwargs2)
-            yield key, None
-        else:
-            multis = kwargs2[self.multi][:]
-            for id in multis:
-                kwargs2[self.multi] = (id,)
-                key = (('dbname', dbname),) + to_tuple(kwargs2)
-                yield key, id
-
     def _unify_args(self, *args, **kwargs):
         # Update named arguments with positional argument values (without self and cr)
         kwargs2 = self.fun_default_values.copy()
@@ -814,7 +815,7 @@ class cache(object):
             keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
         else:
             kwargs2 = self._unify_args(*args, **kwargs)
-            keys_to_del = [key for key, _ in self._generate_keys(dbname, kwargs2) if key in self.cache.keys()]
+            keys_to_del = [key for key, _ in _generate_keys(self.multi, dbname, kwargs2) if key in self.cache.keys()]
 
         for key in keys_to_del:
             self.cache.pop(key)
@@ -847,7 +848,7 @@ class cache(object):
 
             result = {}
             notincache = {}
-            for key, id in self._generate_keys(cr.dbname, kwargs2):
+            for key, id in _generate_keys(self.multi, cr.dbname, kwargs2):
                 if key in self.cache:
                     result[id] = self.cache[key][0]
                 else:
@@ -871,6 +872,214 @@ class cache(object):
             if not self.multi:
                 return result[None]
             return result
+
+        cached_result.clear_cache = self.clear
+        return cached_result
+
+class read_cache(object):
+    """
+    Use it as a decorator of the function you plan to cache
+    Timeout: 0 = no timeout, otherwise in seconds
+    """
+
+    def __init__(self, prefetch=[], context=[], timeout=None, size=8192):
+        if timeout is None:
+            self.timeout = config['cache_timeout']
+        else:
+            self.timeout = timeout
+        self.lasttime = time.time()
+        self.cache = LRU(size)
+        self.fun = None
+        self._context = context
+
+    def _unify_args(self, *args, **kwargs):
+        # Update named arguments with positional argument values (without self and cr)
+        kwargs2 = self.fun_default_values.copy()
+        kwargs2.update(kwargs)
+        kwargs2.update(dict(zip(self.fun_arg_names, args)))
+        return kwargs2
+
+    def clear(self):
+        """clear the cache for all the databases (...)
+        """
+        keys_to_del = self.cache.keys()
+        for key in keys_to_del:
+            self.cache.pop(key)
+
+    def split_order_by_clause(self, order_by):
+        # we have to take into account the order whenever we fetch data
+        #  otherwise we won't be able to sort the result set
+        order_by = (order_by or '').strip()
+        if not order_by:
+            return []
+        else:
+            ret = []
+            fields = order_by.split(',')
+            for field in fields:
+                field = field.strip().split()
+                if len(field) == 1 or (len(field) == 2 and field[1].lower() == 'asc'):
+                    ret.append((True, field[0]))
+                elif len(field) == 2 and field[1].lower() == 'desc':
+                    ret.append((False, field[0]))
+            return ret
+
+    def sort_orderby(self, clause, rows):
+        def key_compare(row1, row2):
+            for asc, field in clause:
+                f1 = row1[field]
+                f2 = row2[field]
+                ret = cmp(f1, f2)
+                if ret != 0:
+                    return ret if asc else -ret
+            return 0
+        return sorted(rows, cmp=key_compare)
+
+    def filter_dict(self, keys_to_remove, rowset):
+        ret = []
+
+        for row in rowset:
+            new_row = dict(**row)
+            for field in keys_to_remove:
+                if field in new_row and field != 'id':
+                    new_row.pop(field)
+            ret.append(new_row)
+
+        return ret
+
+    def __call__(self, fn):
+        if self.fun is not None:
+            raise Exception("Can not use a cache instance on more than one function")
+        self.fun = fn
+
+        argspec = inspect.getargspec(fn)
+        # get rid of self and the database cursor
+        self.fun_arg_names = argspec[0][2:]
+        self.fun_default_values = {}
+        if argspec[3]:
+            self.fun_default_values = dict(zip(self.fun_arg_names[-len(argspec[3]):], argspec[3]))
+
+        self._sort = None
+
+        def cached_result(self2, cr, *args, **kwargs):
+            import time
+            if time.time()-int(self.timeout) > self.lasttime:
+                self.lasttime = time.time()
+                t = time.time()-int(self.timeout)
+                old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
+                for key in old_keys:
+                    self.cache.pop(key)
+
+            if self._sort is None:
+                order_by = self2._parent_order or self2._order
+                self._sort = order_by_clauses = self.split_order_by_clause(order_by)
+            else:
+                order_by_clauses = self._sort
+
+            kwargs2 = self._unify_args(*args, **kwargs)
+
+            # we have to keep in mind the fields that have to be returned
+            #  they will be erased when generating the key in the cache
+            if kwargs2['fields_to_read']:
+                fields_to_read = kwargs2['fields_to_read']
+            else:
+                fields_to_read = self2._columns.keys()
+
+            # if no field is required => we return all the fields
+            fields_pre = [f for f in fields_to_read if
+                               f == self2.CONCURRENCY_CHECK_FIELD
+                            or (f in self2._columns and getattr(self2._columns[f], '_classic_write'))
+                         ] + self2._inherits.values()
+
+            include_sort = False
+            fields_to_query = set(fields_to_read)
+            # we have to keep track of the fields that are used for sorting but
+            #  are not asked by the caller. We'll have to remove them in the returned
+            #  resultset.
+            fields_to_remove = set([])
+            if fields_pre:
+                include_sort = True
+
+                fields_to_add = map(lambda x : x[1], order_by_clauses)
+
+                for field_to_add in fields_to_add:
+                    if field_to_add not in fields_to_query:
+                        fields_to_remove.add(field_to_add)
+                        fields_to_query.add(field_to_add)
+            else:
+                ordered_ids = {}
+                for position, given_id in enumerate(kwargs2['ids']):
+                    ordered_ids[given_id] = position
+
+            previous_context = kwargs2['context']
+
+            # we have to check if we discard some values from the context
+            simplified_context = {}
+            for key, value in previous_context.iteritems():
+                if key in self._context:
+                    simplified_context[key] = value
+
+            # we have to remove from the context what doesn't impact the results
+            kwargs2['context'] = simplified_context
+
+            result = []
+            notincache = {}
+            for key, id in _generate_keys('ids', cr.dbname, kwargs2, ['fields_to_read']):
+                if key in self.cache:
+                    # we have to find if we have all the required fields in the cache
+                    values = self.cache[key][0]
+
+                    fields_already_in_the_cache = values.keys()
+
+                    if set(fields_to_query).issubset(set(fields_already_in_the_cache)):
+                        # all the values are already in the cache, we don't
+                        #  have to ask the DB for more information
+                        row = {'id': int(id)}
+                        for field in fields_to_query:
+                            row[field] = values[field]
+                        result.append(row)
+                    else:
+                        # we have to look for the new values
+                        #  we fetch all of them (not optimal since some fields
+                        #  could already exist)
+                        notincache[int(id)] = key
+                else:
+                    notincache[int(id)] = key
+
+            if notincache:
+                kwargs2['ids'] = notincache.keys()
+
+                kwargs2['fields_to_read'] = fields_to_query
+                kwargs2['context'] = previous_context
+
+                result2 = fn(self2, cr, **kwargs2)
+
+                # we have to add the new rows in the resultset
+                for id, value in map(lambda x : (x['id'], x), result2):
+                    key = notincache[int(id)]
+                    if key in self.cache:
+                        value_in_cache, t = self.cache[key]
+                    else:
+                        value_in_cache, t = {}, time.time()
+
+                    for field in fields_to_query:
+                        # sometimes we don't get the column we ask to fetch...
+                        #  (it happens with inherit_id for ir_action_window)
+                        if field in value:
+                            value_in_cache[field] = value[field]
+                    value_in_cache['id'] = int(id)
+
+                    self.cache[key] = (value_in_cache, t)
+
+                    result.append(value)
+
+            if include_sort:
+                return self.filter_dict(fields_to_remove, self.sort_orderby(order_by_clauses, result))
+            else:
+                # id we don't sort, we have to use the same order as the given IDs, otherwise
+                #  the search won't be sorted in the right order (they use only IDs at some points)
+                result.sort(key=lambda x : ordered_ids[x['id']])
+
+                return result
 
         cached_result.clear_cache = self.clear
         return cached_result
