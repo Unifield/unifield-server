@@ -209,7 +209,7 @@ class users(osv.osv):
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
         if not all(self.is_password_strong(value, login).values()):
             raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                    'Password must be diffrent from the login, it must contain '\
+                    'Password must be different from the login, it must contain '\
                     'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
         self.write(cr, uid, id, {'password': value})
 
@@ -444,7 +444,6 @@ class users(osv.osv):
         dataobj = self.pool.get('ir.model.data')
         data_id = dataobj._get_id(cr, 1, 'base', 'action_res_users_my')
         return dataobj.browse(cr, uid, data_id, context=context).res_id
-
 
     def login(self, db, login, password):
         if not password:
