@@ -48,11 +48,9 @@ class Root(SecuredController):
         """Index page, loads the view defined by `action_id`.
         """
         if not next:
-            read_result = rpc.RPCProxy("res.users").read([rpc.session.uid],
-                    ['action_id', 'force_password_change'], rpc.session.context)[0]
-            if read_result['force_password_change']:
-                next = '/openerp/pref/update_password'
-            elif read_result['action_id']:
+            read_result = rpc.RPCProxy("res.users").read(rpc.session.uid,
+                    ['action_id'], rpc.session.context)
+            if read_result['action_id']:
                 next = '/openerp/home'
         
         return self.menu(next=next)
@@ -97,7 +95,14 @@ class Root(SecuredController):
     @expose(template="/openerp/controllers/templates/index.mako")
     def menu(self, active=None, next=None):
         from openerp.widgets import tree_view
-        
+        if next == '/openerp/pref/update_password':
+            # in case the password must be changed, do not do others operations
+            cherrypy.session['terp_shortcuts']=[]
+            return dict(parents=[], tools={}, load_content=(next and next or ''),
+                        welcome_messages=None,
+                        show_close_btn=None,
+                        widgets=None,
+                        display_shortcut=False)
         try:
             id = int(active)
         except:
