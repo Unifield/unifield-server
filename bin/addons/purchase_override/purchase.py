@@ -3440,7 +3440,8 @@ class purchase_order_line(osv.osv):
                 ('procurement_id', '=', proc_id)],
                 context=context):
                 proc_id_to_cancel.add(proc_id)
-        proc_obj.action_cancel(cr, uid, list(proc_id_to_cancel))
+        if proc_id_to_cancel:
+            proc_obj.action_cancel(cr, uid, list(proc_id_to_cancel))
 
         self.write(cr, uid, ids, {'state': 'cancel'}, context=context)
         self.unlink(cr, uid, line_to_cancel, context=context)
