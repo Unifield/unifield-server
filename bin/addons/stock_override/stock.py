@@ -2840,8 +2840,8 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         # variables declarations
         pick_ids = []
 
-        for wiz in self.read(cr, uid, ids, ['picking_id'], context=context):
-            pick_ids.append(wiz['picking_id'][0])
+        for wiz in self.browse(cr, uid, ids, context=context):
+            pick_ids.append(wiz.picking_id.id)
 
         # Set the boolean 'has_to_be_resourced' to True for each picking
         vals = {'has_to_be_resourced': True}

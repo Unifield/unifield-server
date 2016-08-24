@@ -84,7 +84,7 @@ class stock_change_product_qty(osv.osv_memory):
         inventry_line_obj = self.pool.get('stock.inventory.line')
         prod_obj_pool = self.pool.get('product.product')
 
-        res_original = prod_obj_pool.browse(cr, uid, rec_id,
+        res_original = prod_obj_pool.read(cr, uid, rec_id,
                 ['name', 'uom_id'], context=context)
         for data in self.read(cr, uid, ids,
                 ['new_quantity', 'location_id', 'prodlot_id'], context=context):
@@ -92,10 +92,10 @@ class stock_change_product_qty(osv.osv_memory):
             line_data ={
                 'inventory_id' : inventory_id,
                 'product_qty' : data['new_quantity'],
-                'location_id' : data['location_id'][0],
+                'location_id' : data['location_id'],
                 'product_id' : rec_id,
                 'product_uom' : res_original['uom_id'][0],
-                'prod_lot_id' : data['prodlot_id'][0]
+                'prod_lot_id' : data['prodlot_id']
             }
             inventry_line_obj.create(cr , uid, line_data, context=context)
 
