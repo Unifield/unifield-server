@@ -824,7 +824,7 @@ class stock_picking(osv.osv):
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
+            so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner, context, True)
 
     def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         rule_obj = self.pool.get("sync.client.message_rule")

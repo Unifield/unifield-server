@@ -566,6 +566,7 @@ class purchase_order(osv.osv):
          @return: new purchase order id
 
         """
+        line_obj = self.pool.get('purchase.order.line')
         wf_service = netsvc.LocalService("workflow")
         def make_key(br, fields):
             list_key = []
@@ -615,6 +616,7 @@ class purchase_order(osv.osv):
                     order_infos['origin'] = (order_infos['origin'] or '') + ' ' + porder.origin
             order_infos = self._hook_order_infos(cr, uid, order_infos=order_infos, order_id=porder)
 
+            no_proc_ids = []
             for order_line in porder.order_line:
                 line_key = make_key(order_line, ('id', 'order_id', 'name', 'date_planned', 'taxes_id', 'price_unit', 'notes', 'product_id', 'move_dest_id', 'account_analytic_id'))
                 o_line = order_infos['order_line'].setdefault(line_key, {})
@@ -631,8 +633,11 @@ class purchase_order(osv.osv):
                         o_line[field] = field_val
                     o_line['uom_factor'] = order_line.product_uom and order_line.product_uom.factor or 1.0
                     o_line = self._hook_o_line_value(cr, uid, o_line=o_line, order_line=order_line)
+                if order_line.procurement_id:
+                    no_proc_ids.append(order_line.id)
 
-
+            if no_proc_ids:
+                line_obj.write(cr, uid, no_proc_ids, {'procurement_id': False}, context=context)
 
         allorders = []
         orders_info = {}

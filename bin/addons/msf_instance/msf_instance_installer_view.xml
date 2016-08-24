@@ -22,9 +22,25 @@
           </xpath>
           <group string="res_config_contents" position="replace">
               <group colspan="5">
-                <field name="instance_id" on_change="check_name(instance_id)"/>
+                <field name="instance_id" attrs="{'invisible': [('first_run', '=', False)]}"/>
+                <field name="first_run" invisible="1"/>
+                <field name="message" readonly="1" attrs="{'invisible': [('first_run', '=', True)]}"/>
+                <html>
+                <script language="javascript">
+                    var message = $('#message');
+                    if (message.val()) {
+                        message.css('color', '#f27d0c').css('font-weight', 'bold').css('border', 'none').css('font-size', '1.2em');
+                    }
+                </script>
+                </html>
               </group>
            </group>
+
+           <xpath expr='//button[@name="action_next"]'
+                       position='attributes'>
+                  <attribute name="name">action_check</attribute>
+           </xpath>
+
         </data>
       </field>
     </record>

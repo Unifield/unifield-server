@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_1388" model="patch.scripts">
+            <field name="method">us_1388_change_sequence_implementation</field>
+        </record>
+
         <record id="us_963" model="patch.scripts">
             <field name="method">update_us_963_negative_rule_seq</field>
         </record>
@@ -11,6 +15,10 @@
 
         <record id="another_other_translation_fix" model="patch.scripts">
             <field name="method">another_other_translation_fix</field>
+        </record>
+
+        <record id="another_other_translation_fix_bis" model="patch.scripts">
+            <field name="method">another_other_translation_fix_bis</field>
         </record>
 
         <record id="us_993_patch" model="patch.scripts">
@@ -73,11 +81,23 @@
         <record id="us_1452_patch" model="patch.scripts">
             <field name="method">us_1452_patch</field>
         </record>
-        
+
         <record id="us_1469_patch" model="patch.scripts">
             <field name="method">us_1469_restore_deleted_batch</field>
             <field name="model">stock.production.lot</field>
         </record>
-        
+
+        <record id="us_1430_patch" model="patch.scripts">
+            <field name="method">us_1430_patch</field>
+        </record>
+
+        <record id="sync_down_msfid" model="patch.scripts">
+            <field name="method">sync_down_msfid</field>
+        </record>
+
+        <record id="us_1421_lower_login" model="patch.scripts">
+            <field name="method">us_1421_lower_login</field>
+        </record>
+
     </data>
 </openerp>

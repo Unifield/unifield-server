@@ -14,6 +14,7 @@ from mako.template import Template
 from mako import exceptions
 from mako.runtime import Context
 
+from mako import filters
 from tools.misc import file_open
 import pooler
 import addons
@@ -21,6 +22,22 @@ import time
 import zipfile
 import tempfile
 import codecs
+import re
+
+# new mako filter |xn to escape html entities + replace \n by &#10;
+xml_escapes = {
+    '&' : '&amp;',
+    '>' : '&gt;',
+    '<' : '&lt;',
+    '"' : '&#34;',   # also &quot; in html-only
+    "'" : '&#39;',    # also &apos; in html-only
+    "\n": '&#10;'
+}
+def xml_escape_br(string):
+        return re.sub(r"([&<\"'>\n])", lambda m: xml_escapes[m.group()], string)
+filters.xml_escape_br = xml_escape_br
+filters.DEFAULT_ESCAPES['xn'] = 'filters.xml_escape_br'
+
 
 class SpreadsheetReport(WebKitParser):
     _fields_process = {
@@ -140,8 +157,12 @@ class SpreadsheetCreator(object):
         self.datas = datas
         self.title = title
 
-    def get_xml(self, default_filters=[]):
+
+    def get_xml(self, default_filters=None):
+        if default_filters is None:
+            default_filters = []
+
         f, filename = file_open('addons/spreadsheet_xml/report/spreadsheet_writer_xls.mako', pathinfo=True)
         f[0].close()
         tmpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8', default_filters=default_filters)
-        return tmpl.render(objects=self.datas, headers=self.headers, title= self.title)
+        return tmpl.render(objects=self.datas, headers=self.headers, title=self.title)

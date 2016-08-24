@@ -1118,6 +1118,7 @@ stock moves which are already processed : '''
                                   'validator' : uid,
                                   'date_confirm': strftime('%Y-%m-%d')}, context=context)
 
+        self.ssl_products_in_line(cr, uid, ids, context=context)
         self.check_analytic_distribution(cr, uid, ids, context=context)
 
         return True
@@ -1320,8 +1321,9 @@ stock moves which are already processed : '''
             if exp_sol.po_id and exp_sol.po_id.id not in all_po_ids:
                 all_po_ids.append(exp_sol.po_id.id)
         list_po_name = ', '.join([linked_po.name for linked_po in self.browse(cr, uid, all_po_ids, context) if linked_po.id != ids[0]])
-        self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
-                                 ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
+        if list_po_name:
+            self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
+                    ) % (self.read(cr, uid, ids, ['name'])[0]['name'], list_po_name))
         # sale order lines with modified state
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
@@ -2384,10 +2386,11 @@ stock moves which are already processed : '''
                   'confirmed_delivery_date', 'nomenclature_description', 'default_code',
                   'nomen_manda_0', 'nomen_manda_1', 'nomen_manda_2', 'nomen_manda_3',
                   'nomenclature_code', 'name', 'default_name', 'comment', 'date_planned',
-                  'to_correct_ok', 'text_error',
+                  'to_correct_ok', 'text_error', 'select_fo', 'project_ref', 'external_ref',
                   'nomen_sub_0', 'nomen_sub_1', 'nomen_sub_2', 'nomen_sub_3', 'nomen_sub_4',
                   'nomen_sub_5', 'procurement_id', 'change_price_manually', 'old_price_unit',
-                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id']
+                  'origin', 'account_analytic_id', 'product_id', 'company_id', 'notes', 'taxes_id',
+                  'link_so_id', 'from_fo', 'sale_order_line_id', 'tender_line_id', 'dest_partner_id']
 
         for field in fields:
             field_val = getattr(order_line, field)
@@ -2614,8 +2617,8 @@ class purchase_order_merged_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
         'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
-
     def create(self, cr, uid, vals, context=None):
+
         '''
         Set the line number to 0
         '''

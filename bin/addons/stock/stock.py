@@ -432,7 +432,7 @@ class stock_location(osv.osv):
                           WHERE location_dest_id=%s AND
                                 location_id<>%s AND
                                 product_id=%s AND
-                                state='done'
+                                state='done' AND (expired_date is null or expired_date >= now())
                           GROUP BY product_uom
                        """,
                        (id, id, product_id))
@@ -443,6 +443,7 @@ class stock_location(osv.osv):
                                 location_dest_id<>%s AND
                                 product_id=%s AND
                                 state in ('done', 'assigned')
+                                AND (expired_date is null or expired_date >= now())
                           GROUP BY product_uom
                        """,
                        (id, id, product_id))
@@ -2789,7 +2790,7 @@ class stock_inventory(osv.osv):
         'date_done': fields.datetime('Date done'),
         'inventory_line_id': fields.one2many('stock.inventory.line', 'inventory_id', 'Inventories', states={'done': [('readonly', True)]}),
         'move_ids': fields.many2many('stock.move', 'stock_inventory_move_rel', 'inventory_id', 'move_id', 'Created Moves'),
-        'state': fields.selection( (('draft', 'Draft'), ('done', 'Done'), ('confirm','Confirmed'),('cancel','Cancelled')), 'State', readonly=True, select=True),
+        'state': fields.selection( (('draft', 'Draft'), ('done', 'Done'), ('confirm','Validated'),('cancel','Cancelled')), 'State', readonly=True, select=True),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True, readonly=True, states={'draft':[('readonly',False)]}),
 
     }

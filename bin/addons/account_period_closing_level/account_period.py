@@ -115,7 +115,9 @@ class account_period(osv.osv):
                     self.write(cr, uid, ids, {'state_sync_flag': context['state']})
 
             if level == 'project':
-                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                # US-1499: block also the possibility to reopen the period at project if the FY is already in Mission Closed
+                self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
+                self.write(cr, uid, ids, {'state_sync_flag': 'none'})
 
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
@@ -514,7 +516,9 @@ class account_period(osv.osv):
 
     # Intermission voucher OUT
     def button_intermission_out(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'out_invoice', 'journal_type': 'intermission'})
+        domain_ivo = [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
+        context_ivo = {'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}
+        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), domain=domain_ivo, context=context_ivo)
 
     def button_supplier_refunds(self, cr, uid, ids, context=None):
         """

@@ -10083,9 +10083,13 @@ msgstr "S. Georgia & S. Sandwich Isls."
 msgid "Module Name"
 msgstr "Nom du Module"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,inactive_error:0
+msgid "System message"
+msgstr "Message système"
+
 #. modules: register_accounting, msf_field_access_rights, consumption_calculation, kit, analytic_distribution_invoice, msf_button_access_rights, msf_doc_import, tender_flow
 #: field:account.invoice.line,inactive_error:0
-#: field:real.average.consumption.line,inactive_error:0
 #: field:composition.item,inactive_error:0
 #: field:msf_button_access_rights.button_access_rule,comment:0
 #: field:initial.stock.inventory.line,inactive_error:0
@@ -14570,6 +14574,8 @@ msgstr "Certaines écritures sont déjà lettrées !"
 #. modules: msf_doc_import, register_accounting
 #: field:msf.doc.import.accounting,progression:0
 #: field:wizard.register.import,progression:0
+#: field:abstract.wizard.import,progression:0
+#: field:wizard.import.batch,progression:0
 msgid "Progression"
 msgstr "Progression"
 
@@ -23010,10 +23016,19 @@ msgid "You cannot have a register on the same period and the same journal!"
 msgstr "Vous ne pouvez pas avoir un registre sur la même période et le même journal !"
 
 #. module: register_accounting
-#: report:bank.reconciliation:0
 #: report:cash.inventory:0
 msgid "Journal code:"
 msgstr "Code du Journal:"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Bank journal code:"
+msgstr "Code du Journal de Banque :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Cheque journal code:"
+msgstr "Code du Journal de Chèques :"
 
 #. module: product_attributes
 #: selection:product.product,international_status:0
@@ -23484,6 +23499,54 @@ msgstr "Envoyer SMS"
 #: code:addons/purchase_msf/purchase_msf.py:55
 #: code:addons/purchase_msf/purchase_msf.py:87
 #: field:stock.move,inactive_error:0
+#: code:addons/msf_doc_import/account.py:72
+#: code:addons/msf_doc_import/account.py:201
+#: code:addons/msf_doc_import/account.py:234
+#: code:addons/msf_doc_import/account.py:480
+#: code:addons/msf_doc_import/stock_picking.py:60
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:60
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:296
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:321
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:327
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:333
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:352
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:379
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:77
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:254
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:258
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:785
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:788
+#: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:78
+#: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:612
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:140
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:157
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:141
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:154
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:165
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:174
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:183
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:81
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:162
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:170
+#: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:164
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:145
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:153
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:263
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:270
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:275
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:341
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:346
+#: selection:msf.doc.import.accounting,state:0
+#: field:purchase.import.xml.line,error_list:0
+#: field:purchase.line.import.xml.line,error_list:0
+#: view:sale.order:0
+#: view:sale.order.line:0
+#: field:tender.line,inactive_error:0
+#: selection:wizard.import.in.line.simulation.screen,type_change:0
+#: selection:wizard.import.in.simulation.screen,state:0
+#: selection:wizard.import.po.simulation.screen,state:0
+#: selection:wizard.import.po.simulation.screen.line,type_change:0
+#: selection:wizard.simu.import.po.line,change_type:0
 #, python-format
 msgid "Error"
 msgstr "Error"
@@ -29695,6 +29758,16 @@ msgstr "Le Délai de Paiement du Fournisseur ne contient pas de lignes de Délai
 msgid "Bank statement balance:"
 msgstr "Solde Registre de Banque: "
 
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Total amount of pending cheque:"
+msgstr "Montant total des chèques en attente :"
+
+#. module: register_accounting
+#: report:bank.reconciliation:0
+msgid "Calculated Balance - Pending cheque:"
+msgstr "Solde calculé - Chèques en attente :"
+
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:922
 #: code:addons/analytic_distribution/wizard/analytic_distribution_wizard.py:928
@@ -31082,6 +31155,16 @@ msgstr "Est-ce une Note de Débit?"
 #: model:ir.ui.menu,name:sync_client.update_menu
 #: view:sync.client.update_entity:0
 #: view:wizard.register.import:0
+#: view:wizard.import.auto.supply.line:0
+#: view:wizard.import.batch:0
+#: view:wizard.import.in.simulation.screen:0
+#: view:wizard.import.order.cycle.line:0
+#: view:wizard.import.pick.line:0
+#: view:wizard.import.po.simulation.screen:0
+#: view:wizard.import.product.list:0
+#: view:wizard.import.stock.warehouse.orderpoint.line:0
+#: view:wizard.import.supplier.catalogue:0
+#: view:wizard.import.threshold.value.line:0
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -38369,10 +38452,14 @@ msgstr "Line %s ignored: an error appeared in the Excel file. Details: %s\n"
 msgid "Currency table name"
 msgstr "Nom de la Table de la Devise"
 
+#. module: consumption_calculation
+#: field:real.average.consumption.line,remark:0
+msgid "Comment"
+msgstr "Remarque"
+
 #. modules: consumption_calculation, sale
 #: code:addons/consumption_calculation/consumption_calculation.py:359
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:75
-#: field:real.average.consumption.line,remark:0
 #: report:msf.consumption_report:0
 #, python-format
 msgid "Remark"
@@ -40074,16 +40161,20 @@ msgstr "Période de début"
 msgid "End Period"
 msgstr "Période de fin"
 
-#. module: account
+#. modules: account, msf_doc_import
 #: report:pl.account.horizontal:0
 #: report:pl.account:0
+#: field:abstract.wizard.import,start_date:0
+#: field:wizard.import.batch,start_date:0
 #, python-format
 msgid "Start Date"
 msgstr "Date de début"
 
-#. module: account
+#. modules: account, msf_doc_import
 #: report:pl.account.horizontal:0
 #: report:pl.account:0
+#: field:abstract.wizard.import,end_date:0
+#: field:wizard.import.batch,end_date:0
 #, python-format
 msgid "End Date"
 msgstr "Date de fin"
@@ -43769,6 +43860,17 @@ msgstr "consommation mensuelle réelle"
 #: field:real.average.consumption,state:0
 #: field:msf.doc.import.accounting,state:0
 #: field:wizard.import.po,state:0
+#: field:abstract.wizard.import,state:0
+#: field:wizard.import.auto.supply.line,state:0
+#: field:wizard.import.batch,state:0
+#: field:wizard.import.in.simulation.screen,state:0
+#: field:wizard.import.order.cycle.line,state:0
+#: field:wizard.import.pick.line,state:0
+#: field:wizard.import.po.simulation.screen,state:0
+#: field:wizard.import.product.list,state:0
+#: field:wizard.import.stock.warehouse.orderpoint.line,state:0
+#: field:wizard.import.supplier.catalogue,state:0
+#: field:wizard.import.threshold.value.line,state:0
 msgid "State"
 msgstr "État"
 
@@ -54466,6 +54568,54 @@ msgstr "Date Prévue de Colisage"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:258
 #: code:addons/register_accounting/wizard/wizard_register_import.py:265
 #: selection:wizard.register.import,state:0
+#: code:addons/msf_doc_import/account.py:72
+#: code:addons/msf_doc_import/account.py:201
+#: code:addons/msf_doc_import/account.py:234
+#: code:addons/msf_doc_import/account.py:480
+#: code:addons/msf_doc_import/stock_picking.py:60
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:60
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:296
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:321
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:327
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:333
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:352
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:379
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:77
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:254
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:258
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:785
+#: code:addons/msf_doc_import/wizard/stock_partial_picking.py:788
+#: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:78
+#: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:612
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:140
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:157
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:141
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:154
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:165
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:174
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:183
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:81
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:162
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:170
+#: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:164
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:145
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:153
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:263
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:270
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:275
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:341
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:346
+#: selection:msf.doc.import.accounting,state:0
+#: field:purchase.import.xml.line,error_list:0
+#: field:purchase.line.import.xml.line,error_list:0
+#: view:sale.order:0
+#: view:sale.order.line:0
+#: field:tender.line,inactive_error:0
+#: selection:wizard.import.in.line.simulation.screen,type_change:0
+#: selection:wizard.import.in.simulation.screen,state:0
+#: selection:wizard.import.po.simulation.screen,state:0
+#: selection:wizard.import.po.simulation.screen.line,type_change:0
+#: selection:wizard.simu.import.po.line,change_type:0
 #, python-format
 msgid "Error"
 msgstr "Erreur"
@@ -61444,6 +61594,13 @@ msgstr "Mouvement de stock correspondant"
 msgid "Information"
 msgstr "Information"
 
+#. module: msf_doc_import
+#: field:abstract.wizard.import,info_message:0
+#: view:wizard.import.batch:0
+#: field:wizard.import.batch,info_message:0
+msgid "Information"
+msgstr "Informations"
+
 #. module: base
 #: code:addons/base/module/wizard/base_language_install.py:55
 #, python-format
@@ -64572,6 +64729,11 @@ msgstr "Date - Début de Contrat"
 #: field:wizard.import.stock.warehouse.orderpoint.line,file:0
 #: view:wizard.import.threshold.value.line:0
 #: field:wizard.import.threshold.value.line,file:0
+#: field:abstract.wizard.import,import_file:0
+#: field:wizard.import.batch,import_file:0
+#: field:wizard.import.in.simulation.screen,file_to_import:0
+#: view:wizard.import.supplier.catalogue:0
+#: field:wizard.import.supplier.catalogue,file:0
 msgid "File to import"
 msgstr "Fichier à importer"
 
@@ -73794,3 +73956,463 @@ msgstr "Dans le sélecteur de montants (de - à), la valeur \"de\" doit être la
 #, python-format
 msgid "Not Created"
 msgstr "Non Créé"
+
+#. module: account
+#: code:addons/account/wizard/account_subscription_generate.py:0
+#, python-format
+msgid "The Recurring Model %s has no accounting lines!"
+msgstr "Le Modèle périodique %s n'a pas de lignes comptables !"
+
+#. module: account
+#: code:addons/account/wizard/account_subscription_generate.py:0
+#, python-format
+msgid "The entry is not balanced for the Recurring Model %s!"
+msgstr "L'écriture n'est pas équilibrée pour le Modèle périodique %s!"
+
+#. module: account_subscription
+#: code:addons/account_subscription/account_subscription.py:41
+#: code:addons/account_subscription/account_subscription.py:48
+#, python-format
+msgid "The value in the field \"Repeat\" must be greater than 0!"
+msgstr "La valeur dans le champ \"Périodicité\" doit être supérieure à 0 !"
+
+#. modules: account_override, account
+#: code:addons/account_override/account.py:0
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must have at least two lines."
+msgstr "L'écriture doit avoir au moins deux lignes."
+
+#. module: account
+#: code:addons/account/account.py:0
+#, python-format
+msgid "The entry must be balanced."
+msgstr "L'écriture doit être équilibrée."
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:56
+#, python-format
+msgid "PatchFailed: A script during upgrade has failed. Synchronization is forbidden. Please contact your administrator"
+msgstr "PatchFailed: Un script a échoué pendant la mise à jour. La synchronizsation est désactivée. Veuillez contacter votre administrateur"
+
+#. module: msf_doc_import
+#: model:ir.actions.act_window,name:msf_doc_import.action_wizard_import_batch
+#: model:ir.ui.menu,name:msf_doc_import.menu_action_wizard_import_batch
+#: view:wizard.import.batch:0
+msgid "Import Batch Numbers"
+msgstr "Importer Numéros de Lot"
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Select a file to import: "
+msgstr "Sélectionnez un fichier à importer: "
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Or download a template: "
+msgstr "Ou téléchargez le modèle: "
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Run import"
+msgstr "Démarrer l'import"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:336
+#, python-format
+msgid "No file to import. Please select a file or download the template file and fill it."
+msgstr "Aucun fichier à importer. Veuillez sélectionner un fichier ou télécharger le modèle et le remplir."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:168
+#, python-format
+msgid "The Type of the batch number should be 'Standard' or 'Internal'"
+msgstr "Le type du numéro de lot doit être 'Standard' ou 'Interne'"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:166
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:171
+#, python-format
+msgid "Standard"
+msgstr "Standard"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:166
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:173
+#, python-format
+msgid "Internal"
+msgstr "Interne"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:187
+#, python-format
+msgid "You cannot create a batch number for a product that is not 'Perishable' nor 'Batch mandatory'"
+msgstr "Vous ne pouvez pas créer un numéro de lot pour un produit dont le numéro de lot ni la date d'expiration ne sont obligatoires"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:192
+#, python-format
+msgid "You cannot create an 'Internal' batch number for a 'Batch mandatory' product"
+msgstr "Vous ne pouvez pas créer un numéro de lot 'Interne' pour un produit dont le numéro de lot n'est pas obligatoire"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:197
+#, python-format
+msgid "You cannot create a 'Standard' batch number for a non 'Batch mandatory' product"
+msgstr "Vous ne pouvez pas créer un numéro de lot 'Standard' pour un produit dont le numéro de lot n'est pas obligatoire"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:202
+#, python-format
+msgid "For a 'Standard' batch number, you have to define value in the 'Name' column"
+msgstr "Pour un numéro de lot 'Standard', vous devez définir une valeur dans la colonne 'Nom'"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1147
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1222
+#, python-format
+msgid "A batch is defined on the imported file but the product doesn't require batch number - Batch ignored"
+msgstr "Un numéro de lot est défini dans le fichier importé mais le produit ne requiert pas de numéro de lot - Numéro de lot ignoré"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:225
+#, python-format
+msgid "Name of the batch will be ignored because the batch is 'Internal' so name is created by the system"
+msgstr "Le nom du numéro de lot sera ignoré car le numéro de lot est 'Interne' danc le nom est créé par le système"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:218
+#, python-format
+msgid "A batch number with the same parameters already exists in the system"
+msgstr "Un numéro de lot avec les mêmes paramèters existe déjà dans le système"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:258
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:264
+#, python-format
+msgid "Line %s: %s"
+msgstr "Ligne %s : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:54
+#, python-format
+msgid "Defined type of header '%s' is not in the list of possible type: %s - Please contact\n"
+"your support team and give us this message.\n"
+"            "
+msgstr "Le type d'en-tête \'%s\' n'est pas dans la liste des types possibles : %s - Veuillez contacter\n"
+"votre équipe de support et leur indiquer ce message.\n"
+"            "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:100
+#, python-format
+msgid "The column '%s' is required"
+msgstr "La colonne '%s' est obligatoire"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:120
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:122
+#, python-format
+msgid "The date format was not correct"
+msgstr "Le format de date n'est pas correct"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,model_name:0
+#: field:wizard.import.batch,model_name:0
+msgid "Model to import"
+msgstr "Modèle à importer"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,parent_model_name:0
+#: field:wizard.import.batch,parent_model_name:0
+msgid "Model of the parent"
+msgstr "Nodèle du parent"
+
+#. module: msf_doc_import
+#: help:abstract.wizard.import,parent_model_name:0
+#: help:wizard.import.batch,parent_model_name:0
+msgid "To go back to the parent when the window is closed"
+msgstr "Pour revenir au parent quand la fenêtre est fermée"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,parent_record_id:0
+#: field:wizard.import.batch,parent_record_id:0
+msgid "ID of the parent record"
+msgstr "ID de l'enregistrement parent"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,template_file:0
+#: field:wizard.import.batch,template_file:0
+msgid "Template file"
+msgstr "Fichier modèle"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,template_filename:0
+#: field:wizard.import.batch,template_filename:0
+msgid "Template filename"
+msgstr "Nom du fichier modèle"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,error_message:0
+#: field:msf.doc.import.accounting,error_ids:0
+#: field:wizard.import.batch,error_message:0
+msgid "Errors"
+msgstr "Erreurs"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,warning_message:0
+#: field:wizard.import.batch,warning_message:0
+msgid "Warnings"
+msgstr "Avertissements"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,total_lines_to_import:0
+#: field:wizard.import.batch,total_lines_to_import:0
+msgid "# of lines to import"
+msgstr "# de ligens à importer"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,total_lines_imported:0
+#: field:wizard.import.batch,total_lines_imported:0
+msgid "# of lines imported"
+msgstr "# de lignes importées"
+
+#. module: msf_doc_import
+#: selection:abstract.wizard.import,state:0
+#: selection:wizard.import.batch,state:0
+msgid "Not started"
+msgstr "Non démarré"
+
+#. module: msf_doc_import
+#: selection:wizard.import.auto.supply.line,state:0
+#: selection:wizard.import.order.cycle.line,state:0
+#: selection:wizard.import.pick.line,state:0
+#: selection:wizard.import.product.list,state:0
+#: selection:wizard.import.stock.warehouse.orderpoint.line,state:0
+#: selection:wizard.import.supplier.catalogue,state:0
+#: selection:wizard.import.threshold.value.line,state:0
+msgid "In Progress"
+msgstr "En cours"
+
+#. module: msf_doc_import
+#: selection:abstract.wizard.import,state:0
+#: selection:wizard.import.auto.supply.line,state:0
+#: selection:wizard.import.batch,state:0
+#: selection:wizard.import.in.simulation.screen,state:0
+#: selection:wizard.import.order.cycle.line,state:0
+#: selection:wizard.import.pick.line,state:0
+#: selection:wizard.import.po.simulation.screen,state:0
+#: selection:wizard.import.product.list,state:0
+#: selection:wizard.import.stock.warehouse.orderpoint.line,state:0
+#: selection:wizard.import.supplier.catalogue,state:0
+#: selection:wizard.import.threshold.value.line,state:0
+msgid "Done"
+msgstr "Terminé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:280
+#, python-format
+msgid "Not allowed"
+msgstr "Non autorisé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:281
+#, python-format
+msgid "You cannot duplicate a %s document!"
+msgstr "Vous ne pouvez pas dupliquer un document %s !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:297
+#, python-format
+msgid "No 'run_import' action is defined for the object '%s'!"
+msgstr "Aucune action 'run_import' n'est définie pour l'objet '%s'!"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:328
+#, python-format
+msgid "Import can be run only on draft wizard."
+msgstr "L'important ne peut être effectué que sur des assistants en état 'Non démarré'"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:334
+#, python-format
+msgid "The given file seems not to be encoding in UTF-8. Please check the encoding of the file and re-try."
+msgstr "Le fichier donnée ne semble pas être encodé en UTF-8. Veuillez vérifier l'encodage du fichie et réessayez."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:396
+#, python-format
+msgid "Line is empty"
+msgstr "La ligne est vide"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:399
+#, python-format
+msgid "Number of columns (%s) in the line are larger than expected (%s)."
+msgstr "Le nombre de colonnes (%s) de la ligne est plus grand qu'attendu (%s)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:428
+#, python-format
+msgid "No product found for the code '%s'"
+msgstr "Aucun produit trouvé pour le code '%s'"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:36
+#, python-format
+msgid "get_import_batch_headers_name"
+msgstr "Numéro de lot"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
+#, python-format
+msgid "get_import_batch_headers_product_code"
+msgstr "Code du produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:38
+#, python-format
+msgid "get_import_batch_headers_product_desc"
+msgstr "Description du produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
+#, python-format
+msgid "get_import_batch_headers_life_date"
+msgstr "Date d'expiration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:40
+#, python-format
+msgid "get_import_batch_headers_type"
+msgstr "Type"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:285
+#, python-format
+msgid "no data will be imported until all the error messages are corrected"
+msgstr "aucune donnée ne sera importée tant que toutes les erreurs ne seront pas corrigées"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:54
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:57
+#: field:wizard.simu.import.po.line,import_product_code:0
+#: field:wizard.simu.import.po.line,initial_product_code:0
+#, python-format
+msgid "Product Code"
+msgstr "Code du produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:38
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:55
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:58
+#: field:wizard.simu.import.po.line,import_product_name:0
+#: field:wizard.simu.import.po.line,initial_product_name:0
+#, python-format
+msgid "Product Description"
+msgstr "Description du produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
+#, python-format
+msgid "Life Date"
+msgstr "Date d'expiration"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:40
+#, python-format
+msgid "Type"
+msgstr "Type"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,show_error:0
+#: field:wizard.import.batch,show_error:0
+msgid "Show error message ?"
+msgstr "Voir les messages d'erreurs ?"
+
+#. module: msf_doc_import
+#: field:abstract.wizard.import,show_warning:0
+#: field:wizard.import.batch,show_warning:0
+msgid "Show warning message ?"
+msgstr "Voir les avertissements ?"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:260
+#, python-format
+msgid "Select a file to import and click on 'Run import' button."
+msgstr "Sélectionnez un fichier à importer et cliquez sur le bouton 'Démarrer l'import'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:276
+#, python-format
+msgid "imported"
+msgstr "importées"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:276
+#, python-format
+msgid "without errors"
+msgstr "sans erreurs"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:269
+#, python-format
+msgid "Processing of file completed in %s second(s)!\n"
+"- Total lines to import: %s\n"
+"- Total lines %s: %s %s\n"
+"- Total lines with errors: %s %s\n"
+"%s\n"
+"        "
+msgstr "Traitement du fichier terminé en %s seconde(s) !\n"
+"- Nombre de lignes à importer : %s\n"
+"- Nombre de lignes %s : %s %s\n"
+"- Nombre de lignes avec erreurs : %s %s\n"
+"%s\n"
+"        "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:279
+#, python-format
+msgid "(%s line(s) with warning - see warning messages below)"
+msgstr "(%s ligne(s) avec des avertissements - voir les avertissements ci-dessous)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:283
+#, python-format
+msgid "(see error messages below)"
+msgstr "(voir les erreurs ci-dessous)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:234
+#, python-format
+msgid "Name of the batch will be ignored because the batch is 'Internal' so name is created by the system"
+msgstr "Le nom du batch sera ignoré car le batch est 'Interne' donc son nom sera créé par le système"
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Warning messages"
+msgstr "Messages d'avertissement"
+
+#. module: msf_doc_import
+#: view:wizard.import.batch:0
+msgid "Error messages"
+msgstr "Messages d'erreur"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:104
+#, python-format
+msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue tu use Unifield"
+msgstr "Traitement en cours, veuillez laisser cette fenêtre ouverte et cliquez sur le bouton 'Mettre à jour' pour voir la progression de l'import. Sinon, vous pouvez continuer d'utiliser Unifield"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:385
+#, python-format
+msgid "The column '%s' of the Excel file should be '%s', not '%s'."
+msgstr "La colonne '%s' du fichier Excel doit être '%s', pas '%s'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:381
+#, python-format
+msgid "The column '%s' is not present in the file."
+msgstr "La colonne '%s' n'est pas présente dans le fichier."

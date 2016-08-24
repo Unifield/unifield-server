@@ -320,6 +320,21 @@ class account_period(osv.osv):
 
 account_period()
 
+#UF-1358: Track changes also for account move and account move line
+class account_move(osv.osv):
+    _name = 'account.move'
+    _inherit = 'account.move'
+    _trace = True
+
+account_move()
+
+class account_move_line(osv.osv):
+    _name = 'account.move.line'
+    _inherit = 'account.move.line'
+    _trace = True
+
+account_move_line()
+
 
 class ir_module(osv.osv):
     _inherit = 'ir.module.module'

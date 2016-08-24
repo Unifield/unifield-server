@@ -31,6 +31,7 @@ from threading import Lock
 
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
+    _logger = logging.getLogger('patch_scripts')
 
     _columns = {
         'model': fields.text(string='Model', required=True),
@@ -42,14 +43,48 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
+        """
+        change the implementation of the finance.ocb.export ir_sequence to be
+        psql (instead of no_gap
+        """
+        seq_obj = self.pool.get('ir.sequence')
+        # get the ir_sequence id
+        seq_id_list = seq_obj.search(cr, uid,
+                [('code', '=', 'finance.ocb.export')])
+        if seq_id_list:
+            seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
+
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
         ps_ids = ps_obj.search(cr, uid, [('run', '=', False)])
         for ps in ps_obj.read(cr, uid, ps_ids, ['model', 'method']):
             method = ps['method']
             model_obj = self.pool.get(ps['model'])
-            getattr(model_obj, method)(cr, uid, *a, **b)
-            self.write(cr, uid, [ps['id']], {'run': True})
+            try:
+                getattr(model_obj, method)(cr, uid, *a, **b)
+                self.write(cr, uid, [ps['id']], {'run': True})
+            except Exception as e:
+                err_msg = 'Error with the patch scripts %s.%s :: %s' % (ps['model'], ps['method'], e)
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
+
+    def us_1421_lower_login(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        logger = logging.getLogger('update login')
+        cr.execute('select id, login from res_users')
+        for d in cr.fetchall():
+            lower_login = tools.ustr(d[1]).lower()
+            if tools.ustr(d[1]) == lower_login:
+                continue
+            if user_obj.search(cr, uid, [('login', '=', lower_login), ('active', 'in', ['t', 'f'])]):
+                logger.warn('Login of user id %s not changed because of duplicates' % (d[0], ))
+            else:
+                cr.execute('update res_users set login=%s where id=%s', (lower_login, d[0]))
+        return True
 
     def us_993_patch(self, cr, uid, *a, **b):
         # set no_update to True on USB group_type not to delete it on
@@ -204,6 +239,30 @@ class patch_scripts(osv.osv):
         # by re-sending state and create the missing period_states
         period_ids = period_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
         period_state_obj.update_state(cr, uid, period_ids)
+
+    def sync_down_msfid(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            # TEST ONLY
+            #cr.execute('update product_product set msfid=id')
+
+            # on prod: only UniData product
+            cr.execute("""update ir_model_data set touched='[''msfid'']',
+                last_modification=now()
+                where module='sd' and model='product.product' and
+                res_id in (
+                    select id from product_product where international_status = %s and coalesce(msfid,0) != 0
+                )""", (unidata_id, ))
+        return True
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
@@ -515,7 +574,6 @@ class patch_scripts(osv.osv):
         if self.pool.get('sync.client.update_received'):
             cr.execute("update sync_client_update_received set rule_sequence=-rule_sequence where is_deleted='t'")
 
-
     def another_translation_fix(self, cr, uid, *a, **b):
         if self.pool.get('sync.client.update_received'):
             ir_trans = self.pool.get('ir.translation')
@@ -528,6 +586,17 @@ class patch_scripts(osv.osv):
                 res_id = ir_trans._get_res_id(cr, uid, name=x[2], sdref=x[1])
                 if res_id:
                     cr.execute('update ir_translation set res_id=%s where id=%s', (res_id, x[0]))
+        return True
+
+    def another_other_translation_fix_bis(self, cr, uid, *a, **b):
+        c = self.pool.get('res.users').browse(cr, uid, uid).company_id
+        instance_name = c and c.instance_id and c.instance_id.name or ''
+        logger = logging.getLogger('update')
+        if instance_name.startswith('OCG'):
+            logger.warn('Execute US-1527 script')
+            self.another_other_translation_fix(cr, uid, *a, **b)
+        else:
+            logger.warn('Do not execute US-1527 script')
         return True
 
     def another_other_translation_fix(self, cr, uid, *a, **b):
@@ -667,8 +736,42 @@ class patch_scripts(osv.osv):
         if setup_br:
             sale_percent = 1 + (setup_br.sale_price/100.00)
 
+
         sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
-        cr.execute(sql, (sale_percent,))
+        cr.execute(sql, (sale_percent, ))
+        return True
+
+    def us_1430_patch(self, cr, uid, *a, **b):
+        """
+        Resync. all ir.translation related to product.template,name of Local products
+        """
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'coordo':
+            cr.execute("""
+                UPDATE ir_model_data
+                    SET touched = '[''src'']', last_modification = now()
+                    WHERE model = 'ir.translation' AND res_id IN (
+                        SELECT t.id FROM ir_translation t
+                            LEFT JOIN product_template pt ON pt.id = t.res_id
+                            LEFT JOIN product_product pp ON pp.product_tmpl_id = pt.id
+                            LEFT JOIN product_international_status s ON s.id = pp.international_status
+                            LEFT JOIN ir_model_data d ON d.res_id = s.id
+                        WHERE
+                            t.name = 'product.template,name'
+                          AND
+                            d.model = 'product.international.status'
+                          AND
+                            d.name = 'int_4'
+                          AND
+                            d.module = 'product_attributes')""")
+
         return True
 
 patch_scripts()
