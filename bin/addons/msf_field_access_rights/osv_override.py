@@ -305,20 +305,22 @@ def write(self, cr, uid, ids, vals, context=None):
             # remove the blacklisted fields
             diff_properties = list(set(diff_properties).difference(fields_blacklist))
 
-            # get the fields with write_access=False
-            cr.execute("""SELECT DISTINCT field_name
-                          FROM msf_field_access_rights_field_access_rule_line
-                          WHERE write_access='f' AND
-                          field_access_rule in %s AND
-                          field_name in %s
-                    """, (tuple(rules_search), tuple(diff_properties)))
-            no_write_access_fields = [x[0] for x in cr.fetchall()]
+            if diff_properties:
 
-            for field_name in no_write_access_fields:
-                if not _values_equate(columns[field_name]._type,
-                        old_values[field_name], vals[field_name]):
-                    # throw access denied error
-                    raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
+                # get the fields with write_access=False
+                cr.execute("""SELECT DISTINCT field_name
+                              FROM msf_field_access_rights_field_access_rule_line
+                              WHERE write_access='f' AND
+                              field_access_rule in %s AND
+                              field_name in %s
+                        """, (tuple(rules_search), tuple(diff_properties)))
+                no_write_access_fields = [x[0] for x in cr.fetchall()]
+
+                for field_name in no_write_access_fields:
+                    if not _values_equate(columns[field_name]._type,
+                            old_values[field_name], vals[field_name]):
+                        # throw access denied error
+                        raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if update_execution:
