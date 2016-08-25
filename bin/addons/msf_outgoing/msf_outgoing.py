@@ -4669,21 +4669,25 @@ class stock_move(osv.osv):
         else:
             warehouse_id = warehouse_obj.search(cr, uid, [], context=context)[0]
         if not auto_company:
-            res.update({'location_output_id': warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_output_id'][0]})
+            res.update({'location_output_id': warehouse_obj.read(cr, uid,
+                warehouse_id, ['lot_output_id'], context=context)['lot_output_id'][0]})
 
         loc_virtual_ids = self.pool.get('stock.location').search(cr, uid, [('name', '=', 'Virtual Locations')])
         loc_virtual_id = len(loc_virtual_ids) > 0 and loc_virtual_ids[0] or False
         res.update({'location_virtual_id': loc_virtual_id})
 
         if 'type' in context and context.get('type', False) == 'out':
-            loc_stock_id = warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_stock_id'][0]
+            loc_stock_id = warehouse_obj.read(cr, uid,
+                warehouse_id, ['lot_stock_id'], context=context)['lot_stock_id'][0]
             res.update({'location_id': loc_stock_id})
 
         if 'subtype' in context and context.get('subtype', False) == 'picking':
-            loc_packing_id = warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_packing_id'][0]
+            loc_packing_id = warehouse_obj.read(cr, uid, warehouse_id,
+                ['lot_packing_id'], context=context)['lot_packing_id'][0]
             res.update({'location_dest_id': loc_packing_id})
         elif 'subtype' in context and context.get('subtype', False) == 'standard' and not auto_company:
-            loc_output_id = warehouse_obj.read(cr, uid, warehouse_id, context=context)['lot_output_id'][0]
+            loc_output_id = warehouse_obj.read(cr, uid, warehouse_id,
+                ['lot_output_id'], context=context)['lot_output_id'][0]
             res.update({'location_dest_id': loc_output_id})
 
         return res
