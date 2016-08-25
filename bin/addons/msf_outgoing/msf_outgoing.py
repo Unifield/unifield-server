@@ -4569,21 +4569,28 @@ class stock_move(osv.osv):
     def _get_qty_per_pack(self, cr, uid, ids, field, arg, context=None):
         result = {}
         for move in self.read(cr, uid, ids, ['to_pack', 'from_pack', 'product_qty'], context=context):
-            default_values = {
-                'qty_per_pack': 0.0,
-                'num_of_packs': 0,
-            }
-            result[move['id']] = default_values
+            result[move['id']] = 0.0
             # number of packs with from/to values (integer)
             if move['to_pack'] == 0:
                 num_of_packs = 0
             else:
                 num_of_packs = move['to_pack'] - move['from_pack'] + 1
                 if num_of_packs:
-                    result[move['id']]['qty_per_pack'] = move['product_qty'] / num_of_packs
+                    result[move['id']] = move['product_qty'] / num_of_packs
                 else:
-                    result[move['id']]['qty_per_pack'] = 0
-            result[move['id']]['num_of_packs'] = num_of_packs
+                    result[move['id']] = 0
+        return result
+
+    def _get_num_of_pack(self, cr, uid, ids, field, arg, context=None):
+        result = {}
+        for move in self.read(cr, uid, ids, ['to_pack', 'from_pack'], context=context):
+            result[move['id']] = 0
+            # number of packs with from/to values (integer)
+            if move['to_pack'] == 0:
+                num_of_packs = 0
+            else:
+                num_of_packs = move['to_pack'] - move['from_pack'] + 1
+            result[move['id']] = num_of_packs
         return result
 
     def _get_danger(self, cr, uid, ids, fields, arg, context=None):
@@ -4707,10 +4714,10 @@ class stock_move(osv.osv):
                 'backmove_packing_id': fields.many2one('stock.move', string='Corresponding move of previous step in draft packing'),
                 # functions
                 'virtual_available': fields.function(_product_available, method=True, type='float', string='Virtual Stock', help="Future stock for this product according to the selected locations or all internal if none have been selected. Computed as: Real Stock - Outgoing + Incoming.", multi='qty_available', digits_compute=dp.get_precision('Product UoM')),
-                'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p', multi='qty_pack',),
+                'qty_per_pack': fields.function(_get_qty_per_pack, method=True, type='float', string='Qty p.p'),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
                 'amount': fields.function(_vals_get, method=True, type='float', string='Pack Amount', digits_compute=dp.get_precision('Picking Price'), multi='get_vals',),
-                'num_of_packs': fields.function(_get_qty_per_pack, method=True, type='integer', string='#Packs', multi='qty_pack',),  # old_multi get_vals
+                'num_of_packs': fields.function(_get_num_of_pack, method=True, type='integer', string='#Packs'),  # old_multi get_vals
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
                 'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
                 'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
