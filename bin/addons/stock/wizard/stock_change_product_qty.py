@@ -92,10 +92,10 @@ class stock_change_product_qty(osv.osv_memory):
             line_data ={
                 'inventory_id' : inventory_id,
                 'product_qty' : data['new_quantity'],
-                'location_id' : data['location_id'][0],
+                'location_id' : data['location_id'],
                 'product_id' : rec_id,
                 'product_uom' : res_original['uom_id'][0],
-                'prod_lot_id' : data['prodlot_id'][0]
+                'prod_lot_id' : data['prodlot_id']
             }
             inventry_line_obj.create(cr , uid, line_data, context=context)
 
