@@ -3645,8 +3645,8 @@ class orm(orm_template):
         pool_ir_values = self.pool.get('ir.values')
         for sub_ids in cr.split_for_in_conditions(ids):
             # delete the related attachements
-            cr.execute('DELETE FROM ir_attachment WHERE res_id IN %s',
-                    (sub_ids,))
+            cr.execute('DELETE FROM ir_attachment WHERE res_id IN %s AND res_model = %s',
+                    (sub_ids, self._name))
 
             cr.execute('DELETE FROM ' + self._table + ' ' \
                        'WHERE id IN %s', (sub_ids,))
