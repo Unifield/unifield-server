@@ -1484,7 +1484,7 @@ class stock_picking(osv.osv):
             if pick.state == 'assigned':
                 infolog_message = ''.join((type_list.get(pick.type, _('Document')), " id:", str(pick.id) or 'False', " '", (pick.name or '?'), "' "))
             if pick.min_date:
-                msg = ''.join((_(' for the '), datetime.strptime(pick['min_date'], '%Y-%m-%d %H:%M:%S').strftime(date_format).decode('utf-8')))
+                msg = ''.join((_(' for the '), datetime.strptime(pick.min_date, '%Y-%m-%d %H:%M:%S').strftime(date_format).decode('utf-8')))
             state_list = {
                 'confirmed': _("is scheduled") + msg +'.',
                 'assigned': _('is ready to process.'),

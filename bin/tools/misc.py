@@ -750,11 +750,13 @@ def is_hashable(h):
     except TypeError:
         return False
 
-def _generate_keys(multi, dbname, kwargs2, reset_fields=[]):
+def _generate_keys(multi, dbname, kwargs2, reset_fields=None):
     """
     Generate keys depending of the arguments and the mutli value
     """
 
+    if reset_fields is None:
+        reset_fields = []
     def to_tuple(d):
         pairs = d.items()
         pairs.sort(key=lambda (k,v): k)
@@ -882,7 +884,11 @@ class read_cache(object):
     Timeout: 0 = no timeout, otherwise in seconds
     """
 
-    def __init__(self, prefetch=[], context=[], timeout=None, size=8192):
+    def __init__(self, prefetch=None, context=None, timeout=None, size=8192):
+        if prefetch is None:
+            prefetch = []
+        if context is None:
+            context = []
         if timeout is None:
             self.timeout = config['cache_timeout']
         else:
@@ -961,7 +967,6 @@ class read_cache(object):
         self._sort = None
 
         def cached_result(self2, cr, *args, **kwargs):
-            import time
             if time.time()-int(self.timeout) > self.lasttime:
                 self.lasttime = time.time()
                 t = time.time()-int(self.timeout)

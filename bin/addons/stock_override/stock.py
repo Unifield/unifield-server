@@ -1351,7 +1351,7 @@ class stock_move(osv.osv):
         pick_ids_add = pick_ids.add
         product_ids = set()
         product_ids_add = product_ids.add
-        for stock_move_dict in self.read(cr, uid, ids, ('picking_id', 'product_id'),
+        for stock_move_dict in self.read(cr, uid, ids, ['picking_id', 'product_id'],
                                         context=context):
             if stock_move_dict['picking_id']:
                 pick_ids_add(stock_move_dict['picking_id'][0])
@@ -2841,7 +2841,7 @@ class stock_picking_cancel_wizard(osv.osv_memory):
         pick_ids = []
 
         for wiz in self.read(cr, uid, ids, ['picking_id'], context=context):
-            pick_ids.append(wiz['picking_id'][0])
+            pick_ids.append(wiz['picking_id'])
 
         # Set the boolean 'has_to_be_resourced' to True for each picking
         vals = {'has_to_be_resourced': True}
