@@ -5,6 +5,7 @@
         href="javascript: void(0)"
         title="${help}"
         onclick="buttonClicked('${name}', '${btype}', '${model}', '${id}', getNodeAttribute(this, 'confirm'), '${target}', getNodeAttribute(this, 'context'));"
+        oncontextmenu="showBtnSdref(event, '${name}', '${model}', '${id}');"
         style="height: 20px;"
         ${py.attrs(attrs, confirm=confirm, context=ctx)}>
     % if string:
