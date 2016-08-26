@@ -1519,9 +1519,15 @@ class stock_move(osv.osv):
         return True
 
     @check_cp_rw
-    def confirm_and_force_assign(self, cr, uid, ids, context=None):
-        '''avoid multiple write by calling it only once'''
-
+    def confirm_and_force_assign(self, cr, uid, ids, context=None, vals=None):
+        '''
+        when action_confirm and force_assign are both called, it is faster to
+        use confirm_and_force_assign to do only one write per move.
+        '''
+        if not context:
+            context = {}
+        if vals is None:
+            vals = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         self.check_product_quantity(cr, uid, ids, context=context)
@@ -1532,9 +1538,11 @@ class stock_move(osv.osv):
 
         # if ids and ids_assign are equal, it is possible to call one write on
         # all ids
+        res = []
         if set(ids) == set(ids_assign):
-            res = super(stock_move, self).confirm_and_force_assign(cr, uid,
-                    ids=ids, context=context, vals=vals)
+            self.prepare_action_confirm(cr, uid, ids, context)
+            vals.update({'state': 'assigned'})
+            self.write(cr, uid, ids, vals)
         else:
             res = super(stock_move, self).action_confirm(cr, uid,
                     ids=ids, context=context, vals=vals)
