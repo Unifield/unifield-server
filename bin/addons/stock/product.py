@@ -192,7 +192,6 @@ class product_product(osv.osv):
 
         if not('in' in what or 'out' in what):
             return res
-
         stock_warehouse_obj = self.pool.get('stock.warehouse')
         stock_location_obj = self.pool.get('stock.location')
         if context.get('shop', False):
@@ -231,11 +230,12 @@ class product_product(osv.osv):
             location_ids = child_location_ids or location_ids
 
         results = []
+        results2 = []
         from_date = context.get('from_date',False)
         to_date = context.get('to_date',False)
         date_str = False
         date_values = False
-        where = [tuple(location_ids), tuple(location_ids), tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
+        where = [tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
         if from_date and to_date:
             date_str = "date>=%s AND date<=%s"
             where.append(tuple([from_date]))
@@ -248,25 +248,35 @@ class product_product(osv.osv):
             date_str = "date<=%s"
             date_values = [to_date]
             where.append(tuple(date_values))
-
         prodlot_id = context.get('prodlot_id', False)
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
         date_str = date_str and ' AND %s '% date_str or ''
-        query = """SELECT SUM(product_qty), product_id, product_uom, location_id, location_dest_id
-           FROM stock_move
-           WHERE ((location_id NOT IN %%s AND location_dest_id IN %%s) OR
-                  (location_id IN %%s AND location_dest_id NOT IN %%s))
-                  AND
-                  product_id IN %%s
-                  %s
-                  AND
-                  state IN %%s
-                  %s
-           GROUP BY product_id, product_uom, location_id, location_dest_id""" % (prodlot_id_str, date_str)
+        if 'in' in what:
+            # all moves from a location out of the set to a location in the set
+            cr.execute(
+                'select sum(product_qty), product_id, product_uom '\
+                'from stock_move '\
+                'where location_id NOT IN %s '\
+                'and location_dest_id IN %s '\
+                'and product_id IN %s '\
+                '' + prodlot_id_str + ' '\
+                'and state IN %s ' + date_str +' '\
+                'group by product_id,product_uom',tuple(where))
+            results = cr.fetchall()
+        if 'out' in what:
+            # all moves from a location in the set to a location out of the set
+            cr.execute(
+                'select sum(product_qty), product_id, product_uom '\
+                'from stock_move '\
+                'where location_id IN %s '\
+                'and location_dest_id NOT IN %s '\
+                'and product_id  IN %s '\
+                '' + prodlot_id_str + ' '\
+                'and state in %s ' + date_str + ' '\
+                'group by product_id,product_uom',tuple(where))
+            results2 = cr.fetchall()
 
-        cr.execute(query, tuple(where))
-        results = cr.fetchall()
-        if results:
+        if results or results2:
             uoms_o = {}
             product2uom = {}
             uom_obj = self.pool.get('product.uom')
@@ -274,7 +284,7 @@ class product_product(osv.osv):
                 product2uom[product['id']] = product['uom_id'][0]
                 if product['uom_id'][0] not in uoms_o:
                     uoms_o[product['uom_id'][0]] = uom_obj.browse(cr, uid, product['uom_id'][0], context=context)
-            uoms = map(lambda x: x[2], results)
+            uoms = map(lambda x: x[2], results) + map(lambda x: x[2], results2)
             if context.get('uom', False):
                 uoms += [context['uom']]
 
@@ -285,13 +295,14 @@ class product_product(osv.osv):
                     uoms_o[o.id] = o
             #TOCHECK: before change uom of product, stock move line are in old uom.
             context.update({'raise-exception': False})
-            for amount, prod_id, prod_uom, location_id, location_dest_id in results:
+            for amount, prod_id, prod_uom in results:
                 amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
                          uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
-                if location_id not in location_ids and location_dest_id in location_ids:
-                    res[prod_id] += amount
-                else:
-                    res[prod_id] -= amount
+                res[prod_id] += amount
+            for amount, prod_id, prod_uom in results2:
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+                res[prod_id] -= amount
         return res
 
     def _product_available(self, cr, uid, ids, field_names=None, arg=False, context=None):
