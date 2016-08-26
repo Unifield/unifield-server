@@ -34,5 +34,16 @@
             auto="False"
             string="PO Simulation screen" />
 
+        <report
+            id="report_wizard_import_generic_template"
+            model="abstract.wizard.import"
+            name="wizard.import.generic.template"
+            file="msf_doc_import/report/import_generic_template.mako"
+            report_type="webkit"
+            header="False"
+            menu="False"
+            auto="False"
+            string="Import Generic template" />
+
     </data>
 </openerp>

@@ -137,3 +137,6 @@ import wizard_import_product_list
 import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen
+
+import abstract_wizard_import
+import wizard_import_batch

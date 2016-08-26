@@ -84,7 +84,7 @@ x:FullRows="1">
                     <Data ss:Type="String"></Data>
                 % endif
             % else:
-                <Data ss:Type="String">${(result or "")|x}</Data>
+                <Data ss:Type="String">${(result or "")|xn}</Data>
             % endif
         </Cell>
     % endif

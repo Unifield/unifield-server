@@ -22,6 +22,7 @@
 from mx.DateTime.DateTime import DateFrom, RelativeDateTime, Age, now
 import threading
 import time
+import logging
 
 from osv import fields
 from osv import osv
@@ -647,6 +648,7 @@ class weekly_forecast_report(osv.osv):
 
             new_cr.commit()
         except Exception as e:
+            logging.getLogger('weekly.forecast.report').warn('Exception', exc_info=True)
             new_cr.rollback()
             progress_comment = """
             An error occured during the processing of the report.\n

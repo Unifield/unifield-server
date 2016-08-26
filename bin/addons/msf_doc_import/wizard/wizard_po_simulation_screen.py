@@ -25,6 +25,7 @@ import pooler
 import base64
 import time
 import xml.etree.ElementTree as ET
+import logging
 
 from mx import DateTime
 
@@ -975,6 +976,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             CURRENCY_NAME_ID = {}
             SIMU_LINES = {}
         except Exception, e:
+            logging.getLogger('po.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
             cr.close(True)
@@ -1056,6 +1058,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             cr.commit()
             cr.close(True)
         except Exception, e:
+            logging.getLogger('po.simulation.run').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             res = True
             cr.commit()

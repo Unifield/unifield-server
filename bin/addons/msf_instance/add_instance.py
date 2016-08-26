@@ -354,6 +354,10 @@ class account_move_line(osv.osv):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+        elif 'move_id' in vals:
+            move = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['instance_id'], context=context)
+            if move['instance_id']:
+                vals['instance_id'] = move['instance_id'][0]
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):

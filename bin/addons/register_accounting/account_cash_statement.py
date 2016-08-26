@@ -282,7 +282,7 @@ class account_cash_statement(osv.osv):
                 next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
                 for next_st in self.browse(cr, uid, next_st_ids):
                     if next_st.state != 'confirm':
-                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
+                        self.write(cr, 1, [next_st.id], {'balance_start': amount})
         return res
 
     def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):

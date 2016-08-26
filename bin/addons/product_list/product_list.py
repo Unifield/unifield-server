@@ -436,6 +436,7 @@ product and can't be deleted"""),
         ),
         'msfid': fields.integer(
             string='Hidden field for UniData',
+            select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
             'Hidden xmlid code',

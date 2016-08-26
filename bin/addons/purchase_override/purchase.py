@@ -1348,8 +1348,9 @@ stock moves which are already processed : '''
         if ids[0] in ids_to_read:
             ids_to_read.remove(ids[0])
         list_po_name = ', '.join([linked_po['name'] for linked_po in self.read(cr, uid, ids_to_read, ['name'], context)])
-        self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
-                                 ) % (self.read(cr, uid, ids[0], ['name'])['name'], list_po_name))
+        if list_po_name:
+            self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
+                                     ) % (self.read(cr, uid, ids[0], ['name'])['name'], list_po_name))
         # sale order lines with modified state
         if sol_ids:
             sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
@@ -2645,8 +2646,8 @@ class purchase_order_merged_line(osv.osv):
                                             help='Header level dates has to be populated by default with the possibility of manual updates'),
         'name': fields.function(_get_name, method=True, type='char', string='Name', store=False),
     }
-
     def create(self, cr, uid, vals, context=None):
+
         '''
         Set the line number to 0
         '''

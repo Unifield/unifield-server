@@ -182,6 +182,7 @@ class ir_translation(osv.osv):
             return u''
         if isinstance(types, basestring):
             types = (types,)
+
         if source:
             query = """SELECT value
                        FROM ir_translation

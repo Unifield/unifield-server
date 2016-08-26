@@ -941,12 +941,13 @@ class account_move(osv.osv):
         res = super(account_move, self).post(cr, uid, ids, context)
         return res
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, button_uid, ids, context=None):
         """
         Check that user can approve the move by searching 'from_web_menu' in context. If present and set to True and move is manually created, so User have right to do this.
         """
         if not context:
             context = {}
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         for i in ids:
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', i)])
             if not ml_ids:

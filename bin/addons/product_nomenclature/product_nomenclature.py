@@ -764,9 +764,11 @@ class product_product(osv.osv):
         return self.pool.get('product.nomenclature').get_sub_nomen(cr, uid, self, id, field)
 
     def copy(self, cr, uid, old_id, new_vals=None, context=None):
-        res = super(product_product, self).copy(cr, uid, old_id, new_vals, context=context)
         if new_vals is None:
             new_vals = {}
+        if 'msfid' not in new_vals:
+            new_vals['msfid'] = False
+        res = super(product_product, self).copy(cr, uid, old_id, new_vals, context=context)
         if new_vals.get('default_code', None) == 'XXX':
             # Delete the translations linked to this new product
             tr_obj = self.pool.get('ir.translation')

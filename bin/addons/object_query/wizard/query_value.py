@@ -45,7 +45,7 @@ class search_values(osv.osv_memory):
         if context is None:
             context = {}
         return super(search_values, self).create(cr, uid, {'b_data': vals, 'query_id': context.get('query_id')}, {'no_missing': True})
-    
+
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -98,7 +98,7 @@ class search_values(osv.osv_memory):
             else:
                 values[v.field_id.id] = v.value1
                 values['forced_%s'%v.field_id.id] = v.forced
-       
+
         for sel in obj_q.selection_ids:
             field_name = '%s'%(sel.id)
             quest_fields['forced_%s'%field_name] = {'type': 'boolean', 'string': 'forced value', 'default': values.get('forced_%s'%(field_name, )), 'invisible': 1}

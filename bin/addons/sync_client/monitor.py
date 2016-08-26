@@ -185,7 +185,7 @@ class sync_monitor(osv.osv):
 
         for arg in args:
             if arg[1] not in ('=', '!='):
-                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s' % name))
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
             cond = arg[2] in ('True', 't', '1', 1, True)
             if arg[1] == '!=':
                 cond = not cond
@@ -298,7 +298,7 @@ class sync_version_instance_monitor(osv.osv):
 
         for arg in args:
             if arg[1] not in ('=', '!='):
-                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s' % name))
+                raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % name)
             cond = arg[2] in ('True', 't', '1', 1, True)
             if arg[1] == '!=':
                 cond = not cond
