@@ -2274,7 +2274,8 @@ class stock_picking(osv.osv):
                 # flag for converted picking
                 'converted_to_standard': fields.boolean(string='Converted to Standard'),
                 # functions
-                'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals'),
+                'num_of_packs': fields.function(_vals_get, method=True,
+                    type='integer', string='#Packs', multi='get_vals_integer'),
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals'),
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals'),
                 'currency_id': fields.function(_get_currency, method=True, type='many2one', relation='res.currency', string='Currency', multi=False),
@@ -4722,7 +4723,9 @@ class stock_move(osv.osv):
                 'is_dangerous_good': fields.function(_get_danger, method=True, type='char', size=8, string='Dangerous Good', multi='get_danger'),
                 'is_keep_cool': fields.function(_get_danger, method=True, type='char', size=8, string='Keep Cool', multi='get_danger',),
                 'is_narcotic': fields.function(_get_danger, method=True, type='char', size=8, string='CS', multi='get_danger',),
-                'sale_order_line_number': fields.function(_vals_get, method=True, type='integer', string='Sale Order Line Number', multi='get_vals',),  # old_multi get_vals
+                'sale_order_line_number': fields.function(_vals_get,
+                    method=True, type='integer', string='Sale Order Line Number',
+                    multi='get_vals_integer',),  # old_multi get_vals
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),

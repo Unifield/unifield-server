@@ -2168,20 +2168,6 @@ class stock_move(osv.osv):
         res = self.check_assign(cr, uid, todo)
         return res
 
-    def confirm_and_force_assign(self, cr, uid, ids, context=None, vals=None):
-        '''
-        when action_confirm and force_assign are both called, it is faster to
-        use confirm_and_force_assign to do only one write per move.
-        '''
-        if not context:
-            context = {}
-        if vals is None:
-            vals = {}
-        self.prepare_action_confirm(cr, uid, ids, context)
-        vals.update({'state': 'assigned'})
-        self.write(cr, uid, ids, vals)
-        return []
-
     def force_assign(self, cr, uid, ids, context=None):
         """ Changes the state to assigned.
         @return: True
