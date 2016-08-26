@@ -235,7 +235,7 @@ class product_product(osv.osv):
         to_date = context.get('to_date',False)
         date_str = False
         date_values = False
-        where = [tuple(location_ids),tuple(location_ids), tuple(location_ids),tuple(location_ids), tuple(ids), tuple(states)]
+        where = [tuple(location_ids), tuple(location_ids), tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
         if from_date and to_date:
             date_str = "date>=%s AND date<=%s"
             where.append(tuple([from_date]))
@@ -252,7 +252,7 @@ class product_product(osv.osv):
         prodlot_id = context.get('prodlot_id', False)
         prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
         date_str = date_str and ' AND %s '% date_str or ''
-        query = """SELECT SUM(product_qty), product_id, product_uom
+        query = """SELECT SUM(product_qty), product_id, product_uom, location_id, location_dest_id
            FROM stock_move
            WHERE ((location_id NOT IN %%s AND location_dest_id IN %%s) OR
                   (location_id IN %%s AND location_dest_id NOT IN %%s))
@@ -260,9 +260,9 @@ class product_product(osv.osv):
                   product_id IN %%s
                   %s
                   AND
-                  state in %%s
+                  state IN %%s
                   %s
-           GROUP BY product_id, product_uom""" % (prodlot_id_str, date_str)
+           GROUP BY product_id, product_uom, location_id, location_dest_id""" % (prodlot_id_str, date_str)
 
         cr.execute(query, tuple(where))
         results = cr.fetchall()
@@ -285,10 +285,14 @@ class product_product(osv.osv):
                     uoms_o[o.id] = o
             #TOCHECK: before change uom of product, stock move line are in old uom.
             context.update({'raise-exception': False})
-            for amount, prod_id, prod_uom in results:
+            for amount, prod_id, prod_uom, location_id, location_dest_id in results:
                 amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
                          uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
-                res[prod_id] += amount
+                if location_id not in location_ids and location_dest_id in location_ids:
+                    res[prod_id] += amount
+                else:
+                    res[prod_id] -= amount
+
         return res
 
     def _product_available(self, cr, uid, ids, field_names=None, arg=False, context=None):
