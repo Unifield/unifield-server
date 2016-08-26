@@ -459,6 +459,7 @@ class Entity(osv.osv):
         context = context or {}
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
+        context['lang'] = 'en_US'
 
         if entity.state not in ('init', 'update_send', 'update_validate'):
             raise SkipStep
@@ -580,7 +581,7 @@ class Entity(osv.osv):
             Pull update
         """
         context = context or {}
-
+        context['lang'] = 'en_US'
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context=context)
         if entity.state not in ('init', 'update_pull'):
@@ -726,6 +727,7 @@ class Entity(osv.osv):
         context = context or {}
         entity = self.get_entity(cr, uid, context)
         logger = context.get('logger')
+        context['lang'] = 'en_US'
         if entity.state not in ['init', 'msg_push']:
             raise SkipStep
 
@@ -800,6 +802,7 @@ class Entity(osv.osv):
         """
         context = context or {}
         logger = context.get('logger')
+        context['lang'] = 'en_US'
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         entity = self.get_entity(cr, uid, context=context)

@@ -61,7 +61,8 @@ class product_nomenclature(osv.osv):
         if not context:
             context = {}
 
-        if not context.get('lang') or context.get('lang') == 'en_US':
+        if not context.get('sync_update_execution') and not context.get('sync_message_execution') and \
+            (not context.get('lang') or context.get('lang') == 'en_US'):
             # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
             lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
             if not context.get('yml_test', False):
