@@ -30,6 +30,7 @@ from tools.translate import _
 from service import security
 import netsvc
 import logging
+import re
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -100,6 +101,7 @@ class users(osv.osv):
     _name = "res.users"
     _order = 'name'
 
+    PASSWORD_MIN_LENGHT = 6
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
         "\"%(name)s\".\n\nYour login is %(login)s, "\
@@ -196,6 +198,7 @@ class users(osv.osv):
         return True
 
     def _set_new_password(self, cr, uid, id, name, value, args, context=None):
+        login = self.read(cr, uid, id, ['login'])['login']
         if value is False:
             # Do not update the password if no value is provided, ignore silently.
             # For example web client submits False values for all empty fields.
@@ -205,6 +208,10 @@ class users(osv.osv):
             # so that the new password is immediately used for further RPC requests, otherwise the user
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
+        if not all(self.is_password_strong(value, login).values()):
+            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
+                    'Password must be different from the login, it must contain '\
+                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
         self.write(cr, uid, id, {'password': value})
 
     _columns = {
@@ -225,6 +232,9 @@ class users(osv.osv):
                  "users."),
         'signature': fields.text('Signature', size=64),
         'address_id': fields.many2one('res.partner.address', 'Address'),
+        'force_password_change':fields.boolean('Change password on next login',
+            help="Check out this box to force this user to change his "\
+            "password on next login."),
         'active': fields.boolean('Active'),
         'action_id': fields.many2one('ir.actions.actions', 'Home Action', help="If specified, this action will be opened at logon for this user, in addition to the standard menu."),
         'menu_id': fields.many2one('ir.actions.actions', 'Menu Action', help="If specified, the action will replace the standard menu for this user."),
@@ -347,7 +357,8 @@ class users(osv.osv):
         'company_ids': _get_companies,
         'groups_id': _get_group,
         'address_id': False,
-        'menu_tips':True
+        'menu_tips':True,
+        'force_password_change': False,
     }
 
     @tools.cache()
@@ -442,7 +453,6 @@ class users(osv.osv):
         data_id = dataobj._get_id(cr, 1, 'base', 'action_res_users_my')
         return dataobj.browse(cr, uid, data_id, context=context).res_id
 
-
     def login(self, db, login, password):
         if not password:
             return False
@@ -524,10 +534,38 @@ class users(osv.osv):
         finally:
             cr.close()
 
+    def is_password_strong(self, password, login):
+        """
+        Check that given password is strong enough.
+        In case it is, all values of the returned dict are True
+        """
+        result = {
+                'has_digit': False,
+                'long_enough': False,
+                'login_not_equal_password': False,
+        }
+
+        # check it contains at least one digit
+        if re.search(r'\d', password):
+            result['has_digit'] = True
+
+        # check password lenght
+        if len(password) >= self.PASSWORD_MIN_LENGHT:
+            result['long_enough'] = True
+
+        # check login != password:
+        if password != login:
+            result['login_not_equal_password'] = True
+
+        return result
+
     def change_password(self, cr, uid, old_passwd, new_passwd, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
+
+        The write of the new password is done with uid=1 to prevent raise it
+        the current logged user don't have permission on res_users.
 
         :return: True
         :raise: security.ExceptionNoTb when old password is wrong
@@ -535,7 +573,16 @@ class users(osv.osv):
         """
         self.check(cr.dbname, uid, old_passwd)
         if new_passwd:
-            return self.write(cr, uid, uid, {'password': new_passwd})
+            login = self.read(cr, uid, uid, ['login'])['login']
+            if not all(self.is_password_strong(new_passwd, login).values()):
+                raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
+                        'Password must be diffrent from the login, it must contain '\
+                        'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
+            vals = {
+                'password': new_passwd,
+                'force_password_change': False,
+            }
+            return self.write(cr, 1, uid, vals)
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
     def get_admin_profile(self, cr, uid, context=None):
