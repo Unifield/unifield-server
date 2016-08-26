@@ -127,7 +127,17 @@ def secured(fn):
         """
 
         if rpc.session.is_logged() and kw.get('login_action') != 'login':
-            # User is logged in; allow access
+            # do not display the requested page if the user have to change his
+            # password
+            if rpc.session.force_password_change:
+                clear_login_fields(kw)
+                if fn.__name__ in ('menu'):
+                    kw['next'] = '/openerp/pref/update_password'
+                    kw['active'] = None
+                    clear_login_fields(kw)
+                    return fn(*args, **kw)
+
+            # User is logged in and don't need to change his password; allow access
             clear_login_fields(kw)
             return fn(*args, **kw)
         else:
@@ -203,6 +213,15 @@ def secured(fn):
             cookie['terp_user']['max-age'] = 3600
             cookie['terp_db']['path'] = '/'
             cookie['terp_user']['path'] = '/'
+
+            # check if logged in user have to change his password
+            if rpc.session.force_password_change:
+                clear_login_fields(kw)
+                if fn.__name__ in ('menu'):
+                    kw['next'] = '/openerp/pref/update_password'
+                    kw['active'] = None
+                    clear_login_fields(kw)
+                    return fn(*args, **kw)
 
             # User is now logged in, so show the content
             clear_login_fields(kw)

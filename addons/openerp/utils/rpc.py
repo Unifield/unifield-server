@@ -327,10 +327,12 @@ class RPCSession(object):
         self.storage['open'] = True
 
         # read the full name of the user
-        res_users = self.execute('object', 'execute', 'res.users', 'read', [uid], ['name', 'company_id', 'login'])[0]
+        res_users = self.execute('object', 'execute', 'res.users', 'read',
+                [uid], ['name', 'company_id', 'login', 'force_password_change'])[0]
         self.storage['user_name'] = res_users['name']
         self.storage['company_id'], self.storage['company_name'] = res_users['company_id']
         self.storage['loginname'] = res_users['login']
+        self.storage['force_password_change'] = res_users['force_password_change']
         # set the context
         self.context_reload()
 

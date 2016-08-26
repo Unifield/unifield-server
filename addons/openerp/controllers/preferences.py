@@ -40,6 +40,14 @@ class PrefsPassword(database.FormPassword):
         database.ReplacePasswordField(name='confirm_password', label=_('Confirm Password:')),
     ]
 
+class UpdatePassword(PrefsPassword):
+    action = "/openerp/pref/update_password"
+    string = _('Change your password')
+    description = _("""Your password has been reset by an administrator.
+    Please choose a new password. It must be at least 6 characters long and must contain at least one number.""")
+    display_string = True
+    display_description = True
+
 int_pattern = re.compile(r'^\d+$')
 class Preferences(Form):
 
@@ -90,8 +98,10 @@ class Preferences(Form):
         raise redirect('/openerp/pref/create', saved=True)
 
     @expose(template='/openerp/controllers/templates/preferences/password.mako')
-    def password(self, old_password='', new_password='', confirm_password=''):
-        context = {'form': PrefsPassword(), 'errors': []}
+    def password(self, old_password='', new_password='', confirm_password='',
+            context=None):
+        if context is None:
+            context = {'form': PrefsPassword(), 'errors': []}
         if cherrypy.request.method != 'POST':
             return context
 
@@ -110,7 +120,16 @@ class Preferences(Form):
                 _('Could not change your password.'))
         except openobject.errors.AccessDenied:
             context['errors'].append(_('Original password incorrect, your password was not changed.'))
+        except Exception, e:
+            context['errors'].append(str(e))
         return context
+
+    @expose(template='/openerp/controllers/templates/preferences/password.mako')
+    def update_password(self, old_password='', new_password='',
+            confirm_password=''):
+        context = {'form': UpdatePassword(), 'errors': []}
+        return self.password(old_password, new_password, confirm_password,
+                context=context)
 
     @expose()
     def clear_cache(self):

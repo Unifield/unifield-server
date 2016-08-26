@@ -7,6 +7,18 @@
     </div>
     % endif
     <table class="form-container">
+        % if display_string:
+            <h1>${string}</h1>
+            % if display_description:
+            <div style="
+                margin-top: 2em;
+                margin-bottom: 2em;
+                margin-left: 25%;
+                width: 50%;
+                font-size: 1.3em;
+                "> ${description}</div>
+            % endif
+        % endif
         % for child in fields:
         <%
             error = error_for(child)
