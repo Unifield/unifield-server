@@ -130,7 +130,7 @@ class wizard_import_po_line(osv.osv_memory):
 
             if not error_list:
                 to_write = {}
-                total_line_num = file_obj.countRows()
+                total_line_num = file_obj.getNbRows()
                 # ignore the header line
                 row_iterator.next()
                 for line_num, row in enumerate(row_iterator, start=1):
