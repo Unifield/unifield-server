@@ -38,10 +38,11 @@ class stock_change_product_qty(osv.osv_memory):
         product_id = context and context.get('active_id', False) or False
 
         if (context.get('active_model') == 'product.product') and product_id:
-            prod_obj = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
+            prod_obj = self.pool.get('product.product').read(cr, uid,
+                    product_id, ['track_production'], context=context)
             fields = result.get('fields', {})
-            if fields and (prod_obj.track_production == True) and (fields.get('prodlot_id')):
-                result['fields']['prodlot_id']['required'] =  True
+            if fields and (prod_obj['track_production'] == True) and (fields.get('prodlot_id')):
+                result['fields']['prodlot_id']['required'] = True
             else:
                 result['fields']['prodlot_id']['required'] = False
         return result
@@ -83,16 +84,18 @@ class stock_change_product_qty(osv.osv_memory):
         inventry_line_obj = self.pool.get('stock.inventory.line')
         prod_obj_pool = self.pool.get('product.product')
 
-        res_original = prod_obj_pool.browse(cr, uid, rec_id, context=context)
-        for data in self.browse(cr, uid, ids, context=context):
-            inventory_id = inventry_obj.create(cr , uid, {'name': _('INV: ') + tools.ustr(res_original.name)}, context=context)
+        res_original = prod_obj_pool.read(cr, uid, rec_id,
+                ['name', 'uom_id'], context=context)
+        for data in self.read(cr, uid, ids,
+                ['new_quantity', 'location_id', 'prodlot_id'], context=context):
+            inventory_id = inventry_obj.create(cr , uid, {'name': _('INV: ') + tools.ustr(res_original['name'])}, context=context)
             line_data ={
                 'inventory_id' : inventory_id,
-                'product_qty' : data.new_quantity,
-                'location_id' : data.location_id.id,
+                'product_qty' : data['new_quantity'],
+                'location_id' : data['location_id'],
                 'product_id' : rec_id,
-                'product_uom' : res_original.uom_id.id,
-                'prod_lot_id' : data.prodlot_id.id
+                'product_uom' : res_original['uom_id'][0],
+                'prod_lot_id' : data['prodlot_id']
             }
             inventry_line_obj.create(cr , uid, line_data, context=context)
 

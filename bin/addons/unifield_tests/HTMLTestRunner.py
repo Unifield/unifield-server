@@ -580,6 +580,7 @@ class _TestResult(TestResult):
         if self.verbosity > 1:
             sys.stderr.write('ok ')
             sys.stderr.write(str(test))
+            sys.stderr.write(' in %s' % str(current_test_duration)[:-4])
             sys.stderr.write('\n')
         else:
             sys.stderr.write('.')
@@ -594,6 +595,7 @@ class _TestResult(TestResult):
         if self.verbosity > 1:
             sys.stderr.write('E  ')
             sys.stderr.write(str(test))
+            sys.stderr.write(' in %s' % str(current_test_duration)[:-4])
             sys.stderr.write('\n')
         else:
             sys.stderr.write('E')
@@ -608,6 +610,7 @@ class _TestResult(TestResult):
         if self.verbosity > 1:
             sys.stderr.write('F  ')
             sys.stderr.write(str(test))
+            sys.stderr.write(' in %s' % str(current_test_duration)[:-4])
             sys.stderr.write('\n')
         else:
             sys.stderr.write('F')

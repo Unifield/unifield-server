@@ -73,6 +73,8 @@ class purchase_order(osv.osv):
         '''
         If the partner is international, set 'display_intl_transport_ok' to True
         '''
+        if not ids:
+            return True
         if 'partner_id' in vals:
             partner = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context)
             if partner.zone == 'international':

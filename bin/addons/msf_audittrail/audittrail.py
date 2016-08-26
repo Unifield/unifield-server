@@ -119,6 +119,8 @@ class product_supplier(osv.osv):
         audit_line_obj.create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         ir_model = self.pool.get('ir.model')
         model_name = self._name
         product_model_name = 'product.template'
@@ -467,6 +469,8 @@ class audittrail_rule(osv.osv):
 
 
     def write(self, cr, uid, ids, value, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         for rule in self.browse(cr, uid, ids):

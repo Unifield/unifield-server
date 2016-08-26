@@ -756,10 +756,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ir = False
         order_p_type = False
         if vals.get('order_id', False):
-            order = order_obj.browse(cr, uid, vals['order_id'], context=context)
-            ir = order.procurement_request
-            order_p_type = order.partner_type
-            if order.order_type == 'loan' and order.state == 'validated':
+            order = order_obj.read(cr, uid, vals['order_id'],
+                        ['procurement_request', 'partner_type', 'state',
+                            'order_type'],
+                        context=context)
+            ir = order['procurement_request']
+            order_p_type = order['partner_type']
+            if order['order_type'] == 'loan' and order['state'] == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
                     'po_cft': False,
@@ -1060,6 +1063,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :return True if all is ok else False
         :rtype boolean
         """
+        if not ids:
+            return True
         # Objects
         product_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')

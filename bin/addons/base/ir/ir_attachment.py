@@ -115,6 +115,8 @@ class ir_attachment(osv.osv):
         return super(ir_attachment, self).read(cr, uid, ids, fields_to_read, context, load)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self.check(cr, uid, ids, 'write', context=context, values=vals)
         if 'datas' in vals:
             vals['size'] = self.get_size(vals['datas'])

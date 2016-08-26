@@ -50,6 +50,8 @@ class ir_ui_view(osv.osv):
         """
         Update button access rules for this view
         """
+        if not ids:
+            return True
         if not isinstance(ids, list):
             ids = [ids]
         

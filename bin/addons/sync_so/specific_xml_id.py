@@ -410,6 +410,8 @@ class msf_instance(osv.osv):
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
@@ -610,6 +612,8 @@ class account_analytic_line(osv.osv):
 
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if not 'cost_center_id' in vals:
@@ -631,6 +635,8 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if context is None:
             context = {}
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
@@ -720,6 +726,8 @@ class product_product(osv.osv):
 
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)
         if isinstance(ids, (long, int)):
             ids = [ids]

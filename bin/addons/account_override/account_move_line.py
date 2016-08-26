@@ -453,6 +453,8 @@ class account_move_line(osv.osv):
         """
         Check document_date and date validity
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         if context.get('from_web_menu', False):
