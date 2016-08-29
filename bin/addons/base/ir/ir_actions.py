@@ -270,10 +270,8 @@ class act_window(osv.osv):
             ids = [ids]
 
         res = {}
-        for act_brw in self.browse(cr, uid, ids, context=context):
-            # FIXME add fields_to_fetch
+        for act_brw in self.browse(cr, uid, ids, context=context, fields_to_fetch=['groups_id']):
             res[act_brw.id] = ', '.join(group.name for group in act_brw.groups_id)
-
         return res
 
     _columns = {
