@@ -170,10 +170,10 @@ class update(osv.osv):
         return res
 
     _columns = {
-        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
-        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
-        'model': fields.char('Model', size=128, readonly=True),
-        'sdref': fields.char('SD ref', size=128, readonly=True),
+        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True),
+        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True),
+        'model': fields.char('Model', size=128, readonly=True, select=True),
+        'sdref': fields.char('SD ref', size=128, readonly=True, select=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence', select=True),
         'fancy_sequence' : fields.function(fancy_integer, method=True, string="Sequence", type='char', readonly=True),
@@ -182,8 +182,10 @@ class update(osv.osv):
         'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete='restrict', select=True),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
-        'create_date': fields.datetime('Synchro Date/Time', readonly=True),
-        'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
+        'create_date': fields.datetime('Synchro Date/Time', readonly=True,
+            select=True),
+        'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id',
+            string="Pulled by", select=True),
         'fancy_puller_ids': fields.function(_get_puller_ids,
             fnct_search=_src_puller_ids, method=True,
             string="Pulled by", type='char', store=False),
