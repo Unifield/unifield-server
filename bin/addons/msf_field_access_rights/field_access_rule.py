@@ -83,32 +83,33 @@ class field_access_rule(osv.osv):
     ]
 
     def create(self, cr, user, vals, context=None):
-
+        if context is None:
+            context = {}
         # get model_name from model
         vals['model_name'] = self.pool.get('ir.model').browse(cr, user, vals['model_id'], context=context).model
+        if not context.get('sync_update_execution') and vals.get('model_name') and vals.get('domain_text'):
+            self.validate_domain_action(cr, user, vals['model_name'], vals['domain_text'])
         return super(field_access_rule, self).create(cr, user, vals, context=context)
 
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
             return True
 
+        if context is None:
+            context = {}
+
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
         # if domain_text has changed, change status to not_validated
-        if values.get('domain_text'):
-            if len(ids) == 1:
-                record = self.browse(cr, uid, ids[0], context=context)
-                domain_text = getattr(record, 'domain_text', '')
+        if values.get('domain_text') and not context.get('sync_update_execution'):
+            for rule in self.read(cr, uid, ids, ['domain_text', 'model_name', 'active'], context=context):
+                if rule['domain_text'] != values['domain_text']:
+                    self.validate_domain_action(cr, uid, values.get('model_name', rule['model_name']), values['domain_text'])
 
-                if domain_text != values['domain_text']:
-                    values['status'] = 'validated'
-            else:
-                values['status'] = 'validated'
-
-        # deactivate if not validated
-        if 'status' in values and values['status'] == 'validated':
-            values['active'] = False
+            #if 'active' not in values:
+            #    if rule['active']:
+            #        values['active'] = True
 
         return super(field_access_rule, self).write(cr, uid, ids, values, context=context)
 
@@ -200,33 +201,25 @@ class field_access_rule(osv.osv):
             'type': 'ir.actions.act_window',
             'name': 'Field Access Rule Lines for rule: %s' % this.name,
             'view_type': 'form',
-			'view_mode':'tree,form',
-			'view_id': [view_id],
+            'view_mode':'tree,form',
+            'view_id': [view_id],
             'target': 'new',
             'res_model': 'msf_field_access_rights.field_access_rule_line',
             'context': {
-            	'search_default_field_access_rule': ids[0],
+                'search_default_field_access_rule': ids[0],
             },
         }
 
-    def validate_domain_button(self, cr, uid, ids, context=None):
-        """
-        Validates the domain_text filter, and if successful, changes the Status field to validated
-        """
-        assert len(ids) <= 1, "Cannot work on list of ids != 1"
-
+    def validate_domain_action(self, cr, uid, model_name, domain_text, context=None):
         exception_title = 'Invalid Filter'
-        exception_body = 'The filter you have typed is invalid. You can create a filter using the Create New Filter button'
-
-        record = self.browse(cr, uid, ids[0], context=context)
-
-        if record.domain_text:
-            pool = self.pool.get(record.model_name)
+        exception_body = "\nThe filter you have typed is invalid. You can create a filter using the Create New Filter button"
+        if domain_text:
+            pool = self.pool.get(model_name)
             if not pool:
                 raise osv.except_osv('Invalid Model', 'The model you have chosen is invalid. Please use the auto-complete to choose a valid one.')
 
             try:
-                domain = eval(record.domain_text)
+                domain = eval(domain_text)
                 if not isinstance(domain, list):
                     raise osv.except_osv(exception_title, exception_body)
             except SyntaxError:
@@ -237,10 +230,19 @@ class field_access_rule(osv.osv):
             except (ValueError, psycopg2.ProgrammingError):
                 raise osv.except_osv(exception_title, exception_body)
 
-            self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
-            return True
-        else:
-            self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
-            return True
+        return True
+
+    def validate_domain_button(self, cr, uid, ids, context=None):
+        """
+        Validates the domain_text filter, and if successful, changes the Status field to validated
+        """
+        assert len(ids) <= 1, "Cannot work on list of ids != 1"
+
+
+        record = self.browse(cr, uid, ids[0], context=context)
+
+        self.validate_domain_action(cr, uid, record.model_name, record.domain_text, context)
+        self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
+        return True
 
 field_access_rule()
