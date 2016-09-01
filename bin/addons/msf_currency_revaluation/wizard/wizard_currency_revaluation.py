@@ -703,18 +703,19 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             p.id for p in company.instance_id.child_ids \
                 if p.level == 'project'
         ]
-        # ...check their period state field-closed
-        # we match exactly as any state could not be already synced yet
-        domain = [
-            ('instance_id', 'in', project_ids),
-            ('period_id', '=', period_check_id),
-            ('state', '=', 'field-closed'),
-        ]
-        res = period_state_obj.search(cr, uid, domain, context=context,
-            count=True)
-        if not res or res != len(project_ids):
-            raise osv.except_osv(_('Warning!'),
-                _("All coordo projects are not field closed"))
+        if project_ids:
+            # ...check their period state field-closed
+            # we match exactly as any state could not be already synced yet
+            domain = [
+                ('instance_id', 'in', project_ids),
+                ('period_id', '=', period_check_id),
+                ('state', '=', 'field-closed'),
+            ]
+            res = period_state_obj.search(cr, uid, domain, context=context,
+                count=True)
+            if not res or res != len(project_ids):
+                raise osv.except_osv(_('Warning!'),
+                    _("All coordo projects are not field closed"))
 
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:
