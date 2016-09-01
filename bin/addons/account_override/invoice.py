@@ -542,6 +542,8 @@ class account_invoice(osv.osv):
         """
         Check document_date
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1360,6 +1362,8 @@ class account_invoice_line(osv.osv):
          - write total to the register line
         """
 
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):

@@ -457,6 +457,8 @@ class purchase_order_line(osv.osv):
                                     'price_unit': 0.0, })
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:

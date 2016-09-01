@@ -43,6 +43,8 @@ class purchase_order(osv.osv):
         """
         Change invoice method for in-kind donation PO after a write
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         res = super(purchase_order, self).write(cr, uid, ids, vals, context)

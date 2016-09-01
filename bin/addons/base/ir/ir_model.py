@@ -91,7 +91,7 @@ class ir_model(osv.osv):
         'model': fields.char('Object', size=64, required=True, select=1),
         'info': fields.text('Information'),
         'field_id': fields.one2many('ir.model.fields', 'model_id', 'Fields', required=True),
-        'state': fields.selection([('manual','Custom Object'),('base','Base Object')],'Type',readonly=True),
+        'state': fields.selection([('manual','Custom Object'),('base','Base Object'), ('deprecated', 'Deprecated')],'Type',readonly=True),
         'access_ids': fields.one2many('ir.model.access', 'model_id', 'Access'),
         'osv_memory': fields.function(_is_osv_memory, method=True, string='In-memory model', type='boolean',
             fnct_search=_search_osv_memory,
@@ -139,6 +139,8 @@ class ir_model(osv.osv):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if context:
             context.pop('__last_update', None)
         return super(ir_model,self).write(cr, user, ids, vals, context)
@@ -291,6 +293,8 @@ class ir_model_fields(osv.osv):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if context and context.get('manual',False):
@@ -647,7 +651,8 @@ class ir_model_data(osv.osv):
     @tools.cache()
     def _get_id(self, cr, uid, module, xml_id):
         """Returns the id of the ir.model.data record corresponding to a given module and xml_id (cached) or raise a ValueError if not found"""
-        ids = self.search(cr, uid, [('module','=',module), ('name','=', xml_id)])
+        ids = self.search(cr, uid, [('module','=',module), ('name','=',
+            xml_id)], limit=1, order='NO_ORDER')
         if not ids:
             raise ValueError('No references to %s.%s' % (module, xml_id))
         # the sql constraints ensure us we have only one result

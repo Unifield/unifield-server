@@ -232,6 +232,21 @@ class account_account(osv.osv):
                 arg.append(x)
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+
+        # Restrict to Expense/Income/Receivable accounts for Intermission Vouchers OUT or Stock Transfer Vouchers
+        context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+        context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+            not context.get('is_debit_note', False)
+        if context_ivo or context_stv:
+            arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
+
+        # Restrict to Expense accounts only for Intermission Vouchers IN
+        context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+        if context_ivi:
+            arg.append(('user_type_code', '=', 'expense'))
+
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
@@ -446,6 +461,8 @@ class account_account(osv.osv):
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self._check_date(vals, context=context)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
@@ -798,6 +815,8 @@ class account_move(osv.osv):
         """
         Check that we can write on this if we come from web menu or synchronisation.
         """
+        if not ids:
+            return True
         def check_update_sequence(rec, new_journal_id, new_period_id):
             """
             returns new sequence move vals (sequence_id, name) or None
@@ -922,16 +941,19 @@ class account_move(osv.osv):
         res = super(account_move, self).post(cr, uid, ids, context)
         return res
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, button_uid, ids, context=None):
         """
         Check that user can approve the move by searching 'from_web_menu' in context. If present and set to True and move is manually created, so User have right to do this.
         """
         if not context:
             context = {}
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         for i in ids:
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', i)])
             if not ml_ids:
                 raise osv.except_osv(_('Warning'), _('No line found. Please add some lines before Journal Entry validation!'))
+            elif len(ml_ids) < 2:
+                raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
@@ -1014,14 +1036,15 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
+        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
-            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):
                     ml_ids = [ml_ids]
-                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
-        self.unlink(cr, uid, to_delete, context, check=False)
+                self.pool.get('account.move.line').unlink(cr, user_id, ml_ids, context, check=False)
+        self.unlink(cr, user_id, to_delete, context, check=False)
         return True
 
     def get_valid_but_unbalanced(self, cr, uid, context=None):

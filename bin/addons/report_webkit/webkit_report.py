@@ -41,7 +41,9 @@ from mako import exceptions
 import netsvc
 import pooler
 from report_helper import WebKitHelper
-from report.report_sxw import report_sxw, report_rml, _int_format, _float_format, _date_format, _dttime_format, browse_record_list
+from report.report_sxw import report_sxw, report_rml, _int_format, \
+                              _float_format, _date_format, _dttime_format, browse_record_list, \
+                              rml_parse
 import addons
 import tools
 from tools.translate import _
@@ -412,3 +414,18 @@ class WebKitParser(report_sxw):
         if not result:
             return (False,False)
         return result
+
+
+class XlsWebKitParser(WebKitParser):
+    def __init__(self, name, table, rml=False, parser=rml_parse, header='external', store=False):
+        WebKitParser.__init__(self, name, table, rml=rml, parser=parser, header=header, store=store)
+
+    def create_single_pdf(self, cr, uid, ids, data, report_xml, context=None):
+        report_xml.webkit_debug = 1
+        report_xml.header = " "
+        report_xml.webkit_header.html = "${_debug or ''|n}"
+        return super(XlsWebKitParser, self).create_single_pdf(cr, uid, ids, data, report_xml, context)
+
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(XlsWebKitParser, self).create(cr, uid, ids, data, context)
+        return (a[0], 'xls')

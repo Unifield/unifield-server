@@ -102,6 +102,8 @@ class financing_contract_funding_pool_line(osv.osv):
         """
         Check that no previous funding pool account is used yet.
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -623,6 +625,8 @@ class financing_contract_contract(osv.osv):
 
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
             for contract in self.browse(cr, uid, ids, context=context):

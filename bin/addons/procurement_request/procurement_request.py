@@ -397,7 +397,13 @@ class procurement_request(osv.osv):
         '''
         Update date_planned of lines
         '''
+        if not ids:
+            return True
         res = True
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         for req in self.browse(cr, uid, ids, context=context):
             # Only in case of Internal request
             if req.procurement_request and 'delivery_requested_date' in vals:
@@ -546,6 +552,8 @@ class procurement_request(osv.osv):
         line_obj.write(cr, uid, reset_soq, {'soq_updated': False,}, context=context)
         self.write(cr, uid, ids, {'state': 'validated'}, context=context)
 
+        self.ssl_products_in_line(cr, uid, ids, context=context)
+
         return True
 
     def confirm_procurement(self, cr, uid, ids, context=None):
@@ -677,6 +685,8 @@ class procurement_request_line(osv.osv):
         '''
         Compute the UoM qty according to UoM rounding value
         '''
+        if not ids:
+            return True
         res = True
 
         if 'product_uom_qty' in vals or 'product_uom' in vals:

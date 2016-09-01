@@ -142,6 +142,8 @@ class stock_move(osv.osv):
     _inherit = 'stock.move'
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         vals.update({
             'to_correct_ok': False,
             'text_error': False,

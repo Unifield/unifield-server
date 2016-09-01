@@ -25,6 +25,7 @@ import pooler
 import base64
 import time
 import xml.etree.ElementTree as ET
+import logging
 
 from mx import DateTime
 
@@ -260,7 +261,7 @@ class wizard_import_po_simulation_screen(osv.osv):
         'amount_discrepancy': fields.function(_get_totals, method=True,
                                            type='float', string='Discrepancy',
                                            readonly=True, store=False, multi='simu'),
-        'imp_nb_po_lines': fields.function(_get_import_lines, methode=True,
+        'imp_nb_po_lines': fields.function(_get_import_lines, method=True,
                                            type='integer', string='Nb Import lines',
                                            readonly=True),
         'simu_line_ids': fields.one2many('wizard.import.po.simulation.screen.line',
@@ -273,6 +274,8 @@ class wizard_import_po_simulation_screen(osv.osv):
     }
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -1037,6 +1040,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             CURRENCY_NAME_ID = {}
             SIMU_LINES = {}
         except Exception, e:
+            logging.getLogger('po.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
             cr.close(True)
@@ -1118,6 +1122,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
             cr.commit()
             cr.close(True)
         except Exception, e:
+            logging.getLogger('po.simulation.run').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             res = True
             cr.commit()

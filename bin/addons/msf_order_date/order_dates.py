@@ -493,6 +493,8 @@ class purchase_order(osv.osv):
         '''
         Checks if dates are good before writing
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -920,6 +922,8 @@ class sale_order(osv.osv):
         '''
         Checks if dates are good before writing
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1388,6 +1392,8 @@ class stock_picking(osv.osv):
         '''
         Update all stock moves if the min_date of the picking was changed manually
         '''
+        if not ids:
+            return True
         move_obj = self.pool.get('stock.move')
         for pick in self.browse(cr, uid, ids, context=context):
             if vals.get('min_date_manually', pick.min_date_manually) and vals.get('min_date', vals.get('manual_min_date_stock_picking')):

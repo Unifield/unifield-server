@@ -91,6 +91,8 @@ class automated_import_function(osv.osv):
         :param context: Context of the call
         :return: True
         """
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
 

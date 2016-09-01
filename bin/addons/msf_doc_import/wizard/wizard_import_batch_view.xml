@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="wizard_import_batch_tree_view" model="ir.ui.view">
+            <field name="name">Import Batch Numbers</field>
+            <field name="model">wizard.import.batch</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Import Batch Numbers" noteditable="True">
+                    <field name="start_date" />
+                    <field name="end_date" />
+                    <field name="progression" widget="progressbar" />
+                    <field name="state" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_wizard_import_batch" model="ir.ui.view">
+            <field name="name">Import Batch Numbers</field>
+            <field name="model">wizard.import.batch</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Import Batch Number" hide_duplicate_button="1">
+                    <field name="show_error" invisible="1" />
+                    <field name="show_warning" invisible="1" />
+
+                    <group colspan="4" col="6">
+                        <label string="Select a file to import: " align="1.0" />
+                        <field name="import_file" nolabel="True" colspan="1" />
+                        <label colspan="2" string="" />
+                        <field name="start_date" />
+                        <newline />
+                        <label string="Or download a template: " align="1.0" />
+                        <button name="download_template_file" string="" icon="gtk-save" help="Download template file" type="object" />
+                        <label colspan="2" string="" />
+                        <field name="end_date" />
+                        <group colspan="6" col="4">
+                            <field name="state" />
+                            <field name="progression" widget="progressbar" />
+                        </group>
+                    </group>
+
+                    <separator colspan="4" string="Information" />
+                    <field name="info_message" colspan="4" nolabel="1" />
+
+                    <group colspan="4" attrs="{'invisible': [('state', '=', 'done')]}">
+                        <separator colspan="4" string="Actions" />
+                        <button name="run_import" type="object" string="Run import" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <button name="update" type="object" string="Update" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'progress')]}" />
+                    </group>
+
+                    <group colspan="4" attrs="{'invisible': [('show_warning', '=', False)]}">
+                        <separator colspan="4" string="Warning messages" />
+                        <field name="warning_message" nolabel="1" colspan="4" />
+                    </group>
+
+                    <group colspan="4" attrs="{'invisible': [('show_error', '=', False)]}">
+                        <separator colspan="4" string="Error messages" />
+                        <field name="error_message" nolabel="1" colspan="4" />
+                    </group>
+                </form>
+            </field>
+        </record>
+    
+        <act_window
+            name="Import Batch Numbers"
+            res_model="wizard.import.batch"
+            src_model="wizard.import.batch"
+            view_mode="tree,form"
+            target="current"
+            key2="False"
+            id="action_wizard_import_batch" />
+
+        <menuitem
+            action="action_wizard_import_batch"
+            sequence="5"
+            name="Import Batch Numbers"
+            parent="stock.menu_action_production_lot_form"
+            id="menu_action_wizard_import_batch" />
+
+    </data>
+</openerp>

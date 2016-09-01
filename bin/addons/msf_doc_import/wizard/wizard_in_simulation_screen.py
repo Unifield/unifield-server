@@ -24,6 +24,7 @@ import base64
 from mx import DateTime
 import threading
 import time
+import logging
 
 from osv import fields
 from osv import osv
@@ -164,6 +165,8 @@ class wizard_import_in_simulation_screen(osv.osv):
         '''
         Remove the concurrency access warning
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -821,6 +824,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             CURRENCY_NAME_ID = {}
             SIMU_LINES = {}
         except Exception, e:
+            logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
             self.write(cr, uid, ids, {'message': e}, context=context)
             cr.commit()
             cr.close(True)
