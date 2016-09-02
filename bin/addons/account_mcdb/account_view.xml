@@ -164,8 +164,8 @@
                         </group>
                         <newline/>
                         <group>
-                            <field name="is_reconciled" select='1'/>
                             <field name="reconcile_total_partial_id" select='1'/>
+                            <field name="is_reconciled" select='1'/>
                             <field name="reconcile_date" select='1' string="At"/>
                         </group>
                         <newline/>
