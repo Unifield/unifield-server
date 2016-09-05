@@ -49,7 +49,7 @@ ACCOUNT_RESTRICTED_AREA = {
    'in_invoice': [
         ('type', '!=', 'view'),
         # Either Payable/Payables accounts or Regular / Debt accounts
-        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash']),
+        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash','income']),
         ('type_for_register', '!=', 'donation'),
     ],
     # HEADER OF:
@@ -57,10 +57,10 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Customer Refund
     #+ Debit Notes
     'out_invoice': [
-        '&', ('type', '!=', 'view'),
+        ('type', '!=', 'view'),
         # Either Receivable/Receivables or Regular/Cash or Regular/Income accounts
-        '|', '|', '&', ('type', '=', 'receivable'), ('user_type_code', '=', 'receivables'),
-        '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'income'),
+        '|', '&', ('type', '=', 'receivable'), ('user_type_code', '=', 'receivables'),
+        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
     ],
     # HEADER OF donation
     'donation_header': [
