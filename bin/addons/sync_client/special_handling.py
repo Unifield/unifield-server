@@ -179,7 +179,6 @@ class account_move_line(osv.osv):
             ('journal_id', 'id'),
             ('move_id', 'id'),
             ('partner_id', 'id'),
-            ('partner_txt', False),
             ('period_id', 'id'),
             ('ref', False),
             ('state', False),
