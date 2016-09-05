@@ -23,6 +23,11 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+import sys
+sys.path.append('/home/fm-us-1491/unifield-server/bin/tools')
+from tools.misc import Path
+import os
+import tools
 
 
 class mission_stock_wizard(osv.osv_memory):
@@ -210,13 +215,25 @@ report when the last update field will be filled. Thank you for your comprehensi
         self._check_status(cr, uid, ids, context=context)
 
         datas = {'ids': ids}
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'stock.mission.report_xls',
-            'datas': datas,
-            'nodestroy': True,
-            'context': context,
-        }
+        attachments_path = tools.config.get('attachments_path')
+        if isinstance(ids, (list, tuple)):
+            report_id = ids[0]
+        else:
+            report_id = ids
+        file_name = 'Stock_Mission_Rerport_%s_%s.csv' % (report_id, 'ns_nv_vals')
+        path = os.path.join(attachments_path, file_name)
+        if os.path.exists(path):
+            return (Path(path, delete=False), 'csv')
+        else:
+            raise osv.except_osv(_('Error'), _('File %s not found.') % path)
+
+        #return {
+        #    'type': 'ir.actions.report.xml',
+        #    'report_name': 'stock.mission.report_xls',
+        #    'datas': datas,
+        #    'nodestroy': True,
+        #    'context': context,
+        #}
 
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)

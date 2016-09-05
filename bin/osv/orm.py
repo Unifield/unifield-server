@@ -3332,7 +3332,8 @@ class orm(orm_template):
                        ira.check(cr, user, self._name, 'create', raise_exception=False, context=context)
         return super(orm, self).fields_get(cr, user, fields, context, write_access)
 
-    def read(self, cr, user, ids, fields=None, context=None, load='_classic_read'):
+    def read(self, cr, user, ids, fields=None, context=None,
+            load='_classic_read', order=None):
         if not ids:
             return []
         if context is None:
@@ -3345,7 +3346,7 @@ class orm(orm_template):
         else:
             select = ids
         select = [isinstance(x, dict) and x['id'] or x for x in select]
-        result = self._read_flat(cr, user, select, fields, context, load)
+        result = self._read_flat(cr, user, select, fields, context, load, order)
 
         for r in result:
             for key, v in r.items():
@@ -3356,7 +3357,8 @@ class orm(orm_template):
             return result and result[0] or False
         return result
 
-    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None,
+            load='_classic_read', order=None):
         if not ids:
             return []
         if context is None:
@@ -3390,12 +3392,16 @@ class orm(orm_template):
                 return f_qual
 
             fields_pre2 = map(convert_field, fields_pre)
-            order_by = self._parent_order or self._order
+            if order == 'NO_ORDER':
+                order_by = ''
+            else:
+                order_by = self._parent_order or self._order
             select_fields = ','.join(fields_pre2 + [self._table + '.id'])
             query = 'SELECT %s FROM %s WHERE %s.id IN %%s' % (select_fields, ','.join(tables), self._table)
             if rule_clause:
                 query = ''.join((query, ' AND ', ' OR '.join(rule_clause)))
-            query = ''.join((query, ' ORDER BY ', order_by))
+            if order_by:
+                query = ''.join((query, ' ORDER BY ', order_by))
             for sub_ids in cr.split_for_in_conditions(ids):
                 if rule_clause:
                     cr.execute(query, [tuple(sub_ids)] + rule_params)
