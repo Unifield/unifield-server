@@ -34,7 +34,7 @@ class field_access_rule(osv.osv):
 
     _name = "msf_field_access_rights.field_access_rule"
     _description = 'Field Access Rule'
-    
+
     def _get_all_model_ids(self, cr, uid, model_name):
         def recur_get_model(model, res):
             ids = self.pool.get('ir.model').search(cr, 1, [('model','=',model._name)])
@@ -45,7 +45,7 @@ class field_access_rule(osv.osv):
             return res
         model = self.pool.get(model_name)
         return recur_get_model(model, [])
-    
+
     def _get_family_model_ids(self, cr, uid, ids, field, args, context=None):
         res = dict.fromkeys(ids, [])
         for field_access_rule in self.browse(cr, 1, ids, context=context):
@@ -65,7 +65,7 @@ class field_access_rule(osv.osv):
         'comment': fields.text('Comment', help='A description of what this rule does'),
         'active': fields.boolean('Active', help='If checked, this rule will be applied. This rule must be validated first.'),
         'status': fields.selection((('not_validated', 'Not Validated'), ('validated', 'Model Validated'), ('domain_validated', 'Filter Validated')), 'Status', help='The validation status of the rule. The Filter must be valid for this rule to be validated.', required=True),
-        
+
         'family_model_ids': fields.function(_get_family_model_ids, string='Family Model IDs', type='many2many', relation='ir.model', method=True),
         }
 
@@ -81,37 +81,34 @@ class field_access_rule(osv.osv):
         ('domaintext_like1', 'check(domain_text <> $$"ilike"$$)', 'Due to technical constraints, you cannot use the operator "like" in a domain'),
         ('domaintext_like2', "check(domain_text <> $$'ilike'$$)", 'Due to technical constraints, you cannot use the operator "like" in a domain'),
     ]
-    
+
     def create(self, cr, user, vals, context=None):
-        
+        if context is None:
+            context = {}
         # get model_name from model
         vals['model_name'] = self.pool.get('ir.model').browse(cr, user, vals['model_id'], context=context).model
+        if not context.get('sync_update_execution') and vals.get('model_name') and vals.get('domain_text'):
+            self.validate_domain_action(cr, user, vals['model_name'], vals['domain_text'])
         return super(field_access_rule, self).create(cr, user, vals, context=context)
 
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
             return True
 
+        if context is None:
+            context = {}
+
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
 
-        # if domain_text has changed, change status to not_validated
-        if values.get('domain_text'):
-            if len(ids) == 1:
-                record = self.browse(cr, uid, ids[0], context=context)
-                domain_text = getattr(record, 'domain_text', '')
-
-                if domain_text != values['domain_text']:
-                    values['status'] = 'validated'
-            else:
-                values['status'] = 'validated'
-
-        # deactivate if not validated
-        if 'status' in values and values['status'] == 'validated':
-            values['active'] = False
+        # if domain_text has changed, check new domain syntax
+        if values.get('domain_text') and not context.get('sync_update_execution'):
+            for rule in self.read(cr, uid, ids, ['domain_text', 'model_name', 'active'], context=context):
+                if rule['domain_text'] != values['domain_text']:
+                    self.validate_domain_action(cr, uid, values.get('model_name', rule['model_name']), values['domain_text'])
 
         return super(field_access_rule, self).write(cr, uid, ids, values, context=context)
-    
+
     def copy(self, cr, uid, id, default, context=None):
         raise orm.except_orm('Duplication Disabled', 'The duplication feature has been disabled for Field Access Rules')
 
@@ -140,7 +137,7 @@ class field_access_rule(osv.osv):
             return True
 
     def validate_button(self, cr, uid, ids, context=None):
-    	return self.write(cr, uid, ids, {'status':'validated'}, context=context)
+        return self.write(cr, uid, ids, {'status':'validated'}, context=context)
 
     def create_new_filter_button(self, cr, uid, ids, context=None):
         """
@@ -149,22 +146,22 @@ class field_access_rule(osv.osv):
         assert len(ids) <= 1, "Cannot work on list of ids longer than one"
 
         record = self.browse(cr, uid, ids[0])
-        
+
         # search in ir.ui.view for form and tree views for this model. If they exist, return action, else return None, otherwise openerp will error
         view_pool = self.pool.get('ir.ui.view')
         form = view_pool.search(cr, 1, [('type','=','form'),('model','=',record.model_name)])
         tree = view_pool.search(cr, 1, [('type','=','tree'),('model','=',record.model_name)])
-        
+
         if form and tree:
             res = {
                 'name': 'Create a New Filter For: %s' % record.model_id.name,
                 'res_model': record.model_id.model,
                 'type': 'ir.actions.act_window',
                 'view_type': 'form',
-    			'view_mode':'tree,form',
-                'target': 'new', 
+                'view_mode':'tree,form',
+                'target': 'new',
             }
-            return res        
+            return res
         else:
             raise osv.except_osv('No List View', 'The chosen model has no List view so this feature cannot be used. You can still manually type a filter in the Advanced Filter field...')
 
@@ -174,15 +171,15 @@ class field_access_rule(osv.osv):
         """
         if ids:
             fields_pool = self.pool.get('ir.model.fields')
-            
+
             for id in ids:
                 record = self.browse(cr, uid, id)
                 if record.field_access_rule_line_ids:
                     raise osv.except_osv('Remove Field Access Rule Lines First From %s' % id, 'Please remove all existing Field Access Rule Lines before generating new ones')
-        
+
                 fields_search = fields_pool.search(cr, uid, [('model_id', 'in', [f.id for f in record.family_model_ids])], context=context)
                 fields = fields_pool.browse(cr, uid, fields_search, context=context)
-        
+
                 res = [(0, 0, {'field': i.id, 'field_name': i.name}) for i in fields]
                 self.write(cr, uid, id, {'field_access_rule_line_ids': res})
         return True
@@ -200,33 +197,25 @@ class field_access_rule(osv.osv):
             'type': 'ir.actions.act_window',
             'name': 'Field Access Rule Lines for rule: %s' % this.name,
             'view_type': 'form',
-			'view_mode':'tree,form',
-			'view_id': [view_id],
+            'view_mode':'tree,form',
+            'view_id': [view_id],
             'target': 'new',
             'res_model': 'msf_field_access_rights.field_access_rule_line',
             'context': {
-            	'search_default_field_access_rule': ids[0],
+                'search_default_field_access_rule': ids[0],
             },
         }
 
-    def validate_domain_button(self, cr, uid, ids, context=None):
-        """
-        Validates the domain_text filter, and if successful, changes the Status field to validated
-        """
-        assert len(ids) <= 1, "Cannot work on list of ids != 1"
-
+    def validate_domain_action(self, cr, uid, model_name, domain_text, context=None):
         exception_title = 'Invalid Filter'
-        exception_body = 'The filter you have typed is invalid. You can create a filter using the Create New Filter button'
-
-        record = self.browse(cr, uid, ids[0], context=context)
-
-        if record.domain_text:
-            pool = self.pool.get(record.model_name)
+        exception_body = "\nThe filter you have typed is invalid. You can create a filter using the Create New Filter button"
+        if domain_text:
+            pool = self.pool.get(model_name)
             if not pool:
                 raise osv.except_osv('Invalid Model', 'The model you have chosen is invalid. Please use the auto-complete to choose a valid one.')
 
             try:
-                domain = eval(record.domain_text)
+                domain = eval(domain_text)
                 if not isinstance(domain, list):
                     raise osv.except_osv(exception_title, exception_body)
             except SyntaxError:
@@ -237,10 +226,19 @@ class field_access_rule(osv.osv):
             except (ValueError, psycopg2.ProgrammingError):
                 raise osv.except_osv(exception_title, exception_body)
 
-            self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
-            return True
-        else:
-            self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
-            return True
+        return True
+
+    def validate_domain_button(self, cr, uid, ids, context=None):
+        """
+        Validates the domain_text filter, and if successful, changes the Status field to validated
+        """
+        assert len(ids) <= 1, "Cannot work on list of ids != 1"
+
+
+        record = self.browse(cr, uid, ids[0], context=context)
+
+        self.validate_domain_action(cr, uid, record.model_name, record.domain_text, context)
+        self.write(cr, uid, ids, {'status': 'domain_validated'}, context=context)
+        return True
 
 field_access_rule()
