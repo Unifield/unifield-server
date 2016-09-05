@@ -58,8 +58,8 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Debit Notes
     'out_invoice': [
         ('type', '!=', 'view'),
-        # Either Receivable/Receivables or Regular/Cash or Regular/Income accounts
-        '|', '&', ('type', '=', 'receivable'), ('user_type_code', '=', 'receivables'),
+        # Either Receivable/Receivables or Receivable/Cash or Regular/Cash or Regular/Income accounts
+        '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']),
         '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
     ],
     # HEADER OF donation
