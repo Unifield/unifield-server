@@ -57,9 +57,10 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Customer Refund
     #+ Debit Notes
     'out_invoice': [
-        ('type', '!=', 'view'),
-        # Either Receivable/Receivables accounts or Regular / Cash accounts
-        '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
+        '&', ('type', '!=', 'view'),
+        # Either Receivable/Receivables or Regular/Cash or Regular/Income accounts
+        '|', '|', '&', ('type', '=', 'receivable'), ('user_type_code', '=', 'receivables'),
+        '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'), '&', ('type', '=', 'other'), ('user_type_code', '=', 'income'),
     ],
     # HEADER OF donation
     'donation_header': [
