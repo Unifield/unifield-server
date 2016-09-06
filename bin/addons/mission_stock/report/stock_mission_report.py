@@ -28,6 +28,7 @@ from tools.misc import Path
 import tools
 from tools.translate import _
 import os
+from mission_stock import mission_stock
 
 
 class stock_mission_report_parser(report_sxw.rml_parse):
@@ -46,10 +47,16 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
 
     def create(self, cr, uid, ids, data, context=None):
         attachments_path = tools.config.get('attachments_path')
-        # XXX handle the case where attachment_path is not defined
+
+        # check attachments_path
+        if not attachments_path:
+            raise osv.except_osv(_('Error'), _('attachments_path is not defined.'))
+        if not os.path.exists(attachments_path):
+            raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
+
         report_id = data.get('report_id', None)
         field_name = data.get('field_name', '')
-        file_name = 'Stock_Mission_Rerport_%s_%s.csv' % (report_id, field_name)
+        file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name)
         path = os.path.join(attachments_path, file_name)
         if os.path.exists(path):
             return (Path(path, delete=False), 'csv')

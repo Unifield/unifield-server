@@ -23,11 +23,6 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
-import sys
-sys.path.append('/home/fm-us-1491/unifield-server/bin/tools')
-from tools.misc import Path
-import os
-import tools
 
 
 class mission_stock_wizard(osv.osv_memory):

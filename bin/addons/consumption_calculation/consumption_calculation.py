@@ -1789,9 +1789,6 @@ class product_product(osv.osv):
         if not out_move_ids:
             return res
 
-        print len(out_move_ids)
-
-
         move_result = move_obj.read(cr, uid, out_move_ids, ['location_id',
             'reason_type_id', 'product_uom', 'product_qty', 'product_id',
             'location_dest_id', 'date'], context=context)

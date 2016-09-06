@@ -35,6 +35,7 @@ import codecs
 import cStringIO
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
+STOCK_MISSION_REPORT_NAME_PATTERN = 'Stock_Mission_Rerport_%s_%s.csv'
 CSV_DELIMITER = ';'
 class excel_semicolon(csv.excel):
     delimiter = CSV_DELIMITER
@@ -141,12 +142,6 @@ class stock_mission_report(osv.osv):
         'export_ok': fields.boolean(string='Export file possible ?'),
     }
 
-    def __init__(self, pool, cr):
-        a = super(stock_mission_report, self).__init__(pool, cr)
-        for col in ['ns_nv_vals', 's_nv_vals', 'ns_v_vals', 's_v_vals']:
-            self._columns[col]._prefetch = False
-        return a
-
     _defaults = {
         'full_view': lambda *a: False,
         #'export_ok': False,
@@ -245,11 +240,11 @@ class stock_mission_report(osv.osv):
                 # register immediately this report id into the table temp
                 msr_in_progress.create(cr, uid, report_id, context)
 
-        product_ids = self.pool.get('product.product').search(cr, uid, [],
-                context=context, order='NO_ORDER')
+        product_obj = self.pool.get('product.product')
+        product_ids = product_obj.search(cr, uid, [],
+                context=context, order='NO_ORDER', limit=100)
         logging.getLogger('MSR').info("""___ start to read %s products at %s...""" % (len(product_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
-        product_obj = self.pool.get('product.product')
         # read only the products that can have product_amc or reviewed_consumption
         # 2 cases:
         # A - the product that have only product_amc
@@ -260,8 +255,6 @@ class stock_mission_report(osv.osv):
                 WHERE id IN (SELECT product_id FROM stock_move)""")
         product_amc_ids = cr.fetchall()
         product_amc_ids = list(set(product_ids).intersection(product_amc_ids))
-
-        logging.getLogger('MSR').info("""___ start read A at %s ...""" % time.strftime('%Y-%m-%d %H:%M:%S'))
         product_amc_result = product_obj.read(cr, uid, product_ids, ['product_amc'], context=context, order='NO_ORDER')
 
         # B
@@ -270,7 +263,6 @@ class stock_mission_report(osv.osv):
 
         product_reviewed_ids = cr.fetchall()
         product_reviewed_ids = list(set(product_ids).intersection(product_reviewed_ids))
-        logging.getLogger('MSR').info("""___ start read B at %s ...""" % time.strftime('%Y-%m-%d %H:%M:%S'))
         product_reviewed_result = product_obj.read(cr, uid, product_reviewed_ids, ['reviewed_consumption'], context=context, order='NO_ORDER')
         logging.getLogger('MSR').info("""___ finish read B at %s ...""" % time.strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -577,9 +569,11 @@ class stock_mission_report(osv.osv):
             cr.execute(request, (report_id, ))
             res = cr.dictfetchall()
 
+            attachments_path = tools.config.get('attachments_path')
             field_to_file = {
                     'ns_nv_data': { # No split, no valuation
-                        'file': open(os.path.join(attachments_path, file_name % 'ns_nv_vals'), 'w'),
+                        'file': open(os.path.join(attachments_path,
+                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 'ns_nv_vals')), 'w'),
                         'header': (
                             _('Reference'),
                             _('Name'),
@@ -594,7 +588,8 @@ class stock_mission_report(osv.osv):
                             _('In Pipe Qty'))
                     },
                     'ns_v_data': { # No split, valuation
-                        'file': open(os.path.join(attachments_path, file_name % 'ns_v_vals'), 'w'),
+                        'file': open(os.path.join(attachments_path,
+                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 'ns_v_vals')), 'w'),
                         'header': (
                             _('Reference'),
                             _('Name'),
@@ -612,7 +607,8 @@ class stock_mission_report(osv.osv):
                             _('In Pipe Qty'))
                     },
                     's_nv_data': { # Split, no valuation
-                        'file': open(os.path.join(attachments_path, file_name % 's_nv_vals'), 'w'),
+                        'file': open(os.path.join(attachments_path,
+                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 's_nv_vals')), 'w'),
                         'header': (
                             _('Reference'),
                             _('Name'),
@@ -628,7 +624,8 @@ class stock_mission_report(osv.osv):
                             _('In Pipe Qty'))
                     },
                     's_v_data': { # Split, valuation
-                        'file': open(os.path.join(attachments_path, file_name % 's_v_vals'), 'w'),
+                        'file': open(os.path.join(attachments_path,
+                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 's_v_vals')), 'w'),
                         'header': (
                             _('Reference'),
                             _('Name'),
@@ -650,11 +647,6 @@ class stock_mission_report(osv.osv):
 
             # write all headers of the csv file
             for field in field_to_file.keys():
-                # encode header elements in utf8 before to write it in csv file
-                header_list = field_to_file[field]['header']
-                #header_list = [x.encode('UTF-16LE') for x in header_list]
-                #field_to_file[field]['header'] = header_list
-
                 csvfile = field_to_file[field]['file']
                 writer = UnicodeWriter(csvfile, dialect=excel_semicolon)
                 writer.writerow(field_to_file[field]['header'])
@@ -670,7 +662,7 @@ class stock_mission_report(osv.osv):
                         data_list = eval(data_str)
 
                         # use unicode text
-                        data_list = [tools.ustr(x) for x in data_list]
+                        data_list = [isinstance(x, (int, long, float)) and x or tools.ustr(x) for x in data_list]
                         csvfile = field_to_file[field]['file']
                         writer = UnicodeWriter(csvfile, dialect=excel_semicolon)
                         writer.writerow(data_list)
@@ -706,7 +698,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([s.encode("utf-8") for s in row])
+        self.writer.writerow([isinstance(s, (int, long, float)) and s or s.encode("utf-8") for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
