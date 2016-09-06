@@ -1786,8 +1786,6 @@ class product_product(osv.osv):
 
         out_move_ids = move_obj.search(cr, uid, domain, context=context,
                 order='NO_ORDER')
-        if not out_move_ids:
-            return res
 
         move_result = move_obj.read(cr, uid, out_move_ids, ['location_id',
             'reason_type_id', 'product_uom', 'product_qty', 'product_id',
@@ -1809,7 +1807,6 @@ class product_product(osv.osv):
                 context=context)
         product_dict = dict((x['id'], x) for x in product_result)
 
-        #for move in move_obj.browse(cr, uid, out_move_ids, context=context):
         for move in move_result:
             if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
                 res -= uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
