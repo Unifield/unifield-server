@@ -74416,3 +74416,9 @@ msgstr "La colonne '%s' du fichier Excel doit être '%s', pas '%s'."
 #, python-format
 msgid "The column '%s' is not present in the file."
 msgstr "La colonne '%s' n'est pas présente dans le fichier."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:166
+#, python-format
+msgid "Line seemed empty, so this line was ignored"
+msgstr "La ligne semblait vide, donc cette ligne a été ignorée"
