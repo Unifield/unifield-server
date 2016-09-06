@@ -233,19 +233,20 @@ class account_account(osv.osv):
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
 
-        # Restrict to Expense/Income/Receivable accounts for Intermission Vouchers OUT or Stock Transfer Vouchers
-        context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
-            context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
-        context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
-            not context.get('is_debit_note', False)
-        if context_ivo or context_stv:
-            arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
+        if args == [('restricted_area', '=', 'invoice_lines')]:
+            # Restrict to Expense/Income/Receivable accounts for Intermission Vouchers OUT or Stock Transfer Vouchers LINES
+            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+                not context.get('is_debit_note', False)
+            if context_ivo or context_stv:
+                arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
 
-        # Restrict to Expense accounts only for Intermission Vouchers IN
-        context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
-            context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
-        if context_ivi:
-            arg.append(('user_type_code', '=', 'expense'))
+            # Restrict to Expense accounts only for Intermission Vouchers IN LINES
+            context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
+                context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+            if context_ivi:
+                arg.append(('user_type_code', '=', 'expense'))
 
         return arg
 
