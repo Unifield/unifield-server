@@ -21,10 +21,12 @@
 
 import time
 
+from osv import osv
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.misc import Path
 import tools
+from tools.translate import _
 import os
 
 
@@ -43,14 +45,11 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         super(stock_mission_report_xls_parser, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        #a = super(stock_mission_report_xls_parser, self).create(cr, uid, ids, data, context)
-        #return (a[0], 'xls')
         attachments_path = tools.config.get('attachments_path')
-        if isinstance(ids, (list, tuple)):
-            report_id = ids[0]
-        else:
-            report_id = ids
-        file_name = 'Stock_Mission_Rerport_%s_%s.csv' % (report_id, 'ns_nv_vals')
+        # XXX handle the case where attachment_path is not defined
+        report_id = data.get('report_id', None)
+        field_name = data.get('field_name', '')
+        file_name = 'Stock_Mission_Rerport_%s_%s.csv' % (report_id, field_name)
         path = os.path.join(attachments_path, file_name)
         if os.path.exists(path):
             return (Path(path, delete=False), 'csv')

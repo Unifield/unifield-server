@@ -215,25 +215,32 @@ report when the last update field will be filled. Thank you for your comprehensi
         self._check_status(cr, uid, ids, context=context)
 
         datas = {'ids': ids}
-        attachments_path = tools.config.get('attachments_path')
-        if isinstance(ids, (list, tuple)):
-            report_id = ids[0]
-        else:
-            report_id = ids
-        file_name = 'Stock_Mission_Rerport_%s_%s.csv' % (report_id, 'ns_nv_vals')
-        path = os.path.join(attachments_path, file_name)
-        if os.path.exists(path):
-            return (Path(path, delete=False), 'csv')
-        else:
-            raise osv.except_osv(_('Error'), _('File %s not found.') % path)
 
-        #return {
-        #    'type': 'ir.actions.report.xml',
-        #    'report_name': 'stock.mission.report_xls',
-        #    'datas': datas,
-        #    'nodestroy': True,
-        #    'context': context,
-        #}
+        # add the requested field name and report_id to the datas
+        # to be used later on in the stock_mission_report_xls_parser
+        res = self.read(cr, uid, ids, ['with_valuation', 'split_stock',
+            'report_id'], context=context)
+
+        field_name = None
+        if res['split_stock'] == 'false' and res['with_valuation'] == 'false':
+            field_name = 'ns_nv_vals'
+        elif res['split_stock'] == 'true' and res['with_valuation'] == 'true':
+            field_name = 's_v_vals'
+        elif res['split_stock'] == 'false' and res['with_valuation'] == 'true':
+            field_name = 'ns_v_vals'
+        elif res['split_stock'] == 'true' and res['with_valuation'] == 'false':
+            field_name = 's_nv_vals'
+
+        datas['field_name'] = field_name
+        datas['report_id'] = res['report_id']
+
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'stock.mission.report_xls',
+            'datas': datas,
+            'nodestroy': True,
+            'context': context,
+        }
 
     def update(self, cr, uid, ids, context=None):
         ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
