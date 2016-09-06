@@ -22,6 +22,7 @@
 from osv import fields, osv
 from tools.translate import _
 import logging
+from tools.safe_eval import safe_eval
 from account_period_closing_level import ACCOUNT_PERIOD_STATE_SELECTION
 
 
@@ -470,7 +471,7 @@ class account_period(osv.osv):
             context = {}
         return self.register_view(cr, uid, ids, 'cash', context=context)
 
-    def invoice_view(self, cr, uid, ids, name=_('Invoices'), domain=[], module='account', view_name='invoice_tree', context=None):
+    def invoice_view(self, cr, uid, ids, name=_('Invoices'), domain=None, module='account', view_name='invoice_tree', action_xmlid=None, context=None):
         """
         Open an invoice tree view with the given domain for the period in ids
         """
@@ -479,7 +480,37 @@ class account_period(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if domain is None:
+            domain = []
 
+        if action_xmlid:
+            # to get action_xmlid:
+            # 1/ on the web interface get id of ir.ui.menu menu
+            # 2/ get id of ir.actions.act_window:
+            #        select value from ir_values where model='ir.ui.menu' and res_id=<menu_id>;
+            # 3/ get xmlid:
+            #    select module||'.'||name from ir_model_data where res_id=<act_id> and module!='sd' and model='ir.actions.act_window';
+            module, xmlid = action_xmlid.split('.', 1)
+            act_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, xmlid)[1]
+            keys = ['display_menu_tip', 'help', 'type', 'domain', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'context', 'name', 'views', 'view_type']
+            act = self.pool.get('ir.actions.act_window').read(cr, uid, act_id, keys, context=context)
+            act_domain = act.get('domain', "[]")
+            act_context = act.get('context', "{}") or "{}"
+            # TODO: check if active_id and uid as string are ok
+            eval_domain = safe_eval(act_domain, {'uid': 'uid', 'active_id': 'active_id'})
+
+            period = self.read(cr, uid, ids[0], ['date_stop'], context=context)
+            eval_domain += [('date_invoice', '<=', period['date_stop']), ('state', 'in', ['draft', 'open'])]
+
+            # TODO: check if active_id and uid as string are ok
+            eval_context = safe_eval(act_context, {'uid': 'uid', 'active_id': 'active_id'})
+            eval_context['search_default_draft'] = 0
+            act['context'] = eval_context
+            act['domain'] = eval_domain
+            act['target'] = 'current'
+            return act
+
+        # TODO: convert call with action_xmlid arg, and remove this
         # Search invoices
         for period in self.browse(cr, uid, ids, context=context):
             # prepare view
@@ -504,13 +535,13 @@ class account_period(osv.osv):
         """
         Create a new tab with Open stock transfer vouchers from given period.
         """
-        return self.invoice_view(cr, uid, ids, _('Stock Transfer Vouchers'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', False)], context={'type':'out_invoice', 'journal_type': 'sale'})
+        return self.invoice_view(cr, uid, ids, action_xmlid='account.action_invoice_tree1', context=context)
 
     def button_customer_refunds(self, cr, uid, ids, context=None):
         """
         Create a new tab with Customer refunds from given period.
         """
-        return self.invoice_view(cr, uid, ids, _('Customer Refunds'), [('type', '=', 'out_refund'), ('is_debit_note', '=', False)], context=context)
+        return self.invoice_view(cr, uid, ids, action_xmlid='account.action_invoice_tree3', context=context)
 
     # Debit note
     def button_debit_note(self, cr, uid, ids, context=None):
