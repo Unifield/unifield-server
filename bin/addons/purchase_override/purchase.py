@@ -1201,6 +1201,7 @@ stock moves which are already processed : '''
         sol_obj = self.pool.get('sale.order.line')
         so_obj = self.pool.get('sale.order')
         ad_obj = self.pool.get('analytic.distribution')
+        ccl_obj = self.pool.get('cost.center.distribution.line')
         proc_obj = self.pool.get('procurement.order')
         pick_obj = self.pool.get('stock.picking')
         move_obj = self.pool.get('stock.move')
@@ -1226,6 +1227,15 @@ stock moves which are already processed : '''
                 new_distrib = ad_obj.copy(cr, uid, l.analytic_distribution_id.id, {}, context=context)
             elif not l.analytic_distribution_id and l.order_id and l.order_id.analytic_distribution_id:
                 new_distrib = ad_obj.copy(cr, uid, l.order_id.analytic_distribution_id.id, {}, context=context)
+
+            # Make check on partner_type of the AD cost center lines
+            ccl_ids = ccl_obj.search(cr, uid, [
+                ('distribution_id', '=', new_distrib),
+                ('partner_type', '!=', l.link_so_id.partner_type)
+            ], context=context)
+            if ccl_ids:
+                ccl_obj.write(cr, uid, ccl_ids, {'partner_type': l.link_so_id.partner_type}, context=context)
+
             # Creates the FO lines
             tmp_sale_context = context.get('sale_id')
             # create new line in FOXXXX-Y
