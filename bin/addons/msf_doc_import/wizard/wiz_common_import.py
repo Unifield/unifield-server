@@ -21,6 +21,9 @@
 
 from osv import osv
 from osv import fields
+
+from specific_rules.specific_rules import SHORT_SHELF_LIFE_MESS
+
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import base64
 from tools.translate import _
@@ -208,6 +211,18 @@ class wizard_common_import_line(osv.osv_memory):
                                     res.get('warning', {}).get('message', ''),
                                     c_msg,
                                 )
+
+                            if product_obj.browse(cr, uid, product_id).is_ssl:
+                                res.setdefault('warning', {})
+                                if res['warning'].get('message', None):
+                                    res['warning']['message'] = '%s\n%s' % (res['warning'].get('message', ''), _(SHORT_SHELF_LIFE_MESS))
+                                else:
+                                    res['warning'] = {
+                                        'title': _('Short Shelf Life product'),
+                                        'message': _(SHORT_SHELF_LIFE_MESS),
+                                    }
+
+                            if res:
                                 return res
         except IndexError:
             return {}
