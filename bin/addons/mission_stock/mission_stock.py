@@ -242,7 +242,7 @@ class stock_mission_report(osv.osv):
 
         product_obj = self.pool.get('product.product')
         product_ids = product_obj.search(cr, uid, [],
-                context=context, order='NO_ORDER', limit=100)
+                context=context, order='NO_ORDER')
         logging.getLogger('MSR').info("""___ start to read %s products at %s...""" % (len(product_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
         # read only the products that can have product_amc or reviewed_consumption
@@ -277,14 +277,6 @@ class stock_mission_report(osv.osv):
             product_values[product['id']]['product_amc'] = product['product_amc']
         for product in product_reviewed_result:
             product_values[product['id']]['reviewed_consumption'] = product['reviewed_consumption']
-
-
-        #product_values = dict((x['id'], x) for x in temp_prods)
-
-        #for product in temp_prods:
-        #    product_values.setdefault(product['id'], {})
-        #    product_values[product['id']].setdefault('product_amc', product['product_amc'])
-        #    product_values[product['id']].setdefault('reviewed_consumption', product['reviewed_consumption'])
 
         # Check in each report if new products are in the database and not in the report
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
@@ -654,15 +646,16 @@ class stock_mission_report(osv.osv):
             for line in res:
                 try:
                     product_amc = line['product_id'] in product_values and product_values[line['product_id']]['product_amc'] or 0.00
-                    reviewed_consumption = line['product_id'] in product_values and product_values[line['product_id']]['reviewed_consumption'] or 0.00
+                    reviewed_consumption = line['product_id'] in product_values and \
+                            product_values[line['product_id']]['reviewed_consumption'] or 0.00
 
-                    for field in field_to_file.keys(): 
+                    for field in field_to_file.keys():
                         data_str = line[field] % (product_amc, reviewed_consumption)
                         data_str = data_str.replace('"\'', '\"').replace('\'"', '\"').replace("''", "'")
                         data_list = eval(data_str)
 
                         # use unicode text
-                        data_list = [isinstance(x, (int, long, float)) and x or tools.ustr(x) for x in data_list]
+                        data_list = [not isinstance(x, (int, long, float)) and tools.ustr(x) or x for x in data_list]
                         csvfile = field_to_file[field]['file']
                         writer = UnicodeWriter(csvfile, dialect=excel_semicolon)
                         writer.writerow(data_list)
@@ -698,7 +691,7 @@ class UnicodeWriter:
         self.encoder = codecs.getincrementalencoder(encoding)()
 
     def writerow(self, row):
-        self.writer.writerow([isinstance(s, (int, long, float)) and s or s.encode("utf-8") for s in row])
+        self.writer.writerow([not isinstance(s, (int, long, float)) and s.encode("utf-8") or s for s in row])
         # Fetch UTF-8 output from the queue ...
         data = self.queue.getvalue()
         data = data.decode("utf-8")
