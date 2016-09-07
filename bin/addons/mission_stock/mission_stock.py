@@ -559,9 +559,17 @@ class stock_mission_report(osv.osv):
             ORDER BY l.default_code'''
 
             cr.execute(request, (report_id, ))
-            res = cr.dictfetchall()
+            request_result = cr.dictfetchall()
 
-            attachments_path = tools.config.get('attachments_path')
+            obj_model, obj_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+                    'base_setup', 'attachment_config_default')
+            attachments_path = self.pool.get(obj_model,).read(cr, uid, obj_id,
+                    ['name'])['name']
+
+            # check attachments_path
+            if not attachments_path or not os.path.exists(attachments_path):
+                raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
+
             field_to_file = {
                     'ns_nv_data': { # No split, no valuation
                         'file': open(os.path.join(attachments_path,
@@ -643,7 +651,7 @@ class stock_mission_report(osv.osv):
                 writer = UnicodeWriter(csvfile, dialect=excel_semicolon)
                 writer.writerow(field_to_file[field]['header'])
 
-            for line in res:
+            for line in request_result:
                 try:
                     product_amc = line['product_id'] in product_values and product_values[line['product_id']]['product_amc'] or 0.00
                     reviewed_consumption = line['product_id'] in product_values and \

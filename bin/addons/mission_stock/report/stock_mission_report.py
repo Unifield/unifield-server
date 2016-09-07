@@ -29,6 +29,7 @@ import tools
 from tools.translate import _
 import os
 from mission_stock import mission_stock
+import pooler
 
 
 class stock_mission_report_parser(report_sxw.rml_parse):
@@ -46,12 +47,16 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         super(stock_mission_report_xls_parser, self).__init__(name, table, rml=rml, parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
-        attachments_path = tools.config.get('attachments_path')
+
+        # get the attachment_path
+        pool = pooler.get_pool(cr.dbname)
+        res = pool.get('ir.model.data').get_object_reference(cr, uid,
+                'base_setup', 'attachment_config_default')
+        attachments_path = pool.get(res[0]).read(cr, uid, res[1],
+                ['name'])['name']
 
         # check attachments_path
-        if not attachments_path:
-            raise osv.except_osv(_('Error'), _('attachments_path is not defined.'))
-        if not os.path.exists(attachments_path):
+        if not attachments_path or not os.path.exists(attachments_path):
             raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
 
         report_id = data.get('report_id', None)
@@ -61,7 +66,8 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         if os.path.exists(path):
             return (Path(path, delete=False), 'csv')
         else:
-            raise osv.except_osv(_('Error'), _('File %s not found.') % path)
+            raise osv.except_osv(_('Error'),
+                _("File %s not found.\nMay be you need to update the Mission Stock Report data.") % path)
 
 stock_mission_report_xls_parser(
     'report.stock.mission.report_xls',
