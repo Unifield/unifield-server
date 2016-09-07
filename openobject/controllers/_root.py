@@ -63,6 +63,8 @@ class Root(BaseController):
             # existing ones
             cherrypy.engine.autoreload.unsubscribe()
 
+            # re-enable auto-reloading if it was enabled before
+            cherrypy.engine.autoreload.subscribe()
         request = cherrypy.request
         self.clean_headers_params(request)
         func, vpath = self.find_handler()
