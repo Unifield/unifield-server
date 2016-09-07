@@ -253,30 +253,32 @@ class stock_mission_report(osv.osv):
         # A
         cr.execute("""SELECT id FROM product_product
                 WHERE id IN (SELECT product_id FROM stock_move)""")
-        product_amc_ids = cr.fetchall()
-        product_amc_ids = list(set(product_ids).intersection(product_amc_ids))
-        product_amc_result = product_obj.read(cr, uid, product_ids, ['product_amc'], context=context)
+        product_amc_ids = [x[0] for x in cr.fetchall()]
+        product_amc_ids = list(set(product_amc_ids).intersection(product_ids))
+        product_amc_result = product_obj.read(cr, uid, product_amc_ids, ['product_amc'], context=context)
 
         # B
         cr.execute("""SELECT id FROM product_product
                 WHERE id IN (SELECT name FROM monthly_review_consumption_line)""")
 
-        product_reviewed_ids = cr.fetchall()
-        product_reviewed_ids = list(set(product_ids).intersection(product_reviewed_ids))
+        product_reviewed_ids = [x[0] for x in cr.fetchall()]
+        product_reviewed_ids = list(set(product_reviewed_ids).intersection(product_ids))
         product_reviewed_result = product_obj.read(cr, uid, product_reviewed_ids, ['reviewed_consumption'], context=context)
-        logging.getLogger('MSR').info("""___ finish read B at %s ...""" % time.strftime('%Y-%m-%d %H:%M:%S'))
+        logging.getLogger('MSR').info("""___ finish read at %s ...""" % time.strftime('%Y-%m-%d %H:%M:%S'))
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(product_reviewed_ids) + len(product_amc_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
 
-        product_values = dict.fromkeys(product_ids,
-                {'reviewed_consumption':0.00,
-                 'product_amc':0.00})
+        product_values = dict.fromkeys(product_ids, None)
 
         # Update the final dict with this results
-        for product in product_amc_result:
-            product_values[product['id']]['product_amc'] = product['product_amc']
-        for product in product_reviewed_result:
-            product_values[product['id']]['reviewed_consumption'] = product['reviewed_consumption']
+        for product_dict in product_amc_result:
+            if product_values[product_dict['id']] is None:
+                product_values[product_dict['id']] = {}
+            product_values[product_dict['id']]['product_amc'] = product_dict['product_amc']
+        for product_dict in product_reviewed_result:
+            if product_values[product_dict['id']] is None:
+                product_values[product_dict['id']] = {}
+            product_values[product_dict['id']]['reviewed_consumption'] = product_dict['reviewed_consumption']
 
         # Check in each report if new products are in the database and not in the report
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
@@ -476,21 +478,6 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        # XXX does this method is usefull ???
-        def set_data(request, report_id, line, data_name,):
-            data = ''
-            cr.execute(request, (report_id, line['id']))
-            try:
-                product_amc = line['product_id'][0] in product_values and product_values[line['product_id'][0]]['product_amc'] or 0.00
-                reviewed_consumption = line['product_id'][0] in product_values and product_values[line['product_id'][0]]['reviewed_consumption'] or 0.00
-                for r in cr.dictfetchall():
-                    data += r[data_name] % (product_amc, reviewed_consumption)
-            except Exception, e:
-                logging.getLogger('Mission stock report').warning("""An error is occured when compute the consumption values for product at mission stock report file generation. Data: \n %s""" % data_name)
-
-            data += '\n'
-            return data
-
         for report_id in ids:
             request = '''SELECT
                 l.product_id AS product_id,
@@ -653,9 +640,13 @@ class stock_mission_report(osv.osv):
 
             for line in request_result:
                 try:
-                    product_amc = line['product_id'] in product_values and product_values[line['product_id']]['product_amc'] or 0.00
-                    reviewed_consumption = line['product_id'] in product_values and \
-                            product_values[line['product_id']]['reviewed_consumption'] or 0.00
+                    product_amc = 0.00
+                    reviewed_consumption = 0.00
+                    if line['product_id'] in product_values and product_values[line['product_id']]:
+                        if product_values[line['product_id']].get('product_amc', False):
+                            product_amc = product_values[line['product_id']]['product_amc']
+                        if product_values[line['product_id']].get('product_consumption', False):
+                            reviewed_consumption = product_values[line['product_id']]['reviewed_consumption']
 
                     for field in field_to_file.keys():
                         data_str = line[field] % (product_amc, reviewed_consumption)
