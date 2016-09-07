@@ -55,14 +55,6 @@ class Root(BaseController):
         # If we don't set it to a `False` default, we're probably going to
         # throw *a lot* which we don't want.
         cherrypy.request.loading_addons = False
-        autoreloader_enabled = bool(
-                getattr(cherrypy.engine.autoreload, 'thread', None))
-        if autoreloader_enabled:
-            # stop (actually don't listen to) the auto-reloader the process
-            # doesn't restart due to downloading new add-ons or refreshing
-            # existing ones
-            cherrypy.engine.autoreload.unsubscribe()
-
         request = cherrypy.request
         self.clean_headers_params(request)
         func, vpath = self.find_handler()
