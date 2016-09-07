@@ -25,6 +25,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
+import tools
 from msf_doc_import import check_line
 from msf_doc_import.wizard import FO_LINE_COLUMNS_FOR_IMPORT as columns_for_fo_line_import
 
@@ -113,9 +114,9 @@ class wizard_import_fo_line(osv.osv_memory):
                 header_error = False
                 if header_row:
                     for i, h_name in enumerate(columns_for_fo_line_import):
-                        if len(header_row) > i and str(header_row[i]) != h_name:
+                        if len(header_row) > i and tools.ustr(header_row[i]) != h_name:
                             header_error = True
-                            if str(header_row[i]).upper() == h_name.upper():
+                            if tools.ustr(header_row[i]).upper() == h_name.upper():
                                 error_list.append(_("\n\tPlease check spelling on column '%s'.") % header_row[i])
 
                 if header_error:
@@ -288,7 +289,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 if error_log:
                     error_log = _("Reported errors for ignored lines : \n") + error_log
                 end_time = time.time()
-                total_time = str(round(end_time-start_time)) + _(' second(s)')
+                total_time = tools.ustr(round(end_time-start_time)) + _(' second(s)')
                 final_message = _('''
     %s
     Importation completed in %s!
@@ -307,7 +308,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 # we reset the state of the FO to draft (initial state)
             except Exception as e:
                 self.write(cr, uid, ids, {
-                    'message': _('An unknow error occured, please contact the support team. Error message: %s') % str(e),
+                    'message': _('An unknow error occured, please contact the support team. Error message: %s') % tools.ustr(e),
                     'state': 'done',
                 }, context=context)
             finally:
