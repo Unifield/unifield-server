@@ -514,8 +514,7 @@ class product_product(osv.osv):
 
         return res
 
-    def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read',
-            order=None):
+    def read(self, cr, uid, ids, vals=None, context=None, load='_classic_read'):
         '''
         Set value for each month
         '''
@@ -593,8 +592,7 @@ class product_product(osv.osv):
                                                    'cons_type': context.get('amc') == 'AMC' and 'amc' or 'fmc',
                                                    'value': r['average']}, context=context)
         else:
-            res = super(product_product, self).read(cr, uid, ids, vals,
-                    context=context, load=load, order=order)
+            res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 
         return res
 

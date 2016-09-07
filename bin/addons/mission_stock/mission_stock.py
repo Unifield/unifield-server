@@ -255,7 +255,7 @@ class stock_mission_report(osv.osv):
                 WHERE id IN (SELECT product_id FROM stock_move)""")
         product_amc_ids = cr.fetchall()
         product_amc_ids = list(set(product_ids).intersection(product_amc_ids))
-        product_amc_result = product_obj.read(cr, uid, product_ids, ['product_amc'], context=context, order='NO_ORDER')
+        product_amc_result = product_obj.read(cr, uid, product_ids, ['product_amc'], context=context)
 
         # B
         cr.execute("""SELECT id FROM product_product
@@ -263,7 +263,7 @@ class stock_mission_report(osv.osv):
 
         product_reviewed_ids = cr.fetchall()
         product_reviewed_ids = list(set(product_ids).intersection(product_reviewed_ids))
-        product_reviewed_result = product_obj.read(cr, uid, product_reviewed_ids, ['reviewed_consumption'], context=context, order='NO_ORDER')
+        product_reviewed_result = product_obj.read(cr, uid, product_reviewed_ids, ['reviewed_consumption'], context=context)
         logging.getLogger('MSR').info("""___ finish read B at %s ...""" % time.strftime('%Y-%m-%d %H:%M:%S'))
 
         logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(product_reviewed_ids) + len(product_amc_ids), time.strftime('%Y-%m-%d %H:%M:%S')))
