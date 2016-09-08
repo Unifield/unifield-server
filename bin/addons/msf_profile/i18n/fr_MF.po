@@ -977,6 +977,8 @@ msgstr "Provient d'un registre de chèques?"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:195
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:161
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:178
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:206
 #, python-format
 msgid "Product Qty should be greater than 0.00"
 msgstr "La qté du produit doit être supérieure à 0.00"
@@ -16257,13 +16259,6 @@ msgstr "A Rembourser /A Facturer."
 msgid "Display Locations"
 msgstr "Affichage Zones"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:197
-#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:195
-#, python-format
-msgid "Line %s in the Excel file was ignored. Details: %s"
-msgstr "Line %s in the Excel file was ignored. Details: %s"
-
 #. module: object_query
 #: field:object.query,newquery:0
 msgid "New Query"
@@ -18669,14 +18664,6 @@ msgstr "Field Access Rules"
 #: model:ir.actions.act_window,name:sale.action_order_tree5
 msgid "All Quotations"
 msgstr "Tous les Devis"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:238
-#, python-format
-msgid "Reported errors for ignored lines : \n"
-""
-msgstr "Reported errors for ignored lines : \n"
-""
 
 #. module: account
 #: help:account.chart.template,tax_template_ids:0
@@ -24010,17 +23997,6 @@ msgstr "Autres"
 #: selection:stock.forecast.line,state:0
 msgid "Waiting Schedule"
 msgstr "En attente"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:163
-#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:171
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:162
-#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:149
-#, python-format
-msgid "Line %s in the Excel file: %s\n"
-""
-msgstr "Line %s in the Excel file: %s\n"
-""
 
 #. module: stock
 #: model:ir.ui.menu,name:stock.menu_stock_products_moves
@@ -32628,12 +32604,6 @@ msgstr "Compte - Rapport Journal Commun"
 #: field:supplier.catalogue,filename:0
 msgid "Lines not imported"
 msgstr "Lines not imported"
-
-#. module: consumption_calculation
-#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:243
-#, python-format
-msgid " second(s)"
-msgstr " second(s)"
 
 #. module: account_voucher
 #: view:account.voucher:0
@@ -60404,9 +60374,9 @@ msgid "Order must be unique and bigger than 1!"
 msgstr "La Commande doit être unique ou plus grande que 1!"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:240
-#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:228
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:246
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:294
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:267
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:326
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:191
 #, python-format
 msgid " second(s)"
@@ -63331,6 +63301,12 @@ msgstr "CUBAN CONVERTIBLE PESO"
 #: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:127
 #: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:129
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:114
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:119
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:120
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:138
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:127
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:141
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:124
 #, python-format
 msgid "Line %s in the Excel file: You should have exactly %s columns in this order: %s \n"
 ""
@@ -74422,3 +74398,149 @@ msgstr "La colonne '%s' n'est pas présente dans le fichier."
 #, python-format
 msgid "Line seemed empty, so this line was ignored"
 msgstr "La ligne semblait vide, donc cette ligne a été ignorée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:90
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:87
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:97
+#, python-format
+msgid "Order currency not found!"
+msgstr "Devise de la commande non trouvée !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:122
+#, python-format
+msgid "\n"
+"   Please check spelling on column '%s'."
+msgstr "\n"
+"   Veuillez vérifier le nom de la colonne '%s'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:125
+#, python-format
+msgid "\n"
+"   You can not import this file because the header of columns doesn't match with the expected headers: %s"
+msgstr "\n"
+"   Vous ne pouvez pas importer ce fichier car les entêtes de colonnes ne correspondent aux entêtes attendues : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:127
+#, python-format
+msgid "\n"
+"   Please ensure that all these columns are present and in this exact order."
+msgstr "\n"
+"   Veuillez vous assurer que toutes ces colonnes sont présentes exactement dans cet ordre."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:133
+#, python-format
+msgid "You can not import this file because it contains line(s) with currency (Column G) not of the order currency (%s)"
+msgstr "Vous ne pouvez pas importer ce fichier car il contient des lignes avec une devise (colonne G) qui n'est pas la devise de la commande (%s)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:175
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:210
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:201
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:172
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:214
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:204
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:155
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:183
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:190
+#, python-format
+msgid "Line %s in the Excel file: %s\n"
+""
+msgstr "Ligne %s du fichier Excel : %s\n"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:244
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:223
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:261
+#, python-format
+msgid "Line %s in the Excel file was ignored. Details: %s"
+msgstr "Ligne %s du fichier Excel a été ignorée. Détails : %s"
+
+#. modules: msf_doc_import, consumption_calculation
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:223
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:292
+#: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:265
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:212
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:314
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:323
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:217
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:268
+#: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:407
+#: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:213
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:233
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:238
+#, python-format
+msgid "Reported errors for ignored lines : \n"
+""
+msgstr "Erreurs reportées pour les lignes ignorées : \n"
+""
+
+#. modules: msf_doc_import, consumption_calculation
+#: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:225
+#: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:214
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:316
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:219
+#: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:270
+#: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:408
+#: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:235
+#: code:addons/consumption_calculation/wizard/wizard_import_rac.py:243
+#, python-format
+msgid " second(s)"
+msgstr " seconde(s)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:295
+#, python-format
+msgid "\n"
+"    %s\n"
+"    Importation completed in %s!\n"
+"# of imported lines : %s on %s lines\n"
+"# of ignored lines: %s\n"
+"# of lines to correct: %s\n"
+"    %s\n"
+"\n"
+"    %s\n"
+"    "
+msgstr "\n"
+"    %s\n"
+"    Importation terminée en %s!\n"
+"# de lignes importées : %s sur %s lignes\n"
+"# de lignes ignorées : %s\n"
+"# de lignes à corriger : %s\n"
+"    %s\n"
+"\n"
+"    %s\n"
+"    "
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:317
+#, python-format
+msgid " \n"
+"    Importation completed in %s!\n"
+"    # of imported lines : %s on %s lines\n"
+"    # of ignored lines: %s\n"
+"    # of lines to correct: %s\n"
+"    %s\n"
+"\n"
+"    %s\n"
+"    "
+msgstr " \n"
+"    Importation terminée en %s!\n"
+"    # de lignes importées : %s sur %s lignes\n"
+"    # de lignes ignorées : %s\n"
+"    # de lignes à corriger : %s\n"
+"    %s\n"
+"\n"
+"    %s\n"
+"    "
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:313
+#, python-format
+msgid "An unknow error occured, please contact the support team. Error message: %s"
+msgstr "Une erreur inconnue est survenue, veuillez contacter votre équipe support. Message d'erreur : %s"
