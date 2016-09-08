@@ -82,7 +82,7 @@ class account_partner_balance_tree(osv.osv):
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
         " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
-        " sum(debit) AS debit, sum(credit) AS credit," \
+        " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
         " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
         " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
         " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
