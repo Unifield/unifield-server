@@ -119,6 +119,8 @@ class product_supplier(osv.osv):
         audit_line_obj.create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         ir_model = self.pool.get('ir.model')
         model_name = self._name
         product_model_name = 'product.template'
@@ -320,6 +322,21 @@ class account_period(osv.osv):
 
 account_period()
 
+#UF-1358: Track changes also for account move and account move line
+class account_move(osv.osv):
+    _name = 'account.move'
+    _inherit = 'account.move'
+    _trace = True
+
+account_move()
+
+class account_move_line(osv.osv):
+    _name = 'account.move.line'
+    _inherit = 'account.move.line'
+    _trace = True
+
+account_move_line()
+
 
 class ir_module(osv.osv):
     _inherit = 'ir.module.module'
@@ -452,6 +469,8 @@ class audittrail_rule(osv.osv):
 
 
     def write(self, cr, uid, ids, value, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         for rule in self.browse(cr, uid, ids):

@@ -41,6 +41,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         if a production lot is specified and the expired date is empty, fill the expired date in
         '''
+        if not ids:
+            return True
         prodlot_obj = self.pool.get('stock.production.lot')
         uom_obj = self.pool.get('product.uom')
 

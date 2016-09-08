@@ -39,6 +39,8 @@ class workflow(osv.osv):
     }
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context={}
         wf_service = netsvc.LocalService("workflow")

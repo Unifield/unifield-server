@@ -70,7 +70,7 @@ class account_period(osv.osv):
         curr_rate_obj = self.pool.get('res.currency.rate')
 
         # previous state of the period
-        ap_dict = self.read(cr, uid, ids)[0]
+        ap_dict = self.read(cr, uid, ids, ['state'])[0]
         previous_state = ap_dict['state']
 
 
@@ -342,6 +342,8 @@ class account_period(osv.osv):
                     raise osv.except_osv(_('Warning'), _("Cannot reopen this period because its Fiscal Year is already in Mission-Closed."))
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
         # control conditional push-down of state from HQ. Ticket UTP-913

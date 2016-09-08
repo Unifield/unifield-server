@@ -42,7 +42,10 @@ class TestUS1005(FinanceTest):
 
         import_inv = db.get('wizard.import.invoice')
         wiz_id = import_inv.create({'statement_id': self.reg_id, 'line_ids': [(6, 0, aml_ids)]})
-        import_inv.group_import([wiz_id], {})
+        if len(aml_ids) > 1:
+            import_inv.group_import([wiz_id], {})
+        else:
+            import_inv.single_import([wiz_id], {})
 
         wiz = import_inv.browse(wiz_id)
         import_line = wiz.invoice_lines_ids.next()
@@ -64,11 +67,14 @@ class TestUS1005(FinanceTest):
         self.partner_id = db.get('res.partner').search([('partner_type', '=', 'external')])[0]
         new_invoices = []
         for i in amount:
+            is_refund = i < 0
+            i = abs(i)
             i1 = self.invoice_create_supplier_invoice(db,
                 lines_accounts=[('62000', i)],
                 ad_header_breakdown_data=[['100', 'OPS', 'HT101', 'PF']],
                 partner_id=self.partner_id,
                 ccy_code='EUR',
+                is_refund=is_refund,
                 )
             self.invoice_validate(db, i1)
             new_invoices.append(i1)
@@ -100,36 +106,32 @@ class TestUS1005(FinanceTest):
 
     def test_10_invoices_import_in_register_max_min(self):
         absl_obj = self.p1.get('account.bank.statement.line')
-        new_invoices = self.create_invoices(self.p1, [130, 100])
+        new_invoices = self.create_invoices(self.p1, [130])
         st1 = self.pending_payment(self.p1, new_invoices[0], 0.8)
-        st2 = self.pending_payment(self.p1, new_invoices)
+        st2 = self.pending_payment(self.p1, new_invoices[0])
         absl_obj.posting(st1, 'hard')
         absl_obj.posting(st2, 'hard')
         self.check_local_instance(self.p1, st1+st2, new_invoices)
 
     def test_20_invoices_import_in_register_min_max(self):
         absl_obj = self.p1.get('account.bank.statement.line')
-        new_invoices = self.create_invoices(self.p1, [30, 100])
-        st1 = self.pending_payment(self.p1, new_invoices[0], 0.8)
-        st2 = self.pending_payment(self.p1, new_invoices)
+        new_invoices = self.create_invoices(self.p1, [30, -100])
+        st1 = self.pending_payment(self.p1, new_invoices)
         absl_obj.posting(st1, 'hard')
-        absl_obj.posting(st2, 'hard')
-        self.check_local_instance(self.p1, st1+st2, new_invoices)
+        self.check_local_instance(self.p1, st1, new_invoices)
 
     def test_30_invoices_import_in_register_sync(self):
         absl_obj = self.p1.get('account.bank.statement.line')
-        new_invoices = self.create_invoices(self.p1, [130, 100])
-        st1 = self.pending_payment(self.p1, new_invoices[0], 0.8)
-        st2 = self.pending_payment(self.p1, new_invoices)
+        new_invoices = self.create_invoices(self.p1, [130, -100])
+        st1 = self.pending_payment(self.p1, new_invoices)
         self.synchronize(self.p1)
         self.synchronize(self.c1)
 
-        absl_obj.posting(st2, 'hard')
         absl_obj.posting(st1, 'hard')
         self.synchronize(self.p1)
         self.synchronize(self.c1)
 
-        move_ids = self.check_local_instance(self.p1, st1+st2, new_invoices)
+        move_ids = self.check_local_instance(self.p1, st1, new_invoices)
 
         # get account.move xmlid
         sdref_move = []

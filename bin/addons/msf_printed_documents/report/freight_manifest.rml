@@ -22,14 +22,17 @@
     </template>
 
     <stylesheet>
+        <blockTableStyle id="Signature">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+        </blockTableStyle>
+
         <blockTableStyle id="OrderInformations">
             <blockAlignment value="LEFT" />
             <blockVAlign value="MIDDLE" />
-            <lineStyle kind="OUTLINE" colorName="black" start="0,0" stop="0,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="2,0" stop="2,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="4,0" stop="4,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="6,0" stop="6,-1" thickness="0.5" />
-            <lineStyle kind="OUTLINE" colorName="black" start="8,0" stop="8,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="1,0" stop="1,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="3,0" stop="3,-1" thickness="0.5" />
+            <lineStyle kind="OUTLINE" colorName="black" start="5,0" stop="5,-1" thickness="0.5" />
         </blockTableStyle>
 
         <blockTableStyle id="ItemsTitle">
@@ -246,11 +249,8 @@
         </blockTable>
 
 
-        <blockTable colWidths="125.0,5.5,200.0,5.5,200.0,5.5,200.0,5.5,25.0" >
+        <blockTable colWidths="80.5,200.0,5.5,200.0,5.5,200.0,11.0,69.5" style="OrderInformations">
             <tr>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
@@ -278,9 +278,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -306,9 +303,6 @@
                 </td>
             </tr>
             <tr>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
@@ -336,9 +330,6 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
@@ -364,9 +355,6 @@
                 </td>
             </tr>
             <tr>
-                <td>
-                    <para style="TextInformation"></para>
-                </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
@@ -394,10 +382,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation"> </para>
                 </td>
                 <td>
                     <para style="TextInformation"></para>
@@ -426,16 +411,13 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation">Date:</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation">Date:</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -452,19 +434,26 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation"> </para>
+                </td>
+                <td>
+                    <para style="TextInformation">Signature:</para>
+                    <blockTable colWidths="180.00" style="Signature" rowHeights="30">
+                        <tr>
+                            <td><para style="TextInformation"> </para></td>
+                        </tr>
+                    </blockTable>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation"></para>
-                </td>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-                <td>
-                    <para style="TextInformation"></para>
+                    <para style="TextInformation">Signature:</para>
+                    <blockTable colWidths="180.00" style="Signature" rowHeights="30">
+                        <tr>
+                            <td><para style="TextInformation"> </para></td>
+                        </tr>
+                    </blockTable>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>

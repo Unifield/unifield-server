@@ -429,7 +429,8 @@ def dsn_are_equals(first, second):
 _Pool = ConnectionPool(int(tools.config['db_maxconn']))
 
 def db_connect(db_name):
-    currentThread().dbname = db_name
+    if db_name not in ('template1', 'template0', 'postgres'):
+        currentThread().dbname = db_name
     return Connection(_Pool, db_name)
 
 def close_db(db_name):

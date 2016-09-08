@@ -233,6 +233,8 @@ class account_move_compute_currency(osv.osv):
         """
         Change manual currency regarding journal
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         res = []

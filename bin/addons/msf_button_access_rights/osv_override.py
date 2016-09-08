@@ -45,7 +45,7 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
 
         # view_id == 0 if view generated on fly by openerp because no custom view specified, therefore we will have no rules
         if view_id:
-            search_ids = rules_pool._get_family_ids(cr, view_id)
+            search_ids = rules_pool.get_family_ids(cr, uid, view_id)
         else:
             return super_view_look_dom_arch(self, cr, uid, node, view_id, context)
 
@@ -76,7 +76,8 @@ def view_look_dom_arch(self, cr, uid, node, view_id, context=None):
                     access = False
 
                     if groups:
-                        user = self.pool.get('res.users').read(cr, 1, uid)
+                        user = self.pool.get('res.users').read(cr, 1, uid,
+                                ['groups_id'])
                         if set(user['groups_id']).intersection(groups):
                             access = True
                     else:

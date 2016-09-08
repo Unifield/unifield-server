@@ -81,7 +81,6 @@ class stock_split_move_line(osv.osv_memory):
         pick = pick_obj.browse(cr, uid, record_id, context=context)
         arch_lst = ['<?xml version="1.0"?>', '<form string="Split lines">', '<label string="Indicate here the quantity of the new line. A quantity of zero will not split the line." colspan="4"/>']
         for m in [line for line in pick.move_lines]:
-            quantity = m.product_qty
             arch_lst.append('<field name="move%s" />\n<newline />' % (m.id,))
             res['fields']['move%s' % m.id] = {'string' : m.product_id.name, 'type' : 'float', 'required' : True}
         arch_lst.append('<group col="2" colspan="4">')

@@ -213,6 +213,8 @@ class purchase_order(osv.osv):
         return {'value': value, 'warning': message}
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         stock_loc_obj = self.pool.get('stock.location')
@@ -357,6 +359,8 @@ class stock_picking(osv.osv):
         """
         Here we check if all stock move are in stock or in cross docking
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

@@ -130,9 +130,9 @@ class local_message_rule(osv.osv):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-            partner_name = model_obj.browse(cr, uid, res_id)[rule.destination_name].name
-
-            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+            partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
+            partner_name = partner.name
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
             sale_name = ''
             if 'name' in arguments[0]:
                 sale_name = arguments[0]['name']
@@ -176,7 +176,7 @@ class local_message_rule(osv.osv):
             model_obj = self.pool.get(model_name)
             msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
     
-            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=False, context=context)
             temp = arguments[0] 
             temp['picking'] = return_info
             arguments = [temp]
@@ -404,7 +404,7 @@ class message_received(osv.osv):
             changes={},
             sync_message_execution=True,
             sale_purchase_logger={})
-
+        context['lang'] = 'en_US'
         # get all ids if not specified
         if ids is None:
             ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)
