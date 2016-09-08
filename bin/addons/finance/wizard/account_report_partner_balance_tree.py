@@ -391,7 +391,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             account_type = 'Receivable and Payable'
         return data, account_type
 
-    def show(self, cr, uid, ids, context=None):
+    def show(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
@@ -410,9 +411,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'context': context,
         }
 
-    def print_pdf(self, cr, uid, ids, context=None):
+    def print_pdf(self, cr, buid, ids, context=None):
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         return {
             'type': 'ir.actions.report.xml',
