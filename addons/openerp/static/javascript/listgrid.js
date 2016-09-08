@@ -599,7 +599,8 @@ MochiKit.Base.update(ListView.prototype, {
                 context: openobject.dom.get(prefix + '_terp_context').value,
                 limit: openobject.dom.get(prefix + '_terp_limit').value,
                 offset: openobject.dom.get(prefix + '_terp_offset').value,
-                count: openobject.dom.get(prefix + '_terp_count').value}));
+                count: openobject.dom.get(prefix + '_terp_count').value,
+                approximation: openobject.dom.get(prefix + '_terp_approximation').value}));
         }
 
         name = name.split('.').pop();
@@ -784,14 +785,17 @@ MochiKit.Base.update(ListView.prototype, {
 
         var $terp_ids;
         var $terp_count;
+        var $terp_approximation;
 
         if(this.name == '_terp_list') {
             $terp_ids = jQuery('#_terp_ids')
             $terp_count = jQuery('#_terp_count')
+            $terp_approximation = jQuery('#_terp_approximation')
         }
         else {
             $terp_ids = jQuery('[id="'+this.name+'/_terp_ids'+'"]')
             $terp_count =  jQuery('[id="'+this.name+'/_terp_count'+'"]')
+            $terp_approximation =  jQuery('[id="'+this.name+'/_terp_approximation'+'"]')
         }
 
         args['_terp_ids'] = $terp_ids.val()
@@ -807,6 +811,7 @@ MochiKit.Base.update(ListView.prototype, {
                 if(obj.ids) {
                     $terp_ids.val(obj.ids)
                     $terp_count.val(obj.count)
+                    $terp_approximation.val(obj.approximation)
                 }
                 self.reload();
                 if(obj.res_ids) {
@@ -912,6 +917,7 @@ MochiKit.Base.update(ListView.prototype, {
                 var _terp_id = openobject.dom.get(self.name + '/_terp_id') || openobject.dom.get('_terp_id');
                 var _terp_ids = openobject.dom.get(self.name + '/_terp_ids') || openobject.dom.get('_terp_ids');
                 var _terp_count = openobject.dom.get(self.name + '/_terp_count') || openobject.dom.get('_terp_count');
+                var _terp_approximation = openobject.dom.get(self.name + '/_terp_approximation') || openobject.dom.get('_terp_approximation');
                 _terp_id.value = current_id > 0 ? current_id : 'False';
 
                 if (obj.ids) {
