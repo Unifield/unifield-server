@@ -420,9 +420,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'datas': data,
         }
 
-    def print_xls(self, cr, uid, ids, context=None):
+    def print_xls(self, cr, buid, ids, context=None):
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
