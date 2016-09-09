@@ -84,7 +84,7 @@ class account_period(osv.osv):
             res.append(('id', 'in', period_ids))
         else:
             # if not in HQ
-            res.append(('state', '=', 'mission-closed'), ('fiscalyear_id', '=', fy))
+            res.extend([('state', '=', 'mission-closed'), ('fiscalyear_id', '=', fy)])
         return res
 
     _columns = {
