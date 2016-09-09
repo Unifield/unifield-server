@@ -51,6 +51,13 @@ def _get_number_modules(cr, testlogin=False):
         return True
     return False
 
+def change_password(db, login, password, new_password, confirm_password):
+    cr = pooler.get_db_only(db).cursor()
+    pool = pooler.get_pool(db)
+    user_obj = pool.get('res.users')
+    return user_obj.change_password(db, login, password, new_password,
+            confirm_password)
+
 def login(db, login, password):
     cr = pooler.get_db_only(db).cursor()
     nb = _get_number_modules(cr, testlogin=True)
@@ -62,6 +69,15 @@ def login(db, login, password):
     to_update = False
     if not nb:
         to_update = updater.test_do_upgrade(cr)
+
+    # check if the use have to change is password
+    cr.execute("""SELECT force_password_change
+    FROM res_users
+    WHERE login='%s' AND password='%s'""" % (login, password))
+    force_password = [x[0] for x in cr.fetchall()]
+    if any(force_password):
+        raise Exception("ForcePasswordChange: The admin requests your password change ...")
+
     cr.close()
     if nb or to_update:
         s = threading.Thread(target=pooler.get_pool, args=(db,),
