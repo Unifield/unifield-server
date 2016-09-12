@@ -829,3 +829,51 @@ msgstr "Expiry date"
 #, python-format
 msgid "get_import_batch_headers_type"
 msgstr "Type"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_product_code"
+msgstr "Product Code"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_product_description"
+msgstr "Product Description"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_qty"
+msgstr "Quantity"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_uom"
+msgstr "UoM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_price"
+msgstr "Price"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_drd"
+msgstr "Delivery requested date"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_currency"
+msgstr "Currency"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_comment"
+msgstr "Comment"

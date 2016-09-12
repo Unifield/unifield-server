@@ -5762,7 +5762,7 @@ msgstr "Le compte partenaire utilisé pour cette facture"
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:84
 #, python-format
 msgid "The column \"%s\" is not taken into account. Please remove it. The list of columns accepted is: %s"
-msgstr "The column \"%s\" is not taken into account. Please remove it. The list of columns accepted is: %s"
+msgstr "La colonne \"%s\" n'est pas prise en compte. Veuillez la supprimer. La liste des colonnes acceptées est : %s"
 
 #. module: analytic_distribution
 #: view:analytic.distribution.wizard:0
@@ -56211,10 +56211,20 @@ msgstr "Sorte de Node"
 #: code:addons/consumption_calculation/consumption_calculation.py:359
 #: report:addons/consumption_calculation/report/report_monthly_consumption_xls.mako:67
 #: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:70
-#: code:addons/msf_doc_import/wizard/__init__.py:44
-#: code:addons/msf_doc_import/wizard/__init__.py:49
-#: code:addons/msf_doc_import/wizard/__init__.py:54
-#: code:addons/msf_doc_import/wizard/__init__.py:59
+#: code:addons/msf_doc_import/wizard/__init__.py:30                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:57                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:62                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:67                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:72                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:77                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:82                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:87                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:92                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:96                                                                                                             
+#: code:addons/msf_doc_import/wizard/__init__.py:100                                                                                                            
+#: code:addons/msf_doc_import/wizard/__init__.py:104                                                                                                            
+#: code:addons/msf_doc_import/wizard/__init__.py:108                                                                                                            
+#: code:addons/msf_doc_import/wizard/__init__.py:113 
 #: report:certificate.free.gift:0
 #: report:invoice:0
 #: report:packing.list:0
@@ -74544,3 +74554,51 @@ msgstr " \n"
 #, python-format
 msgid "An unknow error occured, please contact the support team. Error message: %s"
 msgstr "Une erreur inconnue est survenue, veuillez contacter votre équipe support. Message d'erreur : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_product_code"
+msgstr "Code Produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_product_description"
+msgstr "Description Produit"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_qty"
+msgstr "Quantité"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:62
+#, python-format
+msgid "fo_import_uom"
+msgstr "UdM"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_price"
+msgstr "Prix"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_drd"
+msgstr "Date de livraison demandée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_currency"
+msgstr "Devises"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/__init__.py:63
+#, python-format
+msgid "fo_import_comment"
+msgstr "Commentaire"
