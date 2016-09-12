@@ -613,7 +613,6 @@ class users(osv.osv):
                 if res:
                     uid = res[0]
                 if not uid:
-                    import pdb; pdb.set_trace()
                     raise security.ExceptionNoTb('AccessDenied')
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
