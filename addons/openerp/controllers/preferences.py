@@ -35,9 +35,9 @@ class PrefsPassword(database.FormPassword):
     action = "/openerp/pref/password"
     string = _('Change your password')
     fields = [
-        database.ReplacePasswordField(name='old_password', label=_('Old Password:')),
-        database.ReplacePasswordField(name='new_password', label=_('New Password:')),
-        database.ReplacePasswordField(name='confirm_password', label=_('Confirm Password:')),
+        database.ReplacePasswordField(name='old_password', label=_('Current password:')),
+        database.ReplacePasswordField(name='new_password', label=_('New password:')),
+        database.ReplacePasswordField(name='confirm_password', label=_('Confirm new password:')),
     ]
 
 class UpdatePassword(PrefsPassword):
@@ -112,8 +112,9 @@ class Preferences(Form):
         if context['errors']: return context
 
         try:
-            if openerp.utils.rpc.RPCProxy('res.users').change_password(
-                    old_password, new_password, rpc.session.context):
+            result = openerp.utils.rpc.RPCProxy('res.users').pref_change_password(
+                    old_password, new_password, confirm_password, rpc.session.context)
+            if result:
                 rpc.session.password = new_password
                 return dict(context, changed=True)
             context['errors'].append(

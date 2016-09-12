@@ -200,6 +200,36 @@ class Root(SecuredController):
         return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message)
 
     @expose()
+    def do_change_password(self, *arg, **kw):
+        target = kw.get('target') or '/'
+        if target.startswith('/openerp/do_change_password'):
+            target = '/'
+        raise redirect(target)
+
+    @expose(allow_json=True)
+    @unsecured
+    def change_password(self, db=None, user=None, password=None,
+            new_password=None, confirm_password=None, style=None,
+            location=None, message=None, **kw):
+        location = url(location or '/', kw or {})
+
+        if cherrypy.request.params.get('tg_format') == 'json':
+            if rpc.session.change_passowrd(db, user, password, new_password,
+                    confirm_password) > 0:
+                return dict(result=1)
+            return dict(result=0)
+
+        if style in ('ajax', 'ajax_small'):
+            return dict(db=db, user=user, password=password,
+                    new_password=new_password,
+                    confirm_password=confirm_password,
+                    location=location,
+                    style=style,
+                    cp_template="/openerp/controllers/templates/change_password_ajax.mako")
+
+        return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message)
+
+    @expose()
     @unsecured
     def logout(self):
         """ Logout method, will terminate the current session.

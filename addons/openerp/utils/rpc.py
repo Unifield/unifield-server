@@ -134,6 +134,8 @@ class RPCGateway(object):
                 common.error('updater.py', err.code)
             elif err.code.startswith('ServerUpdate'):
                 common.error('ServerUpdate', err.code)
+            elif err.code.startswith('ForcePasswordChange'):
+                common.error('ForcePasswordChange', err.code)
             elif err.code.startswith('PatchFailed'):
                 common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
@@ -312,12 +314,16 @@ class RPCSession(object):
                 return -3
             elif e.title == 'PatchFailed':
                 return -4
+            elif e.title == 'ForcePasswordChange':
+                return -5
             return -1
 
         if uid <= 0:
             return -1
 
         self._logged_as(db, uid, password)
+        # check if user have to change his password
+
         return uid
 
     def _logged_as(self, db, uid, password):
@@ -333,6 +339,7 @@ class RPCSession(object):
         self.storage['company_id'], self.storage['company_name'] = res_users['company_id']
         self.storage['loginname'] = res_users['login']
         self.storage['force_password_change'] = res_users['force_password_change']
+
         # set the context
         self.context_reload()
 
@@ -344,6 +351,19 @@ class RPCSession(object):
 
     def is_logged(self):
         return self.uid and self.open
+
+    def change_password(self, db, user, password, new_password,
+            confirm_password):
+
+        if not (db and user and password and new_password and confirm_password):
+            return _('All fields are required.')
+
+        try:
+            error_message = self.execute_noauth('common', 'change_password', db, user,
+                    password, new_password, confirm_password)
+        except Exception, e:
+            error_message = e.message
+        return error_message
 
     def context_reload(self):
         """Reload the context for the current user
