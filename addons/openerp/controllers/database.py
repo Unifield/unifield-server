@@ -224,7 +224,7 @@ class Database(BaseController):
     def do_create(self, password, dbname, admin_password, confirm_password, demo_data=False, language=None, **kw):
 
         self.msg = {}
-        if not re.match('^[a-zA-Z][a-zA-Z0-9_]+$', dbname):
+        if not re.match('^[a-zA-Z][a-zA-Z0-9_-]+$', dbname):
             self.msg = {'message': ustr(_("You must avoid all accents, space or special characters.")),
                         'title': ustr(_('Bad database name'))}
             return self.create()
