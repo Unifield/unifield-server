@@ -538,55 +538,48 @@ class users(osv.osv):
         finally:
             cr.close()
 
-    def is_password_strong(self, old_password, new_password, confirm_password, login):
+    def check_password(self, old_password, new_password, confirm_password, login):
         """
-        Check that given password is strong enough.
-        In case it is, all values of the returned dict are True
+        Check password respect some conditions
+        Raise is any of the condition is not respected
         """
-        result = {
-                'has_digit': False,
-                'long_enough': False,
-                'login_not_equal_password': False,
-                'password_equal_confirm_password': False,
-                'password_not_equal_old_password': False,
-        }
-
         # check it contains at least one digit
-        if re.search(r'\d', new_password):
-            result['has_digit'] = True
+        if not re.search(r'\d', new_password):
+            message = _('The new password is not strong enough. '\
+                'Password must contain at least one digit.')
+            raise osv.except_osv(_('Operation Canceled'), message)
 
         # check new_password lenght
-        if len(new_password) >= self.PASSWORD_MIN_LENGHT:
-            result['long_enough'] = True
+        if len(new_password) < self.PASSWORD_MIN_LENGHT:
+            message = _('The new password is not strong enough. '\
+                'Password must be at least %s characters long.' % self.PASSWORD_MIN_LENGHT)
+            raise osv.except_osv(_('Operation Canceled'), message)
 
         # check login != new_password:
-        if new_password != login:
-            result['login_not_equal_password'] = True
+        if new_password == login:
+            message = _('The new password cannot be equal to the login.')
+            raise osv.except_osv(_('Operation Canceled'), message)
 
         # check confirm_password == new_password:
-        if new_password == confirm_password:
-            result['password_equal_confirm_password'] = True
+        if new_password != confirm_password:
+            message = _('The new password does not match the confirm password.')
+            raise osv.except_osv(_('Operation Canceled'), message)
 
         # check new_password != old_password
-        if new_password != old_password:
-            result['password_not_equal_old_password'] = True
-
-        return result
+        if new_password == old_password:
+            message = _('The new password must be different from the actual one.')
+            raise osv.except_osv(_('Operation Canceled'), message)
+        return True
 
     def pref_change_password(self, cr, uid, old_passwd, new_passwd,
             confirm_passwd, context=None):
         self.check(cr.dbname, uid, old_passwd)
         login = self.read(cr, uid, uid, ['login'])['login']
-        if not all(self.is_password_strong(old_passwd, new_passwd, confirm_passwd, login).values()):
-            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                    'Password must be diffrent from the login, it must contain '\
-                    'at least one number and be at least %s characters. The new '\
-                    'password must be different from the actual one.' % self.PASSWORD_MIN_LENGHT))
+        self.check_password(old_passwd, new_passwd, confirm_passwd, login)
         vals = {
             'password': new_passwd,
             'force_password_change': False,
         }
-
         return self.write(cr, 1, uid, vals)
 
     def change_password(self, db, login, old_passwd, new_passwd,
@@ -595,7 +588,7 @@ class users(osv.osv):
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
 
-        The write of the new password is done with uid=1 to prevent raise it
+        The write of the new password is done with uid=1 to prevent raise if
         the current logged user don't have permission on res_users.
 
         :return: True
@@ -604,43 +597,28 @@ class users(osv.osv):
         """
         cr = pooler.get_db(db).cursor()
         if new_passwd:
-            result = self.is_password_strong(old_passwd, new_passwd, confirm_passwd, login)
-            if not all(result.values()):
-                if not result['has_digit']:
-                    return -1
-                if not result['long_enough']:
-                    return -2
-                if not result['login_not_equal_password']:
-                    return -3
-                if not result['password_equal_confirm_password']:
-                    return -4
-                if not result['password_not_equal_old_password']:
-                    return -5
-                return -6
+            self.check_password(old_passwd, new_passwd, confirm_passwd, login)
             vals = {
                 'password': new_passwd,
                 'force_password_change': False,
             }
             # get user_uid
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active""",
-                       (login, tools.ustr(old_passwd)))
-            res = cr.fetchone()
-            uid = None
-            if res:
-                uid = res[0]
-            if not uid:
-                # this case should never happen
-                return -6
-
-            result = self.write(cr, 1, uid, vals)
-            cr.commit()
-            cr.close()
-            if result is True:
-                return 0
-            if result is False:
-                return -7
+            try:
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active=%s""",
+                           (login, tools.ustr(old_passwd), True))
+                res = cr.fetchone()
+                uid = None
+                if res:
+                    uid = res[0]
+                if not uid:
+                    import pdb; pdb.set_trace()
+                    raise security.ExceptionNoTb('AccessDenied')
+                result = self.write(cr, 1, uid, vals)
+                cr.commit()
+            finally:
+                cr.close()
             return result
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
