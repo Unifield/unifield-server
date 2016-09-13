@@ -1276,7 +1276,8 @@ class orm_template(object):
                     res[f]['related_columns'] = list((field_col._id1, field_col._id2))
                     res[f]['third_table'] = field_col._rel
                 for arg in ('string', 'readonly', 'states', 'size', 'required', 'group_operator',
-                        'change_default', 'translate', 'help', 'select', 'selectable'):
+                        'change_default', 'translate', 'help', 'select',
+                        'selectable', 'internal'):
                     if getattr(field_col, arg):
                         res[f][arg] = getattr(field_col, arg)
                 if not write_access:
