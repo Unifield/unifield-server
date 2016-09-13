@@ -774,6 +774,41 @@ class patch_scripts(osv.osv):
 
         return True
 
+    def us_trans_admin_fr(self, cr, uid, *a, **b):
+        """
+        replay fr_MF translations for instances were sync has been run with French admin user
+        """
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        instance_name = False
+        instance_id = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            instance_name = usr.company_id.instance_id.instance
+            instance_id = usr.company_id.instance_id.instance_identifier
+
+        if True or instance_name in ('OCG_CM1_COO', 'OCG_CM1_KSR',
+                'OCG_CM1_MRA', 'OCBHT118', 'OCBHT143'):
+            self._logger.warn('Replay fr_MF updates')
+            cr.execute("""update sync_client_update_received set run='f' where id in
+                (select max(id) from sync_client_update_received where sdref in
+                        (select d.name from ir_model_data d where d.module='sd' and d.model='ir.translation' and d.res_id in
+                            (select t.id from ir_translation t, product_template p where t.name='product.template,name' and t.res_id=p.id and lang='fr_MF'
+                            )
+                        ) group by sdref
+                    );
+            """)
+            if instance_id:
+            # delete en_MF translations created on instance for UniData products
+                cr.execute("""delete from ir_translation t
+                    where t.lang='en_MF' and name='product.template,name' and res_id in
+                        (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                    and id in
+                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+instance_id+"""+%')
+                """)
+                self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
+
 patch_scripts()
 
 
