@@ -239,29 +239,58 @@ class update(osv.osv):
     def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
         '''
         if there is fancy_puller_ids search parameter, do corresponding special
-        treatment.
+        treatmentwhere_params = []
+        if not, do normal search
         '''
         new_args = []
-        puller_ids = False
-        puller_ids_args = False
+        is_puller_ids = False
         if args:
             for sub_domain in args:
                 if sub_domain[0] == 'fancy_puller_ids':
-                    puller_ids = True
+                    is_puller_ids = True
                     puller_ids_arg = self._src_puller_ids(cr, uid, None, None, args)
                 else:
                     new_args.append(sub_domain)
-        ids = super(update, self).search(cr, uid, new_args, offset, limit,
-                order, context=context, count=count)
-        if puller_ids and ids and len(puller_ids_arg[0])>2:
-            cr.execute("""SELECT sync_server_update.id
-            FROM sync_server_update INNER JOIN sync_server_entity_rel ON
+        if is_puller_ids and puller_ids_arg and len(puller_ids_arg[0])>2:
+            where_clause = ''
+            query = self._where_calc(cr, uid, new_args, context=context)
+            from_clause, where_clause, where_clause_params = query.get_sql()
+
+            if where_clause:
+                where_clause = ''.join((' AND ', where_clause))
+
+            final_params = []
+            # DISTINCT is needed because we may enter puller_ids can contain
+            # mre than one id, and then an update could be more than one time
+            # in the results
+            final_query = """SELECT DISTINCT sync_server_update.id"""
+
+            order_by=''
+            if order != 'NO_ORDER':
+                order = order or self._order
+                if order:
+                    order_by = ' ORDER BY %s.%s' % (self._table, order)
+            if order:
+                # because of the DISTINCT, to be able to order, table column to
+                # order is needed in the select
+                order_column = '%s.%s' % (self._table, order.split(' ')[0])
+                final_query = ''.join((final_query, ' ,%s ' % order_column))
+
+            final_query = ''.join((final_query,
+            """FROM sync_server_update INNER JOIN sync_server_entity_rel ON
             sync_server_update.id=sync_server_entity_rel.update_id
-            WHERE sync_server_update.id IN %s
-            AND sync_server_entity_rel.entity_id IN %s
-            """, (tuple(ids), tuple(puller_ids_arg[0][2])))
+            WHERE sync_server_entity_rel.entity_id IN %s"""))
+            final_params.extend([tuple(puller_ids_arg[0][2])])
+
+            final_query = ''.join((final_query, where_clause, order_by, ' LIMIT %s'))
+            final_params.extend(where_clause_params)
+            final_params.append(limit)
+            cr.execute(final_query, final_params)
             result = cr.fetchall()
             ids = [x[0] for x in result]
+        else:
+            ids = super(update, self).search(cr, uid, new_args, offset, limit,
+                    order, context=context, count=count)
         return ids
 
     def unfold_package(self, cr, uid, entity, packet, context=None):
