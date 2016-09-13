@@ -801,6 +801,12 @@ class patch_scripts(osv.osv):
             """)
             if instance_id:
             # delete en_MF translations created on instance for UniData products
+                # sync down deletion
+                cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
+                    select id from ir_translation t where t.lang='en_MF' and name='product.template,name' and res_id in
+                    (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                    and name like '"""+instance_id+"""+%'
+                )""")
                 cr.execute("""delete from ir_translation t
                     where t.lang='en_MF' and name='product.template,name' and res_id in
                         (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
