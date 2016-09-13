@@ -43,9 +43,8 @@ class ir_module_module(osv.osv):
 
     def check(self, cr, uid, ids, context=None):
         if ids and \
-            self.search(cr, uid, [('id', 'in', ids), ('name', '=',
-                'sync_client'), ('state', 'in', ['to install', 'to upgrade'])],
-                limit=1, order='NO_ORDER'):
+            self.search_exist(cr, uid, [('id', 'in', ids), ('name', '=',
+                'sync_client'), ('state', 'in', ['to install', 'to upgrade'])]):
                 self.pool.get('ir.model.data').create_all_sdrefs(cr)
         return super(ir_module_module, self).check(cr, uid, ids, context=context)
 
@@ -92,6 +91,81 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         'touched' : '[]',
     }
 
+    def create_model_sdrefs(self, cr, model):
+        """
+        Gets all records for a model and calls get_sd_ref, thereby creating sdrefs that dont exist
+        """
+        obj = self.pool.get(model)
+        result = set()
+
+        if obj is None:
+            self._logger.warn('Could not get object %s while creating all missing sdrefs' % model)
+            return result
+
+        # ignore wizard objects
+        if isinstance(obj, osv.osv_memory):
+            return result
+
+        # ignore objects who inherit another object, and use their table
+        # too, but a different name (would lead to attempted sd ref
+        # duplication)
+        if hasattr(obj, '_inherit') and obj._name != obj._inherit and \
+           (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
+            return result
+
+        # Ignore SQL view records UF-2542
+        if not getattr(obj, '_auto', True):
+            return result
+
+        # get all records for the object
+        cr.execute("""\
+            SELECT distinct r.id
+            FROM %s r
+                LEFT JOIN ir_model_data data ON data.module = 'sd' AND
+                    data.model = %%s AND r.id = data.res_id
+            WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
+        record_ids = map(lambda x: x[0], cr.fetchall())
+
+        # if we have some records that doesn't have an sdref
+        if record_ids:
+            # call get_sd_ref with their ids, therefore creating sdref's
+            # that don't exist
+            sdref = obj.get_sd_ref(cr, 1, record_ids)
+            result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
+
+        return result
+
+    def create_module_sdrefs(self, cr, module_name):
+        """
+        Gets all records for all models of a module and calls get_sd_ref, thereby creating sdrefs that dont exist
+        """
+        result = set()
+        # get all models used by this module
+        data_obj = self.pool.get('ir.model.data')
+        ir_model = self.pool.get('ir.model')
+        cr.execute("""SELECT DISTINCT(model)
+            FROM ir_model_data
+            WHERE module=%s""", (module_name,))
+        model_names = [x[0] for x in cr.fetchall()]
+        model_domain_ids = ir_model.search(cr, 1, MODELS_TO_IGNORE_DOMAIN)
+        model_to_ignore = set([x['name'] for x in ir_model.read(cr, 1,
+            model_domain_ids, ['name'])])
+        model_to_ignore.update(MODELS_TO_IGNORE)
+        model_names = list(set(model_names).difference(model_to_ignore))
+
+        for model_name in model_names:
+            model_obj = self.pool.get(model_name)
+
+            # get all ids to update sdref
+            ir_model_data_ids = data_obj.search(cr, 1,
+                    [('module', '=', module_name),
+                     ('model', '=', model_name)])
+            read_result = data_obj.read(cr, 1, ir_model_data_ids, ['res_id'])
+            record_ids = [x['res_id'] for x in read_result]
+            sdref = model_obj.get_sd_ref(cr, 1, record_ids)
+            result.update( map(lambda sdref: (model_obj._name, sdref), sdref.values()) )
+        return result
+
     def create_all_sdrefs(self, cr):
         """
         Gets all records for all not ignored models and calls get_sd_ref, thereby creating sdrefs that dont exist
@@ -103,44 +177,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
 
         for model in filter(lambda m:m.model not in MODELS_TO_IGNORE,
                             ir_model.browse(cr, 1, model_ids)):
-
-            obj = self.pool.get(model.model)
-
-            if obj is None:
-                self._logger.warn('Could not get object %s while creating all missing sdrefs' % model.model)
-                continue
-
-            # ignore wizard objects
-            if isinstance(obj, osv.osv_memory):
-                continue
-
-            # ignore objects who inherit another object, and use their table
-            # too, but a different name (would lead to attempted sd ref
-            # duplication)
-            if hasattr(obj, '_inherit') and obj._name != obj._inherit and \
-               (hasattr(obj._inherit, '__iter__') or self.pool.get(obj._inherit)._table == obj._table):
-                continue
-
-            # Ignore SQL view records UF-2542
-            if not getattr(obj, '_auto', True):
-                continue
-
-            # get all records for the object
-            cr.execute("""\
-                SELECT distinct r.id
-                FROM %s r
-                    LEFT JOIN ir_model_data data ON data.module = 'sd' AND
-                        data.model = %%s AND r.id = data.res_id
-                WHERE data.res_id IS NULL;""" % obj._table, [obj._name])
-            record_ids = map(lambda x: x[0], cr.fetchall())
-
-            # if we have some records that doesn't have an sdref
-            if record_ids:
-                # call get_sd_ref with their ids, therefore creating sdref's
-                # that don't exist
-                sdref = obj.get_sd_ref(cr, 1, record_ids)
-                result.update( map(lambda sdref: (obj._name, sdref), sdref.values()) )
-
+            result.update(self.create_model_sdrefs(cr, model.model))
         return result
 
     @normalize_sdref
