@@ -232,7 +232,7 @@ class update(osv.osv):
                     exact_search = True
                     break
             if not exact_search:
-                raise osv.except_osv(_("Error!"), _("You Can't search updates without using at least one exact search term (precede your search with the character '=')."))
+                raise osv.except_osv(_("Error!"), _("You can't search updates without using at least one exact search term (precede your search with the character '=')."))
         return self.search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
 
