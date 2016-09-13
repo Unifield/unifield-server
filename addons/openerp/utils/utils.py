@@ -331,8 +331,8 @@ class TinyForm(object):
 
                         value = []
                         for relation_record in relation_objects:
-                            id = relation_record.pop('id')
-                            value.append(OneToMany.update(id, relation_record))
+                            obj_id = relation_record.pop('id')
+                            value.append(OneToMany.update(obj_id, relation_record))
                     else:
                         value = []
                 except:

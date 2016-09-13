@@ -12,6 +12,15 @@
                           form.attr('action') + separator + jQuery.param({'next': url}));
             })
         }
+        function disable_save() {
+            var pass = $("#show_password").val()
+            $("#password").val(pass);
+            $("#show_password").val(false);
+            $("#replace_password").show();
+            $("#replace_password").val(Array(pass.length+1).join('\u2022'));
+            $("#show_password").remove();
+            $("#loginform").submit();
+        }
     </script>
 </%def>
 
@@ -51,11 +60,15 @@
                                 </tr>
                                 <tr>
                                     <td class="label"><label for="user">${_("User:")}</label></td>
-                                    <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true"/></td>
+                                    <td style="padding: 3px;"><input type="text" id="user" name="user" class="db_user_pass" value="${user}" autofocus="true" autocomplete="off"/></td>
                                 </tr>
                                 <tr>
-                                    <td class="label"><label for="password">${_("Password:")}</label></td>
-                                    <td style="padding: 3px;"><input type="password" value="${password}" id="password" name="password" class="db_user_pass" autocomplete="off"/></td>
+                                    <td class="label"><label for="show_password">${_("Password:")}</label></td>
+                                    <td style="padding: 3px;"><input type="password" id="show_password" name="show_password" class="db_user_pass" autocomplete="off" onkeydown = "if (event.keyCode == 13) disable_save()"/>
+                                    <input id="replace_password" type="text" class="db_user_pass" style="display:none;"/>
+                                    <input type="hidden" name="password" id="password" />
+                                    </td>
+
                                 </tr>
                                 <tr>
                                     <td></td>
@@ -64,7 +77,7 @@
                                             <button type="button" class="static_boxes" tabindex="-1" onclick="location.href='${py.url('/openerp/database')}'">${_("Databases")}
                                             </button>
                                         % endif
-                                        <button type="submit" class="static_boxes">${_("Login")}</button>
+                                        <button type="button" class="static_boxes" onclick="disable_save()">${_("Login")}</button>
                                     </td>
                                 </tr>
                             </table>

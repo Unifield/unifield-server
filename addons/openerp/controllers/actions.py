@@ -120,7 +120,7 @@ PRINT_FORMATS = {
      'odt' : 'application/vnd.oasis.opendocument.text',
      'ods' : 'application/vnd.oasis.opendocument.spreadsheet',
      'xls' : 'application/vnd.ms-excel',
-     'xml' : 'text/xml',
+     'xml' : 'application/force-download',
      'csv' : 'text/csv',
      'rtf' : 'application/rtf',
      'txt' : 'text/plain',
@@ -184,7 +184,7 @@ def execute_report(name, **data):
         val = None
         bg_report = False
         background_id = ctx.get('background_id')
-        max_attempt = ctx.get('background_time', 200)
+        max_attempt = ctx.get('background_time', 300)
         report_name = 'report'
 
         if name != 'custom':

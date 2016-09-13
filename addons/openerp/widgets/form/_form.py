@@ -517,7 +517,7 @@ class Selection(TinyInputWidget):
         self.operator = attrs.get('operator', '=')
         self.search_context = attrs.get('context', {})
         #Below mentioned process should be followed for m2o as selection and for boolean field on search panel
-        if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection':
+        if not self.options and attrs.get('relation') and attrs.get('widget') == 'selection' and not attrs.get('get_selection'):
             proxy = rpc.RPCProxy(attrs['relation'])
             try:
                 domain = attrs.get('domain', [])
@@ -952,8 +952,15 @@ class Form(TinyInputWidget):
                     continue
                 try:
                     fields[name]['link'] = attrs.get('link', '1')
-                    if fields[name].get('no_write_access') and 'attrs' in attrs:
-                        del attrs['attrs']
+                    if fields[name].get('no_write_access') and 'attrs' in attrs and 'readonly' in attrs['attrs']:
+                        attrs_dict = eval(attrs['attrs'])
+                        if 'readonly' in attrs_dict:
+                            del attrs_dict['readonly']
+
+                        if attrs_dict:
+                            attrs['attrs'] = unicode(attrs_dict)
+                        else:
+                            del attrs['attrs']
                     fields[name].update(attrs)
                 except:
                     print "-"*30,"\n malformed tag for:", attrs

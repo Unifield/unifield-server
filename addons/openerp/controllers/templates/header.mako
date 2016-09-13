@@ -128,7 +128,7 @@ version = release.version
     % endif
     
     <div id="shortcuts" class="menubar">
-    % if logged:
+    % if logged and display_shortcut:
         <ul>
             % for i, sc in enumerate(shortcuts):
                 <li class="${i == 0 and 'first' or ''}">

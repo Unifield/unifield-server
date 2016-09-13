@@ -134,6 +134,8 @@ class RPCGateway(object):
                 common.error('updater.py', err.code)
             elif err.code.startswith('ServerUpdate'):
                 common.error('ServerUpdate', err.code)
+            elif err.code.startswith('PatchFailed'):
+                common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
                 raise openobject.errors.AccessDenied(err.code, _('Access Denied'))
             else:
@@ -308,6 +310,8 @@ class RPCSession(object):
                 return -2
             elif e.title == 'ServerUpdate':
                 return -3
+            elif e.title == 'PatchFailed':
+                return -4
             return -1
 
         if uid <= 0:
@@ -323,10 +327,12 @@ class RPCSession(object):
         self.storage['open'] = True
 
         # read the full name of the user
-        res_users = self.execute('object', 'execute', 'res.users', 'read', [uid], ['name', 'company_id', 'login'])[0]
+        res_users = self.execute('object', 'execute', 'res.users', 'read',
+                [uid], ['name', 'company_id', 'login', 'force_password_change'])[0]
         self.storage['user_name'] = res_users['name']
         self.storage['company_id'], self.storage['company_name'] = res_users['company_id']
         self.storage['loginname'] = res_users['login']
+        self.storage['force_password_change'] = res_users['force_password_change']
         # set the context
         self.context_reload()
 

@@ -94,7 +94,10 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
         info = rpc.session.execute_noauth('common', 'login_message') or ''
     except:
         pass
-    return dict(target=target, url=url, dblist=dblist, db=db, user=user, password=password,
+    do_login_page = '/openerp/do_login'
+    if target != do_login_page:
+        origArgs['target'] = target
+    return dict(target=do_login_page, url=url, dblist=dblist, db=db, user=user, password=password,
             action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
 
 def secured(fn):
@@ -124,7 +127,17 @@ def secured(fn):
         """
 
         if rpc.session.is_logged() and kw.get('login_action') != 'login':
-            # User is logged in; allow access
+            # do not display the requested page if the user have to change his
+            # password
+            if rpc.session.force_password_change:
+                clear_login_fields(kw)
+                if fn.__name__ in ('menu'):
+                    kw['next'] = '/openerp/pref/update_password'
+                    kw['active'] = None
+                    clear_login_fields(kw)
+                    return fn(*args, **kw)
+
+            # User is logged in and don't need to change his password; allow access
             clear_login_fields(kw)
             return fn(*args, **kw)
         else:
@@ -149,6 +162,9 @@ def secured(fn):
             if action == 'login' and login_ret == -3:
                 nb_mod = rpc.session.number_update_modules(db) or ''
                 return login(cherrypy.request.path_info, message=_('The server is updating %s modules, please wait ...') % (nb_mod,),
+                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            if action == 'login' and login_ret == -4:
+                return login(cherrypy.request.path_info, message=_('A script during patch failed! Login is forbidden for the moment. Please contact your administrator'),
                     db=db, user=user, action=action, origArgs=get_orig_args(kw))
             elif login_ret <= 0:
                 # Bad login attempt
@@ -197,6 +213,15 @@ def secured(fn):
             cookie['terp_user']['max-age'] = 3600
             cookie['terp_db']['path'] = '/'
             cookie['terp_user']['path'] = '/'
+
+            # check if logged in user have to change his password
+            if rpc.session.force_password_change:
+                clear_login_fields(kw)
+                if fn.__name__ in ('menu'):
+                    kw['next'] = '/openerp/pref/update_password'
+                    kw['active'] = None
+                    clear_login_fields(kw)
+                    return fn(*args, **kw)
 
             # User is now logged in, so show the content
             clear_login_fields(kw)

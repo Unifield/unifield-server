@@ -9,7 +9,7 @@
     </style>
     % if changed:
         <script type="text/javascript">
-            window.frameElement.close();
+            window.open("/openerp/logout", '_top');
         </script>
     % endif
 </%def>
