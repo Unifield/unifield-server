@@ -371,6 +371,7 @@ class update_received(osv.osv):
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
         context = dict(context or {}, sync_update_execution=True)
+        context['lang'] = 'en_US'
         local_entity = self.pool.get('sync.client.entity').get_entity(
             cr, uid, context=context)
 
@@ -443,6 +444,7 @@ class update_received(osv.osv):
                 # write only for ids not in log as another write is performed
                 # for those in logs. This avoid two writes on the same object
                 ids_not_in_logs = list(set(update_ids) - set(logs.keys()))
+                ids_in_logs = list(set(update_ids).intersection(logs.keys()))
                 execution_date = datetime.now()
                 if ids_not_in_logs:
                     self.write(cr, uid, ids_not_in_logs, {
@@ -451,12 +453,12 @@ class update_received(osv.osv):
                         'run' : True,
                         #'log' : '', #SP-228: Do not reset the log message even the update got run.
                     }, context=context)
-                for update_id, log in logs.items():
+                for update_id in ids_in_logs:
                     self.write(cr, uid, [update_id], {
                         'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
-                        'log' : log,
+                        'log' : logs[update_id],
                     }, context=context)
                 logs.clear()
                 for sdref, version in versions.items():

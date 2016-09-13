@@ -98,6 +98,8 @@ class stock_production_lot(osv.osv):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -111,6 +113,10 @@ class stock_production_lot(osv.osv):
     # US-1469: Restore missing batches that have been wrongly deleted in US-838
     def us_1469_restore_deleted_batch(self, cr, uid, *a, **b):
         self._logger.info("\n\n______________________Start to restore batch objects for instance: %s\n", cr.dbname)
+
+        # Reset the constraint just in case the previous update has changed again to the original
+        cr.execute('''ALTER TABLE stock_production_lot DROP CONSTRAINT stock_production_lot_batch_name_uniq,
+                ADD CONSTRAINT stock_production_lot_batch_name_uniq UNIQUE (name, product_id, life_date);''')
         
         list_table_fields = [
                              ('stock_move', 'prodlot_id'),
@@ -185,26 +191,30 @@ class stock_production_lot(osv.osv):
                     continue
             
                 existing_batch = lot_obj.browse(cr, uid, lots[0])
+                prod_type = prod_obj.read(cr, uid, prod_id, ['perishable', 'batch_management'])
                 # US-1476: treat differently for internal batch. No need to create if same product and same date exists!
-                if existing_batch.type == 'internal':
+                if existing_batch.type == 'internal' or (prod_type['perishable'] and not prod_type['batch_management']):
                     batch_id = lot_obj.search(cr, uid, [('product_id', '=', prod_id), ('life_date', '=', life_date)])
                     if batch_id:
                         batch_id = batch_id[0]
-                        self._logger.info("--- Step 2: Internal Batch existed.\n")                        
+                        self._logger.info("--- Step 2: Internal Batch existed.\n")
+                    else:
+                        # If the product is ED only, and no batch existed for it, create a new one
+                        vals = {'name': existing_batch.name,'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':'internal', 'sequence_id': 1}
+                        batch_id = lot_obj.create(cr, uid, vals)
+                        self._logger.info("--- Step 2: A new INTERNAL batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id, life_date))
                 
                 if not batch_id:
                     # Prepare the new batch to create, with almost same values, except the product id
-                    vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type, 'sequence_id': 1}
+                    vals = {'name': existing_batch.name, 'product_id': prod_id, 'date':existing_batch.date, 'life_date':life_date, 'type':existing_batch.type}
                     batch_id = lot_obj.create(cr, uid, vals)
-                
-                    self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, for the product: %s, and expiry date %s!\n"%(batch_name, existing_batch.product_id.default_code, life_date))
+                    self._logger.info("--- Step 2: A new batch has been DUPLICATED from the batch %s, product_id: %s and expiry date %s!\n"%(batch_name, prod_id,life_date))
             
                 # 3. Now search all the move lines that still have the reference to the wrong BN, assign them to the new batch_id
                 self._logger.info("--- Step 3: Now assign all the ref lines of table %s with wrong batch references to the new batch: %s\n"%(table_name, batch_id))
                 if batch_id:
                     sql_up = 'update ' + table_name + ' set ' + field_id + ' = ' + str(batch_id) + ' where product_id=' + str(prod_id) + ' and ' + field_id + '=' + str(existing_batch.id)  
                     sql_up = sql_up + " and " + field_expiry_name + "='" + life_date + "';"
-                    #print "Update only: ", sql_up
                     cr.execute(sql_up)
 
         self._logger.info("__________Finish the migration task on duplicate batch objects for table: %s\n", table_name)

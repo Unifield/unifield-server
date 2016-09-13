@@ -110,6 +110,7 @@
                     <field name="active"/>
                     <field name="login" select="1"/>
                     <field name="new_password" password="True"/>
+                    <field name="force_password_change"/>
                     <newline/>
                     <notebook colspan="4">
                         <page string="User">

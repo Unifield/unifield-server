@@ -28,19 +28,19 @@ from tools.translate import _
 class object_query_object(osv.osv):
     _name = 'object.query.object'
     _description = 'Object for query'
-    
+
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'model_id': fields.many2one('ir.model', string='Model', required=True),
     }
-    
+
 object_query_object()
 
 
 class object_query(osv.osv):
     _name = 'object.query'
     _description = 'Object query'
-    
+
     def _get_model_ids(self, cr, uid, ids, field, arg, context=None):
         res = {}
         model_obj = self.pool.get('ir.model')
@@ -52,40 +52,40 @@ class object_query(osv.osv):
                 model_id = model_obj.search(cr, uid, [('model', '=', model_name)])
                 if model_id:
                     res[query.id].append(model_id[0])
-               
+
                 # Insert the base model in the tab
                 if query.object_id.model_id.id not in res[query.id]:
                     res[query.id].append(query.object_id.model_id.id)
         return res
-        
-    
+
+
     _columns = {
         'name': fields.char(size=128, string='Name', required=True),
         'user_id': fields.many2one('res.users', string='Creator', required=True),
         'object_id': fields.many2one('object.query.object', string='Object'),
-        'selection_ids': fields.many2many('ir.model.fields', 'query_fields_sel', 
+        'selection_ids': fields.many2many('ir.model.fields', 'query_fields_sel',
                                           'query_id', 'field_id', string='Search Fields'),
-        'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'), 
-        'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group', 
+        'selection_data': fields.one2many('object.query.selection_data', 'query_id', 'Values'),
+        'group_by_ids': fields.many2many('ir.model.fields', 'query_fields_group',
                                           'query_id', 'field_id', string='Group by fields'),
         'result_simple_ids': fields.many2many('ir.model.fields', 'result_simple_rel', 'query_id', 'field_id',
                                       string='Result fields'),
-        'result_ids': fields.one2many('object.query.result.fields', 'object_id', 
+        'result_ids': fields.one2many('object.query.result.fields', 'object_id',
                                       string='Result order'),
-        'model_ids': fields.function(_get_model_ids, method=True, type='many2many', 
+        'model_ids': fields.function(_get_model_ids, method=True, type='many2many',
                                      relation='ir.model', string='Models'),
         'search_view_id': fields.many2one('ir.ui.view', string='Search View'),
         'tree_view_id': fields.many2one('ir.ui.view', string='Tree View'),
         'export_id': fields.many2one('ir.exports', string='Export'),
         'newquery': fields.boolean('New Query', readonly=1),
-        
+
     }
-    
+
     _defaults = {
         'user_id': lambda obj, cr, uid, context: uid,
         'newquery': lambda *a: True,
     }
-  
+
     def dummy(self, cr, uid, ids, context):
         return True
 
@@ -109,9 +109,9 @@ class object_query(osv.osv):
         self.reset_search_values(cr, uid, ids, context)
 
         self.write(cr, uid, ids, {
-            'object_id': False, 
-            'selection_ids': [(6, 0, [])], 
-            'group_by_ids': [(6, 0, [])], 
+            'object_id': False,
+            'selection_ids': [(6, 0, [])],
+            'group_by_ids': [(6, 0, [])],
             'result_simple_ids': [(6, 0, [])],
             'newquery': True,
         })
@@ -122,19 +122,19 @@ class object_query(osv.osv):
         Get all inherited ir.model of an object
         '''
         res = []
-        
+
         model = self.pool.get(model_name)
-        
+
         if model._inherits:
             for table in model._inherits.keys():
                 for name in self._get_inherits_model(cr, uid, table):
                     res.append(name)
         else:
             res.append(model_name)
-                
+
         return res
-    
-    
+
+
     def create_view(self, cr, uid, ids, context=None):
         '''
         Construct the view according to the user choices
@@ -142,7 +142,7 @@ class object_query(osv.osv):
         view_obj = self.pool.get('ir.ui.view')
         export_line_obj = self.pool.get('ir.exports.line')
         export_obj = self.pool.get('ir.exports')
-        self.set_sequence(cr, uid, ids) 
+        self.set_sequence(cr, uid, ids)
         for query in self.browse(cr, uid, ids, context=context):
             search_view_id = query.search_view_id and query.search_view_id.id or False
             tree_view_id = query.tree_view_id and query.tree_view_id.id or False
@@ -163,6 +163,8 @@ class object_query(osv.osv):
             domain = []
             default_search = {}
             for filter_v in query.selection_data:
+                if filter_v.field_id.state == 'deprecated':
+                    continue
                 dom = False
                 forced_values.append(filter_v.field_id.id)
 
@@ -195,24 +197,30 @@ class object_query(osv.osv):
                     else:
                         domain.append(dom)
             for filter in query.selection_ids:
+                if filter.state == 'deprecated':
+                    continue
                 if filter.id not in forced_values:
                     search_filters += "<field name='%s' />" % (filter.name)
                     search_filters += "\n"
-                
+
             for result in query.result_ids:
+                if result.field_id.state == 'deprecated':
+                    continue
                 tree_fields += "<field name='%s' />" % (result.field_id.name)
                 tree_fields += "\n"
                 tree_field_ids.append(result.field_id.id)
                 export_line_obj.create(cr, uid, {'name': result.field_id.name, 'export_id': export_id})
-            
+
             for group in query.group_by_ids:
+                if group.state == 'deprecated':
+                    continue
                 search_group += "<filter context=\"{'group_by': '%s'}\" string='%s' domain=\"[]\" />" % (group.name, group.field_description)
                 search_group += "\n"
                 if group.id not in tree_field_ids:
                     tree_fields += "<field name='%s' invisible=\"1\" />" % (group.name)
                     tree_fields += "\n"
 
-                
+
             search_arch = '''<search string='%s'>
             %s
             <newline/>
@@ -221,19 +229,19 @@ class object_query(osv.osv):
             </group>
             </search>
             ''' % (query.object_id.model_id.name, search_filters, search_group)
-            
+
             tree_arch = '''<tree string='%s' hide_new_button='1' hide_delete_button='1' noteditable="1">
             %s
             </tree>
             ''' % (query.object_id.model_id.name, tree_fields)
-            
+
             search_view_data = {'name': 'query.search.%s.%s' %(query.object_id.model_id.model, query.id),
                                 'model': query.object_id.model_id.model,
                                 'priority': 250,
                                 'type': 'search',
                                 'arch': search_arch,
                                 'xmd_id': 'object_query.query_search_%s_%s' %(query.object_id.model_id.model, query.id)}
-            
+
             tree_view_data = {'name': 'query.tree.%s.%s' %(query.object_id.model_id.model, query.id),
                               'model': query.object_id.model_id.model,
                               'priority': 250,
@@ -250,10 +258,10 @@ class object_query(osv.osv):
                 view_obj.write(cr, uid, tree_view_id, tree_view_data, context=context)
             else:
                 tree_view_id = view_obj.create(cr, uid, tree_view_data, context=context)
-            
+
             self.write(cr, uid, query.id, {'search_view_id': search_view_id,
                                            'tree_view_id': tree_view_id}, context=context)
-          
+
             default_search.update(disable_cache=time.time())
             return {'type': 'ir.actions.act_window',
                     'res_model': query.object_id.model_id.model,
@@ -264,7 +272,7 @@ class object_query(osv.osv):
                     'domain': domain,
                     'context': default_search
                 }
-        
+
         return {'type': 'ir.actions.act_window_close'}
 
     def populate_result(self, cr, uid, ids, context=None):
@@ -295,7 +303,7 @@ class object_query(osv.osv):
                     max_seq += 1
                 else:
                     del(existing[field.id])
-            
+
             if existing:
                 for to_del in existing:
                     values.append((2, existing[to_del]))
@@ -422,72 +430,71 @@ class object_query_result_fields(osv.osv):
 
     def _get_model_ids(self, cr, uid, ids, field, arg, context=None):
         res = {}
-        
+
         for result in self.browse(cr, uid, ids, context=context):
             res[result.id] = [x.id for x in result.object_id.model_ids]
         return res
-    
+
     _columns = {
         'object_id': fields.many2one('object.query', string='Object', required=True, ondelete='cascade'),
         'field_id': fields.many2one('ir.model.fields', string='Field', required=True, ondelete='cascade'),
         'sequence': fields.integer(string='Sequence', required=True),
-        'model_ids': fields.function(_get_model_ids, method=True, type='many2many', 
+        'model_ids': fields.function(_get_model_ids, method=True, type='many2many',
                                      relation='ir.model', string='Models'),
     }
-    
+
 object_query_result_fields()
 
 
 class ir_fields(osv.osv):
     _name = 'ir.model.fields'
     _inherit = 'ir.model.fields'
-    
+
     def _get_model_search(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return the attached module
         '''
         res = {}
-        
+
         for field in self.browse(cr, uid, ids, context=context):
             res[field.id] = field.model_id.id
-            
+
         return res
-    
+
     def _search_model_search(self, cr, uid, obj, name, args, context=None):
         '''
         Return the domain according to the filter
         '''
         if not args:
             return []
-        
+
         model_ids = []
-        res_ids = []
-        
-        for a in args:        
+
+        for a in args:
             if a[0] == 'model_search_id' and a[1] == 'in' and a[2]:
                 for arg in a[2]:
                     if arg[0] == 6:
                         for model_id in arg[2]:
                             model_ids.append(model_id)
-            
-            res_ids = self.search(cr, uid, [('model_id', 'in', model_ids)]) 
-        
-        return [('id', 'in', res_ids)]
-    
+
+            return [('model_id', 'in', model_ids), ('state', '!=', 'deprecated')]
+
+        return [('id', '=', 0)]
+
     def _is_function(self, cr, uid, ids, field_name, args, context=None):
         '''
         Determines if the field is a function or not
         '''
         res = {}
-        
+
         for field in self.browse(cr, uid, ids, context=context):
             res[field.id] = False
             if self.pool.get(field.model_id.model)._columns[field.name]._properties:
                 res[field.id] = True
-                
+
         return res
-                
-        
+
+
     def _search_function(self, cr, uid, obj, name, args, context=None):
         '''
         Return all fields which are a function field
@@ -501,27 +508,27 @@ class ir_fields(osv.osv):
                 field_ids = []
                 all_fields_ids = []
                 model_ids = context.get('model_ids', [(6,0,[])])[0][2]
-                
+
                 if not model_ids:
-                    model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
-                    
+                    return [('id', '=', 0)]
+                    #model_ids = self.pool.get('ir.model').search(cr, uid, [], context=context)
+
                 for obj in self.pool.get('ir.model').browse(cr, uid, model_ids, context=context):
                     model_obj = self.pool.get(obj.model)
                     for field in obj.field_id:
                         all_fields_ids.append(field.id)
-                        col = model_obj._columns[field.name]
-                        if hasattr(col, '_properties') and col._properties and not col.store:
+                        col = model_obj._columns.get(field.name)
+                        if col and hasattr(col, '_properties') and col._properties and not col.store:
                             if a[0] == 'is_function' or not isinstance(col, fields.related):
                                 field_ids.append(field.id)
-                
+
                 if (a[1] == '=' and a[2] == False) or (a[1] == '!=' and a[2] == True):
                     return [('id', 'not in', field_ids)]
                 else:
                     return [('id', 'in', field_ids)]
-            
-        
+
         return []
-    
+
     def _get_help(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         if isinstance(ids, (long, int)):
@@ -542,16 +549,16 @@ class ir_fields(osv.osv):
                                            method=True,
                                            type='many2one', relation='ir.model',
                                            string='Model'),
-        'is_function': fields.function(_is_function, 
-                                       fnct_search=_search_function, 
+        'is_function': fields.function(_is_function,
+                                       fnct_search=_search_function,
                                        method=True,
                                        type='boolean', string='Is function ?'),
-        'is_unsearchable': fields.function(_is_function, 
-                                       fnct_search=_search_function, 
+        'is_unsearchable': fields.function(_is_function,
+                                       fnct_search=_search_function,
                                        method=True,
                                        type='boolean', string='Is searchable ?'),
     }
-    
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         Call the view on context if there is.
@@ -562,15 +569,15 @@ class ir_fields(osv.osv):
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'object_query', context.get('special_tree_id'))[1]
         if view_type == 'search' and context and 'special_search_id' in context:
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'object_query', context.get('special_search_id'))[1]
-            
-        return super(ir_fields, self).fields_view_get(cr, uid, 
+
+        return super(ir_fields, self).fields_view_get(cr, uid,
                                                       view_id=view_id,
                                                       view_type=view_type,
                                                       context=context,
                                                       toolbar=toolbar,
                                                       submenu=submenu)
-        
-   
+
+
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
         if context is None:
             context = {}
@@ -582,10 +589,10 @@ class ir_fields(osv.osv):
                 self.search(cr, uid, [('name', 'in', exclude_templ), ('model_id', '=', 'product.template')])
             if ids_to_remove:
                 args.append(('id', 'not in', ids_to_remove))
-        
+
         return super(ir_fields, self).search(cr, uid, args, offset, limit,
                 order, context, count)
-    
+
 ir_fields()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -21,6 +21,9 @@
 
 from osv import osv
 from osv import fields
+
+from specific_rules.specific_rules import SHORT_SHELF_LIFE_MESS
+
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 import base64
 from tools.translate import _
@@ -88,15 +91,21 @@ class wiz_common_import(osv.osv_memory):
         Check that the columns in the header will be taken into account.
         """
         translated_headers = [_(f) for f in real_columns]
+        upper_translated_headers = translated_headers
+        if origin == 'FO':
+            upper_translated_headers = [_(f).upper() for f in real_columns]
         for k,v in header_index.items():
-            if k not in translated_headers:
+            upper_k = k
+            if origin == 'FO':
+                upper_k = k.upper()
+            if upper_k not in upper_translated_headers:
                 if origin:
                     # special case from document origin
                     if origin == 'PO' and k == 'Delivery requested date' \
                         and 'Delivery Request Date' in real_columns:
                         continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'state': 'draft',
-                        'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: %s'
+                        'message': _('The column "%s" is not taken into account. Please correct it. The list of columns accepted is: %s'
                                      ) % (k, ','.join(translated_headers))}
                 return False, vals
         return True, True
@@ -187,25 +196,35 @@ class wizard_common_import_line(osv.osv_memory):
             return {}
 
         res = {}
+        is_ssl = False
         try:
             for wl in self.browse(cr, uid, ids, context=context):
                 if wl.parent_model in ('tender', 'sale.order', 'purchase.order'):
                     categ = self.pool.get(wl.parent_model).read(cr, uid, wl.parent_id, ['categ'], context=context)['categ']
                     if categ:
+                        is_ssl = product_ids[0][2] and \
+                            product_obj.search_exist(cr, uid, [('is_ssl', '=', True), ('id', 'in', product_ids[0][2])], context=context)
+
                         for product_id in product_ids[0][2]:
                             c_msg = product_obj.check_consistency(cr, uid, product_id, categ, context=context)
                             if c_msg:
                                 res.setdefault('warning', {})
                                 res['warning'].setdefault('title', _('Warning'))
-                                res['warning'].setdefault('message', '')
-                                res['warning']['message'] = '%s \n %s' % (
-                                    res.get('warning', {}).get('message', ''),
-                                    c_msg,
-                                )
+                                res['warning']['message'] = c_msg
+                                if is_ssl:
+                                    res['warning']['message'] = '%s\n%s' % (res['warning']['message'], _(SHORT_SHELF_LIFE_MESS))
+                            if res:
                                 return res
         except IndexError:
             return {}
 
+        if is_ssl:
+            return {
+                'warning': {
+                    'title':  _('Warning'),
+                    'message': _(SHORT_SHELF_LIFE_MESS),
+                }
+            }
         return res
 
 

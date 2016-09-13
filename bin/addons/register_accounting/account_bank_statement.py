@@ -218,6 +218,8 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function.
         """
+        if not ids:
+            return True
         return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1924,11 +1926,15 @@ class account_bank_statement_line(osv.osv):
         """
         Write some existing account bank statement lines with 'values'.
         """
+        if not ids:
+            return True
 
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
             context = {}
+        if not values:
+            return False
         # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method.
         #+ We prepare some boolean to test what permit to skip some checks.
         #+ SKIP_WRITE_CHECK is a param in context that permit to directly write thing without any check or changes. Use it with caution.
@@ -2866,7 +2872,8 @@ class account_bank_statement_line(osv.osv):
             return False
         if isinstance(ids, (int, long)):
             ids = [ids]
-        return self.unlink(cr, uid, ids, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        return self.unlink(cr, real_uid, ids, context=context)
 
     def _check_account_partner_compat(self, cr, uid, vals, context=None):
         # US-672/2

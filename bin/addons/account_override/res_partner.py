@@ -49,7 +49,9 @@ class res_partner(osv.osv):
         return res and res[0] > 0 or False
 
     def write(self, cr, uid, ids, vals, context=None):
-        if ids and 'name' in vals:
+        if not ids:
+            return True
+        if 'name' in vals:
             current_name_recs = self.read(cr, uid, ids, ['name'],
                 context=context)
             new_name = vals.get('name', False)

@@ -799,3 +799,33 @@ msgstr "You have to select a currency or a supplier in the purchase form !\n"
 #: view:purchase.order:0
 msgid "Delivery & Invoicing"
 msgstr "Delivery"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:36
+#, python-format
+msgid "get_import_batch_headers_name"
+msgstr "Batch number"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:37
+#, python-format
+msgid "get_import_batch_headers_product_code"
+msgstr "Product Code"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:38
+#, python-format
+msgid "get_import_batch_headers_product_desc"
+msgstr "Product Description"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
+#, python-format
+msgid "get_import_batch_headers_life_date"
+msgstr "Expiry date"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:40
+#, python-format
+msgid "get_import_batch_headers_type"
+msgstr "Type"

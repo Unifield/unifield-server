@@ -494,6 +494,8 @@ class initial_stock_inventory_line(osv.osv):
         '''
         Set the UoM with the default UoM of the product
         '''
+        if not ids:
+            return True
         if vals.get('product_id', False):
             prod_obj = self.pool.get('product.product')
             product = prod_obj.browse(cr, uid, vals['product_id'], context=context)
@@ -518,7 +520,7 @@ class stock_cost_reevaluation(osv.osv):
         'date': fields.date(string='Creation date', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'reevaluation_line_ids': fields.one2many('stock.cost.reevaluation.line', 'reevaluation_id', string='Lines',
                                                  readonly=True, states={'draft': [('readonly', False)]}),
-        'state': fields.selection([('draft', 'Draft'), ('confirm', 'Confirmed'), ('done', 'Done'), ('cancel', 'Cancel')],
+        'state': fields.selection([('draft', 'Draft'), ('confirm', 'Validated'), ('done', 'Done'), ('cancel', 'Cancel')],
                                   string='State', readonly=True, required=True),
         'sublist_id': fields.many2one('product.list', string='List/Sublist', ondelete='set null'),
         'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', ondelete='set null'),

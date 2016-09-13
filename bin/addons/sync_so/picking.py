@@ -38,7 +38,7 @@ class stock_move(osv.osv):
 
         res = {}
         for m in self.browse(cr, uid, ids, context=context):
-            res[m.id] = m.state == 'cancel' and m.picking_id and m.picking_id.sale_id and m.picking_id.sale_id.state in ['done', 'cancel']
+            res[m.id] = m.state == 'cancel' and m.picking_id and m.picking_id.sale_id and m.picking_id.sale_id.state in ['done', 'cancel'] or False
 
         return res
 
@@ -97,7 +97,7 @@ class stock_picking(osv.osv):
 
         # product
         product_name = data['product_id']['name']
-        product_id = prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(data['product_id']['id']), context=context)
+        product_id = self.pool.get('so.po.common').get_product_id(cr, uid, data['product_id'], context=context)
         if not product_id:
             product_ids = prod_obj.search(cr, uid, [('name', '=', product_name)], context=context)
             if not product_ids:
@@ -807,7 +807,7 @@ class stock_picking(osv.osv):
 
         error_message = "Create Batch Number: Invalid reference to the product or product does not exist"
         if batch_dict.get('product_id'):
-            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, context=context)
             if rec_id:
                 batch_dict['product_id'] = rec_id
                 error_message = False
@@ -868,7 +868,7 @@ class stock_picking(osv.osv):
             return message
 
         if asset_dict.get('product_id'):
-            rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(out_info.product_id.id), context=context)
+            rec_id = self.pool.get('so.po.common').get_product_id(cr, uid, out_info.product_id, context=context)
             if rec_id:
                 asset_dict['product_id'] = rec_id
             else:
@@ -931,9 +931,9 @@ class stock_picking(osv.osv):
         model_obj = self.pool.get(rule.model)
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
+        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
         arg = model_obj.get_message_arguments(cr, uid, ids[0], rule, context=context)
         call = rule.remote_call
-        update_destinations = model_obj.get_destination_name(cr, uid, ids, rule.destination_name, context=context)
 
         identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, ids, rule.server_id, context=context)
         if not identifiers or not update_destinations:
@@ -980,7 +980,7 @@ class stock_picking(osv.osv):
             # for each new batch number object and for each partner, create messages and put into the queue for sending on next sync round
             # for each new asset object and for each partner, create messages and put into the queue for sending on next sync round
             for item in list_asset:
-                so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner.name, context)
+                so_po_common.create_message_with_object_and_partner(cr, uid, 1002, item, partner, context)
         return res
 
     def msg_close(self, cr, uid, source, stock_picking, context=None):

@@ -250,6 +250,8 @@ class account_analytic_line(osv.osv):
         Verify date for all given ids with account.
         Check document_date and date validity.
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -270,12 +272,23 @@ class account_analytic_line(osv.osv):
          - keep date as source_date
          - mark this line as reversal
         """
-        if not context:
+        if context is None:
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        period_obj = self.pool.get('account.period')
         if posting_date is None:
             posting_date = strftime('%Y-%m-%d')
+        # US-945: deduce real period id from date
+        # TO NOTE that, in correction wizard:
+        # in December we are well in December, never in 13, 14, 15, 16
+        period_ids = period_obj.get_period_from_date(
+            cr, uid, date=posting_date, context=context)
+        # (US-815) use the right period for December HQ Entries
+        period_number = period_ids and period_obj.browse(cr, uid, period_ids, context)[0].number or False
+        period_id_dec_hq_entry = False
+        if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
+            period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
         res = []
         for al in self.browse(cr, uid, ids, context=context):
             vals = {
@@ -288,9 +301,11 @@ class account_analytic_line(osv.osv):
                 'currency_id': al.currency_id.id,
                 'is_reversal': True,
                 'ref': al.entry_sequence,
+                'real_period_id': period_id_dec_hq_entry or period_ids and period_ids[0] or False,  # US-945
             }
             new_al = self.copy(cr, uid, al.id, vals, context=context)
             res.append(new_al)
+
         return res
 
 account_analytic_line()

@@ -577,6 +577,8 @@ class account_account(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -685,6 +687,8 @@ class account_journal(osv.osv):
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, context=context):
@@ -975,6 +979,8 @@ class account_period(osv.osv):
         return self.name_get(cr, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'company_id' in vals:
             move_lines = self.pool.get('account.move.line').search(cr, uid, [('period_id', 'in', ids)])
             if move_lines:
@@ -1052,6 +1058,8 @@ class account_journal_period(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self._check(cr, uid, ids, context=context)
         return super(account_journal_period, self).write(cr, uid, ids, vals, context=context)
 
@@ -1288,6 +1296,8 @@ class account_move(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         c = context.copy()
@@ -1523,6 +1533,16 @@ class account_move(osv.osv):
                 if line.account_id.currency_id and line.currency_id:
                     if line.account_id.currency_id.id != line.currency_id.id and (line.account_id.currency_id.id != line.account_id.company_id.currency_id.id):
                         raise osv.except_osv(_('Error'), _("""Couldn't create move with currency different from the secondary currency of the account "%s - %s". Clear the secondary currency field of the account definition if you want to accept all currencies.""") % (line.account_id.code, line.account_id.name))
+
+            # When clicking on "Save" for a Manual Journal Entry:
+            # IF there are JI, check that there are at least 2 lines and that the entry is balanced
+            if context.get('from_web_menu', False) and move.line_id \
+                    and context.get('journal_id', False) and not context.get('button', False) \
+                    and not context.get('copy'):
+                if len(move.line_id) < 2:
+                    raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
+                elif abs(amount) > 10 ** -4:
+                    raise osv.except_osv(_('Warning'), _('The entry must be balanced.'))
 
             if abs(amount) < 10 ** -4:
                 # If the move is balanced
@@ -1903,6 +1923,8 @@ class account_tax(osv.osv):
         return self.name_get(cr, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)
@@ -2337,9 +2359,6 @@ class account_subscription(osv.osv):
         'period_nbr': 1,
         'state': 'draft',
     }
-    def state_draft(self, cr, uid, ids, context=None):
-        self.write(cr, uid, ids, {'state':'draft'})
-        return False
 
     def check(self, cr, uid, ids, context=None):
         todone = []
@@ -2376,17 +2395,24 @@ class account_subscription(osv.osv):
                     _("Compute cancelled. Please review analytic allocation for lines with expense or income accounts.")
                 )
             ds = sub.date_start
+            date_list = []
+            # get all the dates for which a subscription line has to be created
             for i in range(sub.period_total):
-                self.pool.get('account.subscription.line').create(cr, uid, {
-                    'date': ds,
-                    'subscription_id': sub.id,
-                })
+                date_list.append(ds)
                 if sub.period_type=='day':
                     ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(days=sub.period_nbr)).strftime('%Y-%m-%d')
                 if sub.period_type=='month':
                     ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(months=sub.period_nbr)).strftime('%Y-%m-%d')
                 if sub.period_type=='year':
                     ds = (datetime.strptime(ds, '%Y-%m-%d') + relativedelta(years=sub.period_nbr)).strftime('%Y-%m-%d')
+            # create the subscription lines if they don't exist yet
+            existing_sub_lines = sub.lines_id or []
+            existing_dates = [l.date for l in existing_sub_lines]
+            for date_sub in [d for d in date_list if d not in existing_dates]:
+                self.pool.get('account.subscription.line').create(cr, uid, {
+                    'date': date_sub,
+                    'subscription_id': sub.id,
+                })
         self.write(cr, uid, ids, {'state':'running'})
         return True
 account_subscription()

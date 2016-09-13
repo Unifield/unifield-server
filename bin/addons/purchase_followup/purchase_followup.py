@@ -42,15 +42,15 @@ class purchase_order_followup(osv.osv_memory):
         Return the shipped rate of a PO line
         '''
         uom_obj = self.pool.get('product.uom')
-        line_value = line.price_subtotal
+        line_value = line.product_qty
         move_value = 0.00
         for move in line.move_ids:
             if move.state == 'done':
                 product_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, line.product_uom.id)
                 if move.type == 'out':
-                    move_value -= product_qty*move.price_unit
+                    move_value -= product_qty
                 elif move.type == 'in':
-                    move_value += product_qty*move.price_unit
+                    move_value += product_qty
 
         return round((move_value/line_value)*100, 2)
 
