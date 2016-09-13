@@ -59,8 +59,8 @@ PO_COLUMNS_HEADER_FOR_IMPORT=[
 PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
 FO_COLUMNS_HEADER_FOR_IMPORT=[
-(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-(_('Delivery requested date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string')]
+(_('fo_import_product_code'), 'string'), (_('fo_import_product_description'), 'string'), (_('fo_import_qty'), 'number'), (_('fo_import_uom'), 'string'),
+(_('fo_import_price'), 'number'), (_('fo_import_drd'), 'date'), (_('fo_import_currency'), 'string'), (_('fo_import_comment'), 'string')]
 FO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in FO_COLUMNS_HEADER_FOR_IMPORT]
 
 INT_COLUMNS_HEADER_FOR_IMPORT = [
