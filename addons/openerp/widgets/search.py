@@ -260,6 +260,7 @@ class Search(TinyInputWidget):
             for field_name, field in self.fields.iteritems()
             if field['type'] != 'binary'
             if field.get('selectable')
+            if not field.get('internal')
         ]
 
         if self.fields_list:
