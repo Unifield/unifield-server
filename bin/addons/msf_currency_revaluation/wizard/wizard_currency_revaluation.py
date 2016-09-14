@@ -847,11 +847,6 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
-                # If the method is 'other_bs' or 'liquidity_year', get the
-                # account move currency in the currency table
-                if form.revaluation_method in ['liquidity_year', 'other_bs']:
-                    currency = currency_obj.browse(cr, uid, currency_id, context=context)
-                    currency_id = currency_codes_from_table[currency.name]
                 adj_balance = sums.get('unrealized_gain_loss', 0.0)
                 if not adj_balance:
                     continue
@@ -996,10 +991,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 lines_to_reconcile.append((line.id, rev_line_id))
             # Search analytic lines from first move line
             aal_ids = aal_obj.search(cr, uid, [('move_id', '=', line.id)])
-            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
+            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True}, context=context)
             # Search analytic lines from reversed line and flag them as "is_reversal"
-            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)])
-            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True,})
+            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)], context=context)
+            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True}, context=context)
             rev_line_ids.append(rev_line_id)
         # Hard post the move
         move_obj.post(cr, uid, [move_id], context=context)
