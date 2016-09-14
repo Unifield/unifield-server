@@ -44,6 +44,7 @@ class patch_scripts(osv.osv):
     }
 
     def us_1610_set_oc_on_all_groups(self, cr, uid, *a, **b):
+        logger = logging.getLogger('update')
         update_module = self.pool.get('sync.server.entity_group')
         if update_module:
             # get all groups that don't have any oc
@@ -55,6 +56,27 @@ class patch_scripts(osv.osv):
                     index = group_name.index('oc')
                     oc = group_name[index:index+3]
                     update_module.write(cr, uid, group['id'], {'oc': oc})
+                else:
+                    logger.warn('sync.server.entity_group "%s" does not contain '\
+                            '"oc" or "OC" in its name. Please set up the '\
+                            'oc mannually' % group['name'])
+
+        sync_client_module = self.pool.get('sync.client.entity')
+        if sync_client_module:
+            # get all entities that don't have any oc
+            entity_ids = sync_client_module.search(cr, uid,
+                    [('oc', '=', False)])
+            for entity in sync_client_module.read(cr, uid, entity_ids,
+                    ['name']):
+                entity_name = entity['name'].lower()
+                if 'oc' in entity_name:
+                    index = entity_name.index('oc')
+                    oc = entity_name[index:index+3]
+                    sync_client_module.write(cr, uid, entity['id'], {'oc': oc})
+                else:
+                    logger.warn('sync.client.entity "%s" does not contain '\
+                            '"oc" or "OC" in its name. Please set up the '\
+                            'oc mannually' % entity['name'])
 
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
