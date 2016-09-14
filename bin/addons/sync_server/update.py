@@ -224,17 +224,9 @@ class update(osv.osv):
         return True
 #        return self._cache_pullers.merge(cr, uid, context)
 
-    def search_web(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
-        # if the domain exists, check that it contains at least one exact search
-        if args:
-            exact_search = False
-            for sub_domain in args:
-                if len(sub_domain) > 1 and sub_domain[1] in ('=', '<=', '>='):
-                    exact_search = True
-                    break
-            if not exact_search:
-                raise osv.except_osv(_("Error!"), _("You can't search updates without using at least one exact search term (precede your search with the character '=')."))
-        return self.search(cr, uid, args, offset, limit,
+    def search_web(self, cr, uid, args=None, offset=0, limit=None, order=None,
+            context=None, count=False):
+        return self.exact_search_web(cr, uid, args, offset, limit,
                 order, context=context, count=count)
 
     def search_with_puller_ids(self, cr, uid, args, puller_ids_arg, offset=0,
