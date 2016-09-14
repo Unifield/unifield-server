@@ -395,7 +395,9 @@ class Entity(osv.osv):
     _columns = {
         'name':fields.char('Instance Name', size=64, readonly=True),
         'identifier':fields.char('Identifier', size=64, readonly=True),
-        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center'),
+        'oc': fields.selection(OC_LIST_TUPLE,
+            'Operational Center'), # not required here because _auto_init create
+                                   # before to know from witch OC it is part of
         'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),
