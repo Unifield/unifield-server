@@ -86,6 +86,7 @@
                 <tree string="Instance Groups">
                     <field name="name"/>
                     <field name="type_id"/>
+                    <field name="oc"/>
                 </tree>
             </field>
         </record>

@@ -43,6 +43,19 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1610_set_oc_on_all_groups(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.entity_group')
+        if update_module:
+            # get all groups that don't have any oc
+            group_ids = update_module.search(cr, uid,
+                    [('oc', '=', False)])
+            for group in update_module.read(cr, uid, group_ids, ['name']):
+                group_name = group['name'].lower()
+                if 'oc' in group_name:
+                    index = group_name.index('oc')
+                    oc = group_name[index:index+3]
+                    update_module.write(cr, uid, group['id'], {'oc': oc})
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be
