@@ -47,6 +47,8 @@ import functools
 from datetime import datetime
 import updater
 
+from sync_common import OC_LIST_TUPLE
+
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
@@ -393,6 +395,7 @@ class Entity(osv.osv):
     _columns = {
         'name':fields.char('Instance Name', size=64, readonly=True),
         'identifier':fields.char('Identifier', size=64, readonly=True),
+        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center'),
         'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),

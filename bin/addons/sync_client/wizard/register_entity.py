@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
+from sync_common import OC_LIST_TUPLE
 
 class client_entity_group(osv.osv_memory):
     """ OpenERP group of entities """
@@ -34,37 +35,30 @@ class client_entity_group(osv.osv_memory):
         'name':fields.char('Group Name', size=64, required=True, readonly=True),
         'type':fields.char('Group Type', size=64, readonly=True),
         'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Instances"),         
+        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center',
+            required=True),
+
     }
 
-    def get_parent_instance_name(self, cr, uid, context=None):
-        # get the parent_id from the register entity
+    def get_instance_oc(self, cr, uid, context=None):
         registry_obj = self.pool.get('sync.client.register_entity')
         registry_ids = registry_obj.search(cr, uid, [])
-        instance_name = None
+        oc = None
         if registry_ids:
             registry_id = registry_ids[-1]
-            parent_id = registry_obj.read(cr, uid, registry_id,
-                    ['parent_id'])['parent_id']
-            if parent_id:
-                # get the parent group name
-                instance_temp_obj = self.pool.get('sync_client.instance.temp')
-                instance_name = instance_temp_obj.read(cr, uid, parent_id,
-                            ['name'])['name']
-        return instance_name
+            oc = registry_obj.read(cr, uid, registry_id,
+                    ['oc'])['oc']
+        return oc
 
     def set_group(self, cr, uid, data_list, context=None):
-        parent_name = self.get_parent_instance_name(cr, uid, context)
-        oc_name = None
-        if parent_name and 'OC' in parent_name:
-            index = parent_name.index('OC')
-            oc_name = parent_name[index:index+3] # ie. 'OCA' or 'OCG', ...
+        oc = self.get_instance_oc(cr, uid, context)
 
         # remove all created groups this is usefull in case the user goes on
         # previous step to change the parent instance
         self.unlink(cr, uid, self.search(cr, uid, []))
 
         for data in data_list:
-            if oc_name and oc_name not in data['name']:
+            if oc != data['oc']:
                 continue
             ids = self.search(cr, uid, [('name', '=', data['name'])], context=context)
             if ids:
@@ -87,6 +81,8 @@ class register_entity(osv.osv_memory):
         'parent_id' : fields.many2one('sync_client.instance.temp', 'Parent Instance'),
         'email' : fields.char('Contact Email', size=256, required=True),
         'identifier': fields.char('Identifier', size=64, readonly=True), 
+        'oc':fields.selection(OC_LIST_TUPLE, 'Operational Center',
+            required=True),
         'group_ids':fields.many2many('sync.client.entity_group','sync_entity_group_rel','entity_id','group_id',string="Groups"), 
         'state':fields.selection([('register','Register'),('parents','Parents'),('groups','Groups'), ('message', 'Message')], 'State', required=True),
     }
@@ -94,21 +90,20 @@ class register_entity(osv.osv_memory):
     def default_get(self, cr, uid, fields, context=None):
         values = super(register_entity, self).default_get(cr, uid, fields, context)
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
-        
         values.update({
                 'identifier': entity.identifier,
                 'name': entity.name,
                 #'parent' : entity.parent,
-                'email' : entity.email,
+                'email': entity.email,
+                'oc': entity.oc,
             })
-        
         return values
-    
+
     _defaults = {
-        'state' : 'register',
-        'max_size' : 5,
+        'state': 'register',
+        'max_size': 5,
     }
-    
+
     def previous(self, cr, uid, ids, state, context=None):
         maping = {'parents' : 'register',
                'groups' : 'parents',
@@ -150,12 +145,13 @@ class register_entity(osv.osv_memory):
     def validate(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         for entity in self.browse(cr, uid, ids, context=context):
-            data = {'name' : entity.name,
-                    'parent_name' : entity.parent_id and entity.parent_id.name or '',
-                    'identifier' : entity.identifier,
-                    'hardware_id' : self.pool.get('sync.client.entity')._hardware_id,
-                    'email' : entity.email,
-                    'group_names' : [group.name for group in entity.group_ids],
+            data = {'name': entity.name,
+                    'parent_name': entity.parent_id and entity.parent_id.name or '',
+                    'identifier': entity.identifier,
+                    'hardware_id': self.pool.get('sync.client.entity')._hardware_id,
+                    'email': entity.email,
+                    'group_names': [group.name for group in entity.group_ids],
+                    'oc': entity.oc,
                     }
             res = proxy.register(data, context)
         if res and res[0]:

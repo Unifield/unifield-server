@@ -9,6 +9,9 @@ import json
 import tools
 from tools.translate import _
 
+OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
+OC_LIST_TUPLE = zip([x.lower() for x in OC_LIST], OC_LIST)
+
 MODELS_TO_IGNORE = [
                     'ir.actions.wizard',
                     'ir.actions.act_window.view',
