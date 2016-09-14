@@ -99,5 +99,9 @@
             <field name="method">us_1421_lower_login</field>
         </record>
 
+        <record id="us_1558_trans_admin_fr" model="patch.scripts">
+            <field name="method">us_trans_admin_fr</field>
+        </record>
+
     </data>
 </openerp>
