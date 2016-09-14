@@ -1925,6 +1925,12 @@ class orm_template(object):
                 order, context=context, count=count)
 
     def search_web(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        by default search_web do the same thing than search. If you need a
+        special treatment, you need to redifine it in the class you wan't
+        (in which you can call exact_search_web() for example if you want to
+        force for exact search
+        '''
         return self.search(cr, user, args, offset, limit, order, context, count)
 
     def search_exist(self, cr, user, args, context=None):
