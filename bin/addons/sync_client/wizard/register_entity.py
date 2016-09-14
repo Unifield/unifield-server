@@ -163,14 +163,15 @@ class register_entity(osv.osv_memory):
         return True  
     
     def save_value(self, cr, uid, ids, context=None):
-        cur = self.browse(cr, uid, ids, context=context)[0] 
+        cur = self.browse(cr, uid, ids, context=context)[0]
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
-        data = { 
-                'identifier' : cur.identifier, 
-                'name' : cur.name,
-                'parent' : cur.parent_id and cur.parent_id.name or '',
-                'email' : cur.email,
-                'max_size' : cur.max_size,
+        data = {
+                'identifier': cur.identifier,
+                'name': cur.name,
+                'parent': cur.parent_id and cur.parent_id.name or '',
+                'email': cur.email,
+                'max_size': cur.max_size,
+                'oc': cur.oc,
             }
         self.pool.get('sync.client.entity').write(cr, uid, [entity.id], data, context=context )
     

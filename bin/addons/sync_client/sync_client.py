@@ -348,7 +348,7 @@ class Entity(osv.osv):
     _logger = logging.getLogger('sync.client')
     _hardware_id = get_hardware_id()
 
-    def _auto_init(self,cr,context=None):
+    def _auto_init(self, cr, context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], limit=1, order='NO_ORDER', context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
