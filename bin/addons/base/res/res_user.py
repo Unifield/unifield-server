@@ -31,6 +31,10 @@ from service import security
 import netsvc
 import logging
 import re
+import crypt
+import os
+ENCRYPTION_METHOD = u'$6$' # SHA-512
+SALT_LENGHT = 10
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -214,7 +218,8 @@ class users(osv.osv):
             raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                     'Password must be different from the login, it must contain '\
                     'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-        self.write(cr, uid, id, {'password': value})
+        encrypted_password = tools.ustr(self.get_encrypted_password(cr, value))
+        self.write(cr, uid, id, {'password': encrypted_password})
 
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
@@ -222,7 +227,7 @@ class users(osv.osv):
                                  " and most listings"),
         'login': fields.char('Login', size=64, required=True,
                              help="Used to log into the system"),
-        'password': fields.char('Password', size=64, invisible=True, help="Keep empty if you don't want the user to be able to connect on the system."),
+        'password': fields.char('Password', size=512, invisible=True, help="Keep empty if you don't want the user to be able to connect on the system."),
         'new_password': fields.function(lambda *a:'', method=True, type='char', size=64,
                                 fnct_inv=_set_new_password,
                                 string='Change password', help="Only specify a value if you want to change the user password. "
@@ -273,17 +278,18 @@ class users(osv.osv):
 
     def read(self,cr, uid, ids, fields=None, context=None, load='_classic_read'):
         def override_password(o):
-            if 'password' in o and ( 'id' not in o or o['id'] != uid ):
+            if 'id' not in o or o['id'] != uid:
                 o['password'] = '********'
             return o
 
         result = super(users, self).read(cr, uid, ids, fields, context, load)
-        canwrite = self.pool.get('ir.model.access').check(cr, uid, 'res.users', 'write', raise_exception=False)
-        if not canwrite:
-            if isinstance(ids, (int, float)):
-                result = override_password(result)
-            else:
-                result = map(override_password, result)
+        if 'password' in result:
+            canwrite = self.pool.get('ir.model.access').check(cr, uid, 'res.users', 'write', raise_exception=False)
+            if not canwrite:
+                if isinstance(ids, (int, float)):
+                    result = override_password(result)
+                else:
+                    result = map(override_password, result)
         return result
 
 
@@ -457,11 +463,74 @@ class users(osv.osv):
         data_id = dataobj._get_id(cr, 1, 'base', 'action_res_users_my')
         return dataobj.browse(cr, uid, data_id, context=context).res_id
 
+    def get_random_salt(self, cr):
+        '''
+        return a random chain to be used as salt in password generation
+        '''
+        return os.urandom(SALT_LENGHT)
+
+    def get_encrypted_password(self, cr, password, salt=None):
+        '''
+        encrypt the password and return it
+        if not salt provided, it will generate a new one.
+        if salt is provided, it will use it (usefull to check password validity)
+        '''
+        if not salt:
+            salt = tools.ustr(self.get_random_salt(cr))
+        crypt_salt = ENCRYPTION_METHOD + salt
+        encrypted_password = crypt.crypt(password, crypt_salt.encode('utf8'))
+        result = tools.ustr(encrypted_password)
+        return result
+
+    def verify_password(self, cr, password, database_password):
+        '''
+        return True if the password is the same, False otherwise
+        keep the possiblity to use non encrypted password
+        '''
+        if not database_password or not password:
+            raise security.ExceptionNoTb('Bad username or password')
+        password_to_check = password
+        if database_password.startswith(ENCRYPTION_METHOD):
+            salt = database_password[len(ENCRYPTION_METHOD):len(ENCRYPTION_METHOD)+SALT_LENGHT]
+            password_to_check = self.get_encrypted_password(cr, password, salt)
+        if password_to_check == database_password:
+            return True
+        return False
+
+    def get_user_database_password_from_uid(self, cr, uid):
+        '''
+        return encrypted password from the database using uid
+        '''
+        cr.execute("""SELECT password from res_users
+                      WHERE id=%s AND active""",
+                   (uid,))
+        res = cr.fetchone()
+        if res:
+            return tools.ustr(res[0])
+        return False
+
+    def get_user_database_password_from_login(self, cr, login):
+        '''
+        return encrypted password from the database using login
+        '''
+        login = tools.ustr(login).lower()
+        cr.execute("""SELECT password from res_users
+                      WHERE login=%s AND active""",
+                   (login,))
+        res = cr.fetchone()
+        if res:
+            return tools.ustr(res[0])
+        return False
+
     def login(self, db, login, password):
         if not password:
             return False
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
+        database_password = self.get_user_database_password_from_login(cr, login)
+        if not self.verify_password(cr, password, database_password):
+            return False
+
         try:
             # autocommit: our single request will be performed atomically.
             # (In this way, there is no opportunity to have two transactions
@@ -476,9 +545,9 @@ class users(osv.osv):
             cr.execute("""SELECT id from res_users
                           WHERE login=%s AND password=%s
                                 AND active FOR UPDATE NOWAIT""",
-                       (login, tools.ustr(password)), log_exceptions=False)
+                       (login, tools.ustr(database_password)), log_exceptions=False)
             cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
-                    (login, tools.ustr(password)))
+                    (login, tools.ustr(database_password)))
         except Exception:
             # Failing to acquire the lock on the res_users row probably means
             # another request is holding it - no big deal, we skip the update
@@ -488,7 +557,7 @@ class users(osv.osv):
             cr.execute("""SELECT id from res_users
                           WHERE login=%s AND password=%s
                                 AND active""",
-                       (login, tools.ustr(password)))
+                       (login, tools.ustr(database_password)))
         finally:
             res = cr.fetchone()
             cr.close()
@@ -512,10 +581,8 @@ class users(osv.osv):
             return
         cr = pooler.get_db(db).cursor()
         try:
-            cr.execute('SELECT COUNT(1) FROM res_users WHERE id=%s AND password=%s AND active=%s',
-                        (int(uid), passwd, True))
-            res = cr.fetchone()[0]
-            if not res:
+            database_password = self.get_user_database_password_from_uid(cr, uid)
+            if not self.verify_password(cr, passwd, database_password):
                 raise security.ExceptionNoTb('AccessDenied')
             if self._uid_cache.has_key(db):
                 ulist = self._uid_cache[db]
@@ -582,6 +649,7 @@ class users(osv.osv):
                 raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                         'Password must be diffrent from the login, it must contain '\
                         'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
+            new_passwd = tools.ustr(self.get_encrypted_password(cr, new_passwd))
             vals = {
                 'password': new_passwd,
                 'force_password_change': False,
