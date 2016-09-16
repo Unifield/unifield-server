@@ -224,7 +224,7 @@ class users(osv.osv):
                                  " and most listings"),
         'login': fields.char('Login', size=64, required=True,
                              help="Used to log into the system"),
-        'password': fields.char('Password', size=512, invisible=True, help="Keep empty if you don't want the user to be able to connect on the system."),
+        'password': fields.char('Password', size=128, invisible=True, help="Keep empty if you don't want the user to be able to connect on the system."),
         'new_password': fields.function(lambda *a:'', method=True, type='char', size=64,
                                 fnct_inv=_set_new_password,
                                 string='Change password', help="Only specify a value if you want to change the user password. "
