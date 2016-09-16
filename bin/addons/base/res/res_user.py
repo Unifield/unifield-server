@@ -31,10 +31,7 @@ from service import security
 import netsvc
 import logging
 import re
-import crypt
-import os
-ENCRYPTION_METHOD = u'$6$' # SHA-512
-SALT_LENGHT = 10
+from passlib.hash import bcrypt
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -218,7 +215,7 @@ class users(osv.osv):
             raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                     'Password must be different from the login, it must contain '\
                     'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-        encrypted_password = tools.ustr(self.get_encrypted_password(cr, value))
+        encrypted_password = bcrypt.encrypt(value)
         self.write(cr, uid, id, {'password': encrypted_password})
 
     _columns = {
@@ -464,40 +461,6 @@ class users(osv.osv):
         data_id = dataobj._get_id(cr, 1, 'base', 'action_res_users_my')
         return dataobj.browse(cr, uid, data_id, context=context).res_id
 
-    def get_random_salt(self, cr):
-        '''
-        return a random chain to be used as salt in password generation
-        '''
-        return os.urandom(SALT_LENGHT)
-
-    def get_encrypted_password(self, cr, password, salt=None):
-        '''
-        encrypt the password and return it
-        if not salt provided, it will generate a new one.
-        if salt is provided, it will use it (usefull to check password validity)
-        '''
-        if not salt:
-            salt = tools.ustr(self.get_random_salt(cr))
-        crypt_salt = ENCRYPTION_METHOD + salt
-        encrypted_password = crypt.crypt(password, crypt_salt.encode('utf8'))
-        result = tools.ustr(encrypted_password)
-        return result
-
-    def verify_password(self, cr, password, database_password):
-        '''
-        return True if the password is the same, False otherwise
-        keep the possiblity to use non encrypted password
-        '''
-        if not database_password or not password:
-            raise security.ExceptionNoTb('Bad username or password')
-        password_to_check = password
-        if database_password.startswith(ENCRYPTION_METHOD):
-            salt = database_password[len(ENCRYPTION_METHOD):len(ENCRYPTION_METHOD)+SALT_LENGHT]
-            password_to_check = self.get_encrypted_password(cr, password, salt)
-        if password_to_check == database_password:
-            return True
-        return False
-
     def get_user_database_password_from_uid(self, cr, uid):
         '''
         return encrypted password from the database using uid
@@ -529,8 +492,11 @@ class users(osv.osv):
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
         database_password = self.get_user_database_password_from_login(cr, login)
-        if not self.verify_password(cr, password, database_password):
-            return False
+        if database_password.startswith('$2a$'):
+            if not bcrypt.verify(password, database_password):
+                return False
+        elif password != database_password:
+                return False
 
         try:
             # autocommit: our single request will be performed atomically.
@@ -567,7 +533,11 @@ class users(osv.osv):
         return False
 
     def check_super(self, passwd):
-        if passwd == tools.config['admin_passwd']:
+        config_password = tools.config['admin_passwd']
+        if config_password.startswith('$2a$') and\
+                bcrypt.verify(passwd, config_password):
+            return True
+        elif passwd == config_password:
             return True
         else:
             raise security.ExceptionNoTb('AccessDenied')
@@ -583,8 +553,12 @@ class users(osv.osv):
         cr = pooler.get_db(db).cursor()
         try:
             database_password = self.get_user_database_password_from_uid(cr, uid)
-            if not self.verify_password(cr, passwd, database_password):
+            if database_password.startswith('$2a$'):
+                if not bcrypt.verify(passwd, database_password):
+                    raise security.ExceptionNoTb('AccessDenied')
+            elif passwd != database_password:
                 raise security.ExceptionNoTb('AccessDenied')
+
             if self._uid_cache.has_key(db):
                 ulist = self._uid_cache[db]
                 ulist[uid] = passwd
@@ -650,7 +624,7 @@ class users(osv.osv):
                 raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                         'Password must be diffrent from the login, it must contain '\
                         'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-            new_passwd = tools.ustr(self.get_encrypted_password(cr, new_passwd))
+            new_passwd = bcrypt.encrypt(new_passwd)
             vals = {
                 'password': new_passwd,
                 'force_password_change': False,
