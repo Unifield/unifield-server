@@ -111,6 +111,7 @@
                     <field name="login" select="1"/>
                     <field name="new_password" password="True"/>
                     <field name="force_password_change"/>
+                    <field name="synchronize"/>
                     <newline/>
                     <notebook colspan="4">
                         <page string="User">
@@ -164,6 +165,7 @@
                     <field name="login"/>
                     <field name="context_lang"/>
                     <field name="date"/>
+                    <field name="synchronize"/>
                 </tree>
             </field>
         </record>
@@ -178,6 +180,7 @@
                     <field name="login"/>
                     <field name="address_id" string="Address"/>
                     <field name="company_ids" string="Company" groups="base.group_multi_company"/>
+                    <field name="synchronize"/>
                 </search>
             </field>
         </record>

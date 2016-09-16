@@ -266,6 +266,7 @@ class users(osv.osv):
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
+        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
