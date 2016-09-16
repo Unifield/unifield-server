@@ -395,6 +395,9 @@ class sequence_tools(osv.osv):
         base_obj = self.pool.get(base_object)
         dest_obj = self.pool.get(dest_object)
         seq_obj = self.pool.get('ir.sequence')
+        audit_obj = self.pool.get('audittrail.rule')
+
+        to_trace = dest_obj.check_audit(cr, uid, 'write')
 
         # find the corresponding base ids
         base_ids = [x[foreign_field][0] for x in dest_obj.read(cr, uid, ids, [foreign_field], context=context) if x[foreign_field]]
@@ -420,6 +423,11 @@ class sequence_tools(osv.osv):
                     # numbering value
                     start_num = start_num+1
                     if item_data[i][seq_field] != start_num:
+                        # Create the audittrail log line if the object is traceable
+                        if to_trace:
+                            previous_values = dest_obj.read(cr, uid, [item_data[i]['id']], [seq_field], context=context)
+                            audit_obj.audit_log(cr, uid, to_trace, dest_obj, [item_data[i]['id']], 'write', previous_values, {item_data[i]['id']: {seq_field: start_num}}, context=context)
+
                         cr.execute("update "+dest_obj._table+" set "+seq_field+"=%s where id=%s", (start_num, item_data[i]['id']))
                         #dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
 
