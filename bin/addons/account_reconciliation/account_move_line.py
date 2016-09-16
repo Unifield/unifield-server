@@ -282,6 +282,7 @@ class account_move_line(osv.osv):
 
         # US-533: date of JI reconciliation for total reconciliation linked
         # with above (4, 0)
+        # US-1682: trigger FXA computation
         self.pool.get('account.move.line').write(cr, uid, ids, {
                 'reconcile_date': time.strftime('%Y-%m-%d'),
             }, context=context)
