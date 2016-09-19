@@ -80,7 +80,7 @@ def login(db, login, password):
 
     return user_res
 
-def check_password(self, passwd, config_password):
+def check_password(passwd, config_password):
     # check the password is a bcrypt encrypted one
     if bcrypt.identify(config_password) and \
             bcrypt.verify(passwd, config_password):
