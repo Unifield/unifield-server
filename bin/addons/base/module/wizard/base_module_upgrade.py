@@ -102,15 +102,6 @@ class base_module_upgrade(osv.osv_memory):
         if id2:
             id2 = data_obj.browse(cr, uid, id2, context=context).res_id
 
-
-        # update/create sdref for all installed modules
-        sync_client_module = pool.get('ir.model.data')
-        if sync_client_module and hasattr(sync_client_module,
-            'create_module_sdrefs'):
-            module_list = [x['name'] for x in mod_obj.read(cr, uid, ids, ['name'])]
-            for module_name in module_list:
-                sync_client_module.create_module_sdrefs(cr, module_name)
-
         return {
                 'view_type': 'form',
                 'view_mode': 'form',
