@@ -492,11 +492,12 @@ class users(osv.osv):
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
         database_password = self.get_user_database_password_from_login(cr, login)
-        if database_password.startswith('$2a$'):
-            if not bcrypt.verify(password, database_password):
-                return False
+        # check the password is a bcrypt encrypted one
+        if bcrypt.identify(database_password) and \
+                not bcrypt.verify(password, database_password):
+            return False
         elif password != database_password:
-                return False
+            return False
 
         try:
             # autocommit: our single request will be performed atomically.
@@ -532,16 +533,6 @@ class users(osv.osv):
                 return res[0]
         return False
 
-    def check_super(self, passwd):
-        config_password = tools.config['admin_passwd']
-        if config_password.startswith('$2a$') and\
-                bcrypt.verify(passwd, config_password):
-            return True
-        elif passwd == config_password:
-            return True
-        else:
-            raise security.ExceptionNoTb('AccessDenied')
-
     def check(self, db, uid, passwd):
         """Verifies that the given (uid, password) pair is authorized for the database ``db`` and
            raise an exception if it is not."""
@@ -553,9 +544,10 @@ class users(osv.osv):
         cr = pooler.get_db(db).cursor()
         try:
             database_password = self.get_user_database_password_from_uid(cr, uid)
-            if database_password.startswith('$2a$'):
-                if not bcrypt.verify(passwd, database_password):
-                    raise security.ExceptionNoTb('AccessDenied')
+            # check the password is a bcrypt encrypted one
+            if bcrypt.identify(database_password) and \
+                    not bcrypt.verify(passwd, database_password):
+                raise security.ExceptionNoTb('AccessDenied')
             elif passwd != database_password:
                 raise security.ExceptionNoTb('AccessDenied')
 

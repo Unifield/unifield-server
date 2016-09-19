@@ -23,6 +23,7 @@ import pooler
 import tools
 import threading
 import updater
+from passlib.hash import bcrypt
 
 # When rejecting a password, hide the traceback
 class ExceptionNoTb(Exception):
@@ -79,29 +80,27 @@ def login(db, login, password):
 
     return user_res
 
-def check_super(passwd):
-    if passwd == tools.config['admin_passwd']:
+def check_password(self, passwd, config_password):
+    # check the password is a bcrypt encrypted one
+    if bcrypt.identify(config_password) and \
+            bcrypt.verify(passwd, config_password):
+        return True
+    elif passwd == config_password:
         return True
     else:
         raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+
+def check_super(self, passwd):
+    return check_password(passwd, tools.config['admin_passwd'])
 
 def check_super_dropdb(passwd):
-    if passwd == tools.config['admin_dropdb_passwd']:
-        return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+    return check_password(passwd, tools.config['admin_dropdb_passwd'])
 
 def check_super_bkpdb(passwd):
-    if passwd == tools.config['admin_bkpdb_passwd']:
-        return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+    return check_password(passwd, tools.config['admin_bkpdb_passwd'])
 
 def check_super_restoredb(passwd):
-    if passwd == tools.config['admin_restoredb_passwd']:
-        return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+    return check_password(passwd, tools.config['admin_restoredb_passwd'])
 
 def check(db, uid, passwd):
     pool = pooler.get_pool(db)
