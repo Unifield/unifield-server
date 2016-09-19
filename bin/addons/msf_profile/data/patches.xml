@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_1381" model="patch.scripts">
+            <field name="method">us_1381_encrypt_passwords</field>
+        </record>
+
         <record id="us_1388" model="patch.scripts">
             <field name="method">us_1388_change_sequence_implementation</field>
         </record>

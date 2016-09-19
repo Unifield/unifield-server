@@ -493,9 +493,9 @@ class users(osv.osv):
         cr = pooler.get_db(db).cursor()
         database_password = self.get_user_database_password_from_login(cr, login)
         # check the password is a bcrypt encrypted one
-        if bcrypt.identify(database_password) and \
-                not bcrypt.verify(password, database_password):
-            return False
+        if bcrypt.identify(database_password):
+            if not bcrypt.verify(password, database_password):
+                return False
         elif password != database_password:
             return False
 
@@ -545,9 +545,9 @@ class users(osv.osv):
         try:
             database_password = self.get_user_database_password_from_uid(cr, uid)
             # check the password is a bcrypt encrypted one
-            if bcrypt.identify(database_password) and \
-                    not bcrypt.verify(passwd, database_password):
-                raise security.ExceptionNoTb('AccessDenied')
+            if bcrypt.identify(database_password):
+                if not bcrypt.verify(passwd, database_password):
+                    raise security.ExceptionNoTb('AccessDenied')
             elif passwd != database_password:
                 raise security.ExceptionNoTb('AccessDenied')
 
