@@ -90,7 +90,7 @@ def check_password(passwd, config_password):
     else:
         raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
 
-def check_super(self, passwd):
+def check_super(passwd):
     return check_password(passwd, tools.config['admin_passwd'])
 
 def check_super_dropdb(passwd):
