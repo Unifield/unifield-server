@@ -42,5 +42,9 @@
       <field name="action_id" ref="action_base_setup"/>
       <field name="menu_id" ref="action_base_setup"/>
     </record>
+
+    <record id="attachment_config_default" model="attachment.config">
+        <field name="name">c:\attachments\</field>
+    </record>
   </data>
 </openerp>

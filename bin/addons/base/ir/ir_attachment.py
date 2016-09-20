@@ -24,6 +24,9 @@ import itertools
 from osv import fields,osv
 from osv.orm import except_orm
 import tools
+import logging
+import os
+from tools.translate import _
 
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
@@ -207,6 +210,38 @@ class ir_attachment(osv.osv):
 
 ir_attachment()
 
+class AttachmentConfig(osv.osv):
+    """ Attachment configurations """
+    _name = "attachment.config"
+    _description = "Attachment configuration"
+
+    _logger = logging.getLogger('sync.client')
+
+    _columns = {
+        'name' : fields.char('Path to save the attachments to', size=254),
+    }
+
+    _defaults = {
+        'name' : 'c:\\attachments\\',
+    }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        attachments_path = vals.get('name')
+        if not attachments_path:
+            raise osv.except_osv(_('Error'), _("No attachments_path provided"))
+        # check path existence
+        if not os.path.exists(attachments_path):
+            raise osv.except_osv(_('Error'),
+                    _("attachments_path '%s' doesn't exists.") % attachments_path)
+
+        # check write permission on this path
+        if not os.access(attachments_path, os.W_OK):
+            raise osv.except_osv(_('Error'),
+                    _("You don't have permission to write in '%s'.") % attachments_path)
+
+        return super(AttachmentConfig, self).write(cr, uid, ids, vals, context=context)
+
+AttachmentConfig()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
