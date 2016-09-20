@@ -333,6 +333,8 @@ class stock_location(osv.osv):
         :param context: Context of the call
         :return: Result of the super() call
         """
+        if not ids:
+            return True
         if vals and vals.get('name'):
             vals['name'] = vals.get('name', '').strip()
 

@@ -202,7 +202,7 @@ class analytic_distribution1(osv.osv):
                     vals.update({
                         'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency,
                             anal_amount, round=False, context=context),
-                        'amount_currency': -1 * anal_amount,
+                        'amount_currency': round(-1 * anal_amount, 2),
                         'account_id': distrib_line.analytic_id.id,
                         'cost_center_id': False,
                         'destination_id': False,
@@ -267,9 +267,16 @@ class distribution_line(osv.osv):
         instance_id = company.instance_id.id
 
         for line in self.browse(cr, uid, ids):
-            amount_cur = (move_line.credit_currency - move_line.debit_currency) * line.percentage / 100
+            amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
             ctx = {'date': source_date or date}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+
+            # US-945: deduce real period id from date
+            # TO NOTE that, in correction wizard:
+            # in December we are well in December, never in 13, 14, 15, 16
+            period_ids = self.pool.get('account.period').get_period_from_date(
+                cr, uid, date=date, context=context)
+
             vals = {
                 'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
@@ -289,6 +296,7 @@ class distribution_line(osv.osv):
                 'distribution_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
                 'ref': ref or move_line.move_id.name or False,
+                'real_period_id':  period_ids and period_ids[0] or False,  # US-945
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({

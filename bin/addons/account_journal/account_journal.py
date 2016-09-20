@@ -323,6 +323,8 @@ class account_journal(osv.osv):
         """
         Verify default debit account for adjustement journals
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 

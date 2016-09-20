@@ -588,7 +588,7 @@ class stock_picking(osv.osv):
             raise Exception, "The corresponding uom does not exist here. Uom name: %s" % uom_name
         uom_id = uom_ids[0]
         
-
+        # US-838: RW, need to check the new mechanism of the BN and ED object!!!!!!!
         batch_id = False
         if data['prodlot_id']:
             batch_id = self.pool.get('stock.production.lot').find_sd_ref(cr, uid, xmlid_to_sdref(data['prodlot_id']['id']), context=context)
@@ -824,7 +824,7 @@ class stock_picking(osv.osv):
         super(stock_picking, self)._hook_create_rw_out_sync_messages(cr, uid, ids, context=context)
         for pick in self.browse(cr, uid, ids, context=context):
             partner = pick.partner_id
-            so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner.name, context, True)
+            so_po_common.create_message_with_object_and_partner(cr, uid, rule.sequence_number, pick.id, partner, context, True)
 
     def _manual_create_rw_picking_message(self, cr, uid, res_id, return_info, rule_method, context=None):
         rule_obj = self.pool.get("sync.client.message_rule")

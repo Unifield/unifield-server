@@ -97,6 +97,8 @@ class product_asset(osv.osv):
         override write method to force readonly fields to be saved to db
         on data update
         '''
+        if not ids:
+            return True
         # fetch the product
         if 'product_id' in vals:
             productId = vals['product_id']
@@ -310,6 +312,8 @@ class product_asset_event(osv.osv):
         override write method to force readonly fields to be saved to db
         on data update
         '''
+        if not ids:
+            return True
         # fetch the asset
         if 'asset_id' in vals:
             assetId = vals['asset_id']
@@ -400,6 +404,8 @@ class product_product(osv.osv):
         '''
         if a product is not of type product, it is set to single subtype
         '''
+        if not ids:
+            return True
         if context is None:
             context={}
         # fetch the product

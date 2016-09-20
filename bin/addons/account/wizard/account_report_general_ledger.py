@@ -54,8 +54,13 @@ class account_report_general_ledger(osv.osv_memory):
             ('bl','Balance Sheet'),
         ], 'B/S / P&L account', required=True),
 
-        'unreconciled': fields.boolean("Unreconciled",
-            help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+        'reconciled': fields.selection([
+            ('empty', ''),
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        ], "Reconciled",
+        help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+        'reconcile_date': fields.date("At"),
 
         'account_ids': fields.many2many('account.account',
             'account_report_general_ledger_account_account_rel',
@@ -79,8 +84,9 @@ class account_report_general_ledger(osv.osv_memory):
         'export_format': 'pdf',
         'journal_ids': _get_journals,  # exclude extra-accounting journals from this report (IKD, ODX)
         'account_type': 'all',
-        'unreconciled': False,
+        'reconciled': 'empty',
         'is_initial_balance_available': False,  # as no FY selection, not available by default US-926 point 7)
+        'display_account': 'bal_movement',  # by default only result with JIs
     }
     
     def default_get(self, cr, uid, fields, context=None):
@@ -162,7 +168,8 @@ class account_report_general_ledger(osv.osv_memory):
 
         form_fields = [ 'initial_balance', 'amount_currency', 'sortby',
             'output_currency', 'instance_ids', 'export_format',
-            'account_type', 'unreconciled', 'account_ids', ]
+            'account_type', 'reconciled', 'reconcile_date',
+            'account_ids', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         # US-822: safe initial balance check box

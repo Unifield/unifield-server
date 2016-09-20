@@ -35,16 +35,43 @@ class client_entity_group(osv.osv_memory):
         'type':fields.char('Group Type', size=64, readonly=True),
         'entity_ids':fields.many2many('sync.client.register_entity','sync_entity_group_rel','group_id','entity_id', string="Instances"),         
     }
-    
+
+    def get_parent_instance_name(self, cr, uid, context=None):
+        # get the parent_id from the register entity
+        registry_obj = self.pool.get('sync.client.register_entity')
+        registry_ids = registry_obj.search(cr, uid, [])
+        instance_name = None
+        if registry_ids:
+            registry_id = registry_ids[-1]
+            parent_id = registry_obj.read(cr, uid, registry_id,
+                    ['parent_id'])['parent_id']
+            if parent_id:
+                # get the parent group name
+                instance_temp_obj = self.pool.get('sync_client.instance.temp')
+                instance_name = instance_temp_obj.read(cr, uid, parent_id,
+                            ['name'])['name']
+        return instance_name
+
     def set_group(self, cr, uid, data_list, context=None):
+        parent_name = self.get_parent_instance_name(cr, uid, context)
+        oc_name = None
+        if parent_name and 'OC' in parent_name:
+            index = parent_name.index('OC')
+            oc_name = parent_name[index:index+3] # ie. 'OCA' or 'OCG', ...
+
+        # remove all created groups this is usefull in case the user goes on
+        # previous step to change the parent instance
+        self.unlink(cr, uid, self.search(cr, uid, []))
+
         for data in data_list:
+            if oc_name and oc_name not in data['name']:
+                continue
             ids = self.search(cr, uid, [('name', '=', data['name'])], context=context)
             if ids:
                 self.write(cr, uid, ids, data, context=context)
             else:
                 self.create(cr, uid, data, context=context)
-                
-    
+
 client_entity_group()
 
 class register_entity(osv.osv_memory):

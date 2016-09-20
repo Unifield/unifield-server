@@ -201,6 +201,8 @@ class tender(osv.osv):
         """
         Check consistency between lines and categ of tender
         """
+        if not ids:
+            return True
         # UFTP-317: Make sure ids is a list
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -1021,6 +1023,8 @@ class tender_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         exp_sol_obj = self.pool.get('expected.sale.order.line')
 
         if 'state' in vals and vals.get('state') != 'draft':

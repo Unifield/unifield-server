@@ -29,6 +29,7 @@ class sale_order_allocation_report(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'get_distrib_lines': self.get_distrib_lines,
+            'get_total_amount': self.get_total_amount,
         })
 
     def get_distrib_lines(self, line):
@@ -38,6 +39,16 @@ class sale_order_allocation_report(report_sxw.rml_parse):
         distrib = line.analytic_distribution_id or line.order_id.analytic_distribution_id
         return distrib.cost_center_lines or [False]
 
+    def get_total_amount(self, fo):
+        total = 0.0
+        if fo and fo.order_line:
+            for line in fo.order_line:
+                if line.price_subtotal:
+                    distrib_lines = self.get_distrib_lines(line)
+                    total_line = distrib_lines and sum([(dline and dline.percentage * line.price_subtotal / 100) or 0.0 \
+                                                        for dline in distrib_lines]) or 0.0
+                    total += total_line
+        return total
 
 report_sxw.report_sxw('report.sale.order.allocation.report',
                       'sale.order',

@@ -7,7 +7,7 @@
             <field name="type">tree</field>
             <field name="priority" eval="200" />
             <field name="arch" type="xml">
-                <tree hide_edit_button="1" hide_delete_button="1" colors="red: nb_msg_not_run&gt;0 or nb_data_not_run&gt;0">
+                <tree hide_edit_button="1" hide_delete_button="1" colors="red: nb_msg_not_run&gt;0 or nb_data_not_run&gt;0" hide_new_button="1" >
                     <field name="instance_id" />
                     <field name="start"/>
                     <field name="end"/>

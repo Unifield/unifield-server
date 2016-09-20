@@ -57,6 +57,13 @@ class account_move_line(osv.osv):
             #for initial balance as well as for normal query, we check only the selected FY because the best practice is to generate the FY opening entries
             fiscalyear_ids = [context['fiscalyear']]
 
+        # get period 0 ids
+        period0_domain = [('number', '=', 0)]
+        if fiscalyear_ids:
+            period0_domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
+        period0_ids = fiscalperiod_obj.search(cr, uid, period0_domain,
+            context={'show_period_0': 1})
+
         fiscalyear_clause = (','.join([str(x) for x in fiscalyear_ids])) or '0'
         state = context.get('state', False)
         where_move_state = ''
@@ -94,13 +101,16 @@ class account_move_line(osv.osv):
             if state.lower() not in ['all']:
                 where_move_state= " AND "+obj+".move_id IN (SELECT id FROM account_move WHERE account_move.state = '"+state+"')"
 
-        if context.get('period_from', False) and context.get('period_to', False) and not context.get('periods', False):
+        ctx_period_from = context.get('period_from', False)
+        ctx_period_to = context.get('period_to', False)
+        if (ctx_period_from or ctx_period_to) and not context.get('periods', False):
             if initial_bal:
-                period_company_id = fiscalperiod_obj.browse(cr, uid, context['period_from'], context=context).company_id.id
-                first_period = fiscalperiod_obj.search(cr, uid, [('company_id', '=', period_company_id)], order='date_start', limit=1)[0]
-                context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, first_period, context['period_from'])
+                if ctx_period_from:
+                    period_company_id = fiscalperiod_obj.browse(cr, uid, ctx_period_from, context=context).company_id.id
+                    first_period = fiscalperiod_obj.search(cr, uid, [('company_id', '=', period_company_id)], order='date_start', limit=1)[0]
+                    context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, first_period, ctx_period_from)
             else:
-                context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, context['period_from'], context['period_to'])
+                context['periods'] = fiscalperiod_obj.build_ctx_periods(cr, uid, ctx_period_from, ctx_period_to)
         if context.get('periods', False):
             if initial_bal:
                 query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s)) %s %s" % (fiscalyear_clause, where_move_state, where_move_lines_by_date)
@@ -114,6 +124,8 @@ class account_move_line(osv.osv):
                         query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s) AND id IN (%s)) %s %s" % (fiscalyear_clause, periods, where_move_state, where_move_lines_by_date)
             else:
                 ids = ','.join([str(x) for x in context['periods']])
+                if context.get('period0', False) and period0_ids:  # US-1391/1
+                    ids += ",%s" % (','.join(map(str, period0_ids)), )
                 query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s) AND id IN (%s)) %s %s" % (fiscalyear_clause, ids, where_move_state, where_move_lines_by_date)
         else:
             query = obj+".state <> 'draft' AND "+obj+".period_id IN (SELECT id FROM account_period WHERE fiscalyear_id IN (%s)) %s %s" % (fiscalyear_clause, where_move_state, where_move_lines_by_date)
@@ -125,14 +137,11 @@ class account_move_line(osv.osv):
             child_ids = account_obj._get_children_and_consol(cr, uid, [context['chart_account_id']], context=context)
             query += ' AND '+obj+'.account_id IN (%s)' % ','.join(map(str, child_ids))
 
-        if not context.get('period0', False):
-            # US-822: by default in reports always not include period 0 (IB journals)
-            domain = [('number', '=', 0)]
-            if fiscalyear_ids:
-                domain += [('fiscalyear_id', 'in', fiscalyear_ids)]
-            periods_ids = fiscalperiod_obj.search(cr, uid, domain, context={'show_period_0': 1})
-            if periods_ids:
-                query += ' AND %s.period_id not in (%s)' % (obj, ','.join(map(str, periods_ids)), )
+        # period 0
+        if period0_ids:
+            if not context.get('period0', False):
+                # US-822: by default in reports exclude period 0 (IB journals)
+                query += ' AND %s.period_id not in (%s)' % (obj, ','.join(map(str, period0_ids)), )
 
         if context.get('state_agnostic', False):
             query = query.replace(obj+".state <> 'draft' AND ", '')
@@ -608,10 +617,11 @@ class account_move_line(osv.osv):
     ]
 
     def _auto_init(self, cr, context=None):
-        super(account_move_line, self)._auto_init(cr, context=context)
+        ret = super(account_move_line, self)._auto_init(cr, context=context)
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'account_move_line_journal_id_period_id_index\'')
         if not cr.fetchone():
             cr.execute('CREATE INDEX account_move_line_journal_id_period_id_index ON account_move_line (journal_id, period_id)')
+        return ret
 
     def _check_no_view(self, cr, uid, ids, context=None):
         lines = self.browse(cr, uid, ids, context=context)
@@ -1126,6 +1136,9 @@ class account_move_line(osv.osv):
         unlink_ids += part_rec_ids
         if unlink_ids:
             obj_move_rec.unlink(cr, uid, unlink_ids)
+        obj_move_line.write(cr, uid, move_ids, {
+                'reconcile_date': False,  # US-533 reset reconcilation date
+            }, context=context)
         return True
 
     def check_unlink(self, cr, uid, ids, context=None):
@@ -1159,6 +1172,7 @@ class account_move_line(osv.osv):
                 move_obj.validate(cr, uid, [line.move_id.id], context=context)
             elif context.get('sync_update_execution'):
                 move_obj.validate_sync(cr, uid, [line.move_id.id], context=context)
+
         return result
 
     def _check_date(self, cr, uid, vals, context=None, check=True):
@@ -1195,6 +1209,8 @@ class account_move_line(osv.osv):
             self._update_check(cr, uid, ids, context)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if context is None:
             context={}
         move_obj = self.pool.get('account.move')

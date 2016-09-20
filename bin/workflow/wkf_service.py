@@ -99,7 +99,8 @@ class workflow_service(netsvc.Service):
             cr.execute(
                 'SELECT id '\
                 'FROM wkf_instance '\
-                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s', 
+                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s '\
+                'LIMIT 1',
                 (new_rid, res_type, wkf_id, 'active'))
             new_id = cr.fetchone()
             if new_id:
@@ -123,7 +124,8 @@ class workflow_service(netsvc.Service):
             cr.execute(
                 'SELECT id '\
                 'FROM wkf_instance '\
-                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s', 
+                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s '\
+                'LIMIT 1',
                 (new_rid, res_type, wkf_id, 'active'))
             new_id = cr.fetchone()
             if new_id:

@@ -270,6 +270,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         return id
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('sublist_id', False):
             vals.update({'nomen_manda_0': False, 'nomen_manda_1': False, 'nomen_manda_2': False, 'nomen_manda_3': False})
         if vals.get('nomen_manda_0', False):
@@ -380,6 +382,8 @@ class stock_warehouse_automatic_supply_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(stock_warehouse_automatic_supply_line, self).write(cr, uid, ids, vals, context=context)
         self._check_product_qty(cr, uid, ids, context=context)
         return res

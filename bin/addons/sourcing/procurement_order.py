@@ -68,6 +68,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
+        ),
         'unique_rule_type': fields.char(
             size=128,
             string='Unique Replenishment rule type',
@@ -86,6 +90,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         if not default_values.get('from_splitted_po_line'):
             default_values['from_splitted_po_line'] = False
 
+        if not default_values.get('related_sourcing_id'):
+            default_values['related_sourcing_id'] = False
+
         return super(procurement_order, self).copy_data(cr, uid, copy_id, default_values, context=context)
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -103,7 +110,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
-                line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
+                line.update({'origin': origin_line.order_id.name})
             else:
                 # Update the link to the original FO to create new line on it at PO confirmation
                 procurement = kwargs['procurement']
@@ -205,6 +212,13 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             purchase_domain.append(('order_type', '=', 'direct'))
         else:
             purchase_domain.append(('order_type', '!=', 'direct'))
+
+        if procurement.related_sourcing_id:
+            purchase_domain.append(('related_sourcing_id', '=', procurement.related_sourcing_id.id))
+            values['related_sourcing_id'] = procurement.related_sourcing_id.id
+        else:
+            purchase_domain.append(('related_sourcing_id', '=', False))
+            values['related_sourcing_id'] = False
 
         if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id:
             purchase_domain.append(('pricelist_id', '=', procurement.tender_line_id.purchase_order_line_id.order_id.pricelist_id.id))
@@ -397,6 +411,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         '''
         override for workflow modification
         '''
+        if not ids:
+            return True
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
 
     def get_delay_qty(self, product, partner):

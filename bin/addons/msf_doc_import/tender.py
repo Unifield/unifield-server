@@ -177,7 +177,7 @@ class tender(osv.osv):
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.tender.line').create(cr, uid, {'file': file,
                                                                                 'filename_template': 'template.xls',
-                                                                                'message': """%s %s"""  % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_tender_line_import]), ),
+                                                                                'message': """%s %s"""  % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_tender_line_import]), ),
                                                                                 'filename': 'Lines_Not_Imported.xls',
                                                                                 'tender_id': ids[0],
                                                                                 'state': 'draft',}, context)
@@ -289,6 +289,8 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
         return self.onchange_uom_qty(cr, uid, ids, product_uom, product_qty)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:

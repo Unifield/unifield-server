@@ -70,7 +70,7 @@ class account_period(osv.osv):
         curr_rate_obj = self.pool.get('res.currency.rate')
 
         # previous state of the period
-        ap_dict = self.read(cr, uid, ids)[0]
+        ap_dict = self.read(cr, uid, ids, ['state'])[0]
         previous_state = ap_dict['state']
 
 
@@ -98,6 +98,9 @@ class account_period(osv.osv):
                     self.write(cr, uid, ids, {'state_sync_flag': context['state']})
 
             if level == 'coordo':
+                #US-1433: If the FY is already mission-closed, do not allow this to be done!
+                self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
+                
                 if previous_state == 'created' and context['state'] == 'draft':
                     self.write(cr, uid, ids, {'state_sync_flag': 'none'})
                 if previous_state == 'draft' and context['state'] == 'field-closed':
@@ -112,7 +115,9 @@ class account_period(osv.osv):
                     self.write(cr, uid, ids, {'state_sync_flag': context['state']})
 
             if level == 'project':
-                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                # US-1499: block also the possibility to reopen the period at project if the FY is already in Mission Closed
+                self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
+                self.write(cr, uid, ids, {'state_sync_flag': 'none'})
 
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
@@ -325,7 +330,20 @@ class account_period(osv.osv):
                                                            context=context)
         return res
 
+    #US-1433: If the FY is already mission-closed, do not allow this to be done!
+    def check_reopen_period_with_fy(self, cr, uid, ids, new_state, context):
+        ap_dict = self.read(cr, uid, ids)[0]
+        previous_state = ap_dict['state']
+    
+        # If the state is currently in mission-closed and the fiscal year is also in mission closed, then do not allow to reopen the period
+        if previous_state == 'mission-closed' and new_state in ['field-closed', 'draft']:
+            for period in self.browse(cr, uid, ids, context=context):
+                if period.fiscalyear_id.state == 'mission-closed':
+                    raise osv.except_osv(_('Warning'), _("Cannot reopen this period because its Fiscal Year is already in Mission-Closed."))
+
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
         # control conditional push-down of state from HQ. Ticket UTP-913
@@ -333,6 +351,8 @@ class account_period(osv.osv):
             if vals['state_sync_flag'] != 'none':
                 vals['state'] = vals['state_sync_flag']
                 vals['state_sync_flag'] = 'none'
+                #US-1433: If the FY is already mission-closed, do not allow this to be done!
+                self.check_reopen_period_with_fy(cr, uid, ids, vals['state'], context)
             else:
                 vals['state_sync_flag'] = 'none'
 
@@ -498,7 +518,9 @@ class account_period(osv.osv):
 
     # Intermission voucher OUT
     def button_intermission_out(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'out_invoice', 'journal_type': 'intermission'})
+        domain_ivo = [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
+        context_ivo = {'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}
+        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), domain=domain_ivo, context=context_ivo)
 
     def button_supplier_refunds(self, cr, uid, ids, context=None):
         """

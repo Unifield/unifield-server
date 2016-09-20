@@ -74,6 +74,12 @@ class ir_attachment(osv.osv):
                 return 0
             return []
 
+        # admin user can see all attachments
+        if uid == 1:
+            if count:
+                return len(ids)
+            return ids
+
         # For attachments, the permissions of the document they are attached to
         # apply, so we must remove attachments for which the user cannot access
         # the linked document.
@@ -116,9 +122,11 @@ class ir_attachment(osv.osv):
         return super(ir_attachment, self).read(cr, uid, ids, fields_to_read, context, load)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self.check(cr, uid, ids, 'write', context=context, values=vals)
         if 'datas' in vals:
-            vals['size']=self.get_size(vals['datas'])
+            vals['size'] = self.get_size(vals['datas'])
         return super(ir_attachment, self).write(cr, uid, ids, vals, context)
 
     def copy(self, cr, uid, id, default=None, context=None):
@@ -132,7 +140,7 @@ class ir_attachment(osv.osv):
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
         if 'datas' in values:
-            values['size']=self.get_size(values['datas'])
+            values['size'] = self.get_size(values['datas'])
         return super(ir_attachment, self).create(cr, uid, values, context)
 
     def action_get(self, cr, uid, context=None):
@@ -159,23 +167,14 @@ class ir_attachment(osv.osv):
 
     def get_size(self, sz, unit='Kb'):
         """
-        Return the size in a human readable format or in unit format.
+        Return the size in a human readable format (in Kb)
         """
         if not sz:
             return False
 
-        units = ('bytes', 'Kb', 'Mb', 'Gb')
-        if isinstance(sz,basestring):
-            sz=len(sz)
-        s, i = float(sz), 0
-        if unit and unit in units:
-            stop = units.index(unit)
-        else:
-            stop = len(units)
-        while s >= 1024 and i < stop:
-            s = s / 1024
-            i = i + 1
-
+        if isinstance(sz, basestring):
+            sz = len(sz)
+        s = float(sz)/1024
         return round(s)
 
     _name = 'ir.attachment'

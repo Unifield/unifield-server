@@ -40,7 +40,7 @@ class account_move_line(osv.osv):
          - Item have not been reversed
          - Item come from a reconciliation that have set 'is_addendum_line' to True
          - The account is not the default credit/debit account of the attached statement (register)
-         - All items attached to the entry have no reconcile_id on reconciliable account
+         - The line isn't partially or totally reconciled
          - The line doesn't come from a write-off
          - The line is "corrected_upstream" that implies the line have been already corrected from a coordo or a hq to a level that is superior or equal to these instance.
         """
@@ -60,19 +60,26 @@ class account_move_line(osv.osv):
             if j.get('default_credit_account_id', False) and j.get('default_credit_account_id')[0] not in account_ids:
                 account_ids.append(j.get('default_credit_account_id')[0])
 
+        acc_corr = {}
+
         # Skip to next element if the line is set to False
         for ml in self.browse(cr, 1, ids, context=context):
             res[ml.id] = True
+            acc_corr.setdefault(ml.account_id.id, ml.account_id.user_type.not_correctible)
+            # False if special (or implicitly system period)
+            if ml.period_id.special:
+                res[ml.id] = False
+                continue
             # False if account type is transfer
             if ml.account_id.type_for_register in ['transfer', 'transfer_same']:
                 res[ml.id] = False
                 continue
-            # False if move is posted
+            # False if move is not posted
             if ml.move_id.state != 'posted':
                 res[ml.id] = False
                 continue
             # False if account type code (User type) is set as non correctible
-            if ml.account_id.user_type.not_correctible is True:
+            if acc_corr.get(ml.account_id.id):
                 res[ml.id] = False
                 continue
             # False if line have been corrected
@@ -95,11 +102,6 @@ class account_move_line(osv.osv):
                 if ml.account_id.id in accounts:
                     res[ml.id] = False
                     continue
-            # False if one of move line account is reconciliable and reconciled
-            for aml in ml.move_id.line_id:
-                if aml.account_id.reconcile and (aml.reconcile_id or aml.reconcile_partial_id):
-                    res[aml.id] = False
-                    continue
             # False if this line come from a write-off
             if ml.is_write_off:
                 res[ml.id] = False
@@ -118,6 +120,10 @@ class account_move_line(osv.osv):
                 continue
             # False if this line is a revaluation or a system entry
             if ml.journal_id.type in ('revaluation', 'system', ):
+                res[ml.id] = False
+                continue
+            # False if the move line is partially or totally reconciled
+            if ml.reconcile_id or ml.reconcile_partial_id:
                 res[ml.id] = False
                 continue
         return res
@@ -169,6 +175,9 @@ receivable, item have not been corrected, item have not been reversed and accoun
             'reversal': False,
             'last_cor_was_only_analytic': False,
         })
+        if 'exported' not in default:
+            default['exported'] = False
+
         # Add default date if no one given
         if not 'date' in default:
             default.update({'date': strftime('%Y-%m-%d')})
@@ -676,8 +685,10 @@ receivable, item have not been corrected, item have not been reversed and accoun
         j_extra_id = j_extra_ids and j_extra_ids[0] or False
 
         # Search attached period
-        period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
-            context=context, limit=1, order='date_start, name')
+        period_obj = self.pool.get('account.period')
+        period_ids = period_obj.search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date)],
+                                                                context=context, limit=1, order='date_start, name')
+        period_number = period_ids and period_obj.browse(cr, uid, period_ids, context)[0].number or False
 
         # Browse all given move line for correct them
         for ml in self.browse(cr, uid, ids, context=context):
@@ -729,15 +740,19 @@ receivable, item have not been corrected, item have not been reversed and accoun
                 check_accounts = self.pool.get('account.analytic.account').is_blocked_by_a_contract(cr, uid, [aal.account_id.id])
                 if check_accounts and aal.account_id.id in check_accounts:
                     raise osv.except_osv(_('Warning'), _('You cannot change the G/L account since it is used in a closed financing contract.'))
+            # (US-815) use the right period for December HQ Entries
+            period_id_dec_hq_entry = False
+            if period_number == 12 and context.get('period_id_for_dec_hq_entries', False):
+                period_id_dec_hq_entry = context['period_id_for_dec_hq_entries']
             # Create a new move
-            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
+            move_id = move_obj.create(cr, uid,{'journal_id': journal_id, 'period_id': period_id_dec_hq_entry or period_ids[0], 'date': date, 'document_date': ml.document_date}, context=context)
             # Prepare default value for new line
             vals = {
                 'move_id': move_id,
                 'date': date,
                 'document_date': ml.document_date,
                 'journal_id': journal_id,
-                'period_id': period_ids[0],
+                'period_id': period_id_dec_hq_entry or period_ids[0],
             }
             # Copy the line
             context.update({'omit_analytic_distribution': False})
