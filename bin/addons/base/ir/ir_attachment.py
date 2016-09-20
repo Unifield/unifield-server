@@ -239,6 +239,14 @@ class AttachmentConfig(osv.osv):
             raise osv.except_osv(_('Error'),
                     _("You don't have permission to write in '%s'.") % attachments_path)
 
+        # add db_name in the path
+        db_name = cr.dbname
+        create_db_dir = tools.config.get('create_db_dir_for_attachment')
+        if create_db_dir and not db_name in attachments_path:
+            attachments_path = os.path.join(attachments_path, db_name)
+            if not os.path.exists(attachments_path):
+                os.makedirs(attachments_path)
+            vals['name'] = attachments_path
         return super(AttachmentConfig, self).write(cr, uid, ids, vals, context=context)
 
 AttachmentConfig()
