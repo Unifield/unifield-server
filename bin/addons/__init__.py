@@ -845,6 +845,13 @@ def load_modules(db, force_demo=False, status=None, update_module=False):
         if 'base' in tools.config['update'] or 'all' in tools.config['update']:
             cr.execute("update ir_module_module set state=%s where name=%s and state=%s", ('to upgrade', 'base', 'installed'))
 
+        # STEP 0: Check if BASE module is marked as to upgrade or to install
+        cr.execute("SELECT name FROM ir_module_module WHERE name = 'base' AND state IN ('to install', 'to upgrade')")
+        if cr.fetchone():
+            cr.execute("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename = 'ir_model_fields'")
+            if cr.fetchone():
+                cr.execute("update ir_model_fields set state='deprecated' where state='base'")
+
         # STEP 1: LOAD BASE (must be done before module dependencies can be computed for later steps) 
         graph = create_graph(cr, ['base'], force)
         if not graph:

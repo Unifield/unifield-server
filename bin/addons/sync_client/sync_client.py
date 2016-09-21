@@ -51,6 +51,13 @@ MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
 
+def check_patch_scripts(cr, uid, context=None):
+    if pooler.get_pool(cr.dbname).get('patch.scripts').search(cr, uid, [('run', '=', False)], limit=1, context=context):
+        return _('PatchFailed: A script during upgrade has failed. Synchronization is forbidden. Please contact your administrator')
+    else:
+        return ''
+
+
 class SkipStep(StandardError):
     pass
 
@@ -134,6 +141,10 @@ def sync_subprocess(step='status', defaults_logger={}):
                 chk_tz_msg = check_tz()
                 if chk_tz_msg:
                     raise BaseException(chk_tz_msg)
+                patch_failed = check_patch_scripts(cr, uid, context=context)
+                if patch_failed:
+                    raise BaseException(patch_failed)
+
                 res = fn(self, self.sync_cursor, uid, *args, **kwargs)
             except osv.except_osv, e:
                 logger.switch(step, 'failed')
@@ -234,6 +245,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
                     # more information
                     add_information(logger)
+                patch_failed = check_patch_scripts(cr, uid, context=kwargs.get('context', {}))
+                if patch_failed:
+                    raise osv.except_osv(_('Error'), patch_failed)
 
                 # ah... we can now call the function!
                 logger.switch(step, 'in-progress')
@@ -445,6 +459,7 @@ class Entity(osv.osv):
         context = context or {}
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context)
+        context['lang'] = 'en_US'
 
         if entity.state not in ('init', 'update_send', 'update_validate'):
             raise SkipStep
@@ -566,7 +581,7 @@ class Entity(osv.osv):
             Pull update
         """
         context = context or {}
-
+        context['lang'] = 'en_US'
         logger = context.get('logger')
         entity = self.get_entity(cr, uid, context=context)
         if entity.state not in ('init', 'update_pull'):
@@ -712,6 +727,7 @@ class Entity(osv.osv):
         context = context or {}
         entity = self.get_entity(cr, uid, context)
         logger = context.get('logger')
+        context['lang'] = 'en_US'
         if entity.state not in ['init', 'msg_push']:
             raise SkipStep
 
@@ -786,6 +802,7 @@ class Entity(osv.osv):
         """
         context = context or {}
         logger = context.get('logger')
+        context['lang'] = 'en_US'
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.sync_manager")
 
         entity = self.get_entity(cr, uid, context=context)

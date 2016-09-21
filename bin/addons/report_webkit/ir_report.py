@@ -97,6 +97,8 @@ class ReportXML(osv.osv):
 
     def write(self, cr, uid, ids, vals, context=None):
         "Edit report and manage it registration"
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids,]
         for rep in self.browse(cr, uid, ids, context=context):

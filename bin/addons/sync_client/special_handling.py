@@ -78,6 +78,8 @@ class account_move(osv.osv):
         return super(account_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
 
@@ -107,6 +109,8 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=sync_check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         # UTP-632: re-add write(), but only for the check variable
         if not context:
             context = {}
@@ -175,7 +179,6 @@ class account_move_line(osv.osv):
             ('journal_id', 'id'),
             ('move_id', 'id'),
             ('partner_id', 'id'),
-            ('partner_txt', False),
             ('period_id', 'id'),
             ('ref', False),
             ('state', False),

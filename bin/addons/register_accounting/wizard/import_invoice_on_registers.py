@@ -63,6 +63,8 @@ class wizard_import_invoice_lines(osv.osv_memory):
           - should not be negative
           - should be superior to amount to pay (but absolute value)
         """
+        if not ids:
+            return True
         if isinstance(ids, (long, int)):
             ids = [ids]
         if context is None:

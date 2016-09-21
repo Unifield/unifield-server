@@ -327,6 +327,8 @@ class entity(osv.osv):
         return (True, "Instance Validated")
     
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
         update = context.get('update', False)

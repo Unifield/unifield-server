@@ -271,6 +271,8 @@ class pricelist_partnerinfo(osv.osv):
         '''
         Check the constraint
         '''
+        if not ids:
+            return True
         res = super(pricelist_partnerinfo, self).write(cr, uid, ids, vals, context=context)
 
         self._check_min_quantity(cr, uid, ids, context=context)
@@ -594,6 +596,8 @@ class res_currency(osv.osv):
         '''
         Disallow the uncheck of section/esc checkbox if a section/esc partner use this currency
         '''
+        if not ids:
+            return True
         property_obj = self.pool.get('ir.property')
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')

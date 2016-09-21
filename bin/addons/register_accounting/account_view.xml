@@ -144,6 +144,9 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="Responsible">
+                                <field name="responsible_ids" nolabel="1" />
+                            </page>
                         </notebook>
                         <separator string="Comments"/>
                         <field name="notes" nolabel="1"/>
@@ -809,6 +812,9 @@
                                     <field colspan="4" name="note" nolabel="1"/>
                                 </form>
                             </field>
+                        </page>
+                        <page string="Responsible">
+                            <field name="responsible_ids" nolabel="1" />
                         </page>
                     </notebook>
                     <group col="8" colspan="4">

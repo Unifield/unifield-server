@@ -139,6 +139,8 @@ class ir_model(osv.osv):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if context:
             context.pop('__last_update', None)
         return super(ir_model,self).write(cr, user, ids, vals, context)
@@ -195,7 +197,7 @@ class ir_model_fields(osv.osv):
         'select_level': fields.selection([('0','Not Searchable'),('1','Always Searchable'),('2','Advanced Search (deprecated)')],'Searchable', required=True),
         'translate': fields.boolean('Translate', help="Whether values for this field can be translated (enables the translation mechanism for that field)"),
         'size': fields.integer('Size'),
-        'state': fields.selection([('manual','Custom Field'),('base','Base Field')],'Type', required=True, readonly=True, select=1),
+        'state': fields.selection([('manual','Custom Field'),('base','Base Field'), ('deprecated', 'Deprecated')],'Type', required=True, readonly=True, select=1),
         'on_delete': fields.selection([('cascade','Cascade'),('set null','Set NULL')], 'On delete', help='On delete property for many2one fields'),
         'domain': fields.char('Domain', size=256, help="The optional domain to restrict possible values for relationship fields, "
             "specified as a Python expression defining a list of triplets. "
@@ -291,6 +293,8 @@ class ir_model_fields(osv.osv):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if context and context.get('manual',False):
@@ -647,7 +651,8 @@ class ir_model_data(osv.osv):
     @tools.cache()
     def _get_id(self, cr, uid, module, xml_id):
         """Returns the id of the ir.model.data record corresponding to a given module and xml_id (cached) or raise a ValueError if not found"""
-        ids = self.search(cr, uid, [('module','=',module), ('name','=', xml_id)])
+        ids = self.search(cr, uid, [('module','=',module), ('name','=',
+            xml_id)], limit=1, order='NO_ORDER')
         if not ids:
             raise ValueError('No references to %s.%s' % (module, xml_id))
         # the sql constraints ensure us we have only one result

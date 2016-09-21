@@ -41,7 +41,6 @@ class finance_archive(finance_export.finance_archive):
         """
         # Prepare some values
         new_data = []
-        pool = pooler.get_pool(cr.dbname)
         for line in data:
             tmp_line = list(line)
             p_id = line[0]
@@ -58,71 +57,83 @@ class finance_archive(finance_export.finance_archive):
           - id
         """
         # Prepare some values
-        context = {}
         new_data = []
         dbname = cr.dbname
         pool = pooler.get_pool(dbname)
-        column_number = 0
         partner_obj = pool.get('res.partner')
-        partner_name_column_number = 10
-        partner_id_column_number = 21
-        employee_name_column = 22
+
+        # define column number corresponding to properties
+        partner_name_cl = 9
+        partner_id_cl = 20
+        empl_id_cl = 19
+        empl_name_cl = 21
+
+        partner_search_dict = {}
+        employee_search_dict = {}
+        employee_code_dict = {}
+
         for line in data:
             tmp_line = list(line)
-            line_ids = str(line[column_number])
-            tmp_line[column_number] = self.get_hash(cr, uid, line_ids, model)
+            line_ids = str(line[0])
+            tmp_line[0] = self.get_hash(cr, uid, line_ids, model)
             # Check if we have a partner_id in last column
-            partner_id_present = False
             partner_id = False
             partner_hash = ''
-            if len(tmp_line) > (partner_id_column_number - 1):
-                partner_id = tmp_line[partner_id_column_number - 1]
-                if partner_id:
-                    # US-497: extract name from partner_id (better than partner_txt)
-                    tmp_line[partner_name_column_number - 1] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
-            # If not partner_id, then check 'Third Party' column to search it by name
-            if not partner_id_present:
-                partner_name = tmp_line[partner_name_column_number - 1]
+            emplid = tmp_line[empl_id_cl]
+            # Complete last column with partner_hash
+            tmp_line.append('')
+
+            if not emplid:
+                if len(tmp_line) > partner_id_cl:
+                    partner_id = tmp_line[partner_id_cl]
+                    if partner_id:
+                        # US-497: extract name from partner_id (better than partner_txt)
+                        tmp_line[partner_name_cl] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
+
+                partner_name = tmp_line[partner_name_cl]
                 # Search only if partner_name is not empty
                 if partner_name:
                     # UFT-8 encoding
                     if isinstance(partner_name, unicode):
                         partner_name = partner_name.encode('utf-8')
-                    partner_ids = partner_obj.search(cr, uid, [('name', '=ilike', partner_name), ('active', 'in', ['t', 'f'])], order='id')
+                    if not partner_name in partner_search_dict:
+                        partner_search_dict[partner_name] = partner_obj.search(cr, uid,
+                            [('name', '=ilike', partner_name),
+                             ('active', 'in', ['t', 'f'])],
+                             order='id')
+                    partner_ids = partner_search_dict[partner_name]
                     if partner_ids:
                         partner_id = partner_ids[0]
-            # If we get some ids, fetch the partner hash
-            if partner_id:
-                if isinstance(partner_id, (int, long)):
-                    partner_id = [partner_id]
-                partner_hash = self.get_hash(cr, uid, partner_id, 'res.partner')
-            # Complete last column with partner_hash
-            if not partner_id_present:
-                tmp_line.append('')
-            emplid = tmp_line[partner_id_column_number - 2]
 
-            if not emplid and not partner_id and tmp_line[partner_name_column_number - 1]:
-                employee_obj = pool.get('hr.employee')
-                # we don't have partner and employee, if update employee creation is not run check if he duplicates in the DB
-                partner_name = tmp_line[partner_name_column_number - 1]
-                if isinstance(partner_name, unicode):
-                    partner_name = partner_name.encode('utf-8')
-                emp_ids = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
-                if emp_ids:
-                    empl_code = employee_obj.read(cr, uid, emp_ids[0], ['identification_id'])['identification_id']
-                    if empl_code:
-                        tmp_line[partner_id_column_number - 2] = empl_code
+                # If we get some ids, fetch the partner hash
+                if partner_id:
+                    if isinstance(partner_id, (int, long)):
+                        partner_id = [partner_id]
+                    partner_hash = self.get_hash(cr, uid, partner_id, 'res.partner')
 
-            if emplid:
+                if not partner_id and tmp_line[partner_name_cl]:
+                    employee_obj = pool.get('hr.employee')
+                    if partner_name not in employee_search_dict:
+                        employee_search = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
+                        if employee_search:
+                            employee_search = employee_search[0]
+                        employee_search_dict[partner_name] = employee_search
+                    emp_id = employee_search_dict[partner_name]
+                    if emp_id:
+                        if emp_id not in employee_code_dict:
+                            employee_code_dict[emp_id] = employee_obj.read(cr, uid, emp_id, ['identification_id'])['identification_id']
+                        empl_code = employee_code_dict[emp_id]
+                        if empl_code:
+                            tmp_line[empl_id_cl] = empl_code
+            else:
                 partner_hash = ''
-                if tmp_line[employee_name_column - 1]:
-                    tmp_line[partner_name_column_number - 1] = tmp_line[employee_name_column - 1]
-            tmp_line[partner_id_column_number - 1] = partner_hash
-            del(tmp_line[employee_name_column - 1])
+                if tmp_line[empl_name_cl]:
+                    tmp_line[partner_name_cl] = tmp_line[empl_name_cl]
+            tmp_line[partner_id_cl] = partner_hash
+            del(tmp_line[empl_name_cl])
             # Add result to new_data
             new_data.append(self.line_to_utf8(tmp_line))
-        res = self.postprocess_selection_columns(cr, uid, new_data, [], column_deletion=column_deletion)
-        return res
+        return new_data
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
@@ -471,7 +482,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                               )
                 AND al.instance_id = i.id
                 AND aml.journal_id = aj.id
-                AND ((not a.is_analytic_addicted and aml.period_id = %s) or (a.is_analytic_addicted and al.date >= %s and al.date <= %s))
+                AND ((not a.is_analytic_addicted and aml.period_id = %s) or (a.is_analytic_addicted and (al.real_period_id = %s or (al.real_period_id is NULL and al.date >= %s and al.date <= %s))))
                 AND j.type not in %s
                 AND al.exported in %s
                 AND al.instance_id in %s;
@@ -565,7 +576,6 @@ class hq_report_ocb(report_sxw.report_sxw):
         # TIP & TRICKS:
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
-        instance = pool.get('msf.instance').browse(cr, uid, instance_id)
         instance_name = 'OCB'  # since US-949
         processrequests = [
             {
@@ -623,7 +633,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id', # to take analytic line IDS and make a DB ID with
                 'fnct_params': 'account.analytic.line',
-                'query_params': (period_id, period.date_start, period.date_stop, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
+                'query_params': (period_id, period_id, period.date_start, period.date_stop, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',

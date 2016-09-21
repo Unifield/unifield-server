@@ -146,6 +146,7 @@ class hq_report_oca(report_sxw.report_sxw):
         account_lines = []
         account_lines_debit = {}
         account_lines_functional_debit = {}
+        rate_req = "SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1"
         # US-118: func debit with no FXA currency adjustement entries
         account_lines_functional_debit_no_ccy_adj = {}
         journal_exclude_subtotal_ids = pool.get('account.journal').search(cr,
@@ -184,6 +185,12 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                        ('account_id.is_analytic_addicted', '=', False),
                                                                        ('journal_id.type', 'not in', ['hq', 'migration']),
                                                                        ('exported', 'in', to_export)], context=context)
+        # US-274/2: remove 'Inkind', 'OD-Extra Accounting' entries from both
+        # in Upbalances and Upexpenses files
+        exclude_jn_type_for_balance_and_expense_report = (
+            'inkind',
+            'extra',
+        )
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
             if journal:
@@ -207,21 +214,17 @@ class hq_report_oca(report_sxw.report_sxw):
                     and move_line.journal_id.type == 'accrual' \
                     and move_line.document_date or move_line.date
 
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line_date))
+                if move_line.journal_id.type == 'correction' and move_line.source_date:
+                    # US-1525 For the Correction entries display the rate of the entry period corrected
+                    move_line_date = move_line.source_date
+                cr.execute(rate_req, (move_line.functional_currency_id.id, move_line_date))
                 if cr.rowcount:
                     func_rate = cr.fetchall()[0][0]
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line_date))
+                cr.execute(rate_req, (currency.id, move_line_date))
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
                     rate = round(1 / (curr_rate / func_rate), 8)
-
-            # US-274/2: remove 'Inkind', 'OD-Extra Accounting' entries from both
-            # in Upbalances and Upexpenses files
-            exclude_jn_type_for_balance_and_expense_report = (
-                'inkind',
-                'extra',
-            )
 
             # For first report: as it
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
@@ -348,7 +351,10 @@ class hq_report_oca(report_sxw.report_sxw):
                 ldate = analytic_line.document_date or analytic_line.date
 
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, ldate))
+                if analytic_line.journal_id.type == 'correction' and analytic_line.source_date:
+                    # US-1525 For the Correction entries display the rate of the entry period corrected
+                    ldate = analytic_line.source_date
+                cr.execute(rate_req, (currency.id, ldate))
                 if cr.rowcount:
                     rate = round(1 / cr.fetchall()[0][0], 8)
 

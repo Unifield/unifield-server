@@ -242,6 +242,8 @@ class msf_instance(osv.osv):
             self.log(cr, uid, ids[0], msg)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if 'code' in vals: #US-972: If the user clicks on Save button, then perform this check
@@ -424,7 +426,8 @@ class res_users(osv.osv):
     _name = 'res.users'
 
     def get_browse_user_instance(self, cr, uid, context=None):
-        current_user = self.browse(cr, uid, uid, context=context)
+        current_user = self.browse(cr, uid, uid, context=context,
+                fields_to_fetch=['company_id'])
         return current_user and current_user.company_id and current_user.company_id.instance_id or False
 res_users()
 

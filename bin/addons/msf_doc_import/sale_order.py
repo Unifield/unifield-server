@@ -287,6 +287,8 @@ class sale_order_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

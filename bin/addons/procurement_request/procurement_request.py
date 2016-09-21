@@ -397,6 +397,8 @@ class procurement_request(osv.osv):
         '''
         Update date_planned of lines
         '''
+        if not ids:
+            return True
         res = True
 
         if isinstance(ids, (int, long)):
@@ -683,6 +685,8 @@ class procurement_request_line(osv.osv):
         '''
         Compute the UoM qty according to UoM rounding value
         '''
+        if not ids:
+            return True
         res = True
 
         if 'product_uom_qty' in vals or 'product_uom' in vals:

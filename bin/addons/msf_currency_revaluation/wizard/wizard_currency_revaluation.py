@@ -703,18 +703,19 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             p.id for p in company.instance_id.child_ids \
                 if p.level == 'project'
         ]
-        # ...check their period state field-closed
-        # we match exactly as any state could not be already synced yet
-        domain = [
-            ('instance_id', 'in', project_ids),
-            ('period_id', '=', period_check_id),
-            ('state', '=', 'field-closed'),
-        ]
-        res = period_state_obj.search(cr, uid, domain, context=context,
-            count=True)
-        if not res or res != len(project_ids):
-            raise osv.except_osv(_('Warning!'),
-                _("All coordo projects are not field closed"))
+        if project_ids:
+            # ...check their period state field-closed
+            # we match exactly as any state could not be already synced yet
+            domain = [
+                ('instance_id', 'in', project_ids),
+                ('period_id', '=', period_check_id),
+                ('state', '=', 'field-closed'),
+            ]
+            res = period_state_obj.search(cr, uid, domain, context=context,
+                count=True)
+            if not res or res != len(project_ids):
+                raise osv.except_osv(_('Warning!'),
+                    _("All coordo projects are not field closed"))
 
         # Set the currency table in the context for later computations
         if form.revaluation_method in ['liquidity_year', 'other_bs']:
@@ -846,11 +847,12 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
+                new_currency_id = currency_id
                 # If the method is 'other_bs' or 'liquidity_year', get the
                 # account move currency in the currency table
                 if form.revaluation_method in ['liquidity_year', 'other_bs']:
                     currency = currency_obj.browse(cr, uid, currency_id, context=context)
-                    currency_id = currency_codes_from_table[currency.name]
+                    new_currency_id = currency_codes_from_table[currency.name]
                 adj_balance = sums.get('unrealized_gain_loss', 0.0)
                 if not adj_balance:
                     continue
