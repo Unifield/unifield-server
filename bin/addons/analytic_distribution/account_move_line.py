@@ -143,11 +143,15 @@ class account_move_line(osv.osv):
             'is_write_off',
             'account_id',
             'period_id',
+            'is_revaluated_ok',
+            'debit',
+            'credit',
         ]
 
         for obj_line in self.read(cr, uid, ids, obj_fields, context=context):
             # Prepare some values
             amount = obj_line.get('debit_currency', 0.0) - obj_line.get('credit_currency', 0.0)
+            amount_ji_fctal = obj_line.get('debit', 0.0) - obj_line.get('credit', 0.0)
             journal = self.pool.get('account.journal').read(cr, uid, obj_line.get('journal_id', [False])[0], ['analytic_journal_id', 'name'], context=context)
             move = self.pool.get('account.move').read(cr, uid, obj_line.get('move_id', [False])[0], ['analytic_distribution_id', 'status', 'line_id'], context=context)
             account = self.pool.get('account.account').read(cr, uid, obj_line.get('account_id', [False])[0], ['is_analytic_addicted'], context=context)
@@ -199,14 +203,22 @@ class account_move_line(osv.osv):
                             aji_greater_amount['is'] = True
                         else:
                             aji_greater_amount['is'] = False
+                        # functional amount
+                        if obj_line.get('is_revaluated_ok'):
+                            # (US-1682) if it's a revaluation line get the functional amount directly from the JI
+                            # to avoid slight differences between JI and AJI amounts caused by computation
+                            amount_aji_fctal = -1 * distrib_line.percentage * amount_ji_fctal / 100
+                        else:
+                            amount_aji_fctal = -1 * self.pool.get('res.currency').compute(
+                                    cr, uid, obj_line.get('currency_id', [False])[0], company_currency, anal_amount,
+                                    round=False, context=context)
                         line_vals = {
                              'name': obj_line.get('name', ''),
                              'date': obj_line.get('date', False),
                              'ref': obj_line.get('ref', False),
                              'journal_id': journal.get('analytic_journal_id', [False])[0],
-                             'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
-                                anal_amount, round=False, context=context),
-                             'amount_currency': -1 * anal_amount_rounded,
+                             'amount': amount_aji_fctal,
+                             'amount_currency': -1 * anal_amount_rounded,  # booking amount
                              'account_id': distrib_line.analytic_id.id,
                              'general_account_id': account.get('id'),
                              'move_id': obj_line.get('id'),
