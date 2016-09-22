@@ -46,6 +46,7 @@ import functools
 
 from datetime import datetime
 import updater
+from sync_common import WHITE_LIST_MODEL
 
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
@@ -205,6 +206,15 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     context['logger'] = logger = \
                         self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
                     context['log_sale_purchase'] = True
+
+                    # generate a white list of models
+                    server_model_white_set = self.get_model_white_list(cr, uid)
+                    # check all models are in the hardcoded white list
+                    difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+                    if difference:
+                        msg = 'Warning: Some models used in the synchronization '\
+                        'rule are not present in the WHITE_LIST_MODEL: %s'
+                        logger.append(_(msg) % ' ,'.join(list(difference)))
 
                     # create a specific cursor for the call
                     self.sync_cursor = pooler.get_db(cr.dbname).cursor()
@@ -450,6 +460,63 @@ class Entity(osv.osv):
             self.sync_lock = RLock()
         finally:
             self.renew_lock.release()
+
+    def get_model_white_list(self, cr, uid):
+        '''
+        return a set of all models involved in the synchronization process
+        '''
+        model_field_dict = {}
+
+        # search for model of sync_server.sync_rule
+        rule_module = self.pool.get('sync.client.rule')
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        for obj in rule_module.read(cr, uid, obj_ids, ['model', 'included_fields']):
+            if obj['model'] not in model_field_dict:
+                model_field_dict[obj['model']] = set()
+            model_field_dict[obj['model']].update(eval(obj['included_fields']))
+
+        # search for model of sync_server.message_rule
+        rule_module = self.pool.get('sync.client.message_rule')
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        for obj in rule_module.read(cr, uid, obj_ids, ['model', 'arguments']):
+            if obj['model'] not in model_field_dict:
+                model_field_dict[obj['model']] = set()
+            model_field_dict[obj['model']].update(eval(obj['arguments']))
+
+        model_set = set(model_field_dict.keys())
+
+        def get_field_obj(model, field_name):
+            model_obj = self.pool.get(model)
+            field_obj = None
+            if field_name in model_obj._columns:
+                field_obj = model_obj._columns[field_name]
+            elif field_name in model_obj._inherit_fields:
+                field_obj = model_obj._inherit_fields[field_name][2]
+            else:
+                import pdb; pdb.set_trace()
+            return field_obj
+
+
+        # for each field corresponding to each model, check if it is a m2m m2o or o2m
+        # if yes, add the model of the relation to the model set
+
+        for model, field_list in model_field_dict.items():
+            field_list_to_parse = [x for x in field_list if '/id' in x]
+            if not field_list_to_parse:
+                continue
+
+            for field in field_list_to_parse:
+                field = field.replace('/id', '')
+                if len(field.split('/')) == 2:
+                    related_field, field = field.split('/')
+                    field_obj = get_field_obj(model, related_field)
+                    related_model = field_obj._obj
+                    field_obj = get_field_obj(related_model, field)
+                else:
+                    field_obj = get_field_obj(model, field)
+                if field_obj._type in ('many2one', 'many2many', 'one2many'):
+                    model_set.add(field_obj._obj)
+        return model_set
 
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
