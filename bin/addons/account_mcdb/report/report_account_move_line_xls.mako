@@ -49,13 +49,13 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="19" x:FullColumns="1"
+<Table ss:ExpandedColumnCount="18" x:FullColumns="1"
 x:FullRows="1">
 % for x in range(0,18):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
 <Row>
-% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Output Debit'), _('Output Credit'), _('Output Currency'), _('Reconcile'), _('Reconcile Date'), _('State')]:
+% for header in [_('Proprietary Instance'), _('Journal Code'), _('Entry Sequence'), _('Description'), _('Ref.'), _('Document Date'), _('Posting Date'), _('Period'), _('Account'), _('Third Party'), _('Book. Debit'), _('Book. Credit'), _('Book. Currency'), _('Output Debit'), _('Output Credit'), _('Output Currency'), _('Reconcile'), _('State')]:
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
 % endfor
 </Row>
@@ -124,15 +124,6 @@ x:FullRows="1">
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.reconcile_txt or '')|x}</Data>
 </Cell>
-% if o.reconcile_date and o.reconcile_date != 'False':
-<Cell ss:StyleID="ssBorderDate">
-        <Data ss:Type="DateTime">${o.reconcile_date|n}T00:00:00</Data>
-</Cell>
-% else:
-<Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String"> </Data>
-</Cell>
-% endif
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.move_state and getSel(o,'move_state') or '')|x}</Data>
 </Cell>
