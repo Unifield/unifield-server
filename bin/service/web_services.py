@@ -210,10 +210,11 @@ class db(netsvc.ExportService):
         return True
 
     def _set_pg_psw_env_var(self):
-        os.environ['PGPASSWORD'] = tools.config['db_password']
+	if tools.config['db_password']:
+        	os.environ['PGPASSWORD'] = tools.config['db_password']
 
     def _unset_pg_psw_env_var(self):
-        os.environ['PGPASSWORD'] = ''
+        del os.environ['PGPASSWORD']
 
     def exp_dump_file(self, db_name):
         # get a tempfilename
