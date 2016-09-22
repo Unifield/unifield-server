@@ -971,11 +971,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             # Copy the line
             rev_line_id = line_obj.copy(cr, uid, line.id, vals, context=context)
             # Do the reverse
-            amt = -1 * line.amount_currency
             vals.update({
                 'debit': line.credit,
                 'credit': line.debit,
-                'amount_currency': amt,
+                # (US-1682) Set the booking amounts to False in order not to trigger the recomputation of the functional amounts
+                # in _update_amount_bis (in account_move_line_compute_currency) that could generate slight amount differences
+                'credit_currency': False,
+                'debit_currency': False,
+                'amount_currency': False,
                 'journal_id': form.journal_id.id,
                 'name': line_obj.join_without_redundancy(line.name, 'REV'),
                 'reversal_line_id': line.id,
