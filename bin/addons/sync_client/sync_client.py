@@ -492,10 +492,8 @@ class Entity(osv.osv):
             field_obj = None
             if field_name in model_obj._columns:
                 field_obj = model_obj._columns[field_name]
-            elif field_name in model_obj._inherit_fields:
+            else field_name in model_obj._inherit_fields:
                 field_obj = model_obj._inherit_fields[field_name][2]
-            else:
-                import pdb; pdb.set_trace()
             return field_obj
 
 
