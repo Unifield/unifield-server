@@ -586,6 +586,9 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                            ) % (objects_linked_to_partner))
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
+
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -610,6 +613,9 @@ class res_partner(osv.osv):
 
         if not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
+
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
 
         return super(res_partner, self).create(cr, uid, vals, context=context)
 
