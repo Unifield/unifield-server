@@ -875,8 +875,8 @@ msgstr "le module ne peut être chargé! (astuce: vérifier chemin des addons)"
 #: field:workflow.workitem,act_id:0
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
-msgid "Activity"
-msgstr "Activité"
+msgid "Destination Location"
+msgstr "Destination - Zone"
 
 #. module: base
 #: model:res.currency,currency_name:base.KES
@@ -16163,8 +16163,8 @@ msgstr "Délai de Livraison"
 #. module: consumption_calculation
 #: field:real.average.consumption,cons_location_id:0
 #: field:real.consumption.change.location,location_id:0
-msgid "Consumer location"
-msgstr "Zone Consommateur"
+msgid "Source Location"
+msgstr "Zone Source"
 
 #. module: sale_override
 #: model:ir.module.module,shortdesc:sale_override.module_meta_information

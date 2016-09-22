@@ -11670,7 +11670,7 @@ msgstr "18 J(A)"
 #. module: consumption_calculation
 #: field:real.average.consumption,cons_location_id:0
 #: field:real.consumption.change.location,location_id:0
-msgid "Consumer location"
+msgid "Source Location"
 msgstr "Ubicación de consumo"
 
 #. module: msf_doc_import
@@ -62622,7 +62622,7 @@ msgstr "¡No se ha encontrado un diario de corrección!"
 #: field:workflow.workitem,act_id:0
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
-msgid "Activity"
+msgid "Destination Location"
 msgstr "Actividad"
 
 #. module: register_accounting
