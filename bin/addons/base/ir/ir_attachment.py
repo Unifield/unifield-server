@@ -27,6 +27,8 @@ import tools
 import logging
 import os
 from tools.translate import _
+import base64
+import re
 
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
@@ -131,13 +133,53 @@ class ir_attachment(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         self.check(cr, uid, ids, 'unlink', context=context)
+
+        # remove the corresponding file if any
+        for attachment in self.read(cr, uid, ids, ['path'], context):
+            if attachment['path']:
+                if os.path.exists(attachment['path']):
+                    os.remove(attachment['path'])
+
         return super(ir_attachment, self).unlink(cr, uid, ids, context)
+    
+    def get_root_path(self, cr, uid):
+        default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
+                'base_setup', 'attachment_config_default')
+        return default_attachment_config.name
+
+    def get_file_path(self, cr, uid, file_name):
+        return os.path.join(self.get_root_path(cr, uid), file_name)
+
+    def get_file_name(self, cr, uid, values, attachment_id):
+        module_obj = self.pool.get(values['res_model'])
+        name_get = module_obj.name_get(cr, uid, [values['res_id']])[0][1]
+        file_name = '%s_%s_%s' % (name_get, attachment_id, values['datas_fname'])
+
+        # remove unsafe characters (like '/', ' ', ...) that can broke path on some OS
+        safe_char = re.compile("[a-zA-Z0-9.,_-]")
+        safe_file_name = ''.join([ch for ch in file_name if safe_char.match(ch)])
+        return safe_file_name
 
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
-        if 'datas' in values:
-            values['size'] = self.get_size(values['datas'])
-        return super(ir_attachment, self).create(cr, uid, values, context)
+        # do not store the datas in base but on the file system
+        datas = values.pop('datas')
+        attachment_id = super(ir_attachment, self).create(cr, uid, values,
+                context)
+
+        new_values = self._add_missing_default_values(cr, uid, values, context)
+        local_filename = self.get_file_name(cr, uid, new_values, attachment_id) 
+        new_values['size'] = self.get_size(datas)
+
+        # create the file on the local file system
+        if 'datas_fname' in new_values:
+            new_values['path'] = self.get_file_path(cr, uid, local_filename)
+        self.write(cr, uid, attachment_id, new_values, context=context)
+
+        f = open(new_values['path'], 'w')
+        f.write(base64.decodestring(datas))
+        f.close()
+        return attachment_id
 
     def action_get(self, cr, uid, context=None):
         return self.pool.get('ir.actions.act_window').for_xml_id(
@@ -176,6 +218,7 @@ class ir_attachment(osv.osv):
     _name = 'ir.attachment'
     _columns = {
         'name': fields.char('Attachment Name',size=256, required=True),
+        'path': fields.char('Path', size=256, readonly=True),
         'datas': fields.binary('Data'),
         'datas_fname': fields.char('Filename',size=256),
         'description': fields.text('Description'),
@@ -210,7 +253,7 @@ class ir_attachment(osv.osv):
 
 ir_attachment()
 
-class AttachmentConfig(osv.osv):
+class attachment_config(osv.osv):
     """ Attachment configurations """
     _name = "attachment.config"
     _description = "Attachment configuration"
@@ -247,9 +290,9 @@ class AttachmentConfig(osv.osv):
             if not os.path.exists(attachments_path):
                 os.makedirs(attachments_path)
             vals['name'] = attachments_path
-        return super(AttachmentConfig, self).write(cr, uid, ids, vals, context=context)
+        return super(attachment_config, self).write(cr, uid, ids, vals, context=context)
 
-AttachmentConfig()
+attachment_config()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 
