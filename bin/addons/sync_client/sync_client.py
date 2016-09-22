@@ -208,13 +208,15 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     context['log_sale_purchase'] = True
 
                     # generate a white list of models
-                    server_model_white_set = self.get_model_white_list(cr, uid)
-                    # check all models are in the hardcoded white list
-                    difference = server_model_white_set.difference(WHITE_LIST_MODEL)
-                    if difference:
-                        msg = 'Warning: Some models used in the synchronization '\
-                        'rule are not present in the WHITE_LIST_MODEL: %s'
-                        logger.append(_(msg) % ' ,'.join(list(difference)))
+                    if self.pool.get('sync.client.rule') and
+                        self.pool.get('sync.client.message_rule'):
+                        server_model_white_set = self.get_model_white_list(cr, uid)
+                        # check all models are in the hardcoded white list
+                        difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+                        if difference:
+                            msg = 'Warning: Some models used in the synchronization '\
+                            'rule are not present in the WHITE_LIST_MODEL: %s'
+                            logger.append(_(msg) % ' ,'.join(list(difference)))
 
                     # create a specific cursor for the call
                     self.sync_cursor = pooler.get_db(cr.dbname).cursor()
