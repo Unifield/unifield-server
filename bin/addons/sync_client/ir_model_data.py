@@ -98,14 +98,10 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         """
         # loop on objects that don't match the models to ignore domain in sync common
         result = set()
-        ir_model = self.pool.get('ir.model')
-
-        for model in ir_model.browse(cr, 1, WHITE_LIST_MODEL):
-
-            obj = self.pool.get(model.model)
-
+        for model in WHITE_LIST_MODEL:
+            obj = self.pool.get(model)
             if obj is None:
-                self._logger.warn('Could not get object %s while creating all missing sdrefs' % model.model)
+                self._logger.warn('Could not get object %s while creating all missing sdrefs' % model)
                 continue
 
             # ignore wizard objects
@@ -246,8 +242,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             values['force_recreation'] = not context.get('sync_update_execution', False)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
-#        import pdb
-#        pdb.set_trace()
 
         # when a module load a specific xmlid, the sdref is updated according
         # that xmlid
