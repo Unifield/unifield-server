@@ -32,6 +32,7 @@ import re
 
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
+    _logger = logging.getLogger('ir.attachment')
 
     def check(self, cr, uid, ids, mode, context=None, values=None):
         """Restricts the access to an ir.attachment, according to referred model
@@ -122,17 +123,17 @@ class ir_attachment(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         self.check(cr, uid, ids, 'write', context=context, values=vals)
         if 'datas' in vals:
             vals['size'] = self.get_size(vals['datas'])
-
             if 'datas_fname' in vals:
                 # do not write the data in DB but on the local file system
                 datas = vals.pop('datas')
                 vals['data'] = '' # erase the old value in DB if any
                 for attachment in self.read(cr, uid, ids, ['res_model',
-                    'res_id', 'datas_fname', 'path']):
-
+                        'res_id', 'datas_fname', 'path']):
                     # update the data read with the new ones
                     attachment.update(vals)
                     # delete the previous attachment on local file system if any
@@ -168,7 +169,9 @@ class ir_attachment(osv.osv):
     def get_root_path(self, cr, uid):
         default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
                 'base_setup', 'attachment_config_default')
-        return default_attachment_config.name
+        path = default_attachment_config.name
+        self.pool.get('attachment.config').check_path(cr, uid, path)
+        return path
 
     def get_file_path(self, cr, uid, file_name):
         return os.path.join(self.get_root_path(cr, uid), file_name)
@@ -274,6 +277,80 @@ class ir_attachment(osv.osv):
             cr.execute('CREATE INDEX ir_attachment_res_idx ON ir_attachment (res_model, res_id)')
             cr.commit()
 
+    # US-1690
+    def migrate_attachment_from_db_to_file_system(self, cr, uid):
+        '''
+        The attachment have all been stored into the database. It was decided
+        to store them on the file system. This method is there to do the
+        migration.
+        '''
+        attachment_config_obj = self.pool.get('attachment.config')
+        current_date = fields.datetime.now()
+        default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
+                'base_setup', 'attachment_config_default')
+        if not default_attachment_config:
+            raise osv.except_osv(_('Error'),
+            _("default_attachment_config don't exists. Check the Attachment config."))
+        
+        if default_attachment_config.migration_date and not \
+                default_attachment_config.migration_error:
+            # migration has already been done
+            return True
+
+        try:
+            self.pool.get('attachment.config').check_path(cr, uid, default_attachment_config.name)
+        except Exception as e:
+            self._logger.exception(str(e))
+            attachment_config_obj.write(cr, uid,
+                    default_attachment_config.id,
+                    {
+                        'migration_error': str(e),
+                        'migration_date': current_date,
+                    })
+            return False
+
+        # if the path is ok, move everything there
+        attachment_ids = self.search(cr, uid, [])
+
+        # read one by one not to do one read that will read all the data of all
+        # attachment in one shot
+        error_list = []
+        for attachment_id in attachment_ids:
+            attachment = self.read(cr, uid, attachment_id, ['path', 'datas', 'datas_fname'])
+            if attachment['datas']:
+                if attachment['path']:
+                    # check the path exist and if yes, delete the datas
+                    if os.path.exists(attachment['path']):
+                        self.write(cr, uid, attachment_id, {'datas': False})
+                        continue
+                    else:
+                        error_list.append("attachement id=%s have a path but "\
+                        "this path don't exists, path=%s" % (attachment_id,
+                            attachment['path']))
+                else:
+                    attachment.pop('id')
+                    # write is doing the migration
+                    self.write(cr, uid, attachment_id, attachment)
+
+        if error_list:
+            self._logger.exception('\n'.join(error_list))
+            attachment_config_obj.write(cr, uid,
+                    default_attachment_config.id,
+                    {
+                        'migration_error': '\n'.join(error_list),
+                        'migration_date': current_date,
+                    })
+            return False
+        
+        # migration finish without problem, clear error messages
+        attachment_config_obj.write(cr, uid,
+                default_attachment_config.id,
+                {
+                    'migration_error': '',
+                    'migration_date': current_date,
+                })
+        return True
+
 ir_attachment()
 
 class attachment_config(osv.osv):
@@ -281,38 +358,58 @@ class attachment_config(osv.osv):
     _name = "attachment.config"
     _description = "Attachment configuration"
 
-    _logger = logging.getLogger('sync.client')
-
     _columns = {
-        'name' : fields.char('Path to save the attachments to', size=254),
+        'name': fields.char('Path to save the attachments to', size=256,
+        help="The complet path to the local folder where Unifield will save attachment files.",
+        required=True),
+        'next_migration' : fields.datetime('Next migration date',
+            help="Next planned execution of thei migration to move the old attachment to the path you defined"),
+        'migration_date': fields.datetime('Last migration execution date', readonly=True),
+        'migration_error': fields.text('Migration error', readonly=True)
     }
 
     _defaults = {
         'name' : 'c:\\attachments\\',
     }
 
-    def write(self, cr, uid, ids, vals, context=None):
-        attachments_path = vals.get('name')
+    def check_path(self, cr, uid, attachments_path):
         if not attachments_path:
-            raise osv.except_osv(_('Error'), _("No attachments_path provided"))
+            raise osv.except_osv(_('Error'),
+            _("No attachments_path provided. Check the Attachment config."))
         # check path existence
         if not os.path.exists(attachments_path):
             raise osv.except_osv(_('Error'),
-                    _("attachments_path '%s' doesn't exists.") % attachments_path)
-
+                    _("attachments_path '%s' doesn't exists. Check the Attachment config.") % attachments_path)
         # check write permission on this path
         if not os.access(attachments_path, os.W_OK):
             raise osv.except_osv(_('Error'),
-                    _("You don't have permission to write in '%s'.") % attachments_path)
+                    _("You don't have permission to write in '%s'. Check the Attachment config.") % attachments_path)
 
-        # add db_name in the path
-        db_name = cr.dbname
-        create_db_dir = tools.config.get('create_db_dir_for_attachment')
-        if create_db_dir and not db_name in attachments_path:
-            attachments_path = os.path.join(attachments_path, db_name)
-            if not os.path.exists(attachments_path):
-                os.makedirs(attachments_path)
-            vals['name'] = attachments_path
+    def write(self, cr, uid, ids, vals, context=None):
+        if 'name' in vals:
+            attachments_path = vals.get('name')
+            self.check_path(cr, uid, attachments_path)
+
+            # add db_name in the path
+            db_name = cr.dbname
+            create_db_dir = tools.config.get('create_db_dir_for_attachment')
+            if create_db_dir and not db_name in attachments_path:
+                attachments_path = os.path.join(attachments_path, db_name)
+                if not os.path.exists(attachments_path):
+                    os.makedirs(attachments_path)
+                vals['name'] = attachments_path
+
+        if 'next_migration' in vals:
+            # create a ir_cron with this values
+            cron_obj = self.pool.get('ir.cron')
+            default_migrate_attachment = self.pool.get('ir.model.data').get_object(cr, uid,
+                    'base', 'ir_cron_migrate_attachment')
+            values = {
+                'nextcall': vals['next_migration'],
+                'numbercall': 1,
+                'active': True,
+            }
+            cron_obj.write(cr, uid, default_migrate_attachment.id, values, context=context) 
         return super(attachment_config, self).write(cr, uid, ids, vals, context=context)
 
 attachment_config()
