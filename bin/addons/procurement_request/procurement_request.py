@@ -447,8 +447,8 @@ class procurement_request(osv.osv):
             if a[0] == 'procurement_request':
                 test = False
 
-        if not context.get('procurement_request', False) and test:
-            args.append(('procurement_request', '=', False))
+        # if not context.get('procurement_request', False) and test:
+        #     args.append(('procurement_request', '=', False))
 
         return super(procurement_request, self).search(cr, uid, args, offset,
                 limit, order, context, count)

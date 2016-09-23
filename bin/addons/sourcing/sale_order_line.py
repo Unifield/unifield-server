@@ -388,8 +388,17 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             return []
 
         res = []
+
+        import pdb
+        pdb.set_trace()
         for arg in args:
-            if arg[0] == 'sale_order_state':
+            if arg[0] == 'sale_order_state' and arg[1] == '=' and arg[2] == 'split_so' :
+                res = [
+                    ('order_id.state', '=', 'done'),
+                    ('order_id.split_type_sale_order', '=', 'original_sale_order'),
+                    ('order_id.procurement_request', '=', False),
+                ]
+            elif arg[0] == 'sale_order_state':
                 res = [('order_id.state', arg[1], arg[2])]
 
         return res
