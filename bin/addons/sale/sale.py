@@ -1272,16 +1272,6 @@ class sale_order_line(osv.osv):
 
         if not uom2:
             uom2 = product_obj.uom_id
-        if (product_obj.type=='product') and (product_obj.virtual_available * uom2.factor < qty * product_obj.uom_id.factor) \
-          and (product_obj.procure_method=='make_to_stock'):
-            warning = {
-                'title': _('Not enough stock !'),
-                'message': _('You plan to sell %.2f %s but you only have %.2f %s available !\nThe real stock is %.2f %s. (without reservations)') %
-                    (qty, uom2 and uom2.name or product_obj.uom_id.name,
-                     max(0,product_obj.virtual_available), product_obj.uom_id.name,
-                     max(0,product_obj.qty_available), product_obj.uom_id.name)
-            }
-        # get unit price
         if not pricelist:
             warning = {
                 'title': 'No Pricelist !',
