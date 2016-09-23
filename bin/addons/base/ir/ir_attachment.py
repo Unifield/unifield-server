@@ -157,6 +157,8 @@ class ir_attachment(osv.osv):
 
     def unlink(self, cr, uid, ids, context=None):
         self.check(cr, uid, ids, 'unlink', context=context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         # remove the corresponding file if any
         for attachment in self.read(cr, uid, ids, ['path'], context):
