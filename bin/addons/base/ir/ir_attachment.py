@@ -128,26 +128,25 @@ class ir_attachment(osv.osv):
         self.check(cr, uid, ids, 'write', context=context, values=vals)
         if 'datas' in vals:
             vals['size'] = self.get_size(vals['datas'])
-            if 'datas_fname' in vals:
-                # do not write the data in DB but on the local file system
-                datas = vals.pop('datas')
-                vals['data'] = '' # erase the old value in DB if any
-                for attachment in self.read(cr, uid, ids, ['res_model',
-                        'res_id', 'datas_fname', 'path']):
-                    # update the data read with the new ones
-                    attachment.update(vals)
-                    # delete the previous attachment on local file system if any
-                    if attachment['path']:
-                        if os.path.exists(attachment['path']):
-                            os.remove(attachment['path'])
+            # do not write the data in DB but on the local file system
+            datas = vals.pop('datas')
+            vals['datas'] = '' # erase the old value in DB if any
+            for attachment in self.read(cr, uid, ids, ['res_model',
+                    'res_id', 'datas_fname', 'path']):
+                # update the data read with the new ones
+                attachment.update(vals)
+                # delete the previous attachment on local file system if any
+                if attachment['path']:
+                    if os.path.exists(attachment['path']):
+                        os.remove(attachment['path'])
 
-                    local_filename = self.get_file_name(cr, uid, attachment,
-                            attachment['id']) 
-                    vals['path'] = self.get_file_path(cr, uid, local_filename)
-                    self.write(cr, uid, attachment['id'], vals, context=context)
-                    f = open(vals['path'], 'w')
-                    f.write(base64.decodestring(datas))
-                    f.close()
+                local_filename = self.get_file_name(cr, uid, attachment,
+                        attachment['id']) 
+                vals['path'] = self.get_file_path(cr, uid, local_filename)
+                f = open(vals['path'], 'wb')
+                f.write(base64.decodestring(datas))
+                f.close()
+                return super(ir_attachment, self).write(cr, uid, attachment['id'], vals, context)
 
         return super(ir_attachment, self).write(cr, uid, ids, vals, context)
 
@@ -204,7 +203,7 @@ class ir_attachment(osv.osv):
             new_values['path'] = self.get_file_path(cr, uid, local_filename)
         self.write(cr, uid, attachment_id, new_values, context=context)
 
-        f = open(new_values['path'], 'w')
+        f = open(new_values['path'], 'wb')
         f.write(base64.decodestring(datas))
         f.close()
         return attachment_id
