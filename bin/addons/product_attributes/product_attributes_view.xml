@@ -11,6 +11,7 @@
                 <data>
                     <xpath expr="/tree" position="replace">
                         <tree colors="red:virtual_available&lt;0;blue:virtual_available&gt;=0 and state in ('draft', 'end', 'obsolete');black:virtual_available&gt;=0 and state not in ('draft', 'end', 'obsolete')" string="Products">
+                        <field name="write_date_sp" />
                         <field name="default_code" string="Code"/>
                         <field name="name" string="Description"/>
                         <field name="categ_id" invisible="1"/>

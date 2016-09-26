@@ -629,7 +629,24 @@ class product_attributes(osv.osv):
         """
         return True
 
+    def _get_write_date(self, cr, uid, ids, field_name, args, context=None):
+
+        res = {}
+        for p in self.read(cr, uid, ids, ['__last_update'], context=context):
+            res[p['id']] = p['__last_update']
+
+        return res
+
     _columns = {
+        'write_date_sp': fields.function(
+            _get_write_date,
+            method=True,
+            string='Write date',
+            type='datetime',
+            store={
+                'product.product': (lambda self, cr, uid, ids, c={}: ids, [], 10),
+            },
+        ),
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
         'description2': fields.text('Description 2'),
