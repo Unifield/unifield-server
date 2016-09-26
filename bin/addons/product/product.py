@@ -26,6 +26,7 @@ import math
 from _common import rounding
 import re
 from tools.translate import _
+from datetime import datetime
 
 def is_pair(x):
     return not x%2
@@ -497,6 +498,20 @@ class product_product(osv.osv):
                     (data['name'] or '') + (data['variants'] and (' - '+data['variants']) or '')
         return res
 
+
+    def _product_creation_date(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for id_line in ids:
+            res[id_line] = datetime.now()
+        return res
+
+    def _product_write_date(self, cr, uid, ids, name, arg, context=None):
+        res = {}
+        for id_line in ids:
+            res[id_line] = datetime.now()
+        return res
+
+
     _defaults = {
         'active': lambda *a: 1,
         'price_extra': lambda *a: 0.0,
@@ -527,7 +542,10 @@ class product_product(osv.osv):
         'price_margin': fields.float('Variant Price Margin', digits_compute=dp.get_precision('Sale Price')),
         'pricelist_id': fields.dummy(string='Pricelist', relation='product.pricelist', type='many2one'),
         'name_template': fields.related('product_tmpl_id', 'name', string="Name", type='char', size=128, store=True, write_relate=False),
+        'create_date': fields.function(_product_creation_date, method=True, type='datetime', store=True),
+        'write_date': fields.function(_product_write_date, method=True, type='datetime', store={'product.product': (lambda self, cr, uid, ids, c=None: ids, [], 10),}),
     }
+
     
     def unlink(self, cr, uid, ids, context=None):
         unlink_ids = []
