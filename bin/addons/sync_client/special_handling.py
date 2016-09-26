@@ -194,6 +194,10 @@ class account_move_line(osv.osv):
                 rec_val = getattr(ji_rec, f)
                 val = vals[f]
 
+                # US-1737 consider False and '' equal
+                if not val and not rec_val:
+                    continue
+
                 if t == 'id':
                     if rec_val:
                         has_diff = not val or val != rec_val.id
