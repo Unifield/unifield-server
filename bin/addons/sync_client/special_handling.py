@@ -210,7 +210,7 @@ class account_move_line(osv.osv):
 
             if has_diff:
                 raise osv.except_osv(_('Error !'),
-                    _('You can not modify entries in a HQ closed journal'))
+                    _('You can not modify entries in a HQ closed journal. Field: %s, db value: %s, update value: %s') % (f, rec_val, val))
 
 account_move_line()
 
