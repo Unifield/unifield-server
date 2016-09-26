@@ -29,6 +29,9 @@ import os
 import logging
 from threading import Lock
 
+from msf_field_access_rights.osv_override import _get_instance_level
+
+
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
     _logger = logging.getLogger('patch_scripts')
@@ -840,6 +843,27 @@ class patch_scripts(osv.osv):
                     """)
 
                 self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
+
+    def us_1732_sync_state_ud(self, cr, uid, *a, **b):
+        """
+        Make the product.product with state_ud is not null as to be synchronized at HQ
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Named parameters
+        :param b: Unnamed parameters
+        :return:
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification = NOW() AND touched = ['state_ud']
+                WHERE
+                    module = 'sd'
+                AND
+                    model = 'product.product'
+                AND
+                    res_id IN (
+                        SELECT id FROM product_product WHERE state_ud IS NOT NULL
+            )""")
 
 patch_scripts()
 
