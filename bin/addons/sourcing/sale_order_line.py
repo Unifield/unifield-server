@@ -388,16 +388,16 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             return []
 
         res = []
-
-        import pdb
-        pdb.set_trace()
         for arg in args:
             if arg[0] == 'sale_order_state' and arg[1] == '=' and arg[2] == 'split_so' :
-                res = [
-                    ('order_id.state', '=', 'done'),
-                    ('order_id.split_type_sale_order', '=', 'original_sale_order'),
-                    ('order_id.procurement_request', '=', False),
+                split_dom = [
+                    ('state', '=', 'done'),
+                    ('split_type_sale_order', '=', 'original_sale_order'),
+                    ('procurement_request', '=', False),
+                    ('active', 'in', ['t','f'])
                 ]
+                split_ids = self.pool.get('sale.order').search(cr, uid, split_dom, context=context)
+                res = [('order_id', 'in', split_ids)]
             elif arg[0] == 'sale_order_state':
                 res = [('order_id.state', arg[1], arg[2])]
 

@@ -450,8 +450,9 @@ class procurement_request(osv.osv):
         # if not context.get('procurement_request', False) and test:
         #     args.append(('procurement_request', '=', False))
 
-        return super(procurement_request, self).search(cr, uid, args, offset,
+        res = super(procurement_request, self).search(cr, uid, args, offset,
                 limit, order, context, count)
+        return res
 
     def _hook_copy_default(self, cr, uid, *args, **kwargs):
         id = kwargs['id']
