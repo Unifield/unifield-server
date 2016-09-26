@@ -581,7 +581,9 @@ class account_move_line_compute_currency(osv.osv):
                 newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
-            if line.reconcile_id:
+            if vals.get('reconcile_id'):
+                reconciled_move[vals['reconcile_id']] = True
+            elif line.reconcile_id:
                 reconciled_move[line.reconcile_id.id] = True
         if reconciled_move:
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)
