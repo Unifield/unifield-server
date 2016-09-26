@@ -25,6 +25,8 @@
                     attrs="{'invisible':[('migration_error','=', False), ('migration_date', '!=', False)]}"/>
                 <field name="migration_date" attrs="{'invisible':[('migration_date', '=', False)]}"/>
                 <newline />
+                <field name="is_migration_running" colspan="4" invisible="1"/>
+                <field name="moving_rate" widget="progressbar" colspan="4" attrs="{'invisible':[('is_migration_running','=', False)]}"/>
                 <field name="migration_error" colspan="4" attrs="{'invisible':[('migration_error','=', False)]}"/>
             </group>
         </form>

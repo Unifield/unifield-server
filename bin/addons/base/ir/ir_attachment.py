@@ -29,6 +29,8 @@ import os
 from tools.translate import _
 import base64
 import re
+import threading
+import pooler
 
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
@@ -174,8 +176,10 @@ class ir_attachment(osv.osv):
         self.pool.get('attachment.config').check_path(cr, uid, path)
         return path
 
-    def get_file_path(self, cr, uid, file_name):
-        return os.path.join(self.get_root_path(cr, uid), file_name)
+    def get_file_path(self, cr, uid, file_name, root_path=None):
+        if not root_path:
+            root_path = self.get_root_path(cr, uid)
+        return os.path.join(root_path, file_name)
 
     def get_file_name(self, cr, uid, values, attachment_id):
         module_obj = self.pool.get(values['res_model'])
@@ -285,79 +289,92 @@ class ir_attachment(osv.osv):
         to store them on the file system. This method is there to do the
         migration.
         '''
-        attachment_config_obj = self.pool.get('attachment.config')
         current_date = fields.datetime.now()
+        attachment_config_obj = self.pool.get('attachment.config')
         default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
                 'base_setup', 'attachment_config_default')
-        if not default_attachment_config:
+        if attachment_config_obj.is_migration_running:
             raise osv.except_osv(_('Error'),
-            _("default_attachment_config don't exists. Check the Attachment config."))
-        
-        if default_attachment_config.migration_date and not \
-                default_attachment_config.migration_error:
-            # migration has already been done
-            return True
-
+                    _("A migration or move of the attachments is currently running. You have to wait for it to be finished before to launch again."))
         try:
-            self.pool.get('attachment.config').check_path(cr, uid, default_attachment_config.name)
+            attachment_config_obj.is_migration_running = True
+            if not default_attachment_config:
+                raise osv.except_osv(_('Error'),
+                _("No path to save the attachment found. Check the Attachment config."))
+            if default_attachment_config.migration_date and not \
+                    default_attachment_config.migration_error:
+                # migration has already been done
+                return True
+            try:
+                self.pool.get('attachment.config').check_path(cr, uid, default_attachment_config.name)
+            except Exception as e:
+                self._logger.exception(str(e))
+                attachment_config_obj.write(cr, uid,
+                        default_attachment_config.id,
+                        {'migration_error': str(e),
+                         'migration_date': current_date})
+                return False
+
+            # if the path is ok, move everything there
+            attachment_ids = self.search(cr, uid, [])
+
+            # read one by one not to do one read that will read all the data of all
+            # attachment in one shot
+            error_list = []
+            for attachment_id in attachment_ids:
+                attachment = self.read(cr, uid, attachment_id, ['path', 'datas', 'datas_fname'])
+                if attachment['datas']:
+                    if attachment['path']:
+                        # check the path exist and if yes, delete the datas
+                        if os.path.exists(attachment['path']):
+                            self.write(cr, uid, attachment_id, {'datas': False})
+                            continue
+                        else:
+                            error_list.append("attachement id=%s have a path but "\
+                            "this path don't exists, path=%s" % (attachment_id,
+                                attachment['path']))
+                    else:
+                        attachment.pop('id')
+                        # write is doing the migration
+                        self.write(cr, uid, attachment_id, attachment)
+                # commit for each attachment moved then if a problem happen,
+                # the transaction are not rollback with some of the files alread moved
+                cr.commit()
+
+            if error_list:
+                self._logger.exception('\n'.join(error_list))
+                attachment_config_obj.write(cr, uid,
+                        default_attachment_config.id,
+                        {'migration_error': '\n'.join(error_list),
+                         'migration_date': current_date})
+                return False
+
+            # migration finish without problem, clear error messages
+            attachment_config_obj.write(cr, uid,
+                    default_attachment_config.id,
+                    {'migration_error': '',
+                     'migration_date': current_date})
         except Exception as e:
             self._logger.exception(str(e))
             attachment_config_obj.write(cr, uid,
                     default_attachment_config.id,
-                    {
-                        'migration_error': str(e),
-                        'migration_date': current_date,
-                    })
-            return False
-
-        # if the path is ok, move everything there
-        attachment_ids = self.search(cr, uid, [])
-
-        # read one by one not to do one read that will read all the data of all
-        # attachment in one shot
-        error_list = []
-        for attachment_id in attachment_ids:
-            attachment = self.read(cr, uid, attachment_id, ['path', 'datas', 'datas_fname'])
-            if attachment['datas']:
-                if attachment['path']:
-                    # check the path exist and if yes, delete the datas
-                    if os.path.exists(attachment['path']):
-                        self.write(cr, uid, attachment_id, {'datas': False})
-                        continue
-                    else:
-                        error_list.append("attachement id=%s have a path but "\
-                        "this path don't exists, path=%s" % (attachment_id,
-                            attachment['path']))
-                else:
-                    attachment.pop('id')
-                    # write is doing the migration
-                    self.write(cr, uid, attachment_id, attachment)
-
-        if error_list:
-            self._logger.exception('\n'.join(error_list))
-            attachment_config_obj.write(cr, uid,
-                    default_attachment_config.id,
-                    {
-                        'migration_error': '\n'.join(error_list),
-                        'migration_date': current_date,
-                    })
-            return False
-        
-        # migration finish without problem, clear error messages
-        attachment_config_obj.write(cr, uid,
-                default_attachment_config.id,
-                {
-                    'migration_error': '',
-                    'migration_date': current_date,
-                })
+                    {'migration_error': str(e),
+                     'migration_date': current_date})
+        finally:
+            attachment_config_obj.is_migration_running = False
         return True
 
 ir_attachment()
 
 class attachment_config(osv.osv):
-    """ Attachment configurations """
+    """ Attachment configuration """
     _name = "attachment.config"
     _description = "Attachment configuration"
+
+    is_migration_running = False
+
+    def _is_migration_running(self, cr, uid, ids, name, arg, context=None):
+        return dict.fromkeys(ids, self.is_migration_running)
 
     _columns = {
         'name': fields.char('Path to save the attachments to', size=256,
@@ -366,12 +383,27 @@ class attachment_config(osv.osv):
         'next_migration' : fields.datetime('Next migration date',
             help="Next planned execution of thei migration to move the old attachment to the path you defined"),
         'migration_date': fields.datetime('Last migration execution date', readonly=True),
-        'migration_error': fields.text('Migration error', readonly=True)
+        'migration_error': fields.text('Migration error', readonly=True),
+        'is_migration_running': fields.function(_is_migration_running,
+            type='boolean', string='Moving files...', method=True,
+            readonly=True),
+        'moving_rate': fields.float(string='Moving process',
+            readonly=True),
     }
 
     _defaults = {
         'name' : 'c:\\attachments\\',
     }
+
+    def _check_only_one_obj(self, cr, uid, ids, context=None):
+        obj = self.search(cr, uid, [], context=context)
+        if len(obj) > 1:
+            return False
+        return True
+
+    _constraints = [
+        (_check_only_one_obj, 'You cannot have more than one Attachment configuration', ['name']),
+    ]
 
     def check_path(self, cr, uid, attachments_path):
         if not attachments_path:
@@ -386,8 +418,79 @@ class attachment_config(osv.osv):
             raise osv.except_osv(_('Error'),
                     _("You don't have permission to write in '%s'. Check the Attachment config.") % attachments_path)
 
+    def move_all_attachments(self, cr, uid, ids, new_root_path, context=None):
+        """
+        Create a new thread to move all attachment to the new root path
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param new_root_path: new path to move the attachments
+        :return: True
+        """
+        if self.is_migration_running:
+            raise osv.except_osv(_('Error'),
+                    _("A migration or move of the attachments is currently running. You have to wait for it to be finished before to launch again."))
+        th = threading.Thread(
+            target=self._do_move_all_attachments,
+            args=(cr, uid, ids, new_root_path, True, context),
+        )
+        th.start()
+        return True
+
+    def _do_move_all_attachments(self, cr, uid, ids, new_root_path,
+            use_new_cursor=False, context=None):
+        """
+        Move all attachments from the new_root_path
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param new_root_path: new path to move the attachments
+        :param use_new_cursor: True if this method is called into a new thread
+        :return: True
+        """
+        if use_new_cursor:
+            cr = pooler.get_db(cr.dbname).cursor()
+
+        self.is_migration_running = True
+        try:
+            # check there is some files to move
+            attachment_obj = self.pool.get('ir.attachment')
+            attachment_id_to_move = attachment_obj.search(cr, uid, [('path', '!=', False)])
+            nb_attachments = len(attachment_id_to_move)
+            counter = 0
+            if attachment_id_to_move:
+                for attachment in attachment_obj.read(cr, uid, attachment_id_to_move,
+                        ['path', 'res_model', 'res_id', 'datas_fname'], context):
+                    old_path = attachment['path']
+                    file_name = attachment_obj.get_file_name(cr, uid, attachment, attachment['id'])
+                    new_path = attachment_obj.get_file_path(cr, uid, file_name,
+                            root_path=new_root_path)
+                    if new_path == old_path:
+                        continue
+                    # move the file on the file system
+                    os.rename(old_path, new_path)
+                    # change the path in the DB
+                    attachment_obj.write(cr, uid, attachment['id'], {'path':new_path}, context)
+                    cr.commit()
+                    # update rate for the progress bar
+                    counter +=1
+                    if counter % 10 == 0:
+                        rate = counter/float(nb_attachments)*100
+                        self.write(cr, uid, ids, {'moving_rate': rate},
+                                context)
+
+        except Exception as e:
+            raise osv.except_osv(_('Error'), str(e))
+        finally:
+            self.is_migration_running = False
+            # reset the moving rate
+            self.write(cr, uid, ids, {'moving_rate': 0},
+                    context)
+        return True
+
     def write(self, cr, uid, ids, vals, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         if 'name' in vals:
+
             attachments_path = vals.get('name')
             self.check_path(cr, uid, attachments_path)
 
@@ -399,6 +502,16 @@ class attachment_config(osv.osv):
                 if not os.path.exists(attachments_path):
                     os.makedirs(attachments_path)
                 vals['name'] = attachments_path
+
+            migration_error = vals.get('migration_error', False)
+            if migration_error:
+                raise osv.except_osv(_('Error'),
+                        _("You cannot change the path to save attachment because the migration have some errors. Please fix them before."))
+            # if new_path is different from current one
+            current_path = self.read(cr, uid, ids, ['name'], context)[0]['name']
+            if attachments_path != current_path:
+                self.move_all_attachments(cr, uid, ids, attachments_path,
+                        context=context)
 
         if 'next_migration' in vals:
             # create a ir_cron with this values
