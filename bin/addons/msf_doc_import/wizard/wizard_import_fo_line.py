@@ -112,6 +112,12 @@ class wizard_import_fo_line(osv.osv_memory):
 
                 header_row = rows.next()
                 header_error = False
+
+                if len(header_row) != len(columns_for_fo_line_import):
+                    header_row = False
+                    header_error = True
+                    error_list.append(_("\n\tNumber of columns is not equal to %s") % len(columns_for_fo_line_import))
+
                 if header_row:
                     for i, h_name in enumerate(columns_for_fo_line_import):
                         tr_header_row = _(tools.ustr(header_row[i]))
@@ -122,7 +128,7 @@ class wizard_import_fo_line(osv.osv_memory):
                                 error_list.append(_("\n\tPlease check spelling on column '%s'.") % tr_header_row)
 
                 if header_error:
-                    msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join(columns_for_fo_line_import)
+                    msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join([_(x) for x in columns_for_fo_line_import])
                     error_list.append(msg)
                     msg = _("\n\tPlease ensure that all these columns are present and in this exact order.")
                     error_list.append(msg)
