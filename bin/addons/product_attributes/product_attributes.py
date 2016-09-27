@@ -26,6 +26,7 @@ from lxml import etree
 import logging
 import tools
 from os import path
+from datetime import datetime
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -914,6 +915,8 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'write_date': fields.datetime('Write date'),
+        'create_date': fields.datetime('Create date'),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
@@ -1249,6 +1252,9 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
+        if vals.get('create_date', None) is False:
+            vals['create_date'] = datetime.now()
+
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
 
@@ -1330,6 +1336,9 @@ class product_attributes(osv.osv):
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
+
+        if vals.get('write_date', None) is False:
+            vals['write_date'] = datetime.now()
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
