@@ -47,7 +47,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_account_analytic_line_tree"/>
             <field name="domain">[('account_id.category', '=', 'FUNDING')]</field>
-            <field name="context">{'display_fp': True, 'target_filename_prefix': 'Analytic Journal Items'}</field>
+            <field name="context">{'display_fp': True, 'target_filename_prefix': 'Analytic Journal Items', 'search_default_last_months': 1}</field>
         </record>
 
     <!-- Menu for Analytic Journal Items -->

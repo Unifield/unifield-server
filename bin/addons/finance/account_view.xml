@@ -169,7 +169,7 @@
             <field name="search_view_id" ref="account.view_account_move_filter"/>
             <field name="help">A journal entry consists of several journal items, each of which is either a debit or a credit transaction. OpenERP automatically creates one journal entry per accounting document: invoice, refund, supplier payment, bank statements, etc.</field>
             <field name="domain">[('period_id.number', '!=', 0)]</field>
-            <field name="context">{'from_web_menu': True}</field>
+            <field name="context">{'from_web_menu': True, 'search_default_last_months': 1}</field>
         </record>
 
     <!-- Delete Confirm Draft Invoices wizard from supplier invoices -->

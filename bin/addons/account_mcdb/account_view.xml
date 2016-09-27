@@ -138,6 +138,10 @@
                             <separator orientation="vertical"/>
                             <filter icon="terp-document-new" string="Unposted" domain="[('move_id.state','=','draft')]" help="Unposted Journal Items"/>
                             <filter name="posted" icon="terp-camera_test" string="Posted" domain="[('move_id.state','=','posted')]" help="Posted Journal Items"/>
+                            <filter name="last_months" icon="terp-go-today"
+                                string="last 6 months"
+                                domain="[('date','&gt;',(datetime.date.today()-datetime.timedelta(6*365/12)).strftime('%%Y-%%m-%%d'))]"
+                                help="last 6 months posting date."/>
                             <separator orientation="vertical"/>
                             <filter
                                 icon="terp-dolar_ok!"
@@ -208,7 +212,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('period_id.number', '!=', 0)]</field>
-            <field name="context">{'search_default_posted': 1, 'from_web_menu': True}</field>
+            <field name="context">{'search_default_posted': 1, 'search_default_last_months': 1, 'from_web_menu': True}</field>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
             <field name="help">This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart "Account Payable".</field>
         </record>
@@ -333,6 +337,11 @@
                             <group col='8' colspan='4'>
                                 <filter icon="terp-document-new" string="Unposted" domain="[('state','=','draft')]" help="Unposted Journal Entries"/>
                                 <filter icon="terp-camera_test" string="Posted" domain="[('state','=','posted')]" help="Posted Journal Entries"/>
+                                <separator orientation="vertical"/>
+                                <filter name="last_months" icon="terp-go-today"
+                                    string="last 6 months"
+                                    domain="[('date','&gt;',(datetime.date.today()-datetime.timedelta(6*365/12)).strftime('%%Y-%%m-%%d'))]"
+                                    help="last 6 months posting date."/>
                                 <separator orientation="vertical"/>
                                 <field name="document_date" select="1"/>
                                 <field name="date" select="1" string="Posting Date"/>
