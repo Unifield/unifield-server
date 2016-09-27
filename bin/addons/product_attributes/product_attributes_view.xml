@@ -25,8 +25,8 @@
                         <field name="standard_price" invisible="context.get('pricelist', False)"/>
                         <field name="state" />
                         <field name="international_status"/>
-                        <field name="create_date" string="Creation"/>
-                        <field name="write_date" string="Modification"/>
+                        <field name="uf_create_date" string="Creation"/>
+                        <field name="uf_write_date" string="Modification"/>
                        </tree>
                     </xpath>
                 </data>
@@ -454,8 +454,8 @@
                    <field name="default_code" string="Code"/>
                    <field name="name" string="Description"/>
                    <field name="list_ids" widget="many2one" context="{'list': self}" />
-                   <field name="create_date" string="Creation"/>
-                   <field name="write_date" string="Modification"/>
+                   <field name="uf_create_date" string="Creation"/>
+                   <field name="uf_write_date" string="Modification"/>
                    <newline/>
                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
