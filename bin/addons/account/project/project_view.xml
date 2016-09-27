@@ -215,7 +215,7 @@
                                 help="Analytic Journal Items related to an ENGI journal."
                                 />
                             <filter name="others" string="Others" domain="[('journal_id.type','in',('cash','general','situation'))]" icon="terp-folder-orange"/>
-                            <filter name="last_months" icon="terp-go-today" string="last 6 months" domain="[('date','&gt;',(datetime.date.today()-datetime.timedelta(6*365/12)).strftime('%%Y-%%m-%%d'))]" help="last 6 months posting date."/>
+                            <filter name="last_months" icon="terp-go-today" string="last 3 months" domain="[('date','&gt;',(datetime.date.today()-datetime.timedelta(3*365/12)).strftime('%%Y-%%m-%%d'))]" help="last 3 months posting date."/>
                             <separator orientation="vertical"/>
                             <field name="document_date" select="1"/>
                             <field name="date"/>
