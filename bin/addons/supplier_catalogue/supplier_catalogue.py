@@ -1001,6 +1001,8 @@ class supplier_catalogue_line(osv.osv):
                               and id not in (select suppinfo_id from
                                             pricelist_partnerinfo ) ''' % (ids[0]))
 
+            self.pool.get('product.supplierinfo').write(cr, uid, [line.id], {'product_code': line.supplier_code}, context=context)
+
             res = super(supplier_catalogue_line, self).write(cr, uid, [line.id], new_vals, context=context)
 
         self._check_min_quantity(cr, uid, ids, context=context)
@@ -1064,6 +1066,7 @@ class supplier_catalogue_line(osv.osv):
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
         'partner_info_id': fields.many2one('pricelist.partnerinfo', string='Linked Supplier Info line'),
         'to_correct_ok': fields.boolean('To correct'),
+        'supplier_code': fields.char(size=64, string='Supplier Code'),
     }
 
     _defaults = {
