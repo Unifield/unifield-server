@@ -177,12 +177,13 @@ class wizard_import_product_list(osv.osv):
                             continue
 
                     if to_write.get('product_id'):
-                        imp_product_ids.append(to_write['product_id'])
                         exist_line_ids = list_line_obj.search(cr, uid, [
                             ('list_id', '=', list_browse.id),
                             ('name', '=', to_write.get('product_id'))
                         ], limit=1, context=context)
-                        if exist_line_ids:
+                        in_list = to_write['product_id'] in imp_product_ids
+                        imp_product_ids.append(to_write['product_id'])
+                        if exist_line_ids or in_list:
                             prod_brw = product_obj.browse(cr, uid, to_write['product_id'], context=context)
                             to_write.setdefault('error_list', []).append(
                                 _('Product [%s] %s is already in the database. Line not imported \n') % (
