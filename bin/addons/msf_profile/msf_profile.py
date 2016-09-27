@@ -855,7 +855,7 @@ class patch_scripts(osv.osv):
         """
         if _get_instance_level(self, cr, uid) == 'hq':
             cr.execute("""
-                UPDATE ir_model_data SET last_modification = NOW(), touched = '['''state_ud''']'
+                UPDATE ir_model_data SET last_modification = NOW(), touched = '[''state_ud'']'
                 WHERE
                     module = 'sd'
                 AND
