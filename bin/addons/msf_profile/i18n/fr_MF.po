@@ -870,9 +870,13 @@ msgstr "Compte Racine"
 msgid "module base cannot be loaded! (hint: verify addons-path)"
 msgstr "le module ne peut être chargé! (astuce: vérifier chemin des addons)"
 
-#. modules: base, consumption_calculation
+#. module: base
 #: view:workflow.activity:0
 #: field:workflow.workitem,act_id:0
+msgid "Activity"
+msgstr "Activité"
+
+#. module: consumption_calculation
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
 msgid "Destination Location"

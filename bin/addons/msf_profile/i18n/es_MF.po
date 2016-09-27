@@ -62617,9 +62617,13 @@ msgstr "La lista de componentes para consumir está vacía."
 msgid "No correction journal found!"
 msgstr "¡No se ha encontrado un diario de corrección!"
 
-#. modules: base, consumption_calculation
+#. module: base
 #: view:workflow.activity:0
 #: field:workflow.workitem,act_id:0
+msgid "Activity"
+msgstr "Actividad"
+
+#. module: consumption_calculation
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
 msgid "Destination Location"
