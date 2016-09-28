@@ -1456,7 +1456,6 @@
                         <separator orientation="vertical"/>
                         <filter icon="terp-gtk-jump-to-ltr" string="To Review" domain="[('to_check','=',True)]" groups="base.group_extended" help="Journal Entries to Review"/>
                         <separator orientation="vertical"/>
-                        <separator orientation="vertical"/>
                         <field name="name"/>
                         <field name="ref"/>
                         <field name="partner_id"/>
