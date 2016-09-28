@@ -210,10 +210,7 @@ class users(osv.osv):
             # so that the new password is immediately used for further RPC requests, otherwise the user
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
-        if not all(self.is_password_strong(value, login).values()):
-            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                    'Password must be different from the login, it must contain '\
-                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
+        self.check_password(None, value, value, login)
         self.write(cr, uid, id, {'password': value})
 
     _columns = {
