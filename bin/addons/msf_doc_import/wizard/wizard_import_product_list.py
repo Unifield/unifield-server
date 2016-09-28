@@ -186,7 +186,7 @@ class wizard_import_product_list(osv.osv):
                         if exist_line_ids or in_list:
                             prod_brw = product_obj.browse(cr, uid, to_write['product_id'], context=context)
                             to_write.setdefault('error_list', []).append(
-                                _('Product [%s] %s is already in the database. Line not imported \n') % (
+                                _('Product [%s] %s is already in the product list. Line not imported \n') % (
                                     prod_brw.default_code,
                                     prod_brw.name,
                                 )

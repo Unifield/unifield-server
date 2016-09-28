@@ -74611,3 +74611,19 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:194
+#, python-format
+msgid "Line %s in the Excel file was added to the file of the lines with errors.Details: Product already in the product list \n"
+""
+msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes avec erreurs. Détails : Le produit est déjà dans la liste de produits.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:189
+#, python-format
+msgid "Product [%s] %s is already in the product list. Line not imported \n"
+""
+msgstr "Le produit [%s] %s est déjà dans la liste de produits. Ligne non importée \n"
+""
