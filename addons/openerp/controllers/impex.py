@@ -436,7 +436,6 @@ class ImpEx(SecuredController):
             report_path = rpc.session.execute('report', 'export', flds, domain,
                     params.model, params.fields2, None, export_format, ids, ctx)
 
-        import pdb; pdb.set_trace()
         f = open(report_path, 'rb')
         result = f.read()
         os.remove(report_path)
