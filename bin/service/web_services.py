@@ -32,17 +32,48 @@ import addons
 import ir
 import netsvc
 import pooler
-import updater
 import release
 import sql_db
 import tools
 import locale
 import logging
+import datetime
+import csv
+import re
 from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
-import datetime
 from updater import get_server_version
+from tools.misc import file_open
+from mako.template import Template
 
+def export_csv(fields, result):
+    try:
+        fp = StringIO()
+        writer = csv.writer(fp, quoting=csv.QUOTE_ALL)
+
+        writer.writerow(fields)
+
+        for data in result:
+            row = []
+            for d in data:
+                if isinstance(d, basestring):
+                    d = d.replace('\n',' ').replace('\t',' ')
+                    try:
+                        d = d.encode('utf-8')
+                    except:
+                        pass
+                if d is False: d = None
+                row.append(d)
+
+            writer.writerow(row)
+
+        fp.seek(0)
+        data = fp.read()
+        fp.close()
+
+        return data
+    except IOError, (errno, strerror):
+        raise Exception(_("Operation failed\nI/O error")+"(%s)" % (errno,))
 
 def check_tz():
     db = sql_db.db_connect('template1')
@@ -768,13 +799,14 @@ class report_spool(netsvc.ExportService):
         netsvc.ExportService.__init__(self, name)
         self.joinGroup('web-services')
         self._reports = {}
+        self._exports = {}
         self.id = 0
         self.id_protect = threading.Semaphore()
 
     def dispatch(self, method, auth, params):
         (db, uid, passwd ) = params[0:3]
         params = params[3:]
-        if method not in ['report','report_get']:
+        if method not in ['report','report_get', 'export']:
             raise KeyError("Method not supported %s" % method)
         security.check(db,uid,passwd)
         fn = getattr(self, 'exp_' + method)
@@ -784,6 +816,80 @@ class report_spool(netsvc.ExportService):
 
     def new_dispatch(self,method,auth,params):
         pass
+
+    def get_grp_data(self, result, flds):
+        data = []
+        for r in result:
+            tmp_data = []
+            for f in flds:
+                value = r.get(f,'')
+                if isinstance(value, tuple):
+                    value = value and value[1] or ''
+                tmp_data.append(value)
+            data.append(tmp_data)
+        return data
+
+    def exp_export(self, db_name, uid,  fields, domain, model, fields_name,
+            group_by=None, export_format='csv', ids=None, context=None):
+        res = {}
+        db, pool = pooler.get_db_and_pool(db_name)
+        cr = db.cursor()
+        model_obj = pool.get(model)
+        view_name = context.get('_terp_view_name', '')
+        if not ids:
+            ids = model_obj.search(cr, uid, domain, context=context)
+        # XXX if len(ids) > 2000 : do it in background
+
+        if group_by:
+            data = model_obj.read_group(cr, uid, domain, fields, group_by, 0, 0, context=context)
+
+            result_tmp = []  # List of processed data lines (dictionaries)
+            # Closure to recursively prepare and insert lines in 'result_tmp'
+            # (as much as the number of 'group_by' levels)
+            def process_data(line):
+                domain_line = line.get('__domain', [])
+                grp_by_line = line.get('__context', {}).get('group_by', [])
+                # If there is a 'group_by', we fetch data one level deeper
+                if grp_by_line:
+                    data = model_obj.read_group(domain_line, fields, grp_by_line, 0, 0, context=context)
+                    for line2 in data:
+                        line_copy = line.copy()
+                        line_copy.update(line2)
+                        process_data(line_copy)
+                # If 'group_by' is empty, this means we were at the last level
+                # so we insert the line in the final result
+                else:
+                    result_tmp.append(line)
+            # Prepare recursively the data to export (inserted in 'result_tmp')
+            for data_line in data:
+                process_data(data_line)
+            result = self.get_grp_data(result_tmp, fields)
+
+            result, fields_name = model_obj.filter_export_data_result(cr, uid, result, fields_name)
+            if export_format == "excel":
+                return result
+            return export_csv(fields_name, result)
+
+        result = model_obj.export_data(cr, uid, ids, fields, context=context)
+        if result.get('warning'):
+            common.warning(unicode(result.get('warning', False)), _('Export Error'))
+            return False
+        result = result.get('datas',[])
+
+        if export_format == "excel":
+            tmpl_filename = 'addons/base/report/templates/expxml.mako'
+            f = file_open(tmpl_filename)
+            template = f.read()
+            f.close()
+            body_mako_tmpl = Template(template)
+
+            tools_obj = pool.get('date.tools')
+            time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
+            title = 'Export %s %s' % (view_name, time_stamp)
+            res = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
+                    title=title, re=re)
+            return res.encode('utf-8')
+        return export_csv(fields, result)
 
     def exp_report(self, db, uid, object, ids, datas=None, context=None):
         if not datas:
