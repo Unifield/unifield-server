@@ -866,30 +866,34 @@ class report_spool(netsvc.ExportService):
             result = self.get_grp_data(result_tmp, fields)
 
             result, fields_name = model_obj.filter_export_data_result(cr, uid, result, fields_name)
+        else:
+
+            result = model_obj.export_data(cr, uid, ids, fields, context=context)
+            if result.get('warning'):
+                common.warning(unicode(result.get('warning', False)), _('Export Error'))
+                return False
+            result = result.get('datas',[])
+
             if export_format == "excel":
-                return result
-            return export_csv(fields_name, result)
+                tmpl_filename = 'addons/base/report/templates/expxml.mako'
+                f = file_open(tmpl_filename)
+                template = f.read()
+                f.close()
+                body_mako_tmpl = Template(template)
 
-        result = model_obj.export_data(cr, uid, ids, fields, context=context)
-        if result.get('warning'):
-            common.warning(unicode(result.get('warning', False)), _('Export Error'))
-            return False
-        result = result.get('datas',[])
+                tools_obj = pool.get('date.tools')
+                time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
+                title = 'Export %s %s' % (view_name, time_stamp)
+                res = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
+                        title=title, re=re)
+        if export_format == 'csv':
+            result = export_csv(fields, result)
 
-        if export_format == "excel":
-            tmpl_filename = 'addons/base/report/templates/expxml.mako'
-            f = file_open(tmpl_filename)
-            template = f.read()
-            f.close()
-            body_mako_tmpl = Template(template)
-
-            tools_obj = pool.get('date.tools')
-            time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
-            title = 'Export %s %s' % (view_name, time_stamp)
-            res = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
-                    title=title, re=re)
-            return res.encode('utf-8')
-        return export_csv(fields, result)
+        f = NamedTemporaryFile(delete=False)
+        file_path = f.name
+        f.write(res.encode('utf-8'))
+        f.close()
+        return file_path
 
     def exp_report(self, db, uid, object, ids, datas=None, context=None):
         if not datas:
