@@ -40,35 +40,6 @@ def datas_read(ids, model, flds, context=None):
     ctx = dict((context or {}), **rpc.session.context)
     return rpc.RPCProxy(model).export_data(ids, flds, ctx)
 
-def export_csv(fields, result):
-    try:
-        fp = StringIO.StringIO()
-        writer = csv.writer(fp, quoting=csv.QUOTE_ALL)
-
-        writer.writerow(fields)
-
-        for data in result:
-            row = []
-            for d in data:
-                if isinstance(d, basestring):
-                    d = d.replace('\n',' ').replace('\t',' ')
-                    try:
-                        d = d.encode('utf-8')
-                    except:
-                        pass
-                if d is False: d = None
-                row.append(d)
-
-            writer.writerow(row)
-
-        fp.seek(0)
-        data = fp.read()
-        fp.close()
-
-        return data
-    except IOError, (errno, strerror):
-        raise common.message(_("Operation failed\nI/O error")+"(%s)" % (errno,))
-
 def _fields_get_all(model, views, context=None):
 
     context = context or {}
@@ -382,12 +353,6 @@ class ImpEx(SecuredController):
             return _fields
 
         return rec(fields)
-    
-    @expose(template="/openerp/controllers/templates/expxml.mako")
-    def export_html(self, fields, result, view_name):
-        cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
-        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
-        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format())), 're': re}
 
     def get_grp_data(self, result, flds):
         data = []
@@ -435,11 +400,13 @@ class ImpEx(SecuredController):
 
         view_name = ctx.get('_terp_view_name', '')
 
+        ids = None
+        report = None
+        domain = params.search_domain or []
         if ctx.get('group_by_no_leaf'):
             ctx['client_export_data'] = True  # UTP-580-582-697 client export flag
 
             rpc_obj = rpc.RPCProxy(params.model)
-            domain = params.search_domain or []
             to_group = ctx.get('group_by', [])
             group_by = []
             for gr in to_group:
@@ -456,61 +423,28 @@ class ImpEx(SecuredController):
 
             flds = fields_to_read[:]
             params.fields2 = fields_to_read[:]
+            report = rpc.session.execute('report', 'export', flds, domain,
+                    params.model, params.fields2, group_by, export_format, ids, ctx)
 
-            data = rpc_obj.read_group(domain, flds, group_by, 0, 2000, ctx)
-
-            result_tmp = []  # List of processed data lines (dictionaries)
-            # Closure to recursively prepare and insert lines in 'result_tmp'
-            # (as much as the number of 'group_by' levels)
-            def process_data(line):
-                domain_line = line.get('__domain', [])
-                grp_by_line = line.get('__context', {}).get('group_by', [])
-                # If there is a 'group_by', we fetch data one level deeper
-                if grp_by_line:
-                    data = rpc_obj.read_group(domain_line, flds, grp_by_line, 0, 0, ctx)
-                    for line2 in data:
-                        line_copy = line.copy()
-                        line_copy.update(line2)
-                        process_data(line_copy)
-                # If 'group_by' is empty, this means we were at the last level
-                # so we insert the line in the final result
-                else:
-                    result_tmp.append(line)
-            # Prepare recursively the data to export (inserted in 'result_tmp')
-            for data_line in data:
-                process_data(data_line)
-            result = self.get_grp_data(result_tmp, flds)
-
-            result, params.fields2 = rpc_obj.filter_export_data_result(result, params.fields2)
-            if export_format == "excel":
-                return self.export_html(params.fields2, result, view_name)
-            return export_csv(params.fields2, result)
-
-        if not params.ids or all_records:
-            domain = params.search_domain or []
-
-            # (US-1360) Use not only the domain corresponding to the filters selected but also
-            # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
-            if 'original_domain' in ctx:
-                domain.extend(ctx['original_domain'])
-
-            if params.model == 'product.product':
-                ids = proxy.search(domain, 0, None, 0, ctx)
-            else:
-                ids = proxy.search(domain, 0, 2000, 0, ctx)
         else:
-            ids = params.ids or []
-        result = datas_read(ids, params.model, flds, context=ctx)
-        if result.get('warning'):
-            common.warning(unicode(result.get('warning', False)), _('Export Error'))
-            return False
-        result = result.get('datas',[])
+            if not params.ids or all_records:
+                # (US-1360) Use not only the domain corresponding to the filters selected but also
+                # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
+                if 'original_domain' in ctx:
+                    domain.extend(ctx['original_domain'])
+            else:
+                ids = params.ids or []
 
-        if import_compat == "1":
-            params.fields2 = flds
-        if export_format == "excel":
-            return self.export_html(params.fields2, result, view_name)
-        return export_csv(params.fields2, result)
+            if import_compat == "1":
+                params.fields2 = flds
+            report = rpc.session.execute('report', 'export', flds, domain,
+                    params.model, params.fields2, None, export_format, ids, ctx)
+
+        if export_format == 'excel':
+            cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
+            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
+        report = report.encode('utf-8')
+        return report
 
     @expose(template="/openerp/controllers/templates/imp.mako")
     def imp(self, error=None, records=None, success=None, **kw):
