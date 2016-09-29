@@ -866,6 +866,7 @@ class report_spool(netsvc.ExportService):
             result = self.get_grp_data(result_tmp, fields)
 
             result, fields_name = model_obj.filter_export_data_result(cr, uid, result, fields_name)
+            result = result.encode('utf-8')
         else:
 
             result = model_obj.export_data(cr, uid, ids, fields, context=context)
@@ -884,14 +885,15 @@ class report_spool(netsvc.ExportService):
                 tools_obj = pool.get('date.tools')
                 time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
                 title = 'Export %s %s' % (view_name, time_stamp)
-                res = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
+                result = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
                         title=title, re=re)
+                result = result.encode('utf-8')
         if export_format == 'csv':
             result = export_csv(fields, result)
 
         f = NamedTemporaryFile(delete=False)
         file_path = f.name
-        f.write(res.encode('utf-8'))
+        f.write(result)
         f.close()
         return file_path
 
