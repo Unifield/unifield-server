@@ -31,9 +31,7 @@ from openobject import tools
 from openobject.tools import expose, redirect, ast
 import simplejson
 import time
-from openobject.i18n import format
-import re
-
+import os
 
 product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
 def datas_read(ids, model, flds, context=None):
@@ -370,7 +368,6 @@ class ImpEx(SecuredController):
     def export_data(self, fname, fields, import_compat=False, export_format='csv', all_records=False, **kw):
 
         params, data_index = TinyDict.split(kw)
-        proxy = rpc.RPCProxy(params.model)
 
         flds = []
         for item in fields:
@@ -401,12 +398,11 @@ class ImpEx(SecuredController):
         view_name = ctx.get('_terp_view_name', '')
 
         ids = None
-        report = None
+        report_path = None
         domain = params.search_domain or []
         if ctx.get('group_by_no_leaf'):
             ctx['client_export_data'] = True  # UTP-580-582-697 client export flag
 
-            rpc_obj = rpc.RPCProxy(params.model)
             to_group = ctx.get('group_by', [])
             group_by = []
             for gr in to_group:
@@ -423,7 +419,7 @@ class ImpEx(SecuredController):
 
             flds = fields_to_read[:]
             params.fields2 = fields_to_read[:]
-            report = rpc.session.execute('report', 'export', flds, domain,
+            report_path = rpc.session.execute('report', 'export', flds, domain,
                     params.model, params.fields2, group_by, export_format, ids, ctx)
 
         else:
@@ -437,14 +433,17 @@ class ImpEx(SecuredController):
 
             if import_compat == "1":
                 params.fields2 = flds
-            report = rpc.session.execute('report', 'export', flds, domain,
+            report_path = rpc.session.execute('report', 'export', flds, domain,
                     params.model, params.fields2, None, export_format, ids, ctx)
 
+        import pdb; pdb.set_trace()
+        f = open(report_path, 'rb')
+        result = f.read()
+        os.remove(report_path)
         if export_format == 'excel':
             cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
             cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
-        report = report.encode('utf-8')
-        return report
+        return result
 
     @expose(template="/openerp/controllers/templates/imp.mako")
     def imp(self, error=None, records=None, success=None, **kw):
