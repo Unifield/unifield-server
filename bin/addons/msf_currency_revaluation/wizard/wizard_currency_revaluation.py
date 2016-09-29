@@ -847,7 +847,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
-                adj_balance = sums.get('unrealized_gain_loss', 0.0)
+                # (US-1682) The adj_balance is rounded, otherwise the booking amount of the first reval entry would be
+                # computed from a non-rounded functional amount, whereas its counterpart is based on a rounded amount
+                adj_balance = round(sums.get('unrealized_gain_loss', 0.0), 2)
                 if not adj_balance:
                     continue
 
