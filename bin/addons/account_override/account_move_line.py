@@ -320,10 +320,11 @@ class account_move_line(osv.osv):
             return 0.0
         # Create an sql query
         sql =  """
-            SELECT SUM(debit - credit)
+            SELECT SUM(COALESCE(debit,0) - COALESCE(credit,0))
             FROM account_move_line
             WHERE id in %s
         """
+
         cr.execute(sql, (tuple(ids),))
         res = cr.fetchall()
         if isinstance(ids, list):
