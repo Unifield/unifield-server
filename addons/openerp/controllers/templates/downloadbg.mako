@@ -73,9 +73,6 @@
 </%def>
 
 <%def name="content()">
-<table width="100%">
-    <tr><%include file="header.mako"/></tr>                                 
-</table>
 <div class="downloadbg-form">
     <div id="down_title">${_('Report generation in progress')}</div>
     <div id="pwidget">
@@ -90,7 +87,8 @@
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if total == 'True':
         <div>
-            <input type="button" value="Download report" onclick="window.open('/openerp/downloadbg?res_id=${res_id}', '_blank'); setTimeout(window.close, 10);" />
+            <input type="button" value="Download report"
+            onclick="window.open('/openerp/downloadbg?res_id=${res_id}', '_blank'); />
         </div>
     %endif
     </div>
