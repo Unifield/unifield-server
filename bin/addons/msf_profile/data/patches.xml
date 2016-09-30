@@ -103,5 +103,9 @@
             <field name="method">us_trans_admin_fr</field>
         </record>
 
+        <record id="us_1732_sync_state_ud" model="patch.scripts">
+            <field name="method">us_1732_sync_state_ud</field>
+        </record>
+
     </data>
 </openerp>
