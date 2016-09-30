@@ -178,12 +178,23 @@ class background_report(osv.osv_memory):
             'percent': fields.float('Percent'),
             'finished': fields.boolean('Finished'),
         }
+
+        _defaults = {
+            'file_name': lambda *a: '',
+            'report_name': lambda *a: '',
+            'report_id': lambda *a: '',
+            'percent': lambda *a: 0,
+            'finished': lambda *a: False,
+        }
+
         def update_percent(self, cr, uid, ids, percent, context=None):
             if isinstance(ids, (int, long)):
                 ids = [ids]
             if percent > 1.00:
                 percent = 1.00
             self.write(cr, uid, ids, {'percent': percent})
+
+
 
 
 background_report()

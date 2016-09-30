@@ -831,14 +831,59 @@ class report_spool(netsvc.ExportService):
 
     def exp_export(self, db_name, uid,  fields, domain, model, fields_name,
             group_by=None, export_format='csv', ids=None, context=None):
-        res = {}
+        res = {'result': None}
         db, pool = pooler.get_db_and_pool(db_name)
         cr = db.cursor()
+        bg_obj = pool.get('memory.background.report')
+        background_id = bg_obj.create(cr, uid, {})
+        create_thread = threading.Thread(target=self.export,
+                args=(cr, pool, uid, fields, domain, model, fields_name,
+                    background_id, group_by, export_format, ids, res, context))
+        create_thread.start()
+        create_thread.join(2)
+        if res['result']:
+            return res
+        return background_id
+
+    def export(self, cr, pool, uid,  fields, domain, model, fields_name,
+            bg_id, group_by=None, export_format='csv', ids=None, res=None,
+            context=None):
+
+        if not res:
+            res={}
+        if not context:
+            context={}
+
+        self.id_protect.acquire()
+        self.id += 1
+        report_id = self.id
+        self.id_protect.release()
+
         model_obj = pool.get(model)
         view_name = context.get('_terp_view_name', '')
+        tools_obj = pool.get('date.tools')
+        time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
+        title = 'Export %s %s' % (view_name, time_stamp)
+        self._reports[report_id] = {
+                'uid': uid,
+                'result': False,
+                'state': False,
+                'exception': None,
+                'format': export_format,
+                'filename': '%s_%s' % (view_name, time.strftime('%Y%m%d')),
+        }
+
+        bg_obj = pooler.get_pool(cr.dbname).get('memory.background.report')
+        bg_obj.write(cr, uid, [bg_id],
+                {
+                     'report_name': title,
+                     'report_id': report_id,
+                     'percent': 0.00,
+                     'finished': False
+                }, context=context)
+
         if not ids:
             ids = model_obj.search(cr, uid, domain, context=context)
-        # XXX if len(ids) > 2000 : do it in background
 
         if group_by:
             data = model_obj.read_group(cr, uid, domain, fields, group_by, 0, 0, context=context)
@@ -869,22 +914,30 @@ class report_spool(netsvc.ExportService):
             result = result.encode('utf-8')
         else:
 
-            result = model_obj.export_data(cr, uid, ids, fields, context=context)
+            result = {'datas': []}
+            counter = 0
+            chunk_size = 100
+            for i in range(0, len(ids), chunk_size):
+                ids_chunk = ids[i:i + chunk_size]
+                counter += len(ids_chunk)
+                result['datas'].extend(model_obj.export_data(cr, uid, ids_chunk, fields,
+                    context=context)['datas'])
+                progression = float(counter) / len(ids)
+                bg_obj.update_percent(cr, uid, bg_id, progression, context=context)
+
             if result.get('warning'):
                 common.warning(unicode(result.get('warning', False)), _('Export Error'))
+                res['result'] = False
                 return False
             result = result.get('datas',[])
 
-            if export_format == "excel":
+            if export_format == "xls":
                 tmpl_filename = 'addons/base/report/templates/expxml.mako'
                 f = file_open(tmpl_filename)
                 template = f.read()
                 f.close()
                 body_mako_tmpl = Template(template)
 
-                tools_obj = pool.get('date.tools')
-                time_stamp = time.strftime(tools_obj.get_datetime_format(cr, uid, context=context))
-                title = 'Export %s %s' % (view_name, time_stamp)
                 result = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
                         title=title, re=re)
                 result = result.encode('utf-8')
@@ -895,6 +948,15 @@ class report_spool(netsvc.ExportService):
         file_path = f.name
         f.write(result)
         f.close()
+        res['result'] = file_path
+        self._reports[report_id]['path'] = file_path
+        self._reports[report_id]['state'] = True
+        bg_obj.write(cr, uid, [bg_id],
+                {
+                     'file_name': file_path,
+                     'percent': 1.00,
+                     'finished': True
+                }, context=context)
         return file_path
 
     def exp_report(self, db, uid, object, ids, datas=None, context=None):
@@ -922,7 +984,8 @@ class report_spool(netsvc.ExportService):
                     tb = sys.exc_info()
                     self._reports[id]['exception'] = ExceptionWithTraceback('RML is not available at specified location or not enough data to print!', tb)
                 if context.get('background_id'):
-                    bg_obj.update_percent(cr, uid, context['background_id'], {'percent': 1.00}, context=context)
+                    bg_obj.update_percent(cr, uid, context['background_id'],
+                            percent=1.00, context=context)
                 if isinstance(result, tools.misc.Path):
                     self._reports[id]['path'] = result.path
                     self._reports[id]['result'] = ''
@@ -956,6 +1019,8 @@ class report_spool(netsvc.ExportService):
         if exc:
             self.abortResponse(exc, exc.message, 'warning', exc.traceback)
         res = {'state': result['state']}
+        if 'filename' in result and 'format' in result:
+            res['filename'] = '%s.%s' % (result['filename'], result['format'])
         if res['state']:
             if tools.config['reportgz']:
                 import zlib
