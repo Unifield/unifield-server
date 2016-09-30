@@ -34,10 +34,6 @@ import time
 import os
 
 product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
-def datas_read(ids, model, flds, context=None):
-    ctx = dict((context or {}), **rpc.session.context)
-    return rpc.RPCProxy(model).export_data(ids, flds, ctx)
-
 def _fields_get_all(model, views, context=None):
 
     context = context or {}
@@ -88,7 +84,7 @@ class ImpEx(SecuredController):
             for i, view in enumerate(params.view_mode):
                 views[view] = params.view_ids[i]
 
-        export_format = data.get('export_format', 'excel')
+        export_format = data.get('export_format', 'xls')
         all_records = data.get('all_records', '0')
 
         if not params.ids:
@@ -436,12 +432,17 @@ class ImpEx(SecuredController):
             report_path = rpc.session.execute('report', 'export', flds, domain,
                     params.model, params.fields2, None, export_format, ids, ctx)
 
-        f = open(report_path, 'rb')
-        result = f.read()
-        os.remove(report_path)
-        if export_format == 'excel':
-            cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
-            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
+        if isinstance(report_path, (int, long)):
+            # this is a background_id, the background wizzard should be displayed
+            cherrypy.response.headers['Content-Type'] = 'text/html'
+            raise tools.redirect('/openerp/downloadbg', res_id=report_path)
+        else:
+            f = open(report_path['result'], 'rb')
+            result = f.read()
+            os.remove(report_path['result'])
+            if export_format == 'xls':
+                cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
+            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.%s"'%(view_name, time.strftime('%Y%m%d'), export_format)
         return result
 
     @expose(template="/openerp/controllers/templates/imp.mako")

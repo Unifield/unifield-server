@@ -132,7 +132,7 @@
 
         function do_export(form){
             pre = do_pre_submit();
-            if (jQuery('#export_format').val() == 'excel') {
+            if (jQuery('#export_format').val() == 'xls') {
                 file_name = "data.xls";
             } else {
                 file_name = "data.csv";
@@ -203,7 +203,7 @@
                         <td class="label"><label for="export_format">${_("Format:")}</label></td>
                         <td>
                             <select id="export_format" name="export_format">
-                                <option value="excel" style="padding-right: 15px;">${_("Excel")}</option>
+                                <option value="xls" style="padding-right: 15px;">${_("Excel")}</option>
                                 <option value="csv" ${'selected=selected' if export_format == "csv" else ''}>${_("CSV")}</option>
                             </select>
                         </td>
