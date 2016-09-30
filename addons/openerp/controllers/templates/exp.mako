@@ -208,14 +208,10 @@
                             </select>
                         </td>
                         <td class="label">
-                            %if model == 'product.product':
-                            <label for="all_records">Export all query results (<span style="color: #ff0000;">WARNING: could break down machines</span>):</label>
-                            %else:
-                            <label for="all_records">Export all query results (limited to 2000 records):</label>
-                            %endif
+                            <label for="all_records">Export all query results:</label>
                         </td>
                         <td>
-                            <input type="checkbox" id="all_records" name="all_records" value="1" 
+                            <input type="checkbox" id="all_records" name="all_records" value="1"
                                 ${'checked=checked' if all_records=='1' else ''}
                                 ${'disabled=disabled' if not ids else ''}
                             />
