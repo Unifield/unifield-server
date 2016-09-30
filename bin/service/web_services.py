@@ -840,7 +840,9 @@ class report_spool(netsvc.ExportService):
                 args=(cr, pool, uid, fields, domain, model, fields_name,
                     background_id, group_by, export_format, ids, res, context))
         create_thread.start()
-        create_thread.join(2)
+
+        # after 4 seconds, the progress bar is displayed
+        create_thread.join(4)
         if res['result']:
             return res
         return background_id
@@ -955,7 +957,6 @@ class report_spool(netsvc.ExportService):
                 {
                      'file_name': file_path,
                      'percent': 1.00,
-                     'finished': True
                 }, context=context)
         return file_path
 
