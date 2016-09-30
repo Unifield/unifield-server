@@ -185,7 +185,7 @@ msgstr ""
 "nieuwe database."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Bevestig wachtwoord:"
 
 #: controllers/database.py:73
