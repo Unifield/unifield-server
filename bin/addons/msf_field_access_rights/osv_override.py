@@ -297,6 +297,10 @@ def write(self, cr, uid, ids, vals, context=None):
             'nomenclature_description',
         ]
 
+        rules_data = dict(
+            (x['id'], x['domain_text']) for x in
+            self.pool.get('msf_field_access_rights.field_access_rule').read(cr, uid, rules_search, ['domain_text'], context=context)
+        )
         for old_values in old_values_list:
             # keep only the property that changes between old an new values
             dict_diff = dict([(key, value) for key, value in vals.items() if old_values[key] != value])
@@ -306,21 +310,26 @@ def write(self, cr, uid, ids, vals, context=None):
             diff_properties = list(set(diff_properties).difference(fields_blacklist))
 
             if diff_properties:
+                rule_to_check = []
+                for rule_id in rules_search:
+                    if _record_matches_domain(self, cr, old_values['id'], rules_data[rule_id]):
+                        rule_to_check.append(rule_id)
 
-                # get the fields with write_access=False
-                cr.execute("""SELECT DISTINCT field_name
-                              FROM msf_field_access_rights_field_access_rule_line
-                              WHERE write_access='f' AND
-                              field_access_rule in %s AND
-                              field_name in %s
-                        """, (tuple(rules_search), tuple(diff_properties)))
-                no_write_access_fields = [x[0] for x in cr.fetchall()]
+                if rule_to_check:
+                    # get the fields with write_access=False
+                    cr.execute("""SELECT DISTINCT field_name
+                                  FROM msf_field_access_rights_field_access_rule_line
+                                  WHERE write_access='f' AND
+                                  field_access_rule in %s AND
+                                  field_name in %s
+                            """, (tuple(rule_to_check), tuple(diff_properties)))
+                    no_write_access_fields = [x[0] for x in cr.fetchall()]
 
-                for field_name in no_write_access_fields:
-                    if not _values_equate(columns[field_name]._type,
-                            old_values[field_name], vals[field_name]):
-                        # throw access denied error
-                        raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
+                    for field_name in no_write_access_fields:
+                        if not _values_equate(columns[field_name]._type,
+                                old_values[field_name], vals[field_name]):
+                            # throw access denied error
+                            raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
         if update_execution:
