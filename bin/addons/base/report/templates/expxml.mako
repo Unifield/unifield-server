@@ -78,7 +78,7 @@ x:FullRows="1">
         <Data ss:Type="Number">${d}</Data>
      % else:
        <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${d or ''}</Data>
+        <Data ss:Type="String">${d or '' | x}</Data>
     % endif
 </Cell>
   % endfor
