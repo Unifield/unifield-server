@@ -26,6 +26,7 @@
           <newline/>
           <field name="source"/>
           <field name="destination"/>
+          <field name="arguments"/>
         </search>
       </field>
     </record>
