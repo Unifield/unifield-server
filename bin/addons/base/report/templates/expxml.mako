@@ -65,20 +65,20 @@ x:FullRows="1">
   % for k in row:
      <% d = '%s'%k %>
      % if d in ('True', 'False'):
-       <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="Boolean">${d=='True' and '1' or '0'}</Data>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="Boolean">${d=='True' and '1' or '0'}</Data>
      % elif d and re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', d):
-       <Cell ss:StyleID="sShortDate">
-        <Data ss:Type="DateTime">${d}T00:00:00.000</Data>
+<Cell ss:StyleID="sShortDate">
+    <Data ss:Type="DateTime">${d}T00:00:00.000</Data>
      % elif d and re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$', d):
-       <Cell ss:StyleID="sDate">
-        <Data ss:Type="DateTime">${d.replace(' ','T')}.000</Data>
+<Cell ss:StyleID="sDate">
+    <Data ss:Type="DateTime">${d.replace(' ','T')}.000</Data>
      % elif d and re.match('^-?[0-9]+\.?[0-9]*$', d):
-       <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="Number">${d}</Data>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="Number">${d}</Data>
      % else:
-       <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${d or '' | x}</Data>
+<Cell ss:StyleID="ssBorder">
+    <Data ss:Type="String">${d or '' | x}</Data>
     % endif
 </Cell>
   % endfor
