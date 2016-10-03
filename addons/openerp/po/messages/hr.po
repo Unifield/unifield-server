@@ -181,7 +181,7 @@ msgstr ""
 "podataka."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Potvrda lozinke:"
 
 #: controllers/database.py:73

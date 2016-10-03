@@ -183,7 +183,7 @@ msgstr ""
 "Anda."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Konfirmasi password:"
 
 #: controllers/database.py:73

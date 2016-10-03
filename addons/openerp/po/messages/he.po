@@ -169,7 +169,7 @@ msgid ""
 msgstr "זוהי הסיסמה של המשתמש \"admin\" שיווצר במסד הנתונים החדש שלך."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "אימות סיסמא:"
 
 #: controllers/database.py:73

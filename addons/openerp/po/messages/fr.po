@@ -201,8 +201,8 @@ msgstr ""
 "nouvelle base de données."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
-msgstr "Confirmez le mot de passe :"
+msgid "Confirm administrator password:"
+msgstr "Confirmez le mot de passe administrateur:"
 
 #: controllers/database.py:73
 msgid ""

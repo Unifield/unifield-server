@@ -179,7 +179,7 @@ msgid ""
 msgstr "'admin' хэрэглэгчийн нууц үгээр шинэ өгөгдлийн сан үүсгэнэ."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Нууц үг давт"
 
 #: controllers/database.py:73

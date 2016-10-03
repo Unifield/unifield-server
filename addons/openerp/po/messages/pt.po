@@ -183,7 +183,7 @@ msgstr ""
 "dados."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Confirmar senha:"
 
 #: controllers/database.py:73

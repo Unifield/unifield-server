@@ -182,7 +182,7 @@ msgstr ""
 "нова база данни."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Потвърдете паролата:"
 
 #: controllers/database.py:73
