@@ -875,7 +875,7 @@ class report_spool(netsvc.ExportService):
                 'filename': '%s_%s' % (view_name, time.strftime('%Y%m%d')),
         }
 
-        bg_obj = pooler.get_pool(cr.dbname).get('memory.background.report')
+        bg_obj = pool.get('memory.background.report')
         bg_obj.write(cr, uid, [bg_id],
                 {
                      'report_name': title,
@@ -958,6 +958,8 @@ class report_spool(netsvc.ExportService):
                      'file_name': file_path,
                      'percent': 1.00,
                 }, context=context)
+        cr.commit()
+        cr.close()
         return file_path
 
     def exp_report(self, db, uid, object, ids, datas=None, context=None):
