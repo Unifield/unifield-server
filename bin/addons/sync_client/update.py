@@ -311,9 +311,6 @@ class update_received(osv.osv):
         'editable' : fields.boolean("Set editable"),
     }
 
-    _defaults = {
-        'log_first_notrun': '',
-    }
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 
     _logger = logging.getLogger('sync.client')
