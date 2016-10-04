@@ -143,7 +143,7 @@ class ir_attachment(osv.osv):
                         os.remove(attachment['path'])
 
                 local_filename = self.get_file_name(cr, uid, attachment,
-                        attachment['id']) 
+                        attachment['id'])
                 vals['path'] = self.get_file_path(cr, uid, local_filename)
                 f = open(vals['path'], 'wb')
                 f.write(base64.decodestring(datas))
@@ -200,12 +200,14 @@ class ir_attachment(osv.osv):
                 context)
 
         new_values = self._add_missing_default_values(cr, uid, values, context)
+        new_values['id'] = attachment_id
         local_filename = self.get_file_name(cr, uid, new_values, attachment_id)
         new_values['size'] = self.get_size(datas)
 
         # create the file on the local file system
         if 'datas_fname' in new_values:
             new_values['path'] = self.get_file_path(cr, uid, local_filename)
+        new_values.pop('id')
         self.write(cr, uid, attachment_id, new_values, context=context)
 
         f = open(new_values['path'], 'wb')
