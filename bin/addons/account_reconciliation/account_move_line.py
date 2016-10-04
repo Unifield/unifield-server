@@ -125,6 +125,7 @@ class account_move_line(osv.osv):
         total = 0.0
         merges_rec = []
         company_list = []
+        reconcile_partial_browsed = False
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -137,7 +138,6 @@ class account_move_line(osv.osv):
         # UTP-752: Add an attribute to reconciliation element if different instance levels
         previous_level = False
         different_level = False
-        reconcile_partial_browsed = False
         for line in self.browse(cr, uid, ids, context=context):
             # Do level check only if we don't know if more than 1 different level exists between lines
             if not different_level:
