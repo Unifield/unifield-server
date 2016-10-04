@@ -324,18 +324,47 @@ already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can o
 
 def get_hardware_id():
         mac = []
+        logger = logging.getLogger('sync.client')
         if sys.platform == 'win32':
-            for line in os.popen("ipconfig /all"):
-                if line.lstrip().startswith('Physical Address'):
-                    mac.append(line.split(':')[1].strip().replace('-',':'))
+            # US-1746: on windows machine get the hardware id from the registry
+            # to avoid hwid change with new network interface (wifi adtapters,
+            # vpn, ...)
+
+            # check if there is hwid stored in the registry
+            import _winreg
+
+            try:
+                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+                       "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0",
+                        0, _winreg.KEY_READ) as registry_key:
+                    hw_hash, regtype = _winreg.QueryValueEx(registry_key, "HardwareId")
+                    logger.info("HardwareId registry key : %s" % hw_hash)
+            except WindowsError:
+                logger.info("HardwareId registry key not found, create it.")
+
+                # generate a new hwid on windows
+                for line in os.popen("ipconfig /all"):
+                    if line.lstrip().startswith('Physical Address'):
+                        mac.append(line.split(':')[1].strip().replace('-',':'))
+                mac.sort()
+                logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
+                hw_hash = hashlib.md5(''.join(mac)).hexdigest()
+
+                # write the new hwid in the registry
+                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
+                       "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0",
+                       0, _winreg.KEY_ALL_ACCESS) as registry_key:
+                    _winreg.SetValueEx(registry_key, "HardwareId", 0,
+                                       _winreg.REG_EXPAND_SZ, hw_hash)
+                    logger.info("HardwareId generated registry key : %s" % hw_hash)
         else:
             for line in os.popen("/sbin/ifconfig"):
                 if line.find('Ether') > -1:
                     mac.append(line.split()[4])
-        mac.sort()
-        logging.getLogger('sync.client').info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
-        hw_hash = hashlib.md5(''.join(mac)).hexdigest()
-        logging.getLogger('sync.client').info('Hardware identifier: %s' % (hw_hash,))
+            mac.sort()
+            logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
+            hw_hash = hashlib.md5(''.join(mac)).hexdigest()
+        logger.info('Hardware identifier: %s' % (hw_hash,))
         return hw_hash
 
 
