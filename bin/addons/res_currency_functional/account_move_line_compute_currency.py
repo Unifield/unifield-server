@@ -330,7 +330,7 @@ class account_move_line_compute_currency(osv.osv):
                         cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple([o.id])])
                     # Update analytic lines
                     analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total,}, context=context)
+                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total, 'currency_id': al.functional_currency_id.id}, context=context)
                     # Update Addendum line that's not reconciled
                     addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
                     if not addendum_counterpart_ids:

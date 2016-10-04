@@ -282,10 +282,12 @@ class account_move_line(osv.osv):
 
         # US-533: date of JI reconciliation for total reconciliation linked
         # with above (4, 0)
-        # US-1682: trigger FXA computation
-        self.pool.get('account.move.line').write(cr, uid, ids, {
-                'reconcile_date': time.strftime('%Y-%m-%d'),
-            }, context=context)
+        # bypass orm methods: for specific lines:
+        #  - US-1766 FXA AJI should not be recomputed
+        #  - US-1682 yealry REV JI have a dedicated rate
+        cr.execute('update account_move_line set reconcile_date=%s where id in %s',
+            (time.strftime('%Y-%m-%d'), tuple(ids))
+        )
 
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
