@@ -168,7 +168,7 @@ class ir_attachment(osv.osv):
                     os.remove(attachment['path'])
 
         return super(ir_attachment, self).unlink(cr, uid, ids, context)
-    
+
     def get_root_path(self, cr, uid):
         default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
                 'base_setup', 'attachment_config_default')
@@ -182,9 +182,10 @@ class ir_attachment(osv.osv):
         return os.path.join(root_path, file_name)
 
     def get_file_name(self, cr, uid, values, attachment_id):
-        module_obj = self.pool.get(values['res_model'])
-        name_get = module_obj.name_get(cr, uid, [values['res_id']])[0][1]
-        file_name = '%s_%s_%s' % (name_get, attachment_id, values['datas_fname'])
+        resource_name = self._name_get_resname(cr, uid, [values['id']],
+                None, None, None)[values['id']]
+        file_name = '%s_%s_%s' % (resource_name or 'NOT_LINKED_ATTACHMENT',
+                attachment_id, values['datas_fname'])
 
         # remove unsafe characters (like '/', ' ', ...) that can broke path on some OS
         safe_char = re.compile("[a-zA-Z0-9.,_-]")
@@ -199,7 +200,7 @@ class ir_attachment(osv.osv):
                 context)
 
         new_values = self._add_missing_default_values(cr, uid, values, context)
-        local_filename = self.get_file_name(cr, uid, new_values, attachment_id) 
+        local_filename = self.get_file_name(cr, uid, new_values, attachment_id)
         new_values['size'] = self.get_size(datas)
 
         # create the file on the local file system
