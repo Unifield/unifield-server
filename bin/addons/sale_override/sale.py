@@ -1335,6 +1335,15 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 'Please change the currency to choose a compatible currency.'),
                 )
 
+            # 5/ Check if there is a temporary product in the sale order :
+            for line in order.order_line:
+                if line.product_id and line.product_id.international_status.id == 5: # if temporary product
+                    raise osv.except_osv(
+                        _("Warning"),
+                        _("You cannot confirm sale order containing temporary product"),
+                    )
+
+
             if not order.procurement_request and order.split_type_sale_order == 'original_sale_order':
                 line_obj.update_supplier_on_line(cr, uid, line_ids, context=context)
 

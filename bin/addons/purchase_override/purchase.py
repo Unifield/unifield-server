@@ -1107,6 +1107,15 @@ stock moves which are already processed : '''
                 errors = ' / '.join(str(x) for x in line_error)
                 raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price or 0.00 Subtotal. Lines in exception : %s') % errors)
 
+            # Check if there is a temporary product in product order lines :
+            for line in po.order_line:
+                if line.product_id.international_status.id == 5 : # if temporary product
+                    raise osv.except_osv(
+                        _("Warning"),
+                        _("You cannot confirm purchase order containing temporary product"),
+                    )
+
+
             # Check if the pricelist of the order is good according to currency of the partner
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid,
                     [('in_search', '=', po.partner_id.partner_type)],
@@ -1334,6 +1343,15 @@ stock moves which are already processed : '''
         sol_obj = self.pool.get('sale.order.line')
         exp_sol_obj = self.pool.get('expected.sale.order.line')
         so_obj =  self.pool.get('sale.order')
+
+        # Check if there is a temporary product in product order lines :
+        for po in self.browse(cr, uid, ids, context=context):
+            for line in po.order_line:
+                if line.product_id.international_status.id == 5 : # if temporary product
+                    raise osv.except_osv(
+                        _("Warning"),
+                        _("You cannot confirm purchase order containing temporary product"),
+                    )
 
         # Create extra lines on the linked FO/IR
         self.create_extra_lines_on_fo(cr, uid, ids, context=context)
