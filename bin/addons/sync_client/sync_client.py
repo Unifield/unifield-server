@@ -338,7 +338,7 @@ def get_hardware_id():
                        "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0",
                         0, _winreg.KEY_READ) as registry_key:
                     hw_hash, regtype = _winreg.QueryValueEx(registry_key, "HardwareId")
-                    logger.info("HardwareId registry key : %s" % hw_hash)
+                    logger.info("HardwareId registry key found: %s" % hw_hash)
             except WindowsError:
                 logger.info("HardwareId registry key not found, create it.")
 
@@ -356,7 +356,6 @@ def get_hardware_id():
                        0, _winreg.KEY_ALL_ACCESS) as registry_key:
                     _winreg.SetValueEx(registry_key, "HardwareId", 0,
                                        _winreg.REG_EXPAND_SZ, hw_hash)
-                    logger.info("HardwareId generated registry key : %s" % hw_hash)
         else:
             for line in os.popen("/sbin/ifconfig"):
                 if line.find('Ether') > -1:
