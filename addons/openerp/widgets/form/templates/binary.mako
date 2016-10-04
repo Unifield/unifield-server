@@ -25,9 +25,9 @@
         %if value:
         	<input type="hidden" name="${name}" value="${value}"></input>
        	% endif
-        % if text and model == 'ir.attachment' and ctx != 'usb_synchronization' and editable:
+        % if model == 'ir.attachment' and ctx != 'usb_synchronization' and editable:
         <a class="button-a" href="javascript: void(0)" onclick="save_binary_data('${name}', '${filename}')">${_("Open donation certificate")}</a>
-        % elif text and editable:
+        % elif editable:
         <a class="button-a" href="javascript: void(0)" onclick="save_binary_data('${name}', '${filename}')">${_("Save As")}</a>
         % endif
         % if editable and not readonly:

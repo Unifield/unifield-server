@@ -23,7 +23,7 @@ import base64,os,re
 import cherrypy
 from openerp import utils, widgets as tw, validators
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, common, TinyDict, TinyForm, expr_eval
+from openerp.utils import rpc, common, TinyDict, TinyForm, expr_eval, serve_file
 from error_page import _ep
 from openobject.tools import expose, redirect, validate, error_handler, exception_handler
 import openobject
@@ -750,7 +750,12 @@ class Form(SecuredController):
         
         elif params.id:
             proxy = rpc.RPCProxy(params.model)
-            res = proxy.read([params.id],[params.field], rpc.session.context)
+            res = proxy.read([params.id],[params.field, 'path', 'datas_fname'], rpc.session.context)
+            if res[0]['path']:
+                return serve_file.serve_file(res[0]['path'],
+                        "application/x-download", 'attachment',
+                        res[0]['datas_fname'])
+
             return base64.decodestring(res[0][params.field])
         else:
             return base64.decodestring(data[params.field])

@@ -22,12 +22,11 @@ import base64
 
 import cherrypy
 from openerp.controllers import SecuredController
-from openerp.utils import rpc, common, TinyDict
+from openerp.utils import rpc, common, TinyDict, serve_file
 
 from openobject.tools import expose, redirect
 
 import actions
-
 
 class Attachment(SecuredController):
 
@@ -57,11 +56,15 @@ class Attachment(SecuredController):
     def get(self, record=False):
         record = int(record)
         attachment = rpc.RPCProxy('ir.attachment').read(record, ['type',
-        'datas', 'url', 'name'], rpc.session.context)
+            'url', 'name', 'path', 'datas_fname', 'datas'], rpc.session.context)
 
         if attachment['type'] == 'binary':
-            cherrypy.response.headers["Content-Disposition"] = 'attachment; filename="%s"' % attachment['name']
-            return base64.decodestring(attachment['datas'])
+            if attachment['datas']:
+                # US1690: old style attachement where stored in base
+                cherrypy.response.headers["Content-Disposition"] = 'attachment; filename="%s"' % attachment['datas_fname']
+                return base64.decodestring(attachment['datas'])
+            else:
+                return serve_file.serve_file(attachment['path'], "application/x-download", 'attachment', attachment['datas_fname'])
         elif attachment['type'] == 'url':
             raise redirect(attachment['url'])
         raise Exception('Unknown attachment type %(type)s for attachment name %(name)s' % attachment)
