@@ -110,8 +110,8 @@ class FormCreate(DBForm):
         openobject.widgets.TextField(name='dbname', label=_('New database name:'), validator=formencode.validators.NotEmpty(), help=_("Choose the name of the database that will be created. The name must not contain any special character. Exemple: 'terp'.")),
 #       openobject.widgets.CheckBox(name='demo_data', label=_('Load Demonstration data:'), default=False, validator=validators.Bool(if_empty=False), help=_("Check this box if you want demonstration data to be installed on your new database. These data will help you to understand OpenERP, with predefined products, partners, etc.")),
         openobject.widgets.SelectField(name='language', options=get_lang_list, validator=validators.String(), label=_('Default Language:'), help=_("Choose the default language that will be installed for this database. You will be able to install new languages after installation through the administration menu.")),
-        ReplacePasswordField(name='confirm_password', label=_('Confirm password:'), help=_("This is the password of the 'admin' user that will be created in your new database. It has to be the same than the above field.")),
         ReplacePasswordField(name='admin_password', label=_('Administrator password:'), help=_("This is the password of the 'admin' user that will be created in your new database.")),
+        ReplacePasswordField(name='confirm_password', label=_('Confirm administrator password:'), help=_("This is the password of the 'admin' user that will be created in your new database. It has to be the same than the above field.")),
     ]
     validator = openobject.validators.Schema(chained_validators=[formencode.validators.FieldsMatch("admin_password","confirm_password")])
 

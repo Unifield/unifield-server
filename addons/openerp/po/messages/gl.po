@@ -186,7 +186,7 @@ msgstr ""
 "datos."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Confirmar contrasinal:"
 
 #: controllers/database.py:73

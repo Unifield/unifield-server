@@ -180,7 +180,7 @@ msgstr ""
 "database."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Bekræft adgangskode:"
 
 #: controllers/database.py:73
