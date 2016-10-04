@@ -322,20 +322,42 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
 already_syncing_error = osv.except_osv(_('Already Syncing...'), _('OpenERP can only perform one synchronization at a time - you must wait for the current synchronization to finish before you can synchronize again.'))
 
+def generate_new_hwid():
+    '''
+            @return: the new hardware id
+    '''
+    logger = logging.getLogger('sync.client')
+    mac_list = []
+    if sys.platform == 'win32':
+        # generate a new hwid on windows
+        for line in os.popen("ipconfig /all"):
+            if line.lstrip().startswith('Physical Address'):
+                mac_list.append(line.split(':')[1].strip().replace('-',':'))
+
+    else:
+        for line in os.popen("/sbin/ifconfig"):
+            if line.find('Ether') > -1:
+                mac_list.append(line.split()[4])
+    mac_list.sort()
+
+    logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
+    hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
+    logger.info('Hardware identifier: %s' % hw_hash)
+    return hw_hash
+
 def get_hardware_id():
-        mac = []
         logger = logging.getLogger('sync.client')
         if sys.platform == 'win32':
             # US-1746: on windows machine get the hardware id from the registry
             # to avoid hwid change with new network interface (wifi adtapters,
             # vpn, ...)
 
-            # check if there is hwid stored in the registry
             import _winreg
+            sub_key = 'SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0'
 
             try:
-                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-                       "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0",
+                # check if there is hwid stored in the registry
+                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, sub_key,
                         0, _winreg.KEY_READ) as registry_key:
                     hw_hash, regtype = _winreg.QueryValueEx(registry_key, "HardwareId")
                     logger.info("HardwareId registry key found: %s" % hw_hash)
@@ -343,27 +365,17 @@ def get_hardware_id():
                 logger.info("HardwareId registry key not found, create it.")
 
                 # generate a new hwid on windows
-                for line in os.popen("ipconfig /all"):
-                    if line.lstrip().startswith('Physical Address'):
-                        mac.append(line.split(':')[1].strip().replace('-',':'))
-                mac.sort()
-                logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
-                hw_hash = hashlib.md5(''.join(mac)).hexdigest()
+                hw_hash = generate_new_hwid()
 
                 # write the new hwid in the registry
-                with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE,
-                       "SYSTEM\ControlSet001\services\eventlog\Application\openerp-web-6.0",
-                       0, _winreg.KEY_ALL_ACCESS) as registry_key:
-                    _winreg.SetValueEx(registry_key, "HardwareId", 0,
-                                       _winreg.REG_EXPAND_SZ, hw_hash)
+                try:
+                    with _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, sub_key,
+                            0, _winreg.KEY_ALL_ACCESS) as registry_key:
+                        _winreg.SetValueEx(registry_key, "HardwareId", 0, _winreg.REG_SZ, hw_hash)
+                except WindowsError as e:
+                    logger.error('Error on write of HardwareId in the registry: %s' % set(e))
         else:
-            for line in os.popen("/sbin/ifconfig"):
-                if line.find('Ether') > -1:
-                    mac.append(line.split()[4])
-            mac.sort()
-            logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
-            hw_hash = hashlib.md5(''.join(mac)).hexdigest()
-        logger.info('Hardware identifier: %s' % (hw_hash,))
+            hw_hash = generate_new_hwid()
         return hw_hash
 
 
