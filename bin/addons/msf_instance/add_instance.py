@@ -262,16 +262,26 @@ class account_analytic_line(osv.osv):
 
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
-            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
+            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id', 'type'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+            # US-1766: in pipe FXA sync update: force currency
+            if journal['type'] == 'cur_adj':
+                currency = self.pool.get('res.users').get_company_currency_id(cr, uid)
+                if currency:
+                    vals['currency_id'] = currency
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         if 'journal_id' in vals:
-            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
+            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id', 'type'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+            # US-1766: in pipe FXA sync update: force currency
+            if journal['type'] == 'cur_adj':
+                currency = self.pool.get('res.users').get_company_currency_id(cr, uid)
+                if currency:
+                    vals['currency_id'] = currency
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
