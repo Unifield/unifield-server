@@ -137,6 +137,7 @@ class account_move_line(osv.osv):
         # UTP-752: Add an attribute to reconciliation element if different instance levels
         previous_level = False
         different_level = False
+        reconcile_partial_browsed = False
         for line in self.browse(cr, uid, ids, context=context):
             # Do level check only if we don't know if more than 1 different level exists between lines
             if not different_level:
@@ -148,12 +149,15 @@ class account_move_line(osv.osv):
             if line.reconcile_id:
                 raise osv.except_osv(_('Warning'), _('Already Reconciled!'))
             if line.reconcile_partial_id:
-                for line2 in line.reconcile_partial_id.line_partial_ids:
-                    if not line2.reconcile_id:
-                        if line2.id not in merges:
-                            merges.append(line2.id)
-                        # Next line have been modified from debit/credit to debit_currency/credit_currency
-                        total += (line2.debit_currency or 0.0) - (line2.credit_currency or 0.0)
+                if not reconcile_partial_browsed:
+                    # (US-1757) We browse the list of the already partially reconciled lines only once to get their total amount
+                    reconcile_partial_browsed = True
+                    for line2 in line.reconcile_partial_id.line_partial_ids:
+                        if not line2.reconcile_id:
+                            if line2.id not in merges:
+                                merges.append(line2.id)
+                            # Next line have been modified from debit/credit to debit_currency/credit_currency
+                            total += (line2.debit_currency or 0.0) - (line2.credit_currency or 0.0)
                 merges_rec.append(line.reconcile_partial_id.id)
             else:
                 unmerge.append(line.id)
