@@ -153,6 +153,7 @@ class wizard_import_po_line(osv.osv_memory):
                         'proc_type': 'make_to_order',
                         'default_code': False,
                         'confirmed_delivery_date': False,
+                        'line_number':'',
                     }
 
                     col_count = len(row)
@@ -245,11 +246,21 @@ class wizard_import_po_line(osv.osv_memory):
                         to_write.update(
                             comment=c_value['comment'],
                             warning_list=c_value['warning_list'])
+
+                        # Cell 8 : Line Number
+                        ln_value = check_line.line_number_value(
+                            row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
+                        to_write.update(
+                            line_number=ln_value['line_number'],
+                            error_list=ln_value['error_list'])
+
+
                         to_write.update(
                             to_correct_ok=any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                             show_msg_ok=any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
                             order_id=wiz.po_id.id,
                             text_error='\n'.join(to_write['error_list'] + to_write['warning_list']))
+
                         # we check consistency on the model of on_change functions to call for updating values
                         purchase_line_obj.check_line_consistency(
                             cr, uid, wiz.po_id.id, to_write=to_write, context=context)
@@ -265,8 +276,33 @@ class wizard_import_po_line(osv.osv_memory):
                             continue
 
                         # write order line on PO
-                        purchase_line_obj.create(cr, uid, to_write, context=context)
-                        vals['order_line'].append((0, 0, to_write))
+                        if wiz.po_id.state == 'rfq_sent':
+                            # several check before updating the RfQ :
+                            rfq_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
+                            pol_brw = purchase_line_obj.browse(cr, uid, rfq_ids, context=context)[0]
+                            if not rfq_ids:
+                                raise Exception(_("Request for Quotation with given order_id and line_number not found in the database."))
+                            elif p_value['product_code'] != pol_brw.product_id.default_code:
+                                raise Exception(_("Product code from database and from import must be the same."))
+                            elif not price_value['price_unit_defined']:
+                                raise Exception(_("Price must be defined in the RfQ import file."))
+                            else : # it's ok, we can update RfQ :
+                                # filter 'to_write' to not update unwanted values:
+                                filtered_write = {}
+                                if to_write['comment']:
+                                    filtered_write['comment'] = to_write['comment']
+                                filtered_write['price_unit'] = to_write['price_unit']
+                                filtered_write['functional_currency_id'] = to_write['functional_currency_id']
+                                # filtered_write['text_error'] = to_write['text_error']
+                                # filtered_write['to_correct_ok'] = to_write['to_correct_ok']
+
+                                purchase_line_obj.write(cr, uid, rfq_ids, filtered_write, context=context)
+
+                        else: # its a regular PO :
+                            purchase_line_obj.create(cr, uid, to_write, context=context)
+                        
+                        vals['order_line'].append((0, 0, to_write)) 
+
                         if to_write['error_list']:
                             lines_to_correct += 1
                         complete_lines += 1
