@@ -609,6 +609,9 @@ class account_move_line(osv.osv):
         'period_id': lambda self, cr, uid, c: c.get('period_id', False),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.move.line', context=c),
         'is_counterpart': lambda *a: False,
+        # prevent NULL value in sql record
+        'debit': 0,
+        'credit': 0,
     }
     _order = "date desc, id desc"
     _sql_constraints = [
