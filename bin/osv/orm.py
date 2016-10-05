@@ -1911,16 +1911,40 @@ class orm_template(object):
             return len(res)
         return res
 
+    def has_index(self,cr, column_name):
+        '''
+            check if column_name have an index in the database
+        '''
+        indexname = '%s_%s_index' % (self._table, column_name)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, self._table))
+        res = cr.dictfetchall()
+        if res:
+            return True
+        return False
+
     def exact_search_web(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
-        # if the domain exists, check that it contains at least one exact search
+        '''
+            If the domain exists, check that it contains at least one exact search.
+            And exact search contain at least one '=' in its subdomain
+            and this subdomain have a corresponding index in the databse
+        '''
         if args:
             exact_search = False
+            exact_search_with_no_index = []
             for sub_domain in args:
                 if len(sub_domain) > 1 and sub_domain[1] in ('=', '<=', '>='):
-                    exact_search = True
-                    break
+                    # check this column have an index, if not this doesn't
+                    # count as an exact search
+                    if self.has_index(cr, sub_domain[0]):
+                        exact_search = True
+                        break
+                    else:
+                        exact_search_with_no_index.append(_(self._columns[sub_domain[0]].string))
             if not exact_search:
-                raise except_orm(_("Error!"), _("You can't search updates without using at least one exact search term (precede your search with the character '=')."))
+                if exact_search_with_no_index:
+                    raise except_orm(_("Error!"), _("Sorry, the field(s) '%s' cannot be search alone with '='. Use '=' with others search fields.") % ', '.join(exact_search_with_no_index))
+                else:
+                    raise except_orm(_("Error!"), _("You can't search updates without using at least one exact search term (precede your search with the character '=')."))
         return self.search(cr, uid, args, offset, limit,
                 order, context=context, count=count)
 
