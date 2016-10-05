@@ -195,7 +195,7 @@ class update(osv.osv):
         'handle_priority': fields.boolean('Handle Priority'),
     }
 
-    _order = 'sequence, create_date desc'
+    _order = 'create_date desc, id desc'
 
     _sql_constraints = [
         ('detect_duplicated_updates','UNIQUE (session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
@@ -215,6 +215,12 @@ class update(osv.osv):
         cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_sequence_id_index'")
         if not cr.fetchone():
             cr.execute("CREATE INDEX sync_server_update_sequence_id_index on sync_server_update (sequence, id)")
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_model_create_date_id_index'")
+        if not cr.fetchone():
+            cr.execute("CREATE INDEX sync_server_update_model_create_date_id_index ON sync_server_update(model, create_date, id)")
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_create_date_id_index'")
+        if not cr.fetchone():
+            cr.execute("CREATE INDEX sync_server_update_create_date_id_index ON sync_server_update(create_date, id)")
 
 #    def __init__(self, pool, cr):
 #        self._cache_pullers = SavePullerCache(self)
@@ -658,8 +664,6 @@ class update(osv.osv):
                     forced_values[k] = unicode(v)
         return fields, forced_values
 
-    _order = 'create_date desc'
-    
 update()
 puller_ids_rel()
 
