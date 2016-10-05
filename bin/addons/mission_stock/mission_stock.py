@@ -37,6 +37,67 @@ import cStringIO
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
 STOCK_MISSION_REPORT_NAME_PATTERN = 'Stock_Mission_Rerport_%s_%s.csv'
 CSV_DELIMITER = ';'
+
+HEADER_DICT = {
+        'ns_nv_vals': (
+            _('Reference'),
+            _('Name'),
+            _('UoM'),
+            _('Instance stock'),
+            _('Warehouse stock'),
+            _('Cross-Docking Qty.'),
+            _('Secondary Stock Qty.'),
+            _('Internal Cons. Unit Qty.'),
+            _('AMC'),
+            _('FMC'),
+            _('In Pipe Qty')),
+        'ns_v_vals': (
+            _('Reference'),
+            _('Name'),
+            _('UoM'),
+            _('Cost Price'),
+            _('Func. Cur.'),
+            _('Instance stock'),
+            _('Instance stock val.'),
+            _('Warehouse stock'),
+            _('Cross-Docking Qty.'),
+            _('Secondary Stock Qty.'),
+            _('Internal Cons. Unit Qty.'),
+            _('AMC'),
+            _('FMC'),
+            _('In Pipe Qty')),
+        's_nv_vals': (
+            _('Reference'),
+            _('Name'),
+            _('UoM'),
+            _('Instance stock'),
+            _('Stock Qty.'),
+            _('Unallocated Stock Qty.'),
+            _('Cross-Docking Qty.'),
+            _('Secondary Stock Qty.'),
+            _('Internal Cons. Unit Qty.'),
+            _('AMC'),
+            _('FMC'),
+            _('In Pipe Qty')),
+        's_v_vals': (
+            _('Reference'),
+            _('Name'),
+            _('UoM'),
+            _('Cost Price'),
+            _('Func. Cur.'),
+            _('Instance stock'),
+            _('Instance stock val.'),
+            _('Stock Qty.'),
+            _('Unallocated Stock Qty.'),
+            _('Cross-Docking Qty.'),
+            _('Secondary Stock Qty.'),
+            _('Internal Cons. Unit Qty.'),
+            _('AMC'),
+            _('FMC'),
+            _('In Pipe Qty')),
+        }
+
+
 class excel_semicolon(csv.excel):
     delimiter = CSV_DELIMITER
 
@@ -492,7 +553,7 @@ class stock_mission_report(osv.osv):
                 '%%s',
                 '%%s',
                 trim(to_char(l.in_pipe_qty, '999999999999.999'))
-                ) AS ns_nv_data,
+                ) AS ns_nv_vals,
                 (quote_literal(replace(l.default_code, '%%', '%%%%')),
                 quote_literal(replace(pt.name, '%%', '%%%%')),
                 quote_literal(replace(pu.name, '%%', '%%%%')),
@@ -505,7 +566,7 @@ class stock_mission_report(osv.osv):
                 '%%s',
                 '%%s',
                 trim(to_char(l.in_pipe_qty, '999999999999.999'))
-                ) AS s_nv_data,
+                ) AS s_nv_vals,
                 (quote_literal(replace(l.default_code, '%%', '%%%%')),
                 quote_literal(replace(pt.name, '%%', '%%%%')),
                 quote_literal(replace(pu.name, '%%', '%%%%')),
@@ -520,7 +581,7 @@ class stock_mission_report(osv.osv):
                 '%%s',
                 trim(to_char(l.cu_qty, '999999999999.999')),
                 trim(to_char(l.in_pipe_qty, '999999999999.999'))
-                ) AS ns_v_data,
+                ) AS ns_v_vals,
                 (quote_literal(replace(l.default_code, '%%', '%%%%')),
                 quote_literal(replace(pt.name, '%%', '%%%%')),
                 quote_literal(replace(pu.name, '%%', '%%%%')),
@@ -536,7 +597,7 @@ class stock_mission_report(osv.osv):
                 '%%s',
                 '%%s',
                 trim(to_char(l.in_pipe_qty, '999999999999.999'))
-                ) AS s_v_data
+                ) AS s_v_vals
             FROM stock_mission_report_line l
                  LEFT JOIN product_product pp ON l.product_id = pp.id
                  LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -557,80 +618,14 @@ class stock_mission_report(osv.osv):
             if not attachments_path or not os.path.exists(attachments_path):
                 raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
 
-            field_to_file = {
-                    'ns_nv_data': { # No split, no valuation
+            field_to_file = {}
+            for report_type in ('ns_nv_vals', 'ns_v_vals', 's_nv_vals',
+                    's_v_vals'):
+                field_to_file[report_type] = {
                         'file': open(os.path.join(attachments_path,
-                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 'ns_nv_vals')), 'w'),
-                        'header': (
-                            _('Reference'),
-                            _('Name'),
-                            _('UoM'),
-                            _('Instance stock'),
-                            _('Warehouse stock'),
-                            _('Cross-Docking Qty.'),
-                            _('Secondary Stock Qty.'),
-                            _('Internal Cons. Unit Qty.'),
-                            _('AMC'),
-                            _('FMC'),
-                            _('In Pipe Qty'))
-                    },
-                    'ns_v_data': { # No split, valuation
-                        'file': open(os.path.join(attachments_path,
-                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 'ns_v_vals')), 'w'),
-                        'header': (
-                            _('Reference'),
-                            _('Name'),
-                            _('UoM'),
-                            _('Cost Price'),
-                            _('Func. Cur.'),
-                            _('Instance stock'),
-                            _('Instance stock val.'),
-                            _('Warehouse stock'),
-                            _('Cross-Docking Qty.'),
-                            _('Secondary Stock Qty.'),
-                            _('Internal Cons. Unit Qty.'),
-                            _('AMC'),
-                            _('FMC'),
-                            _('In Pipe Qty'))
-                    },
-                    's_nv_data': { # Split, no valuation
-                        'file': open(os.path.join(attachments_path,
-                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 's_nv_vals')), 'w'),
-                        'header': (
-                            _('Reference'),
-                            _('Name'),
-                            _('UoM'),
-                            _('Instance stock'),
-                            _('Stock Qty.'),
-                            _('Unallocated Stock Qty.'),
-                            _('Cross-Docking Qty.'),
-                            _('Secondary Stock Qty.'),
-                            _('Internal Cons. Unit Qty.'),
-                            _('AMC'),
-                            _('FMC'),
-                            _('In Pipe Qty'))
-                    },
-                    's_v_data': { # Split, valuation
-                        'file': open(os.path.join(attachments_path,
-                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, 's_v_vals')), 'w'),
-                        'header': (
-                            _('Reference'),
-                            _('Name'),
-                            _('UoM'),
-                            _('Cost Price'),
-                            _('Func. Cur.'),
-                            _('Instance stock'),
-                            _('Instance stock val.'),
-                            _('Stock Qty.'),
-                            _('Unallocated Stock Qty.'),
-                            _('Cross-Docking Qty.'),
-                            _('Secondary Stock Qty.'),
-                            _('Internal Cons. Unit Qty.'),
-                            _('AMC'),
-                            _('FMC'),
-                            _('In Pipe Qty'))
-                    },
-            }
+                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
+                                report_type)), 'w'),
+                        'header': HEADER_DICT[report_type]}
 
             # write all headers of the csv file
             for field in field_to_file.keys():
