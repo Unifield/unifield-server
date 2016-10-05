@@ -1278,6 +1278,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         # Objects
         line_obj = self.pool.get('sale.order.line')
         pricelist_obj = self.pool.get('product.pricelist')
+        product_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -1336,9 +1337,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 )
 
             # 5/ Check if there is a temporary product in the sale order :
-            for line in order.order_line:
-                if line.product_id and line.product_id.international_status.id == 5: # if temporary product
-                    raise osv.except_osv(
+            temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
+            sol_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context)
+            if len(sol_with_temp_ids) > 0:
+                raise osv.except_osv(
                         _("Warning"),
                         _("You cannot confirm sale order containing temporary product"),
                     )

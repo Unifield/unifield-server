@@ -1084,6 +1084,7 @@ stock moves which are already processed : '''
         '''
         # Objects
         po_line_obj = self.pool.get('purchase.order.line')
+        product_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -1108,9 +1109,10 @@ stock moves which are already processed : '''
                 raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price or 0.00 Subtotal. Lines in exception : %s') % errors)
 
             # Check if there is a temporary product in product order lines :
-            for line in po.order_line:
-                if line.product_id.international_status.id == 5 : # if temporary product
-                    raise osv.except_osv(
+            temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
+            pol_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
+            if len(pol_with_temp_ids) > 0:
+                raise osv.except_osv(
                         _("Warning"),
                         _("You cannot confirm purchase order containing temporary product"),
                     )
@@ -1343,12 +1345,15 @@ stock moves which are already processed : '''
         sol_obj = self.pool.get('sale.order.line')
         exp_sol_obj = self.pool.get('expected.sale.order.line')
         so_obj =  self.pool.get('sale.order')
+        product_obj = self.pool.get('product.product')
+        po_line_obj = self.pool.get('purchase.order.line')
 
         # Check if there is a temporary product in product order lines :
         for po in self.browse(cr, uid, ids, context=context):
-            for line in po.order_line:
-                if line.product_id.international_status.id == 5 : # if temporary product
-                    raise osv.except_osv(
+            temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
+            pol_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
+            if len(pol_with_temp_ids) > 0:
+                raise osv.except_osv(
                         _("Warning"),
                         _("You cannot confirm purchase order containing temporary product"),
                     )
