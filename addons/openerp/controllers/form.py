@@ -739,7 +739,6 @@ class Form(SecuredController):
 
     @expose(content_type='application/octet-stream')
     def save_binary_data(self, _fname='file.dat', *args, **kw):
-        import pdb; pdb.set_trace()
         params, data = TinyDict.split(kw)
 
         cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s"' % _fname
