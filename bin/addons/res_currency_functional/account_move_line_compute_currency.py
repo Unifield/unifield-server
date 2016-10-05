@@ -367,8 +367,20 @@ class account_move_line_compute_currency(osv.osv):
                         from_another_instance = True
                     if multi_instance and (from_sync or from_another_instance):
                         continue
+
+
+                    # create_addendum_line: we need a context (if currency_table is used by yearly reval US-1682)
+                    # but this context should not contain any sync value or FXA JI/AJI is not well created in some use case
+                    # for example: create func. unbalanced entries at proj, sync to coordo and reconcile at coordo
+                    # when reconcilation is received at project, FXA entries should be created (UF-2501)
+                    new_ctx = context.copy()
+                    for sync_context_key in ('sync_update_execution', 'do_not_create_analytic_line', 'update_mode'):
+                        if new_ctx.get(sync_context_key):
+                            del new_ctx[sync_context_key]
+
+
                     # If no exception, do main process about new addendum lines
-                    partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total, context=context)
+                    partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total, context=new_ctx)
                     if partner_line_id:
                         # Add it to reconciliation (same that other lines)
                         reconcile_txt = ''
