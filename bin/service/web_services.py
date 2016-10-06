@@ -461,6 +461,14 @@ class common(_ObjectService):
             return res or False
         elif method == 'number_update_modules':
             return security.number_update_modules(params[0])
+        elif method == 'change_password':
+            try:
+                security.change_password(params[0], params[1], params[2],
+                        params[3], params[4])
+            except Exception as e:
+                msg = str(e.value)
+                return msg
+            return True
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])
