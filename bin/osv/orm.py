@@ -1942,7 +1942,7 @@ class orm_template(object):
                         exact_search_with_no_index.append(_(self._columns[sub_domain[0]].string))
             if not exact_search:
                 if exact_search_with_no_index:
-                    raise except_orm(_("Error!"), _("Sorry, the field(s) '%s' cannot be search alone with '='. Use '=' with others search fields.") % ', '.join(exact_search_with_no_index))
+                    raise except_orm(_("Error!"), _("Sorry, the field(s) '%s' can not be searched alone with '='. Use '=' with others search fields.") % ', '.join(exact_search_with_no_index))
                 else:
                     raise except_orm(_("Error!"), _("You can't search updates without using at least one exact search term (precede your search with the character '=')."))
         return self.search(cr, uid, args, offset, limit,
