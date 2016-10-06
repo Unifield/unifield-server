@@ -2076,6 +2076,7 @@ class stock_picking(osv.osv):
         '''
         get functional values
         '''
+        pack_fam_obj = self.pool.get('pack.family.memory')
         result = {}
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
@@ -2083,13 +2084,13 @@ class stock_picking(osv.osv):
         for val in picking_to_families.values():
             family_set.update(val)
 
-        family_read_result = self.pool.get('pack.family.memory').read(cr, uid,
+        family_read_result = pack_fam_obj.read(cr, uid,
                 list(family_set),
                 ['num_of_packs', 'total_weight', 'total_volume', 'shipment_id', 'not_shipped'],
                 context=context)
 
         family_dict = dict((x['id'], x) for x in family_read_result)
-
+        
         for current_id, family_ids in picking_to_families.items():
             default_values = {
                 'num_of_packs': 0,
@@ -2099,18 +2100,22 @@ class stock_picking(osv.osv):
             }
             result[current_id] = default_values
             if family_ids:
+                num_of_packs = 0
+                total_weight = 0
+                total_volume = 0
                 for family_id in family_ids:
                     if family_id in family_dict:
                         family = family_dict[family_id]
                         if family['shipment_id'] and family['not_shipped']:
                             if self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context):
                                 continue
-                    num_of_packs = family['num_of_packs']
-                    result[current_id]['num_of_packs'] = int(num_of_packs)
-                    total_weight = family['total_weight']
-                    result[current_id]['total_weight'] = float(total_weight)
-                    total_volume = family['total_volume']
-                    result[current_id]['total_volume'] = float(total_volume)
+                    num_of_packs += family['num_of_packs']
+                    total_weight += family['total_weight']
+                    total_volume += family['total_volume']
+
+                result[current_id]['num_of_packs'] = int(num_of_packs)
+                result[current_id]['total_weight'] = float(total_weight)
+                result[current_id]['total_volume'] = float(total_volume)
         return result
 
     def is_completed(self, cr, uid, ids, context=None):
