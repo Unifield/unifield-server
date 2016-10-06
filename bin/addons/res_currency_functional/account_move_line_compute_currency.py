@@ -330,7 +330,7 @@ class account_move_line_compute_currency(osv.osv):
                         cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple([o.id])])
                     # Update analytic lines
                     analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total,}, context=context)
+                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total, 'currency_id': al.functional_currency_id.id}, context=context)
                     # Update Addendum line that's not reconciled
                     addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
                     if not addendum_counterpart_ids:
@@ -367,8 +367,20 @@ class account_move_line_compute_currency(osv.osv):
                         from_another_instance = True
                     if multi_instance and (from_sync or from_another_instance):
                         continue
+
+
+                    # create_addendum_line: we need a context (if currency_table is used by yearly reval US-1682)
+                    # but this context should not contain any sync value or FXA JI/AJI is not well created in some use case
+                    # for example: create func. unbalanced entries at proj, sync to coordo and reconcile at coordo
+                    # when reconcilation is received at project, FXA entries should be created (UF-2501)
+                    new_ctx = context.copy()
+                    for sync_context_key in ('sync_update_execution', 'do_not_create_analytic_line', 'update_mode'):
+                        if new_ctx.get(sync_context_key):
+                            del new_ctx[sync_context_key]
+
+
                     # If no exception, do main process about new addendum lines
-                    partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total, context=context)
+                    partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total, context=new_ctx)
                     if partner_line_id:
                         # Add it to reconciliation (same that other lines)
                         reconcile_txt = ''
