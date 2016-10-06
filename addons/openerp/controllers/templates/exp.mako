@@ -208,7 +208,7 @@
                             </select>
                         </td>
                         <td class="label">
-                            <label for="all_records">Export all query results:</label>
+                            <label for="all_records">Export all query results: (<span style="color: #ff0000;">could impact machine performance</span>):</label>
                         </td>
                         <td>
                             <input type="checkbox" id="all_records" name="all_records" value="1"
