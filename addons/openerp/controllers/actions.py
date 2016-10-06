@@ -107,7 +107,7 @@ def execute_window(view_ids, model, res_id=False, domain=None, view_type='form',
     # if it's the end of module installation, restart the pool
     # to be able to use this new modules
     if name:
-        if name == 'Module Upgrade Install':
+        if name == _('Module Upgrade Install'):
             restart_pooler_if_new_module()
 
     elif view_ids:
