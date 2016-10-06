@@ -14,6 +14,18 @@ from openobject.tools import extract_zip_file
 class ModuleForm(form.Form):
     _cp_path = "/openerp/modules"
 
+    def has_new_modules(self):
+        """ Returns whether there are new web modules available for download
+        (brand new or updates)
+        :rtype bool:
+        """
+        return bool([
+            name for (name, version) in rpc.RPCProxy('ir.module.module').list_web()
+            if (not addons.exists(name)
+                or version > addons.get_info(name).get('version', '0')
+                or name not in addons._loaded[cherrypy.session.get('db')])
+        ])
+
     def get_new_modules(self):
         if not addons.writeable: return []
         modules = rpc.RPCProxy('ir.module.module')
