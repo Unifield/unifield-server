@@ -42,6 +42,7 @@ from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 import datetime
 from updater import get_server_version
+from passlib.hash import bcrypt
 
 
 def check_tz():
@@ -86,7 +87,8 @@ class db(netsvc.ExportService):
             params = params[1:]
             security.check_super(passwd)
         elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
-                'check_timezone', 'connected_to_prod_sync_server' ]:
+                'check_timezone', 'connected_to_prod_sync_server',
+                'check_super_password_validity' ]:
             # params = params
             # No security check for these methods
             pass
@@ -112,10 +114,11 @@ class db(netsvc.ExportService):
         self.id += 1
         id = self.id
         self.id_protect.release()
-
         self.actions[id] = {'clean': False}
-
         self._create_empty_database(db_name)
+
+        # encrypt the db admin password
+        user_password = bcrypt.encrypt(user_password)
 
         class DBInitialize(object):
             def __call__(self, serv, id, db_name, demo, lang, user_password='admin'):
@@ -167,6 +170,13 @@ class db(netsvc.ExportService):
         create_thread.start()
         self.actions[id]['thread'] = create_thread
         return id
+
+    def exp_check_super_password_validity(self, password):
+        try:
+            security.check_super_password_validity(password)
+        except Exception as e:
+            return str(e)
+        return True
 
     def exp_check_timezone(self):
         return check_tz()
@@ -466,7 +476,7 @@ class common(_ObjectService):
                 security.change_password(params[0], params[1], params[2],
                         params[3], params[4])
             except Exception as e:
-                msg = str(e.value)
+                msg = str(e)
                 return msg
             return True
         elif method == 'logout':
