@@ -87,7 +87,8 @@
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if total == 'True':
         <div>
-            <input type="button" value="Download report" onclick="window.open('/openerp/downloadbg?res_id=${res_id}', '_blank'); setTimeout(window.close, 10);" />
+            <input type="button" value="Download report"
+            onclick="window.open('/openerp/downloadbg?res_id=${res_id}', '_blank'); window.frameElement.close()" />
         </div>
     %endif
     </div>
