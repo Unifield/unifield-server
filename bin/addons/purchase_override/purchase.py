@@ -1125,6 +1125,8 @@ stock moves which are already processed : '''
                     todo.append(line.id)
                 if line.soq_updated:
                     reset_soq.append(line.id)
+                if line.product_id.state.name.lower() == "stopped":
+                    raise osv.except_osv(_('Error'), _('You can not validate a PO with stopped products.'))
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
             self.log(cr, uid, po.id, message)
