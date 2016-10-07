@@ -230,6 +230,11 @@ class Database(BaseController):
             return self.create()
 
         ok = False
+        res = rpc.session.execute_db('check_super_password_validity', admin_password)
+        if res is not True:
+            self.msg = {'message': res,
+                        'title': ustr(_('Bad admin password'))}
+            return self.create()
         try:
             res = rpc.session.execute_db('create', password, dbname, demo_data, language, admin_password)
             while True:
