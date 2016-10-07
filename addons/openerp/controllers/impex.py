@@ -437,8 +437,8 @@ class ImpEx(SecuredController):
             cherrypy.response.headers['Content-Type'] = 'text/html'
             raise tools.redirect('/openerp/downloadbg', res_id=report_path)
         else:
-            f = open(report_path['result'], 'rb')
-            result = f.read()
+            with open(report_path['result'], 'rb') as report_file:
+                result = report_file.read()
             os.remove(report_path['result'])
             if export_format == 'xls':
                 cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
