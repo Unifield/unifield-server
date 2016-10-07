@@ -214,7 +214,7 @@ class Root(SecuredController):
         location = url(location or '/', kw or {})
 
         if cherrypy.request.params.get('tg_format') == 'json':
-            if rpc.session.change_passowrd(db, user, password, new_password,
+            if rpc.session.change_password(db, user, password, new_password,
                     confirm_password) > 0:
                 return dict(result=1)
             return dict(result=0)
