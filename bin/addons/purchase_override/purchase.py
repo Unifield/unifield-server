@@ -1110,8 +1110,7 @@ stock moves which are already processed : '''
 
             # Check if there is a temporary product in product order lines :
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
-            pol_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            if len(pol_with_temp_ids) > 0:
+            if po_line_obj.search_exist(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context):
                 raise osv.except_osv(
                         _("Warning"),
                         _("You cannot confirm purchase order containing temporary product"),
@@ -1351,8 +1350,7 @@ stock moves which are already processed : '''
         # Check if there is a temporary product in product order lines :
         for po in self.browse(cr, uid, ids, context=context):
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
-            pol_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            if len(pol_with_temp_ids) > 0:
+            if po_line_obj.search_exist(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context):
                 raise osv.except_osv(
                         _("Warning"),
                         _("You cannot confirm purchase order containing temporary product"),

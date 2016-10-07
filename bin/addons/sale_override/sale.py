@@ -1338,8 +1338,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             # 5/ Check if there is a temporary product in the sale order :
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
-            sol_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            if len(sol_with_temp_ids) > 0:
+            if line_obj.search_exist(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context):
                 raise osv.except_osv(
                         _("Warning"),
                         _("You cannot confirm sale order containing temporary product"),
