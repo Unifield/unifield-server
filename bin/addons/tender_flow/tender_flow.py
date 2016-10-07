@@ -641,6 +641,7 @@ class tender(osv.osv):
             for line in tender.tender_line_ids:
                 if line.line_state == 'cancel':
                     continue
+
                 data.setdefault(line.supplier_id.id, {}) \
                     .setdefault('order_line', []).append((0,0,{'name': line.product_id.partner_ref,
                                                                'product_qty': line.qty,
@@ -651,6 +652,7 @@ class tender(osv.osv):
                                                                'date_planned': line.date_planned,
                                                                'move_dest_id': False,
                                                                'notes': line.product_id.description_purchase,
+                                                               'confirmed_delivery_date': line.purchase_order_line_id.confirmed_delivery_date,
                                                                }))
                     
                 # fill data corresponding to po creation
@@ -1568,7 +1570,7 @@ class procurement_order(osv.osv):
                     values['location_id'] = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
                 else:
                     values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
-        
+                    
         return values
 
 procurement_order()

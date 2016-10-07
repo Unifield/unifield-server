@@ -105,6 +105,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         if not context:
             context = {}
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+        
         origin_line = False
         if 'procurement' in kwargs:
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
@@ -123,6 +124,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             procurement = kwargs['procurement']
             if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
                 line.update({'price_unit': procurement.price_unit})
+
+            line.update({'confirmed_delivery_date': procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date})
 
         if not line.get('price_unit', False):
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
