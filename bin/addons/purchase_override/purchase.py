@@ -1364,9 +1364,6 @@ stock moves which are already processed : '''
             list_po_name = ', '.join([linked_po['name'] for linked_po in self.read(cr, uid, ids_to_read, ['name'], context)])
             self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
                                  ) % (self.read(cr, uid, ids[0], ['name'])['name'], list_po_name))
-        # sale order lines with modified state
-        if sol_ids:
-            sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
 
         # !!BEWARE!! we must update the So lines before any writing to So objects
         for po in self.browse(cr, uid, ids, context=context):
@@ -1375,6 +1372,10 @@ stock moves which are already processed : '''
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
             del context['wait_order']
             self.infolog(cr, uid, "The PO id:%s (%s) has been confirmed" % (po.id, po.name))
+
+        # sale order lines with modified state
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
 
         return True
 
