@@ -642,18 +642,23 @@ class tender(osv.osv):
                 if line.line_state == 'cancel':
                     continue
 
+                pol_values = {
+                    'name': line.product_id.partner_ref,
+                    'product_qty': line.qty,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom.id,
+                    'change_price_manually': 'True',
+                    'price_unit': line.price_unit,
+                    'date_planned': line.date_planned,
+                    'move_dest_id': False,
+                    'notes': line.product_id.description_purchase,
+                }
+
+                if purchase_order_line_id:
+                    pol_values.update({'confirmed_delivery_date': line.purchase_order_line_id.confirmed_delivery_date})
+
                 data.setdefault(line.supplier_id.id, {}) \
-                    .setdefault('order_line', []).append((0,0,{'name': line.product_id.partner_ref,
-                                                               'product_qty': line.qty,
-                                                               'product_id': line.product_id.id,
-                                                               'product_uom': line.product_uom.id,
-                                                               'change_price_manually': 'True',
-                                                               'price_unit': line.price_unit,
-                                                               'date_planned': line.date_planned,
-                                                               'move_dest_id': False,
-                                                               'notes': line.product_id.description_purchase,
-                                                               'confirmed_delivery_date': line.purchase_order_line_id.confirmed_delivery_date,
-                                                               }))
+                    .setdefault('order_line', []).append((0,0, pol_values))
                     
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['default'])['default']
@@ -1570,7 +1575,7 @@ class procurement_order(osv.osv):
                     values['location_id'] = self.pool.get('stock.warehouse').browse(cr, uid, wh_ids[0]).lot_input_id.id
                 else:
                     values['location_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_config_locations', 'stock_location_service')[1]
-                    
+
         return values
 
 procurement_order()
