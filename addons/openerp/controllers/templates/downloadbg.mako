@@ -81,14 +81,17 @@
             <div id="indicator" style="width: ${'%d'%(percent*250)}px"></div>
         </div>
     </div>
-    %if total != 'True':
+    %if data_collected == 'True' and total != 'True':
+        <div id="explanations">${_('All the data have been collected. The report is now under rendering (this can take some time one big reports). A button to download it will be displayed soon...')}</div>
+    %endif
+    %if data_collected != 'True' and total != 'True':
         <div id="explanations">${_('A button to download the report will be displayed when finished.')}</div>
     %endif
     <div id="report_name">${_('Name of the requested report: ')}${report_name}
     %if total == 'True':
         <div>
             <input type="button" value="Download report"
-            onclick="window.open('/openerp/downloadbg?res_id=${res_id}', '_blank'); window.frameElement.close()" />
+            onclick="window.open('/openerp/downloadbg?res_id=${res_id}&from_button=1', '_blank'); window.frameElement.close()" />
         </div>
     %endif
     </div>
