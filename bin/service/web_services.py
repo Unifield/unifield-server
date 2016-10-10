@@ -802,7 +802,7 @@ class report_spool(netsvc.ExportService):
     def dispatch(self, method, auth, params):
         (db, uid, passwd ) = params[0:3]
         params = params[3:]
-        if method not in ['report','report_get', 'export']:
+        if method not in ['report','report_get', 'report_get_state', 'export']:
             raise KeyError("Method not supported %s" % method)
         security.check(db,uid,passwd)
         fn = getattr(self, 'exp_' + method)
@@ -847,6 +847,7 @@ class report_spool(netsvc.ExportService):
             bg_id, group_by=None, export_format='csv', ids=None, res=None,
             context=None):
 
+        logger = netsvc.Logger()
         if not res:
             res={}
         if not context:
@@ -940,7 +941,9 @@ class report_spool(netsvc.ExportService):
                     body_mako_tpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8')
                     try:
                         mako_ctx = Context(result_file, fields=fields_name, result=result, title=title, re=re)
+                        logging.getLogger('web-services').info('Start rendering report %s...' % filename)
                         body_mako_tpl.render_context(mako_ctx)
+                        logging.getLogger('web-services').info('report generated.')
                     except Exception, e:
                         msg = exceptions.text_error_template().render()
                         netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
@@ -952,7 +955,6 @@ class report_spool(netsvc.ExportService):
                     result_file.write(result)
         res['result'] = result_file_path
         self._reports[report_id]['path'] = result_file_path
-        print 'report_id, state True : %s' % report_id
         self._reports[report_id]['state'] = True
         bg_obj.write(cr, uid, [bg_id],
                 {
@@ -1044,6 +1046,16 @@ class report_spool(netsvc.ExportService):
                 res['delete'] = result.get('delete', False)
             del self._reports[report_id]
         return res
+
+    def exp_report_get_state(self, db, uid, report_id):
+        if report_id in self._reports:
+            if self._reports[report_id]['uid'] == uid:
+                result = self._reports[report_id]
+                return result['state']
+            else:
+                raise Exception, 'AccessDenied'
+        else:
+            raise Exception, 'ReportNotFound'
 
     def exp_report_get(self, db, uid, report_id):
         if report_id in self._reports:
