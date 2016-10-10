@@ -950,17 +950,18 @@ class report_spool(netsvc.ExportService):
             else:
                 with open(result_file_path, 'wb') as result_file:
                     result_file.write(result)
-        res['result'] = file_path
-        self._reports[report_id]['path'] = file_path
+        res['result'] = result_file_path
+        self._reports[report_id]['path'] = result_file_path
+        print 'report_id, state True : %s' % report_id
         self._reports[report_id]['state'] = True
         bg_obj.write(cr, uid, [bg_id],
                 {
-                     'file_name': file_path,
+                     'file_name': result_file_path,
                      'percent': 1.00,
                 }, context=context)
         cr.commit()
         cr.close()
-        return file_path
+        return result_file_path
 
     def exp_report(self, db, uid, object, ids, datas=None, context=None):
         if not datas:
