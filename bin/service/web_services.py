@@ -40,38 +40,34 @@ import logging
 import datetime
 import csv
 import re
+from osv import osv
 from cStringIO import StringIO
 from tempfile import NamedTemporaryFile
 from updater import get_server_version
 from tools.misc import file_open
 from mako.template import Template
+from mako import exceptions
+from mako.runtime import Context
+import codecs
 
-def export_csv(fields, result):
+def export_csv(fields, result, result_file_path):
     try:
-        fp = StringIO()
-        writer = csv.writer(fp, quoting=csv.QUOTE_ALL)
-
-        writer.writerow(fields)
-
-        for data in result:
-            row = []
-            for d in data:
-                if isinstance(d, basestring):
-                    d = d.replace('\n',' ').replace('\t',' ')
-                    try:
-                        d = d.encode('utf-8')
-                    except:
-                        pass
-                if d is False: d = None
-                row.append(d)
-
-            writer.writerow(row)
-
-        fp.seek(0)
-        data = fp.read()
-        fp.close()
-
-        return data
+        with open(result_file_path, 'wb') as result_file:
+            writer = csv.writer(result_file, quoting=csv.QUOTE_ALL)
+            writer.writerow(fields)
+            for data in result:
+                row = []
+                for d in data:
+                    if isinstance(d, basestring):
+                        d = d.replace('\n',' ').replace('\t',' ')
+                        try:
+                            d = d.encode('utf-8')
+                        except:
+                            pass
+                    if d is False:
+                        d = None
+                    row.append(d)
+                writer.writerow(row)
     except IOError, (errno, strerror):
         raise Exception(_("Operation failed\nI/O error")+"(%s)" % (errno,))
 
@@ -887,6 +883,9 @@ class report_spool(netsvc.ExportService):
         if not ids:
             ids = model_obj.search(cr, uid, domain, context=context)
 
+        result_file = NamedTemporaryFile('w+b', delete=False)
+        result_file_path = result_file.name
+        result_file.close()
         if group_by:
             data = model_obj.read_group(cr, uid, domain, fields, group_by, 0, 0, context=context)
 
@@ -914,6 +913,8 @@ class report_spool(netsvc.ExportService):
 
             result, fields_name = model_obj.filter_export_data_result(cr, uid, result, fields_name)
             result = result.encode('utf-8')
+            with open(result_file_path, 'wb') as result_file:
+                result_file.write(result)
         else:
 
             result = {'datas': []}
@@ -932,24 +933,23 @@ class report_spool(netsvc.ExportService):
                 res['result'] = False
                 return False
             result = result.get('datas',[])
-
             if export_format == "xls":
-                tmpl_filename = 'addons/base/report/templates/expxml.mako'
-                f = file_open(tmpl_filename)
-                template = f.read()
-                f.close()
-                body_mako_tmpl = Template(template)
-
-                result = body_mako_tmpl.render_unicode(fields=fields_name, result=result,
-                        title=title, re=re)
-                result = result.encode('utf-8')
-        if export_format == 'csv':
-            result = export_csv(fields, result)
-
-        f = NamedTemporaryFile(delete=False)
-        file_path = f.name
-        f.write(result)
-        f.close()
+                with codecs.open(result_file_path, 'wb', 'utf8') as result_file:
+                    f, filename = file_open('addons/base/report/templates/expxml.mako', pathinfo=True)
+                    f[0].close()
+                    body_mako_tpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8')
+                    try:
+                        mako_ctx = Context(result_file, fields=fields_name, result=result, title=title, re=re)
+                        body_mako_tpl.render_context(mako_ctx)
+                    except Exception, e:
+                        msg = exceptions.text_error_template().render()
+                        netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
+                        raise osv.except_osv(_('Webkit render'), msg)
+            elif export_format == 'csv':
+                export_csv(fields, result, result_file_path)
+            else:
+                with open(result_file_path, 'wb') as result_file:
+                    result_file.write(result)
         res['result'] = file_path
         self._reports[report_id]['path'] = file_path
         self._reports[report_id]['state'] = True
