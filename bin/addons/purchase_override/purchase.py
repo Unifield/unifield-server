@@ -336,6 +336,28 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_customer_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return a concatenation of the PO's customer references from the project (case of procurement request)
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        so_obj = self.pool.get('sale.order')
+        for po_id in ids:
+            res[po_id] = ""
+
+            so_ids = self.get_so_ids_from_po_ids(cr, uid, po_id, context=context)
+            for so in so_obj.read(cr, uid, so_ids, ['client_order_ref'], context=context):
+                if so['client_order_ref']:
+                    if res[po_id]:
+                        res[po_id] += ';'
+                    res[po_id] += so['client_order_ref']
+                    
+        return res
+
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -415,6 +437,13 @@ class purchase_order(osv.osv):
         'update_in_progress': fields.boolean(
             string='Update in progress',
             readonly=True,
+        ),
+        'customer_ref': fields.function(
+            _get_customer_ref,
+            method=True,
+            string='Customer Ref.',
+            type='text',
+            store=False,
         ),
     }
 
