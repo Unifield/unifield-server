@@ -114,14 +114,9 @@
     <Column ss:AutoFitWidth="1" ss:Width="100" />
     # Exp Date
     <Column ss:AutoFitWidth="1" ss:Width="100" />
-    # Qty
+    % for loc in locations:
     <Column ss:AutoFitWidth="1" ss:Width="80" />
-    # Value
-    <Column ss:AutoFitWidth="1" ss:Width="80" />
-    # Total Qty
-    <Column ss:AutoFitWidth="1" ss:Width="120" />
-    # Total Value
-    <Column ss:AutoFitWidth="1" ss:Width="120" />
+    % endfor
 
 % for o in objects:
 

@@ -556,6 +556,7 @@ class many2many(_column):
         self._id2 = id2
         self._limit = limit
 
+
     def get(self, cr, obj, ids, name, user=None, offset=0, context=None, values=None):
         if not context:
             context = {}

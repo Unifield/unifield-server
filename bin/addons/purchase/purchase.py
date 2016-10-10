@@ -902,7 +902,7 @@ class procurement_order(osv.osv):
         """
         res = {}
         if context is None:
-            context = {}
+            context = {}procurement
         company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
         partner_obj = self.pool.get('res.partner')
         uom_obj = self.pool.get('product.uom')
