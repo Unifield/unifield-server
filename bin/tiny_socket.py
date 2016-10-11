@@ -63,6 +63,7 @@ class mysocket:
         self.sock.close()
         
     def mysend(self, msg, exception=False, traceback=None):
+	#print type(msg), type(traceback)
         msg = cPickle.dumps([msg,traceback])
         if self.is_gzip:
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)

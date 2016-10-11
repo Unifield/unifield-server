@@ -67,6 +67,7 @@ logger = logging.getLogger('server')
 import tools
 updater.update_path()
 logger.info("OpenERP version - %s", release.version)
+logger.info("sys.path %s", ' '.join(sys.path))
 for name, value in [('addons_path', tools.config['addons_path']),
                     ('database hostname', tools.config['db_host'] or 'localhost'),
                     ('database port', tools.config['db_port'] or '5432'),
