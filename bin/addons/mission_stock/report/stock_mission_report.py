@@ -61,10 +61,11 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
 
         report_id = data.get('report_id', None)
         field_name = data.get('field_name', '')
-        file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name)
+        file_format = data.get('file_format', '')
+        file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
         path = os.path.join(attachments_path, file_name)
         if os.path.exists(path):
-            return (Path(path, delete=False), 'csv')
+            return (Path(path, delete=False), file_format)
         else:
             raise osv.except_osv(_('Error'),
                 _("File %s not found.\nMay be you need to update the Mission Stock Report data.") % path)

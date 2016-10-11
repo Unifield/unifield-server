@@ -197,7 +197,13 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         return wiz_id
 
-    def open_xml_file(self, cr, uid, ids, context=None):
+    def open_xls_file(self, cr, uid, ids, context=None):
+        return self.open_file(cr, uid, ids, file_format='xls', context=context)
+
+    def open_csv_file(self, cr, uid, ids, context=None):
+        return self.open_file(cr, uid, ids, file_format='csv', context=context)
+
+    def open_file(self, cr, uid, ids, file_format='xls', context=None):
         '''
         Open the XML file
         '''
@@ -228,6 +234,7 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         datas['field_name'] = field_name
         datas['report_id'] = res['report_id']
+        datas['file_format'] = file_format
 
         return {
             'type': 'ir.actions.report.xml',
