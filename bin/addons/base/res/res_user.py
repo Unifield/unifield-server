@@ -130,6 +130,10 @@ class users(osv.osv):
         cr.execute('select company_id, res_company.name from res_users left join res_company on res_company.id = company_id where res_users.id=%s' %uid)
         return cr.fetchall()
 
+    def get_company_currency_id(self, cr, uid):
+        user = self.browse(cr, uid, uid, fields_to_fetch=['company_id'])
+        return user.company_id and user.company_id.currency_id and user.company_id.currency_id.id or False
+
     def send_welcome_email(self, cr, uid, id, context=None):
         logger= netsvc.Logger()
         user = self.pool.get('res.users').read(cr, uid, id, context=context)

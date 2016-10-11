@@ -194,6 +194,10 @@ class account_move_line(osv.osv):
                 rec_val = getattr(ji_rec, f)
                 val = vals[f]
 
+                # US-1737 consider False and '' equal
+                if not val and not rec_val:
+                    continue
+
                 if t == 'id':
                     if rec_val:
                         has_diff = not val or val != rec_val.id
@@ -206,7 +210,7 @@ class account_move_line(osv.osv):
 
             if has_diff:
                 raise osv.except_osv(_('Error !'),
-                    _('You can not modify entries in a HQ closed journal'))
+                    _('You can not modify entries in a HQ closed journal. Field: %s, db value: %s, update value: %s') % (f, rec_val, val))
 
 account_move_line()
 

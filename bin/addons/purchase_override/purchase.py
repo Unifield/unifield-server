@@ -416,9 +416,12 @@ class purchase_order(osv.osv):
             string='Update in progress',
             readonly=True,
         ),
+        # US-1765: register the 1st call of wkf_confirm_trigger to prevent recursion error
+        'po_confirmed': fields.boolean('PO', readonly=True),
     }
 
     _defaults = {
+        'po_confirmed': lambda *a: False,
         'order_type': lambda *a: 'regular',
         'priority': lambda *a: 'normal',
         'categ': lambda *a: 'other',
@@ -1361,9 +1364,6 @@ stock moves which are already processed : '''
             list_po_name = ', '.join([linked_po['name'] for linked_po in self.read(cr, uid, ids_to_read, ['name'], context)])
             self.log(cr, uid, ids[0], _("The order %s is in confirmed (waiting) state and will be confirmed once the related orders [%s] would have been confirmed"
                                  ) % (self.read(cr, uid, ids[0], ['name'])['name'], list_po_name))
-        # sale order lines with modified state
-        if sol_ids:
-            sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
 
         # !!BEWARE!! we must update the So lines before any writing to So objects
         for po in self.browse(cr, uid, ids, context=context):
@@ -1372,6 +1372,10 @@ stock moves which are already processed : '''
             self._hook_confirm_order_update_corresponding_so(cr, uid, ids, context=context, po=po, so_ids=so_ids)
             del context['wait_order']
             self.infolog(cr, uid, "The PO id:%s (%s) has been confirmed" % (po.id, po.name))
+
+        # sale order lines with modified state
+        if sol_ids:
+            sol_obj.write(cr, uid, sol_ids, {'state': 'confirmed'}, context=context)
 
         return True
 
@@ -1814,7 +1818,6 @@ stock moves which are already processed : '''
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         # objects
         so_obj = self.pool.get('sale.order')
         wf_service = netsvc.LocalService("workflow")
@@ -1833,6 +1836,20 @@ stock moves which are already processed : '''
             ('state', '=', 'confirmed_wait'),
         ], context=context)
 
+        # US-1765: PO linked to multiple POs, last PO confirmed
+        # wkf_confirm_trigger is called for this PO and after again and again and again for each linked POs (by the workflow)
+        # register the first call by setting po_confirmed=True and do not process the others
+        confirmed = False
+        if all_po_for_all_so_ids:
+            confirmed = self.search_exist(cr, uid,
+                    [('id', 'in', all_po_for_all_so_ids), ('po_confirmed', '=', True)], context=context)
+        if confirmed:
+            # one of the linked PO has already triggered this method for all POs, so we can stop
+            return True
+        if ids:
+            # register the call
+            # direct sql to not trigger (again) the workflow
+            cr.execute('''update purchase_order set po_confirmed='t' where id in %s''', (tuple(ids),))
         # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)

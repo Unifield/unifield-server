@@ -107,5 +107,12 @@
             <field name="method">us_trans_admin_fr</field>
         </record>
 
+        <record id="us_1732_sync_state_ud" model="patch.scripts">
+            <field name="method">us_1732_sync_state_ud</field>
+        </record>
+
+        <record id="us_1766_fix_fxa_aji_curr" model="patch.scripts">
+            <field name="method">us_1766_fix_fxa_aji_curr</field>
+        </record>
     </data>
 </openerp>
