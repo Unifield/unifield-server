@@ -163,7 +163,7 @@
             % for loc in locations:
             <Cell ss:StyleID="line"><Data ss:Type="Number">${line['location_ids'].get(loc.id, 0.00)|x}</Data></Cell>
             % endfor
-            <Cell ss:StyleID="sumline"><Data ss:Type="Number">${line.get('qty', 0.00|x}</Data></Cell>
+            <Cell ss:StyleID="sumline"><Data ss:Type="Number">${line.get('qty', 0.00)|x}</Data></Cell>
           </Row>
           %endif
         % endfor
