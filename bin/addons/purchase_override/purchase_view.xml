@@ -183,6 +183,7 @@
                       <field name="partner_id" string="Supplier" />
                       <field name="delivery_requested_date" />
                       <field name="origin" />
+                      <field name="customer_ref"/>
                       <field name="dest_partner_names" />
                       <field name="shipped_rate" widget="progressbar" />
                       <field name="invoiced_rate" widget="progressbar" />
