@@ -897,7 +897,7 @@ class report_spool(netsvc.ExportService):
                 grp_by_line = line.get('__context', {}).get('group_by', [])
                 # If there is a 'group_by', we fetch data one level deeper
                 if grp_by_line:
-                    data = model_obj.read_group(domain_line, fields, grp_by_line, 0, 0, context=context)
+                    data = model_obj.read_group(cr, uid, domain_line, fields, grp_by_line, 0, 0, context=context)
                     for line2 in data:
                         line_copy = line.copy()
                         line_copy.update(line2)
