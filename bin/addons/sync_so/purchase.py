@@ -438,7 +438,7 @@ class purchase_order_sync(osv.osv):
 
         if proc_ids:
             self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
-            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
+            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr, force=True)
 
 #        for orig_line, split_lines in to_split.iteritems():
 #            pol_ids = line_obj.search(cr, uid, [('order_id', '=', res_id), ('original_purchase_line_id', '=', orig_line)], context=context)
@@ -548,7 +548,7 @@ class purchase_order_sync(osv.osv):
                         if sol.procurement_id and sol.procurement_id.purchase_id:
                             self.pool.get('procurement.order').write(cr, uid, [sol.procurement_id.id], {'purchase_id': po_id}, context=context)
                             line_obj.write(cr, uid, [line.id], {'procurement_id': sol.procurement_id.id}, context=context)
-                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr, force=True)
                         if sol.order_id and (not sol.order_id.procurement_request or sol.order_id.location_requestor_id.usage == 'customer'):
                             self.write(cr, uid, [po_id], {'cross_docking_ok': True}, context=context)
 
