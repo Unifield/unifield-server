@@ -348,18 +348,6 @@ class ImpEx(SecuredController):
 
         return rec(fields)
 
-    def get_grp_data(self, result, flds):
-        data = []
-        for r in result:
-            tmp_data = []
-            for f in flds:
-                value = r.get(f,'')
-                if isinstance(value, tuple):
-                    value = value and value[1] or ''
-                tmp_data.append(value)
-            data.append(tmp_data)
-        return data
-
     @expose(content_type="application/octet-stream")
     def export_data(self, fname, fields, import_compat=False, export_format='csv', all_records=False, **kw):
 
