@@ -3675,6 +3675,20 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_customer_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the customer ref from "sale.order".client_order_ref
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            res[pol.id] = pol.procurement_id.sale_id.client_order_ref
+
+        return res
+
+
     _columns = {
         'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -3715,6 +3729,13 @@ class purchase_order_line(osv.osv):
         'soq_updated': fields.boolean(
             string='SoQ updated',
             readonly=True,
+        ),
+        'customer_ref': fields.function(
+            _get_customer_ref,
+            method=True,
+            type="text",
+            store=False,
+            string="Customer ref.",
         ),
     }
 
