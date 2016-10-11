@@ -117,6 +117,7 @@
     % for loc in locations:
     <Column ss:AutoFitWidth="1" ss:Width="80" />
     % endfor
+    <Column ss:AutoFitWidth="1" ss:Width="80" />
 
 % for o in objects:
 
@@ -143,6 +144,7 @@
         % for loc in locations:
             <Cell ss:StyleID="poheader"><Data ss:Type="String">Qty: ${loc.name|x}</Data></Cell>
         % endfor
+        <Cell ss:StyleID="poheader"><Data ss:Type="String">Total Qty</Data></Cell>
     </Row>
     
     % for prd in getLines():
@@ -161,6 +163,7 @@
             % for loc in locations:
             <Cell ss:StyleID="line"><Data ss:Type="Number">${line['location_ids'].get(loc.id, 0.00)|x}</Data></Cell>
             % endfor
+            <Cell ss:StyleID="sumline"><Data ss:Type="Number">${line.get('qty', 0.00|x}</Data></Cell>
           </Row>
           %endif
         % endfor
