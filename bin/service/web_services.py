@@ -857,7 +857,6 @@ class report_spool(netsvc.ExportService):
         self.id += 1
         report_id = self.id
         self.id_protect.release()
-
         model_obj = pool.get(model)
         view_name = context.get('_terp_view_name', '')
         tools_obj = pool.get('date.tools')
@@ -908,14 +907,15 @@ class report_spool(netsvc.ExportService):
                 else:
                     result_tmp.append(line)
             # Prepare recursively the data to export (inserted in 'result_tmp')
+            counter = 0
             for data_line in data:
+                counter += 1
                 process_data(data_line)
+                progression = float(counter) / len(data)
+                bg_obj.update_percent(cr, uid, bg_id, progression, context=context)
             result = self.get_grp_data(result_tmp, fields)
 
             result, fields_name = model_obj.filter_export_data_result(cr, uid, result, fields_name)
-            result = result.encode('utf-8')
-            with open(result_file_path, 'wb') as result_file:
-                result_file.write(result)
         else:
 
             result = {'datas': []}
@@ -934,25 +934,25 @@ class report_spool(netsvc.ExportService):
                 res['result'] = False
                 return False
             result = result.get('datas',[])
-            if export_format == "xls":
-                with codecs.open(result_file_path, 'wb', 'utf8') as result_file:
-                    f, filename = file_open('addons/base/report/templates/expxml.mako', pathinfo=True)
-                    f[0].close()
-                    body_mako_tpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8')
-                    try:
-                        mako_ctx = Context(result_file, fields=fields_name, result=result, title=title, re=re)
-                        logging.getLogger('web-services').info('Start rendering report %s...' % filename)
-                        body_mako_tpl.render_context(mako_ctx)
-                        logging.getLogger('web-services').info('report generated.')
-                    except Exception, e:
-                        msg = exceptions.text_error_template().render()
-                        netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
-                        raise osv.except_osv(_('Webkit render'), msg)
-            elif export_format == 'csv':
-                export_csv(fields, result, result_file_path)
-            else:
-                with open(result_file_path, 'wb') as result_file:
-                    result_file.write(result)
+        if export_format == "xls":
+            with codecs.open(result_file_path, 'wb', 'utf8') as result_file:
+                f, filename = file_open('addons/base/report/templates/expxml.mako', pathinfo=True)
+                f[0].close()
+                body_mako_tpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8')
+                try:
+                    mako_ctx = Context(result_file, fields=fields_name, result=result, title=title, re=re)
+                    logging.getLogger('web-services').info('Start rendering report %s...' % filename)
+                    body_mako_tpl.render_context(mako_ctx)
+                    logging.getLogger('web-services').info('report generated.')
+                except Exception, e:
+                    msg = exceptions.text_error_template().render()
+                    netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
+                    raise osv.except_osv(_('Webkit render'), msg)
+        elif export_format == 'csv':
+            export_csv(fields, result, result_file_path)
+        else:
+            with open(result_file_path, 'wb') as result_file:
+                result_file.write(result)
         res['result'] = result_file_path
         self._reports[report_id]['path'] = result_file_path
         self._reports[report_id]['state'] = True
