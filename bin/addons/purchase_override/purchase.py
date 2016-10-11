@@ -357,6 +357,20 @@ class purchase_order(osv.osv):
                     
         return res
 
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the number of line(s) for the PO
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+            
+        res = {}
+        for po_id in ids:
+            res[po_id] = self.pool.get('purchase.order.line').search_count(cr, uid, [('order_id', '=', po_id)], context=context)
+
+        return res
+
+
 
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
@@ -443,6 +457,13 @@ class purchase_order(osv.osv):
             method=True,
             string='Customer Ref.',
             type='text',
+            store=False,
+        ),
+        'line_count': fields.function(
+            _get_line_count,
+            method=True,
+            type='integer',
+            string="Line count",
             store=False,
         ),
     }
