@@ -65,7 +65,7 @@ if os.name == 'nt':
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
-                "pylzma", "xlrd", "xlwt", "xlutils"
+                "pylzma", "xlwt"
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
