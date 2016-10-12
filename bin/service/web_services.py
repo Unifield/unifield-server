@@ -934,12 +934,14 @@ class report_spool(netsvc.ExportService):
                 res['result'] = False
                 return False
             result = result.get('datas',[])
+
         if export_format == "xls":
             with codecs.open(result_file_path, 'wb', 'utf8') as result_file:
                 f, filename = file_open('addons/base/report/templates/expxml.mako', pathinfo=True)
                 f[0].close()
-                body_mako_tpl = Template(filename=filename, input_encoding='utf-8', output_encoding='utf-8')
+                body_mako_tpl = Template(filename=filename, input_encoding='utf-8', default_filters=['unicode'])
                 try:
+                    fields_name = [tools.ustr(x) for x in fields_name]
                     mako_ctx = Context(result_file, fields=fields_name, result=result, title=title, re=re)
                     logging.getLogger('web-services').info('Start rendering report %s...' % filename)
                     body_mako_tpl.render_context(mako_ctx)
