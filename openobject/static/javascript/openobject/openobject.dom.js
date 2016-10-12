@@ -74,7 +74,7 @@ function idSelector(nodeId) {
             }
         }, options);
 
-        options.width = get_width(options.width || "700px");
+        options.width = get_width(options.width || "750px");
         options.min_width = get_width(options.min_width || 0);
         options.max_width = get_width(options.max_width || "100%");
         options.height = get_height(options.height || "500px");
