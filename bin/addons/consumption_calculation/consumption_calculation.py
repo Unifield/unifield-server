@@ -577,6 +577,8 @@ class real_average_consumption(osv.osv):
         return self.pool.get('product.product').onChangeSearchNomenclature(cr, uid, 0, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, False, context={'withnum': 1})
     
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('sublist_id',False):
             vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
         if vals.get('nomen_manda_0',False):
@@ -772,14 +774,14 @@ class real_average_consumption_line(osv.osv):
         'date_mandatory': fields.boolean(string='DM'),
         'asset_id': fields.integer(string='Asset'),
         'asset_mandatory': fields.boolean('AM'),
-        'remark': fields.char(size=256, string='Remark'),
+        'remark': fields.char(size=256, string='Comment'),
         'move_id': fields.many2one('stock.move', string='Move'),
         'rac_id': fields.many2one('real.average.consumption', string='RAC', ondelete='cascade'),
         'text_error': fields.text('Errors', readonly=True),
         'to_correct_ok': fields.function(_get_checks_all, method=True, type="boolean", string="To correct", store=False, readonly=True, multi="m"),
         'just_info_ok': fields.boolean(string='Just for info'),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
-        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
+        'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='System message', store=False, multi='inactive'),
         }
 
     _defaults = {
@@ -814,6 +816,8 @@ class real_average_consumption_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1269,6 +1273,8 @@ class monthly_review_consumption(osv.osv):
                 'context': context}
     
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('sublist_id',False):
             vals.update({'nomen_manda_0':False,'nomen_manda_1':False,'nomen_manda_2':False,'nomen_manda_3':False})
         if vals.get('nomen_manda_0',False):
@@ -1372,6 +1378,8 @@ class monthly_review_consumption_line(osv.osv):
         return super(monthly_review_consumption_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

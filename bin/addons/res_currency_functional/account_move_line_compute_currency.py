@@ -330,7 +330,7 @@ class account_move_line_compute_currency(osv.osv):
                         cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple([o.id])])
                     # Update analytic lines
                     analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total,}, context=context)
+                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total, 'currency_id': al.functional_currency_id.id}, context=context)
                     # Update Addendum line that's not reconciled
                     addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
                     if not addendum_counterpart_ids:
@@ -367,8 +367,20 @@ class account_move_line_compute_currency(osv.osv):
                         from_another_instance = True
                     if multi_instance and (from_sync or from_another_instance):
                         continue
+
+
+                    # create_addendum_line: we need a context (if currency_table is used by yearly reval US-1682)
+                    # but this context should not contain any sync value or FXA JI/AJI is not well created in some use case
+                    # for example: create func. unbalanced entries at proj, sync to coordo and reconcile at coordo
+                    # when reconcilation is received at project, FXA entries should be created (UF-2501)
+                    new_ctx = context.copy()
+                    for sync_context_key in ('sync_update_execution', 'do_not_create_analytic_line', 'update_mode'):
+                        if new_ctx.get(sync_context_key):
+                            del new_ctx[sync_context_key]
+
+
                     # If no exception, do main process about new addendum lines
-                    partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total)
+                    partner_line_id = self.create_addendum_line(cr, uid, reconciled_line_ids, total, context=new_ctx)
                     if partner_line_id:
                         # Add it to reconciliation (same that other lines)
                         reconcile_txt = ''
@@ -455,7 +467,10 @@ class account_move_line_compute_currency(osv.osv):
             if vals['date'] < period.get('date_start') or vals['date'] > period.get('date_stop'):
                 raise osv.except_osv(_('Warning !'), _('Posting date (%s) is outside of defined period: %s!') % (vals.get('date'), period.get('name') or '',))
 
-    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False, debit_currency=False, credit_currency=False):
+    def _update_amount_bis(self, cr, uid, vals, currency_id, curr_fun, date=False, source_date=False,
+                           debit_currency=False, credit_currency=False, context=None):
+        if context is None:
+            context = {}
         newvals = {}
         ctxcurr = {}
         cur_obj = self.pool.get('res.currency')
@@ -466,6 +481,8 @@ class account_move_line_compute_currency(osv.osv):
         if vals.get('source_date', source_date):
             ctxcurr['date'] = vals.get('source_date', source_date)
 
+        if 'currency_table_id' in context:
+            ctxcurr['currency_table_id'] = context['currency_table_id']
 #        if ctxcurr.get('date', False):
 #            newvals['date'] = ctxcurr['date']
 
@@ -491,7 +508,9 @@ class account_move_line_compute_currency(osv.osv):
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, credit_currency or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = debit_currency - credit_currency
         # Set booking values to 0 if line come from a reconciliation that have generated an addendum line (so this line have 'is_addendum_line' to True
-        if vals.get('is_addendum_line', False):
+        # or if it's a revaluation line (US-1682)
+        if vals.get('is_addendum_line', False) or \
+                (context.get('sync_update_execution', False) and 'is_revaluated_ok' in newvals and newvals['is_revaluated_ok']):
             newvals.update({'debit_currency': 0.0, 'credit_currency': 0.0})
         return newvals
 
@@ -548,14 +567,18 @@ class account_move_line_compute_currency(osv.osv):
             else:
                 newvals['currency_id'] = curr_fun
         # Don't update values for addendum lines that come from a reconciliation
-        if not is_system_period and not newvals.get('is_addendum_line', False):
-            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute))
+        # and for revaluation lines (US-1682)
+        if not is_system_period and not newvals.get('is_addendum_line', False) and not \
+                (context.get('sync_update_execution', False) and 'is_revaluated_ok' in newvals and newvals['is_revaluated_ok']):
+            newvals.update(self._update_amount_bis(cr, uid, vals, newvals['currency_id'], curr_fun, date=date_to_compute, context=context))
         return super(account_move_line_compute_currency, self).create(cr, uid, newvals, context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
         """
         Update line values regarding date, source_date and currency rate
         """
+        if not ids:
+            return True
         # Some verifications
         if not context:
             context = {}
@@ -575,11 +598,13 @@ class account_move_line_compute_currency(osv.osv):
                 vals.update({'currency_id': line.move_id and line.move_id.manual_currency_id and line.move_id.manual_currency_id.id or False})
             currency_id = vals.get('currency_id') or line.currency_id.id
             func_currency = line.account_id.company_id.currency_id.id
-            if line.period_id and not line.period_id.is_system:
-                newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency))
+            if line.period_id and not line.period_id.is_system and not (context.get('sync_update_execution', False) and line.is_revaluated_ok):
+                newvals.update(self._update_amount_bis(cr, uid, newvals, currency_id, func_currency, date, source_date, line.debit_currency, line.credit_currency, context=context))
             res = res and super(account_move_line_compute_currency, self).write(cr, uid, [line.id], newvals, context, check=check, update_check=update_check)
             # Update addendum line for reconciliation entries if this line is reconciled
-            if line.reconcile_id:
+            if vals.get('reconcile_id'):
+                reconciled_move[vals['reconcile_id']] = True
+            elif line.reconcile_id:
                 reconciled_move[line.reconcile_id.id] = True
         if reconciled_move:
             self.reconciliation_update(cr, uid, reconciled_move.keys(), context=context)

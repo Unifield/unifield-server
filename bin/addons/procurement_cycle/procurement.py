@@ -48,6 +48,8 @@ class stock_warehouse_order_cycle(osv.osv):
         '''
         Checks if a frequence was choosen for the cycle
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

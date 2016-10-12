@@ -45,6 +45,8 @@ class product_list(osv.osv):
         '''
         Adds update date and user information
         '''
+        if not ids:
+            return True
         vals.update({
             'reviewer_id': uid,
             'last_update_date': time.strftime('%Y-%m-%d'),
@@ -434,6 +436,7 @@ product and can't be deleted"""),
         ),
         'msfid': fields.integer(
             string='Hidden field for UniData',
+            select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
             'Hidden xmlid code',
@@ -486,6 +489,8 @@ product and can't be deleted"""),
                 limit, order, context, count)
 
     def write(self, cr, uid, ids, value, context=None):
+        if not ids:
+            return True
         single = False
         if isinstance(ids, (long, int)):
             ids = [ids]

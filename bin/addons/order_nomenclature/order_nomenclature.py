@@ -137,6 +137,9 @@ class purchase_order_line(osv.osv):
             partner_id, date_order, fiscal_position, date_planned,
             name, price_unit, notes, state, old_unit_price,nomen_manda_0,comment,context=prod_context)
 
+        if result.get('warning') and result['warning'].get('title') == 'Short Shelf Life product':
+            del result['warning']
+
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
@@ -191,6 +194,8 @@ class purchase_order_line(osv.osv):
         '''
         override write. don't save filtering data
         '''
+        if not ids:
+            return True
         self._relatedFields(cr, uid, vals, context)
 
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
@@ -375,6 +380,9 @@ class sale_order_line(osv.osv):
                                         uom, qty_uos, uos, name, partner_id,
                                         lang, update_tax, date_order, packaging, fiscal_position, flag)
 
+        if result.get('warning') and result['warning'].get('title') == 'Short Shelf Life product':
+            del result['warning']
+
         # drop modification to name attribute
         if 'name' in result['value']:
             del result['value']['name']
@@ -446,6 +454,8 @@ class sale_order_line(osv.osv):
         '''
         override write. don't save filtering data
         '''
+        if not ids:
+            return True
         self._relatedFields(cr, uid, vals, context)
 
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)

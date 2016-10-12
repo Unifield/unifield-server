@@ -29,6 +29,9 @@ import os
 import logging
 from threading import Lock
 
+from msf_field_access_rights.osv_override import _get_instance_level
+
+
 class patch_scripts(osv.osv):
     _name = 'patch.scripts'
     _logger = logging.getLogger('patch_scripts')
@@ -42,6 +45,18 @@ class patch_scripts(osv.osv):
     _defaults = {
         'model': lambda *a: 'patch.scripts',
     }
+
+    def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
+        """
+        change the implementation of the finance.ocb.export ir_sequence to be
+        psql (instead of no_gap
+        """
+        seq_obj = self.pool.get('ir.sequence')
+        # get the ir_sequence id
+        seq_id_list = seq_obj.search(cr, uid,
+                [('code', '=', 'finance.ocb.export')])
+        if seq_id_list:
+            seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
     def launch_patch_scripts(self, cr, uid, *a, **b):
         ps_obj = self.pool.get('patch.scripts')
@@ -59,6 +74,20 @@ class patch_scripts(osv.osv):
                     'Error',
                     err_msg,
                 )
+
+    def us_1421_lower_login(self, cr, uid, *a, **b):
+        user_obj = self.pool.get('res.users')
+        logger = logging.getLogger('update login')
+        cr.execute('select id, login from res_users')
+        for d in cr.fetchall():
+            lower_login = tools.ustr(d[1]).lower()
+            if tools.ustr(d[1]) == lower_login:
+                continue
+            if user_obj.search(cr, uid, [('login', '=', lower_login), ('active', 'in', ['t', 'f'])]):
+                logger.warn('Login of user id %s not changed because of duplicates' % (d[0], ))
+            else:
+                cr.execute('update res_users set login=%s where id=%s', (lower_login, d[0]))
+        return True
 
     def us_993_patch(self, cr, uid, *a, **b):
         # set no_update to True on USB group_type not to delete it on
@@ -149,15 +178,29 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
-    def us_1061_patch(self, cr, uid, *a, **b):
+    def us_1454_patch(self, cr, uid, *a, **b):
         '''setup the size on all attachment'''
         attachment_obj = self.pool.get('ir.attachment')
         attachment_ids = attachment_obj.search(cr, uid, [])
         vals = {}
+        deleted_count = 0
+        logger = logging.getLogger('update')
         for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            # check existance of the linked document, if the linked document
+            # don't exist anymore, delete the attachement
+            model_obj = self.pool.get(attachment.res_model)
+            if not model_obj or not model_obj.search(cr, uid,
+                    [('id', '=', attachment.res_id),]):
+                attachment_obj.unlink(cr, uid, attachment.id)
+                logger.warn('deleting attachment %s' % attachment.id)
+                deleted_count += 1
+                continue
+
             if attachment.datas and not attachment.size:
                 vals['size'] = attachment_obj.get_size(attachment.datas)
                 attachment_obj.write(cr, uid, attachment.id, vals)
+        if deleted_count:
+            logger.warn('%s attachment(s) deleted.' % deleted_count)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
@@ -199,6 +242,30 @@ class patch_scripts(osv.osv):
         # by re-sending state and create the missing period_states
         period_ids = period_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
         period_state_obj.update_state(cr, uid, period_ids)
+
+    def sync_down_msfid(self, cr, uid, *a, **b):
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'section':
+            data_obj = self.pool.get('ir.model.data')
+            unidata_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_6')[1]
+            # TEST ONLY
+            #cr.execute('update product_product set msfid=id')
+
+            # on prod: only UniData product
+            cr.execute("""update ir_model_data set touched='[''msfid'']',
+                last_modification=now()
+                where module='sd' and model='product.product' and
+                res_id in (
+                    select id from product_product where international_status = %s and coalesce(msfid,0) != 0
+                )""", (unidata_id, ))
+        return True
 
     def us_332_patch(self, cr, uid, *a, **b):
         context = {}
@@ -676,6 +743,153 @@ class patch_scripts(osv.osv):
         sql = """UPDATE product_template SET standard_price = 1.00, list_price = %s WHERE standard_price = 0.00"""
         cr.execute(sql, (sale_percent, ))
         return True
+
+    def us_1430_patch(self, cr, uid, *a, **b):
+        """
+        Resync. all ir.translation related to product.template,name of Local products
+        """
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        level_current = False
+
+        if usr and usr.company_id and usr.company_id.instance_id:
+            level_current = usr.company_id.instance_id.level
+
+        if level_current == 'coordo':
+            cr.execute("""
+                UPDATE ir_model_data
+                    SET touched = '[''src'']', last_modification = now()
+                    WHERE model = 'ir.translation' AND res_id IN (
+                        SELECT t.id FROM ir_translation t
+                            LEFT JOIN product_template pt ON pt.id = t.res_id
+                            LEFT JOIN product_product pp ON pp.product_tmpl_id = pt.id
+                            LEFT JOIN product_international_status s ON s.id = pp.international_status
+                            LEFT JOIN ir_model_data d ON d.res_id = s.id
+                        WHERE
+                            t.name = 'product.template,name'
+                          AND
+                            d.model = 'product.international.status'
+                          AND
+                            d.name = 'int_4'
+                          AND
+                            d.module = 'product_attributes')""")
+
+        return True
+
+    def us_trans_admin_fr(self, cr, uid, *a, **b):
+        """
+        replay fr_MF translations for instances were sync has been run with French admin user
+        """
+        context = {}
+        user_obj = self.pool.get('res.users')
+        usr = user_obj.browse(cr, uid, [uid], context=context)[0]
+        instance_name = False
+        instance_id = False
+        top_level = False
+        coordo_id = False
+        if usr and usr.company_id and usr.company_id.instance_id:
+            instance_name = usr.company_id.instance_id.instance
+            instance_id = usr.company_id.instance_id.instance_identifier
+            if usr.company_id.instance_id.parent_id:
+                if usr.company_id.instance_id.parent_id.parent_id:
+                    coordo_id = usr.company_id.instance_id.parent_id.instance_identifier
+                    top_level = usr.company_id.instance_id.parent_id.parent_id.instance
+                else:
+                    top_level = usr.company_id.instance_id.parent_id.instance
+
+        if instance_name in ('OCG_CM1_COO', 'OCG_CM1_KSR',
+                'OCG_CM1_MRA', 'OCBHT118', 'OCBHT143', 'OCBHT101'):
+            self._logger.warn('Replay fr_MF updates')
+            cr.execute("""delete from ir_model_data where model='ir.translation' and module='sd'
+                and res_id in (select id from ir_translation where res_id=0 and name='product.template,name')
+            """);
+            cr.execute("delete from ir_translation where res_id=0 and name='product.template,name'");
+            if top_level:
+                cr.execute("""update sync_client_update_received set run='f' where id in
+                    (select max(id) from sync_client_update_received where model='ir.translation' and source=%s group by sdref)
+                """, (top_level, ))
+
+            else:
+                cr.execute("""update sync_client_update_received set run='f' where id in
+                    (select max(id) from sync_client_update_received where sdref in
+                            (select d.name from ir_model_data d where d.module='sd' and d.model='ir.translation' and d.res_id in
+                                (select t.id from ir_translation t, product_template p where t.name='product.template,name' and t.res_id=p.id and lang='fr_MF')
+                            ) group by sdref
+                        )
+                """)
+
+            if instance_id:
+            # delete en_MF translations created on instance for UniData products
+                # sync down deletion
+                cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
+                    select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
+                    (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                    and name like '"""+instance_id+"""%'
+                )""")
+                cr.execute("""delete from ir_translation t
+                    where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
+                        (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                    and id in
+                        (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+instance_id+"""%')
+                """)
+                if coordo_id and instance_name in ('OCBHT118', 'OCBHT143'):
+                    # also remove old UniData trans sent by coordo
+                    cr.execute("""delete from ir_translation t
+                        where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
+                            (select t.id from product_template t, product_product p where p.product_tmpl_id = t.id and international_status=6)
+                        and id in
+                            (select d.res_id from ir_model_data d where d.module='sd' and d.model='ir.translation' and name like '"""+coordo_id+"""%')
+                    """)
+
+                self._logger.warn('%s local translation for UniData products deleted' % (cr.rowcount,))
+
+    def us_1732_sync_state_ud(self, cr, uid, *a, **b):
+        """
+        Make the product.product with state_ud is not null as to be synchronized at HQ
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param a: Named parameters
+        :param b: Unnamed parameters
+        :return:
+        """
+        if _get_instance_level(self, cr, uid) == 'hq':
+            cr.execute("""
+                UPDATE ir_model_data SET last_modification = NOW(), touched = '[''state_ud'']'
+                WHERE
+                    module = 'sd'
+                AND
+                    model = 'product.product'
+                AND
+                    res_id IN (
+                        SELECT id FROM product_product WHERE state_ud IS NOT NULL
+            )""")
+
+    def us_1766_fix_fxa_aji_curr(self, cr, uid, *a, **b):
+        """
+        Fix FXA AJIs:
+            - set book currency = fct currency
+            - set book amount = fct amount
+        """
+        context = {}
+        logger = logging.getLogger('fix_us_1766')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        currency_id = user.company_id.currency_id and user.company_id.currency_id.id or False
+
+        if currency_id:
+            journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'cur_adj'), ('active', 'in', ['t', 'f'])])
+            if journal_ids:
+                cr.execute("""select entry_sequence from account_analytic_line
+                    where journal_id in %s and
+                    currency_id != %s """, (tuple(journal_ids), currency_id))
+                all_seq = [x[0] for x in cr.fetchall()]
+                logger.warn('Fix %d FXA AJIs: %s' % (len(all_seq), ','.join(all_seq)))
+                cr.execute("""update account_analytic_line set
+                    currency_id = %s,
+                    amount = amount_currency
+                    where journal_id in %s and
+                    currency_id != %s""", (currency_id, tuple(journal_ids), currency_id))
+
 
 patch_scripts()
 

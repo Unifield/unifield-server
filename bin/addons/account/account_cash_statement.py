@@ -283,6 +283,8 @@ class account_cash_statement(osv.osv):
 
         @return: True on success, False otherwise
         """
+        if not ids:
+            return True
 
         super(account_cash_statement, self).write(cr, uid, ids, vals, context=context)
         res = self._get_starting_balance(cr, uid, ids)

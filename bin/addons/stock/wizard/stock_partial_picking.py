@@ -58,7 +58,6 @@ class stock_partial_picking(osv.osv_memory):
         if context is None:
             context = {}
 
-        pick_obj = self.pool.get('stock.picking')
         res = super(stock_partial_picking, self).default_get(cr, uid, fields, context=context)
         picking_ids = context.get('active_ids', [])
         if not picking_ids:

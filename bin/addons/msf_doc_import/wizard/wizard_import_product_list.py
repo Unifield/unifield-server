@@ -41,10 +41,17 @@ class wizard_import_product_list(osv.osv):
         res = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+        """
+        # product_ids does not exist
         for obj in self.browse(cr, uid, ids, context=context):
             res[obj.id] = False
             if any([item for item in obj.product_ids if item.to_correct_ok]):
                 res[obj.id] = True
+        """
 
     _columns = {
         'file': fields.binary(string='File to import', filters='*.xml',

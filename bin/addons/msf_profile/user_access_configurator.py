@@ -888,6 +888,8 @@ class res_groups(osv.osv):
         '''
         Call the inactive function if the group is inactive
         '''
+        if not ids:
+            return True
         res = super(res_groups, self).write(cr, uid, ids, vals, context=context)
         self._update_inactive(cr, uid, ids, vals, context=context)
         return res

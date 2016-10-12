@@ -60,7 +60,7 @@
                     <field name="journal_type" invisible="1"/>
                     <field name="is_corrigible" invisible="1"/>
                     <button name="button_corrections" type="object" string="Accounting info/correction"
-                        attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                        attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
                     <button string="Have been reallocated?" attrs="{'invisible': [('is_reallocated', '=', False)]}" icon="terp-mail-" colspan="2" name="button_open_analytic_corrections" type="object"/>
                     <field name="journal_id"/>
                     <field name="entry_sequence"/>
@@ -100,7 +100,7 @@
                         <field name="journal_type" invisible="1"/>
                         <field name="is_corrigible" invisible="1"/>
                         <button name="button_corrections" type="object" string="Accounting info/correction"
-                            attrs="{'invisible': ['|', '|', '|', ('is_reallocated', '=', True), ('is_reversal', '=', True), ('journal_type', '=', 'engagement'), ('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
+                            attrs="{'invisible': [('is_corrigible', '=', False)]}" icon="terp-mail-message-new"/>
                         <field name="is_reallocated" invisible="1"/>
                         <field name="last_corrected_id" invisible="1"/>
                         <field name="is_engi" invisible="1"/>
@@ -161,9 +161,12 @@
                             <field name="partner_id" select='1' string="3RD Party Partner"/>
                             <field name="employee_id" select='1' string="3RD Party Employee"/>
                             <field name="transfer_journal_id" select='1' string="3RD Party Journal" context="{'exclude_journals': ['IB']}"/>
-                            <field name="is_reconciled" select='1'/>
+                        </group>
+                        <newline/>
+                        <group>
                             <field name="reconcile_total_partial_id" select='1'/>
-                            <newline/>
+                            <field name="is_reconciled" select='1'/>
+                            <field name="reconcile_date" select='1' string="At"/>
                         </group>
                         <newline/>
                         <group>
@@ -205,7 +208,7 @@
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[('period_id.number', '!=', 0)]</field>
-            <field name="context">{'search_default_posted': 1, 'from_web_menu': True}</field>
+            <field name="context">{'from_web_menu': True}</field>
             <field name="search_view_id" ref="mcdb_view_account_move_line_filter"/>
             <field name="help">This view can be used by accountants in order to quickly record entries in OpenERP. If you want to record a supplier invoice, start by recording the line of the expense account. OpenERP will propose to you automatically the Tax related to this account and the counterpart "Account Payable".</field>
         </record>
@@ -274,6 +277,7 @@
                     <field name="credit" sum="Total Func. Credit"/>
                     <field name="functional_currency_id"/>
                     <field name="reconcile_total_partial_id"/>
+                    <field name="reconcile_date" invisible="1"/>
                     <field name="state"/>
                 </tree>
             </field>

@@ -96,6 +96,8 @@ class view(osv.osv):
             cr.execute('CREATE INDEX ir_ui_view_model_type_inherit_id ON ir_ui_view (model, type, inherit_id)')
 
     def write(self, cr, uid, ids, vals, context={}):
+        if not ids:
+            return True
         if not isinstance(ids, (list, tuple)):
             ids = [ids]
         result = super(view, self).write(cr, uid, ids, vals, context)

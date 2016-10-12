@@ -511,6 +511,8 @@ from/to this location will be shown.""",
         """
         Call onchange_prodlot() if a prodlot is specified
         """
+        if not ids:
+            return True
         if vals.get('prodlot_id'):
             vals.update(
                 self.onchange_prodlot(

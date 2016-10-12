@@ -79,6 +79,8 @@ class board_board(osv.osv):
                      dictionary must be with the form: {‘name_of_the_field’: value, ...}.
         @return: True
         """
+        if not ids:
+            return True
         result = super(board_board, self).write(cr, uid, ids, vals, context=context)
 
         board = self.pool.get('board.board').browse(cr, uid, ids[0], context=context)

@@ -44,6 +44,19 @@ import datetime
 from updater import get_server_version
 
 
+def check_tz():
+    db = sql_db.db_connect('template1')
+    cr = db.cursor()
+    try:
+        cr.execute('select now() - %s', (datetime.datetime.now(),))
+        now = cr.fetchone()[0]
+        if abs(now) >= datetime.timedelta(hours=1):
+            return _('Time zones of UniField server and PostgreSQL server differ. Please check the computer configuration.')
+    finally:
+        cr.close()
+    return ''
+
+
 class db(netsvc.ExportService):
     def __init__(self, name="db"):
         netsvc.ExportService.__init__(self, name)
@@ -154,6 +167,9 @@ class db(netsvc.ExportService):
         create_thread.start()
         self.actions[id]['thread'] = create_thread
         return id
+
+    def exp_check_timezone(self):
+        return check_tz()
 
     def exp_get_progress(self, id):
         if self.actions[id]['thread'].isAlive():
@@ -298,18 +314,6 @@ class db(netsvc.ExportService):
     def exp_db_exist(self, db_name):
         ## Not True: in fact, check if connection to database is possible. The database may exists
         return bool(sql_db.db_connect(db_name))
-
-    def exp_check_timezone(self):
-        db = sql_db.db_connect('template1')
-        cr = db.cursor()
-        try:
-            cr.execute('select now() - %s', (datetime.datetime.now(),))
-            now = cr.fetchone()[0]
-            if abs(now) >= datetime.timedelta(hours=1):
-                return _('Time zones of UniField server and PostgreSQL server differ. Please check the computer configuration.')
-        finally:
-            cr.close()
-        return ''
 
     def exp_list(self, document=False):
         if not tools.config['list_db'] and not document:

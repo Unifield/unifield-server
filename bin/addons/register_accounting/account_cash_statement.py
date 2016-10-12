@@ -120,6 +120,8 @@ class account_cash_statement(osv.osv):
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -137,7 +139,7 @@ class account_cash_statement(osv.osv):
                     if not r['closing_balance_frozen']:
                         if r['journal_id']:
                             jtype = self.pool.get('account.journal').read(cr,
-                                uid, [r['journal_id'][0]],
+                                uid, [r['journal_id'][0]], ['type'],
                                 context=context)[0]['type']
                             if jtype != 'cash':
                                 args = [('prev_reg_id', '=', r['id'])]
@@ -280,7 +282,7 @@ class account_cash_statement(osv.osv):
                 next_st_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)])
                 for next_st in self.browse(cr, uid, next_st_ids):
                     if next_st.state != 'confirm':
-                        self.write(cr, uid, [next_st.id], {'balance_start': amount})
+                        self.write(cr, 1, [next_st.id], {'balance_start': amount})
         return res
 
     def _get_sum_entry_encoding(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -423,6 +425,8 @@ class account_bank_statement_line(osv.osv):
         return super(account_bank_statement_line, self).create(cr, uid, values, context=context)
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if 'cash_register_op_advance_po_id' in values:
             if values['cash_register_op_advance_po_id']:
                 domain = [

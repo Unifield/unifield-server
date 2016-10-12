@@ -234,6 +234,8 @@ class account_account(osv.osv):
         Add default destination to the list of destination_ids
         """
         # Prepare some values
+        if not ids:
+            return True
         if context is None:
             context = {}
         # Check default destination presence
@@ -345,7 +347,7 @@ class account_move(osv.osv):
                 'context': context,
         }
 
-    def button_reset_distribution(self, cr, uid, ids, context=None):
+    def button_reset_distribution(self, cr, button_uid, ids, context=None):
         """
         Reset analytic distribution on all move lines.
         To do this, just delete the analytic_distribution id link on each move line.
@@ -354,6 +356,7 @@ class account_move(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         # Prepare some values
         move_obj = self.pool.get(self._name + '.line')
         # Search move lines

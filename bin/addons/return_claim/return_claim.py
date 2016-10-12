@@ -1286,6 +1286,8 @@ class claim_product_line(osv.osv):
         set the name
         '''
         # common check
+        if not ids:
+            return True
         self._orm_checks(cr, uid, vals, context=context)
         return super(claim_product_line, self).write(cr, uid, ids, vals, context=context)
 

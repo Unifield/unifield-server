@@ -289,6 +289,8 @@ The category of the UoM of the product is '%s' whereas the category of the UoM y
         return self.onchange_uom_qty(cr, uid, ids, product_uom, product_qty)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
