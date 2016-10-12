@@ -1266,6 +1266,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             3/ Check of line procurement method in case of loan FO
             4/ Check if the currency of the order is compatible with
                the currency of the partner
+            5/ Check if there is temporary products
 
         :param cr: Cursor to the database
         :param uid: ID of the user that runs the method
@@ -1338,11 +1339,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
             # 5/ Check if there is a temporary product in the sale order :
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
-            if line_obj.search_exist(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context):
+            line_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context)
+            line_err = ""
+            for line in line_obj.browse(cr, uid, line_with_temp_ids, context=context):
+                if line_err:
+                    line_err += ", "
+                line_err += str(line.line_number)
+                
+            if line_with_temp_ids:
                 raise osv.except_osv(
-                        _("Warning"),
-                        _("You cannot confirm sale order containing temporary product"),
-                    )
+                    _("Warning"),
+                    _("You cannot confirm sale order containing temporary product (line: %s)" % line_err),
+                )
 
 
             if not order.procurement_request and order.split_type_sale_order == 'original_sale_order':
