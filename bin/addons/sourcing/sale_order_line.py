@@ -416,14 +416,18 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if not args:
             return []
 
-        res = []
+        domain = [('active', 'in', ['t', 'f'])]
         for arg in args:
             if arg[0] == 'categ':
-                res = [('order_id.categ', arg[1], arg[2])]
+                domain.append(('categ', arg[1], arg[2]))
             elif arg[0] == 'priority':
-                res = [('order_id.priority', arg[1], arg[2])]
+                domain.append(('priority', arg[1], arg[2]))
 
-        return res
+        order_ids = self.pool.get('sale.order').search(cr, uid, domain, context=context)
+        if order_ids:
+            return [('order_id', 'in', order_ids)]
+
+        return []
 
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
         """
