@@ -112,7 +112,6 @@ class SpreadsheetReport(WebKitParser):
             body_mako_tpl.render_context(mako_ctx)
             fileout.close()
         except Exception, e:
-            import pdb; pdb.set_trace()
             msg = exceptions.text_error_template().render()
             netsvc.Logger().notifyChannel('Webkit render', netsvc.LOG_ERROR, msg)
             raise osv.except_osv(_('Webkit render'), msg)
