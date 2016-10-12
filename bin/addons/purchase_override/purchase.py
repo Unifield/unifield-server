@@ -1836,27 +1836,18 @@ stock moves which are already processed : '''
             ('state', '=', 'confirmed_wait'),
         ], context=context)
 
-        # US-1765: PO linked to multiple POs, last PO confirmed
-        # wkf_confirm_trigger is called for this PO and after again and again and again for each linked POs (by the workflow)
-        # register the first call by setting po_confirmed=True and do not process the others
-        confirmed = False
-        if all_po_for_all_so_ids:
-            confirmed = self.search_exist(cr, uid,
-                    [('id', 'in', all_po_for_all_so_ids), ('po_confirmed', '=', True)], context=context)
-        if confirmed:
-            # one of the linked PO has already triggered this method for all POs, so we can stop
-            return True
-        if ids:
-            # register the call
-            # direct sql to not trigger (again) the workflow
-            cr.execute('''update purchase_order set po_confirmed='t' where id in %s''', (tuple(ids),))
         # we trigger all the corresponding sale order -> test_lines is called on these so
         for so_id in all_so_ids:
             wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
-        for po_id in all_po_for_all_so_ids:
-            wf_service.trg_write(uid, 'purchase.order', po_id, cr)
+        # US-1765: PO linked to multiple POs, last PO confirmed
+        # wkf_confirm_trigger is called for this PO and after again and again and again for each linked POs (by the workflow)
+        # register the first call by setting po_confirmed=True and do not process the others
+        for po in self.browse(cr, uid, all_po_for_all_so_ids):
+            if po.state in ('confirmed', 'confirmed_wait'):
+                continue
+            wf_service.trg_write(uid, 'purchase.order', po.id, cr)
 
         for po_id in not_confirmed_po:
             wf_service.trg_write(uid, 'purchase.order', po_id, cr)
