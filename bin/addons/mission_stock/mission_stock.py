@@ -415,6 +415,14 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # check attachments_path
+        obj_model, obj_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+                'base_setup', 'attachment_config_default')
+        attachments_path = self.pool.get(obj_model).read(cr, uid, obj_id,
+                ['name'])['name']
+        if not attachments_path or not os.path.exists(attachments_path):
+            raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
+
         msr_in_progress = self.pool.get('msr_in_progress')
 
         report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
@@ -694,14 +702,6 @@ class stock_mission_report(osv.osv):
         context = context or {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        # check attachments_path
-        obj_model, obj_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-                'base_setup', 'attachment_config_default')
-        attachments_path = self.pool.get(obj_model,).read(cr, uid, obj_id,
-                ['name'])['name']
-        if not attachments_path or not os.path.exists(attachments_path):
-            raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
 
         logger = logging.getLogger('MSR')
         for report_id in ids:
