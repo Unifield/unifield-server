@@ -319,6 +319,7 @@ class stock_mission_report(osv.osv):
         header_style.borders = borders
 
         sheet = field_to_file['sheet']
+        sheet.row_default_height = 60*20
         header_row = field_to_file['header']
         header_row = [_(column_name) for column_name, colum_property in header_row]
         self.xls_write_header(sheet, header_row, header_style)
@@ -360,8 +361,8 @@ class stock_mission_report(osv.osv):
 
                 sheet = field_to_file['sheet']
                 self.xls_write_row(sheet, data_list, row_count, row_style)
-                sheet.row(row_count).height_mismatch = True
-                sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
+                #sheet.row(row_count).height_mismatch = True
+                #sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
                 row_count += 1
             except Exception, e:
                 logging.getLogger('MSR').warning("""An error is occured when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
@@ -414,7 +415,6 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        line_obj = self.pool.get('stock.mission.report.line')
         msr_in_progress = self.pool.get('msr_in_progress')
 
         report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
@@ -440,13 +440,10 @@ class stock_mission_report(osv.osv):
 
         cr.commit()
 
-        if context.get('update_full_report'):
-            report_ids = full_report_ids
-        else:
-            all_report_ids = report_ids + full_report_ids
-            for report_id in all_report_ids:
-                # register immediately this report id into the table temp
-                msr_in_progress.create(cr, uid, report_id, context)
+        all_report_ids = report_ids + full_report_ids
+        for report_id in all_report_ids:
+            # register immediately this report id into the table temp
+            msr_in_progress.create(cr, uid, report_id, context)
 
         product_obj = self.pool.get('product.product')
         product_ids = product_obj.search(cr, uid, [],
@@ -463,6 +460,8 @@ class stock_mission_report(osv.osv):
                 WHERE id IN (SELECT product_id FROM stock_move)""")
         product_amc_ids = [x[0] for x in cr.fetchall()]
         product_amc_ids = list(set(product_amc_ids).intersection(product_ids))
+
+        # XXX the following read is the part where 95 % of the time of this method is spent
         product_amc_result = product_obj.read(cr, uid, product_amc_ids, ['product_amc'], context=context)
 
         # B
@@ -480,8 +479,7 @@ class stock_mission_report(osv.osv):
 
         # Update the final dict with this results
         for product_dict in product_amc_result:
-            if product_values[product_dict['id']] is None:
-                product_values[product_dict['id']] = {}
+            product_values[product_dict['id']] = {}
             product_values[product_dict['id']]['product_amc'] = product_dict['product_amc']
         for product_dict in product_reviewed_result:
             if product_values[product_dict['id']] is None:
@@ -489,6 +487,19 @@ class stock_mission_report(osv.osv):
             product_values[product_dict['id']]['reviewed_consumption'] = product_dict['reviewed_consumption']
 
         # Check in each report if new products are in the database and not in the report
+        self.check_new_product_and_create_export(cr, uid, report_ids, product_values, context=context)
+
+        # After update of all normal reports, update the full view report
+        context.update({'update_full_report': True})
+        self.check_new_product_and_create_export(cr, uid, full_report_ids, product_values, context=context)
+
+        return True
+
+    def check_new_product_and_create_export(self, cr, uid, report_ids, product_values, context=None):
+        if context is None:
+            context = {}
+
+        line_obj = self.pool.get('stock.mission.report.line')
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             # Create one line by product
             cr.execute('''SELECT p.id from product_product p
@@ -505,6 +516,7 @@ class stock_mission_report(osv.osv):
             if not report['local_report']:
                 continue
 
+            msr_in_progress = self.pool.get('msr_in_progress')
             #US-1218: If this report is previously processed, then do not redo it again for this transaction!
             if msr_in_progress._already_processed(cr, uid, report['id'], context):
                 continue
@@ -523,18 +535,10 @@ class stock_mission_report(osv.osv):
 
             logging.getLogger('MSR').info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             self._get_export(cr, uid, report['id'], product_values,
-                    export_format='xls', context=context)
+                    context=context)
             # Update the update date on report
             self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
             logging.getLogger('MSR').info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
-
-        # After update of all normal reports, update the full view report
-        if not context.get('update_full_report'):
-            c = context.copy()
-            c.update({'update_full_report': True})
-            self.update(cr, uid, [], context=c)
-
-        return True
 
     def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
@@ -678,7 +682,7 @@ class stock_mission_report(osv.osv):
                     line_obj.write(cr, uid, line.id, vals)
         return True
 
-    def _get_export(self, cr, uid, ids, product_values, export_format='csv', context=None):
+    def _get_export(self, cr, uid, ids, product_values, context=None):
         '''
         Get the CSV files of the stock mission report.
         This method generates 4 files (according to option set) :

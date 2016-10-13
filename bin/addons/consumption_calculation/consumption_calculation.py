@@ -1750,17 +1750,16 @@ class product_product(osv.osv):
             to_date = context.get('to_date')
 
         # Get all reason types
-        loan_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-        donation_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
-        donation_exp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
-        loss_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-        discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
-        return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-        return_good_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-        replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
+        get_object_reference = self.pool.get('ir.model.data').get_object_reference
+        loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
 
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
+
         if to_date:
             domain.append(('date', '<=', to_date))
         if from_date:
@@ -1783,10 +1782,10 @@ class product_product(osv.osv):
                           '|', '&', ('rac_id.period_from', '<=', to_date), ('rac_id.period_from', '>=', from_date),
                           # All lines with a report started before the period  and finished after the period
                           '&', ('rac_id.period_from', '<=', from_date), ('rac_id.period_to', '>=', to_date)]
-            rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid,
-                    rcr_domain, context=context, order='NO_ORDER')
+            racl_obj = self.pool.get('real.average.consumption.line')
+            rcr_line_ids = racl_obj.search(cr, uid, rcr_domain, context=context, order='NO_ORDER')
             report_move_ids = []
-            for line in self.pool.get('real.average.consumption.line').browse(cr, uid, rcr_line_ids, context=context):
+            for line in racl_obj.browse(cr, uid, rcr_line_ids, context=context):
                 report_move_ids.append(line.move_id.id)
                 res += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
             if report_move_ids:
@@ -1814,6 +1813,11 @@ class product_product(osv.osv):
         product_result = product_obj.read(cr, uid, product_ids, ['uom_id'],
                 context=context)
         product_dict = dict((x['id'], x) for x in product_result)
+
+        if move_result:
+            return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+            return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+            replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
 
         for move in move_result:
             if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
@@ -1897,13 +1901,11 @@ class product_product(osv.osv):
                     nb_days = fr_nb_days_in_month - from_date.day + 1
                     res += round(nb_days/fr_nb_days_in_month, 2)
                     # Number of month till the end of from month
-                    to_nb_days_in_month = days_in_month(to_date.month, to_date.year)  
+                    to_nb_days_in_month = days_in_month(to_date.month, to_date.year)
                     res += round(to_date.day/to_nb_days_in_month, 2)
                     break
-                    
+
         return res
-                     
-            
 
     def _compute_product_amc(self, cr, uid, ids, field_name, args, ctx=None):
         if ctx is None:
@@ -1921,14 +1923,15 @@ class product_product(osv.osv):
         else:
             to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
 
-        context.update({'from_date': from_date})
-        context.update({'to_date': to_date})
+        context.update({
+            'from_date': from_date,
+            'to_date': to_date})
 
-        for product in ids:
-            res[product] = self.compute_amc(cr, uid, product, context=context)
+        for product_id in ids:
+            res[product_id] = self.compute_amc(cr, uid, product_id, context=context)
 
         return res
-    
+
     def _get_period_consumption(self, cr, uid, line, from_date, to_date, context=None):
         '''
         Returns the average quantity of product in the period
