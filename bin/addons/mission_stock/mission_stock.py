@@ -31,7 +31,6 @@ import threading
 import logging
 import os
 import csv
-import tools
 import codecs
 import cStringIO
 from xlwt import Workbook, easyxf, Borders
@@ -42,121 +41,82 @@ CSV_DELIMITER = ';'
 
 HEADER_DICT = {
         'ns_nv_vals': (
-            'Reference',
-            'Name',
-            'UoM',
-            'Instance stock',
-            'Warehouse stock',
-            'Cross-Docking Qty.',
-            'Secondary Stock Qty.',
-            'Internal Cons. Unit Qty.',
-            'AMC',
-            'FMC',
-            'In Pipe Qty'),
+            ('Reference', 'default_code'),
+            ('Name', 'pt_name'),
+            ('UoM', 'pu_name'),
+            ('Instance stock', 'l_internal_qty'),
+            ('Warehouse stock', 'l_wh_qty'),
+            ('Cross-Docking Qty.', 'l_cross_qty'),
+            ('Secondary Stock Qty.', 'l_secondary_qty'),
+            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
+            ('AMC', 'product_amc'),
+            ('FMC', 'product_consumption'),
+            ('In Pipe Qty', 'l_in_pipe_qty'),),
         'ns_v_vals': (
-            'Reference',
-            'Name',
-            'UoM',
-            'Cost Price',
-            'Func. Cur.',
-            'Instance stock',
-            'Instance stock val.',
-            'Warehouse stock',
-            'Cross-Docking Qty.',
-            'Secondary Stock Qty.',
-            'Internal Cons. Unit Qty.',
-            'AMC',
-            'FMC',
-            'In Pipe Qty'),
+            ('Reference', 'default_code'),
+            ('Name', 'pt_name'),
+            ('UoM', 'pu_name'),
+            ('Cost Price', 'pt_standard_price'),
+            ('Func. Cur.', 'rc_name'),
+            ('Instance stock', 'l_internal_qty'),
+            ('Instance stock val.', 'l_internal_qty_pt_price'),
+            ('Warehouse stock', 'l_wh_qty'),
+            ('Cross-Docking Qty.', 'l_cross_qty'),
+            ('Secondary Stock Qty.', 'l_secondary_qty'),
+            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
+            ('AMC', 'product_amc'),
+            ('FMC', 'product_consumption'),
+            ('In Pipe Qty', 'l_in_pipe_qty'),),
         's_nv_vals': (
-            'Reference',
-            'Name',
-            'UoM',
-            'Instance stock',
-            'Stock Qty.',
-            'Unallocated Stock Qty.',
-            'Cross-Docking Qty.',
-            'Secondary Stock Qty.',
-            'Internal Cons. Unit Qty.',
-            'AMC',
-            'FMC',
-            'In Pipe Qty'),
+            ('Reference', 'default_code'),
+            ('Name', 'pt_name'),
+            ('UoM', 'pu_name'),
+            ('Instance stock', 'l_internal_qty'),
+            ('Stock Qty.', 'l_stock_qty'),
+            ('Unallocated Stock Qty.', 'l_central_qty'),
+            ('Cross-Docking Qty.', 'l_cross_qty'),
+            ('Secondary Stock Qty.', 'l_secondary_qty'),
+            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
+            ('AMC', 'product_amc'),
+            ('FMC', 'product_consumption'),
+            ('In Pipe Qty', 'l_in_pipe_qty'),),
         's_v_vals': (
-            'Reference',
-            'Name',
-            'UoM',
-            'Cost Price',
-            'Func. Cur.',
-            'Instance stock',
-            'Instance stock val.',
-            'Stock Qty.',
-            'Unallocated Stock Qty.',
-            'Cross-Docking Qty.',
-            'Secondary Stock Qty.',
-            'Internal Cons. Unit Qty.',
-            'AMC',
-            'FMC',
-            'In Pipe Qty'),
+            ('Reference', 'default_code'),
+            ('Name', 'pt_name'),
+            ('UoM', 'pu_name'),
+            ('Cost Price', 'pt_standard_price'),
+            ('Func. Cur.', 'rc_name'),
+            ('Instance stock', 'l_internal_qty'),
+            ('Instance stock val.', 'l_internal_qty_pt_price'),
+            ('Stock Qty.', 'l_stock_qty'),
+            ('Unallocated Stock Qty.', 'l_central_qty'),
+            ('Cross-Docking Qty.', 'l_cross_qty'),
+            ('Secondary Stock Qty.', 'l_secondary_qty'),
+            ('Internal Cons. Unit Qty.', 'l_cu_qty'),
+            ('AMC', 'product_amc'),
+            ('FMC', 'product_consumption'),
+            ('In Pipe Qty', 'l_in_pipe_qty'),),
         }
+
 
 GET_EXPORT_REQUEST = '''SELECT
         l.product_id AS product_id,
-        (quote_literal(replace(l.default_code, '%%', '%%%%')),
-        quote_literal(replace(pt.name, '%%', '%%%%')),
-        quote_literal(replace(pu.name, '%%', '%%%%')),
-        trim(to_char(l.internal_qty, '999999999999.999')),
-        trim(to_char(l.wh_qty, '999999999999.999')),
-        trim(to_char(l.cross_qty, '999999999999.999')),
-        trim(to_char(l.secondary_qty, '999999999999.999')),
-        trim(to_char(l.cu_qty, '999999999999.999')),
-        '%%s',
-        '%%s',
-        trim(to_char(l.in_pipe_qty, '999999999999.999'))
-        ) AS ns_nv_vals,
-        (quote_literal(replace(l.default_code, '%%', '%%%%')),
-        quote_literal(replace(pt.name, '%%', '%%%%')),
-        quote_literal(replace(pu.name, '%%', '%%%%')),
-        trim(to_char(l.internal_qty, '999999999999.999')),
-        trim(to_char(l.stock_qty, '999999999999.999')),
-        trim(to_char(l.central_qty, '999999999999.999')),
-        trim(to_char(l.cross_qty, '999999999999.999')),
-        trim(to_char(l.secondary_qty, '999999999999.999')),
-        trim(to_char(l.cu_qty, '999999999999.999')),
-        '%%s',
-        '%%s',
-        trim(to_char(l.in_pipe_qty, '999999999999.999'))
-        ) AS s_nv_vals,
-        (quote_literal(replace(l.default_code, '%%', '%%%%')),
-        quote_literal(replace(pt.name, '%%', '%%%%')),
-        quote_literal(replace(pu.name, '%%', '%%%%')),
-        trim(to_char(pt.standard_price, '999999999999.999')),
-        quote_literal(replace(rc.name, '%%', '%%%%')),
-        trim(to_char(l.internal_qty, '999999999999.999')),
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')),
-        trim(to_char(l.wh_qty, '999999999999.999')),
-        trim(to_char(l.cross_qty, '999999999999.999')),
-        trim(to_char(l.secondary_qty, '999999999999.999')),
-        '%%s',
-        '%%s',
-        trim(to_char(l.cu_qty, '999999999999.999')),
-        trim(to_char(l.in_pipe_qty, '999999999999.999'))
-        ) AS ns_v_vals,
-        (quote_literal(replace(l.default_code, '%%', '%%%%')),
-        quote_literal(replace(pt.name, '%%', '%%%%')),
-        quote_literal(replace(pu.name, '%%', '%%%%')),
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')),
-        quote_literal(replace(rc.name, '%%', '%%%%')),
-        trim(to_char(l.internal_qty, '999999999999.999')),
-        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')),
-        trim(to_char(l.stock_qty, '999999999999.999')),
-        trim(to_char(l.central_qty, '999999999999.999')),
-        trim(to_char(l.cross_qty, '999999999999.999')),
-        trim(to_char(l.secondary_qty, '999999999999.999')),
-        trim(to_char(l.cu_qty, '999999999999.999')),
-        '%%s',
-        '%%s',
-        trim(to_char(l.in_pipe_qty, '999999999999.999'))
-        ) AS s_v_vals
+        replace(l.default_code, '%%', '%%%%') as default_code,
+        replace(pt.name, '%%', '%%%%') as pt_name,
+        replace(pu.name, '%%', '%%%%') as pu_name,
+        trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
+        trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
+        trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
+        trim(to_char(l.secondary_qty, '999999999999.999')) as l_secondary_qty,
+        trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
+        trim(to_char(l.in_pipe_qty, '999999999999.999')) as l_in_pipe_qty,
+        trim(to_char(l.stock_qty, '999999999999.999')) as l_stock_qty,
+        trim(to_char(l.central_qty, '999999999999.999')) as l_central_qty,
+        trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
+        trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
+        trim(to_char(pt.standard_price, '999999999999.999')) as pt_standard_price,
+        replace(rc.name, '%%', '%%%%') as rc_name,
+        trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
@@ -164,7 +124,6 @@ GET_EXPORT_REQUEST = '''SELECT
          LEFT JOIN res_currency rc ON pp.currency_id = rc.id
     WHERE l.mission_report_id = %s
     ORDER BY l.default_code'''
-
 
 class excel_semicolon(csv.excel):
     delimiter = CSV_DELIMITER
@@ -305,39 +264,42 @@ class stock_mission_report(osv.osv):
 
     def generate_csv_files(self, request_result, field_to_file, product_values):
 
-        # write all headers of the csv file
-        for field in field_to_file.keys():
-            writer = field_to_file[field]['csv_writer']
-            header_row = field_to_file[field]['header']
-            header_row = [_(column_name) for column_name in header_row]
-            writer.writerow(header_row)
+        # write headers of the csv file
+        writer = field_to_file['csv_writer']
+        header_row = field_to_file['header']
+        header_row = [_(column_name) for column_name, colum_property in header_row]
+        writer.writerow(header_row)
 
-        for line in request_result:
+        for row in request_result:
             try:
                 product_amc = 0.00
                 reviewed_consumption = 0.00
-                if line['product_id'] in product_values and product_values[line['product_id']]:
-                    if product_values[line['product_id']].get('product_amc', False):
-                        product_amc = product_values[line['product_id']]['product_amc']
-                    if product_values[line['product_id']].get('product_consumption', False):
-                        reviewed_consumption = product_values[line['product_id']]['reviewed_consumption']
+                if row['product_id'] in product_values and product_values[row['product_id']]:
+                    if product_values[row['product_id']].get('product_amc', False):
+                        product_amc = product_values[row['product_id']]['product_amc']
+                    if product_values[row['product_id']].get('product_consumption', False):
+                        reviewed_consumption = product_values[row['product_id']]['reviewed_consumption']
 
-                for field in field_to_file.keys():
-                    data_str = line[field] % (product_amc, reviewed_consumption)
-                    data_str = data_str.replace('"\'', '\"').replace('\'"', '\"').replace("''", "'")
-                    data_list = eval(data_str)
+                data_list = []
+                data_list_append = data_list.append
+                for columns_name, property_name in field_to_file['header']:
+                    if property_name == 'product_amc':
+                        data_list_append(product_amc)
+                    elif property_name == 'product_consumption':
+                        data_list_append(reviewed_consumption)
+                    elif 'qty' in property_name:
+                        data_list_append(eval(row.get(property_name, False)))
+                    else:
+                        data_list_append(row.get(property_name, False))
 
-                    # use unicode text
-                    data_list = [not isinstance(x, (int, long, float)) and tools.ustr(x) or x for x in data_list]
-                    writer = field_to_file[field]['csv_writer']
-                    writer.writerow(data_list)
+                writer = field_to_file['csv_writer']
+                writer.writerow(data_list)
             except Exception, e:
                 logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file : %s\n""" % e, exc_info=True)
 
-        # close all files
-        for field in field_to_file.keys():
-            csvfile = field_to_file[field]['csv_file']
-            csvfile.close()
+        # close file
+        csvfile = field_to_file['csv_file']
+        csvfile.close()
 
     def generate_xls_files(self, request_result, field_to_file, product_values):
 
@@ -356,9 +318,10 @@ class stock_mission_report(osv.osv):
             """)
         header_style.borders = borders
 
-        for field in field_to_file.keys():
-            sheet = field_to_file[field]['sheet']
-            self.xls_write_header(sheet, field_to_file[field]['header'], header_style)
+        sheet = field_to_file['sheet']
+        header_row = field_to_file['header']
+        header_row = [_(column_name) for column_name, colum_property in header_row]
+        self.xls_write_header(sheet, header_row, header_style)
 
         sheet.row(0).height_mismatch = True
         sheet.row(0).height = 45*20
@@ -383,23 +346,31 @@ class stock_mission_report(osv.osv):
                     if product_values[row['product_id']].get('product_consumption', False):
                         reviewed_consumption = product_values[row['product_id']]['reviewed_consumption']
 
-                for field in field_to_file.keys():
-                    data_str = row[field] % (product_amc, reviewed_consumption)
-                    data_str = data_str.replace('"\'', '\"').replace('\'"', '\"').replace("''", "'")
-                    data_list = eval(data_str)
+                data_list = []
+                data_list_append = data_list.append
+                for columns_name, property_name in field_to_file['header']:
+                    if property_name == 'product_amc':
+                        data_list_append(product_amc)
+                    elif property_name == 'product_consumption':
+                        data_list_append(reviewed_consumption)
+                    elif 'qty' in property_name:
+                        data_list_append(eval(row.get(property_name, False)))
+                    else:
+                        data_list_append(row.get(property_name, False))
 
-                    # use unicode text
-                    data_list = [not isinstance(x, (int, long, float)) and tools.ustr(x) or x for x in data_list]
-                    sheet = field_to_file[field]['sheet']
-                    self.xls_write_row(sheet, data_list, row_count, row_style)
+                sheet = field_to_file['sheet']
+                self.xls_write_row(sheet, data_list, row_count, row_style)
+                sheet.row(row_count).height_mismatch = True
+                sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
+                row_count += 1
             except Exception, e:
                 logging.getLogger('MSR').warning("""An error is occured when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
-            sheet.row(row_count).height_mismatch = True
-            sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
-            row_count += 1
-        for field in field_to_file.keys():
-            book = field_to_file[field]['book']
-            book.save(field_to_file[field]['xls_file'])
+        book = field_to_file['book']
+        book.save(field_to_file['xls_file'])
+
+        # close file
+        xlsfile = field_to_file['xls_file']
+        xlsfile.close()
 
     def background_update(self, cr, uid, ids, context=None):
         """
@@ -720,28 +691,30 @@ class stock_mission_report(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        # check attachments_path
+        obj_model, obj_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
+                'base_setup', 'attachment_config_default')
+        attachments_path = self.pool.get(obj_model,).read(cr, uid, obj_id,
+                ['name'])['name']
+        if not attachments_path or not os.path.exists(attachments_path):
+            raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
+
         logger = logging.getLogger('MSR')
         for report_id in ids:
+
+            logger.info('___ Start export SQL request...')
             cr.execute(GET_EXPORT_REQUEST, (report_id, ))
             request_result = cr.dictfetchall()
 
-            obj_model, obj_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-                    'base_setup', 'attachment_config_default')
-            attachments_path = self.pool.get(obj_model,).read(cr, uid, obj_id,
-                    ['name'])['name']
-
-            # check attachments_path
-            if not attachments_path or not os.path.exists(attachments_path):
-                raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
-
-            field_to_file = {}
+            logger.info('___ Start CSV and XLS generation...')
             for report_type in ('ns_nv_vals', 'ns_v_vals', 's_nv_vals', 's_v_vals'):
+                field_to_file = {}
                 book = Workbook()
                 sheet = book.add_sheet('Sheet 1')
                 csv_file = open(os.path.join(attachments_path,
                     STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
                         report_type + '.csv')), 'w')
-                field_to_file[report_type] = {
+                field_to_file = {
                         'csv_file': csv_file,
                         'csv_writer': UnicodeWriter(csv_file, dialect=excel_semicolon),
                         'xls_file': open(os.path.join(attachments_path,
@@ -751,17 +724,14 @@ class stock_mission_report(osv.osv):
                         'book': book,
                         'sheet': sheet,}
 
-            # generate CSV file
-            logger.info('___ Start CSV generation...')
-            self.generate_csv_files(request_result, field_to_file, product_values)
-            logger.info('___ CSV generation finished !')
+                # generate CSV file
+                self.generate_csv_files(request_result, field_to_file, product_values)
 
-            # generate XLS files
-            logger.info('___ Start XLS generation...')
-            self.generate_xls_files(request_result, field_to_file, product_values)
-            logger.info('___ XLS generation finished !')
+                # generate XLS files
+                self.generate_xls_files(request_result, field_to_file, product_values)
 
-            self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
+                self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
+            logger.info('___ CSV & XLS generation finished !')
             del request_result
         return True
 
