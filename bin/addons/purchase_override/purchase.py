@@ -1087,6 +1087,7 @@ stock moves which are already processed : '''
         '''
         # Objects
         po_line_obj = self.pool.get('purchase.order.line')
+        product_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -1109,6 +1110,22 @@ stock moves which are already processed : '''
             if len(line_error) > 0:
                 errors = ' / '.join(str(x) for x in line_error)
                 raise osv.except_osv(_('Error !'), _('You cannot have a purchase order line with a 0.00 Unit Price or 0.00 Subtotal. Lines in exception : %s') % errors)
+
+            # Check if there is a temporary product in the purchase order :
+            temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
+            line_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
+            line_err = ""
+            for line in po_line_obj.browse(cr, uid, line_with_temp_ids, context=context):
+                if line_err:
+                    line_err += ", "
+                line_err += str(line.line_number)
+                
+            if line_with_temp_ids:
+                raise osv.except_osv(
+                    _("Warning"),
+                    _("You cannot confirm sale order containing temporary product (line: %s)" % line_err),
+                )
+
 
             # Check if the pricelist of the order is good according to currency of the partner
             pricelist_ids = self.pool.get('product.pricelist').search(cr, uid,
@@ -1337,6 +1354,24 @@ stock moves which are already processed : '''
         sol_obj = self.pool.get('sale.order.line')
         exp_sol_obj = self.pool.get('expected.sale.order.line')
         so_obj =  self.pool.get('sale.order')
+        product_obj = self.pool.get('product.product')
+        po_line_obj = self.pool.get('purchase.order.line')
+
+        # Check if there is a temporary product in the purchase order :
+        for po in self.browse(cr, uid, ids, context=context):
+            temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
+            line_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
+            line_err = ""
+            for line in po_line_obj.browse(cr, uid, line_with_temp_ids, context=context):
+                if line_err:
+                    line_err += ", "
+                line_err += str(line.line_number)
+                
+            if line_with_temp_ids:
+                raise osv.except_osv(
+                    _("Warning"),
+                    _("You cannot confirm sale order containing temporary product (line: %s)" % line_err),
+                )
 
         # Create extra lines on the linked FO/IR
         self.create_extra_lines_on_fo(cr, uid, ids, context=context)
