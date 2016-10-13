@@ -146,6 +146,7 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
+                        <field name="red_color" invisible="1" />
                         <field name="rfq_ok" invisible="1" />
                         <field name="tender_line_id" invisible="1" />
                         <field name="fake_state" invisible="1" />

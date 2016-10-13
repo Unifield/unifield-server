@@ -284,6 +284,7 @@ class wizard_import_po_line(osv.osv_memory):
                             # CASE 1: the line is not registered in the system, so CREATE it :
                             if not rfq_line_ids:
                                 created_lines += 1
+                                to_write['red_color'] = True
                                 purchase_line_obj.create(cr, uid, to_write, context=context)
 
                             # CASE 2: the line is already in the system, so UPDATE it :
