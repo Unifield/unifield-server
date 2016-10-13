@@ -1196,8 +1196,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         temp_products = product_obj.search(cr, uid, [('international_status', '=', temp_status)], context=context)
         if temp_products:
             # checking for temporary products :
-            if self.search_exist(cr, uid, [('id', 'in', ids), ('product_id', 'in', temp_products),], context=context):
-                raise osv.except_osv(_('Warning'), _("You can not source temporary products."))
+            line_ids = self.search(cr, uid, [('id', 'in', ids), ('product_id', 'in', temp_products),], context=context)
+            err_msg = []
+            for l in self.browse(cr, uid, line_ids, context=context):
+                err_msg.append(_('Line %s of the order %s') % (l.line_number, l.order_id.name))
+
+            if err_msg:
+                raise osv.except_osv(_('Warning'), _("You can not source lines with Temporary products. Details: \n %s") % '\n'.join(msg for msg in err_msg))
 
         loan_stock = self.search(cr, uid, [
             ('id', 'in', ids),
