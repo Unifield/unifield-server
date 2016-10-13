@@ -1170,6 +1170,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         # Objects
         order_obj = self.pool.get('sale.order')
         po_auto_obj = self.pool.get('po.automation.config')
+        data_obj = self.pool.get('ir.model.data')
+        product_obj = self.pool.get('product.product')
 
         if context is None:
             context = {}
@@ -1190,16 +1192,12 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                 Please select it within the lines of the associated Field Order (through the "Field Orders" menu).
                 """))
 
-        # checking for temporary products :
-        temporary_products = self.search(cr, uid, [
-            ('id', 'in', ids),
-            ('product_id.international_status.id', '=', 5),
-
-        ], count=True, context=context)
-
-        if temporary_products:
-            raise osv.except_osv(_('Warning'), _("You can not source temporary products."))
-
+        temp_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
+        temp_products = product_obj.search(cr, uid, [('international_status', '=', temp_status)], context=context)
+        if temp_products:
+            # checking for temporary products :
+            if self.search_exists(cr, uid, [('id', 'in', ids), ('product_id', 'in', temp_products),], context=context):
+                raise osv.except_osv(_('Warning'), _("You can not source temporary products."))
 
         loan_stock = self.search(cr, uid, [
             ('id', 'in', ids),
