@@ -1340,12 +1340,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             # 5/ Check if there is a temporary product in the sale order :
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
             line_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', order.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            line_err = ""
-            for line in line_obj.browse(cr, uid, line_with_temp_ids, context=context):
-                if line_err:
-                    line_err += ", "
-                line_err += str(line.line_number)
-                
+            line_err = ' / '.join([str(line.line_number for l in line_obj.browse(cr, uid, line_with_temp_ids, context=context)])
+
             if line_with_temp_ids:
                 raise osv.except_osv(
                     _("Warning"),
