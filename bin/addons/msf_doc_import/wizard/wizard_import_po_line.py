@@ -96,7 +96,7 @@ class wizard_import_po_line(osv.osv_memory):
                 or not wiz.po_id.pricelist_id.currency_id:
                 raise osv.except_osv(_("Error!"), _("Order currency not found!"))
 
-            ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
+            ignore_lines, complete_lines, lines_to_correct, created_lines = 0, 0, 0, 0
             line_ignored_num, error_list = [], []
             error_log, message = '', ''
             header_index = context['header_index']
@@ -220,7 +220,7 @@ class wizard_import_po_line(osv.osv_memory):
                                 to_write.update(product_qty=round_qty['value']['product_qty'])
                                 warn_list = to_write['warning_list']
                                 warn_list.append(round_qty['warning']['message'])
-                                #message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
+                            #message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
 
                         # Cell 4: Price
                         price_value = check_line.compute_price_value(
@@ -276,13 +276,14 @@ class wizard_import_po_line(osv.osv_memory):
                             cr.rollback()
                             continue
 
-                        # write order line on PO :
+
                         if wiz.po_id.state == 'rfq_sent':
                             rfq_line_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
                             to_write['rfq_ok'] = True
 
                             # CASE 1: the line is not registered in the system, so CREATE it :
                             if not rfq_line_ids:
+                                created_lines += 1
                                 purchase_line_obj.create(cr, uid, to_write, context=context)
 
                             # CASE 2: the line is already in the system, so UPDATE it :
@@ -296,6 +297,12 @@ class wizard_import_po_line(osv.osv_memory):
                                     raise osv.except_osv(_('Error'), _("Product code from system and from import must be the same."))
                                 if not price_value['price_unit_defined']:
                                     raise osv.except_osv(_('Error'), _("Price must be defined in the RfQ import file."))
+
+                                # in case of update we do not want to update qty and uom values :
+                                if to_write.has_key('product_qty'):
+                                    to_write.pop('product_qty')
+                                if to_write.has_key('product_uom'):
+                                    to_write.pop('product_uom')
 
                                 # update POL :
                                 purchase_line_obj.write(cr, uid, rfq_line_ids, to_write, context=context)
@@ -365,13 +372,13 @@ class wizard_import_po_line(osv.osv_memory):
             final_message = _('''
 %s
 Importation completed in %s!
-# of imported lines : %s on %s lines
+# of imported lines : %s on %s lines (%s updated and %s created)
 # of ignored lines: %s
 # of lines to correct: %s
 %s
 
 %s
-''') % (categ_log, total_time, complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (categ_log, total_time, complete_lines, line_num, complete_lines-created_lines,created_lines, ignore_lines, lines_to_correct, error_log, message)
             wizard_vals['message'] = final_message
             if line_with_error:
                 file_to_export = wiz_common_import.export_file_with_error(
