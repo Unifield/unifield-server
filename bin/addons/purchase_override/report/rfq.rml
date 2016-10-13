@@ -3,7 +3,7 @@
 
     <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="500" />
 
         <pageGraphics>
             <drawString x="35" y="560.0">REQUEST FOR QUOTATION ([[ getSel(objects[0], 'order_type') ]])</drawString>
