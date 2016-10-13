@@ -101,25 +101,24 @@ class wizard_import_po_line(osv.osv_memory):
             error_log, message = '', ''
             header_index = context['header_index']
             template_col_count = len(header_index)
-            mandatory_col_count = 7
+            mandatory_col_count = 8
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
 
             """
             1st path: check currency in lines in phasis with document
             REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
-            CCY COL INDEX: 6
+            CCY COL INDEX: 7
             """
             order_currency_code = wiz.po_id.pricelist_id.currency_id.name
-            currency_index = 6
+            currency_index = 7
             row_iterator = file_obj.getRows()
 
             # don't use the original
             row_iterator, row_iterator_line_check = itertools.tee(row_iterator)
 
             row_iterator_line_check.next()  # skip header line
-            lines_to_correct = check_line.check_lines_currency(row_iterator_line_check,
-                currency_index, order_currency_code)
+            lines_to_correct = check_line.check_lines_currency(row_iterator_line_check, currency_index, order_currency_code)
             if lines_to_correct > 0:
                 categ_log = ''
                 line_num = 0
@@ -129,6 +128,7 @@ class wizard_import_po_line(osv.osv_memory):
                 error_list.append(msg)
 
             if not error_list:
+                line_number_set = set()
                 to_write = {}
                 total_line_num = file_obj.getNbRows()
                 # ignore the header line
@@ -177,7 +177,15 @@ class wizard_import_po_line(osv.osv_memory):
                             total_line_num -= 1
                             continue
 
-                        # Cell 0: Product Code
+
+                        # Cell 0 : Line Number
+                        ln_value = check_line.line_number_value(
+                            row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
+                        to_write.update(
+                            line_number=ln_value['line_number'],
+                            error_list=ln_value['error_list'])
+
+                        # Cell 1: Product Code
                         p_value = check_line.product_value(
                             cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],
                             product_obj=product_obj, row=row, to_write=to_write, context=context)
@@ -247,13 +255,6 @@ class wizard_import_po_line(osv.osv_memory):
                             comment=c_value['comment'],
                             warning_list=c_value['warning_list'])
 
-                        # Cell 8 : Line Number
-                        ln_value = check_line.line_number_value(
-                            row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
-                        to_write.update(
-                            line_number=ln_value['line_number'],
-                            error_list=ln_value['error_list'])
-
 
                         to_write.update(
                             to_correct_ok=any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
@@ -275,30 +276,31 @@ class wizard_import_po_line(osv.osv_memory):
                             cr.rollback()
                             continue
 
-                        # write order line on PO
+                        # write order line on PO :
                         if wiz.po_id.state == 'rfq_sent':
-                            # several check before updating the RfQ :
-                            rfq_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
-                            pol_brw = purchase_line_obj.browse(cr, uid, rfq_ids, context=context)[0]
-                            if not rfq_ids:
-                                raise Exception(_("Request for Quotation with given order_id and line_number not found in the database."))
-                            elif p_value['product_code'] != pol_brw.product_id.default_code:
-                                raise Exception(_("Product code from database and from import must be the same."))
-                            elif not price_value['price_unit_defined']:
-                                raise Exception(_("Price must be defined in the RfQ import file."))
-                            else : # it's ok, we can update RfQ :
-                                # filter 'to_write' to not update unwanted values:
-                                filtered_write = {}
-                                if to_write['comment']:
-                                    filtered_write['comment'] = to_write['comment']
-                                filtered_write['price_unit'] = to_write['price_unit']
-                                filtered_write['functional_currency_id'] = to_write['functional_currency_id']
-                                # filtered_write['text_error'] = to_write['text_error']
-                                # filtered_write['to_correct_ok'] = to_write['to_correct_ok']
+                            rfq_line_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
+                            to_write['rfq_ok'] = True
 
-                                purchase_line_obj.write(cr, uid, rfq_ids, filtered_write, context=context)
+                            # CASE 1: the line is not registered in the system, so CREATE it :
+                            if not rfq_line_ids:
+                                purchase_line_obj.create(cr, uid, to_write, context=context)
 
-                        else: # its a regular PO :
+                            # CASE 2: the line is already in the system, so UPDATE it :
+                            for po_line in purchase_line_obj.browse(cr, uid, rfq_line_ids, context=context):
+                                # some checks :
+                                if to_write['line_number'] in line_number_set: 
+                                    raise osv.except_osv(_('Error'), _("the same line number appears several times"))
+                                else:
+                                    line_number_set.add(to_write['line_number'])
+                                if p_value['product_code'] != po_line.product_id.default_code:
+                                    raise osv.except_osv(_('Error'), _("Product code from system and from import must be the same."))
+                                if not price_value['price_unit_defined']:
+                                    raise osv.except_osv(_('Error'), _("Price must be defined in the RfQ import file."))
+
+                                # update POL :
+                                purchase_line_obj.write(cr, uid, rfq_line_ids, to_write, context=context)
+
+                        else: # its not RfQ
                             purchase_line_obj.create(cr, uid, to_write, context=context)
                         
                         vals['order_line'].append((0, 0, to_write)) 
