@@ -48,6 +48,8 @@ UOM_NAME_ID = {}
 CURRENCY_NAME_ID = {}
 
 SIMU_LINES = {}
+LN_BY_EXT_REF = {}
+EXT_REF_BY_LN = {}
 
 """
 UF-2538 optional 4nd tuple item: list of states for mandatory check
@@ -62,6 +64,7 @@ LINES_COLUMNS = [(0, _('Line number'), 'optionnal'),
                  (6, _('Price Unit'), 'mandatory'),
                  (7, _('Currency'), 'mandatory'),
                  (8, _('Origin'), 'optionnal'),
+                 (14, _('Comment'), 'optionnal'),
                  (10, _('Delivery Confirmed Date'), 'mandatory', ('!=', ['confirmed'])),
                  (16, _('Project Ref.'), 'optionnal'),
                  (17, _('Message ESC 1'), 'optionnal'),
@@ -159,6 +162,14 @@ class wizard_import_po_simulation_screen(osv.osv):
                                    ('done', 'Done')],
                                    string='State',
                                    readonly=True),
+        'with_ad': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='File contains Analytic Distribution',
+            required=True,
+        ),
         # File information
         'file_to_import': fields.binary(string='File to import'),
         'filename': fields.char(size=64, string='Filename'),
@@ -259,6 +270,7 @@ class wizard_import_po_simulation_screen(osv.osv):
 
     _defaults = {
         'state': 'draft',
+        'with_ad': lambda *a: 'yes',
     }
 
     def write(self, cr, uid, ids, vals, context=None):
@@ -336,17 +348,23 @@ class wizard_import_po_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        for wiz in self.browse(cr, uid, ids, context=context):
-            if wiz.filetype == 'excel':
-                xml_file = base64.decodestring(wiz.file_to_import)
-                excel_file = SpreadsheetXML(xmlstring=xml_file)
-                if not excel_file.getWorksheets():
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
-            else:
-                xml_file = base64.decodestring(wiz.file_to_import)
-                root = ET.fromstring(xml_file)
-                if root.tag != 'data':
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+        try:
+            for wiz in self.browse(cr, uid, ids, context=context):
+                if wiz.filetype == 'excel':
+                    xml_file = base64.decodestring(wiz.file_to_import)
+                    excel_file = SpreadsheetXML(xmlstring=xml_file)
+                    if not excel_file.getWorksheets():
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
+                else:
+                    xml_file = base64.decodestring(wiz.file_to_import)
+                    root = ET.fromstring(xml_file)
+                    if root.tag != 'data':
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+        except Exception as e:
+            raise osv.except_osv(
+                _('Error'),
+                _('Error during file to import parsing :: Error: %s') % e,
+            )
 
         self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
         cr.commit()
@@ -372,6 +390,14 @@ class wizard_import_po_simulation_screen(osv.osv):
         rec_lines = []
         rec = False
 
+        ad_field_names = [
+            'analytic_distribution_id',
+            'ad_destination_name',
+            'ad_cost_center_name',
+            'ad_percentage',
+            'ad_subtotal',
+        ]
+
         index = 0
         for record in root:
             if record.tag == 'record':
@@ -393,18 +419,19 @@ class wizard_import_po_simulation_screen(osv.osv):
                 return index
 
         for field in rec:
-            if field.attrib['name'] != 'order_line':
+            ad_field = field.attrib['name'] in ad_field_names
+            if field.attrib['name'] != 'order_line' and not ad_field:
                 index = get_field_index(field, index)
-            else:
+            elif not ad_field:
                 index += 1
                 values[index] = ['line_number', 'external_ref',
                                  'product_code', 'product_name',
                                  'product_qty', 'product_uom',
                                  'price_unit', 'currency_id',
-                                 'origin', 'date_planned',
+                                 'origin', 'comment', 'date_planned',
                                  'confirmed_delivery_date',
                                  'nomen_manda_0', 'nomen_manda_1',
-                                 'nomen_manda_2', 'comment',
+                                 'nomen_manda_2',
                                  'notes', 'project_ref',
                                  'message_esc1', 'message_esc2']
                 for line in field:
@@ -414,6 +441,8 @@ class wizard_import_po_simulation_screen(osv.osv):
             index += 1
             values[index] = []
             for fl in line:
+                if fl.attrib['name'] in ad_field_names:
+                    continue
                 if not fl.getchildren():
                     values[index].append(fl.text or '')
                 else:
@@ -469,6 +498,8 @@ class wizard_import_po_simulation_screen(osv.osv):
             global UOM_NAME_ID
             global CURRENCY_NAME_ID
             global SIMU_LINES
+            global LN_BY_EXT_REF
+            global EXT_REF_BY_LN
 
             if context is None:
                 context = {}
@@ -484,6 +515,13 @@ class wizard_import_po_simulation_screen(osv.osv):
                                                    'state': 'draft'}, context=context)
                     continue
 
+                nb_file_header_lines = NB_OF_HEADER_LINES
+                nb_file_lines_columns = NB_LINES_COLUMNS
+                first_line_index = nb_file_header_lines + 1
+                if wiz.with_ad == 'yes' and wiz.filetype != 'xml':
+                    nb_file_header_lines += 2
+                    first_line_index += 2
+
                 for line in wiz.simu_line_ids:
                     # Put data in cache
                     if line.in_product_id:
@@ -497,6 +535,7 @@ class wizard_import_po_simulation_screen(osv.osv):
                     First of all, we build a cache for simulation screen lines
                     '''
                     l_num = line.in_line_number
+                    l_ext_ref = line.in_ext_ref
                     l_prod = line.in_product_id and line.in_product_id.id or False
                     l_uom = line.in_uom and line.in_uom.id or False
                     # By simulation screen
@@ -518,6 +557,14 @@ class wizard_import_po_simulation_screen(osv.osv):
                     # By Qty
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom].setdefault(line.in_qty, [])
                     SIMU_LINES[wiz.id][l_num][l_prod][l_uom][line.in_qty].append(line.id)
+
+                    LN_BY_EXT_REF.setdefault(wiz.id, {})
+                    EXT_REF_BY_LN.setdefault(wiz.id, {})
+                    if line.in_ext_ref:
+                        LN_BY_EXT_REF[wiz.id].setdefault(str(line.in_ext_ref), [])
+                        EXT_REF_BY_LN[wiz.id].setdefault(l_num, [])
+                        LN_BY_EXT_REF[wiz.id][line.in_ext_ref].append(l_num)
+                        EXT_REF_BY_LN[wiz.id][l_num].append(str(line.in_ext_ref))
 
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
@@ -541,28 +588,31 @@ class wizard_import_po_simulation_screen(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(1, NB_OF_HEADER_LINES+1):
-                    if len(values.get(x, [])) != 2:
+                for x in xrange(1, nb_file_header_lines+1):
+                    nb_to_check = 2
+                    if x > NB_OF_HEADER_LINES and x <= nb_file_header_lines:
+                        continue
+                    if len(values.get(x, [])) != nb_to_check:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The header \
-    information must be on two columns : Column A for name of the field and column\
-     B for value.') % x
+information must be on two columns : Column A for name of the field and column\
+ B for value.') % x
                         file_format_errors.append(error_msg)
 
-                if len(values.get(NB_OF_HEADER_LINES+1, [])) != NB_LINES_COLUMNS:
-                    error_msg = _('Line 20 of the Excel file: This line is \
-    mandatory and must have %s columns. The values on this line must be the name \
-    of the field for PO lines.') % NB_LINES_COLUMNS
+                if len(values.get(first_line_index, [])) < nb_file_lines_columns:
+                    error_msg = _('Line %s of the Excel file: This line is \
+mandatory and must have at least %s columns. The values on this line must be the name \
+of the field for PO lines.') % (first_line_index, nb_file_lines_columns)
                     file_format_errors.append(error_msg)
 
-                for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
-                    if len(values.get(x, [])) != NB_LINES_COLUMNS:
+                for x in xrange(first_line_index, len(values)+1):
+                    if len(values.get(x, [])) < nb_file_lines_columns:
                         lines_to_ignored.append(x)
                         error_msg = _('Line %s of the imported file: The line \
-    information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
+information must be on at least %s columns. The line %s has %s columns') % (x, nb_file_lines_columns, x, len(values.get(x, [])))
                         file_format_errors.append(error_msg)
 
-                nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
+                nb_file_lines = len(values) - first_line_index
                 self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
 
                 if len(file_format_errors):
@@ -709,7 +759,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                 new_po_lines = []
                 not_ok_file_lines = {}
                 # Loop on lines
-                for x in xrange(NB_OF_HEADER_LINES+2, len(values)+1):
+                for x in xrange(first_line_index+1, len(values)+1):
 
                     # Check mandatory fields
                     not_ok = False
@@ -738,7 +788,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
-                    ext_ref = values.get(x, ['', ''])[1]
+                    ext_ref = values.get(x, ['', ''])[1] and str(values.get(x, ['', ''])[1])
 
                     if not line_number and not ext_ref:
                         not_ok = True
@@ -746,6 +796,19 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                         err = _('Line %s of the file: %s') % (x, err1)
                         values_line_errors.append(err)
                         file_line_error.append(err1)
+
+                    if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
+                        not_ok = True
+                        err1 = _('No PO line with the line number \'%s\' and the external ref \'%s\' found in database') % (line_number, ext_ref)
+                        err = _('Line %s of the file: %s') % (x, err1)
+                        values_line_errors.append(err)
+                        file_line_error.append(err1)
+
+                    if not line_number and ext_ref and ext_ref in LN_BY_EXT_REF[wiz.id].keys():
+                        line_number = LN_BY_EXT_REF[wiz.id][ext_ref][0]
+
+                    if not ext_ref and line_number and line_number in EXT_REF_BY_LN[wiz.id].keys():
+                        ext_ref = EXT_REF_BY_LN[wiz.id][line_number][0]
 
                     if not_ok:
                         not_ok_file_lines[x] = ' - '.join(err for err in file_line_error)
@@ -779,7 +842,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     if vals[4]:
                         qty = float(vals[4])
 
-                    file_lines[x] = (line_number or ext_ref, product_id, uom_id, qty)
+                    file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref)
 
                 '''
                 Get the best matching line :
@@ -920,6 +983,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                     vals = values.get(po_line, [])
                     new_wl_id = wl_obj.create(cr, uid, {'type_change': 'new',
                                                         'in_line_number': values.get(po_line, [])[0] and int(values.get(po_line, [])[0]) or False,
+                                                        'in_ext_ref': values.get(po_line, [])[1] or False,
                                                         'simu_id': wiz.id}, context=context)
                     err_msg = wl_obj.import_line(cr, uid, new_wl_id, vals, context=context)
                     if po_line in not_ok_file_lines:
@@ -934,7 +998,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                 # Lines to delete
                 for po_line in SIMU_LINES[wiz.id]['line_ids']:
-                    wl_obj.write(cr, uid, po_line, {'type_change': 'del'}, context=context)
+                    wl_obj.write(cr, uid, po_line, {'type_change': 'ignore'}, context=context)
 
                 '''
                 We generate the message which will be displayed on the simulation
@@ -1071,7 +1135,7 @@ wizard_import_po_simulation_screen()
 
 class wizard_import_po_simulation_screen_line(osv.osv):
     _name = 'wizard.import.po.simulation.screen.line'
-    _order = 'is_new_line, in_line_number, in_product_id, id'
+    _order = 'is_new_line, in_line_number, in_ext_ref, in_product_id, id'
     _rec_name = 'in_line_number'
 
     def _get_line_info(self, cr, uid, ids, field_name, args, context=None):
@@ -1092,6 +1156,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                             'in_dcd': False,
                             'in_price': 0.00,
                             'in_currency': False,
+                            'in_ext_ref': False,
                             'imp_discrepancy': 0.00,
                             'change_ok': False}
 
@@ -1106,7 +1171,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                 res[line.id]['in_dcd'] = l.confirmed_delivery_date
                 res[line.id]['in_price'] = l.price_unit
                 res[line.id]['in_currency'] = l.currency_id and l.currency_id.id or False
-                if line.type_change != 'del':
+                res[line.id]['in_ext_ref'] = l.external_ref or False
+                if line.type_change != '':
                     if line.imp_qty and line.imp_price:
                         disc = (line.imp_qty*line.imp_price)-(line.in_qty*line.in_price)
                         res[line.id]['imp_discrepancy'] = disc
@@ -1120,8 +1186,9 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     price_change = not(res[line.id]['in_price'] == line.imp_price)
                     drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
                     dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
+                    to_delete = line.imp_comment == '[DELETE]'
 
-                    if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change):
+                    if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change or to_delete):
                         res[line.id]['change_ok'] = True
                 elif line.type_change == 'del':
                     res[line.id]['imp_discrepancy'] = -(line.in_qty*line.in_price)
@@ -1190,8 +1257,10 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'is_new_line': fields.function(_get_str_line_number, method=True, string='Is new line ?',
                                        type='boolean', readonly=True, multi='new_line',
                                        store={'wizard.import.po.simulation.screen.line': (lambda self, cr, uid, ids, c={}: ids, ['in_line_number'], 20),}),
+        'in_ext_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'type_change': fields.selection([('', ''), ('error', 'Error'), ('new', 'New'),
-                                         ('split', 'Split'), ('del', 'Del'),],
+                                         ('split', 'Split'), ('del', 'Del'),
+                                         ('ignore', 'Ignore')],
                                          string='CHG', readonly=True),
         'imp_product_id': fields.many2one('product.product', string='Product',
                                           readonly=True),
@@ -1206,6 +1275,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         'imp_dcd': fields.date(string='Delivery Confirmed Date', readonly=True),
         'imp_esc1': fields.char(size=256, string='Message ESC1', readonly=True),
         'imp_esc2': fields.char(size=256, string='Message ESC2', readonly=True),
+        'imp_comment': fields.text(string='Comment', readonly=True),
         'imp_external_ref': fields.char(size=256, string='External Ref.', readonly=True),
         'imp_project_ref': fields.char(size=256, string='Project Ref.', readonly=True),
         'imp_origin': fields.char(size=256, string='Origin Ref.', readonly=True),
@@ -1246,19 +1316,28 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         for line in self.browse(cr, uid, ids, context=context):
             write_vals = {}
 
+            # Comment
+            write_vals['imp_comment'] = values[14] and values[14].strip()
+
             # External Ref.
             write_vals['imp_external_ref'] = values[1]
-            if line.in_line_number and write_vals['imp_external_ref']:
-                errors.append(_('The line cannot have both Line no. and Ext Ref.'))
-                write_vals['in_line_number'] = False
-                write_vals['imp_external_ref'] = False
-                write_vals['type_change'] = 'error'
-            elif line.in_line_number:
+            pol_ids = None
+            if line.in_line_number:
                 pol_ids = self.pool.get('purchase.order.line').search(cr, uid, [('order_id', '=', line.simu_id.order_id.id), ('line_number', '=', line.in_line_number)], context=context)
-                if not pol_ids:
+                if not pol_ids and not (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
                     errors.append(_('Line no is not consistent with validated PO.'))
                     write_vals['in_line_number'] = False
                     write_vals['type_change'] = 'error'
+
+            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
+                if not pol_ids:
+                    write_vals['type_change'] = 'error'
+                    if line.in_line_number:
+                        errors.append(_('The import file is inconsistent. Line no. %s is not existing or was previously deleted') % line.in_line_number)
+                    else:
+                        errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
+                else:
+                    write_vals['type_change'] = 'del'
 
             if not line.in_line_number and not write_vals.get('imp_external_ref'):
                 errors.append(_('The line should have a Line no. or an Ext Ref.'))
@@ -1437,15 +1516,17 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         line_treated = 0.00
         percent_completed = 0.00
         for line in self.browse(cr, uid, ids, context=context):
+            context['purchase_id'] = line.simu_id.order_id.id
             line_treated += 1
             percent_completed = int(float(line_treated) / float(nb_lines) * 100)
-            if line.po_line_id and line.type_change != 'del' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
+            if line.po_line_id and line.type_change != 'ignore' and not line.change_ok and not line.imp_external_ref and not line.imp_project_ref and not line.imp_origin:
                 continue
 
-            if line.type_change in ('del', 'error'):
+            if line.type_change in ('ignore', 'error'):
                 # Don't do anything
-                # i.e. Skype conversation with Raffaelle (08.01.2014) : deletes will need to be done manually after import
                 continue
+            elif line.type_change == 'del' and line.po_line_id:
+                line_obj.fake_unlink(cr, uid, [line.po_line_id.id], context=context)
             elif line.type_change == 'split' and line.parent_line_id:
                 # Call the split line wizard
                 po_line_id = False
