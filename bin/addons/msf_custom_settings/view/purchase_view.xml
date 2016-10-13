@@ -40,6 +40,8 @@
                             <field name="partner_address_id"  attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                             <field name="origin" attrs="{'readonly': [('state', 'in', ['sourced', 'split', 'rfq_sent', 'rfq_updated', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" widget="char"/>
                             <field name="internal_type" string="Zone"  />
+                            <field name="customer_ref" widget="char" />
+                            <label colspan="2"></label>
                             <field name="pricelist_id" string="Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]"
                             colspan="3" attrs="{'readonly': [('state', 'in', ['rfq_updated', 'done', 'cancel', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}"/>
                         </group>
