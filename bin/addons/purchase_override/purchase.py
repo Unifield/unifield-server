@@ -236,12 +236,34 @@ class purchase_order(osv.osv):
         return res
 
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Compute the number of Purchase order lines in each purchase order.
+        A split line is count as one line
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of purchase.order ID to compute
+        :param field_name: Name of the field to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: A dictionnary with the purchase.order ID as keys and the number of Purchase
+                 order lines for each of them as value
+        """
+        pol_obj = self.pool.get('sale.order.line')
+
+        if context is None:
+            context =  {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         res = {}
-        for order in self.read(cr, uid, ids, ['order_line'], context=context):
-            if order['order_line']:
-                res[order['id']] = False
-            else:
-                res[order['id']] = True
+
+        for order_id in ids:
+            res[order_id] = pol_obj.search_count(cr, uid, [
+                ('order_id', '=', order_id),
+                ('is_line_split', '=', False),
+            ], context=context)
+
         return res
 
     def _po_from_x(self, cr, uid, ids, field_names, args, context=None):
