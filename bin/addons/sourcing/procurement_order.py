@@ -125,7 +125,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
                 line.update({'price_unit': procurement.price_unit})
 
-            if procurement and tender_line_id and purchase_order_line_id and confirmed_delivery_date :
+            if procurement and procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id and procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date :
                 line.update({'confirmed_delivery_date': procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date})
 
         if not line.get('price_unit', False):
