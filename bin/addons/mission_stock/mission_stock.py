@@ -717,13 +717,13 @@ class stock_mission_report(osv.osv):
                 sheet = book.add_sheet('Sheet 1')
                 csv_file = open(os.path.join(attachments_path,
                     STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                        report_type + '.csv')), 'w')
+                        report_type + '.csv')), 'wb')
                 field_to_file = {
                         'csv_file': csv_file,
                         'csv_writer': UnicodeWriter(csv_file, dialect=excel_semicolon),
                         'xls_file': open(os.path.join(attachments_path,
                             STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                                report_type + '.xls')), 'w'),
+                                report_type + '.xls')), 'wb'),
                         'header': HEADER_DICT[report_type],
                         'book': book,
                         'sheet': sheet,}
