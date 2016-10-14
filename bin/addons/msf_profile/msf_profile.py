@@ -865,6 +865,32 @@ class patch_scripts(osv.osv):
                         SELECT id FROM product_product WHERE state_ud IS NOT NULL
             )""")
 
+    def us_1766_fix_fxa_aji_curr(self, cr, uid, *a, **b):
+        """
+        Fix FXA AJIs:
+            - set book currency = fct currency
+            - set book amount = fct amount
+        """
+        context = {}
+        logger = logging.getLogger('fix_us_1766')
+        user = self.pool.get('res.users').browse(cr, uid, uid, context=context)
+        currency_id = user.company_id.currency_id and user.company_id.currency_id.id or False
+
+        if currency_id:
+            journal_ids = self.pool.get('account.analytic.journal').search(cr, uid, [('type', '=', 'cur_adj'), ('active', 'in', ['t', 'f'])])
+            if journal_ids:
+                cr.execute("""select entry_sequence from account_analytic_line
+                    where journal_id in %s and
+                    currency_id != %s """, (tuple(journal_ids), currency_id))
+                all_seq = [x[0] for x in cr.fetchall()]
+                logger.warn('Fix %d FXA AJIs: %s' % (len(all_seq), ','.join(all_seq)))
+                cr.execute("""update account_analytic_line set
+                    currency_id = %s,
+                    amount = amount_currency
+                    where journal_id in %s and
+                    currency_id != %s""", (currency_id, tuple(journal_ids), currency_id))
+
+
 patch_scripts()
 
 
