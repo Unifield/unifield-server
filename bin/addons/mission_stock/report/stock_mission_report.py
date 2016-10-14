@@ -55,7 +55,7 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
         # get the attachment_path
         pool = pooler.get_pool(cr.dbname)
         attachment_obj = pool.get('ir.attachment')
-        attachments_path = attachment_obj.get_root_path(cr, uid)
+        attachments_path = attachment_obj.get_root_path(cr, uid, check=False)
 
         if attachment_obj.store_data_in_db(cr, uid, ignore_migration=True):
             # then get the attachment in the old way : in the database
