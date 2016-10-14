@@ -1847,7 +1847,7 @@ stock moves which are already processed : '''
         if all_po_for_all_so_ids:
             # if one PO is not confirmed_/wait we can do all the stuff
             if not self.search_exist(cr, uid,
-                [('id', 'in', all_po_for_all_so_ids), ('state', 'not in', ['confirm', 'confirmed_wait'])],
+                [('id', 'in', all_po_for_all_so_ids), ('state', 'not in', ['approved', 'confirmed_wait'])],
                 context=context):
                     confirmed = self.search_exist(cr, uid,
                         [('id', 'in', all_po_for_all_so_ids), ('po_confirmed', '=', True)], context=context)
