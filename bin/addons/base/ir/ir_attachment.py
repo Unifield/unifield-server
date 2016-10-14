@@ -196,7 +196,7 @@ class ir_attachment(osv.osv):
                 store_data_in_db = True
         return store_data_in_db
 
-    def get_root_path(self, cr, uid):
+    def get_root_path(self, cr, uid, check=True):
         '''
         return the path to store attachments.
         Raise if the path is not valid
@@ -204,7 +204,8 @@ class ir_attachment(osv.osv):
         default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
                 'base_setup', 'attachment_config_default')
         path = default_attachment_config.name
-        self.pool.get('attachment.config').check_path(cr, uid, path)
+        if check:
+            self.pool.get('attachment.config').check_path(cr, uid, path)
         return path
 
     def get_file_path(self, cr, uid, file_name, root_path=None):
