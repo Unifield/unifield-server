@@ -654,7 +654,7 @@ class tender(osv.osv):
                     'notes': line.product_id.description_purchase,
                 }
 
-                if purchase_order_line_id:
+                if line.purchase_order_line_id:
                     pol_values.update({'confirmed_delivery_date': line.purchase_order_line_id.confirmed_delivery_date})
 
                 data.setdefault(line.supplier_id.id, {}) \
