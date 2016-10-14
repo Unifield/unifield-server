@@ -12,10 +12,11 @@
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="730" y="520.0">Page : <pageNumber /></drawString>
+            <drawString x="700" y="520.0">Page : <pageNumber /></drawString>
             <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
-            <drawString x="765" y="520.0">/</drawString>
-            <drawString x="770" y="520.0"><pageCount /> </drawString>
+            <drawString x="735" y="520.0">/</drawString>
+            <drawString x="740" y="520.0"><pageCount /> </drawString>
+            <drawString x="700" y="510.0">Print date: [[ time.strftime('%d/%b/%Y') ]]</drawString>
         </pageGraphics>
 
     </pageTemplate>
