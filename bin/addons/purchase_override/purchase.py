@@ -1845,8 +1845,11 @@ stock moves which are already processed : '''
         # wkf_confirm_trigger is called for this PO and after again and again and again for each linked POs (by the workflow)
         # register the first call by setting po_confirmed=True and do not process the others
         for po in self.browse(cr, uid, all_po_for_all_so_ids):
-            if po.state in ('confirmed', 'confirmed_wait'):
+            if po.po_confirmed:
                 continue
+            self.pool.get('purchase.order').write(cr, uid, ids, {
+                'po_confirmed': True
+            }, context=context)
             wf_service.trg_write(uid, 'purchase.order', po.id, cr)
 
         for po_id in not_confirmed_po:
