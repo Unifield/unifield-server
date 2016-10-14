@@ -205,7 +205,7 @@ report when the last update field will be filled. Thank you for your comprehensi
 
     def open_file(self, cr, uid, ids, file_format='xls', context=None):
         '''
-        Open the XML file
+        Open the file
         '''
         if isinstance(ids, list):
             ids = ids[0]
