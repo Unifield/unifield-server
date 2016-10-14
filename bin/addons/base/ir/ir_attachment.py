@@ -22,7 +22,6 @@
 import itertools
 
 from osv import fields,osv
-from osv.orm import except_orm
 import tools
 import logging
 import os
@@ -128,26 +127,32 @@ class ir_attachment(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         self.check(cr, uid, ids, 'write', context=context, values=vals)
+
+        store_data_in_db = self.store_data_in_db(cr, uid)
         if 'datas' in vals:
             vals['size'] = self.get_size(vals['datas'])
             # do not write the data in DB but on the local file system
             datas = vals.pop('datas')
-            vals['datas'] = '' # erase the old value in DB if any
+            if store_data_in_db:
+                vals['datas'] = datas
+            else:
+                vals['datas'] = '' # erase the old value in DB if any
             for attachment in self.read(cr, uid, ids, ['res_model',
                     'res_id', 'datas_fname', 'path']):
                 # update the data read with the new ones
                 attachment.update(vals)
-                # delete the previous attachment on local file system if any
-                if attachment['path']:
-                    if os.path.exists(attachment['path']):
-                        os.remove(attachment['path'])
+                if not store_data_in_db:
+                    # delete the previous attachment on local file system if any
+                    if attachment['path']:
+                        if os.path.exists(attachment['path']):
+                            os.remove(attachment['path'])
 
-                local_filename = self.get_file_name(cr, uid, attachment,
-                        attachment['id'])
-                vals['path'] = self.get_file_path(cr, uid, local_filename)
-                f = open(vals['path'], 'wb')
-                f.write(base64.decodestring(datas))
-                f.close()
+                    local_filename = self.get_file_name(cr, uid, attachment,
+                            attachment['id'])
+                    vals['path'] = self.get_file_path(cr, uid, local_filename)
+                    f = open(vals['path'], 'wb')
+                    f.write(base64.decodestring(datas))
+                    f.close()
                 return super(ir_attachment, self).write(cr, uid, attachment['id'], vals, context)
 
         return super(ir_attachment, self).write(cr, uid, ids, vals, context)
@@ -169,7 +174,33 @@ class ir_attachment(osv.osv):
 
         return super(ir_attachment, self).unlink(cr, uid, ids, context)
 
+    def is_migration_done(self, cr, uid):
+        '''
+        check if the attachment have been migrated to the file system
+        '''
+        default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
+                'base_setup', 'attachment_config_default')
+        return default_attachment_config.is_migration_done(cr, uid)
+
+    def store_data_in_db(self, cr, uid, ignore_migration=False):
+        '''
+        check if the data should be stored in the database (or file system)
+        '''
+        store_data_in_db = False
+        if not ignore_migration and not self.is_migration_done(cr, uid):
+            store_data_in_db = True
+        else:
+            try:
+                self.get_root_path(cr, uid)
+            except:
+                store_data_in_db = True
+        return store_data_in_db
+
     def get_root_path(self, cr, uid):
+        '''
+        return the path to store attachments.
+        Raise if the path is not valid
+        '''
         default_attachment_config = self.pool.get('ir.model.data').get_object(cr, uid,
                 'base_setup', 'attachment_config_default')
         path = default_attachment_config.name
@@ -177,15 +208,22 @@ class ir_attachment(osv.osv):
         return path
 
     def get_file_path(self, cr, uid, file_name, root_path=None):
+        '''
+        return a path corresponding to the file_name join with the root_path
+        '''
         if not root_path:
             root_path = self.get_root_path(cr, uid)
         return os.path.join(root_path, file_name)
 
     def get_file_name(self, cr, uid, values, attachment_id):
+        '''
+        generate a unique name for the attachment
+        '''
         resource_name = self._name_get_resname(cr, uid, [values['id']],
                 None, None, None)[values['id']]
+        datas_fname = values.get('datas_fname', '')
         file_name = '%s_%s_%s' % (resource_name or 'NOT_LINKED_ATTACHMENT',
-                attachment_id, values['datas_fname'])
+                attachment_id, datas_fname)
 
         # remove unsafe characters (like '/', ' ', ...) that can broke path on some OS
         safe_char = re.compile("[a-zA-Z0-9.,_-]")
@@ -194,25 +232,33 @@ class ir_attachment(osv.osv):
 
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
-        # do not store the datas in base but on the file system
-        datas = values.pop('datas')
+
+        store_data_in_db = self.store_data_in_db(cr, uid)
+        if not store_data_in_db:
+            datas = values.pop('datas')
+        else:
+            datas = values['datas']
         attachment_id = super(ir_attachment, self).create(cr, uid, values,
                 context)
 
         new_values = self._add_missing_default_values(cr, uid, values, context)
         new_values['id'] = attachment_id
         local_filename = self.get_file_name(cr, uid, new_values, attachment_id)
-        new_values['size'] = self.get_size(datas)
 
-        # create the file on the local file system
-        if 'datas_fname' in new_values:
+        if not store_data_in_db:
             new_values['path'] = self.get_file_path(cr, uid, local_filename)
+
+        new_values['size'] = self.get_size(datas)
         new_values.pop('id')
+        if 'datas' in new_values:
+            new_values.pop('datas')
         self.write(cr, uid, attachment_id, new_values, context=context)
 
-        f = open(new_values['path'], 'wb')
-        f.write(base64.decodestring(datas))
-        f.close()
+        if not store_data_in_db:
+            # create the file on the local file system
+            f = open(new_values['path'], 'wb')
+            f.write(base64.decodestring(datas))
+            f.close()
         return attachment_id
 
     def action_get(self, cr, uid, context=None):
@@ -309,7 +355,7 @@ class ir_attachment(osv.osv):
                 # migration has already been done
                 return True
             try:
-                self.pool.get('attachment.config').check_path(cr, uid, default_attachment_config.name)
+                attachment_config_obj.check_path(cr, uid, default_attachment_config.name)
             except Exception as e:
                 self._logger.exception(str(e))
                 attachment_config_obj.write(cr, uid,
@@ -373,7 +419,6 @@ class attachment_config(osv.osv):
     """ Attachment configuration """
     _name = "attachment.config"
     _description = "Attachment configuration"
-
     is_migration_running = False
 
     def _is_migration_running(self, cr, uid, ids, name, arg, context=None):
@@ -408,7 +453,28 @@ class attachment_config(osv.osv):
         (_check_only_one_obj, 'You cannot have more than one Attachment configuration', ['name']),
     ]
 
+    def is_migration_done(self, cr, uid, ids, context=None, *args, **kwargs):
+        '''
+        return True if the migration as been done, False otherwise
+        '''
+        done = True
+        for conf in self.read(cr, uid, ids, ['migration_date',
+                'migration_error', 'is_migration_running']):
+            if conf['is_migration_running']:
+                done = False
+                break
+            if not conf['migration_date']:
+                done = False
+                break
+            if conf['migration_error']:
+                done = False
+                break
+        return done
+
     def check_path(self, cr, uid, attachments_path):
+        '''
+        raise with an explicit message if any condition is not fulfill
+        '''
         if not attachments_path:
             raise osv.except_osv(_('Error'),
             _("No attachments_path provided. Check the Attachment config."))
@@ -516,7 +582,7 @@ class attachment_config(osv.osv):
                 self.move_all_attachments(cr, uid, ids, attachments_path,
                         context=context)
 
-        if 'next_migration' in vals:
+        if 'next_migration' in vals and vals['next_migration']:
             # create a ir_cron with this values
             cron_obj = self.pool.get('ir.cron')
             default_migrate_attachment = self.pool.get('ir.model.data').get_object(cr, uid,
