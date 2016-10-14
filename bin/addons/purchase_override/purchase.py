@@ -162,7 +162,7 @@ class purchase_order(osv.osv):
         # if the copy comes from the button duplicate
         if context.get('from_button'):
             default.update({'is_a_counterpart': False})
-        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False})
+        default.update({'loan_id': False, 'merged_line_ids': False, 'partner_ref': False, 'po_confirmed': False})
         if not context.get('keepOrigin', False):
             default.update({'origin': False})
 
@@ -1836,13 +1836,21 @@ stock moves which are already processed : '''
             ('state', '=', 'confirmed_wait'),
         ], context=context)
 
+        # we trigger all the corresponding sale order -> test_lines is called on these so
+        for so_id in all_so_ids:
+            wf_service.trg_write(uid, 'sale.order', so_id, cr)
+
         # US-1765: PO linked to multiple POs, last PO confirmed
         # wkf_confirm_trigger is called for this PO and after again and again and again for each linked POs (by the workflow)
         # register the first call by setting po_confirmed=True and do not process the others
         confirmed = False
         if all_po_for_all_so_ids:
-            confirmed = self.search_exist(cr, uid,
-                    [('id', 'in', all_po_for_all_so_ids), ('po_confirmed', '=', True)], context=context)
+            # if one PO is not confirmed_/wait we can do all the stuff
+            if not self.search_exist(cr, uid,
+                [('id', 'in', all_po_for_all_so_ids), ('state', 'not in', ['confirm', 'confirmed_wait']),
+                context=context):
+                    confirmed = self.search_exist(cr, uid,
+                        [('id', 'in', all_po_for_all_so_ids), ('po_confirmed', '=', True)], context=context)
         if confirmed:
             # one of the linked PO has already triggered this method for all POs, so we can stop
             return True
@@ -1850,9 +1858,6 @@ stock moves which are already processed : '''
             # register the call
             # direct sql to not trigger (again) the workflow
             cr.execute('''update purchase_order set po_confirmed='t' where id in %s''', (tuple(ids),))
-        # we trigger all the corresponding sale order -> test_lines is called on these so
-        for so_id in all_so_ids:
-            wf_service.trg_write(uid, 'sale.order', so_id, cr)
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
