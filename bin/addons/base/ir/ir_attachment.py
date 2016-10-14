@@ -419,7 +419,6 @@ class attachment_config(osv.osv):
     """ Attachment configuration """
     _name = "attachment.config"
     _description = "Attachment configuration"
-    _logger = logging.getLogger('sync.client')
     is_migration_running = False
 
     def _is_migration_running(self, cr, uid, ids, name, arg, context=None):
