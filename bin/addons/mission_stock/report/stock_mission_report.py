@@ -25,7 +25,6 @@ from osv import osv
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.misc import Path
-import tools
 from tools.translate import _
 import os
 from mission_stock import mission_stock
@@ -48,27 +47,34 @@ class stock_mission_report_xls_parser(SpreadsheetReport):
 
     def create(self, cr, uid, ids, data, context=None):
 
-        # get the attachment_path
-        pool = pooler.get_pool(cr.dbname)
-        res = pool.get('ir.model.data').get_object_reference(cr, uid,
-                'base_setup', 'attachment_config_default')
-        attachments_path = pool.get(res[0]).read(cr, uid, res[1],
-                ['name'])['name']
-
-        # check attachments_path
-        if not attachments_path or not os.path.exists(attachments_path):
-            raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
-
         report_id = data.get('report_id', None)
         field_name = data.get('field_name', '')
         file_format = data.get('file_format', '')
         file_name = mission_stock.STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, field_name + '.%s' % file_format)
-        path = os.path.join(attachments_path, file_name)
-        if os.path.exists(path):
-            return (Path(path, delete=False), file_format)
+
+        # get the attachment_path
+        pool = pooler.get_pool(cr.dbname)
+        attachment_obj = pool.get('ir.attachment')
+        attachments_path = attachment_obj.get_root_path(cr, uid)
+
+        if attachment_obj.store_data_in_db(cr, uid, ignore_migration=True):
+            # then get the attachment in the old way : in the database
+            attachment_ids = attachment_obj.search(cr, uid, [('datas_fname', '=', file_name)],
+                    context=context)
+            if not attachment_ids or not attachment_obj.read(cr, uid, attachment_ids[0], ['datas'])['datas']:
+                raise osv.except_osv(_('Error'),
+                        _("attachments_path %s doesn't exists and the report "\
+                          "has not been found in the database. Please check "\
+                          "the attachments configuration or update the MSR.") % attachments_path)
+            datas = attachment_obj.read(cr, uid, attachment_ids[0], ['datas'])['datas']
+            return (datas, file_format)
         else:
-            raise osv.except_osv(_('Error'),
-                _("File %s not found.\nMay be you need to update the Mission Stock Report data.") % path)
+            path = os.path.join(attachments_path, file_name)
+            if os.path.exists(path):
+                return (Path(path, delete=False), file_format)
+            else:
+                raise osv.except_osv(_('Error'),
+                    _("File %s not found.\nMay be you need to update the Mission Stock Report data.") % path)
 
 stock_mission_report_xls_parser(
     'report.stock.mission.report_xls',

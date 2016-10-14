@@ -262,12 +262,36 @@ class stock_mission_report(osv.osv):
             sheet.write(row_count, column_count, _(column), style)
             column_count += 1
 
-    def generate_csv_files(self, request_result, field_to_file, product_values):
+
+    def write_report_in_database(self, cr, uid, file_name, data):
+        # write the report in the DB
+        ir_attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
+            file_name)])
+        if attachment_ids:
+            # overwrite existing
+            ir_attachment_obj.write(cr, uid, attachment_ids[0], {'datas': data.getvalue()})
+        else:
+            ir_attachment_obj.create(cr, uid,
+                    {
+                        'name': file_name,
+                        'datas': data.getvalue(),
+                        'datas_fname': file_name,
+                    })
+            del data
+
+    def generate_csv_files(self, cr, uid, request_result, report_id, report_type,
+            attachments_path, header, write_attachment_in_db, product_values):
+
+        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.csv')
+        if not write_attachment_in_db:
+            csv_file = open(os.path.join(attachments_path, file_name), 'wb')
+        else:
+            csv_file = cStringIO.StringIO()
+        writer = UnicodeWriter(csv_file, dialect=excel_semicolon)
 
         # write headers of the csv file
-        writer = field_to_file['csv_writer']
-        header_row = field_to_file['header']
-        header_row = [_(column_name) for column_name, colum_property in header_row]
+        header_row = [_(column_name) for column_name, colum_property in header]
         writer.writerow(header_row)
 
         for row in request_result:
@@ -282,7 +306,7 @@ class stock_mission_report(osv.osv):
 
                 data_list = []
                 data_list_append = data_list.append
-                for columns_name, property_name in field_to_file['header']:
+                for columns_name, property_name in header:
                     if property_name == 'product_amc':
                         data_list_append(product_amc)
                     elif property_name == 'product_consumption':
@@ -292,16 +316,18 @@ class stock_mission_report(osv.osv):
                     else:
                         data_list_append(row.get(property_name, False))
 
-                writer = field_to_file['csv_writer']
                 writer.writerow(data_list)
             except Exception, e:
                 logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file : %s\n""" % e, exc_info=True)
 
         # close file
-        csvfile = field_to_file['csv_file']
-        csvfile.close()
+        if not write_attachment_in_db:
+            csv_file.close()
+        else:
+            self.write_report_in_database(cr, uid, file_name, csv_file)
 
-    def generate_xls_files(self, request_result, field_to_file, product_values):
+    def generate_xls_files(self, cr, uid, request_result, report_id, report_type,
+            attachments_path, header, write_attachment_in_db, product_values):
 
         # write the headers
         borders = Borders()
@@ -318,10 +344,10 @@ class stock_mission_report(osv.osv):
             """)
         header_style.borders = borders
 
-        sheet = field_to_file['sheet']
+        book = Workbook()
+        sheet = book.add_sheet('Sheet 1')
         sheet.row_default_height = 60*20
-        header_row = field_to_file['header']
-        header_row = [_(column_name) for column_name, colum_property in header_row]
+        header_row = [_(column_name) for column_name, colum_property in header]
         self.xls_write_header(sheet, header_row, header_style)
 
         sheet.row(0).height_mismatch = True
@@ -349,7 +375,7 @@ class stock_mission_report(osv.osv):
 
                 data_list = []
                 data_list_append = data_list.append
-                for columns_name, property_name in field_to_file['header']:
+                for columns_name, property_name in header:
                     if property_name == 'product_amc':
                         data_list_append(product_amc)
                     elif property_name == 'product_consumption':
@@ -359,19 +385,24 @@ class stock_mission_report(osv.osv):
                     else:
                         data_list_append(row.get(property_name, False))
 
-                sheet = field_to_file['sheet']
                 self.xls_write_row(sheet, data_list, row_count, row_style)
                 #sheet.row(row_count).height_mismatch = True
                 #sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
                 row_count += 1
             except Exception, e:
                 logging.getLogger('MSR').warning("""An error is occured when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
-        book = field_to_file['book']
-        book.save(field_to_file['xls_file'])
+        file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
+        if not write_attachment_in_db:
+            xls_file = open(os.path.join(attachments_path, file_name), 'wb')
+        else:
+            xls_file = cStringIO.StringIO()
+        book.save(xls_file)
 
         # close file
-        xlsfile = field_to_file['xls_file']
-        xlsfile.close()
+        if not write_attachment_in_db:
+            xls_file.close()
+        else:
+            self.write_report_in_database(cr, uid, file_name, xls_file)
 
     def background_update(self, cr, uid, ids, context=None):
         """
@@ -414,14 +445,6 @@ class stock_mission_report(osv.osv):
 
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        # check attachments_path
-        obj_model, obj_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-                'base_setup', 'attachment_config_default')
-        attachments_path = self.pool.get(obj_model).read(cr, uid, obj_id,
-                ['name'])['name']
-        if not attachments_path or not os.path.exists(attachments_path):
-            raise osv.except_osv(_('Error'), _("attachments_path %s doesn't exists.") % attachments_path)
 
         msr_in_progress = self.pool.get('msr_in_progress')
 
@@ -702,41 +725,47 @@ class stock_mission_report(osv.osv):
         context = context or {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         logger = logging.getLogger('MSR')
-        for report_id in ids:
 
+        # check attachments_path
+
+        attachments_path = None
+        attachment_obj = self.pool.get('ir.attachment')
+        try:
+            attachments_path = attachment_obj.get_root_path(cr, uid)
+        except:
+            logger.warning("___ attachments_path %s doesn't exists. The report will be stored in the database" % attachments_path)
+
+        write_attachment_in_db = False
+        if attachment_obj.store_data_in_db(cr, uid,
+                ignore_migration=True):
+            write_attachment_in_db = True
+
+        for report_id in ids:
             logger.info('___ Start export SQL request...')
             cr.execute(GET_EXPORT_REQUEST, (report_id, ))
             request_result = cr.dictfetchall()
 
             logger.info('___ Start CSV and XLS generation...')
             for report_type in ('ns_nv_vals', 'ns_v_vals', 's_nv_vals', 's_v_vals'):
-                field_to_file = {}
-                book = Workbook()
-                sheet = book.add_sheet('Sheet 1')
-                csv_file = open(os.path.join(attachments_path,
-                    STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                        report_type + '.csv')), 'wb')
-                field_to_file = {
-                        'csv_file': csv_file,
-                        'csv_writer': UnicodeWriter(csv_file, dialect=excel_semicolon),
-                        'xls_file': open(os.path.join(attachments_path,
-                            STOCK_MISSION_REPORT_NAME_PATTERN % (report_id,
-                                report_type + '.xls')), 'wb'),
+                params = {
+                        'report_id': report_id,
+                        'report_type': report_type,
+                        'attachments_path': attachments_path,
                         'header': HEADER_DICT[report_type],
-                        'book': book,
-                        'sheet': sheet,}
+                        'write_attachment_in_db': write_attachment_in_db,
+                        'product_values': product_values,}
 
                 # generate CSV file
-                self.generate_csv_files(request_result, field_to_file, product_values)
+                self.generate_csv_files(cr, uid, request_result, **params)
 
                 # generate XLS files
-                self.generate_xls_files(request_result, field_to_file, product_values)
+                self.generate_xls_files(cr, uid, request_result, **params)
 
                 self.write(cr, uid, [report_id], {'export_ok': True}, context=context)
             logger.info('___ CSV & XLS generation finished !')
             del request_result
+            del product_values
         return True
 
 stock_mission_report()
