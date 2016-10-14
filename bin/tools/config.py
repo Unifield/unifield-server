@@ -105,6 +105,7 @@ class configmanager(object):
             'osv_memory_age_limit': 1, # hours
             'additional_xml': False,
             'attachments_path': None,
+            'create_db_dir_for_attachment': True,
         }
 
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])

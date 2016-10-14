@@ -191,6 +191,8 @@ class ir_cron(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
         crons = self.browse(cr, uid, ids, context=context)
         if crons and crons[0] and crons[0].model=='backup.config':
