@@ -1857,7 +1857,7 @@ stock moves which are already processed : '''
         if ids:
             # register the call
             # direct sql to not trigger (again) the workflow
-            cr.execute('''update purchase_order set po_confirmed='t' where id in %s''', (tuple(ids),))
+            cr.execute('''update purchase_order set po_confirmed='t' where id in %s and state = 'confirmed_wait' ''', (tuple(ids),))
 
         # we trigger pos of all sale orders -> all_po_confirm is called on these po
         for po_id in all_po_for_all_so_ids:
