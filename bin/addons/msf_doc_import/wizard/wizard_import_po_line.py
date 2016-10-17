@@ -118,7 +118,15 @@ class wizard_import_po_line(osv.osv_memory):
             row_iterator, row_iterator_line_check = itertools.tee(row_iterator)
 
             row_iterator_line_check.next()  # skip header line
-            lines_to_correct = check_line.check_lines_currency(row_iterator_line_check, currency_index, order_currency_code)
+            try:
+                lines_to_correct = check_line.check_lines_currency(row_iterator_line_check, currency_index, order_currency_code)
+            except Exception as e:
+                message = _("""An error occurs during the check of the currency: %s""") % e
+                categ_log = ''
+                line_num = 0
+                error_list.append(message)
+                logging.getLogger('import purchase order').error('Error %s' % e)
+
             if lines_to_correct > 0:
                 categ_log = ''
                 line_num = 0
