@@ -141,6 +141,12 @@ class analytic_line(osv.osv):
 
         (US-650) Management of "NOT IN". For example to exclude Jan 2016 and Oct 2015:
         ['&', '|', ('date', '<', '2016-01-01'), ('date', '>', '2016-01-31'), '|', ('date', '<', '2015-10-01'), ('date', '>', '2015-10-31')]
+
+        AFTER US-945:
+        We use the real_period_id.
+        For the old entries this field doesn't exist: we keep using the posting dates.
+        For example to include a Period 13:
+        ['|', ('real_period_id', '=', 13), '&', '&', ('real_period_id', '=', False), ('date', '>=', '2016-12-01'), ('date', '<=', '2016-12-31')]
         """
         # Checks
         if context is None:
@@ -175,6 +181,8 @@ class analytic_line(osv.osv):
                         new_args.append(('real_period_id', '=', p_id))
                         # or no real period and in period range
                         # for previous US-945 entries
+                        new_args.append('&')
+                        new_args.append('&')
                         new_args.append(('real_period_id', '=', False))
                         new_args.append(('date', '>=', period.date_start))
                         new_args.append(('date', '<=', period.date_stop))
