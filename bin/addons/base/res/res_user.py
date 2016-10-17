@@ -136,7 +136,7 @@ class users(osv.osv):
 
     def send_welcome_email(self, cr, uid, id, context=None):
         logger= netsvc.Logger()
-        user = self.pool.get('res.users').read(cr, uid, id, context=context)
+        user = self.read(cr, uid, id, context=context)
         if not tools.config.get('smtp_server'):
             logger.notifyChannel('mails', netsvc.LOG_WARNING,
                 _('"smtp_server" needs to be set to send mails to users'))
@@ -325,7 +325,7 @@ class users(osv.osv):
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
             uid2 = uid
-        user = self.pool.get('res.users').read(cr, uid, uid2, ['company_id'], context)
+        user = self.read(cr, uid, uid2, ['company_id'], context)
         company_id = user.get('company_id', False)
         return company_id and company_id[0] or False
 
