@@ -370,7 +370,7 @@ class ir_attachment(osv.osv):
             # if the path is ok, move everything there
             attachment_ids = self.search(cr, uid, [('datas', '!=', False)])
 
-            self._logger.info('Start attachment migration, %s attachments migrate...' % len(attachment_ids))
+            self._logger.info('Start attachment migration: %s attachments to migrate...' % len(attachment_ids))
 
             # read one by one not to do one read that will read all the data of all
             # attachment in one shot
