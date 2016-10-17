@@ -313,6 +313,7 @@
                                    domain="[('internal_ok', '=', True)]" 
                                    attrs="{'readonly': [('state', 'not in', ('draft', 'confirmed', 'assigned'))]}"/>
                             <field name="order_category"/>
+                            <field name="incoming_id" />
                         </group>
                         <group colspan="2" col="2">
                             <field name="date" attrs="{'readonly': [('state', 'not in', ['draft', 'auto', 'assigned', 'confirmed'])]}"/>
