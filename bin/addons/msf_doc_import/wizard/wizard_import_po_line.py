@@ -101,17 +101,18 @@ class wizard_import_po_line(osv.osv_memory):
             error_log, message = '', ''
             header_index = context['header_index']
             template_col_count = len(header_index)
-            mandatory_col_count = 8
+            is_rfq = wiz.po_id.state == 'rfq_sent'
+            mandatory_col_count = 8 if is_rfq else 7
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
 
             """
             1st path: check currency in lines in phasis with document
             REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
-            CCY COL INDEX: 7
+            CCY COL INDEX: 6 (PO) or 7 (RfQ)
             """
             order_currency_code = wiz.po_id.pricelist_id.currency_id.name
-            currency_index = 7
+            currency_index = 7 if is_rfq else 6
             row_iterator = file_obj.getRows()
 
             # don't use the original
@@ -186,12 +187,13 @@ class wizard_import_po_line(osv.osv_memory):
                             continue
 
 
-                        # Cell 0 : Line Number
-                        ln_value = check_line.line_number_value(
-                            row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
-                        to_write.update(
-                            line_number=ln_value['line_number'],
-                            error_list=ln_value['error_list'])
+                        # Cell 0 : Line Number (RfQ)
+                        if is_rfq:
+                            ln_value = check_line.line_number_value(
+                                row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
+                            to_write.update(
+                                line_number=ln_value['line_number'],
+                                error_list=ln_value['error_list'])
 
                         # Cell 1: Product Code
                         p_value = check_line.product_value(
@@ -285,7 +287,7 @@ class wizard_import_po_line(osv.osv_memory):
                             continue
 
 
-                        if wiz.po_id.state == 'rfq_sent':
+                        if is_rfq:
                             rfq_line_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
                             to_write['rfq_ok'] = True
 
