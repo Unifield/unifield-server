@@ -187,9 +187,15 @@ class ir_attachment(osv.osv):
         check if the data should be stored in the database (or file system)
         '''
         store_data_in_db = False
-        if not ignore_migration and not self.is_migration_done(cr, uid):
+
+        attachment_config_obj = self.pool.get('attachment.config')
+        if attachment_config_obj.is_migration_running:
+            # during the migration, we need to store the data on file system
+            store_data_in_db = False
+        elif not ignore_migration and not self.is_migration_done(cr, uid):
             store_data_in_db = True
-        else:
+
+        if not store_data_in_db:
             try:
                 self.get_root_path(cr, uid)
             except:
@@ -351,10 +357,6 @@ class ir_attachment(osv.osv):
             if not default_attachment_config:
                 raise osv.except_osv(_('Error'),
                 _("No path to save the attachment found. Check the Attachment config."))
-            if default_attachment_config.migration_date and not \
-                    default_attachment_config.migration_error:
-                # migration has already been done
-                return True
             try:
                 attachment_config_obj.check_path(cr, uid, default_attachment_config.name)
             except Exception as e:
@@ -366,11 +368,15 @@ class ir_attachment(osv.osv):
                 return False
 
             # if the path is ok, move everything there
-            attachment_ids = self.search(cr, uid, [])
+            attachment_ids = self.search(cr, uid, [('datas', '!=', False)])
+
+            self._logger.info('Start attachment migration: %s attachments to migrate...' % len(attachment_ids))
 
             # read one by one not to do one read that will read all the data of all
             # attachment in one shot
             error_list = []
+            counter = 0
+            nb_attachments = len(attachment_ids)
             for attachment_id in attachment_ids:
                 attachment = self.read(cr, uid, attachment_id, ['path', 'datas', 'datas_fname'])
                 if attachment['datas']:
@@ -378,6 +384,7 @@ class ir_attachment(osv.osv):
                         # check the path exist and if yes, delete the datas
                         if os.path.exists(attachment['path']):
                             self.write(cr, uid, attachment_id, {'datas': False})
+                            counter +=1
                             continue
                         else:
                             error_list.append("attachement id=%s have a path but "\
@@ -390,6 +397,14 @@ class ir_attachment(osv.osv):
                 # commit for each attachment moved then if a problem happen,
                 # the transaction are not rollback with some of the files alread moved
                 cr.commit()
+
+                # update rate for the progress bar
+                counter +=1
+                if counter % 10 == 0:
+                    rate = counter/float(nb_attachments)*100
+                    attachment_config_obj.write(cr, uid,
+                            default_attachment_config.id,
+                            {'moving_rate': rate})
 
             if error_list:
                 self._logger.exception('\n'.join(error_list))
