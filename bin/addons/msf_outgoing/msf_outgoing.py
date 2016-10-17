@@ -3496,6 +3496,7 @@ class stock_picking(osv.osv):
                 'backorder_id': picking.id,
                 'move_lines': [],
                 'already_replicated': already_replicated,
+                'incoming_id': False,
             }
             tmp_allow_copy = context.get('allow_copy')
             context.update({

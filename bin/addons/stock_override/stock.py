@@ -366,7 +366,8 @@ class stock_picking(osv.osv):
             store={
                 'stock.picking': (lambda self, cr, uid, ids, c={}: ids, ['partner_id2'], 10),
             }
-        )
+        ),
+        'incoming_id': fields.many2one('stock.picking', string='Incoming ref')
     }
 
     _defaults = {'from_yml_test': lambda *a: False,

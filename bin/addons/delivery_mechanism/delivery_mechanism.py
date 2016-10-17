@@ -1375,9 +1375,13 @@ class stock_picking(osv.osv):
                 res_wiz = wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
                 if 'res_id' in res_wiz:
                     new_pick_id = res_wiz['res_id']
+                    if new_pick_id:
+                        self.write(cr, uid, new_pick_id, {'incoming_id': picking_dict['id']}, context=context)
                     if backorder_id and new_pick_id:
                         new_pick_name = self.read(cr, uid, new_pick_id, ['name'], context=context)['name']
-                        self.write(cr, uid, backorder_id, {'associate_pick_name': new_pick_name,}, context=context)
+                        self.write(cr, uid, backorder_id, {
+                            'associate_pick_name': new_pick_name,
+                        }, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'prepare_pick': _('Done'),
