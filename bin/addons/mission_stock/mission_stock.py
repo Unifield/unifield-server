@@ -323,6 +323,12 @@ class stock_mission_report(osv.osv):
         # close file
         if not write_attachment_in_db:
             csv_file.close()
+            # delete previous reports in DB if any
+            ir_attachment_obj = self.pool.get('ir.attachment')
+            attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
+                file_name)])
+            if attachment_ids:
+                ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
             self.write_report_in_database(cr, uid, file_name, csv_file)
 
@@ -401,6 +407,12 @@ class stock_mission_report(osv.osv):
         # close file
         if not write_attachment_in_db:
             xls_file.close()
+            # delete previous reports in DB if any
+            ir_attachment_obj = self.pool.get('ir.attachment')
+            attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
+                file_name)])
+            if attachment_ids:
+                ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
             self.write_report_in_database(cr, uid, file_name, xls_file)
 
