@@ -116,9 +116,6 @@
           <para style="P3">Reconcile</para>
         </td>
         <td>
-          <para style="P3">Reconcile Date</para>
-        </td>
-        <td>
           <para style="P3">State</para>
         </td>
       </tr>
@@ -174,9 +171,6 @@
         </td>
         <td>
           <para style="P3">[[ o.reconcile_txt and o.reconcile_txt or '' ]]</para>
-        </td>
-        <td>
-          <para style="P3">[[ formatLang(o.reconcile_date, date=True) or '']]</para>
         </td>
         <td>
           <para style="P3">[[ o.move_state and getSel(o, 'move_state') or '' ]]</para>

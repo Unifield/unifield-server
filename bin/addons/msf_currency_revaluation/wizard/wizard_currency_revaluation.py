@@ -701,7 +701,7 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # get coordo projects...
         project_ids = [
             p.id for p in company.instance_id.child_ids \
-                if p.level == 'project'
+                if p.level == 'project' and p.state != 'inactive'
         ]
         if project_ids:
             # ...check their period state field-closed
@@ -847,12 +847,9 @@ class WizardCurrencyrevaluation(osv.osv_memory):
         # Create entries only after all computation have been done
         for account_id, account_tree in account_sums.iteritems():
             for currency_id, sums in account_tree.iteritems():
-                # If the method is 'other_bs' or 'liquidity_year', get the
-                # account move currency in the currency table
-                if form.revaluation_method in ['liquidity_year', 'other_bs']:
-                    currency = currency_obj.browse(cr, uid, currency_id, context=context)
-                    currency_id = currency_codes_from_table[currency.name]
-                adj_balance = sums.get('unrealized_gain_loss', 0.0)
+                # (US-1682) The adj_balance is rounded, otherwise the booking amount of the first reval entry would be
+                # computed from a non-rounded functional amount, whereas its reversal is based on a rounded amount
+                adj_balance = round(sums.get('unrealized_gain_loss', 0.0), 2)
                 if not adj_balance:
                     continue
 
@@ -976,11 +973,14 @@ class WizardCurrencyrevaluation(osv.osv_memory):
             # Copy the line
             rev_line_id = line_obj.copy(cr, uid, line.id, vals, context=context)
             # Do the reverse
-            amt = -1 * line.amount_currency
             vals.update({
                 'debit': line.credit,
                 'credit': line.debit,
-                'amount_currency': amt,
+                # (US-1682) Set the booking amounts to False in order not to trigger the recomputation of the functional amounts
+                # in _update_amount_bis (in account_move_line_compute_currency) that could generate slight amount differences
+                'credit_currency': False,
+                'debit_currency': False,
+                'amount_currency': False,
                 'journal_id': form.journal_id.id,
                 'name': line_obj.join_without_redundancy(line.name, 'REV'),
                 'reversal_line_id': line.id,
@@ -996,10 +996,10 @@ class WizardCurrencyrevaluation(osv.osv_memory):
                 lines_to_reconcile.append((line.id, rev_line_id))
             # Search analytic lines from first move line
             aal_ids = aal_obj.search(cr, uid, [('move_id', '=', line.id)])
-            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True})
+            aal_obj.write(cr, uid, aal_ids, {'is_reallocated': True}, context=context)
             # Search analytic lines from reversed line and flag them as "is_reversal"
-            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)])
-            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True,})
+            new_aal_ids = aal_obj.search(cr, uid, [('move_id', '=', rev_line_id)], context=context)
+            aal_obj.write(cr, uid, new_aal_ids, {'is_reversal': True}, context=context)
             rev_line_ids.append(rev_line_id)
         # Hard post the move
         move_obj.post(cr, uid, [move_id], context=context)

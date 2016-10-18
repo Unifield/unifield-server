@@ -74,9 +74,12 @@
                      attrs="{'readonly':[('editable','=',False)]}"/>
             </group>
           </group>
-          <separator string="Execution Messages" colspan="4"/>
-          <field name="log" nolabel="1" colspan="4"
-                 attrs="{'readonly':[('editable','=',False)]}"/>
+          <separator string="Last Execution Messages" colspan="4"/>
+          <field name="log" nolabel="1" colspan="4" />
+          <group attrs="{'invisible': [('log_first_notrun', '=', False)]}" colspan="4">
+          <separator string="First Execution Messages" colspan="4"/>
+          <field name="log_first_notrun" nolabel="1" colspan="4" />
+          </group>
           <label string="" colspan="3"/>
           <group colspan="1" col="3">
             <field name="editable"

@@ -82,7 +82,7 @@ class account_partner_balance_tree(osv.osv):
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
         " p.id as partner_id, p.ref as partner_ref, p.name as partner_name," \
-        " sum(debit) AS debit, sum(credit) AS credit," \
+        " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
         " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
         " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
         " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
@@ -391,7 +391,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             account_type = 'Receivable and Payable'
         return data, account_type
 
-    def show(self, cr, uid, ids, context=None):
+    def show(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,
@@ -410,9 +411,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'context': context,
         }
 
-    def print_pdf(self, cr, uid, ids, context=None):
+    def print_pdf(self, cr, buid, ids, context=None):
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         return {
             'type': 'ir.actions.report.xml',
@@ -420,9 +422,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'datas': data,
         }
 
-    def print_xls(self, cr, uid, ids, context=None):
+    def print_xls(self, cr, buid, ids, context=None):
         if context is None:
             context = {}
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                         uid, data,

@@ -91,7 +91,7 @@ class ir_model(osv.osv):
         'model': fields.char('Object', size=64, required=True, select=1),
         'info': fields.text('Information'),
         'field_id': fields.one2many('ir.model.fields', 'model_id', 'Fields', required=True),
-        'state': fields.selection([('manual','Custom Object'),('base','Base Object'), ('deprecated', 'Deprecated')],'Type',readonly=True),
+        'state': fields.selection([('manual','Custom Object'),('base','Base Object')],'Type',readonly=True),
         'access_ids': fields.one2many('ir.model.access', 'model_id', 'Access'),
         'osv_memory': fields.function(_is_osv_memory, method=True, string='In-memory model', type='boolean',
             fnct_search=_search_osv_memory,
@@ -197,7 +197,7 @@ class ir_model_fields(osv.osv):
         'select_level': fields.selection([('0','Not Searchable'),('1','Always Searchable'),('2','Advanced Search (deprecated)')],'Searchable', required=True),
         'translate': fields.boolean('Translate', help="Whether values for this field can be translated (enables the translation mechanism for that field)"),
         'size': fields.integer('Size'),
-        'state': fields.selection([('manual','Custom Field'),('base','Base Field')],'Type', required=True, readonly=True, select=1),
+        'state': fields.selection([('manual','Custom Field'),('base','Base Field'), ('deprecated', 'Deprecated')],'Type', required=True, readonly=True, select=1),
         'on_delete': fields.selection([('cascade','Cascade'),('set null','Set NULL')], 'On delete', help='On delete property for many2one fields'),
         'domain': fields.char('Domain', size=256, help="The optional domain to restrict possible values for relationship fields, "
             "specified as a Python expression defining a list of triplets. "

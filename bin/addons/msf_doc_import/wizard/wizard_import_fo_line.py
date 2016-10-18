@@ -25,6 +25,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
+import tools
 from msf_doc_import import check_line
 from msf_doc_import.wizard import FO_LINE_COLUMNS_FOR_IMPORT as columns_for_fo_line_import
 
@@ -111,15 +112,23 @@ class wizard_import_fo_line(osv.osv_memory):
 
                 header_row = rows.next()
                 header_error = False
+
+                if len(header_row) != len(columns_for_fo_line_import):
+                    header_row = False
+                    header_error = True
+                    error_list.append(_("\n\tNumber of columns is not equal to %s") % len(columns_for_fo_line_import))
+
                 if header_row:
                     for i, h_name in enumerate(columns_for_fo_line_import):
-                        if len(header_row) > i and str(header_row[i]) != h_name:
+                        tr_header_row = _(tools.ustr(header_row[i]))
+                        tr_h_name = _(h_name)
+                        if len(header_row) > i and tr_header_row != tr_h_name:
                             header_error = True
-                            if str(header_row[i]).upper() == h_name.upper():
-                                error_list.append(_("\n\tPlease check spelling on column '%s'.") % header_row[i])
+                            if tr_header_row.upper() == tr_h_name.upper():
+                                error_list.append(_("\n\tPlease check spelling on column '%s'.") % tr_header_row)
 
                 if header_error:
-                    msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join(columns_for_fo_line_import)
+                    msg = _("\n\tYou can not import this file because the header of columns doesn't match with the expected headers: %s") % ','.join([_(x) for x in columns_for_fo_line_import])
                     error_list.append(msg)
                     msg = _("\n\tPlease ensure that all these columns are present and in this exact order.")
                     error_list.append(msg)
@@ -127,8 +136,8 @@ class wizard_import_fo_line(osv.osv_memory):
                     lines_to_correct = check_line.check_lines_currency(rows,
                         currency_index, order_currency_code)
                     if lines_to_correct > 0:
-                        msg = "You can not import this file because it contains" \
-                            " line(s) with currency (Column G) not of the order currency (%s)" % (
+                        msg = _("You can not import this file because it contains" \
+                            " line(s) with currency (Column G) not of the order currency (%s)") % (
                             order_currency_code, )
                         error_list.append(msg)
 
@@ -288,7 +297,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 if error_log:
                     error_log = _("Reported errors for ignored lines : \n") + error_log
                 end_time = time.time()
-                total_time = str(round(end_time-start_time)) + _(' second(s)')
+                total_time = tools.ustr(round(end_time-start_time)) + _(' second(s)')
                 final_message = _('''
     %s
     Importation completed in %s!
@@ -307,7 +316,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 # we reset the state of the FO to draft (initial state)
             except Exception as e:
                 self.write(cr, uid, ids, {
-                    'message': _('An unknow error occured, please contact the support team. Error message: %s') % str(e),
+                    'message': _('An unknow error occured, please contact the support team. Error message: %s') % tools.ustr(e),
                     'state': 'done',
                 }, context=context)
             finally:

@@ -161,6 +161,12 @@ class wizard_import_batch(osv.osv_memory):
                 save_error(errors)
                 continue
 
+            if all(not x for x in line_data):
+                save_warnings(
+                    _('Line seemed empty, so this line was ignored')
+                )
+                continue
+
             # Product
             product_id = None
             try:
