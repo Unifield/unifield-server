@@ -1145,6 +1145,14 @@ class wizard_import_po_simulation_screen_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        delete_line_ids = self.search(cr, uid, [
+            ('imp_comment', '=', '[DELETE]')
+        ], context=context)
+        delete_line_numbers = set()
+        for x in self.read(cr, uid, delete_line_ids, ['in_line_number'], context=context):
+            if x['in_line_number']:
+                delete_line_numbers.add(x['in_line_number'])
+
         res = {}
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'in_product_id': False,
@@ -1187,6 +1195,8 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     drd_change = not(res[line.id]['in_drd'] == line.imp_drd)
                     dcd_change = not(res[line.id]['in_dcd'] == line.imp_dcd)
                     to_delete = line.imp_comment == '[DELETE]'
+                    if to_delete:
+                        delete_line_numbers.add(line.in_line_number)
 
                     if line.simu_id.state != 'draft' and (prod_change or qty_change or price_change or drd_change or dcd_change or to_delete):
                         res[line.id]['change_ok'] = True
@@ -1329,7 +1339,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                     write_vals['in_line_number'] = False
                     write_vals['type_change'] = 'error'
 
-            if write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]':
+            if (write_vals['imp_comment'] and write_vals['imp_comment'] == '[DELETE]'):
                 if not pol_ids:
                     write_vals['type_change'] = 'error'
                     if line.in_line_number:
@@ -1338,6 +1348,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                         errors.append(_('The import file is inconsistent. The matching line is not existing or was previously deleted'))
                 else:
                     write_vals['type_change'] = 'del'
+                    if line.in_line_number:
+                        to_delete = self.search(cr, uid, [
+                            ('simu_id', '=', line.simu_id.id),
+                            ('in_line_number', '=', line.in_line_number),
+                        ], context=context)
+                        self.write(cr, uid, to_delete, {'type_change': 'del'}, context=context)
 
             if not line.in_line_number and not write_vals.get('imp_external_ref'):
                 errors.append(_('The line should have a Line no. or an Ext Ref.'))
