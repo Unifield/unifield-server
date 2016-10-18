@@ -320,10 +320,11 @@ class account_move_line(osv.osv):
             return 0.0
         # Create an sql query
         sql =  """
-            SELECT SUM(debit - credit)
+            SELECT SUM(COALESCE(debit,0) - COALESCE(credit,0))
             FROM account_move_line
             WHERE id in %s
         """
+
         cr.execute(sql, (tuple(ids),))
         res = cr.fetchall()
         if isinstance(ids, list):
@@ -494,6 +495,19 @@ class account_move_line(osv.osv):
             args.append(('move_state', '=', context.get('move_state')))
         return super(account_move_line, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
+
+    def copy(self, cr, uid, aml_id, default=None, context=None):
+        """
+        When duplicate a JI, don't copy the link to register lines
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'imported_invoice_line_ids': [],
+        })
+        return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """
