@@ -183,7 +183,7 @@ msgstr ""
 "adatbázist."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Jelszó megerősítése:"
 
 #: controllers/database.py:73

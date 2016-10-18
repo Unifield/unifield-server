@@ -182,7 +182,7 @@ msgstr ""
 "tietokannassasi."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Vahvista salasana:"
 
 #: controllers/database.py:73

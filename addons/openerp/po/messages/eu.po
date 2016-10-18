@@ -181,7 +181,7 @@ msgstr ""
 "Zure datu basean sortuko den 'admin' erabiltzailearen pasahitza da hau."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Pasahitza berretsi:"
 
 #: controllers/database.py:73

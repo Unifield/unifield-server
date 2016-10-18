@@ -184,7 +184,7 @@ msgstr ""
 "данных."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Подтверждение пароля:"
 
 #: controllers/database.py:73

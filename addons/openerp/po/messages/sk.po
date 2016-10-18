@@ -179,7 +179,7 @@ msgstr ""
 "databáze."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Potvrdenie hesla:"
 
 #: controllers/database.py:73
