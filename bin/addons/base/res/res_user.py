@@ -222,6 +222,68 @@ class users(osv.osv):
         encrypted_password = bcrypt.encrypt(value)
         self.write(cr, uid, id, {'password': encrypted_password})
 
+    def _is_erp_manager(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return True if the user is member of the group_erp_manager (usually,
+        admin of the site).
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        manager_group_id = None
+        result = dict.fromkeys(ids, False)
+        try:
+            dataobj = self.pool.get('ir.model.data')
+            dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                    'group_erp_manager')
+        except ValueError:
+            # If these groups does not exists anymore
+            pass
+        if manager_group_id:
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if manager_group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
+        print '_is_erp_manager: %s' % result
+        return result
+
+    def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return True if the user is member of the Sync_Config
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        sync_config_group_id = None
+        result = dict.fromkeys(ids, False)
+        group_id = None
+        res_group_obj = self.pool.get('res.groups')
+        group_ids = res_group_obj.search(cr, uid,
+                [('name', '=', 'Sync_Config')], context=context)
+        if group_ids:
+            group_id = group_ids[0]
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
+        print '_is_sync_config: %s' % result
+        return result
+
+    def _get_instance_level(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return the level of the instance related to the company of the user
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for user_id in ids:
+            company_id = self._get_company(cr, user_id, context=context)
+            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
+                    ['instance_id'], context=context)['instance_id']
+            instance_id = instance_id and instance_id[0] or False
+            level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
+            result[user_id] = level
+        print '_get_instance_level: %s' % result
+        return result
+
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
                             help="The new user's real name, used for searching"
@@ -268,6 +330,15 @@ class users(osv.osv):
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
+        'is_erp_manager': fields.function(_is_erp_manager, method=True,
+            fnct_inv=lambda *a:'', string='Is ERP Manager ?',
+            type="boolean"),
+        'is_sync_config': fields.function(_is_sync_config, method=True,
+            fnct_inv=lambda *a:'', string='Is Sync Config ?',
+            type="boolean"),
+        'instance_level': fields.function(_get_instance_level, method=True,
+            fnct_inv=lambda *a:'', string='Instance level',
+            type="char"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -401,6 +472,14 @@ class users(osv.osv):
             values['login'] = tools.ustr(values['login']).lower()
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+
+        # uncheck synchronize checkbox if the user is manager or sync config
+        if values.get('groups_id'):
+            import pdb; pdb.set_trace()
+            if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
+               any(self._is_erp_manager(cr, uid, ids, context=context).values()):
+                vals = {'synchronize': False}
+                res = super(users, self).write(cr, uid, ids, vals, context=context)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
