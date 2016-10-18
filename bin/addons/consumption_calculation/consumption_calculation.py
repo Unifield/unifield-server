@@ -609,6 +609,9 @@ class real_average_consumption(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        obj_data = self.pool.get('ir.model.data')
+        product_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'product_tbd')[1]
+        uom_tbd = obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'uom_tbd')[1]
 
         for var in self.browse(cr, uid, ids, context=context):
             # we check the lines that need to be fixed
@@ -1734,106 +1737,84 @@ class product_product(osv.osv):
         '''
         if not context:
             context = {}
+        
         if isinstance(ids, (int, long)):
             ids = [ids]
-
+        
         move_obj = self.pool.get('stock.move')
         uom_obj = self.pool.get('product.uom')
+        
         res = 0.00
+        
         from_date = False
         to_date = False
-
+        
         # Read if a interval is defined
         if context.get('from_date', False):
             from_date = context.get('from_date')
+        
         if context.get('to_date', False):
             to_date = context.get('to_date')
-
+            
         # Get all reason types
-        get_object_reference = self.pool.get('ir.model.data').get_object_reference
-        loan_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
-        donation_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
-        donation_exp_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
-        loss_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
-        discrepancy_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        loan_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loan')[1]
+        donation_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation')[1]
+        donation_exp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_donation_expiry')[1]
+        loss_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_loss')[1]
+        discrepancy_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_discrepancy')[1]
+        return_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
+        return_good_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
+        replacement_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
 
         # Update the domain
         domain = [('state', '=', 'done'), ('reason_type_id', 'not in', (loan_id, donation_id, donation_exp_id, loss_id, discrepancy_id)), ('product_id', 'in', ids)]
-
         if to_date:
             domain.append(('date', '<=', to_date))
         if from_date:
             domain.append(('date', '>=', from_date))
-
-        locations = self.pool.get('stock.location').search(cr, uid,
-                [('usage', 'in', ('internal', 'customer'))], context=context,
-                order='NO_ORDER')
+        
+        locations = self.pool.get('stock.location').search(cr, uid, [('usage', 'in', ('internal', 'customer'))], context=context)
         # Add locations filters in domain if locations are passed in context
         domain.append(('location_id', 'in', locations))
         domain.append(('location_dest_id', 'in', locations))
-
+        
         # Search all real consumption line included in the period
         # If no period found, take all stock moves
         if from_date and to_date:
             rcr_domain = ['&', ('product_id', 'in', ids),
-                          # All lines with a report started out the period and finished in the period
+                          # All lines with a report started out the period and finished in the period 
                           '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
-                          # All lines with a report started in the period and finished out the period
+                          # All lines with a report started in the period and finished out the period 
                           '|', '&', ('rac_id.period_from', '<=', to_date), ('rac_id.period_from', '>=', from_date),
                           # All lines with a report started before the period  and finished after the period
                           '&', ('rac_id.period_from', '<=', from_date), ('rac_id.period_to', '>=', to_date)]
-            racl_obj = self.pool.get('real.average.consumption.line')
-            rcr_line_ids = racl_obj.search(cr, uid, rcr_domain, context=context, order='NO_ORDER')
+        
+            rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, rcr_domain, context=context)
             report_move_ids = []
-            for line in racl_obj.browse(cr, uid, rcr_line_ids, context=context):
+            for line in self.pool.get('real.average.consumption.line').browse(cr, uid, rcr_line_ids, context=context):
                 report_move_ids.append(line.move_id.id)
                 res += self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
+            
             if report_move_ids:
                 domain.append(('id', 'not in', report_move_ids))
-
-        out_move_ids = move_obj.search(cr, uid, domain, context=context,
-                order='NO_ORDER')
-
-        move_result = move_obj.read(cr, uid, out_move_ids, ['location_id',
-            'reason_type_id', 'product_uom', 'product_qty', 'product_id',
-            'location_dest_id', 'date'], context=context)
-
-        # get all location_id
-        location_ids = list(set([x['location_id'][0] for x in move_result if x['location_id']]))
-        location_dest_ids = list(set([x['location_dest_id'][0] for x in move_result if x['location_dest_id']]))
-        location_ids = list(set(location_ids + location_dest_ids))
-        location_obj = self.pool.get('stock.location')
-        location_result = location_obj.read(cr, uid, location_ids, ['usage'],
-                context=context)
-        location_dict = dict((x['id'], x) for x in location_result)
-
-        # get all product_id
-        product_ids = list(set([x['product_id'][0] for x in move_result if x['product_id']]))
-        product_obj = self.pool.get('product.product')
-        product_result = product_obj.read(cr, uid, product_ids, ['uom_id'],
-                context=context)
-        product_dict = dict((x['id'], x) for x in product_result)
-
-        if move_result:
-            return_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_return_from_unit')[1]
-            return_good_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_return')[1]
-            replacement_id = get_object_reference(cr, uid, 'reason_types_moves', 'reason_type_goods_replacement')[1]
-
-        for move in move_result:
-            if move['reason_type_id'][0] in (return_id, return_good_id, replacement_id) and location_dict[move['location_id'][0]]['usage'] == 'customer':
-                res -= uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
-            elif location_dict[move['location_dest_id'][0]]['usage'] == 'customer':
-                res += uom_obj._compute_qty(cr, uid, move['product_uom'][0], move['product_qty'], product_dict[move['product_id'][0]]['uom_id'][0])
-
+        
+        out_move_ids = move_obj.search(cr, uid, domain, context=context)
+        
+        for move in move_obj.browse(cr, uid, out_move_ids, context=context):
+            if move.reason_type_id.id in (return_id, return_good_id, replacement_id) and move.location_id.usage == 'customer':
+                res -= uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
+            elif move.location_dest_id.usage == 'customer':
+                res += uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, move.product_id.uom_id.id)
+            
             # Update the limit in time
-            if not context.get('from_date') and (not from_date or move['date'] < from_date):
-                from_date = move['date']
-            if not context.get('to_date') and (not to_date or move['date'] > to_date):
-                to_date = move['date']
-
-        if not to_date or not from_date or not res:
+            if not context.get('from_date') and (not from_date or move.date < from_date):
+                from_date = move.date
+            if not context.get('to_date') and (not to_date or move.date > to_date):
+                to_date = move.date
+                
+        if not to_date or not from_date:
             return 0.00
-
+            
         # We want the average for the entire period
         if to_date < from_date:
             raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
@@ -1842,21 +1823,22 @@ class product_product(osv.osv):
             to_date_str = strptime(to_date, '%Y-%m-%d')
         except ValueError:
             to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
+        
         try:
             from_date_str = strptime(from_date, '%Y-%m-%d')
         except ValueError:
             from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
 
         nb_months = self._get_date_diff(from_date_str, to_date_str)
-        if not nb_months:
-            nb_months = 1
-
+        
+        if not nb_months: nb_months = 1
+        
         uom_id = self.read(cr, uid, ids[0], ['uom_id'], context=context)['uom_id'][0]
         res = res/nb_months
-        res = uom_obj._compute_qty(cr, uid, uom_id, res, uom_id)
-
+        res = self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res, uom_id)
+            
         return res
-
+    
     def _get_date_diff(self, from_date, to_date):
         '''
         Returns the number of months between to dates according to the number
@@ -1901,41 +1883,40 @@ class product_product(osv.osv):
                     nb_days = fr_nb_days_in_month - from_date.day + 1
                     res += round(nb_days/fr_nb_days_in_month, 2)
                     # Number of month till the end of from month
-                    to_nb_days_in_month = days_in_month(to_date.month, to_date.year)
+                    to_nb_days_in_month = days_in_month(to_date.month, to_date.year)  
                     res += round(to_date.day/to_nb_days_in_month, 2)
                     break
-
+                    
         return res
+                     
+            
 
     def _compute_product_amc(self, cr, uid, ids, field_name, args, ctx=None):
         if ctx is None:
             ctx = {}
         context = ctx.copy()
         res = {}
+        from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
+        to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
 
         if context.get('from_date', False):
             from_date = (DateFrom(context.get('from_date')) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
-        else:
-            from_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(months=-3, day=1)).strftime('%Y-%m-%d')
-
+                                               
         if context.get('to_date', False):
             to_date = (DateFrom(context.get('to_date')) + RelativeDateTime(months=1, day=1, days=-1)).strftime('%Y-%m-%d')
-        else:
-            to_date = (DateFrom(time.strftime('%Y-%m-%d')) + RelativeDateTime(day=1, days=-1)).strftime('%Y-%m-%d')
 
-        context.update({
-            'from_date': from_date,
-            'to_date': to_date})
+        context.update({'from_date': from_date})
+        context.update({'to_date': to_date})
 
-        for product_id in ids:
-            res[product_id] = self.compute_amc(cr, uid, product_id, context=context)
+        for product in ids:
+            res[product] = self.compute_amc(cr, uid, product, context=context)
 
         return res
-
+    
     def _get_period_consumption(self, cr, uid, line, from_date, to_date, context=None):
         '''
         Returns the average quantity of product in the period
-        '''
+        '''        
         # Compute the # of days in the report period
         if context is None:
             context = {}
@@ -1946,10 +1927,10 @@ class product_product(osv.osv):
         dt_to_date = datetime.strptime(to_date, '%Y-%m-%d')
         delta = report_to - report_from
 
-        # Add 1 to include the last day of report to
+        # Add 1 to include the last day of report to        
         report_nb_days = delta.days + 1
         days_incl = 0
-
+        
         # Case where the report is totally included in the period
         if line.rac_id.period_from >= from_date and line.rac_id.period_to <= to_date:
             return line.consumed_qty
@@ -1970,16 +1951,11 @@ class product_product(osv.osv):
             # Add 1 to include the last day of to_date
             delta2 = dt_to_date - report_from
             days_incl = delta2.days +1
-
+        
         # Compute the quantity consumed in the period for this line
         consumed_qty = (line.consumed_qty/report_nb_days)*days_incl
-        if consumed_qty:
-            result = self.pool.get('product.uom')._compute_qty(cr, uid,
-                    line.uom_id.id, consumed_qty, line.uom_id.id)
-        else:
-            result = consumed_qty
-        return result
-
+        return self.pool.get('product.uom')._compute_qty(cr, uid, line.uom_id.id, consumed_qty, line.uom_id.id)
+    
     _columns = {
         'procure_delay': fields.float(digits=(16,2), string='Procurement Lead Time', 
                                         help='It\'s the default time to procure this product. This lead time will be used on the Order cycle procurement computation'),

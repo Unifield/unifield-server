@@ -197,15 +197,9 @@ report when the last update field will be filled. Thank you for your comprehensi
 
         return wiz_id
 
-    def open_xls_file(self, cr, uid, ids, context=None):
-        return self.open_file(cr, uid, ids, file_format='xls', context=context)
-
-    def open_csv_file(self, cr, uid, ids, context=None):
-        return self.open_file(cr, uid, ids, file_format='csv', context=context)
-
-    def open_file(self, cr, uid, ids, file_format='xls', context=None):
+    def open_xml_file(self, cr, uid, ids, context=None):
         '''
-        Open the file
+        Open the XML file
         '''
         if isinstance(ids, list):
             ids = ids[0]
@@ -216,26 +210,6 @@ report when the last update field will be filled. Thank you for your comprehensi
         self._check_status(cr, uid, ids, context=context)
 
         datas = {'ids': ids}
-
-        # add the requested field name and report_id to the datas
-        # to be used later on in the stock_mission_report_xls_parser
-        res = self.read(cr, uid, ids, ['with_valuation', 'split_stock',
-            'report_id'], context=context)
-
-        field_name = None
-        if res['split_stock'] == 'false' and res['with_valuation'] == 'false':
-            field_name = 'ns_nv_vals'
-        elif res['split_stock'] == 'true' and res['with_valuation'] == 'true':
-            field_name = 's_v_vals'
-        elif res['split_stock'] == 'false' and res['with_valuation'] == 'true':
-            field_name = 'ns_v_vals'
-        elif res['split_stock'] == 'true' and res['with_valuation'] == 'false':
-            field_name = 's_nv_vals'
-
-        datas['field_name'] = field_name
-        datas['report_id'] = res['report_id']
-        datas['file_format'] = file_format
-
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'stock.mission.report_xls',
@@ -245,8 +219,7 @@ report when the last update field will be filled. Thank you for your comprehensi
         }
 
     def update(self, cr, uid, ids, context=None):
-        msr_obj = self.pool.get('stock.mission.report')
-        ids = msr_obj.search(cr, uid, [], context=context)
-        return msr_obj.background_update(cr, uid, ids)
+        ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
+        return self.pool.get('stock.mission.report').background_update(cr, uid, ids)
 
 mission_stock_wizard()
