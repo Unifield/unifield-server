@@ -243,7 +243,6 @@ class users(osv.osv):
             for current_user in read_result:
                 if manager_group_id in current_user['groups_id']:
                     result[current_user['id']] = True
-        print '_is_erp_manager: %s' % result
         return result
 
     def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
@@ -264,7 +263,6 @@ class users(osv.osv):
             for current_user in read_result:
                 if group_id in current_user['groups_id']:
                     result[current_user['id']] = True
-        print '_is_sync_config: %s' % result
         return result
 
     def _get_instance_level(self, cr, uid, ids, name=None, arg=None, context=None):
@@ -281,7 +279,6 @@ class users(osv.osv):
             instance_id = instance_id and instance_id[0] or False
             level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
             result[user_id] = level
-        print '_get_instance_level: %s' % result
         return result
 
     _columns = {
@@ -475,7 +472,6 @@ class users(osv.osv):
 
         # uncheck synchronize checkbox if the user is manager or sync config
         if values.get('groups_id'):
-            import pdb; pdb.set_trace()
             if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
                any(self._is_erp_manager(cr, uid, ids, context=context).values()):
                 vals = {'synchronize': False}
