@@ -30,7 +30,6 @@ from tools.translate import _
 from service import security
 import netsvc
 import logging
-import re
 from passlib.hash import bcrypt
 
 class groups(osv.osv):
@@ -104,7 +103,6 @@ class users(osv.osv):
     _name = "res.users"
     _order = 'name'
 
-    PASSWORD_MIN_LENGHT = 6
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
         "\"%(name)s\".\n\nYour login is %(login)s, "\
@@ -215,10 +213,7 @@ class users(osv.osv):
             # so that the new password is immediately used for further RPC requests, otherwise the user
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
-        if not all(self.is_password_strong(value, login).values()):
-            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                    'Password must be different from the login, it must contain '\
-                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
+        security.check_password_validity(None, value, value, login)
         encrypted_password = bcrypt.encrypt(value)
         self.write(cr, uid, id, {'password': encrypted_password})
 
@@ -651,56 +646,55 @@ class users(osv.osv):
         finally:
             cr.close()
 
-    def is_password_strong(self, password, login):
-        """
-        Check that given password is strong enough.
-        In case it is, all values of the returned dict are True
-        """
-        result = {
-                'has_digit': False,
-                'long_enough': False,
-                'login_not_equal_password': False,
+    def pref_change_password(self, cr, uid, old_passwd, new_passwd,
+            confirm_passwd, context=None):
+        self.check(cr.dbname, uid, old_passwd)
+        login = self.read(cr, uid, uid, ['login'])['login']
+        security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
+        vals = {
+            'password': new_passwd,
+            'force_password_change': False,
         }
+        return self.write(cr, 1, uid, vals)
 
-        # check it contains at least one digit
-        if re.search(r'\d', password):
-            result['has_digit'] = True
-
-        # check password lenght
-        if len(password) >= self.PASSWORD_MIN_LENGHT:
-            result['long_enough'] = True
-
-        # check login != password:
-        if password != login:
-            result['login_not_equal_password'] = True
-
-        return result
-
-    def change_password(self, cr, uid, old_passwd, new_passwd, context=None):
+    def change_password(self, db_name, login, old_passwd, new_passwd,
+            confirm_passwd, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
 
-        The write of the new password is done with uid=1 to prevent raise it
+        The write of the new password is done with uid=1 to prevent raise if
         the current logged user don't have permission on res_users.
 
         :return: True
         :raise: security.ExceptionNoTb when old password is wrong
         :raise: except_osv when new password is not set or empty
         """
-        self.check(cr.dbname, uid, old_passwd)
+        cr = pooler.get_db(db_name).cursor()
         if new_passwd:
-            login = self.read(cr, uid, uid, ['login'])['login']
-            if not all(self.is_password_strong(new_passwd, login).values()):
-                raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                        'Password must be diffrent from the login, it must contain '\
-                        'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
+            security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
             new_passwd = bcrypt.encrypt(new_passwd)
             vals = {
                 'password': new_passwd,
                 'force_password_change': False,
             }
-            return self.write(cr, 1, uid, vals)
+            # get user_uid
+            try:
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND active=%s""",
+                           (login, True))
+                res = cr.fetchone()
+                uid = None
+                if res:
+                    uid = res[0]
+                if not uid:
+                    raise security.ExceptionNoTb('AccessDenied')
+                self.check(db_name, uid, tools.ustr(old_passwd))
+                result = self.write(cr, 1, uid, vals)
+                cr.commit()
+            finally:
+                cr.close()
+            return result
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
     def get_admin_profile(self, cr, uid, context=None):
