@@ -169,7 +169,7 @@ msgid ""
 msgstr "这是将与“系统管理员”用户一同创建的新数据库的密码。"
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "确认管理员密码:"
 
 #: controllers/database.py:73

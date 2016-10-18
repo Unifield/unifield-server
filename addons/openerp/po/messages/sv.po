@@ -172,7 +172,7 @@ msgid ""
 msgstr ""
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Upprepa lösenord:"
 
 #: controllers/database.py:73

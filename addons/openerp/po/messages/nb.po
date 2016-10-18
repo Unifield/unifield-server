@@ -179,7 +179,7 @@ msgstr ""
 "Dette er passordet for 'admin' brukeren som opprettes i din nye database."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Bekreft passord:"
 
 #: controllers/database.py:73

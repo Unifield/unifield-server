@@ -182,7 +182,7 @@ msgid ""
 msgstr "Yeni oluşturulacak veritabanındaki 'admin' kullanıcısının şifresi."
 
 #: controllers/database.py:73
-msgid "Confirm password:"
+msgid "Confirm administrator password:"
 msgstr "Parolayı tekrarla:"
 
 #: controllers/database.py:73
