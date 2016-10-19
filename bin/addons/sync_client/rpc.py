@@ -374,7 +374,6 @@ class Connection(object):
         self.user_id = user_id
         if user_id is None:
             self.user_id = Common(self.connector).login(self.database, self.login, self.password)
-            
         if self.user_id is False:
             raise osv.except_osv(_('Error!'), _('Unable to connect to the distant server with this user!'))
         self._logger.debug(self.user_id)
