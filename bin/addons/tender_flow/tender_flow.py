@@ -652,6 +652,7 @@ class tender(osv.osv):
                                                                'date_planned': line.date_planned,
                                                                'move_dest_id': False,
                                                                'notes': line.product_id.description_purchase,
+                                                               'comment': line.comment,
                                                                }))
                     
                 # fill data corresponding to po creation
