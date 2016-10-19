@@ -4926,14 +4926,15 @@ class pack_family_memory(osv.osv):
                 '_name'::varchar(5) as name,
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
-                bool_and(m.not_shipped) as not_shipped
+                bool_and(m.not_shipped) as not_shipped,
+                m.comment as comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
+            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.comment
     )
     ''')
 
@@ -5028,6 +5029,7 @@ class pack_family_memory(osv.osv):
         'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
         'description_ppl': fields.char('Description', size=256),
         'not_shipped': fields.boolean(string='Not shipped'),
+        'comment': fields.char(string='Comment', size=1024)
     }
 
     _defaults = {

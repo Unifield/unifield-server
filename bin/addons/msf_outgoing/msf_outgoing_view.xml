@@ -1269,6 +1269,7 @@
 									<field name="location_id" />
 									<field name="location_dest_id" />
 									<field name="state" />
+									<field name="comment" />
 									<field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
 										<tree colors="red: inactive_product==True">
 											<field name="name" />
