@@ -76,19 +76,6 @@ def login(db_name, login, password):
     if not nb:
         to_update = updater.test_do_upgrade(cr)
 
-    # get user uid corresponding to the login
-    cr.execute("""SELECT id
-    FROM res_users
-    WHERE login='%s'""" % (login))
-    uid = [x[0] for x in cr.fetchall()]
-    if uid:
-        uid = uid[0]
-    else:
-        raise ExceptionNoTb('AccessDenied')
-
-    # check password and login match
-    check(db_name, uid, password)
-
     # check if the user have to change his password
     cr.execute("""SELECT force_password_change
     FROM res_users
