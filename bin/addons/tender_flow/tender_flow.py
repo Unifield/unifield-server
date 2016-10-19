@@ -375,6 +375,7 @@ class tender(osv.osv):
                               'notes': line.product_id.description_purchase,
                               'order_id': po_id,
                               'tender_line_id': line.id,
+                              'comment': line.comment,
                               }
                     # create purchase order line
                     pol_id = pol_obj.create(cr, uid, values, context=context)
