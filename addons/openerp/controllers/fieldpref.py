@@ -28,7 +28,7 @@ class FieldPref(SecuredController):
     _cp_path = "/openerp/fieldpref"
 
     def is_admin_profile(self):
-        return rpc.RPCProxy('res.users').get_admin_profile(rpc.session.uid)
+        return rpc.RPCProxy('res.users').get_admin_profile()
 
     @expose(template="/openerp/controllers/templates/fieldpref.mako")
     def index(self, **kw): #_terp_model, _terp_field, _terp_deps
