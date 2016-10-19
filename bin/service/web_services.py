@@ -118,7 +118,7 @@ class db(netsvc.ExportService):
         self._create_empty_database(db_name)
 
         # encrypt the db admin password
-        user_password = bcrypt.encrypt(user_password)
+        user_password = bcrypt.encrypt(tools.ustr(user_password))
 
         class DBInitialize(object):
             def __call__(self, serv, id, db_name, demo, lang, user_password='admin'):

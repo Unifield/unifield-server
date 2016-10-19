@@ -214,7 +214,7 @@ class users(osv.osv):
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
         security.check_password_validity(None, value, value, login)
-        encrypted_password = bcrypt.encrypt(value)
+        encrypted_password = bcrypt.encrypt(tools.ustr(value))
         self.write(cr, uid, id, {'password': encrypted_password})
 
 
@@ -493,6 +493,8 @@ class users(osv.osv):
         cr = pooler.get_db(db).cursor()
         database_password = self.get_user_database_password_from_login(cr, login)
         # check the password is a bcrypt encrypted one
+        database_password = tools.ustr(database_password)
+        password = tools.ustr(password)
         if bcrypt.identify(database_password):
             if not bcrypt.verify(password, database_password):
                 return False
@@ -545,6 +547,8 @@ class users(osv.osv):
         try:
             database_password = self.get_user_database_password_from_uid(cr, uid)
             # check the password is a bcrypt encrypted one
+            database_password = tools.ustr(database_password)
+            passwd = tools.ustr(passwd)
             if bcrypt.identify(database_password):
                 if not bcrypt.verify(passwd, database_password):
                     raise security.ExceptionNoTb('AccessDenied')
@@ -599,7 +603,7 @@ class users(osv.osv):
         cr = pooler.get_db(db_name).cursor()
         if new_passwd:
             security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
-            new_passwd = bcrypt.encrypt(new_passwd)
+            new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
             vals = {
                 'password': new_passwd,
                 'force_password_change': False,
