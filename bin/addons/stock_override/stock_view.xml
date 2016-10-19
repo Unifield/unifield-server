@@ -405,6 +405,7 @@
                                             invisible="1"
                                             />
                                         <field name="product_packaging" domain="[('product_id','=',product_id)]" colspan="4" invisible="1"/>
+                                        <field name="comment" colspan="4" />
                                     </group>
 
                                     <group colspan="2" col="2">
