@@ -219,7 +219,7 @@ class users(osv.osv):
             raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                     'Password must be different from the login, it must contain '\
                     'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-        encrypted_password = bcrypt.encrypt(value)
+        encrypted_password = bcrypt.encrypt(tools.ustr(value))
         self.write(cr, uid, id, {'password': encrypted_password})
 
     _columns = {
@@ -497,6 +497,8 @@ class users(osv.osv):
         cr = pooler.get_db(db).cursor()
         database_password = self.get_user_database_password_from_login(cr, login)
         # check the password is a bcrypt encrypted one
+        database_password = tools.ustr(database_password)
+        password = tools.ustr(password)
         if bcrypt.identify(database_password):
             if not bcrypt.verify(password, database_password):
                 return False
@@ -549,6 +551,8 @@ class users(osv.osv):
         try:
             database_password = self.get_user_database_password_from_uid(cr, uid)
             # check the password is a bcrypt encrypted one
+            database_password = tools.ustr(database_password)
+            passwd = tools.ustr(passwd)
             if bcrypt.identify(database_password):
                 if not bcrypt.verify(passwd, database_password):
                     raise security.ExceptionNoTb('AccessDenied')
@@ -620,6 +624,7 @@ class users(osv.osv):
                 raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
                         'Password must be diffrent from the login, it must contain '\
                         'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
+            new_passwd = tools.ustr(new_passwd)
             new_passwd = bcrypt.encrypt(new_passwd)
             vals = {
                 'password': new_passwd,

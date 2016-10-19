@@ -54,7 +54,7 @@ class patch_scripts(osv.osv):
         users_obj = self.pool.get('res.users')
         user_ids = users_obj.search(cr, uid, [])
         for user in users_obj.read(cr, uid, user_ids, ['password']):
-            original_password = user['password']
+            original_password = tools.ustr(user['password'])
             # check the password is not already encrypted
             if not bcrypt.identify(original_password):
                 encrypted_password = bcrypt.encrypt(original_password)

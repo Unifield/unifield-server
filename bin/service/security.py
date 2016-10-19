@@ -82,6 +82,8 @@ def login(db, login, password):
 
 def check_password(passwd, config_password):
     # check the password is a bcrypt encrypted one
+    config_password = tools.ustr(config_password)
+    passwd = tools.ustr(passwd)
     if bcrypt.identify(config_password) and \
             bcrypt.verify(passwd, config_password):
         return True
