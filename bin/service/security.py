@@ -37,8 +37,10 @@ class ExceptionNoTb(Exception):
 
 def number_update_modules(db):
     cr = pooler.get_db_only(db).cursor()
-    n = _get_number_modules(cr)
-    cr.close()
+    try:
+        n = _get_number_modules(cr)
+    finally:
+        cr.close()
     return n
 
 def _get_number_modules(cr, testlogin=False):
@@ -59,32 +61,37 @@ def _get_number_modules(cr, testlogin=False):
 def change_password(db_name, login, password, new_password, confirm_password):
     db, pool = pooler.get_db_and_pool(db_name)
     cr = db.cursor()
-    user_obj = pool.get('res.users')
-    return user_obj.change_password(db_name, login, password, new_password,
-            confirm_password)
+    try:
+        user_obj = pool.get('res.users')
+        result = user_obj.change_password(db_name, login, password, new_password,
+                confirm_password)
+    finally:
+        cr.close()
+    return result
 
 def login(db_name, login, password):
     db, pool = pooler.get_db_and_pool(db_name)
     cr = db.cursor()
-    nb = _get_number_modules(cr, testlogin=True)
-    patch_failed = [0]
-    cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='patch_scripts'")
-    if cr.rowcount:
-        cr.execute("SELECT count(id) FROM patch_scripts WHERE run = \'f\'")
-        patch_failed = cr.fetchone()
-    to_update = False
-    if not nb:
-        to_update = updater.test_do_upgrade(cr)
+    try:
+        nb = _get_number_modules(cr, testlogin=True)
+        patch_failed = [0]
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='patch_scripts'")
+        if cr.rowcount:
+            cr.execute("SELECT count(id) FROM patch_scripts WHERE run = \'f\'")
+            patch_failed = cr.fetchone()
+        to_update = False
+        if not nb:
+            to_update = updater.test_do_upgrade(cr)
 
-    # check if the user have to change his password
-    cr.execute("""SELECT force_password_change
-    FROM res_users
-    WHERE login='%s'""" % (login))
-    force_password = [x[0] for x in cr.fetchall()]
-    if any(force_password):
-        raise Exception("ForcePasswordChange: The admin requests your password change ...")
-
-    cr.close()
+        # check if the user have to change his password
+        cr.execute("""SELECT force_password_change
+        FROM res_users
+        WHERE login='%s'""" % (login))
+        force_password = [x[0] for x in cr.fetchall()]
+        if any(force_password):
+            raise Exception("ForcePasswordChange: The admin requests your password change ...")
+    finally:
+        cr.close()
     if nb or to_update:
         s = threading.Thread(target=pooler.get_pool, args=(db_name,),
                 kwargs={'threaded': True})

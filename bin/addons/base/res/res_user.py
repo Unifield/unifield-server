@@ -246,7 +246,6 @@ class users(osv.osv):
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        sync_config_group_id = None
         result = dict.fromkeys(ids, False)
         group_id = None
         res_group_obj = self.pool.get('res.groups')
@@ -565,48 +564,49 @@ class users(osv.osv):
             return False
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
-        database_password = self.get_user_database_password_from_login(cr, login)
-        # check the password is a bcrypt encrypted one
-        database_password = tools.ustr(database_password)
-        password = tools.ustr(password)
-        if bcrypt.identify(database_password):
-            if not bcrypt.verify(password, database_password):
-                return False
-        elif password != database_password:
-            return False
-
         try:
-            # autocommit: our single request will be performed atomically.
-            # (In this way, there is no opportunity to have two transactions
-            # interleaving their cr.execute()..cr.commit() calls and have one
-            # of them rolled back due to a concurrent access.)
-            # We effectively unconditionally write the res_users line.
-            cr.autocommit(True)
-            # Even w/ autocommit there's a chance the user row will be locked,
-            # in which case we can't delay the login just for the purpose of
-            # update the last login date - hence we use FOR UPDATE NOWAIT to
-            # try to get the lock - fail-fast
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active FOR UPDATE NOWAIT""",
-                       (login, tools.ustr(database_password)), log_exceptions=False)
-            cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
-                    (login, tools.ustr(database_password)))
-        except Exception:
-            # Failing to acquire the lock on the res_users row probably means
-            # another request is holding it - no big deal, we skip the update
-            # for this time, and let the user login anyway.
-            logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
-            cr.rollback()
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active""",
-                       (login, tools.ustr(database_password)))
+            database_password = self.get_user_database_password_from_login(cr, login)
+            # check the password is a bcrypt encrypted one
+            database_password = tools.ustr(database_password)
+            password = tools.ustr(password)
+            if bcrypt.identify(database_password):
+                if not bcrypt.verify(password, database_password):
+                    return False
+            elif password != database_password:
+                return False
+            try:
+                # autocommit: our single request will be performed atomically.
+                # (In this way, there is no opportunity to have two transactions
+                # interleaving their cr.execute()..cr.commit() calls and have one
+                # of them rolled back due to a concurrent access.)
+                # We effectively unconditionally write the res_users line.
+                cr.autocommit(True)
+                # Even w/ autocommit there's a chance the user row will be locked,
+                # in which case we can't delay the login just for the purpose of
+                # update the last login date - hence we use FOR UPDATE NOWAIT to
+                # try to get the lock - fail-fast
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active FOR UPDATE NOWAIT""",
+                           (login, tools.ustr(database_password)), log_exceptions=False)
+                cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
+                        (login, tools.ustr(database_password)))
+            except Exception:
+                # Failing to acquire the lock on the res_users row probably means
+                # another request is holding it - no big deal, we skip the update
+                # for this time, and let the user login anyway.
+                logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
+                cr.rollback()
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active""",
+                           (login, tools.ustr(database_password)))
+            finally:
+                res = cr.fetchone()
+                if res:
+                    return res[0]
         finally:
-            res = cr.fetchone()
             cr.close()
-            if res:
-                return res[0]
         return False
 
     def check(self, db, uid, passwd):
@@ -676,15 +676,8 @@ class users(osv.osv):
         """
         cr = pooler.get_db(db_name).cursor()
         if new_passwd:
-            security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
-            new_passwd = tools.ustr(new_passwd)
-            new_passwd = bcrypt.encrypt(new_passwd)
-            vals = {
-                'password': new_passwd,
-                'force_password_change': False,
-            }
-            # get user_uid
             try:
+                # get user_uid
                 cr.execute("""SELECT id from res_users
                               WHERE login=%s AND active=%s""",
                            (login, True))
@@ -695,6 +688,12 @@ class users(osv.osv):
                 if not uid:
                     raise security.ExceptionNoTb('AccessDenied')
                 self.check(db_name, uid, tools.ustr(old_passwd))
+                security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
+                new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
+                vals = {
+                    'password': new_passwd,
+                    'force_password_change': False,
+                }
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:
