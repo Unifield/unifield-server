@@ -46,6 +46,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1482_fix_default_code_on_msf_lines(self, cr, uid, *a, **b):
+        """
+        If the default code set on the MSR lines is different from the
+        default_code set on the related product_id, it means that the MSR lines
+        should be updated.
+        The call of write on them do the job.
+        """
+
+        request = """
+        UPDATE stock_mission_report_line
+        SET default_code=subquerry.pp_code
+        FROM
+            (SELECT msrl.id AS msrl_id, msrl.default_code AS msrl_code,
+             pp.default_code AS pp_code FROM stock_mission_report_line AS msrl
+             JOIN product_product AS pp ON pp.id = msrl.product_id
+             WHERE
+                msrl.default_code != pp.default_code
+            ) AS subquerry
+        WHERE
+            stock_mission_report_line.id = msrl_id
+        """
+        cr.execute(request)
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be

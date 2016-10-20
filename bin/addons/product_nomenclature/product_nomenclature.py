@@ -868,7 +868,29 @@ class product_product(osv.osv):
         sale = self.pool.get('sale.order.line')
         sale._setNomenclatureInfo(cr, uid, vals, context)
 
-        return super(product_product, self).write(cr, uid, ids, vals, context)
+
+        default_code = vals.get('default_code', False)
+
+        if default_code:
+            read_result = self.read(cr, uid, ids, ['default_code'], context=context)
+
+        res = super(product_product, self).write(cr, uid, ids, vals, context)
+
+        # check if default_code change
+        if default_code:
+            all_msf_lines_to_upgrade = []
+            msf_line_obj = self.pool.get('stock.mission.report.line')
+            for product in read_result:
+                if product['default_code'] != default_code:
+                    # if the default_code change, update the corresponding MSR lines
+                    msf_lines_to_update = msf_line_obj.search(cr, uid,
+                            [('product_id', '=', product['id'])],
+                            context=context)
+                    all_msf_lines_to_upgrade.extend(msf_lines_to_update)
+            if all_msf_lines_to_upgrade:
+                msf_line_obj.write(cr, uid, all_msf_lines_to_upgrade,
+                        {}, context=context)
+        return res
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''

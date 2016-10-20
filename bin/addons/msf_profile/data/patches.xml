@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="us_1482" model="patch.scripts">
+            <field name="method">us_1482_fix_default_code_on_msf_lines</field>
+        </record>
+
         <record id="us_1388" model="patch.scripts">
             <field name="method">us_1388_change_sequence_implementation</field>
         </record>
