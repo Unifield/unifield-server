@@ -845,7 +845,7 @@ class product_product(osv.osv):
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
-        prod_default_code = default_code or self.read(cr, uid, res, ['default_code'], context=context)
+        prod_default_code = default_code or self.read(cr, uid, res, ['default_code'], context=context)['default_code']
         if to_overwrite:
             self.write(cr, uid, res, {'xmlid_code': prod_default_code}, context=context)
 
