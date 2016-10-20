@@ -415,12 +415,33 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         if context is None:
             context = {}
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
-        data, account_type = self._get_data(cr, uid, ids, context=context)
+        # get data for "SaveFilter"
+        print self.read(cr, uid, ids[0])
+
+        # or set data for Apply Filter
+        new_id = self.create(cr, uid, {'filter': 'filter_date', 'date_from': '2016-01-01', 'instance_ids': [(6, 0, [3, 2])], 'journal_ids': [(6, 0, [1,2])]}, context=context)
+        if context.get('active_model') == 'ir.ui.menu' and context.get('active_id'):
+            action = self.pool.get('ir.ui.menu').read(cr, uid, context.get('active_id'), ['action'], context=context)['action']
+            model, res_id = action.split(',')
+            ret = self.pool.get(model).read(cr, uid, [res_id],
+                ['type', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'name', 'views', 'view_type'],
+                context=context)[0]
+            ret.update({'context': context, 'res_id': new_id, 'target': 'new'})
+            return ret
         return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'account.partner.balance',
-            'datas': data,
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.account.partner.balance.tree',
+            'view_type': 'form',
+            'context': context,
+            'res_id': new_id,
+            'target': 'new',
         }
+        #data, account_type = self._get_data(cr, uid, ids, context=context)
+        #return {
+        #    'type': 'ir.actions.report.xml',
+        #    'report_name': 'account.partner.balance',
+        #    'datas': data,
+        #}
 
     def print_xls(self, cr, buid, ids, context=None):
         if context is None:
