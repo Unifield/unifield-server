@@ -1276,7 +1276,8 @@ class orm_template(object):
                     res[f]['related_columns'] = list((field_col._id1, field_col._id2))
                     res[f]['third_table'] = field_col._rel
                 for arg in ('string', 'readonly', 'states', 'size', 'required', 'group_operator',
-                        'change_default', 'translate', 'help', 'select', 'selectable'):
+                        'change_default', 'translate', 'help', 'select',
+                        'selectable', 'internal'):
                     if getattr(field_col, arg):
                         res[f][arg] = getattr(field_col, arg)
                 if not write_access:
@@ -1909,6 +1910,52 @@ class orm_template(object):
         if isinstance(res, list):
             return len(res)
         return res
+
+    def has_index(self,cr, column_name):
+        '''
+            check if column_name have an index in the database
+        '''
+        indexname = '%s_%s_index' % (self._table, column_name)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = %s and tablename = %s", (indexname, self._table))
+        res = cr.dictfetchall()
+        if res:
+            return True
+        return False
+
+    def exact_search_web(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+            If the domain exists, check that it contains at least one exact search.
+            And exact search contain at least one '=' in its subdomain
+            and this subdomain have a corresponding index in the databse
+        '''
+        if args:
+            exact_search = False
+            exact_search_with_no_index = []
+            for sub_domain in args:
+                if len(sub_domain) > 1 and sub_domain[1] in ('=', '<=', '>='):
+                    # check this column have an index, if not this doesn't
+                    # count as an exact search
+                    if self.has_index(cr, sub_domain[0]):
+                        exact_search = True
+                        break
+                    exact_search_with_no_index.append(_(self._columns[sub_domain[0]].string))
+
+            if not exact_search:
+                if exact_search_with_no_index:
+                    raise except_orm(_("Error!"), _("Sorry, the field(s) '%s' can not be searched alone with '='. Use '=' with others search fields.") % ', '.join(exact_search_with_no_index))
+                raise except_orm(_("Error!"), _("You can't search on this object without using at least one exact search term (precede your search with the character '=')."))
+
+        return self.search(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+
+    def search_web(self, cr, user, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        by default search_web do the same thing than search. If you need a
+        special treatment, you need to redifine it in the class you wan't
+        (in which you can call exact_search_web() for example if you want to
+        force for exact search
+        '''
+        return self.search(cr, user, args, offset, limit, order, context, count)
 
     def search_exist(self, cr, user, args, context=None):
         """

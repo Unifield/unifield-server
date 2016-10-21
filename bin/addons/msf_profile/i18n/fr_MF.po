@@ -74670,3 +74670,16 @@ msgstr "Qté"
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:141
 msgid "UoM"
 msgstr "UdM"
+
+#. module: base
+#: code:addons/orm.py:1945
+#, python-format
+msgid "Sorry, the field(s) '%s' can not be searched alone with '='. Use '=' with others search fields."
+msgstr "Désolé, le(s) champ(s) '%s' ne peut(vent) pas être utilisé(s) seul(s). Utilisez '=' avec d'autres champs de recherche."
+
+#. module: base
+#: code:addons/orm.py:1946
+#, python-format
+msgid "You can't search on this object without using at least one exact search term (precede your search with the character '=')."
+msgstr "Vous ne pouvez pas exécuter de recherche sur cet objet sans utiliser au moins une recherche exacte (ajoutez le caractère = devant votre filtre)."
+

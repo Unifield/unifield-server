@@ -20,14 +20,17 @@
       <field name="type">search</field>
       <field name="arch" type="xml">
         <search string="Synchronization Monitor">
+          <field name="source"/>
           <field name="create_date"/>
           <field name="sequence"/>
-          <filter icon="terp-gtk-stop" string="Not Validated"
-                  domain="[('sequence','=',False)]"/>
-          <newline/>
           <field name="rule_id"/>
           <field name="model"/>
+          <newline/>
           <field name="sdref"/>
+          <field name="values"/>
+          <field name="fancy_puller_ids"/>
+          <filter icon="terp-gtk-stop" string="Not Validated"
+                  domain="[('sequence','=',False)]"/>
         </search>
       </field>
     </record>
