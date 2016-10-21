@@ -694,12 +694,6 @@ class users(osv.osv):
                     'force_password_change': False,
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
-                security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
-                new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
-                vals = {
-                    'password': new_passwd,
-                    'force_password_change': False,
-                }
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:
