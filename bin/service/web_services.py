@@ -476,7 +476,7 @@ class common(_ObjectService):
                 security.change_password(params[0], params[1], params[2],
                         params[3], params[4])
             except Exception as e:
-                msg = str(e)
+                msg = tools.ustr(e.value)
                 return msg
             return True
         elif method == 'logout':

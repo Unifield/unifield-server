@@ -213,7 +213,7 @@ class users(osv.osv):
             # so that the new password is immediately used for further RPC requests, otherwise the user
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
-        security.check_password_validity(None, value, value, login)
+        security.check_password_validity(self, cr, uid, None, value, value, login)
         encrypted_password = bcrypt.encrypt(tools.ustr(value))
         self.write(cr, uid, id, {'password': encrypted_password})
 
@@ -580,7 +580,7 @@ class users(osv.osv):
             confirm_passwd, context=None):
         self.check(cr.dbname, uid, old_passwd)
         login = self.read(cr, uid, uid, ['login'])['login']
-        security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
+        security.check_password_validity(self, cr, uid, old_passwd, new_passwd, confirm_passwd, login)
         vals = {
             'password': new_passwd,
             'force_password_change': False,
@@ -600,15 +600,9 @@ class users(osv.osv):
         :raise: security.ExceptionNoTb when old password is wrong
         :raise: except_osv when new password is not set or empty
         """
-        cr = pooler.get_db(db_name).cursor()
         if new_passwd:
-            security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
-            new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
-            vals = {
-                'password': new_passwd,
-                'force_password_change': False,
-            }
             # get user_uid
+            cr = pooler.get_db(db_name).cursor()
             try:
                 cr.execute("""SELECT id from res_users
                               WHERE login=%s AND active=%s""",
@@ -619,6 +613,12 @@ class users(osv.osv):
                     uid = res[0]
                 if not uid:
                     raise security.ExceptionNoTb('AccessDenied')
+                security.check_password_validity(self, cr, uid, old_passwd, new_passwd, confirm_passwd, login)
+                new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
+                vals = {
+                    'password': new_passwd,
+                    'force_password_change': False,
+                }
                 self.check(db_name, uid, tools.ustr(old_passwd))
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()

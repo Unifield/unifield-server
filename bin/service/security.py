@@ -57,6 +57,9 @@ def _get_number_modules(cr, testlogin=False):
     return False
 
 def change_password(db_name, login, password, new_password, confirm_password):
+    '''
+    Call the res.user change_password method
+    '''
     db, pool = pooler.get_db_and_pool(db_name)
     cr = db.cursor()
     user_obj = pool.get('res.users')
@@ -99,11 +102,23 @@ def login(db_name, login, password):
 
     return user_res
 
-def check_password_validity(old_password, new_password, confirm_password, login):
-    """
+def check_password_validity(self, cr, uid, old_password, new_password, confirm_password, login):
+    '''
     Check password respect some conditions
     Raise is any of the condition is not respected
-    """
+
+    :param self: the caller of this method. It is needed for _get_lang to be
+    able to know the language of the requested user
+    :param cr: database cursor
+    :param uid: the user id of the password to check
+    :param old_password: the previous password
+    :param new_password: the new password to setup
+    :param confirm_password: the confirmation of the new password
+    :param login: the login that request the password check
+    :return: True if the password check pass
+    :rtype: boolean
+    :raise osv.except_osv: if the password is not ok
+    '''
     # check it contains at least one digit
     if not re.search(r'\d', new_password):
         message = _('The new password is not strong enough. '\
@@ -132,20 +147,33 @@ def check_password_validity(old_password, new_password, confirm_password, login)
         raise osv.except_osv(_('Operation Canceled'), message)
     return True
 
-def check_password(passwd, config_password):
+def check_password(password, hashed_password):
+    '''
+    Check that the password match the hashed_password
+
+    :param password: a string containing the password to check
+    :param hashed_password: a string containing the hash to check against, such
+    as returned by encrypt()
+    :return: True if the password match
+    :rtype: boolean
+    :raise ExceptionNoTb: if password don't match
+    '''
+    hashed_password = tools.ustr(hashed_password)
+    password = tools.ustr(password)
+
     # check the password is a bcrypt encrypted one
-    config_password = tools.ustr(config_password)
-    passwd = tools.ustr(passwd)
-    if bcrypt.identify(config_password) and \
-            bcrypt.verify(passwd, config_password):
+    if bcrypt.identify(hashed_password) and \
+            bcrypt.verify(password, hashed_password):
         return True
-    elif passwd == config_password:
+    elif password == hashed_password:
+        # this is a not encrypted password (we want to keep compatibility with
+        # old way password
         return True
     else:
         raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
 
 def check_super_password_validity(password):
-    check_password_validity(None, password, password, 'admin')
+    check_password_validity(None, None, 1, None, password, password, 'admin')
     return True
 
 def check_super(passwd):
