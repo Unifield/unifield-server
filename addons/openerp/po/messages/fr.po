@@ -1679,6 +1679,9 @@ msgstr "Tous les mot de passes doivent être complétés."
 msgid "Update password"
 msgstr "Mettre à jour le mot de passe"
 
+msgid "Password changed."
+msgstr "Mot de passe modifé."
+
 #~ msgid "Add Resource:"
 #~ msgstr "Ajouter une ressource :"
 
