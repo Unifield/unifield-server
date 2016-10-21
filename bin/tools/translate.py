@@ -902,7 +902,9 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
     # translate strings marked as to be translated
     for module, source, name, id, type in _to_translate:
         trans = trans_obj._get_source(cr, uid, name, type, lang, source, only_translated_terms)
-        if only_translated_terms and trans and trans != source or not only_translated_terms:
+        if (only_translated_terms == 'y' and trans and trans != source) \
+            or (only_translated_terms == 'n' and (not trans or trans == source)) \
+            or not only_translated_terms:
             out.append([module, type, name, id, source, encode(trans) or ''])
 
     return out
