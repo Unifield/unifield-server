@@ -3477,7 +3477,6 @@ class orm(orm_template):
                         continue
                     if self._columns[f].translate:
                         ids = [x['id'] for x in res]
-                        #TODO: optimize out of this loop
                         res_trans = translation_obj._get_ids(cr,
                                 user, self._name+','+f, 'model', context_lang, ids)
                         for r in res:
