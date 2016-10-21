@@ -74611,3 +74611,62 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
+msgid "Exp Date"
+msgstr "Date Exp."
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:147
+msgid "Total Qty"
+msgstr "Qté Totale"
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+msgid "Generate report (all locations)"
+msgstr "Générer le rapport (toutes les zones)"
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+#: view:unconsistent.stock.report:0
+msgid "Generate report"
+msgstr "Générer le rapport"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:142
+msgid "Batch"
+msgstr "Lot"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:139
+#: field:unconsistent.stock.report.line,product_code:0
+msgid "Product Code"
+msgstr "Code Produit"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
+#: field:export.report.stock.inventory,name:0
+msgid "Generated on"
+msgstr "Généré le"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:125
+msgid "DB/instance name"
+msgstr "BD/nom de l'instance"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:140
+msgid "Product Description"
+msgstr "Description Produit"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:145
+#: field:unconsistent.stock.report.line,quantity:0
+msgid "Qty"
+msgstr "Qté"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:141
+msgid "UoM"
+msgstr "UdM"
