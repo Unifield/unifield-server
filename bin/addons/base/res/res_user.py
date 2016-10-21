@@ -562,7 +562,6 @@ class users(osv.osv):
     def login(self, db, login, password):
         if not password:
             return False
-        import pdb; pdb.set_trace()
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
         try:
