@@ -31,17 +31,14 @@ import openobject
 
 __all__ = ["secured", "unsecured", "login", "change_password"]
 
-
-@expose(template="/openerp/controllers/templates/login.mako")
-def login(target, db=None, user=None, password=None, action=None, message=None, origArgs={}):
-
-    url = rpc.session.connection_string
-    url = str(url[:-1])
-
+def get_db_list():
     dblist = []
 
-    bad_regional = ''
-    tz_offset = ''
+    result = {
+            'bad_regional':'',
+            'tz_offset':'',
+            'dblist': []
+            }
 
     if os.name == 'nt':
         try:
@@ -51,12 +48,12 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
             value, regtype = _winreg.QueryValueEx(reg, "LocaleName")
             _winreg.CloseKey(reg)
             if value != 'en-US':
-                bad_regional = _("On the server system user account must have English (United States) as Format in the regional settings")
+                result['bad_regional'] = _("On the server system user account must have English (United States) as Format in the regional settings")
         except:
             pass
     try:
         dblist = rpc.session.listdb()
-        tz_offset = rpc.session.gateway.execute_noauth('db', 'check_timezone')
+        result['tz_offset'] = rpc.session.gateway.execute_noauth('db', 'check_timezone')
     except:
         message = _("Could not connect to server")
 
@@ -88,6 +85,19 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
                     db = None
             else:
                 dblist = [d for d in dblist if d.startswith(base + '_') or d == base]
+    result['dblist'] = dblist
+    return result
+
+@expose(template="/openerp/controllers/templates/login.mako")
+def login(target, db=None, user=None, password=None, action=None, message=None, origArgs={}):
+
+    url = rpc.session.connection_string
+    url = str(url[:-1])
+
+    result = get_db_list()
+    dblist = result['dblist']
+    bad_regional = result['bad_regional']
+    tz_offset = result['tz_offset']
 
     info = None
     try:
@@ -107,61 +117,15 @@ def change_password(target, db=None, user=None, password=None,
     url = rpc.session.connection_string
     url = str(url[:-1])
 
-    dblist = []
+    result = get_db_list()
+    dblist = result['dblist']
+    bad_regional = result['bad_regional']
+    tz_offset = result['tz_offset']
 
-    bad_regional = ''
-    tz_offset = ''
     new_password = origArgs.get('new_password', None)
     confirm_password = origArgs.get('confirm_password', None)
 
-    if os.name == 'nt':
-        try:
-            import _winreg
-            reg = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                "Control Panel\\International", 0, _winreg.KEY_READ)
-            value, regtype = _winreg.QueryValueEx(reg, "LocaleName")
-            _winreg.CloseKey(reg)
-            if value != 'en-US':
-                bad_regional = _("On the server system user account must have English (United States) as Format in the regional settings")
-        except:
-            pass
-    try:
-        dblist = rpc.session.listdb()
-        tz_offset = rpc.session.gateway.execute_noauth('db', 'check_timezone')
-    except:
-        message = _("Could not connect to server")
-
-    dbfilter = cherrypy.request.app.config['openerp-web'].get('dblist.filter')
-    if dbfilter:
-        headers = cherrypy.request.headers
-        host = headers.get('X-Forwarded-Host', headers.get('Host'))
-
-        base = re.split('\.|:|/', host)[0]
-
-        if dbfilter == 'EXACT':
-            if dblist is None:
-                db = base
-                dblist = [db]
-            else:
-                dblist = [d for d in dblist if d == base]
-
-        elif dbfilter == 'UNDERSCORE':
-            base = base + '_'
-            if dblist is None:
-                if db and not db.startswith(base):
-                    db = None
-            else:
-                dblist = [d for d in dblist if d.startswith(base)]
-
-        elif dbfilter == 'BOTH':
-            if dblist is None:
-                if db and db != base and not db.startswith(base + '_'):
-                    db = None
-            else:
-                dblist = [d for d in dblist if d.startswith(base + '_') or d == base]
-
     info = None
-
     do_change_password_page = '/openerp/do_change_password'
     if target != do_change_password_page:
         origArgs['target'] = target

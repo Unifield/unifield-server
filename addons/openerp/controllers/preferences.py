@@ -113,7 +113,7 @@ class Preferences(Form):
 
         try:
             result = openerp.utils.rpc.RPCProxy('res.users').pref_change_password(
-                    old_password, new_password, confirm_password, rpc.session.context)
+                    rpc.session.uid, old_password, new_password, confirm_password, rpc.session.context)
             if result:
                 rpc.session.password = new_password
                 return dict(context, changed=True)

@@ -322,8 +322,6 @@ class RPCSession(object):
             return -1
 
         self._logged_as(db, uid, password)
-        # check if user have to change his password
-
         return uid
 
     def _logged_as(self, db, uid, password):
