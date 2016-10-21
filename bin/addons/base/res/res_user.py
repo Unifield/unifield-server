@@ -134,7 +134,7 @@ class users(osv.osv):
 
     def send_welcome_email(self, cr, uid, id, context=None):
         logger= netsvc.Logger()
-        user = self.pool.get('res.users').read(cr, uid, id, context=context)
+        user = self.read(cr, uid, id, context=context)
         if not tools.config.get('smtp_server'):
             logger.notifyChannel('mails', netsvc.LOG_WARNING,
                 _('"smtp_server" needs to be set to send mails to users'))
@@ -217,6 +217,63 @@ class users(osv.osv):
         encrypted_password = bcrypt.encrypt(tools.ustr(value))
         self.write(cr, uid, id, {'password': encrypted_password})
 
+    def _is_erp_manager(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return True if the user is member of the group_erp_manager (usually,
+        admin of the site).
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        manager_group_id = None
+        result = dict.fromkeys(ids, False)
+        try:
+            dataobj = self.pool.get('ir.model.data')
+            dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                    'group_erp_manager')
+        except ValueError:
+            # If these groups does not exists anymore
+            pass
+        if manager_group_id:
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if manager_group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
+        return result
+
+    def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return True if the user is member of the Sync_Config
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = dict.fromkeys(ids, False)
+        group_id = None
+        res_group_obj = self.pool.get('res.groups')
+        group_ids = res_group_obj.search(cr, uid,
+                [('name', '=', 'Sync_Config')], context=context)
+        if group_ids:
+            group_id = group_ids[0]
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
+        return result
+
+    def _get_instance_level(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return the level of the instance related to the company of the user
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for user_id in ids:
+            company_id = self._get_company(cr, user_id, context=context)
+            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
+                    ['instance_id'], context=context)['instance_id']
+            instance_id = instance_id and instance_id[0] or False
+            level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
+            result[user_id] = level
+        return result
 
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
@@ -264,6 +321,15 @@ class users(osv.osv):
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
+        'is_erp_manager': fields.function(_is_erp_manager, method=True,
+            fnct_inv=lambda *a:'', string='Is ERP Manager ?',
+            type="boolean"),
+        'is_sync_config': fields.function(_is_sync_config, method=True,
+            fnct_inv=lambda *a:'', string='Is Sync Config ?',
+            type="boolean"),
+        'instance_level': fields.function(_get_instance_level, method=True,
+            fnct_inv=lambda *a:'', string='Instance level',
+            type="char"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -321,7 +387,7 @@ class users(osv.osv):
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
             uid2 = uid
-        user = self.pool.get('res.users').read(cr, uid, uid2, ['company_id'], context)
+        user = self.read(cr, uid, uid2, ['company_id'], context)
         company_id = user.get('company_id', False)
         return company_id and company_id[0] or False
 
@@ -397,6 +463,13 @@ class users(osv.osv):
             values['login'] = tools.ustr(values['login']).lower()
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
+
+        # uncheck synchronize checkbox if the user is manager or sync config
+        if values.get('groups_id'):
+            if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
+               any(self._is_erp_manager(cr, uid, ids, context=context).values()):
+                vals = {'synchronize': False}
+                res = super(users, self).write(cr, uid, ids, vals, context=context)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
@@ -491,48 +564,49 @@ class users(osv.osv):
             return False
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
-        database_password = self.get_user_database_password_from_login(cr, login)
-        # check the password is a bcrypt encrypted one
-        database_password = tools.ustr(database_password)
-        password = tools.ustr(password)
-        if bcrypt.identify(database_password):
-            if not bcrypt.verify(password, database_password):
-                return False
-        elif password != database_password:
-            return False
-
         try:
-            # autocommit: our single request will be performed atomically.
-            # (In this way, there is no opportunity to have two transactions
-            # interleaving their cr.execute()..cr.commit() calls and have one
-            # of them rolled back due to a concurrent access.)
-            # We effectively unconditionally write the res_users line.
-            cr.autocommit(True)
-            # Even w/ autocommit there's a chance the user row will be locked,
-            # in which case we can't delay the login just for the purpose of
-            # update the last login date - hence we use FOR UPDATE NOWAIT to
-            # try to get the lock - fail-fast
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active FOR UPDATE NOWAIT""",
-                       (login, tools.ustr(database_password)), log_exceptions=False)
-            cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
-                    (login, tools.ustr(database_password)))
-        except Exception:
-            # Failing to acquire the lock on the res_users row probably means
-            # another request is holding it - no big deal, we skip the update
-            # for this time, and let the user login anyway.
-            logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
-            cr.rollback()
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active""",
-                       (login, tools.ustr(database_password)))
+            database_password = self.get_user_database_password_from_login(cr, login)
+            # check the password is a bcrypt encrypted one
+            database_password = tools.ustr(database_password)
+            password = tools.ustr(password)
+            if bcrypt.identify(database_password):
+                if not bcrypt.verify(password, database_password):
+                    return False
+            elif password != database_password:
+                return False
+            try:
+                # autocommit: our single request will be performed atomically.
+                # (In this way, there is no opportunity to have two transactions
+                # interleaving their cr.execute()..cr.commit() calls and have one
+                # of them rolled back due to a concurrent access.)
+                # We effectively unconditionally write the res_users line.
+                cr.autocommit(True)
+                # Even w/ autocommit there's a chance the user row will be locked,
+                # in which case we can't delay the login just for the purpose of
+                # update the last login date - hence we use FOR UPDATE NOWAIT to
+                # try to get the lock - fail-fast
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active FOR UPDATE NOWAIT""",
+                           (login, tools.ustr(database_password)), log_exceptions=False)
+                cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
+                        (login, tools.ustr(database_password)))
+            except Exception:
+                # Failing to acquire the lock on the res_users row probably means
+                # another request is holding it - no big deal, we skip the update
+                # for this time, and let the user login anyway.
+                logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
+                cr.rollback()
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active""",
+                           (login, tools.ustr(database_password)))
+            finally:
+                res = cr.fetchone()
+                if res:
+                    return res[0]
         finally:
-            res = cr.fetchone()
             cr.close()
-            if res:
-                return res[0]
         return False
 
     def check(self, db, uid, passwd):
@@ -604,6 +678,7 @@ class users(osv.osv):
             # get user_uid
             cr = pooler.get_db(db_name).cursor()
             try:
+                # get user_uid
                 cr.execute("""SELECT id from res_users
                               WHERE login=%s AND active=%s""",
                            (login, True))
@@ -620,6 +695,12 @@ class users(osv.osv):
                     'force_password_change': False,
                 }
                 self.check(db_name, uid, tools.ustr(old_passwd))
+                security.check_password_validity(old_passwd, new_passwd, confirm_passwd, login)
+                new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
+                vals = {
+                    'password': new_passwd,
+                    'force_password_change': False,
+                }
                 result = self.write(cr, 1, uid, vals)
                 cr.commit()
             finally:

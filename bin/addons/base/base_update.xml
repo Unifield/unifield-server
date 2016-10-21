@@ -111,7 +111,10 @@
                     <field name="login" select="1"/>
                     <field name="new_password" password="True"/>
                     <field name="force_password_change"/>
-                    <field name="synchronize"/>
+                    <field name="synchronize" attrs="{'invisible': ['|', '|', ('is_erp_manager', '=', True), ('is_sync_config', '=', True), ('instance_level', '!=', 'section')]}"/>
+                    <field name="is_erp_manager" invisible="1"/>
+                    <field name="is_sync_config" invisible="1"/>
+                    <field name="instance_level" invisible="1"/>
                     <newline/>
                     <notebook colspan="4">
                         <page string="User">

@@ -149,7 +149,6 @@ class db(netsvc.ExportService):
                     serv.actions[id]['users'] = cr.dictfetchall()
                     serv.actions[id]['clean'] = True
                     cr.commit()
-                    cr.close(True)
                 except Exception, e:
                     serv.actions[id]['clean'] = False
                     serv.actions[id]['exception'] = e
@@ -160,6 +159,7 @@ class db(netsvc.ExportService):
                     e_str.close()
                     netsvc.Logger().notifyChannel('web-services', netsvc.LOG_ERROR, 'CREATE DATABASE\n%s' % (traceback_str))
                     serv.actions[id]['traceback'] = traceback_str
+                finally:
                     if cr:
                         cr.close(True)
         logger = netsvc.Logger()
@@ -367,10 +367,12 @@ class db(netsvc.ExportService):
             return False
 
         cr = connection.cursor()
-        cr.execute('''SELECT host, database
-        FROM sync_client_sync_server_connection''')
-        host, database = cr.fetchone()
-        cr.close()
+        try:
+            cr.execute('''SELECT host, database
+            FROM sync_client_sync_server_connection''')
+            host, database = cr.fetchone()
+        finally:
+            cr.close()
         if host and database and database.strip() == 'SYNC_SERVER' and \
             ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
             return True
@@ -396,16 +398,18 @@ class db(netsvc.ExportService):
         db = sql_db.db_connect(dbname)
         cr = db.cursor()
 
-        # check sync_client_version table existance
-        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
-        if not cr.fetchone():
-            # the table sync_client_version doesn't exists, fallback on the
-            # version from release.py file
-            return release.version or 'UNKNOWN_VERSION'
+        try:
+            # check sync_client_version table existance
+            cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
+            if not cr.fetchone():
+                # the table sync_client_version doesn't exists, fallback on the
+                # version from release.py file
+                return release.version or 'UNKNOWN_VERSION'
 
-        cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
-        res = cr.fetchone()
-        cr.close(True)
+            cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
+            res = cr.fetchone()
+        finally:
+            cr.close(True)
         if res and res[0]:
             return res[0]
         elif res[1]:
@@ -446,10 +450,12 @@ class _ObjectService(netsvc.ExportService):
         params = params[3:]
         security.check(db,uid,passwd)
         cr = pooler.get_db(db).cursor()
-        fn = getattr(self, 'exp_'+method)
-        res = fn(cr, uid, *params)
-        cr.commit()
-        cr.close()
+        try:
+            fn = getattr(self, 'exp_'+method)
+            res = fn(cr, uid, *params)
+            cr.commit()
+        finally:
+            cr.close()
         return res
 
 class common(_ObjectService):
@@ -849,8 +855,9 @@ class report_spool(netsvc.ExportService):
                 else:
                     self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
                 self._reports[id]['state'] = True
-            cr.commit()
-            cr.close()
+            finally:
+                cr.commit()
+                cr.close()
             return True
 
         thread.start_new_thread(go, (id, uid, ids, datas, context))

@@ -125,15 +125,14 @@ if tools.config['db_name']:
     for dbname in tools.config['db_name'].split(','):
         db,pool = pooler.get_db_and_pool(dbname, update_module=tools.config['init'] or tools.config['update'], pooljobs=False)
         cr = db.cursor()
-
-        if tools.config["test_file"]:
-            logger.info('loading test file %s', tools.config["test_file"])
-            tools.convert_yaml_import(cr, 'base', file(tools.config["test_file"]), {}, 'test', True)
-            cr.rollback()
-
-        pool.get('ir.cron')._poolJobs(db.dbname)
-
-        cr.close()
+        try:
+            if tools.config["test_file"]:
+                logger.info('loading test file %s', tools.config["test_file"])
+                tools.convert_yaml_import(cr, 'base', file(tools.config["test_file"]), {}, 'test', True)
+                cr.rollback()
+            pool.get('ir.cron')._poolJobs(db.dbname)
+        finally:
+            cr.close()
 
 #----------------------------------------------------------
 # translation stuff
@@ -151,9 +150,11 @@ if tools.config["translate_out"]:
     buf = file(tools.config["translate_out"], "w")
     dbname = tools.config['db_name']
     cr = pooler.get_db(dbname).cursor()
-    tools.trans_export(tools.config["language"], tools.config["translate_modules"] or ["all"], buf, fileformat, cr)
-    cr.close()
-    buf.close()
+    try:
+        tools.trans_export(tools.config["language"], tools.config["translate_modules"] or ["all"], buf, fileformat, cr)
+    finally:
+        cr.close()
+        buf.close()
 
     logger.info('translation file written successfully')
     sys.exit(0)
@@ -162,13 +163,15 @@ if tools.config["translate_in"]:
     context = {'overwrite': tools.config["overwrite_existing_translations"]}
     dbname = tools.config['db_name']
     cr = pooler.get_db(dbname).cursor()
-    tools.trans_load(cr,
-                     tools.config["translate_in"], 
-                     tools.config["language"],
-                     context=context)
-    tools.trans_update_res_ids(cr)
-    cr.commit()
-    cr.close()
+    try:
+        tools.trans_load(cr,
+                         tools.config["translate_in"], 
+                         tools.config["language"],
+                         context=context)
+        tools.trans_update_res_ids(cr)
+    finally:
+        cr.commit()
+        cr.close()
     sys.exit(0)
 
 #----------------------------------------------------------------------------------
