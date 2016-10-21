@@ -505,7 +505,7 @@
                     <notebook colspan="4">
                         <page string="Invoice">
                             <field invisible="1" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'intermission_header')]" name="account_id" />
-                            <field name="fake_account_id" domain="[('restricted_area', '=', 'intermission_header')]"/>
+                            <field name="fake_account_id" readonly="0" domain="[('restricted_area', '=', 'intermission_header')]"/>
                             <field name="name" string="Reference"/>
                             <newline/>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True}">

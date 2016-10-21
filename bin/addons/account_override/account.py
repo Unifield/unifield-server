@@ -233,21 +233,35 @@ class account_account(osv.osv):
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
 
+        context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+        context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+        context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+            not context.get('is_debit_note', False)
+
         if args == [('restricted_area', '=', 'invoice_lines')]:
-            # Restrict to Expense/Income/Receivable accounts for Intermission Vouchers OUT or Stock Transfer Vouchers LINES
-            context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
-                context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
-            context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
-                not context.get('is_debit_note', False)
+            # LINES of Intermission Vouchers OUT or Stock Transfer Vouchers:
+            # restrict to Expense/Income/Receivable accounts
             if context_ivo or context_stv:
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
-
-            # Restrict to Expense accounts only for Intermission Vouchers IN LINES
-            context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
-                context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+            # LINES of Intermission Vouchers IN:
+            # restrict to Expense accounts only
             if context_ivi:
                 arg.append(('user_type_code', '=', 'expense'))
-
+        elif args == [('restricted_area', '=', 'intermission_header')]:
+            if context_ivo:
+                # HEADER of Intermission Voucher OUT:
+                # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Receivables/Receivable
+                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                       '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable')]
+            elif context_ivi:
+                # HEADER of Intermission Voucher IN:
+                # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
+                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                       '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
