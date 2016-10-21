@@ -1,0 +1,4 @@
+To start using this bazaar pre-commit hook:
+
+	mkdir $HOME/.bazaar/plugins
+	cp -r tools/pyflakes $HOME/.bazaar/plugins
