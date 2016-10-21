@@ -65,10 +65,7 @@ function add_filter_row(elem) {
 
             if (jQuery(v).text() != selected_txt) { return; }
             index_row = k;
-            $new_tr.find('select.expr').hide();
-            $new_tr_lbl.hide();
-            $new_tr.find('label.and_or').remove();
-            jQuery('<label>', {'class': 'and_or'}).text('OR').insertBefore($new_tr_qstring);
+            jQuery('<label>', {'class': 'and_or'}).text('AND').insertBefore($new_tr_qstring);
         });
 
         if(index_row >= 0) {
@@ -331,7 +328,6 @@ function display_Customfilters(all_domains, group_by_ctx) {
             // By property, we get incorrect ordering
             for(var ind=0; ind<tbody_keys.length ;ind++){
                 var All_domain = [];
-                var group = [];
                 var tbody_frm_ind = form_result[tbody_keys[ind]]; //tbody dictionary
                 var trs_keys = jQuery.unique(jQuery.keys(tbody_frm_ind)); //sort trs
 
@@ -339,27 +335,8 @@ function display_Customfilters(all_domains, group_by_ctx) {
                     var return_record = tbody_frm_ind[trs_keys[index]];
                     var $curr_body = jQuery('#filter_option_table > tbody').eq(tbody_keys[ind]);
                     var $row = $curr_body.find('> .filter_row_class').eq(trs_keys[index]);
-                    var $next_row = [];
-
-                    if ($row.next('tr.filter_row_class').find('input.qstring').val() != ''){
-                        $next_row = jQuery($row.next());
-                    }
 
                     var type = return_record.type;
-                    var temp_domain = [];
-                    var grouping = $next_row.length != 0 ? $next_row.find('label.and_or').text(): null;
-
-                    if (group.length==0) {
-                        var $new_grp = $curr_body.find('tr.filter_row_class:gt('+trs_keys[index]+')')
-                                                 .find('td#filter_column:not(:has(label)) input.qstring[value]');
-                        if ($new_grp.length){
-                            group.push('&');
-                        }
-                    }
-                    if(grouping) {
-                        temp_domain.push(grouping == 'AND' ? '&' : '|');
-                    }
-
                     var field = return_record['rec'];
                     var comparison = $row.find('select.expr').val();
                     var value = return_record['rec_val'];
@@ -441,17 +418,9 @@ function display_Customfilters(all_domains, group_by_ctx) {
                             break;
                     }
 
-                    if ($row.find('label.and_or').length || grouping){
-                        temp_domain.push(field, comparison, value);
-                        group.push(temp_domain);
-                    } else {
-                        group.push(field, comparison, value);
-                    }
-
-                    if (!grouping) {
-                        All_domain.push(group);
-                        group = [];
-                    }
+                    var group = [];
+                    group.push(field, comparison, value);
+                    All_domain.push(group);
                 }
 
                 if (All_domain.length) {
