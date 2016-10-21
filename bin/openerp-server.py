@@ -61,6 +61,35 @@ if os.name == 'posix':
 import netsvc
 logger = logging.getLogger('server')
 
+# Log an operations.event. In the contexts we are called, we don't
+# have a open cr, so we need to find the DB names, then open the cr
+# and clean up. We ignore all errors because logging events is best
+# effort.
+def ops_event(what, db=None):
+    if db is None:
+        db = sql_db.db_connect('template1')
+        cr = db.cursor()
+        cr.execute("select decode(datname, 'escape') from pg_database where datistemplate = 'false'")
+        dblist = [str(name) for (name,) in cr.fetchall()]
+        cr.close()
+        cr = None
+    else:
+        dblist = [ db ]
+
+    for db in dblist:
+        try:
+            c, pool = pooler.get_db_and_pool(db)
+            cr = c.cursor()
+            oe = pool.get('operations.event')
+            oe.create(cr, 1, { 'kind': what })
+            cr.commit()
+        except:
+            pass
+        finally:
+            if cr is not None:
+                cr.close()
+                cr = None
+
 #-----------------------------------------------------------------------
 # import the tools module so that the commandline parameters are parsed
 #-----------------------------------------------------------------------
@@ -90,6 +119,7 @@ logger.info('initialising distributed objects services')
 # connect to the database and initialize it with base if needed
 #---------------------------------------------------------------
 import pooler
+import sql_db
 
 #----------------------------------------------------------
 # import basic modules
@@ -125,6 +155,7 @@ if not ( tools.config["stop_after_init"] or \
 
 if tools.config['db_name']:
     for dbname in tools.config['db_name'].split(','):
+        ops_event('commandline-update', dbname)
         db,pool = pooler.get_db_and_pool(dbname, update_module=tools.config['init'] or tools.config['update'], pooljobs=False)
         cr = db.cursor()
 
@@ -230,6 +261,8 @@ def quit(restart=False, db_name=''):
     logger = logging.getLogger('shutdown')
     logger.info("Initiating OpenERP Server shutdown")
     logger.info("Hit CTRL-C again or send a second signal to immediately terminate the server...")
+
+    ops_event('shutdown')
     logging.shutdown()
 
     # manually join() all threads before calling sys.exit() to allow a second signal
@@ -279,11 +312,12 @@ if tools.config['pidfile']:
 
 netsvc.Server.startAll()
 
+ops_event('startup')
 logger.info('OpenERP server is running, waiting for connections...')
 updater.reconnect_sync_server()
 
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
-    mainthread_sleep(5)
+    mainthread_sleep(5),
 
 quit(restart=updater.restart_required)
 

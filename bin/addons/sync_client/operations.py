@@ -20,43 +20,75 @@
 ##############################################################################
 
 from osv import osv, fields
-import logging, traceback, sys
+import logging
 
-# Operational events are things that happen while Unifield is running
-# that we would like to have recorded so that we can investigate/summarize
-# via queries on non-production instances. Once written by Unifield
-# in response to something happening, they are read-only. They can be
-# inspected using the Search view, or exported via SQL to another
-# system for processing.
 class operations_event(osv.osv):
+    """Operational events are things that happen while Unifield is running
+    that we would like to have recorded so that we can
+    investigate/summarize # via queries on non-production
+    instances. Once written by Unifield # in response to something
+    happening, they are read-only. They can be # inspected using the
+    Search view, or exported via SQL to another # system for
+    processing.
+    """
 
     _name = 'operations.event'
+    _rec_name = 'time'
+    _order = 'time desc'
+
+    def _shorten(self, x):
+        if not isinstance(x, basestring):
+            return x
+
+        if len(x) < 80:
+            return x
+
+        if x.startswith("Traceback"):
+            lines = x.split("\n")
+            return "\n".join(lines[-4:])
+
+        return x[0:80]+"..."
+
+    def _shorten_data(self, cr, uid, ids, field_name, arg, context):
+        res = {}
+        for ev in self.browse(cr, uid, ids, context=context):
+            res[ev.id] = self._shorten(ev.data)
+        return res
+
     _columns = {
-        'when': fields.datetime('When', readonly=True, select=True, help="When the event happened."),
+        'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the event happened."),
+        'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
         'kind': fields.char('Kind', readonly=True, size=64, required=True, help="What kind of event it was."),
-        'data': fields.text('Data', readonly=True, help="The data associated with the event.")
+        'data': fields.text('Data', readonly=True, help="The data associated with the event."),
+        'data_short': fields.function(_shorten_data, method=True, type='char'),
     }
 
     _defaults = {
-        'when': lambda self,cr,uid,c: fields.datetime.now()
+        'time': lambda self,cr,uid,c: fields.datetime.now(),
+        'instance': lambda self,cr,uid,c: self._get_inst(cr, uid, c)
     }
 
     _logger = logging.getLogger('operations.event')
 
-    # returns the id of the new event
-    def create_from_traceback(self, cr, uid, exc_info, context=None):
-        data = {
-            'kind': 'traceback',
-            'data': ''.join(traceback.format_exception(*exc_info))
-        }
-        id = self.create(cr, uid, data, context=context)
-        return id
+    def _get_inst(self, cr, uid, context=None):
+        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
+        return instance and instance.instance
 
     def bang(self, cr, uid, ids=None, context=None):
-        try:
-            raise ValueError("bang!")
-        except Exception as e:
-            self.create_from_traceback(cr, uid, sys.exc_info(), context=None)
+        raise ValueError("bang!")
         return 1
-    
+
+    def purge(self, cr, uid, context=None):
+        """Called from ir.cron every day to purge events older
+        than 30 days.
+        """
+        self._logger.info("Operations event purge")
+        cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL '30 day';")
+
 operations_event()
+
+# todo:
+# 0. add handler to netsvc.py 
+# 1. search on kind and instance in search view
+# 2. lock to prevent traceback loop
+# 3. user access rights

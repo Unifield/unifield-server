@@ -70,6 +70,7 @@ MODELS_TO_IGNORE = [
     'res.widget',
     'product.likely.expire.report',
     'product.likely.expire.report.line',
+    'operations.event',
 ]
 
 MODELS_TO_IGNORE_DOMAIN = [

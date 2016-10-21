@@ -36,6 +36,7 @@ import release
 from pprint import pformat
 import warnings
 import heapq
+import pooler
 
 class Service(object):
     """ Base class for *Local* services
@@ -473,6 +474,25 @@ def replace_request_password(args):
     return args
 
 class OpenERPDispatcher:
+    # Try to log the traceback in operations.event, but on a best-effort
+    # basis: catch all errors and give up
+    def ops_event(self, dbname, uid, tb_s):
+        if not isinstance(uid, (int, long)):
+            # Don't know what it was, but it wasn't a uid, so make it "admin"
+            uid = 1
+
+        try:
+            cr = None
+            db, pool = pooler.get_db_and_pool(dbname)
+            cr = db.cursor()
+            oe = pool.get('operations.event')
+            oe.create(cr, uid, { 'kind': 'traceback',
+                                 'data': tb_s })
+            cr.commit()
+        finally:
+            if cr is not None:
+                cr.close()
+
     def log(self, title, msg, channel=logging.DEBUG_RPC, depth=None):
         logger = logging.getLogger(title)
         if logger.isEnabledFor(channel):
@@ -493,6 +513,7 @@ class OpenERPDispatcher:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
+            self.ops_event(params[0], params[1], tb_s)
             if tools.config['debug_mode']:
                 import pdb
                 pdb.post_mortem(tb[2])

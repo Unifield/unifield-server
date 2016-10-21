@@ -176,7 +176,7 @@ class object_proxy(netsvc.Service):
                     else:
                         self.abortResponse(1, _('Integrity Error'), 'warning', inst[0])
                 except Exception:
-                    self.logger.exception("Uncaught exception")
+                    self.logger.exception("Uncaught exception xxx")
                     raise
 
         return wrapper

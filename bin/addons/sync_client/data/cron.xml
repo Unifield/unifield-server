@@ -40,5 +40,17 @@
             <field name="function">check_not_run</field>
         </record>
 
+	<record forcecreate="True" id="ir_cron_ops_events" model="ir.cron">
+	  <field name="name">Purge Operation Events</field>
+	  <field name="function">purge</field>
+	  <field name="user_id">1</field>
+	  <field name="interval_type">days</field>
+	  <field eval="-1" name="numbercall"/>
+	  <field eval="5" name="priority"/>
+	  <field eval="0" name="doall"/>
+	  <field eval="1" name="active"/>
+	  <field eval="1" name="interval_number"/>
+	  <field name="model">operations.event</field>
+	</record>
   </data>
 </openerp>
