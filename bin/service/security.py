@@ -73,8 +73,10 @@ def change_password(db_name, login, password, new_password, confirm_password):
     return result
 
 def login(db_name, login, password):
-    db, pool = pooler.get_db_and_pool(db_name)
-    cr = db.cursor()
+    # it is required here not to get pool but only the db, if the pool it also
+    # get, then the server will update the module at this step without display
+    # the "Server is updating modules ..." message
+    cr = pooler.get_db_only(db_name).cursor()
     try:
         nb = _get_number_modules(cr, testlogin=True)
         patch_failed = [0]
@@ -85,7 +87,13 @@ def login(db_name, login, password):
         to_update = False
         if not nb:
             to_update = updater.test_do_upgrade(cr)
+        if nb or to_update:
+            s = threading.Thread(target=pooler.get_pool, args=(db_name,),
+                    kwargs={'threaded': True})
+            s.start()
+            raise Exception("ServerUpdate: Server is updating modules ...")
 
+        pool = pooler.get_pool(db_name)
         # check if the user have to change his password
         cr.execute("""SELECT force_password_change
         FROM res_users
@@ -95,11 +103,6 @@ def login(db_name, login, password):
             raise Exception("ForcePasswordChange: The admin requests your password change ...")
     finally:
         cr.close()
-    if nb or to_update:
-        s = threading.Thread(target=pooler.get_pool, args=(db_name,),
-                kwargs={'threaded': True})
-        s.start()
-        raise Exception("ServerUpdate: Server is updating modules ...")
 
     user_obj = pool.get('res.users')
     user_res = user_obj.login(db_name, login, password)
@@ -169,10 +172,8 @@ def check_password(password, hashed_password):
     password = tools.ustr(password)
 
     # check the password is a bcrypt encrypted one
-    config_password = tools.ustr(config_password)
-    passwd = tools.ustr(passwd)
-    if bcrypt.identify(config_password) and \
-            bcrypt.verify(passwd, config_password):
+    if bcrypt.identify(hashed_password) and \
+            bcrypt.verify(password, hashed_password):
         return True
     elif password == hashed_password:
         # this is a not encrypted password (we want to keep compatibility with
