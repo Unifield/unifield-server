@@ -282,6 +282,27 @@
 
         <pto>
             <pto_header>
+        <blockTable colWidths="300.0,170.0,170.0,165.0" style="HeaderBigInfos">
+            <tr>
+                <td>
+                    <para style="HeaderInfosBigTitle">
+                        PRE-PACKING LIST ([[ getSel(pt, 'state') ]])
+                    </para>
+                    <para style="HeaderInfosBigTitleBlue">
+                        [[ pt.name ]]
+                    </para>
+                </td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+	    <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </blockTable>
                 <blockTable colWidths="30.0,60.0,220.0,55.0,75.0,65.0,20.0,20.0,20.0,55.0,45.0,45.0,50.0,50.0" style="LinesHeader">
                     <tr>
                         <td>
@@ -483,6 +504,7 @@
             </para>
 
         </pto>
+        <setNextTemplate name="first" />
 
     </story>
 
