@@ -73,7 +73,7 @@ class Service(object):
 
 class LocalService(object):
     """ Proxy for local services. 
-    
+
         Any instance of this class will behave like the single instance
         of Service(name)
     """
@@ -101,11 +101,11 @@ class ExportService(object):
     eservice.method(). Rather, the proxy should call 
     dispatch(method,auth,params)
     """
-    
+
     _services = {}
     _groups = {}
     _logger = logging.getLogger('web-services')
-    
+
     def __init__(self, name, audience=''):
         ExportService._services[name] = self
         self.__name = name
@@ -120,7 +120,7 @@ class ExportService(object):
 
     def dispatch(self, method, auth, params):
         raise Exception("stub dispatch at %s" % self.__name)
-        
+
     def new_dispatch(self,method,auth,params):
         raise Exception("stub dispatch at %s" % self.__name)
 
@@ -196,7 +196,7 @@ def init_logger():
         else:
             handler = logging.handlers.SysLogHandler('/dev/log')
         format = '%s %s' % (release.description, release.version) \
-                + ':%(dbname)s:%(levelname)s:%(name)s:%(message)s'
+            + ':%(dbname)s:%(levelname)s:%(name)s:%(message)s'
 
     elif tools.config['logfile']:
         # LogFile Handler
@@ -401,7 +401,7 @@ class Server:
 
     def start(self):
         self.__logger.debug("called stub Server.start")
-        
+
     def _late_start(self):
         self.start()
         for thr in Server.__starter_threads:

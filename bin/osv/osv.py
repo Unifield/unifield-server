@@ -87,7 +87,7 @@ class object_proxy(netsvc.Service):
                 # We open a *new* cursor here, one reason is that failed SQL
                 # queries (as in IntegrityError) will invalidate the current one.
                 cr = False
-                
+
                 if hasattr(src, '__call__'):
                     # callable. We need to find the right parameters to call
                     # the  orm._sql_message(self, cr, uid, ids, context) function,
@@ -106,9 +106,9 @@ class object_proxy(netsvc.Service):
                         pass
                     finally:
                         if cr: cr.close()
-                   
+
                     return False # so that the original SQL error will
-                                 # be returned, it is the best we have.
+                    # be returned, it is the best we have.
 
                 try:
                     cr = pooler.get_db_only(dbname).cursor()
@@ -152,7 +152,7 @@ class object_proxy(netsvc.Service):
                     for key in osv_pool._sql_error.keys():
                         if key in inst[0]:
                             self.abortResponse(1, _('Constraint Error'), 'warning',
-                                            tr(osv_pool._sql_error[key], 'sql_constraint') or inst[0])
+                                               tr(osv_pool._sql_error[key], 'sql_constraint') or inst[0])
                     if inst.pgcode in (errorcodes.NOT_NULL_VIOLATION, errorcodes.FOREIGN_KEY_VIOLATION, errorcodes.RESTRICT_VIOLATION):
                         msg = _('The operation cannot be completed, probably due to the following:\n- deletion: you may be trying to delete a record while other records still reference it\n- creation/update: a mandatory field is not correctly set')
                         self.logger.debug("IntegrityError", exc_info=True)
@@ -370,10 +370,10 @@ class osv(osv_base, orm.orm):
                             for c in cls.__dict__.get(s, []):
                                 exist = False
                                 for c2 in range(len(new)):
-                                     #For _constraints, we should check field and methods as well
-                                     if new[c2][2]==c[2] and (new[c2][0] == c[0] \
-                                            or getattr(new[c2][0],'__name__', True) == \
-                                                getattr(c[0],'__name__', False)):
+                                    #For _constraints, we should check field and methods as well
+                                    if new[c2][2]==c[2] and (new[c2][0] == c[0] \
+                                                             or getattr(new[c2][0],'__name__', True) == \
+                                                             getattr(c[0],'__name__', False)):
                                         # If new class defines a constraint with
                                         # same function name, we let it override
                                         # the old one.

@@ -93,17 +93,18 @@ import pooler
 
 #----------------------------------------------------------
 # import basic modules
+# (the asserts are to silence pyflakes warnings)
 #----------------------------------------------------------
-import osv
-import workflow
-import report
-import service
+import osv; assert osv
+import workflow; assert workflow
+import report; assert report
+import service; assert service
 
 #----------------------------------------------------------
 # import addons
 #----------------------------------------------------------
 
-import addons
+import addons; assert addons
 
 #----------------------------------------------------------
 # Load and update databases if requested
@@ -113,8 +114,8 @@ import service.http_server
 import updater
 
 if not ( tools.config["stop_after_init"] or \
-    tools.config["translate_in"] or \
-    tools.config["translate_out"] ):
+         tools.config["translate_in"] or \
+         tools.config["translate_out"] ):
     service.http_server.init_servers()
     service.http_server.init_xmlrpc()
     service.http_server.init_static_http()
@@ -140,8 +141,6 @@ if tools.config['db_name']:
 # translation stuff
 #----------------------------------------------------------
 if tools.config["translate_out"]:
-    import csv
-
     if tools.config["language"]:
         msg = "language %s" % (tools.config["language"],)
     else:
