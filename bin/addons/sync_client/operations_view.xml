@@ -39,6 +39,9 @@
       <field name="context">{}</field>
     </record>
 
+    <menuitem id="ops_menu" name="Operations" parent="base.menu_reporting" sequence="60"/>
+    <menuitem id="ops_evt_menu" name="Events" parent="ops_menu" action="ops_event_action"/>
+
     <record model="ir.actions.server" id="ops_event_bang">
       <field name="name">Bang!</field>
       <field name="model_id" ref="model_operations_event"/>
@@ -51,9 +54,6 @@
       <field name="parent_id" ref="ops_menu"/>
       <field name="action" ref="ops_event_bang"/>
     </record>
-
-    <menuitem id="ops_menu" name="Operations" parent="base.menu_reporting" sequence="60"/>
-    <menuitem id="ops_evt_menu" name="Events" parent="ops_menu" action="ops_event_action"/>
 
   </data>
 </openerp>
