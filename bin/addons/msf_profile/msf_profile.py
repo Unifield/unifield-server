@@ -891,6 +891,24 @@ class patch_scripts(osv.osv):
                     currency_id != %s""", (currency_id, tuple(journal_ids), currency_id))
 
 
+    def us_635_dest_partner_ids(self, cr, uid, *a, **b):
+        """
+        Fill many2many field dest_partner_ids
+        """
+        context = {}
+        proc_obj = self.pool.get('procurement.order')
+        
+        procurement_ids = proc_obj.search(cr, uid, [], context=context)
+        for procurement in proc_obj.browse(cr, uid, procurement_ids, context=context):
+            so_line = None
+            order_customer_id = None
+            sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
+            if sale_line_ids:
+                so_line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+                order_customer_id = so_line.order_partner_id.id
+                self.pool.get('purchase.order').write(cr, uid, procurement.purchase_id.id, {'dest_partner_ids': [(4, order_customer_id)]}, context=context)
+
+
 patch_scripts()
 
 
