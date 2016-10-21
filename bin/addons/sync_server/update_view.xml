@@ -73,6 +73,7 @@
             <field name="rule_id"/>
             <field name="create_date"/>
             <field name="source"/>
+            <field name="owner"/>
             <group colspan="2" col="2">
               <field name="sequence"
                      attrs="{'invisible':[('sequence','=',False)]}"/>
