@@ -675,7 +675,6 @@ class users(osv.osv):
         :raise: except_osv when new password is not set or empty
         """
         if new_passwd:
-            # get user_uid
             cr = pooler.get_db(db_name).cursor()
             try:
                 # get user_uid
