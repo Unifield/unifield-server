@@ -523,7 +523,7 @@
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Details')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Currency')}:</Data></Cell>
-    <Cell ss:StyleID="sData"><Data ss:Type="String">${get_same_and_default_currency(o)[1].name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.company_id.currency_id.name or ''|x}</Data></Cell>
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Tender Priority')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
    </Row>
