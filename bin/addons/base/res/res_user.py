@@ -267,11 +267,13 @@ class users(osv.osv):
             ids = [ids]
         result = {}
         for user_id in ids:
+            level = False
             company_id = self._get_company(cr, user_id, context=context)
             instance_id = self.pool.get('res.company').read(cr, uid, company_id,
                     ['instance_id'], context=context)['instance_id']
             instance_id = instance_id and instance_id[0] or False
-            level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
+            if instance_id:
+                level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
             result[user_id] = level
         return result
 
