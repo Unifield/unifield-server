@@ -1,4 +1,4 @@
 To start using this bazaar pre-commit hook:
 
 	mkdir $HOME/.bazaar/plugins
-	ln -s `pwd`/tools/pre-commit $HOME/.bazaar/pre-commit
+	ln -s `pwd`/tools/precommit $HOME/.bazaar/precommit
