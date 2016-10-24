@@ -74611,3 +74611,8 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: stock_override
+#: field:stock.picking,incoming_id:0
+msgid "Incoming ref"
+msgstr "Ref. Réception"
