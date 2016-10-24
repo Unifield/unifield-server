@@ -25,7 +25,8 @@ def precommit(local_branch, master_branch, old_revision_number, old_revision_id,
 
     cmd = [ 'autopep8', '--select=E1', '--diff' ]
     cmd.extend(files_to_check)
-    res = subprocess.check_output(cmd)
+    res = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+
     if res != '':
         cmd[2] = '--in-place'
         raise errors.BzrError("Fix autopep8 warnings before committing. You might want to use this command: %s" % " ".join(cmd))
