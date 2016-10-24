@@ -799,7 +799,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
 
                     if line_number and ext_ref and (ext_ref not in LN_BY_EXT_REF[wiz.id].keys() or line_number not in LN_BY_EXT_REF[wiz.id][ext_ref]):
                         not_ok = True
-                        err1 = _('No PO line with the line number \'%s\' and the external ref \'%s\' found in database') % (line_number, ext_ref)
+                        err1 = _('The line cannot have both Line no. and Ext. Ref')
                         err = _('Line %s of the file: %s') % (x, err1)
                         values_line_errors.append(err)
                         file_line_error.append(err1)
