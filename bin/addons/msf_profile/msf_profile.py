@@ -897,14 +897,18 @@ class patch_scripts(osv.osv):
         """
         context = {}
         po_obj = self.pool.get('purchase.order')
+        so_obj = self.pool.get('sale.order')
 
         po_ids = po_obj.search(cr, uid, [], context=context)
         for po_id in po_ids:
-            sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid, po_id, context=context)
-            if sol_ids:
-                so_line = self.pool.get('sale.order.line').browse(cr, uid, sol_ids[0], context=context)
-                order_customer_id = so_line.order_partner_id.id
-                self.pool.get('purchase.order').write(cr, uid, po_id, {'dest_partner_ids': [(4, order_customer_id)]}, context=context)
+            so_ids = po_obj.get_so_ids_from_po_ids(cr, uid, po_id, context=context)
+            for so in so_obj.browse(cr, uid, so_ids, context=context):
+                if not so.procurement_request:
+                    po_obj.write(cr, uid, po_id, {
+                        'dest_partner_ids': [(4, so.partner_id.id)],
+                    }, context=context)
+
+        return True
 
 
 patch_scripts()
