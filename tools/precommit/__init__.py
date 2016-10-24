@@ -5,7 +5,6 @@ import subprocess
 from bzrlib import branch, errors
 from bzrlib.commands import Command, register_command
 from bzrlib.workingtree import WorkingTree
-from bzrlib.option import ListOption
 
 from distutils.spawn import find_executable
 
@@ -40,17 +39,11 @@ def precommit(local_branch, master_branch, old_revision_number, old_revision_id,
 
 
 class cmd_precommit(Command):
-    __doc__ = """Check changes with autopep8 and pyflakes
+    __doc__ = """Check changes with autopep8 and pyflakes.
     """
     takes_args = ['selected*']
-    takes_options = [
-        ListOption('exclude', type=str, short_name='x',
-                   help="Do not consider changes made to a given path."),
-        'verbose',
-    ]
 
-    def run(self, message=None, file=None, verbose=False, selected_list=None,
-            exclude=None):
+    def run(self, message=None, selected_list=None):
         tree, selected_list = WorkingTree.open_containing_paths(selected_list)
         precommit(None, None, None, None, None, None, tree.changes_from(tree.basis_tree()), None)
         print "No problems found. Ready to commit."
