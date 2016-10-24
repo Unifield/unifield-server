@@ -53239,8 +53239,10 @@ msgstr "Total Net:"
 msgid "Child Nomenclatures"
 msgstr "Nomenclatures Enfant"
 
-#. module: product
+#. modules: sales_followup, product, res_currency_functional
 #: field:product.product,partner_ref:0
+#: view:purchase.order.line:0
+#: report:addons/sales_followup/report/sale_follow_up_multi_report_xls.mako:216
 msgid "Customer ref"
 msgstr "Réf. Client"
 
@@ -74611,3 +74613,30 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: purchase_override
+#: field:purchase.order.line,customer_ref:0
+msgid "Customer ref."
+msgstr "Ref. Client"
+
+#. module: purchase_override
+#: field:purchase.order,customer_ref:0
+msgid "Customer Ref."
+msgstr "Ref. Client"
+
+#. module: purchase_override
+#: field:purchase.order,line_count:0
+msgid "Line count"
+msgstr "# de lignes"
+
+#. module: purchase_override
+#: report:msf.purchase.order:0
+msgid "Source Document :"
+msgstr "Document source :"
+
+#. module: purchase_override
+#: report:msf.purchase.order:0
+msgid "Customer reference :"
+msgstr "Référence client :"
+
+
