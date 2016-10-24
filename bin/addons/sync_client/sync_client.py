@@ -332,6 +332,9 @@ def get_hardware_id():
             for line in os.popen("/sbin/ifconfig"):
                 if line.find('Ether') > -1:
                     mac.append(line.split()[4])
+        if not mac:
+            executable = sys.platform == 'win32' and 'ipconfig /all' or '/sbin/ifconfig'
+            raise Exception, '%s give no result, please check it is correctly installed' % executable
         mac.sort()
         logging.getLogger('sync.client').info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac))
         hw_hash = hashlib.md5(''.join(mac)).hexdigest()
