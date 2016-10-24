@@ -62,23 +62,14 @@ import netsvc
 logger = logging.getLogger('server')
 
 # Log an operations.event. In the contexts we are called, we don't
-# have a open cr, so we need to find the DB names, then open the cr
-# and clean up. We ignore all errors because logging events is best
+# have a open cr. We need to look in pooler.pool_dic to find the
+# list of DBs that have already been opened and upgraded.
+# We ignore all errors because logging events is best
 # effort.
-def ops_event(what, db=None):
-    if db is None:
-        db = sql_db.db_connect('template1')
-        cr = db.cursor()
-        cr.execute("select decode(datname, 'escape') from pg_database where datistemplate = 'false'")
-        dblist = [str(name) for (name,) in cr.fetchall()]
-        cr.close()
-        cr = None
-    else:
-        dblist = [ db ]
-
-    for db in dblist:
+def ops_event(what):
+    for db in pooler.pool_dic.keys():
         try:
-            c, pool = pooler.get_db_and_pool(db)
+            c, pool = pooler.get_db_and_pool(db, upgrade_modules=False)
             cr = c.cursor()
             oe = pool.get('operations.event')
             oe.create(cr, 1, { 'kind': what })
@@ -119,7 +110,6 @@ logger.info('initialising distributed objects services')
 # connect to the database and initialize it with base if needed
 #---------------------------------------------------------------
 import pooler
-import sql_db
 
 #----------------------------------------------------------
 # import basic modules
@@ -167,6 +157,7 @@ if tools.config['db_name']:
         pool.get('ir.cron')._poolJobs(db.dbname)
 
         cr.close()
+    ops_event('commandline-update')
 
 #----------------------------------------------------------
 # translation stuff
@@ -312,7 +303,6 @@ if tools.config['pidfile']:
 
 netsvc.Server.startAll()
 
-ops_event('startup')
 logger.info('OpenERP server is running, waiting for connections...')
 updater.reconnect_sync_server()
 

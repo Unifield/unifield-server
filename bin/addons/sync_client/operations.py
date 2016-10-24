@@ -25,10 +25,10 @@ import logging
 class operations_event(osv.osv):
     """Operational events are things that happen while Unifield is running
     that we would like to have recorded so that we can
-    investigate/summarize # via queries on non-production
-    instances. Once written by Unifield # in response to something
-    happening, they are read-only. They can be # inspected using the
-    Search view, or exported via SQL to another # system for
+    investigate/summarize via queries on non-production
+    instances. Once written by Unifield in response to something
+    happening, they are read-only. They can be inspected using the
+    Search view, or exported via SQL to another system for
     processing.
     """
 
@@ -78,17 +78,12 @@ class operations_event(osv.osv):
         raise ValueError("bang!")
         return 1
 
-    def purge(self, cr, uid, context=None):
+    def purge(self, cr, uid, keep='30 day'):
         """Called from ir.cron every day to purge events older
-        than 30 days.
+        than X days, where X comes from either an argument like
+        ['5 day'], or defaults to 30 days.
         """
-        self._logger.info("Operations event purge")
-        cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL '30 day';")
+        self._logger.info("Operations event purge: keep %s" % keep)
+        cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
 
 operations_event()
-
-# todo:
-# 0. add handler to netsvc.py 
-# 1. search on kind and instance in search view
-# 2. lock to prevent traceback loop
-# 3. user access rights

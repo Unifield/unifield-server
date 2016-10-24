@@ -9,13 +9,26 @@
       <field name="arch" type="xml">
         <tree string="Events" hide_new_button="1" hide_edit_button="1" hide_delete_button="1">
           <field name="time"/>
-          <field name="kind"/>
           <field name="instance"/>
+          <field name="kind"/>
           <field string="Event Data" name="data_short"/>
         </tree>
       </field>
     </record>
-    
+
+    <record id="ops_event_search" model="ir.ui.view">
+      <field name="name">operations.event.search</field>
+      <field name="model">operations.event</field>
+      <field name="type">search</field>
+      <field name="arch" type="xml">
+        <search>
+          <field name="time"/>
+          <field name="instance"/>
+          <field name="kind"/>
+        </search>
+      </field>
+    </record>
+
     <record model="ir.ui.view" id="ops_event_form_view">
       <field name="name">operations.event.form</field>
       <field name="model">operations.event</field>
@@ -23,8 +36,8 @@
       <field name="arch" type="xml">
         <form string="Event" editable="0" hide_new_button="1" hide_delete_button="1" hide_edit_button="1" hide_duplicate_button="1">
           <field name="time"/>
-          <field name="kind"/>
           <field name="instance"/>
+          <field name="kind"/>
 	  <separator string="Event contents:" colspan="4"/>
           <field name="data" colspan="4" nolabel="1"/>
 	</form>
