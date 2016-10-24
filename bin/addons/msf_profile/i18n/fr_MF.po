@@ -74748,3 +74748,10 @@ msgstr "Le fichier importé est incohérent. La ligne correspondante n'existe pa
 #: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:102
 msgid "Ext. Reference"
 msgstr "Réf. Externe"
+
+#. module: purchase_override
+#: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
+msgid "Print date:"
+msgstr "Date d'impression :"
