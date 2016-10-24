@@ -21,7 +21,6 @@
 
 from osv import osv
 from osv import fields
-from osv import orm
 from tools.translate import _
 
 import socket
@@ -32,11 +31,10 @@ import sys
 import os
 import math
 import hashlib
-import traceback
 from psycopg2 import OperationalError
 
 import logging
-from sync_common import sync_log, get_md5, check_md5
+from sync_common import get_md5, check_md5
 from service.web_services import check_tz
 
 from threading import Thread, RLock, Lock
