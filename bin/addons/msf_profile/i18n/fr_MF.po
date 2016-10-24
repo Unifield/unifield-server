@@ -18091,19 +18091,47 @@ msgstr "Lignes d'Ecriture"
 msgid "Available for incoming shipment ?"
 msgstr "Disponible pour envoi entrant ?"
 
-#. modules: purchase, account, reason_types_moves, stock_override, order_nomenclature, sale, product_asset, specific_rules, purchase_override, supplier_catalogue, base, product_list, tender_flow, msf_supply_doc_export, msf_doc_import, return_claim, analytic_distribution
+#. modules: tender_flow, product_asset, update_client, register_accounting, return_claim, msf_doc_import, supplier_catalogue, purchase_compare_rfq, product_list, analytic_distribution, reason_types_moves, stock_override, consumption_calculation, purchase_override, specific_rules, kit, base, msf_tools, purchase, account, msf_outgoing, order_nomenclature, msf_field_access_rights, sale, msf_button_access_rights, msf_supply_doc_export
 #: field:account.move.line.reconcile.writeoff,comment:0
 #: field:account.commitment,notes:0
+#: field:account.invoice.line,inactive_error:0
 #: field:res.groups,comment:0
-#: code:addons/msf_doc_import/wizard/__init__.py:45
-#: code:addons/msf_doc_import/wizard/__init__.py:50
-#: code:addons/msf_doc_import/wizard/__init__.py:55
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:183
+#: field:real.average.consumption.line,remark:0
+#: field:composition.item,inactive_error:0
+#: report:kit.report:0
+#: field:msf_button_access_rights.button_access_rule,comment:0
+#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:232
+#: code:addons/msf_doc_import/wizard/__init__.py:41
+#: code:addons/msf_doc_import/wizard/__init__.py:58
+#: code:addons/msf_doc_import/wizard/__init__.py:83
+#: code:addons/msf_doc_import/wizard/__init__.py:108
+#: code:addons/msf_doc_import/wizard/__init__.py:119
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:244
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:67
+#: field:initial.stock.inventory.line,inactive_error:0
+#: report:po.simulation.screen:0
+#: field:purchase.line.import.xml.line,comment:0
+#: field:purchase.order.line,inactive_error:0
+#: field:sale.order.line,inactive_error:0
+#: field:stock.inventory.line,inactive_error:0
+#: field:wizard.import.po.simulation.screen.line,imp_comment:0
+#: field:wizard.import.po.simulation.screen.line,in_comment:0
+#: field:wizard.simu.import.po.line,initial_comment:0
+#: field:msf_field_access_rights.field_access_rule,comment:0
+#: report:invoice:0
+#: field:memory.additionalitems,comment:0
+#: report:packing.list:0
+#: report:picking.ticket:0
+#: field:shipment.additional.line.processor,comment:0
+#: field:shipment.additionalitems,comment:0
+#: field:stock.move.memory.shipment.additionalitems,comment:0
 #: report:addons/msf_supply_doc_export/report/product_list_xls.mako:52
 #: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:64
 #: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:77
 #: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:76
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:77
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:227
+#: field:automated.import.job,comment:0
 #: field:purchase.order.line,comment:0
 #: field:purchase.order.merged.line,comment:0
 #: field:sale.order.line,comment:0
@@ -18115,24 +18143,31 @@ msgstr "Disponible pour envoi entrant ?"
 #: field:old.product.list.line,comment:0
 #: field:product.list.line,comment:0
 #: field:purchase.order.line,name:0
+#: code:addons/purchase_compare_rfq/wizard/compare_rfq.py:459
 #: report:msf.purchase.order:0
 #: report:msf.purchase.quotation:0
 #: report:purchase.order.merged:0
 #: field:purchase.order.merged.line,name:0
 #: field:stock.inventory.line,comment:0
 #: field:stock.move,comment:0
+#: field:account.direct.invoice.wizard.line,inactive_error:0
+#: field:wizard.account.invoice.line,inactive_error:0
 #: field:claim.event,description_claim_event:0
+#: report:msf.freight_manifest:0
 #: report:msf.product_list:0
 #: report:msf.report_reception_in:0
 #: report:msf.sale.order:0
 #: field:sale.order.line,name:0
 #: field:initial.stock.inventory.line,comment:0
 #: field:report.stock.move,comment:0
+#: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:77
 #: view:supplier.catalogue:0
 #: field:supplier.catalogue,comment:0
 #: field:supplier.catalogue.line,comment:0
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:552
 #: field:pricelist.partnerinfo,comment:0
 #: field:tender.line,comment:0
+#: field:sync_client.version,comment:0
 #, python-format
 msgid "Comment"
 msgstr "Commentaire"
@@ -27849,17 +27884,28 @@ msgstr "Sélectionner les Plans de Comptes"
 msgid "Macau"
 msgstr "Macau"
 
-#. modules: purchase, account, sale, register_accounting, purchase_override, purchase_allocation_report
+#. modules: purchase, account, account_mcdb, procurement_request, purchase_override, sale, account_override, purchase_allocation_report, register_accounting, msf_supply_doc_export
 #: field:account.invoice.line,price_subtotal:0
+#: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:98
+#: report:addons/account_mcdb/report/report_account_analytic_line_free_xls.mako:185
+#: report:addons/account_override/report/open_invoices_xls.mako:361
+#: report:allocation.invoices.report:0
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:180
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:185
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:202
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:237
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:243
+#: report:procurement.request.report:0
 #: field:purchase.order.line,price_subtotal:0
 #: view:purchase.report:0
 #: field:purchase.report,price_total:0
 #: report:po.line.allocation.report:0
 #: report:purchase.order.allocation.report:0
-#: report:sale.order.allocation.report:0
 #: field:purchase.order.line.allocation.report,subtotal:0
 #: field:purchase.order.merged.line,price_subtotal:0
+#: field:account.direct.invoice.wizard.line,price_subtotal:0
 #: field:wizard.account.invoice.line,price_subtotal:0
+#: report:sale.order.allocation.report:0
 #: field:sale.order.line,price_subtotal:0
 msgid "Subtotal"
 msgstr "Sous-total"
@@ -60090,32 +60136,43 @@ msgstr "Lignes Fusionnées d'un Bon de Commande "
 msgid "Error at import"
 msgstr "Error at import"
 
-#. modules: msf_budget, purchase, tender_flow, account_mcdb, msf_homere_interface, account_hq_entries, analytic_distribution, msf_doc_import, financing_contract, purchase_allocation_report, register_accounting
+#. modules: msf_budget, purchase, register_accounting, account_mcdb, msf_homere_interface, financing_contract, sale, account_hq_entries, account_override, purchase_allocation_report, tender_flow, msf_supply_doc_export, msf_doc_import, analytic_override, analytic_distribution
 #: field:hq.analytic.reallocation,cost_center_id:0
 #: field:hq.entries,cost_center_id:0
+#: field:hq.entries.split.lines,cost_center_id:0
 #: view:account.analytic.line:0
 #: view:account.mcdb:0
-#: code:addons/account_mcdb/report/account_mcdb_export.py:167
+#: field:account.mcdb,analytic_account_cc_ids:0
+#: code:addons/account_mcdb/report/account_mcdb_export.py:189
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:66
-#: selection:account.analytic.account,category:0
+#: report:allocation.invoices.report:0
 #: view:account.analytic.line:0
-#: field:account.analytic.line,cost_center_id:0
+#: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:131
 #: view:analytic.distribution.wizard:0
 #: field:analytic.distribution.wizard.fp.lines,cost_center_id:0
 #: view:analytic.distribution.wizard.lines:0
+#: field:int.commitment.realloc.wizard,cost_center_id:0
+#: selection:account.analytic.account,category:0
+#: field:account.analytic.line,cost_center_id:0
+#: report:addons/financing_contract/report/project_expenses_xls.mako:482
 #: field:msf.budget,cost_center_id:0
+#: field:msf.doc.import.accounting.lines,cost_center_id:0
 #: field:hr.analytic.reallocation,cost_center_id:0
 #: field:hr.employee,cost_center_id:0
 #: field:hr.payroll.msf,cost_center_id:0
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:178
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:183
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:200
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:235
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:241
+#: report:po.follow.up_rml:0
 #: view:purchase.report:0
-#: field:purchase.report,cost_center_id:0
-#: field:account.mcdb,analytic_account_cc_ids:0
-#: report:addons/financing_contract/report/project_expenses_xls.mako:461
-#: field:msf.doc.import.accounting.lines,cost_center_id:0
 #: report:po.line.allocation.report:0
-#: report:sale.order.allocation.report:0
 #: report:purchase.order.allocation.report:0
+#: view:account.direct.invoice.wizard.lines:0
 #: field:wizard.register.import.lines,cost_center_id:0
+#: report:sale.order.allocation.report:0
+#: field:purchase.report,cost_center_id:0
 #, python-format
 msgid "Cost Center"
 msgstr "Centre de Coût"
@@ -74416,3 +74473,84 @@ msgstr "La colonne '%s' du fichier Excel doit être '%s', pas '%s'."
 #, python-format
 msgid "The column '%s' is not present in the file."
 msgstr "La colonne '%s' n'est pas présente dans le fichier."
+
+#. module: msf_doc_import
+#: field:wizard.export.po.validated,need_ad:0
+msgid "Export AD"
+msgstr "Exporter la Distribution Analytique"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:569
+#, python-format
+msgid "No line found for line number '%s' and ext. ref. '%s' - Line not imported"
+msgstr "Pas de ligne trouvée avec le numéro de ligne '%s' et la réf. externe '%s' - Ligne non importée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:562
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:570
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:786
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:796
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:803
+#, python-format
+msgid "Line %s of the file: %s"
+msgstr "Ligne %s du fichier : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:56
+#: field:wizard.import.in.line.simulation.screen,external_ref:0
+#: field:wizard.import.po.simulation.screen.line,imp_external_ref:0
+#: field:wizard.import.po.simulation.screen.line,in_ext_ref:0
+#, python-format
+msgid "External Ref."
+msgstr "Réf. Externe"
+
+#. module: msf_doc_import
+#: field:wizard.import.in.line.simulation.screen,imp_external_ref:0
+msgid "External ref."
+msgstr "Réf. Externe"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1287
+#, python-format
+msgid "No original IN lines with external ref '%s' found."
+msgstr "Pas de ligne trouvée dans la réception originale avec la réf. externe '%s'."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1289
+#, python-format
+msgid "Line does not correspond to original IN"
+msgstr "La ligne ne correspond pas à la réception originale"
+
+#. module: msf_doc_import
+#: field:wizard.import.po.simulation.screen,with_ad:0
+msgid "File contains Analytic Distribution"
+msgstr "Le fichier contient une distribution analytique"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:366
+#, python-format
+msgid "Error during file to import parsing :: Error: %s"
+msgstr "Erreur durant le traitement du fichier importé :: Erreur : %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:597
+#, python-format
+msgid "Line %s of the imported file: The header information must be on two columns : Column A for name of the field and column B for value."
+msgstr "Ligne %s du fichier importé : les informations de l'en-tête doivent être sur deux colonnes : La colonne A pour le nom du champ et la colonne B pour sa valeur."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1346
+#, python-format
+msgid "The import file is inconsistent. Line no. %s is not existing or was previously deleted"
+msgstr "Le fichier importé est incohérent. La ligne n° %s n'existe pas ou a été précédemment supprimée"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:1348
+#, python-format
+msgid "The import file is inconsistent. The matching line is not existing or was previously deleted"
+msgstr "Le fichier importé est incohérent. La ligne correspondante n'existe pas ou a été précédemment supprimée"
+
+#. module: msf_supply_doc_export
+#: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:102
+msgid "Ext. Reference"
+msgstr "Réf. Externe"
