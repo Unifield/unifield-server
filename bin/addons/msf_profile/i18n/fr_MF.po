@@ -74611,3 +74611,10 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: purchase_override
+#: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
+msgid "Print date:"
+msgstr "Date d'impression :"
