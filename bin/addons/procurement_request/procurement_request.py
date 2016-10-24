@@ -542,6 +542,16 @@ class procurement_request(osv.osv):
                     nb_lines += 1
                 if line.product_uom_qty <= 0.00:
                     raise osv.except_osv(_('Error'), _('A line must a have a quantity larger than 0.00'))
+
+                # 5/ Check if there is a temporary product in the sale order :
+                temp_prod_ids = self.pool.get('product.product').search(cr, uid, [('international_status', '=', 5)], context=context)
+                line_with_temp_ids = line_obj.search(cr, uid, [('order_id', '=', req.id), ('product_id', 'in', temp_prod_ids)], context=context)
+                line_err = ' / '.join([str(line.line_number) for l in line_obj.browse(cr, uid, line_with_temp_ids, context=context)])
+                if line_with_temp_ids:
+                    raise osv.except_osv(
+                        _("Warning"),
+                        _("You can not confirm internal request containing temporary product (line: %s)") % line_err,
+                    )
             if nb_lines:
                 raise osv.except_osv(_('Error'), _('Please check the lines : you cannot have "To Be confirmed" for Nomenclature Level". You have %s lines to correct !') % nb_lines)
             self.log(cr, uid, req.id, _("The internal request '%s' has been validated (nb lines: %s).") % (req.name, len(req.order_line)), context=context)

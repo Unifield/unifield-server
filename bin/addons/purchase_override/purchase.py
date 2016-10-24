@@ -1114,12 +1114,12 @@ stock moves which are already processed : '''
             # Check if there is a temporary product in the purchase order :
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
             line_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            line_err = " / ".join([str(l.line_number) for l in po_line_obj.browse(cr, uid, line_with_tempo_ids, context=context)])
+            line_err = " / ".join([str(l.line_number) for l in po_line_obj.browse(cr, uid, line_with_temp_ids, context=context)])
 
             if line_with_temp_ids:
                 raise osv.except_osv(
                     _("Warning"),
-                    _("You cannot confirm sale order containing temporary product (line: %s)" % line_err),
+                    _("You cannot confirm purchase order containing temporary product (line: %s)") % line_err,
                 )
 
 
@@ -1357,12 +1357,12 @@ stock moves which are already processed : '''
         for po in self.browse(cr, uid, ids, context=context):
             temp_prod_ids = product_obj.search(cr, uid, [('international_status', '=', 5)], context=context)
             line_with_temp_ids = po_line_obj.search(cr, uid, [('order_id', '=', po.id), ('product_id', 'in', temp_prod_ids)], context=context)
-            line_err = " / ".join([str(l.line_number) for l in po_line_obj.browse(cr, uid, line_with_tempo_ids, context=context)])
+            line_err = " / ".join([str(l.line_number) for l in po_line_obj.browse(cr, uid, line_with_temp_ids, context=context)])
 
             if line_with_temp_ids:
                 raise osv.except_osv(
                     _("Warning"),
-                    _("You cannot confirm sale order containing temporary product (line: %s)" % line_err),
+                    _("You cannot confirm purchase order containing temporary product (line: %s)") % line_err,
                 )
 
         # Create extra lines on the linked FO/IR
