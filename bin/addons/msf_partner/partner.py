@@ -718,8 +718,6 @@ class res_partner(osv.osv):
         Change the procurement method according to the partner type
         '''
         price_obj = self.pool.get('product.pricelist')
-        cur_obj = self.pool.get('res.currency')
-        user_obj = self.pool.get('res.users')
 
         r = {'po_by_project': 'project'}
 
