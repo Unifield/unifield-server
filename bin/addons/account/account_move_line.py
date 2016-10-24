@@ -1141,6 +1141,7 @@ class account_move_line(osv.osv):
             obj_move_rec.unlink(cr, uid, unlink_ids)
         obj_move_line.write(cr, uid, move_ids, {
                 'reconcile_date': False,  # US-533 reset reconcilation date
+                'unreconcile_date': time.strftime('%Y-%m-%d'),  # US-1868 add unreconciliation date
             }, context=context)
         return True
 
