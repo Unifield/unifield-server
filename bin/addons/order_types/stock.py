@@ -326,10 +326,8 @@ class stock_picking(osv.osv):
 
                 # US-148
                 if pick.type == 'in':
-                    args = [('picking_id', '=', pick.id),
-                            ('draft', '=', True)]
-                    wiz_ids = wizard_obj.search(cr, uid, args=args,
-                                                context=context)
+                    domain = [('picking_id', '=', pick.id), ('draft', '=', True), ('already_processed', '=', False)]
+                    wiz_ids = wizard_obj.search(cr, uid, domain, context=context)
                     if wiz_ids:
                         proc_id = wiz_ids[0]
                     else:
