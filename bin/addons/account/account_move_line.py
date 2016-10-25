@@ -1137,10 +1137,15 @@ class account_move_line(osv.osv):
         part_rec_ids = [rec['reconcile_partial_id'][0] for rec in part_recs]
         unlink_ids += rec_ids
         unlink_ids += part_rec_ids
+        # get all the JIs linked to the same reconciliation
+        linked_aml = self.search(cr, uid, ['|', ('reconcile_id', 'in', unlink_ids),
+                                               ('reconcile_partial_id', 'in', unlink_ids)], order='NO_ORDER', context=context)
         if unlink_ids:
             obj_move_rec.unlink(cr, uid, unlink_ids)
-        obj_move_line.write(cr, uid, move_ids, {
+        # update reconciliation/unreconciliation dates for all the JIs of the reconciliation
+        obj_move_line.write(cr, uid, linked_aml, {
                 'reconcile_date': False,  # US-533 reset reconcilation date
+                'unreconcile_date': time.strftime('%Y-%m-%d'),  # US-1868 add unreconciliation date
             }, context=context)
         return True
 

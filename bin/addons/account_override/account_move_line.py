@@ -155,13 +155,17 @@ class account_move_line(osv.osv):
 
     def _get_reconciled_move_lines(self, cr, uid, ids, context=None):
         res = []
-        for line in self.browse(cr, uid, ids):
+        for line in self.browse(cr, uid, ids, context=context,
+                                fields_to_fetch=['reconcile_id', 'reconcile_partial_id', 'reconcile_txt']):
             if line.reconcile_id:
                 for t in line.reconcile_id.line_id:
                     res.append(t.id)
             elif line.reconcile_partial_id:
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
+            # when an "unreconciliation" is synchronized the reconcile_txt must be reset
+            elif line.reconcile_txt and context.get('sync_update_execution'):
+                res.append(line.id)
         return res
 
     def _balance_currency(self, cr, uid, ids, name, arg, context=None):
