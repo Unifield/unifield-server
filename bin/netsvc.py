@@ -43,6 +43,10 @@ import pooler
 def ops_event(dbname, kind, dat, uid=1):
     try:
         cr = None
+        # Only ask for databases that have already been opened, so that we
+        # avoid doing database upgrades when not expected.
+        if dbname not in pooler.pool_dic.keys():
+            return
         db, pool = pooler.get_db_and_pool(dbname)
         cr = db.cursor()
         oe = pool.get('operations.event')
@@ -204,6 +208,10 @@ class OpsEventsHandler(logging.Handler):
         self._logging = False
 
     def emit(self, record):
+        if record.dbname == 'admin':
+            import pdb
+            pdb.set_trace()
+
         if record.dbname == '?':
             return
 
@@ -535,7 +543,9 @@ class OpenERPDispatcher:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
-            ops_event(params[0], 'traceback', tb_s, params[1])
+            # For service 'db', param[0] is not a dbname, so just skip it.
+            if service_name != 'db':
+                ops_event(params[0], 'traceback', tb_s, params[1])
             if tools.config['debug_mode']:
                 import pdb
                 pdb.post_mortem(tb[2])
