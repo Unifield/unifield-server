@@ -75,6 +75,7 @@ class operations_event(osv.osv):
         return instance and instance.instance
 
     def bang(self, cr, uid, ids=None, context=None):
+        self._logger.error("Bang!")
         raise ValueError("bang!")
         return 1
 

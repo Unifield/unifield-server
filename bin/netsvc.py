@@ -38,6 +38,22 @@ import warnings
 import heapq
 import pooler
 
+# Try to log the traceback in operations.event, but on a best-effort
+# basis: catch all errors and give up
+def ops_event(dbname, kind, dat, uid=1):
+    try:
+        cr = None
+        db, pool = pooler.get_db_and_pool(dbname)
+        cr = db.cursor()
+        oe = pool.get('operations.event')
+        oe.create(cr, uid, { 'kind': kind, 'data': dat })
+        cr.commit()
+    except:
+        pass
+    finally:
+        if cr is not None:
+            cr.close()
+
 class Service(object):
     """ Base class for *Local* services
 
@@ -182,6 +198,24 @@ class ColoredFormatter(DBFormatter):
         record.levelname = COLOR_PATTERN % (30 + fg_color, 40 + bg_color, record.levelname)
         return DBFormatter.format(self, record)
 
+class OpsEventsHandler(logging.Handler):
+    def __init__(self, *kwargs):
+        logging.Handler.__init__(self, *kwargs)
+        self._logging = False
+
+    def emit(self, record):
+        if record.dbname == '?':
+            return
+
+        # During the call to emit, a lock is already held (see logging/__init__.py)
+        # so it is safe to use this flag.
+        if not self._logging:
+            self._logging = True
+            ops_event(record.dbname,
+                      logging.getLevelName(record.levelno).lower(),
+                      record.message)
+            self._logging = False
+
 def init_logger():
     import os
     from tools.translate import resetlocale
@@ -228,6 +262,13 @@ def init_logger():
     # add the handler to the root logger
     logger = logging.getLogger()
     logger.addHandler(handler)
+
+    # add a handler to copy log messages into the operations.events table
+    oeh = OpsEventsHandler()
+    oeh.setFormatter(DBFormatter(format))
+    oeh.setLevel(logging.WARNING)
+    logger.addHandler(oeh)
+
     logger.setLevel(int(tools.config['log_level'] or '0'))
 
 
@@ -474,25 +515,6 @@ def replace_request_password(args):
     return args
 
 class OpenERPDispatcher:
-    # Try to log the traceback in operations.event, but on a best-effort
-    # basis: catch all errors and give up
-    def ops_event(self, dbname, uid, tb_s):
-        if not isinstance(uid, (int, long)):
-            # Don't know what it was, but it wasn't a uid, so make it "admin"
-            uid = 1
-
-        try:
-            cr = None
-            db, pool = pooler.get_db_and_pool(dbname)
-            cr = db.cursor()
-            oe = pool.get('operations.event')
-            oe.create(cr, uid, { 'kind': 'traceback',
-                                 'data': tb_s })
-            cr.commit()
-        finally:
-            if cr is not None:
-                cr.close()
-
     def log(self, title, msg, channel=logging.DEBUG_RPC, depth=None):
         logger = logging.getLogger(title)
         if logger.isEnabledFor(channel):
@@ -513,7 +535,7 @@ class OpenERPDispatcher:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
-            self.ops_event(params[0], params[1], tb_s)
+            ops_event(params[0], 'traceback', tb_s, params[1])
             if tools.config['debug_mode']:
                 import pdb
                 pdb.post_mortem(tb[2])
