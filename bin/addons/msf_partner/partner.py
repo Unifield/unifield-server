@@ -435,9 +435,10 @@ class res_partner(osv.osv):
         instance_result = instance_ojb.read(cr, uid, instance_ids,
                                             ['name'], context=context)
         instance_name_list = [x['name'] for x in instance_result if x['name']]
-        for partner in self.read(cr, uid, ids, ['name'], context=context):
-            if partner['name'] and partner['name'] in instance_name_list:
-                return False
+        for partner in self.read(cr, uid, ids, ['name', 'partner_type'], context=context):
+            if partner['partner_type'] == 'external':
+                if partner['name'] and partner['name'] in instance_name_list:
+                    return False
         return True
 
     _constraints = [
