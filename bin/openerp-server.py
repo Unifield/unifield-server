@@ -66,8 +66,10 @@ logger = logging.getLogger('server')
 # list of DBs that have already been opened and upgraded.
 # We ignore all errors because logging events is best
 # effort.
-def ops_event(what):
+def ops_event(what, dbname=None):
     for db in pooler.pool_dic.keys():
+        if dbname is not None and db != dbname:
+            continue
         try:
             c, pool = pooler.get_db_and_pool(db, upgrade_modules=False)
             cr = c.cursor()
@@ -157,7 +159,6 @@ if tools.config['db_name']:
         pool.get('ir.cron')._poolJobs(db.dbname)
 
         cr.close()
-    ops_event('commandline-update')
 
 #----------------------------------------------------------
 # translation stuff

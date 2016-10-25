@@ -58,10 +58,16 @@ class operations_event(osv.osv):
     _columns = {
         'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the event happened."),
         'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
+        'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during event centralization."),
         'kind': fields.char('Kind', readonly=True, size=64, required=True, help="What kind of event it was."),
         'data': fields.text('Data', readonly=True, help="The data associated with the event."),
         'data_short': fields.function(_shorten_data, method=True, type='char'),
     }
+
+    _sql_constraints = [
+        ('dedup', 'UNIQUE(instance, remote_id)',
+         'Duplicate events from an instance and not allowed.')
+    ]
 
     _defaults = {
         'time': lambda self,cr,uid,c: fields.datetime.now(),
