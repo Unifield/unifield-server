@@ -166,7 +166,6 @@ class import_currencies(osv.osv_memory):
 
         # Prepare some info
         model = 'confirm.import.currencies'
-        message = ''
         complementary_data = {}
         # Give currencies list if any problem occured
         if currency_list and len(currency_list) > 0:

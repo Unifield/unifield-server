@@ -19,14 +19,9 @@
 #
 ##############################################################################
 import time
-import netsvc
-from osv import fields, osv
-import ir
-
-from tools.misc import currency
-from tools.translate import _
-
 import datetime
+from osv import fields, osv
+from tools.translate import _
 
 class res_currency(osv.osv):
     def _current_rate(self, cr, uid, ids, name, arg, context=None):
@@ -144,7 +139,6 @@ class res_currency(osv.osv):
 
     def auto_import(self, cr, uid, file_to_import):
         import base64
-        import os
         processed = []
         rejected = []
         headers = []
