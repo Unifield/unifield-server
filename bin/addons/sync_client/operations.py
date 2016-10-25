@@ -65,17 +65,18 @@ class operations_event(osv.osv):
 
     _defaults = {
         'time': lambda self,cr,uid,c: fields.datetime.now(),
-        'instance': lambda self,cr,uid,c: self._get_inst(cr, uid, c)
+        'instance': lambda self,cr,uid,c: self._get_inst(cr, uid)
     }
 
     _logger = logging.getLogger('operations.event')
 
-    def _get_inst(self, cr, uid, context=None):
-        instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
-        return instance and instance.instance
+    def _get_inst(self, cr, uid):
+        i = self.pool.get('sync.client.entity').get_entity(cr, uid).name;
+        if i is None:
+            return "unknown"
+        return i
 
     def bang(self, cr, uid, ids=None, context=None):
-        self._logger.error("Bang!")
         raise ValueError("bang!")
         return 1
 
