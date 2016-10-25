@@ -435,14 +435,22 @@ class res_partner(osv.osv):
         instance_result = instance_ojb.read(cr, uid, instance_ids,
                                             ['name'], context=context)
         instance_name_list = [x['name'] for x in instance_result if x['name']]
+
+        section_mission_ids = self.search(cr, uid, [
+            ('active', 'in', ('t', 'f')),
+            ('partner_type', 'in', ('section', 'intermission'))], context=context)
+        read_result = self.read(cr, uid, section_mission_ids, ['name'], context=context)
+        section_mission_names = [x['name'] for x in read_result]
         for partner in self.read(cr, uid, ids, ['name', 'partner_type'], context=context):
+            if partner['name'] in section_mission_names:
+                return False
             if partner['partner_type'] == 'external':
                 if partner['name'] and partner['name'] in instance_name_list:
                     return False
         return True
 
     _constraints = [
-        (check_partner_name_is_not_instance_name, "You can't define a partner name with the name of a existing instance.", ['name'])
+        (check_partner_name_is_not_instance_name, "You can't define a partner name with the name of a existing instance or existing Intermission/Intersection.", ['name'])
     ]
 
     def transporter_ticked(self, cr, uid, ids, transporter, context=None):
