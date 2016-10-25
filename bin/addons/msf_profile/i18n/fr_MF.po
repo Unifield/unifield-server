@@ -74611,3 +74611,14 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: purchase_compare_rfq
+#: code:addons/purchase_compare_rfq/wizard/compare_rfq.py:461
+#, python-format
+msgid "Confirmed delivery"
+msgstr "Livraison prévue"
+
+#. module: tender_flow
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:565
+msgid "Confirmed Delivery Date"
+msgstr "Date de livraison prévue"
