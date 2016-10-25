@@ -51,7 +51,7 @@ def expr_eval(string, context=None):
         except:
             cherrypy.log.error("Error while parsing %r\n" % string,
                                context='expr_eval',
-                               severity=logging.WARNING,
+                               severity=logging.DEBUG,
                                traceback=True)
             return {}
     else:
