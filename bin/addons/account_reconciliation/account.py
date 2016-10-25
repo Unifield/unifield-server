@@ -22,6 +22,7 @@
 ##############################################################################
 
 from osv import osv
+import time
 
 class account_move_reconcile(osv.osv):
     _name = "account.move.reconcile"

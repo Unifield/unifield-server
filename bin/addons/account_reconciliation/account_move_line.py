@@ -125,6 +125,7 @@ class account_move_line(osv.osv):
         total = 0.0
         merges_rec = []
         company_list = []
+        reconcile_partial_browsed = False
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -148,12 +149,15 @@ class account_move_line(osv.osv):
             if line.reconcile_id:
                 raise osv.except_osv(_('Warning'), _('Already Reconciled!'))
             if line.reconcile_partial_id:
-                for line2 in line.reconcile_partial_id.line_partial_ids:
-                    if not line2.reconcile_id:
-                        if line2.id not in merges:
-                            merges.append(line2.id)
-                        # Next line have been modified from debit/credit to debit_currency/credit_currency
-                        total += (line2.debit_currency or 0.0) - (line2.credit_currency or 0.0)
+                if not reconcile_partial_browsed:
+                    # (US-1757) We browse the list of the already partially reconciled lines only once to get their total amount
+                    reconcile_partial_browsed = True
+                    for line2 in line.reconcile_partial_id.line_partial_ids:
+                        if not line2.reconcile_id:
+                            if line2.id not in merges:
+                                merges.append(line2.id)
+                            # Next line have been modified from debit/credit to debit_currency/credit_currency
+                            total += (line2.debit_currency or 0.0) - (line2.credit_currency or 0.0)
                 merges_rec.append(line.reconcile_partial_id.id)
             else:
                 unmerge.append(line.id)
@@ -282,10 +286,12 @@ class account_move_line(osv.osv):
 
         # US-533: date of JI reconciliation for total reconciliation linked
         # with above (4, 0)
-        # US-1682: trigger FXA computation
-        self.pool.get('account.move.line').write(cr, uid, ids, {
-                'reconcile_date': time.strftime('%Y-%m-%d'),
-            }, context=context)
+        # bypass orm methods: for specific lines:
+        #  - US-1766 FXA AJI should not be recomputed
+        #  - US-1682 yealry REV JI have a dedicated rate
+        cr.execute('update account_move_line set reconcile_date=%s where id in %s',
+            (time.strftime('%Y-%m-%d'), tuple(ids))
+        )
 
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
