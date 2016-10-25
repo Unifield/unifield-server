@@ -45,7 +45,13 @@ class cmd_precommit(Command):
     takes_args = ['selected*']
 
     def run(self, message=None, selected_list=None):
-        tree, selected_list = WorkingTree.open_containing_paths(selected_list)
+        if hasattr(WorkingTree, "open_containing_paths"):
+            tree, selected_list = WorkingTree.open_containing_paths(selected_list)
+        else:
+            # For bzr 2.1.x
+            from bzrlib.builtins import tree_files
+            tree, selected_list = tree_files(".")
+
         precommit(None, None, None, None, None, None, tree.changes_from(tree.basis_tree()), None)
         print "No problems found. Ready to commit."
 
