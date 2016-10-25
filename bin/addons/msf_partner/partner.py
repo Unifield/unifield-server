@@ -58,7 +58,7 @@ class res_partner(osv.osv):
                 if arg[2]:
                     res = sup_in
             else:
-                    res = sup_obj.search(cr, uid, [('id', 'not in', sup_in)])
+                res = sup_obj.search(cr, uid, [('id', 'not in', sup_in)])
 
         if not res:
             return [('id', '=', 0)]
@@ -172,7 +172,7 @@ class res_partner(osv.osv):
 
         partner_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0]
+                                                 context=context)[0]
         if user and user.company_id and user.company_id.partner_id:
             partner_id = user.company_id.partner_id.id
 
@@ -181,11 +181,11 @@ class res_partner(osv.osv):
         return res
 
     def _get_is_instance_search(self, cr, uid, ids, field_name, args,
-        context=None):
+                                context=None):
         """ search the instance's partner id """
         partner_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0]
+                                                 context=context)[0]
         if user and user.company_id and user.company_id.partner_id:
             partner_id = user.company_id.partner_id.id
         return partner_id and [('id', '=', partner_id)] or []
@@ -212,7 +212,7 @@ class res_partner(osv.osv):
         return res
 
     def _get_is_coordo_search(self, cr, uid, ids, field_name, args,
-                                context=None):
+                              context=None):
         """ return partner which are coordination and current company partner """
         a = args[0]
         if _get_instance_level(self, cr, uid) != 'coordo':
@@ -258,15 +258,15 @@ class res_partner(osv.osv):
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
         'property_product_pricelist_purchase': fields.property(
-          'product.pricelist',
-          type='many2one',
-          relation='product.pricelist',
-          domain=[('type','=','purchase')],
-          string="Purchase default currency",
-          method=True,
-          view_load=True,
-          required=True,
-          help="This currency will be used, instead of the default one, for purchases from the current partner"),
+            'product.pricelist',
+            type='many2one',
+            relation='product.pricelist',
+            domain=[('type','=','purchase')],
+            string="Purchase default currency",
+            method=True,
+            view_load=True,
+            required=True,
+            help="This currency will be used, instead of the default one, for purchases from the current partner"),
         'property_product_pricelist': fields.property(
             'product.pricelist',
             type='many2one',
@@ -459,75 +459,75 @@ class res_partner(osv.osv):
 
         # ids list (the domain are the same as the one used for the action window of the menus)
         purchase_ids = purchase_obj.search(cr, uid,
-            [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
-            context=context.update({'purchase_order': True}))
+                                           [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                           context=context.update({'purchase_order': True}))
         rfq_ids = purchase_obj.search(cr, uid,
-            [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
-            context=context.update({'request_for_quotation': True}))
+                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                      context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
-            [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
-            context=context)
+                                   [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                   context=context)
         intermission_vouch_in_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'in_invoice', 'journal_type': 'intermission'}))
+            ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'in_invoice', 'journal_type': 'intermission'}))
 
         intermission_vouch_out_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'out_invoice', 'journal_type': 'intermission'}))
+            ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'out_invoice', 'journal_type': 'intermission'}))
 
         donation_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True),
-                ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'in_invoice', 'journal_type': 'inkind'}))
+            ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True),
+            ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'in_invoice', 'journal_type': 'inkind'}))
         supp_invoice_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', False), ('is_debit_note', "=", False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
+            ('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', False), ('is_debit_note', "=", False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
 
         cust_refunds_ids = account_invoice_obj.search(cr, uid,
-            [('type','=','out_refund'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])],
-            context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
+                                                      [('type','=','out_refund'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])],
+                                                      context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
 
         debit_note_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False),
-                ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}))
+            ('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False),
+            ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}))
 
         stock_transfer_vouch_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'out_invoice', 'journal_type': 'sale'}))
+            ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale'}))
         incoming_ship_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('subtype', '=', 'standard'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context = context.update({
-                'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('subtype', '=', 'standard'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context = context.update({
+            'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1
+        }))
         out_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context = context.update({
-                'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context = context.update({
+            'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'
+        }))
         pick_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'picking'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context = context.update({
-                'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'picking'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context = context.update({
+            'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1
+        }))
         ppl_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'ppl'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context=context.update({
-                'contact_display': 'partner_address', 'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'ppl'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context=context.update({
+            'contact_display': 'partner_address', 'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1
+        }))
         tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
         com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')], context=context)
         ship_ids = ship_obj.search(cr, uid,
-            [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
-            context=context)
+                                   [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
+                                   context=context)
         absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
         aml_ids = aml_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('reconcile_id', '=', False), ('account_id.reconcile', '=', True)])
 
@@ -562,7 +562,7 @@ class res_partner(osv.osv):
         instance_ojb = self.pool.get('msf.instance')
         instance_ids = instance_ojb.search(cr, uid, [], context=context)
         instance_result = instance_ojb.read(cr, uid, instance_ids,
-                ['name'], context=context)
+                                            ['name'], context=context)
         instance_name_list = [x['name'] for x in instance_result if x['name']]
         if partner_name and partner_name in instance_name_list:
             raise osv.except_osv(
@@ -677,7 +677,7 @@ class res_partner(osv.osv):
                 return {'value': {'active': True},
                         'warning': {'title': _('Error'),
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
-                                                ) % (objects_linked_to_partner,)}}
+                                                 ) % (objects_linked_to_partner,)}}
         else:
             # US-49 check that activated partner is not using a not active CCY
             check_pricelist_ids = []
@@ -687,22 +687,22 @@ class res_partner(osv.osv):
             ]
             check_ccy_ids = []
             for r in self.read(cr, uid, ids, fields_pricelist,
-                context=context):
+                               context=context):
                 for f in fields_pricelist:
                     if r[f] and r[f][0] not in check_pricelist_ids:
                         check_pricelist_ids.append(r[f][0])
             if check_pricelist_ids:
                 for cpl_r in self.pool.get('product.pricelist').read(cr,
-                    uid, check_pricelist_ids, ['currency_id'],
-                    context=context):
+                                                                     uid, check_pricelist_ids, ['currency_id'],
+                                                                     context=context):
                     if cpl_r['currency_id'] and \
-                        cpl_r['currency_id'][0] not in check_ccy_ids:
+                            cpl_r['currency_id'][0] not in check_ccy_ids:
                         check_ccy_ids.append(cpl_r['currency_id'][0])
                 if check_ccy_ids:
                     count = self.pool.get('res.currency').search(cr, uid, [
-                            ('active', '!=', True),
-                            ('id', 'in', check_ccy_ids),
-                        ], count=True, context=context)
+                        ('active', '!=', True),
+                        ('id', 'in', check_ccy_ids),
+                    ], count=True, context=context)
                     if count:
                         return {
                             'value': {'active': False},
@@ -764,14 +764,14 @@ class res_partner(osv.osv):
 
         # Get all supplier
         tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                                                  order, context=context, count=count)
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
             return tmp_res
         else:
             # Get all supplier in product form
             args.append(('in_product', '=', True))
             res_in_prod = super(res_partner, self).search(cr, uid, args,
-                    offset, limit, order, context=context, count=count)
+                                                          offset, limit, order, context=context, count=count)
             new_res = []
 
             # Sort suppliers by sequence in product form
