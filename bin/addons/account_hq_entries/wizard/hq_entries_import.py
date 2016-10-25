@@ -283,7 +283,7 @@ class hq_entries_import_wizard(osv.osv_memory):
             return True
         return False
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, uid, ids, context=None, auto_import=False):
         """
         Take a CSV file and fetch some informations for HQ Entries
         """
@@ -297,6 +297,12 @@ class hq_entries_import_wizard(osv.osv_memory):
         if not journal_ids:
             raise osv.except_osv(_('Error'), _('You cannot import HQ entries because no HQ Journal exists.'))
 
+        def manage_error(line_index, msg, name='', code='', status=''):
+            if auto_import:
+                rejected_lines.append((line_index, [name, code, status], msg))
+            else:
+                raise osv.except_osv(_('Error'), 'Line %s, %s' % (line_index, _(msg)))
+
         # Prepare some values
         message = _("HQ Entries import failed.")
         res = False
@@ -304,6 +310,8 @@ class hq_entries_import_wizard(osv.osv_memory):
         processed = 0
         errors = []
         filename = ""
+        processed_lines = []
+        rejected_lines = []
 
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -325,35 +333,37 @@ class hq_entries_import_wizard(osv.osv_memory):
                 if filename.split('.')[-1] != 'csv':
                     raise osv.except_osv(_('Warning'), _('You are trying to import a file with the wrong file format; please import a CSV file.'))
             res = True
-            # Omit first line that contains columns ' name
+            # Omit first line that contains hearders
+            headers = None
             try:
-                reader.next()
+                headers = reader.next()
             except StopIteration:
                 raise osv.except_osv(_('Error'), _('File is empty!'))
-            nbline = 1
+            line_index = 1
             for line in reader:
-                nbline += 1
+                line_index += 1
                 processed += 1
+                if auto_import:
+                    processed_lines.append((line_index, []))
                 try:
                     self.update_hq_entries(cr, uid, line, context=context)
                     created += 1
                 except osv.except_osv, e:
-                    errors.append('Line %s, %s'%(nbline, e.value))
+                    manage_error(line_index, e.value)
             fileobj.close()
 
         if res:
             message = _("HQ Entries import successful")
         context.update({'message': message})
 
-        if errors:
-            cr.rollback()
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_error')
-        else:
-            view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
 
         # This is to redirect to HQ Entries Tree View
         context.update({'from': 'hq_entries_import'})
+
+        if auto_import:
+            return processed_lines, rejected_lines, headers
 
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'filename': filename, 'created': created, 'total': processed, 'state': 'hq', 'errors': "\n".join(errors), 'nberrors': len(errors)}, context=context)
 

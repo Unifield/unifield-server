@@ -540,5 +540,20 @@ class hq_entries(osv.osv):
                 elif p.number == 12 and not self._is_dec_period_open(cr, uid, context):
                     raise mission_closed_except
 
+    def auto_import(self, cr, uid, file_to_import):
+        import base64
+        import os
+        processed = []
+        rejected = []
+        headers = []
+
+        import_obj = self.pool.get('hq.entries.import')
+        import_id = import_obj.create(cr, uid, {
+            'file': base64.encodestring(open(file_to_import, 'r').read()),
+            'filename': os.path.split(file_to_import)[1],
+        })
+        processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)
+        return processed, rejected, headers
+
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
