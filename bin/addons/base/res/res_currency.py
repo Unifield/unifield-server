@@ -26,6 +26,8 @@ import ir
 from tools.misc import currency
 from tools.translate import _
 
+import datetime
+
 class res_currency(osv.osv):
     def _current_rate(self, cr, uid, ids, name, arg, context=None):
         if context is None:
@@ -139,6 +141,36 @@ class res_currency(osv.osv):
         ids = self.search(cr, uid, args, limit=limit)
         res = self.name_get(cr, uid, ids, context)
         return res
+
+    def auto_import(self, cr, uid, file_to_import):
+        import base64
+        import os
+        processed = []
+        rejected = []
+        headers = []
+
+        # read the first line of the file to get the date
+        first_line = None
+        date = None
+        with open(file_to_import, 'r') as csv_file:
+            first_line = csv_file.next().rstrip()
+            if 'Date' in first_line:
+                date = first_line.split('Date: ')[1]
+                # check that tis date is a real date
+                try:
+                    datetime.datetime.strptime(date, '%Y-%m-%d')
+                except:
+                    date = None
+        if not date:
+            raise osv.except_osv(_('Error'), _("A date is needed at first line of %s in this form: 'Date: 2016-01-01'." % file_to_import))
+        import_obj = self.pool.get('import.currencies')
+        import_id = import_obj.create(cr, uid, {
+            'rate_date': date,
+            'import_file': base64.encodestring(open(file_to_import, 'r').read()),
+        })
+        processed, rejected, headers = import_obj.import_rates(cr, uid, [import_id], auto_import=True)
+        return processed, rejected, headers
+
 res_currency()
 
 class res_currency_rate(osv.osv):
