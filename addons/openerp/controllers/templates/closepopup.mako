@@ -46,7 +46,12 @@
                                 topWindow.location.href = '/openerp';
                                 return;
                             } else {
-                                topWindow.editRecord(terp_id);
+                                var editable = jQuery(idSelector('_terp_editable'),$doc).val();
+                                if (editable == "True") {
+                                    topWindow.editRecord(terp_id);
+                                } else {
+                                    topWindow.viewRecord(terp_id);
+                                }
                                 return;
                             }
                         case 'tree':
