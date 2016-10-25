@@ -215,11 +215,12 @@
    <Protection/>
   </Style>
   <Style ss:ID="s89">
+   <NumberFormat ss:Format="Short Date"/>
    <Alignment ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Interior/>
    <NumberFormat ss:Format="Fixed"/>
@@ -446,6 +447,18 @@
     <NumberFormat/>
     <Protection/>
 </Style>
+<Style ss:ID="mSupConfDate">
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
+    <Interior ss:Color="#FFFF99" ss:Pattern="Solid"/>
+    <NumberFormat/>
+    <Protection/>
+</Style>
 <Style ss:ID="mLastLine">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
     <Borders>
@@ -536,7 +549,7 @@
      <Cell />
      <Cell />
     % for numsup in xrange(0, len(o.supplier_ids)):
-    <Cell ss:MergeAcross="2" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Supplier')} ${numsup+1}</Data></Cell>
+    <Cell ss:MergeAcross="3" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Supplier')} ${numsup+1}</Data></Cell>
     % endfor
     <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Selected Supplier')}</Data></Cell>
    </Row>
@@ -549,6 +562,7 @@
     % for numsup in xrange(0, len(o.supplier_ids)):
     <Cell ss:StyleID="mSupName"><Data ss:Type="String">${_('Name')}</Data></Cell>
     <Cell ss:StyleID="mSupUnit"><Data ss:Type="String">${_('Unit Price')}</Data></Cell>
+    <Cell ss:StyleID="mSupConfDate"><Data ss:Type="String">${_('Confirmed Delivery Date')}</Data></Cell>
     <Cell ss:StyleID="mSupComment"><Data ss:Type="String">${_('Comment')}</Data></Cell>
     % endfor
    </Row>
@@ -565,12 +579,13 @@
         sup_name = 'name_%s' % supplier.id
         sup_price = 'unit_price_%s' % supplier.id
         sup_comment = 'comment_%s' % supplier.id
+        sup_confirmed_delivery_date = 'confirmed_delivery_date_%s' % supplier.id
       %>
     <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
     <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
-    <Cell ss:StyleID="s89"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
+    <Cell ss:StyleID="s89"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="s90"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
       % endfor
-
     <Cell ss:StyleID="s91"><Data ss:Type="String">${line.choosen_supplier_id or ''|x}</Data></Cell>
    </Row>
    % endfor
