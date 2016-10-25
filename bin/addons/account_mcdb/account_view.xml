@@ -278,6 +278,7 @@
                     <field name="functional_currency_id"/>
                     <field name="reconcile_total_partial_id"/>
                     <field name="reconcile_date" invisible="1"/>
+                    <field name="unreconcile_date" invisible="1"/>
                     <field name="state"/>
                 </tree>
             </field>
