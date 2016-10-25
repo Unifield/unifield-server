@@ -424,7 +424,24 @@ class res_partner(osv.osv):
 
         return True
 
+    def check_partner_name_is_not_instance_name(self, cr, uid, ids, context=None):
+        '''
+        verify that the name of the partner is not used by an msf.instance
+        '''
+        if context is None:
+            context = {}
+        instance_ojb = self.pool.get('msf.instance')
+        instance_ids = instance_ojb.search(cr, uid, [], context=context)
+        instance_result = instance_ojb.read(cr, uid, instance_ids,
+                                            ['name'], context=context)
+        instance_name_list = [x['name'] for x in instance_result if x['name']]
+        for partner in self.read(cr, uid, ids, ['name'], context=context):
+            if partner['name'] and partner['name'] in instance_name_list:
+                return False
+        return True
+
     _constraints = [
+        (check_partner_name_is_not_instance_name, "You can't define a partner name with the name of a existing instance.", ['name'])
     ]
 
     def transporter_ticked(self, cr, uid, ids, transporter, context=None):
@@ -553,23 +570,6 @@ class res_partner(osv.osv):
             +[_('%s (Journal Item)') % (aml['move_id'] and aml['move_id'][1] or '') for aml in aml_obj.read(cr, uid, aml_ids, ['move_id'])]
         )
 
-    def check_partner_name_is_not_instance_name(self, cr, uid, partner_name, context=None):
-        '''
-        raise if the given partner_name is already used by an msf.instance
-        '''
-        if context is None:
-            context = {}
-        instance_ojb = self.pool.get('msf.instance')
-        instance_ids = instance_ojb.search(cr, uid, [], context=context)
-        instance_result = instance_ojb.read(cr, uid, instance_ids,
-                                            ['name'], context=context)
-        instance_name_list = [x['name'] for x in instance_result if x['name']]
-        if partner_name and partner_name in instance_name_list:
-            raise osv.except_osv(
-                _('Error'),
-                _("You can't define a partner name with the name of a existing instance.")
-            )
-
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
@@ -578,10 +578,6 @@ class res_partner(osv.osv):
             ids = [ids]
         if not context:
             context = {}
-
-        if 'name' in vals and 'partner_type' in vals and vals['partner_type'] == 'external':
-            #US-1714 do not permit instances names as partner names
-            self.check_partner_name_is_not_instance_name(cr, uid, vals['name'], context=context)
 
         #US-126: when it's an update from the sync, then just remove the forced 'active' parameter
         if context.get('sync_update_execution', False) and 'active' in vals:
@@ -628,9 +624,6 @@ class res_partner(osv.osv):
                             vals['property_product_pricelist'] = pl.id
                         elif pl.type == 'purchase':
                             vals['property_product_pricelist_purchase'] = pl.id
-        elif 'name' in vals and 'partner_type' in vals and vals['partner_type'] == 'external':
-            #US-1714 do not permit instances names as partner names
-            self.check_partner_name_is_not_instance_name(cr, uid, vals['name'], context=context)
 
         if not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
