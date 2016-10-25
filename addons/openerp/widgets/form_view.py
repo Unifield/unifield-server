@@ -33,7 +33,7 @@ class ViewForm(Form):
 
     template = "/openerp/widgets/templates/viewform.mako"
 
-    params = ['limit', 'offset', 'count', 'search_domain', 'search_data', 'filter_domain', 'notebook_tab', 'context_menu', 'previously_selected', 'previously_selected_length']
+    params = ['limit', 'offset', 'count', 'approximation', 'search_domain', 'search_data', 'filter_domain', 'notebook_tab', 'context_menu', 'previously_selected', 'previously_selected_length']
     member_widgets = ['screen', 'search', 'sidebar', 'logs']
 
     def __init__(self, params, **kw):
@@ -123,6 +123,7 @@ class ViewForm(Form):
         self.limit = self.screen.limit
         self.offset = self.screen.offset
         self.count = self.screen.count
+        self.approximation = self.screen.approximation
 
         self.search_domain = params.search_domain
         self.search_data = params.search_data

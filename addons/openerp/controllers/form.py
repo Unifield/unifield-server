@@ -186,6 +186,7 @@ class Form(SecuredController):
 
         params.offset = params.offset or 0
         params.count = params.count or 0
+        params.approximation = params.approximation or False
         params.view_type = params.view_type or params.view_mode[0]
 
         return tw.form_view.ViewForm(params, name="view_form", action="/openerp/form/save")
@@ -240,7 +241,10 @@ class Form(SecuredController):
         pager = None
         if buttons.pager:
             pager = tw.pager.Pager(id=form.screen.id, ids=form.screen.ids, offset=form.screen.offset,
-                                   limit=form.screen.limit, count=form.screen.count, view_type=params.view_type)
+                                   limit=form.screen.limit,
+                                   count=form.screen.count,
+                                   view_type=params.view_type,
+                                   approximation=form.screen.approximation)
 
         can_shortcut = self.can_shortcut_create()
         shortcut_ids = []
@@ -335,7 +339,7 @@ class Form(SecuredController):
     def _read_form(self, context, count, domain, filter_domain, id, ids, kw,
                    limit, model, offset, search_data, search_domain, source,
                    view_ids, view_mode, view_type, notebook_tab, o2m_edit=False,
-                   editable=False, sidebar_closed=False):
+                   editable=False, sidebar_closed=False, approximation=False):
         """ Extract parameters for form reading/creation common to both
         self.edit and self.view
         """
@@ -351,6 +355,7 @@ class Form(SecuredController):
                                        '_terp_offset': offset,
                                        '_terp_limit': limit,
                                        '_terp_count': count,
+                                       '_terp_approximation': approximation,
                                        '_terp_search_domain': search_domain,
                                        '_terp_search_data': search_data,
                                        '_terp_filter_domain': filter_domain,
@@ -380,13 +385,18 @@ class Form(SecuredController):
     def edit(self, model, id=False, ids=None, view_ids=None,
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
-             search_data=None, filter_domain=None, o2m_edit=False, sidebar_closed=False, **kw):
+             search_data=None, filter_domain=None, o2m_edit=False,
+             sidebar_closed=False, approximation=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
+        if search_domain != '[]':
+            approximation = 'False'
         params = self._read_form(context, count, domain, filter_domain, id,
                                  ids, kw, limit, model, offset, search_data,
                                  search_domain, source, view_ids, view_mode,
-                                 view_type, notebook_tab, o2m_edit=o2m_edit, editable=True, sidebar_closed=sidebar_closed)
+                                 view_type, notebook_tab, o2m_edit=o2m_edit,
+                                 editable=True, sidebar_closed=sidebar_closed,
+                                 approximation=approximation)
 
         if not params.ids:
             params.count = 0
@@ -403,13 +413,18 @@ class Form(SecuredController):
     def view(self, model, id, ids=None, view_ids=None,
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
-             search_data=None, filter_domain=None, sidebar_closed=False, **kw):
+             search_data=None, filter_domain=None, sidebar_closed=False,
+             approximation=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
+        if search_domain != '[]':
+            approximation = 'False'
         params = self._read_form(context, count, domain, filter_domain, id,
                                  ids, kw, limit, model, offset, search_data,
                                  search_domain, source, view_ids, view_mode,
-                                 view_type, notebook_tab, sidebar_closed=sidebar_closed)
+                                 view_type, notebook_tab,
+                                 sidebar_closed=sidebar_closed,
+                                 approximation=approximation)
 
         if not params.ids:
             params.count = 1
@@ -552,6 +567,7 @@ class Form(SecuredController):
                 'offset': params.offset,
                 'limit': params.limit,
                 'count': params.count,
+                'approximation': params.approximation,
                 'search_domain': ustr(params.search_domain),
                 'search_data': ustr(params.search_data),
                 'filter_domain': ustr(params.filter_domain),
@@ -684,6 +700,7 @@ class Form(SecuredController):
                 'offset': params.offset,
                 'limit': params.limit,
                 'count': params.count,
+                'approximation': params.approximation,
                 'search_domain': ustr(params.search_domain),
                 'filter_domain': ustr(params.filter_domain),
                 'sidebar_closes': params.sidebar_closed}
@@ -728,6 +745,7 @@ class Form(SecuredController):
                 'offset': params.offset,
                 'limit': params.limit,
                 'count': params.count,
+                'approximation': params.approximation,
                 'search_domain': ustr(params.search_domain),
                 'filter_domain': ustr(params.filter_domain),
                 'sidebar_closed': params.sidebar_closed}
@@ -778,6 +796,7 @@ class Form(SecuredController):
                 'offset': params.offset,
                 'limit': params.limit,
                 'count': params.count,
+                'approximation': params.approximation,
                 'search_domain': ustr(params.search_domain),
                 'filter_domain': ustr(params.filter_domain)}
 
@@ -889,6 +908,7 @@ class Form(SecuredController):
             o = res['offset']
             l = res['limit']
             if not c: c = res['count']
+            params.approximation = False
 
             params.search_domain = res['search_domain']
             params.search_data = res['search_data']
