@@ -51,6 +51,8 @@ class finance_archive(finance_export.finance_archive):
 
     def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
         """
+        ##### WARNING #####
+        ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
         Change first column for the DB ID composed of:
           - database name
           - model

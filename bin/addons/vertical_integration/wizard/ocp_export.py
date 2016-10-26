@@ -22,6 +22,7 @@
 from osv import fields
 from osv import osv
 
+import time
 from time import strftime
 
 class ocp_export_wizard(osv.osv_memory):
@@ -41,6 +42,25 @@ class ocp_export_wizard(osv.osv_memory):
         """
         Launch a report to generate the ZIP file.
         """
-        pass
+        if context is None:
+            context = {}
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        data = {}
+        data['form'] = {}
+        if wizard.instance_id:
+            # Get projects below instance
+            inst = wizard.instance_id
+            data['form'].update({'instance_id': inst.id, })
+            data['form'].update(
+                {'instance_ids': [inst.id] + [x.id for x in inst.child_ids]})
+        if wizard.period_id:
+            data['form'].update({'period_id': wizard.period_id.id})
+        if wizard.fiscalyear_id:
+            data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
+        # First 3 digits of the Prop. Instance code (OCP_ABCDE => ABC):
+        instance_code = inst and '_' in inst.code and inst.code.split('_')[1][:3] or ''
+        target_file_name_pattern = '%s_%s_Monthly Export'
+        data['target_filename'] = target_file_name_pattern % (instance_code, time.strftime('%Y%m'))
+        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocp', 'datas': data}
 
 ocp_export_wizard()
