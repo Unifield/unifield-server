@@ -294,11 +294,14 @@ class wizard_import_po_line(osv.osv_memory):
                             # CASE 1: the line is not registered in the system, so CREATE it :
                             if not rfq_line_ids:
                                 created_lines += 1
-                                to_write['red_color'] = True
                                 if wiz.po_id.tender_id:
                                     msg =  _('Warning! You are adding new lines which did not exist in the original tender!')
                                     if msg not in message:
                                         message += msg
+                                to_write.update({
+                                    'line_number': False,
+                                    'red_color': True,
+                                })
                                 purchase_line_obj.create(cr, uid, to_write, context=context)
 
                             # CASE 2: the line is already in the system, so UPDATE it :
