@@ -84,6 +84,7 @@
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
+<Column ss:AutoFitWidth="1" ss:Width="300" />
 % for x in range(2,nb_of_columns - 1):
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
@@ -170,8 +171,8 @@
     </Row>
     % for l in o.line_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.str_line_number or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.external_ref or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.line_number or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.external_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_product_id and obj_name_get('product.product', l.move_product_id.id) or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_product_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_uom_id.name or '')|x}</Data></Cell>
