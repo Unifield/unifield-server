@@ -218,16 +218,12 @@ The columns should be in this values:
         """
         Check that the columns in the header will be taken into account.
         """
-        wiz = self.browse(cr, uid, ids, context=context)
-        columns = columns_for_po_integration
-        if not wiz.rfq_ok:
-            columns = columns_for_po_integration[1:]
         for k,v in header_index.items():
             if k not in columns_for_po_integration:
                 if k == 'Delivery requested date':
                     continue  # 'Delivery requested date' tolerated (for Rfq vs 'Delivery Requested Date' of PO_COLUMNS_HEADER_FOR_IMPORT)
                 vals = {'message': _('The column "%s" is not taken into account. Please remove it. The list of columns accepted is: \n %s')
-                                                   % (k, ', \n'.join(columns))}
+                                                   % (k, ', \n'.join(columns_for_po_integration))}
                 return self.write(cr, uid, ids, vals, context), False
         list_of_required_values = ['Line', 'Product Code']
         for required_value in list_of_required_values:

@@ -101,7 +101,8 @@ class wizard_import_po_line(osv.osv_memory):
             error_log, message = '', ''
             header_index = context['header_index']
             template_col_count = len(header_index)
-            mandatory_col_count = 8 if wiz.po_id.rfq_ok else 7
+            is_rfq = wiz.po_id.rfq_ok and wiz.po_id.state == 'rfq_sent'
+            mandatory_col_count = 8 if is_rfq else 7
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
 
@@ -111,7 +112,7 @@ class wizard_import_po_line(osv.osv_memory):
             CCY COL INDEX: 6 (PO) or 7 (RfQ)
             """
             order_currency_code = wiz.po_id.pricelist_id.currency_id.name
-            currency_index = 7 if wiz.po_id.rfq_ok else 6
+            currency_index = 7 if is_rfq else 6
             row_iterator = file_obj.getRows()
 
             # don't use the original
@@ -166,12 +167,9 @@ class wizard_import_po_line(osv.osv_memory):
 
                     col_count = len(row)
                     if col_count != template_col_count and col_count != mandatory_col_count:
-                        if wiz.po_id.rfq_ok:
-                            columns = ','.join(columns_for_po_line_import)
-                        else:
-                            columns = ','.join(columns_for_po_line_import[1:])
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
-                                line_num, template_col_count, columns)
+                                line_num, template_col_count,
+                                ','.join(columns_for_po_line_import))
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
@@ -190,7 +188,7 @@ class wizard_import_po_line(osv.osv_memory):
 
 
                         # Cell 0 : Line Number (RfQ)
-                        if wiz.po_id.rfq_ok:
+                        if is_rfq:
                             ln_value = check_line.line_number_value(
                                 row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
                             to_write.update(
@@ -289,15 +287,18 @@ class wizard_import_po_line(osv.osv_memory):
                             continue
 
 
-                        if wiz.po_id.rfq_ok:
+                        if is_rfq:
                             rfq_line_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
                             to_write['rfq_ok'] = True
 
                             # CASE 1: the line is not registered in the system, so CREATE it :
                             if not rfq_line_ids:
                                 created_lines += 1
-                                if wiz.po_id.tender_id and _('Warning! You are adding new lines which did not exist in the original tender!') not in message:
-                                    message += _('Warning! You are adding new lines which did not exist in the original tender!'),
+                                if not wiz.po_id.tender_id:
+                                    to_write['red_color'] = True
+                                msg =  _('Warning! You are adding new lines which did not exist in the original tender!')
+                                if msg not in message:
+                                    message += msg
                                 purchase_line_obj.create(cr, uid, to_write, context=context)
 
                             # CASE 2: the line is already in the system, so UPDATE it :
@@ -417,21 +418,21 @@ Importation completed in %s!
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         purchase_obj = self.pool.get('purchase.order')
-        for wiz in self.browse(cr, uid, ids):
-            po_id = wiz.po_id
-            if not wiz.file:
+        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
+            po_id = wiz_read['po_id']
+            if not wiz_read['file']:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
+                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
                 # iterator on rows
                 reader_iterator = fileobj.getRows()
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'po_id': po_id.id, 'header_index': header_index})
+                context.update({'po_id': po_id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(
-                        cr, uid, ids, context, header_index, po_id.rfq_ok and columns_for_po_line_import or columns_for_po_line_import[1:],
+                    cr, uid, ids, context, header_index, columns_for_po_line_import,
                     origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -454,7 +455,7 @@ Importation completed in %s!
             "avoid conflict accesses (you can see the loading on the PO note "
             "tab check box). At the end of the load, POXX will be back in the "
             "right state. You can refresh the screen if you need to follow "
-            "the upload progress") % (purchase_obj.browse(cr, uid, po_id.id).name)
+            "the upload progress") % (purchase_obj.browse(cr, uid, po_id).name)
         return self.write(
             cr, uid, ids,
             {'message': msg_to_return, 'state': 'in_progress'},
