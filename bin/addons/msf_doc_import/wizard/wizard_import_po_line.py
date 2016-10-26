@@ -423,21 +423,21 @@ Importation completed in %s!
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
         purchase_obj = self.pool.get('purchase.order')
-        for wiz_read in self.read(cr, uid, ids, ['po_id', 'file']):
-            po_id = wiz_read['po_id']
-            if not wiz_read['file']:
+        for wiz in self.browse(cr, uid, ids):
+            po_id = wiz.po_id
+            if not wiz.file
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
-                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_read['file']))
+                fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
                 # iterator on rows
                 reader_iterator = fileobj.getRows()
                 # get first line
                 first_row = next(reader_iterator)
                 header_index = wiz_common_import.get_header_index(
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
-                context.update({'po_id': po_id, 'header_index': header_index})
+                context.update({'po_id': po_id.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, columns_for_po_line_import,
+                        cr, uid, ids, context, header_index, po_id.rft_ok and columns_for_po_line_import or columns_for_po_line_import[1:],
                     origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -460,7 +460,7 @@ Importation completed in %s!
             "avoid conflict accesses (you can see the loading on the PO note "
             "tab check box). At the end of the load, POXX will be back in the "
             "right state. You can refresh the screen if you need to follow "
-            "the upload progress") % (purchase_obj.browse(cr, uid, po_id).name)
+            "the upload progress") % (purchase_obj.browse(cr, uid, po_id.id).name)
         return self.write(
             cr, uid, ids,
             {'message': msg_to_return, 'state': 'in_progress'},
