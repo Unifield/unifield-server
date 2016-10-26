@@ -425,7 +425,7 @@ Importation completed in %s!
         purchase_obj = self.pool.get('purchase.order')
         for wiz in self.browse(cr, uid, ids):
             po_id = wiz.po_id
-            if not wiz.file
+            if not wiz.file:
                 return self.write(cr, uid, ids, {'message': _("Nothing to import")})
             try:
                 fileobj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
@@ -437,7 +437,7 @@ Importation completed in %s!
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id.id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(
-                        cr, uid, ids, context, header_index, po_id.rft_ok and columns_for_po_line_import or columns_for_po_line_import[1:],
+                        cr, uid, ids, context, header_index, po_id.rfq_ok and columns_for_po_line_import or columns_for_po_line_import[1:],
                     origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
