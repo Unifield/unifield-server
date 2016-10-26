@@ -74611,3 +74611,9 @@ msgid "\n"
 "	Number of columns is not equal to %s"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:300
+#, python-format
+msgid "Warning! You are adding new lines which did not exist in the original tender!"
+msgstr "Attention ! Vous avez ajouté une nouvelle ligne qui n'existe pas dans l'appel d'offre original !"
