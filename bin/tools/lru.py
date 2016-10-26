@@ -113,3 +113,8 @@ class LRU:
         del self[key]
         return v
 
+    @synchronized()
+    def del_map(self,f):
+        for k in self.keys():
+            if f(k):
+                del self[k]

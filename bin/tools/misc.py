@@ -814,13 +814,11 @@ class cache(object):
             if *args and **kwargs are both empty, clear all the keys related to this database
         """
         if not args and not kwargs:
-            keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
+            self.cache.del_map(lambda key: key[0][1] == dbname)
         else:
             kwargs2 = self._unify_args(*args, **kwargs)
-            keys_to_del = [key for key, _ in _generate_keys(self.multi, dbname, kwargs2) if key in self.cache.keys()]
-
-        for key in keys_to_del:
-            self.cache.pop(key)
+            dbs = _generate_keys(self.multi, dbname, kwargs2)
+            self.cache.del_map(lambda key: key in dbs)
 
     @classmethod
     def clean_caches_for_db(cls, dbname):
@@ -909,10 +907,7 @@ class read_cache(object):
 
         """clear the cache for database dbname
         """
-        keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
-
-        for key in keys_to_del:
-            self.cache.pop(key)
+        self.cache.del_map(lambda key: key[0][1] == dbname)
 
     def split_order_by_clause(self, order_by):
         # we have to take into account the order whenever we fetch data
