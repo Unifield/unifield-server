@@ -146,6 +146,8 @@
     </Row>
 
     <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ordered Qty')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ordered UoM')}</Data></Cell>
@@ -168,6 +170,8 @@
     </Row>
     % for l in o.line_ids:
     <Row>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.str_line_number or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.external_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_product_id and obj_name_get('product.product', l.move_product_id.id) or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_product_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_uom_id.name or '')|x}</Data></Cell>
