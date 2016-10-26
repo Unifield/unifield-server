@@ -268,14 +268,20 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         context.update({'active_id': ids[0]})
-        columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
+        po = self.read(cr, uid, ids, ['rfq_ok'], context=context)[0]
+        if po['rfq_ok']:
+            columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
+            columns = columns_for_po_line_import
+        else:
+            columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import[1:]]
+            columns = columns_for_po_line_import[1:]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
         export_id = self.pool.get('wizard.import.po.line').create(cr, uid, {'file': file,
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns_for_po_line_import]),),
+                                                                            'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns]),),
                                                                             'state': 'draft', },
                                                                    context)
         return {'type': 'ir.actions.act_window',
