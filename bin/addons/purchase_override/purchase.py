@@ -388,7 +388,7 @@ class purchase_order(osv.osv):
             
         res = {}
         for po_id in ids:
-            res[po_id] = self.pool.get('purchase.order.line').search_count(cr, uid, [('order_id', '=', po_id)], context=context)
+            res[po_id] = self.pool.get('purchase.order.line').search_count(cr, uid, [('order_id', '=', po_id), ('is_line_split', '=', False)], context=context)
 
         return res
 
