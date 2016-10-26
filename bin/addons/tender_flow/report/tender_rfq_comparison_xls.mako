@@ -223,7 +223,6 @@
     <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
    </Borders>
    <Interior/>
-   <NumberFormat ss:Format="Fixed"/>
    <Protection/>
   </Style>
   <Style ss:ID="s90">
