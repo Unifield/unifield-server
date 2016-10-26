@@ -383,7 +383,7 @@ class purchase_order(osv.osv):
         '''
         Return the number of line(s) for the PO
         '''
-        po_obj = self.pool.get('purchase.order.line')
+        pol_obj = self.pool.get('purchase.order.line')
 
         if isinstance(ids, (int, long)):
             ids = [ids]
