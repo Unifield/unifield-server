@@ -978,7 +978,7 @@ class tender_line(osv.osv):
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
                 'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True), # same precision as related field!
-                'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date" readonly=True), # same precision as related field!
+                'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
                 'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
                 'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
                 'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
