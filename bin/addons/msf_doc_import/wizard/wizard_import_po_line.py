@@ -431,6 +431,8 @@ Importation completed in %s!
                 header_index = wiz_common_import.get_header_index(
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
+                rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
+                is_rfq = rfq['rfq_ok'] and rfq['state'] == 'rfq_sent'
                 res, res1 = wiz_common_import.check_header_values(
                         cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:],
                     origin='PO')
