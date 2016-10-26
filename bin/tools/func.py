@@ -84,7 +84,7 @@ def synchronized(lock_attr='_lock'):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             lock = getattr(self, lock_attr)
-            with lock
+            with lock:
                 return func(self, *args, **kwargs)
         return wrapper
     return decorator
