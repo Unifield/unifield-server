@@ -1376,7 +1376,7 @@ class stock_picking(osv.osv):
                 if 'res_id' in res_wiz:
                     new_pick_id = res_wiz['res_id']
                     if new_pick_id:
-                        self.write(cr, uid, new_pick_id, {'incoming_id': picking_dict['id']}, context=context)
+                        self.write(cr, uid, new_pick_id, {'incoming_id': backorder_id or picking_dict['id']}, context=context)
                     if backorder_id and new_pick_id:
                         new_pick_name = self.read(cr, uid, new_pick_id, ['name'], context=context)['name']
                         self.write(cr, uid, backorder_id, {
