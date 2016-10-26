@@ -35,6 +35,32 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
+    def _handle_od_entries(self, cr, uid, data):
+        '''
+        Takes data in parameter and modify it for all OD entries that originate from HQ entry corrections:
+        - instance: becomes 'SIEG'
+        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
+        Returns a list of tuples (same format as data)
+        '''
+        new_data = []
+        pool = pooler.get_pool(cr.dbname)
+        aml_obj = pool.get('account.move.line')
+        # column numbers corresponding to properties
+        id_db = 0
+        instance = 1
+        journal = 2
+        description = 4
+        for line in data:
+            line_list = list(line)
+            if line_list[journal] == 'OD':
+                corrected_aml = aml_obj.browse(cr, uid, line_list[id_db],
+                                               fields_to_fetch=['corrected_line_id']).corrected_line_id
+                if corrected_aml and corrected_aml.journal_id.code == 'HQ' or False:
+                    line_list[instance] = 'SIEG'
+                    line_list[journal] = line_list[description][9:12]
+            new_data.append(tuple(line_list))
+        return new_data
+
     def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
         """
         ##### WARNING #####
@@ -44,80 +70,24 @@ class finance_archive(finance_export.finance_archive):
           - model
           - id
         """
+        # first handle OD entries that originate from HQ entry corrections to get the new data to handle
+        new_data = self._handle_od_entries(cr, uid, data)
+        # then call OCB method on new_data
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
-        return finance_archive_ocb.postprocess_add_db_id(cr, uid, data, model, column_deletion)
+        return finance_archive_ocb.postprocess_add_db_id(cr, uid, new_data, model, column_deletion)
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
-        # TODO: method taken from OCB => to adapt for OCP
         """
-        Use current SQL result (data) to fetch IDs and mark lines as used.
-        Then do another request.
-        Finally mark lines as exported.
-
-        Data is a list of tuples.
+        ##### WARNING #####
+        ### THIS CALLS THE METHOD FROM OCB ###
+        Handle of the consolidate entries:
+        aggregate all lines that are on an account where "Shrink entries for HQ export" is checked
         """
-        # Checks
-        if not excluded_journal_types:
-            raise osv.except_osv(_('Warning'), _('Excluded journal_types not found!'))
-        # Prepare some values
-        new_data = []
-        pool = pooler.get_pool(cr.dbname)
-        ids = [x and x[0] for x in data]
-        company_currency = pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.name
-        # In case where no line to return, abort process and return empty data
-        if not ids:
-            return new_data
-        # Create new export sequence
-        seq = pool.get('ir.sequence').get(cr, uid, 'finance.ocb.export')
-        # Mark lines as used
-        sqlmark = """UPDATE account_move_line SET exporting_sequence = %s WHERE id in %s;"""
-        cr.execute(sqlmark, (seq, tuple(ids),))
-        # Do right request
-        sqltwo = """SELECT req.concat AS "DB ID", i.code, j.code, j.code || '-' || p.code || '-' || f.code || '-' || a.code || '-' || c.name AS "entry_sequence", 'Automated counterpart - ' || j.code || '-' || a.code || '-' || p.code || '-' || f.code AS "desc", '' AS "ref", p.date_stop AS "document_date", p.date_stop AS "date", a.code AS "account", '' AS "partner_txt", '' AS "dest", '' AS "cost_center", '' AS "funding_pool", 
-CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit", 
-CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", 
-c.name AS "booking_currency", 
-CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", 
-CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
-            FROM (
-                SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, 
-                       SUM(amount_currency) AS total, 
-                       SUM(debit - credit) AS func_total, 
-                       array_to_string(array_agg(aml.id), ',') AS concat
-                FROM account_move_line AS aml, account_journal AS j
-                WHERE aml.exporting_sequence = %s
-                AND aml.journal_id = j.id
-                AND j.type NOT IN %s
-                GROUP BY aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id
-                ORDER BY aml.account_id
-            ) AS req, 
-                 account_account AS a, 
-                 account_period AS p, 
-                 account_journal AS j, 
-                 res_currency AS c, 
-                 account_fiscalyear AS f, 
-                 msf_instance AS i
-            WHERE req.account_id = a.id
-            AND req.period_id = p.id
-            AND req.journal_id = j.id
-            AND req.currency_id = c.id
-            AND req.instance_id = i.id
-            AND p.fiscalyear_id = f.id
-            AND a.shrink_entries_for_hq = 't';"""
-        cr.execute(sqltwo, (seq, tuple(excluded_journal_types)))
-        datatwo = cr.fetchall()
-        # post process datas (add functional currency name, those from company)
-        for line in datatwo:
-            tmp_line = list(line)
-            tmp_line.append(company_currency)
-            line_ids = tmp_line[0]
-            tmp_line[0] = self.get_hash(cr, uid, line_ids, 'account.move.line')
-            new_data.append(tmp_line)
-        # mark lines as exported
-        sqlmarktwo = """UPDATE account_move_line SET exported = 't', exporting_sequence = Null WHERE id in %s;"""
-        cr.execute(sqlmarktwo, (tuple(ids),))
-        # return result
-        return new_data
+        # first handle OD entries that originate from HQ entry corrections to get the new data to handle
+        new_data = self._handle_od_entries(cr, uid, data)
+        # then call OCB method on new_data
+        finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
+        return finance_archive_ocb.postprocess_consolidated_entries(cr, uid, new_data, excluded_journal_types, column_deletion)
 
 class hq_report_ocp(report_sxw.report_sxw):
 
