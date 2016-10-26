@@ -70712,6 +70712,16 @@ msgstr "Etc/GMT+1"
 msgid "Ordered qty"
 msgstr "Qté commandée"
 
+#. module: sales_followup
+#: field:sale.order.line.followup,qty_ordered:0
+msgid "Line number"
+msgstr "N° de ligne"
+
+#. module: sales_followup
+#: field:sale.order.line.followup,qty_ordered:0
+msgid "Ext. Ref"
+msgstr "Ref. ext."
+
 #. module: return_claim
 #: model:ir.module.module,shortdesc:return_claim.module_meta_information
 msgid "MSF Return-Claim"

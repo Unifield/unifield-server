@@ -1621,7 +1621,6 @@ class wizard_import_po_simulation_screen_line(osv.osv):
                              'product_uom': line.imp_uom.id,
                              'price_unit': line.imp_price,
                              'product_qty': line.imp_qty,
-                             'line_number': line.in_line_number,
                              'date_planned': line.imp_drd or line.simu_id.order_id.delivery_requested_date,
                             }
                 if line.imp_dcd:
