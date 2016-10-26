@@ -905,10 +905,12 @@ class read_cache(object):
         kwargs2.update(dict(zip(self.fun_arg_names, args)))
         return kwargs2
 
-    def clear(self):
-        """clear the cache for all the databases (...)
+    def clear(self, dbname):
+
+        """clear the cache for database dbname
         """
-        keys_to_del = self.cache.keys()
+        keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
+
         for key in keys_to_del:
             self.cache.pop(key)
 

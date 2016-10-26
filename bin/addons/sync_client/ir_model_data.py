@@ -36,10 +36,10 @@ class ir_module_module(osv.osv):
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(ir_module_module, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 
-    def _clean_cache(self):
-        super(ir_module_module, self)._clean_cache()
+    def _clean_cache(self, cr):
+        super(ir_module_module, self)._clean_cache(cr.dbname)
         # radical but this doesn't frequently happen
-        self._read_flat.clear_cache()
+        self._read_flat.clear_cache(cr.dbname)
 
     def check(self, cr, uid, ids, context=None):
         if ids and \
