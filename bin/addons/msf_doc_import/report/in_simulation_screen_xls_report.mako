@@ -84,7 +84,6 @@
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="300" />
-<Column ss:AutoFitWidth="1" ss:Width="300" />
 % for x in range(2,nb_of_columns - 1):
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 % endfor
@@ -147,14 +146,13 @@
     </Row>
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ordered Qty')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ordered UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Price Unit')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Curr.')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Ref')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('CHG')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String"></Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product')}</Data></Cell>
@@ -171,14 +169,13 @@
     </Row>
     % for l in o.line_ids:
     <Row>
-        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.line_number or '')|x}</Data></Cell>
-        <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.external_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_product_id and obj_name_get('product.product', l.move_product_id.id) or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_product_qty or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_uom_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(l.move_price_unit or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.move_currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.line_number or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(l.external_ref or '')|x}</Data></Cell>
         % if l.type_change == 'error':
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'type_change') or '')|x}</Data></Cell>
         <Cell ss:StyleID="line_change" ><Data ss:Type="String">${(getSel(l, 'integrity_status') or '')|x}</Data></Cell>
@@ -239,7 +236,9 @@
     <Row></Row>
 
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Information')}</Data></Cell>
+        <Cell ss:StyleID="header" MergeAcross="3"><Data ss:Type="String">${_('Information')}</Data></Cell>
+    </Row>
+    <Row>
         <Cell ss:StyleID="line" MergeAcross="3" ><Data ss:Type="String">${(o.message or '')|x}</Data></Cell>
     </Row>
 
