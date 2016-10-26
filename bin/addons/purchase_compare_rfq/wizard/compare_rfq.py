@@ -456,8 +456,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 # Confirmed delivery date on the related RfQ line
                 'confirmed_delivery_date_%s' % sid: {
                     'selectable': True,
-                    'type': 'char',
-                    'size': 128,
+                    'type': 'date',
                     'string': _('Confirmed delivery'),
                 },
                 # Comment of the related RfQ line
@@ -522,17 +521,10 @@ class wizard_compare_rfq_line(osv.osv_memory):
                             pu,
                             round=True)
 
-                # format confirmed delivery date YYYY-MM-DD to DD-MM-YYYY :
-                confirmed_dd = ""
-                if rfql and rfql.confirmed_delivery_date:
-                    confirmed_dd = rfql.confirmed_delivery_date
-                    dt = datetime.strptime(confirmed_dd, '%Y-%m-%d')
-                    confirmed_dd = dt.strftime('%d-%m-%Y')
-
                 r.update({
                     'name_%s' % sid: sup.name,
                     'unit_price_%s' % sid: rfql and pu or 0.00,
-                    'confirmed_delivery_date_%s' % sid: confirmed_dd,
+                    'confirmed_delivery_date_%s' % sid: rfql.confirmed_delivery_date,
                     'comment_%s' % sid: rfql and rfql.comment or '',
                 })
 
