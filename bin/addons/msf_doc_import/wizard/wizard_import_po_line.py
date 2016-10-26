@@ -167,9 +167,12 @@ class wizard_import_po_line(osv.osv_memory):
 
                     col_count = len(row)
                     if col_count != template_col_count and col_count != mandatory_col_count:
+                        if wiz.po_id.rfq_ok:
+                            columns = ','.join(columns_for_po_line_import)
+                        else:
+                            columns = ','.join(columns_for_po_line_import[1:])
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
-                                line_num, template_col_count,
-                                ','.join(columns_for_po_line_import))
+                                line_num, template_col_count, columns)
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
