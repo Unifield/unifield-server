@@ -596,6 +596,7 @@
                                     <field name="line_number"/>
                                     <field name="product_id" context="{'available_for_restriction': 'consumption', 'search_default_not_restricted': 1}" />
                                     <field name="inactive_product" invisible="1" />
+                                    <field name="comment" />
                                     <field name="product_qty"/>
                                     <field name="product_uom" string="UoM"/>
                                     <field name="scrapped" invisible="1"/>
