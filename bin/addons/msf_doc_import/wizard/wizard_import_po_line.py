@@ -169,7 +169,7 @@ class wizard_import_po_line(osv.osv_memory):
                     if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
                                 line_num, template_col_count,
-                                ','.join(columns_for_po_line_import))
+                                ','.join(is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:]))
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
@@ -294,11 +294,11 @@ class wizard_import_po_line(osv.osv_memory):
                             # CASE 1: the line is not registered in the system, so CREATE it :
                             if not rfq_line_ids:
                                 created_lines += 1
-                                if not wiz.po_id.tender_id:
-                                    to_write['red_color'] = True
-                                msg =  _('Warning! You are adding new lines which did not exist in the original tender!')
-                                if msg not in message:
-                                    message += msg
+                                to_write['red_color'] = True
+                                if wiz.po_id.tender_id:
+                                    msg =  _('Warning! You are adding new lines which did not exist in the original tender!')
+                                    if msg not in message:
+                                        message += msg
                                 purchase_line_obj.create(cr, uid, to_write, context=context)
 
                             # CASE 2: the line is already in the system, so UPDATE it :
@@ -432,7 +432,7 @@ Importation completed in %s!
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, columns_for_po_line_import,
+                        cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:],
                     origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
