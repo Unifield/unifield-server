@@ -125,19 +125,6 @@
 
        <!-- =====================  Instance Info Management ================= -->
 
-          <record model="ir.ui.view" id="activate_entity_wizard_view">
-            <field name="name">sync.client.activate_entity_wiz</field>
-            <field name="model">sync.client.activate_entity</field>
-            <field name="type">form</field>
-            <field name="arch" type="xml">
-                <form string="Activate entity" col="4" >
-                    <field name="name" />
-                    <newline />
-                    <button type="object" string="Activate" name="activate" icon="gtk-ok"/>
-                </form>
-               </field>
-       </record>
-
        <record model="ir.ui.view" id="update_entity_wizard_view">
             <field name="name">sync.client.aupdate_entity_wiz</field>
             <field name="model">sync.client.update_entity</field>
@@ -149,14 +136,6 @@
                </field>
        </record>
 
-       <record model="ir.actions.act_window" id="activate_wizard_action">
-            <field name="name">Activate Instance</field>
-            <field name="res_model">sync.client.activate_entity</field>
-            <field name="view_type">form</field>
-            <field name="view_mode">form</field>
-            <field name="target">new</field>
-        </record>
-
        <record model="ir.actions.act_window" id="update_wizard_action">
             <field name="name">Update Instance</field>
             <field name="res_model">sync.client.update_entity</field>
@@ -166,10 +145,6 @@
         </record>
 
         <menuitem id="maint_menu" name="Maintenance" parent="reg_menu" sequence="100"/>
-
-        <menuitem name="Activate Instance" parent="maint_menu"
-            id="activate_wiz_menu"
-            action="activate_wizard_action" sequence="99"/>
 
         <menuitem name="Update Instance" parent="maint_menu"
             id="update_wiz_menu"

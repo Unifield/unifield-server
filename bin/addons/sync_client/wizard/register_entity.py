@@ -213,40 +213,6 @@ class update_entity(osv.osv_memory):
 
 update_entity()
 
-class activate_entity(osv.osv_memory):
-    _name = "sync.client.activate_entity"
-
-    _columns = {
-        'name' : fields.char("Instance Name", size=64, required=True)      
-    }
-
-    def activate(self, cr, uid, ids, context=None):
-        entity_obj = self.pool.get('sync.client.entity') 
-        uuid = entity_obj.generate_uuid()
-        entity = entity_obj.get_entity(cr, uid, context=context)
-        current = self.browse(cr, uid, ids, context=context)[0]
-        name = current.name
-        if not name:
-            raise osv.except_osv(_('Error !'), _('Instance name cannot be empty'))
-
-        proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
-        res = proxy.activate_entity(name, uuid, entity_obj._hardware_id, context)
-        if res and not res[0]:
-            raise osv.except_osv(_('Error !'), res[1])
-        if res and res[0]:
-            security = res[1]['security_token']
-            entity_obj.write(cr, uid, [entity.id], {
-                'name' : res[1]['name'],
-                'parent': res[1]['parent'],
-                'email' : res[1]['email'], 
-                'identifier' : uuid}, context=context)
-            res = proxy.ack_update(uuid, entity_obj._hardware_id, security, context)
-            if res and not res[0]:
-                raise osv.except_osv(_('Error !'), res[1])
-        return True
-
-activate_entity()
-
 class instance_temp(osv.osv):
     _name = "sync_client.instance.temp"
     _description = "Parent Instance"

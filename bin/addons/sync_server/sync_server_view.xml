@@ -49,6 +49,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
+                    <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated,updated"/>
+                    <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated"/>
+                    <newline/>
                     <group colspan="2" col="2"> 
                         <separator string="Configuration" colspan="2"/>
                         <field name="name"/>
@@ -69,9 +72,6 @@
                     <field name="group_ids" colspan="4" nolabel="1"/>
                     <separator string="Children" colspan="4"/>
                     <field name="children_ids" colspan="4" nolabel="1"/>
-                    <newline/>
-                    <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated,updated"/>
-                    <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated"/>
                 </form>
             </field>
         </record>

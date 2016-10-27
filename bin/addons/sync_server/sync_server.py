@@ -45,7 +45,7 @@ def check_validated(f):
             logging.getLogger('sync.server').warn('Hardware id mismatch: instance %s, db hw_id: %s, hw_id sent: %s' % (entity.name, entity.hardware_id, hw_id))
             return (False, 'Error 17: Authentification Failed, please contact the support')
         if entity.state == 'updated':
-            return (False, 'This Instance has been updated and the update procedure has to be launched at your side')
+            return (False, 'This instance config has been updated and the update procedure has to be launched at your side to apply the changes.')
         if not entity.state == 'validated':
             return (False, "The instance has not yet been validated by its parent")
         if not entity.user_id.id == int(uid):
@@ -172,7 +172,6 @@ class entity(osv.osv):
             context = {}
 
         now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        no_update = dict(context, update=False)
         try:
             if not wait:
                 cr.execute("SAVEPOINT update_entity_last_activity")
@@ -192,7 +191,7 @@ class entity(osv.osv):
         'hardware_id' : fields.char('Hardware Identifier', size=128, select=True),
         'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='cascade'),
         'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
-        'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Updated')], 'State'),
+        'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Config updated')], 'State'),
         'email':fields.char('Contact Email', size=512),
         'user_id': fields.many2one('res.users', 'User', ondelete='restrict', required=True),
 
@@ -222,9 +221,6 @@ class entity(osv.osv):
                 raise osv.except_osv(_("Error!"), _("Can not delete an instance that have children!"))
         return super(entity, self).unlink(cr, uid, ids, context=None)
 
-    def get_security_token(self):
-        return uuid.uuid4().hex
-
     def _check_duplicate(self, cr, uid, name, uuid, context=None):
         duplicate_id = self.search(cr, uid, [('user_id', '!=', uid), '|',
                                              ('name', '=', name), ('identifier', '=', uuid)],
@@ -249,8 +245,8 @@ class entity(osv.osv):
     def _check_children(self, cr, uid, entity, uuid_list, context=None):
         children_ids = self._get_all_children(cr, uid, entity.id)
         uuid_child = [child.identifier for child in self.browse(cr, uid, children_ids, context=context)]
-        for uuid in uuid_list:
-            if not uuid in uuid_child:
+        for u in uuid_list:
+            if not u in uuid_child:
                 return False
         return True
 
@@ -273,25 +269,7 @@ class entity(osv.osv):
             Allow to change uuid,
             and reactivate the link between an local instance and his data on the server
         """
-        ids = self.search(cr, uid, [('user_id', '=', uid), 
-                                    ('hardware_id', "=", hardware_id),
-                                    ('name', '=', name), 
-                                    ('state', '=', 'updated')], context=context)
-        if not ids:
-            return (False, 'No entity matches with this name')
-
-        token = uuid.uuid4().hex
-        self.write(cr, 1, ids, {'identifier': identifier, 'update_token': token}, context=context)
-        entity = self.browse(cr, uid, ids, context=context)[0]
-        groups = [group.name for group in entity.group_ids]
-        data = {
-            'name': entity.name,
-            'parent': entity.parent_id.name,
-            'email': entity.email,
-            'groups': groups,
-            'security_token': token,
-        }
-        return (True, data)
+        raise NotImplementedError("See US-1809")
 
     def update(self, cr, uid, identifier, hardware_id, context=None):
         ids = self.search(cr, uid, [('identifier', '=' , identifier),
@@ -305,9 +283,14 @@ class entity(osv.osv):
         self.write(cr, 1, ids, {'update_token' : token}, context=context)
         entity = self.browse(cr, uid, ids, context=context)[0]
         groups = [group.name for group in entity.group_ids]
+        # Avoid problems serializing None in XML-RPC
+        if entity.parent_id.name is None:
+            pname = ""
+        else:
+            pname = entity.parent_id.name
         data = {
             'name': entity.name,
-            'parent': entity.parent_id.name,
+            'parent': pname,
             'email': entity.email,
             'groups': groups,
             'security_token': token,
@@ -331,10 +314,17 @@ class entity(osv.osv):
             return True
         if not context:
             context = {}
-        update = context.get('update', False)
 
-        if update:
-            vals['state'] = 'updated'
+        # Be careful to only put it into state updated when something
+        # that needs to be sent down to the client changes. (US-1809)
+        # Except: don't check group_ids because they are not used by
+        # sync_client anyway (and tricky to check right).
+        if context.get('update', False):
+            for before in self.browse(cr, uid, ids):
+                if ('name' in vals and before.name != vals['name'] or
+                    'parent_id' in vals and before.parent_id.id != vals['parent_id'] or
+                        'email' in vals and before.email != vals['email']):
+                    vals['state'] = 'updated'
 
         return super(entity, self).write(cr, uid, ids, vals, context=context)
 
@@ -444,9 +434,9 @@ class entity(osv.osv):
 
     @check_validated
     def validate(self, cr, uid, entity, uuid_list, context=None):
-        for uuid in uuid_list:
-            if not uuid:
-                return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be actived")
+        for u in uuid_list:
+            if not u:
+                return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be activated")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want to validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in',
@@ -457,9 +447,9 @@ class entity(osv.osv):
 
     @check_validated
     def invalidate(self, cr, uid, entity, uuid_list, context=None):
-        for uuid in uuid_list:
-            if not uuid:
-                return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be actived")
+        for u in uuid_list:
+            if not u:
+                return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be activated")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want validate is not one of your children")
         ids_to_validate = self.search(cr, uid, [('identifier', 'in',
@@ -900,7 +890,6 @@ class sync_server_monitor_email(osv.osv):
                 rules[rule.id]['instances'][group.id] = [x.id for x in group.entity_ids]
         update_ids = update_obj.search(cr, uid, [])
 
-        entities = {}
         self._logger.info("Analyze %s data" % len(update_ids))
         i = 1
         for split_update_ids in tools.misc.split_every(PACK, update_ids, list):

@@ -20,7 +20,6 @@
 ##############################################################################
 
 import logging
-from psycopg2 import IntegrityError
 
 from osv import osv, fields
 import tools
@@ -44,10 +43,10 @@ class ir_module_module(osv.osv):
     def check(self, cr, uid, ids, context=None):
         if ids and \
             self.search_exist(cr, uid,
-                    [('id', 'in', ids),
-                     ('name', 'in', ['sync_client', 'sync_so', 'update_client']),
-                     ('state', 'in', ['to install', 'to upgrade'])]):
-                self.pool.get('ir.model.data').create_all_sdrefs(cr)
+                              [('id', 'in', ids),
+                               ('name', 'in', ['sync_client', 'sync_so', 'update_client']),
+                                  ('state', 'in', ['to install', 'to upgrade'])]):
+            self.pool.get('ir.model.data').create_all_sdrefs(cr)
         return super(ir_module_module, self).check(cr, uid, ids, context=context)
 
 ir_module_module()
@@ -82,7 +81,7 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         'version':fields.integer('Version'),
         'last_modification':fields.datetime('Last Modification Date'),
         'is_deleted' : fields.function(string='The record exists in database?', type='boolean',
-            fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
+                                       fnct=_get_is_deleted, fnct_search=_get_is_deleted, method=True),
         'touched' : fields.text("Which records has been touched"),
         'force_recreation' : fields.boolean("Force record re-creation"),
     }
@@ -215,14 +214,14 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
     def manual_create_sdref(self, cr, uid, obj, sdref, res_id, context=None):
         if res_id and sdref:
             self.create(cr, uid, {
-                    'noupdate' : False, # don't set to True otherwise import won't work
-                    'module' : 'sd',
-                    'last_modification' : fields.datetime.now(),
-                    'model' : obj._name,
-                    'res_id' : res_id,
-                    'version' : 1,
-                    'name' : sdref,
-                }, context=context)
+                'noupdate' : False, # don't set to True otherwise import won't work
+                'module' : 'sd',
+                'last_modification' : fields.datetime.now(),
+                'model' : obj._name,
+                'res_id' : res_id,
+                'version' : 1,
+                'name' : sdref,
+            }, context=context)
             return True
         return False
 
@@ -234,7 +233,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             cr.execute("""\
                 DELETE FROM ir_model_data
                 WHERE module = 'sd' AND model = %s AND res_id = %s""",
-                [values['model'], values['res_id']])
+                       [values['model'], values['res_id']])
             if cr._obj.rowcount:
                 self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
 
@@ -243,14 +242,12 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
         cr.execute("""\
             DELETE FROM ir_model_data
             WHERE module = %s AND name = %s""",
-            [values['module'], values['name']])
+                   [values['module'], values['name']])
         if cr._obj.rowcount and values['module'] == 'sd':
             self._logger.warn("The following record has to be re-created: sd.%(name)s" % values)
             values['force_recreation'] = not context.get('sync_update_execution', False)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
-#        import pdb
-#        pdb.set_trace()
 
         # when a module load a specific xmlid, the sdref is updated according
         # that xmlid
@@ -265,7 +262,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 WHERE
                     module = 'sd' AND name = %s AND
                     model = %s AND res_id != %s""",
-                [sdref_name, values['model'], values['res_id']])
+                       [sdref_name, values['model'], values['res_id']])
             values['force_recreation'] = cr._obj.rowcount > 0 \
                 and not context.get('sync_update_execution', False)
             if values['force_recreation']:
@@ -278,8 +275,8 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
                 WHERE
                     sdref.module = 'sd' AND
                     sdref.model = %s AND sdref.res_id = %s""",
-                [sdref_name, values['force_recreation'],
-                 values['model'], values['res_id']])
+                       [sdref_name, values['force_recreation'],
+                        values['model'], values['res_id']])
             assert cr.rowcount > 0, "Nothing to update"
 
         return id
@@ -298,7 +295,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
     def update_sd_ref(self, cr, uid, sdref, vals, context=None):
         """Update a SD ref information. Raise ValueError if sdref doesn't exists."""
         ids = self.search(cr, uid, [('module','=','sd'),('name','=',sdref)],
-                order='NO_ORDER', context=context)
+                          order='NO_ORDER', context=context)
         if not ids:
             raise ValueError("Cannot find sdref %s!" % sdref)
 
