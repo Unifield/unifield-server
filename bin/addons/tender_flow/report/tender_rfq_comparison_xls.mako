@@ -397,6 +397,12 @@
 <Style ss:ID="sShortDate">
 <NumberFormat ss:Format="Short Date"/>
 <Alignment ss:Vertical="Bottom" ss:Horizontal="Left" ss:WrapText="1"/>
+    <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+    </Borders>
 </Style>
 <Style ss:ID="mSupHeader">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
