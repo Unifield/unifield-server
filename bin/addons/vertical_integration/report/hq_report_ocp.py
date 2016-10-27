@@ -105,6 +105,10 @@ class hq_report_ocp(report_sxw.report_sxw):
         if context is None:
             context = {}
         pool = pooler.get_pool(cr.dbname)
+        ayec_obj = pool.get('account.year.end.closing')
+        mi_obj = pool.get('msf.instance')
+        m_obj = pool.get('account.move')
+        ml_obj = pool.get('account.move.line')
         excluded_journal_types = ['hq']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
@@ -126,11 +130,6 @@ class hq_report_ocp(report_sxw.report_sxw):
         #   of target Coordo
         plresult_ji_in_ids = []
         if period.number == 12:
-            ayec_obj = pool.get("account.year.end.closing")
-            mi_obj = pool.get('msf.instance')
-            m_obj = pool.get('account.move')
-            ml_obj = pool.get('account.move.line')
-
             period16_id = ayec_obj._get_period_id(cr, uid, fy_id, 16)
             if period16_id:
                 # get potential PL RESULT entries of us-822 book_pl_results
