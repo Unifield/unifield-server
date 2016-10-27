@@ -447,7 +447,7 @@
     <Protection/>
 </Style>
 <Style ss:ID="mSupConfDate">
-    <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+    <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
     <Borders>
     <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2"/>
     <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
@@ -490,18 +490,18 @@
  <Worksheet ss:Name="${sheet_name(o.name)|x}">
   <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultRowHeight="15">
-   <Column ss:AutoFitWidth="0" ss:Width="75"/>
-   <Column ss:AutoFitWidth="0" ss:Width="178.5"/>
-   <Column ss:AutoFitWidth="0" ss:Width="46.5"/>
-   <Column ss:Width="51"/>
-   <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
+   <Column ss:AutoFitWidth="0" ss:Width="50"/>
+   <Column ss:AutoFitWidth="0" ss:Width="80"/>
+   <Column ss:AutoFitWidth="0" ss:Width="250"/>
+   <Column ss:Width="40"/>
+   <Column ss:AutoFitWidth="0" ss:Width="50"/>
    % for numsup in xrange(0, len(o.supplier_ids)):
-   <Column ss:AutoFitWidth="0" ss:Width="65.25"/>
-   <Column ss:AutoFitWidth="0" ss:Width="61.5"/>
-   <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
-   <Column ss:Width="57.75" ss:Span="1"/>
+   <Column ss:AutoFitWidth="0" ss:Width="120"/>
+   <Column ss:AutoFitWidth="0" ss:Width="70"/>
+   <Column ss:AutoFitWidth="0" ss:Width="90"/>
+   <Column ss:Width="120" ss:Span="1"/>
    % endfor
-   <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
+   <Column ss:AutoFitWidth="0" ss:Width="150"/>
    <Row ss:AutoFitHeight="0" ss:Height="52.5">
     <Cell ss:Index="4" ss:StyleID="s62"><Data ss:Type="String">${_('Comparison - Requests for Quotation')}</Data></Cell>
    </Row>
@@ -552,7 +552,7 @@
     % endfor
     <Cell ss:MergeDown="1" ss:StyleID="mSupHeader"><Data ss:Type="String">${_('Selected Supplier')}</Data></Cell>
    </Row>
-   <Row ss:AutoFitHeight="0" ss:StyleID="s63">
+   <Row ss:Height="40" ss:StyleID="s63">
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Line nr.')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Code')}</Data></Cell>
     <Cell ss:StyleID="s98"><Data ss:Type="String">${_('Product Description')}</Data></Cell>
