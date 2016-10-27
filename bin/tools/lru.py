@@ -33,10 +33,10 @@ class LRU:
         return obj in self.d
 
     @synchronized()
-    def get_cache_value(self, key):
+    def get(self, key, default=None):
         if key in self.d:
             return self[key]
-        return None
+        return default
 
     @synchronized()
     def __getitem__(self, obj):

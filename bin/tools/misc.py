@@ -847,7 +847,7 @@ class cache(object):
             result = {}
             notincache = {}
             for key, id in _generate_keys(self.multi, cr.dbname, kwargs2):
-                cache_value = self.cache.get_cache_value(key)
+                cache_value = self.cache.get(key)
                 if cache_value is not None:
                     result[id] = cache_value[0]
                 else:
@@ -1023,7 +1023,7 @@ class read_cache(object):
             result = []
             notincache = {}
             for key, id in _generate_keys('ids', cr.dbname, kwargs2, ['fields_to_read']):
-                cache_value = self.cache.get_cache_value(key)
+                cache_value = self.cache.get(key)
                 if cache_value is not None:
                     # we have to find if we have all the required fields in the cache
                     fields_already_in_the_cache = cache_value[0].keys()
@@ -1053,7 +1053,7 @@ class read_cache(object):
                 # we have to add the new rows in the resultset
                 for id, value in map(lambda x : (x['id'], x), result2):
                     key = notincache[int(id)]
-                    cache_value = self.cache.get_cache_value(key)
+                    cache_value = self.cache.get(key)
                     if cache_value is not None:
                         value_in_cache, t = cache_value
                     else:
