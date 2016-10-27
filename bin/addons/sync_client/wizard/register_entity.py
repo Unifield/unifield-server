@@ -26,7 +26,7 @@ from tools.translate import _
 
 class client_entity_group(osv.osv_memory):
     """ OpenERP group of entities """
-    
+
     _name = "sync.client.entity_group"
     _description = "Synchronization Instance Group"
 
@@ -44,12 +44,12 @@ class client_entity_group(osv.osv_memory):
         if registry_ids:
             registry_id = registry_ids[-1]
             parent_id = registry_obj.read(cr, uid, registry_id,
-                    ['parent_id'])['parent_id']
+                                          ['parent_id'])['parent_id']
             if parent_id:
                 # get the parent group name
                 instance_temp_obj = self.pool.get('sync_client.instance.temp')
                 instance_name = instance_temp_obj.read(cr, uid, parent_id,
-                            ['name'])['name']
+                                                       ['name'])['name']
         return instance_name
 
     def set_group(self, cr, uid, data_list, context=None):
@@ -76,7 +76,7 @@ client_entity_group()
 
 class register_entity(osv.osv_memory):
     """ OpenERP entity name and unique identifier """
-    
+
     _name = "sync.client.register_entity"
     _description = "Synchronization Instance"
 
@@ -94,31 +94,31 @@ class register_entity(osv.osv_memory):
     def default_get(self, cr, uid, fields, context=None):
         values = super(register_entity, self).default_get(cr, uid, fields, context)
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
-        
+
         values.update({
-                'identifier': entity.identifier,
-                'name': entity.name,
-                #'parent' : entity.parent,
-                'email' : entity.email,
-            })
-        
+            'identifier': entity.identifier,
+            'name': entity.name,
+            #'parent' : entity.parent,
+            'email' : entity.email,
+        })
+
         return values
-    
+
     _defaults = {
         'state' : 'register',
         'max_size' : 5,
     }
-    
+
     def previous(self, cr, uid, ids, state, context=None):
         maping = {'parents' : 'register',
-               'groups' : 'parents',
-               'message' : 'groups'}
-        
+                  'groups' : 'parents',
+                  'message' : 'groups'}
+
         for res_id in ids:
             state = self.browse(cr, uid, res_id, context=context).state
             self.write(cr, uid, [res_id], {'state' : maping[state]}, context=context)
         return True
-    
+
     def _get_default_entity(self, cr, uid, ids, context=None):
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         if entity.parent:
@@ -126,7 +126,7 @@ class register_entity(osv.osv_memory):
             if ids:
                 return ids[0]
         return False
-    
+
     def next(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.get_entity(
@@ -138,7 +138,7 @@ class register_entity(osv.osv_memory):
         parent_id = self._get_default_entity(cr, uid, ids, context)
         self.write(cr, uid, ids, {'state' : 'parents', 'parent_id' : parent_id}, context=context)
         return True
-    
+
     def group_state(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity_group")
         res = proxy.get_group_name(context)
@@ -146,7 +146,7 @@ class register_entity(osv.osv_memory):
             self.pool.get("sync.client.entity_group").set_group(cr, uid, res, context=context)
         self.write(cr, uid, ids, {'state' : 'groups'}, context=context)
         return True
-    
+
     def validate(self, cr, uid, ids, context=None):
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         for entity in self.browse(cr, uid, ids, context=context):
@@ -163,33 +163,33 @@ class register_entity(osv.osv_memory):
             self.write(cr, uid, ids, {'message' : res[1], 'state' : 'message'})
         elif res and not res[0]:
             raise osv.except_osv(_('Error !'), res[1])
-        
+
         return True  
-    
+
     def save_value(self, cr, uid, ids, context=None):
         cur = self.browse(cr, uid, ids, context=context)[0] 
         entity = self.pool.get('sync.client.entity').get_entity(cr, uid, context=context)
         data = { 
-                'identifier' : cur.identifier, 
-                'name' : cur.name,
-                'parent' : cur.parent_id and cur.parent_id.name or '',
-                'email' : cur.email,
-                'max_size' : cur.max_size,
-            }
+            'identifier' : cur.identifier, 
+            'name' : cur.name,
+            'parent' : cur.parent_id and cur.parent_id.name or '',
+            'email' : cur.email,
+            'max_size' : cur.max_size,
+        }
         self.pool.get('sync.client.entity').write(cr, uid, [entity.id], data, context=context )
-    
+
     def generate_uuid(self, cr, uid, ids, context=None):
         uuid = self.pool.get('sync.client.entity').generate_uuid()
         self.write(cr, uid, ids, {"identifier" : uuid}, context=context) 
         return True 
-    
+
 register_entity()
 
 
 
 class update_entity(osv.osv_memory):
     _name = "sync.client.update_entity"
-    
+
     def get_update(self, cr, uid, ids, context=None):
         entity_obj = self.pool.get('sync.client.entity') 
         entity = entity_obj.get_entity(cr, uid, context=context)
@@ -209,17 +209,17 @@ class update_entity(osv.osv_memory):
             if res and not res[0]:
                 raise osv.except_osv(_('Error !'), res[1])
         return True
-    
-    
+
+
 update_entity()
 
 class activate_entity(osv.osv_memory):
     _name = "sync.client.activate_entity"
-    
+
     _columns = {
         'name' : fields.char("Instance Name", size=64, required=True)      
     }
-    
+
     def activate(self, cr, uid, ids, context=None):
         entity_obj = self.pool.get('sync.client.entity') 
         uuid = entity_obj.generate_uuid()
@@ -228,7 +228,7 @@ class activate_entity(osv.osv_memory):
         name = current.name
         if not name:
             raise osv.except_osv(_('Error !'), _('Instance name cannot be empty'))
-        
+
         proxy = self.pool.get("sync.client.sync_server_connection").get_connection(cr, uid, "sync.server.entity")
         res = proxy.activate_entity(name, uuid, entity_obj._hardware_id, context)
         if res and not res[0]:
@@ -244,7 +244,7 @@ class activate_entity(osv.osv_memory):
             if res and not res[0]:
                 raise osv.except_osv(_('Error !'), res[1])
         return True
-        
+
 activate_entity()
 
 class instance_temp(osv.osv):

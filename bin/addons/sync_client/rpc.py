@@ -131,7 +131,7 @@ def fixed_request(self, host, handler, request_body, verbose=0):
     errcode, errmsg, headers = h.getreply()
     if errcode != 200:
         raise xmlrpclib.ProtocolError(host + handler, errcode, errmsg,
-                    headers)
+                                      headers)
     self.verbose = verbose
     # below we make sure to call parse_response() and
     # not _parse_response(), and don't pass the socket,
@@ -194,7 +194,7 @@ class NetRPC:
     def __init__(self, sock=None, is_gzip=False, timeout=10.0):
         if sock is None:
             self.sock = socket.socket(
-            socket.AF_INET, socket.SOCK_STREAM)
+                socket.AF_INET, socket.SOCK_STREAM)
         else:
             self.sock = sock
         self.sock.settimeout(timeout)
@@ -296,7 +296,7 @@ class NetRPCConnector(Connector):
                     retry = True
                     self._logger.debug("retry to connect %s, error : %s" ,i, e)
                 i += 1
-                
+
         socket.disconnect()
         if error:
             raise osv.except_osv(_('Error!'), "Unable to proceed for the following reason:\n%s" % (e.faultCode if hasattr(e, 'faultCode') else tools.ustr(e)))
@@ -328,7 +328,7 @@ class Common(object):
             #self._logger.debug('result: %r' % result)
             return result
         return proxy
-    
+
 
 
 class Database(object):
@@ -351,7 +351,7 @@ class Database(object):
             #self._logger.debug('result: %r' % result)
             return result
         return proxy
-    
+
 class Connection(object):
     """
     TODO: Document this class
@@ -374,7 +374,7 @@ class Connection(object):
         self.user_id = user_id
         if user_id is None:
             self.user_id = Common(self.connector).login(self.database, self.login, self.password)
-            
+
         if self.user_id is False:
             raise osv.except_osv(_('Error!'), _('Unable to connect to the distant server with this user!'))
         self._logger.debug(self.user_id)
@@ -385,14 +385,14 @@ class Connection(object):
         """
         url = "%(protocol)s://%(login)s:%(password)s@" \
               "%(hostname)s:%(port)d/%(database)s" % {
-            'protocol' : self.connector.PROTOCOL,
-            'login' : self.login,
-            'password' : self.password,
-            'hostname' : self.connector.hostname,
-            'port' : self.connector.port,
-            'database' : self.database,
-        }
- 
+                  'protocol' : self.connector.PROTOCOL,
+                  'login' : self.login,
+                  'password' : self.password,
+                  'hostname' : self.connector.hostname,
+                  'port' : self.connector.port,
+                  'database' : self.database,
+              }
+
         return "Connection: %s" % url
 
 class Object(object):
@@ -430,7 +430,7 @@ class Object(object):
     def __send__(self, method, *args):
         #self._logger.debug('method: %r', method)
         #self._logger.debug('args: %r', args)
-        
+
         result = self.connection.connector.send('object', 'execute',
                                                 self.connection.database,
                                                 self.connection.user_id,
@@ -456,9 +456,9 @@ class Object(object):
         # because the server returns a positive value but the record does not exist
         # into the database
         value = self.search_count([('id', '=', oid)], context=context)
-        
+
         return value > 0
-        
+
     def read(self, ids, fields=None, context=None):
         if fields is None:
             fields = []
@@ -482,16 +482,16 @@ class Object(object):
             limit = self.search_count(domain)
 
         arguments = [domain, offset, limit, order is not None and\
-                order != 'NO_ORDER' and order or False]
+                     order != 'NO_ORDER' and order or False]
 
         arguments = self.__add_context(arguments, context)
 
         return self.__send__('search', *arguments)
-        
+
     def search_count(self, domain, context=None):
         if context is None:
             context = {}
-            
+
         return self.__send__('search_count', domain, context)
 
     def write(self, ids, values, context=None):
