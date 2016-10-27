@@ -22,6 +22,8 @@
 from osv import osv
 from tools.translate import _
 import pooler
+import time
+from time import strftime
 from time import strptime
 
 from account_override import finance_export
@@ -118,8 +120,6 @@ class hq_report_ocp(report_sxw.report_sxw):
         first_day_of_period = period.date_start
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
-        year = str(year_num)
-        month = '%02d' % (tm.tm_mon)
 
         # US-822: if December is picked should:
         # - include Period 16 action 2 Year end PL RESULT entries
@@ -290,11 +290,19 @@ class hq_report_ocp(report_sxw.report_sxw):
         # TIP & TRICKS:
         # + More than 1 request in 1 file: just use same filename for each request you want to be in the same file.
         # + If you cannot do a SQL request to create the content of the file, do a simple request (with key) and add a postprocess function that returns the result you want
-        instance_name = 'OCP'
+
+        # Define the file name according to the following format:
+        # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly Export.csv (ex: KE1_201609_171116110306_Monthly Export.csv)
+        inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
+        instance_code = inst and '_' in inst.code and inst.code.split('_')[1][:3] or ''
+        selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
+        current_time = time.strftime('%d%m%y%H%M%S')
+        monthly_export_filename = '%s_%s_%s_Monthly Export.csv' % (instance_code, selected_period, current_time)
+
         processrequests = [
             {
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
-                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
+                'filename': monthly_export_filename,
                 'key': 'rawdata',
                 'function': 'postprocess_add_db_id',  # to take analytic line IDS and make a DB ID with them
                 'fnct_params': 'account.analytic.line',
@@ -304,14 +312,14 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'object': 'account.analytic.line',
                 },
             {
-                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
+                'filename': monthly_export_filename,
                 'key': 'bs_entries_consolidated',
                 'query_params': (period_id, tuple(excluded_journal_types), tuple(instance_ids)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': excluded_journal_types,
                 },
             {
-                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
+                'filename': monthly_export_filename,
                 'key': 'bs_entries',
                 'function': 'postprocess_add_db_id',  # to take analytic line IDS and make a DB ID with them
                 'fnct_params': 'account.move.line',
@@ -323,7 +331,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         ]
         if plresult_ji_in_ids:
             processrequests.append({
-                'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
+                'filename': monthly_export_filename,
                 'key': 'plresult',
                 'function': 'postprocess_add_db_id',  # to take move line ids and make a DB ID with them
                 'fnct_params': 'account.move.line',

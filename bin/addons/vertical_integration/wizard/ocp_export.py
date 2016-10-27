@@ -24,6 +24,7 @@ from osv import osv
 
 import time
 from time import strftime
+from time import strptime
 
 class ocp_export_wizard(osv.osv_memory):
     _name = "ocp.export.wizard"
@@ -54,13 +55,19 @@ class ocp_export_wizard(osv.osv_memory):
             data['form'].update(
                 {'instance_ids': [inst.id] + [x.id for x in inst.child_ids]})
         if wizard.period_id:
-            data['form'].update({'period_id': wizard.period_id.id})
+            period = wizard.period_id
+            data['form'].update({'period_id': period.id})
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
-        # First 3 digits of the Prop. Instance code (OCP_ABCDE => ABC):
+        # The file name is composed of:
+        # - the first 3 digits of the Prop. Instance code (OCP_ABCDE => ABC)
+        # - the year and month of the selected period
+        # - the current datetime
+        # Ex: KE1_201609_171116110306_Monthly Export
         instance_code = inst and '_' in inst.code and inst.code.split('_')[1][:3] or ''
-        target_file_name_pattern = '%s_%s_Monthly Export'
-        data['target_filename'] = target_file_name_pattern % (instance_code, time.strftime('%Y%m'))
+        selected_period = period and strftime('%Y%m', strptime(period.date_start, '%Y-%m-%d')) or ''
+        current_time = time.strftime('%d%m%y%H%M%S')
+        data['target_filename'] = '%s_%s_%s_Monthly Export' % (instance_code, selected_period, current_time)
         return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocp', 'datas': data}
 
 ocp_export_wizard()
