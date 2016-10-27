@@ -817,8 +817,8 @@ class cache(object):
             self.cache.del_map(lambda key: key[0][1] == dbname)
         else:
             kwargs2 = self._unify_args(*args, **kwargs)
-            dbs = _generate_keys(self.multi, dbname, kwargs2)
-            self.cache.del_map(lambda key: key in dbs)
+            generated_keys = [x for x, y in _generate_keys(self.multi, dbname, kwargs2)]
+            self.cache.del_map(lambda key: key in generated_keys)
 
     @classmethod
     def clean_caches_for_db(cls, dbname):
@@ -840,17 +840,16 @@ class cache(object):
             if time.time()-int(self.timeout) > self.lasttime:
                 self.lasttime = time.time()
                 t = time.time()-int(self.timeout)
-                old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
-                for key in old_keys:
-                    self.cache.pop(key)
+                self.cache.del_map(lambda key: self.cache[key][1] < t)
 
             kwargs2 = self._unify_args(*args, **kwargs)
 
             result = {}
             notincache = {}
             for key, id in _generate_keys(self.multi, cr.dbname, kwargs2):
-                if key in self.cache:
-                    result[id] = self.cache[key][0]
+                cache_value = self.cache.get_cache_value(key)
+                if cache_value is not None:
+                    result[id] = cache_value[0]
                 else:
                     notincache[id] = key
 
@@ -967,9 +966,7 @@ class read_cache(object):
             if time.time()-int(self.timeout) > self.lasttime:
                 self.lasttime = time.time()
                 t = time.time()-int(self.timeout)
-                old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
-                for key in old_keys:
-                    self.cache.pop(key)
+                self.cache.del_map(lambda key: self.cache[key][1] < t)
 
             if self._sort is None:
                 order_by = self2._parent_order or self2._order
@@ -1026,18 +1023,16 @@ class read_cache(object):
             result = []
             notincache = {}
             for key, id in _generate_keys('ids', cr.dbname, kwargs2, ['fields_to_read']):
-                if key in self.cache:
+                cache_value = self.cache.get_cache_value(key)
+                if cache_value is not None:
                     # we have to find if we have all the required fields in the cache
-                    values = self.cache[key][0]
-
-                    fields_already_in_the_cache = values.keys()
-
+                    fields_already_in_the_cache = cache_value[0].keys()
                     if set(fields_to_query).issubset(set(fields_already_in_the_cache)):
                         # all the values are already in the cache, we don't
                         #  have to ask the DB for more information
                         row = {'id': int(id)}
                         for field in fields_to_query:
-                            row[field] = values[field]
+                            row[field] = cache_value[0][field]
                         result.append(row)
                     else:
                         # we have to look for the new values
@@ -1058,8 +1053,9 @@ class read_cache(object):
                 # we have to add the new rows in the resultset
                 for id, value in map(lambda x : (x['id'], x), result2):
                     key = notincache[int(id)]
-                    if key in self.cache:
-                        value_in_cache, t = self.cache[key]
+                    cache_value = self.cache.get_cache_value(key)
+                    if cache_value is not None:
+                        value_in_cache, t = cache_value
                     else:
                         value_in_cache, t = {}, time.time()
 
