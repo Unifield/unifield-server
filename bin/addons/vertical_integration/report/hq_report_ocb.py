@@ -139,8 +139,6 @@ class finance_archive(finance_export.finance_archive):
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
-        ##### WARNING #####
-        ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
         Use current SQL result (data) to fetch IDs and mark lines as used.
         Then do another request.
         Finally mark lines as exported.

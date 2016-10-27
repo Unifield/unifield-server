@@ -39,7 +39,8 @@ class finance_archive(finance_export.finance_archive):
 
     def _handle_od_entries(self, cr, uid, data):
         '''
-        Takes data in parameter and modify it for all OD entries that originate from HQ entry corrections:
+        Takes data in parameter that results from 'rawdata' or 'bs_entries' requests
+        Modify it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
         Returns a list of tuples (same format as data)
@@ -48,17 +49,17 @@ class finance_archive(finance_export.finance_archive):
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         # column numbers corresponding to properties
-        id_db = 0
-        instance = 1
+        id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
+        instance_code = 1
         journal = 2
         description = 4
         for line in data:
             line_list = list(line)
             if line_list[journal] == 'OD':
-                corrected_aml = aml_obj.browse(cr, uid, line_list[id_db],
+                corrected_aml = aml_obj.browse(cr, uid, line_list[id_from_db],
                                                fields_to_fetch=['corrected_line_id']).corrected_line_id
                 if corrected_aml and corrected_aml.journal_id.code == 'HQ' or False:
-                    line_list[instance] = 'SIEG'
+                    line_list[instance_code] = 'SIEG'
                     line_list[journal] = line_list[description][9:12]
             new_data.append(tuple(line_list))
         return new_data
@@ -85,11 +86,8 @@ class finance_archive(finance_export.finance_archive):
         Handle of the consolidate entries:
         aggregate all lines that are on an account where "Shrink entries for HQ export" is checked
         """
-        # first handle OD entries that originate from HQ entry corrections to get the new data to handle
-        new_data = self._handle_od_entries(cr, uid, data)
-        # then call OCB method on new_data
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
-        return finance_archive_ocb.postprocess_consolidated_entries(cr, uid, new_data, excluded_journal_types, column_deletion)
+        return finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
 
 class hq_report_ocp(report_sxw.report_sxw):
 
