@@ -490,18 +490,18 @@
  <Worksheet ss:Name="${sheet_name(o.name)|x}">
   <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultRowHeight="15">
-   <Column ss:Index="2" ss:AutoFitWidth="0" ss:Width="75"/>
+   <Column ss:AutoFitWidth="0" ss:Width="75"/>
    <Column ss:AutoFitWidth="0" ss:Width="178.5"/>
    <Column ss:AutoFitWidth="0" ss:Width="46.5"/>
    <Column ss:Width="51"/>
    <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
+   % for numsup in xrange(0, len(o.supplier_ids)):
    <Column ss:AutoFitWidth="0" ss:Width="65.25"/>
    <Column ss:AutoFitWidth="0" ss:Width="61.5"/>
    <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
    <Column ss:Width="57.75" ss:Span="1"/>
-   <Column ss:Index="12" ss:AutoFitWidth="0" ss:Width="87.75"/>
-   <Column ss:Width="57.75" ss:Span="1"/>
-   <Column ss:Index="15" ss:Width="87.75"/>
+   % endfor
+   <Column ss:AutoFitWidth="0" ss:Width="87.75"/>
    <Row ss:AutoFitHeight="0" ss:Height="52.5">
     <Cell ss:Index="4" ss:StyleID="s62"><Data ss:Type="String">${_('Comparison - Requests for Quotation')}</Data></Cell>
    </Row>
