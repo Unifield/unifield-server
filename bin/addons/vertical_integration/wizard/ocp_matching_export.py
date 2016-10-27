@@ -44,6 +44,8 @@ class ocp_matching_export_wizard(osv.osv_memory):
         """
         Launch a report to generate the ZIP file.
         """
+        if context is None:
+            context = {}
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         data['form'] = {}

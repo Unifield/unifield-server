@@ -117,8 +117,9 @@ class hq_report_ocp(report_sxw.report_sxw):
         instance_ids = form.get('instance_ids', False)
         instance_id = form.get('instance_id', False)
         if not fy_id or not period_id or not instance_ids or not instance_id:
-            raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscalyear or period or instance.'))
-        period = pool.get('account.period').browse(cr, uid, period_id)
+            raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscal year or period or instance.'))
+        period = pool.get('account.period').browse(cr, uid, period_id, context=context,
+                                                   fields_to_fetch=['date_start', 'date_stop', 'number'])
         first_day_of_period = period.date_start
         tm = strptime(first_day_of_period, '%Y-%m-%d')
         year_num = tm.tm_year
