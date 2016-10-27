@@ -582,7 +582,7 @@
       %>
     <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
     <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
-    <Cell ss:StyleID="s89"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
+    <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
     <Cell ss:StyleID="s90"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
       % endfor
     <Cell ss:StyleID="s91"><Data ss:Type="String">${line.choosen_supplier_id or ''|x}</Data></Cell>
