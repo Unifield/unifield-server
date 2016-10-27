@@ -165,6 +165,7 @@ Section OpenERP_Web_Client SectionOpenERP_Web_Client
         !insertmacro CreateInternetShortcut "$SMPROGRAMS\$STARTMENU_FOLDER\Forum" "http://www.openerp.com/forum"
         !insertmacro CreateInternetShortcut "$SMPROGRAMS\$STARTMENU_FOLDER\Translation" "https://translations.launchpad.net/openobject"
     !insertmacro MUI_STARTMENU_WRITE_END
+    nsExec::Exec "sc config openerp-web-6.0 depend= openerp-server-6.0"
 SectionEnd
 
 Section -RestartService
