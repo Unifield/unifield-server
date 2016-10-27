@@ -161,10 +161,10 @@ class act_window(osv.osv):
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(act_window, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 
-    def _clean_cache(self, cr):
-        super(act_window, self)._clean_cache(cr.dbname)
+    def _clean_cache(self, dbname):
+        super(act_window, self)._clean_cache(dbname)
         # radical but this doesn't frequently happen
-        self._read_flat.clear_cache(cr.dbname)
+        self._read_flat.clear_cache(dbname)
 
     def _check_model(self, cr, uid, ids, context=None):
         for action in self.browse(cr, uid, ids, context):

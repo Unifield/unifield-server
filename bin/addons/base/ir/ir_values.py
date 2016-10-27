@@ -36,10 +36,10 @@ class ir_values(osv.osv):
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(ir_values, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 
-    def _clean_cache(self, cr):
-        super(ir_values, self)._clean_cache(cr.dbname)
+    def _clean_cache(self, dbname):
+        super(ir_values, self)._clean_cache(dbname)
         # radical but this doesn't frequently happen
-        self._read_flat.clear_cache(cr.dbname)
+        self._read_flat.clear_cache(dbname)
 
     def _real_unpickle(self, cr, uid, ids, name, arg, context=None):
         res = {}

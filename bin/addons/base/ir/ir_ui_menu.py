@@ -53,10 +53,10 @@ class ir_ui_menu(osv.osv):
         ret = super(ir_ui_menu, self)._read_flat(cr, user, ids, fields_to_read, context, load)
         return ret
 
-    def _clean_cache(self, cr):
-        super(ir_ui_menu, self)._clean_cache(cr.dbname)
+    def _clean_cache(self, dbname):
+        super(ir_ui_menu, self)._clean_cache(dbname)
         # radical but this doesn't frequently happen
-        self._read_flat.clear_cache(cr.dbname)
+        self._read_flat.clear_cache(dbname)
 
     def _filter_visible_menus(self, cr, uid, ids, context=None):
         """Filters the give menu ids to only keep the menu items that should be
