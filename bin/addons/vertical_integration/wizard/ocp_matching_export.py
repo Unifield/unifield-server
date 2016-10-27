@@ -22,7 +22,9 @@
 from osv import fields
 from osv import osv
 
+import time
 from time import strftime
+from time import strptime
 
 
 class ocp_matching_export_wizard(osv.osv_memory):
@@ -42,6 +44,29 @@ class ocp_matching_export_wizard(osv.osv_memory):
         """
         Launch a report to generate the ZIP file.
         """
-        print "todo"
+        wizard = self.browse(cr, uid, ids[0], context=context)
+        data = {}
+        data['form'] = {}
+        if wizard.instance_id:
+            # Get projects below instance
+            inst = wizard.instance_id
+            data['form'].update({'instance_id': inst.id, })
+            data['form'].update(
+                {'instance_ids': [inst.id] + [x.id for x in inst.child_ids]})
+        if wizard.period_id:
+            period = wizard.period_id
+            data['form'].update({'period_id': period.id})
+        if wizard.fiscalyear_id:
+            data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
+        # The file name is composed of:
+        # - the first 3 digits of the Prop. Instance code (OCP_ABCDE => ABC)
+        # - the year and month of the selected period
+        # - the current datetime
+        # Ex: KE1_201610_171116110306_Check on reconcilable entries
+        instance_code = inst and '_' in inst.code and inst.code.split('_')[1][:3] or ''
+        selected_period = period and strftime('%Y%m', strptime(period.date_start, '%Y-%m-%d')) or ''
+        current_time = time.strftime('%d%m%y%H%M%S')
+        data['target_filename'] = '%s_%s_%s_Check on reconcilable entries' % (instance_code, selected_period, current_time)
+        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocp.matching', 'datas': data}
 
 ocp_matching_export_wizard()
