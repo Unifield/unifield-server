@@ -59,7 +59,7 @@ class ocp_export_wizard(osv.osv_memory):
         if not period_state_obj.search_exist(cr, uid, domain, context=context):
             raise osv.except_osv(_('Warning!'), _('The selected instance must be Mission-Closed.'))
 
-    def button_export_ocp(self, cr, uid, ids, context=None):
+    def button_ocp_export_to_hq(self, cr, uid, ids, context=None):
         """
         Launch a report to generate the ZIP file.
         """
