@@ -218,10 +218,10 @@ class analytic_account(osv.osv):
         'date_start': fields.date('Active from', required=True),
         'date': fields.date('Inactive from', select=True),
         'category': fields.selection([('OC','Cost Center'),
-            ('FUNDING','Funding Pool'),
-            ('FREE1','Free 1'),
-            ('FREE2','Free 2'),
-            ('DEST', 'Destination')], 'Category', select=1),
+                                      ('FUNDING','Funding Pool'),
+                                      ('FREE1','Free 1'),
+                                      ('FREE2','Free 2'),
+                                      ('DEST', 'Destination')], 'Category', select=1),
         'cost_center_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_cost_centers', 'funding_pool_id', 'cost_center_id', string='Cost Centers', domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"),
         'for_fx_gain_loss': fields.boolean(string="For FX gain/loss", help="Is this account for default FX gain/loss?"),
         'tuple_destination_summary': fields.one2many('account.destination.summary', 'funding_pool_id', 'Destination by accounts'),
@@ -240,9 +240,9 @@ class analytic_account(osv.osv):
             context = {}
         for account in self.read(cr, uid, ids, ['category', 'name', 'code'], context=context):
             bad_ids = self.search(cr, uid, [('category', '=',
-                account.get('category', '')), ('|'), ('name', '=ilike',
-                    account.get('name', '')), ('code', '=ilike',
-                        account.get('code', ''))], order='NO_ORDER', limit=2)
+                                             account.get('category', '')), ('|'), ('name', '=ilike',
+                                                                                   account.get('name', '')), ('code', '=ilike',
+                                                                                                              account.get('code', ''))], order='NO_ORDER', limit=2)
             if len(bad_ids) and len(bad_ids) > 1:
                 return False
         return True
@@ -254,7 +254,7 @@ class analytic_account(osv.osv):
         if not context:
             context = {}
         search_ids = self.search(cr, uid, [('for_fx_gain_loss', '=', True)],
-                order='NO_ORDER', limit=2)
+                                 order='NO_ORDER', limit=2)
         if search_ids and len(search_ids) > 1:
             return False
         return True
@@ -280,7 +280,7 @@ class analytic_account(osv.osv):
             left join account_account a on a.default_destination_id = d.id
             left join account_destination_link l on l.destination_id = d.id and l.account_id = a.id
             where a.default_destination_id is not null and l.destination_id is null and d.id in %s ''', (tuple(ids),)
-        )
+                   )
         error = []
         for x in cr.fetchall():
             error.append(_('"%s" is the default destination for the G/L account "%s %s", you can\'t remove it.')%(x[2], x[0], x[1]))
@@ -331,9 +331,7 @@ class analytic_account(osv.osv):
             cr.execute("select analytic_account_id from project_project")
             project_ids = [x[0] for x in cr.fetchall()]
             return self.name_get(cr, uid, project_ids, context=context)
-
-        if not context and operator == '=':
-            # US-116: we are in the import
+        if operator == '=':
             account = self.search(cr, uid, [('code', '=', name)]+args, limit=limit, context=context)
             if account:
                 return self.name_get(cr, uid, account, context=context)
@@ -355,24 +353,24 @@ class analytic_account(osv.osv):
         res = []
         # Browse all accounts
         for account in self.browse(cr, uid, ids, context=context):
-#            data = []
-#            acc = account
-#            while acc:
-#                data.insert(0, acc.code)
-#                acc = acc.parent_id
-#            data = ' / '.join(data[1:-1])
-#            display = "%s" % (account.code)
-#            if len(data) and len(data) > 0:
-#                display = "%s (%s)" % (account.code, data)
-#            res.append((account.id, display))
+            #            data = []
+            #            acc = account
+            #            while acc:
+            #                data.insert(0, acc.code)
+            #                acc = acc.parent_id
+            #            data = ' / '.join(data[1:-1])
+            #            display = "%s" % (account.code)
+            #            if len(data) and len(data) > 0:
+            #                display = "%s (%s)" % (account.code, data)
+            #            res.append((account.id, display))
             res.append((account.id, account.code))
         return res
 
     def set_funding_pool_parent(self, cr, uid, vals):
         if 'category' in vals and \
            'code' in vals and \
-            vals['category'] == 'FUNDING' and \
-            vals['code'] != 'FUNDING':
+                vals['category'] == 'FUNDING' and \
+                vals['code'] != 'FUNDING':
             # for all accounts except the parent one
             funding_pool_parent = self.search(cr, uid, [('category', '=', 'FUNDING'), ('parent_id', '=', False)])[0]
             vals['parent_id'] = funding_pool_parent
@@ -420,8 +418,8 @@ class analytic_account(osv.osv):
         self.write(cr, uid, new_id, {'name': name,'code': '%s(copy)' % (account['code'] or '')}, context=context)
         trans_obj = self.pool.get('ir.translation')
         trans_ids = trans_obj.search(cr, uid, [('name', '=',
-            'account.analytic.account,name'), ('res_id', '=', new_id),],
-            order='NO_ORDER')
+                                                'account.analytic.account,name'), ('res_id', '=', new_id),],
+                                     order='NO_ORDER')
         trans_obj.unlink(cr, uid, trans_ids)
         return new_id
 
@@ -462,9 +460,9 @@ class analytic_account(osv.osv):
         ######################################################
         # US-399: Now perform the check unicity manually!
         bad_ids = self.search(cr, uid, [('category', '=',
-            new_values.get('category', '')), ('|'), ('name', '=ilike',
-                new_values.get('name', '')), ('code', '=ilike',
-                    new_values.get('code', ''))], order='NO_ORDER', limit=2)
+                                         new_values.get('category', '')), ('|'), ('name', '=ilike',
+                                                                                  new_values.get('name', '')), ('code', '=ilike',
+                                                                                                                new_values.get('code', ''))], order='NO_ORDER', limit=2)
         if len(bad_ids) and len(bad_ids) > 1:
             raise osv.except_osv(_('Warning !'), _('You cannot have the same code or name between analytic accounts in the same category!'))
         ######################################################
@@ -477,8 +475,8 @@ class analytic_account(osv.osv):
         if vals.get('name', False):
             trans_obj = self.pool.get('ir.translation')
             trans_ids = trans_obj.search(cr, uid, [('name', '=',
-                'account.analytic.account,name'), ('res_id', 'in', ids)],
-                order='NO_ORDER')
+                                                    'account.analytic.account,name'), ('res_id', 'in', ids)],
+                                         order='NO_ORDER')
             if trans_ids:
                 cr.execute('UPDATE ir_translation SET src = %s WHERE id IN %s', (vals.get('name'), tuple(trans_ids)))
         return res
