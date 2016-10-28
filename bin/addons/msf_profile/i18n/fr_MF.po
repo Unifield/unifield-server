@@ -74683,3 +74683,40 @@ msgstr "Désolé, le(s) champ(s) '%s' ne peut(vent) pas être utilisé(s) seul(s
 msgid "You can't search on this object without using at least one exact search term (precede your search with the character '=')."
 msgstr "Vous ne pouvez pas exécuter de recherche sur cet objet sans utiliser au moins une recherche exacte (ajoutez le caractère = devant votre filtre)."
 
+#. module: vertical_integration
+#: code:addons/vertical_integration/report/hq_report_ocp.py:136
+#: code:addons/vertical_integration/report/hq_report_ocp_matching.py:98
+#, python-format
+msgid "Some info are missing. Either fiscal year or period or instance."
+msgstr "Des infos sont manquantes. L'année fiscale, la période ou l'instance."
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/ocp_export.py:60
+#, python-format
+msgid "The selected instance must be Mission-Closed."
+msgstr "L'instance sélectionnée doit être Mission-Closed."
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/ocp_export.py:88
+#, python-format
+msgid "The report can be run at HQ level only."
+msgstr "Le rapport ne peut être lancé qu'en HQ."
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/ocp_export.py:52
+#, python-format
+msgid "You must select a proprietary instance."
+msgstr "Vous devez sélectionner une instance propriétaire."
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/wizard/ocp_export.py:50
+#, python-format
+msgid "You must select a period."
+msgstr "Vous devez sélectionner une période."
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/report/hq_report_ocp.py:129
+#: code:addons/vertical_integration/report/hq_report_ocp_matching.py:91
+#, python-format
+msgid "No data retrieved. Check that the wizard is filled in."
+msgstr "Aucune donnée récupérée. Vérifiez que le wizard est rempli."
