@@ -912,10 +912,11 @@ class res_users(osv.osv):
         It is called from the web.
         It enables to display certain fields if the user belongs to a group profiled 'admin'.
         """
-        for user in self.browse(cr, uid, [uid], context=context):
-            for group in user.groups_id:
-                if group.is_an_admin_profile:
-                    return True
+        res = self.read(cr, uid, uid, ['groups_id'], context=context)
+        if res.get('groups_id', False):
+            if self.pool.get('res.groups').search_exist(cr, uid, [('id', 'in',
+                res['groups_id']), ('is_an_admin_profile', '=', True)], context=context):
+                return True
         return False
         
     def _get_fake(self, cr, uid, ids, field_names, args, context=None):
