@@ -238,7 +238,7 @@ class stock_move_processor(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             # Return an error if the move has no product defined
-            if not line.move_id.product_id:
+            if not line.move_id or not line.move_id.product_id:
                 raise osv.except_osv(
                     _('Data Error'),
                     _('The move you are trying to process has no product defined - Please set a product on it before process it.')

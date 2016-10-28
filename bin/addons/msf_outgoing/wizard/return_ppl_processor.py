@@ -142,6 +142,18 @@ class return_ppl_move_processor(osv.osv):
             help="Expected product to receive",
             multi='move_info',
         ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'return.ppl.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
+            multi='move_info',
+        ),
         'ordered_uom_id': fields.function(
             _get_move_info,
             method=True,
