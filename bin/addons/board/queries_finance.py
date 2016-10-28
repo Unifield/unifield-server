@@ -19,9 +19,9 @@ l.move_id = m.id and
 l.state='valid' and
 m.journal_id = j.id and
 j.type != 'system'
-group by p.name, m.name, l.move_id
+group by p.name, m.name, l.move_id, p.date_start
 having abs(sum(l.credit_currency-l.debit_currency)) > 0.00001
-order by m.name
+order by p.date_start, m.name
 """
     },
     {
@@ -37,9 +37,9 @@ l.move_id = m.id and
 l.state='valid' and
 m.journal_id = j.id and
 j.type != 'system'
-group by p.name, m.name, l.move_id
+group by p.name, m.name, l.move_id, p.date_start
 having abs(sum(l.credit-l.debit)) > 0.00001
-order by m.name"""
+order by p.date_start, m.name"""
     },
     {
         'title': _('AJI/JI mismatch in functional currency'),
@@ -74,9 +74,9 @@ WHERE
 account_account.user_type = account_account_type.id and
 account_account_type.code in ('income', 'expense')
 )
-GROUP BY account_period.name, account_move.name, account_move_line.id
+GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start
 HAVING abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_analytic_line.amount)) > 0.00001
-order by difference desc, account_move.name"""
+order by account_period.date_start, account_move.name"""
     },
     {
         'title': _('AJI/JI mismatch in booking currency'),
@@ -111,9 +111,9 @@ WHERE
 account_account.user_type = account_account_type.id and
 account_account_type.code in ('income', 'expense')
 )
-GROUP BY account_period.name, account_move.name, account_move_line.id
+GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start
 HAVING abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) > 0.00001
-ORDER BY difference desc, account_move.name"""
+ORDER BY account_period.date_start, account_move.name"""
     },
     {
         'title': _('Unbalanced reconciliations in functional currency'),
