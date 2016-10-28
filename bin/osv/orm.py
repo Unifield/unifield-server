@@ -1726,10 +1726,10 @@ class orm_template(object):
 
         result = {'type': view_type, 'model': self._name}
 
-        ok = True
+        is_inherited_view = True
         sql_res = False
         parent_view_model = None
-        while ok:
+        while is_inherited_view:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
                 if '.' in view_ref:
@@ -1753,14 +1753,12 @@ class orm_template(object):
                         type=%s AND
                         inherit_id IS NULL
                     ORDER BY priority''', (self._name, view_type))
-
             sql_res = cr.fetchone()
-
             if not sql_res:
                 break
 
-            ok = sql_res[5]
-            view_id = ok or sql_res[3]
+            is_inherited_view = sql_res[5]
+            view_id = is_inherited_view or sql_res[3]
             parent_view_model = sql_res[6]
 
         # if a view was found
@@ -1785,7 +1783,6 @@ class orm_template(object):
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:
-
             # otherwise, build some kind of default view
             if view_type == 'form':
                 res = self.fields_get(cr, user, context=context)
