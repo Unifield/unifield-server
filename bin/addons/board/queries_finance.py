@@ -24,7 +24,6 @@ having abs(sum(l.credit_currency-l.debit_currency)) > 0.00001
 order by m.name
 """
     },
-
     {
         'title': _('JI entries in functional currency that do not add up'),
         'headers': [_('Period'), _('JI'), _('Difference')],
@@ -77,8 +76,8 @@ account_account_type.code in ('income', 'expense')
 )
 GROUP BY account_period.name, account_move.name, account_move_line.id
 HAVING abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_analytic_line.amount)) > 0.00001
-order by difference desc, account_move.name"""},
-
+order by difference desc, account_move.name"""
+    },
     {
         'title': _('AJI/JI mismatch in booking currency'),
         'headers': [_('Period'), _('JI'), _('JI Book. Amount'), _('AJI Book. Amount'), _('Difference')],
@@ -115,5 +114,25 @@ account_account_type.code in ('income', 'expense')
 GROUP BY account_period.name, account_move.name, account_move_line.id
 HAVING abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) > 0.00001
 ORDER BY difference desc, account_move.name"""
-    }
+    },
+    {
+        'title': _('Unbalanced reconciliations in functional currency'),
+        'headers': [_('Reconcile'), _('Difference')],
+        'query': """SELECT rec.name, sum(l.credit-l.debit)
+from account_move_line l, account_move_reconcile rec
+where l.reconcile_id=rec.id
+group by rec.id, rec.name
+having(abs(sum(l.credit-l.debit)) > 0.0001)
+"""
+    },
+    {
+        'title': _('Unbalanced reconciliations in booking currency'),
+        'headers': [_('Reconcile'), _('Difference')],
+        'query': """SELECT rec.name, sum(l.credit_currency-l.debit_currency)
+from account_move_line l, account_move_reconcile rec
+where l.reconcile_id=rec.id
+group by rec.id, rec.name
+having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(l.currency_id)=1)
+"""
+    },
 ]

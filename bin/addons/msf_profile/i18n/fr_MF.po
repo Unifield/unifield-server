@@ -74780,3 +74780,15 @@ msgstr "Intégrité des données financières"
 #, python-format
 msgid "Balances per entry"
 msgstr "Balances des entrées"
+
+#. module: board
+#: code:addons/board/queries_finance.py:119
+#, python-format
+msgid "Unbalanced reconciliations in functional currency"
+msgstr "Lettrages non équilibrés en devise fonctionnelle"
+
+#. module: board
+#: code:addons/board/queries_finance.py:129
+#, python-format
+msgid "Unbalanced reconciliations in booking currency"
+msgstr "Lettrages non équilibrés en devise d'enregistement"
