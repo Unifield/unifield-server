@@ -135,7 +135,40 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 		# localcontext allows you to call methods inside mako file :
 		self.localcontext.update({
 			'time': time,
+			'get_uf_stopped_products': self.get_uf_stopped_products,
 		})
+
+	def get_uf_stopped_products(self):
+		'''
+		Returns all the products with unidata status = stopped
+		'''
+		stock_mission_rl_obj = self.pool.get('stock.mission.report.line')
+		stopped_ids = stock_mission_rl_obj.search(self.cr, self.uid, [('product_state', '=', 'stopped')], context=self.localcontext)
+
+		res = {} # dict[product][instance]
+		for line in stock_mission_rl_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
+			for s_id in stopped_ids:
+				if s_id not in res:
+					res[s_id] = {
+						'product_code': line.product_id.default_code,
+						'product_description': line.product_id.name_template,
+						'product_creator': line.product_id.international_status and line.product_id.international_status.name or '',
+						'standardization_level': line.product_id.standard_ok,
+						'unidata_status': line.product_id.state_ud,
+						'instances_data': []
+					}
+
+				res[s_id]["instances_data"].append({
+					'instance_id': line.instance_id.id,
+					'instance_name': line.instance_id.name,
+					'instance_stock': line.internal_qty,
+					'pipeline_qty': line.in_pipe_qty,
+					'unifield_status': line.product_state,
+				})
+
+		return res
+
+
 
 
 

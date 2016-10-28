@@ -1261,6 +1261,8 @@ class product_attributes(osv.osv):
         if not ids:
             return True
         data_obj = self.pool.get('ir.model.data')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        prod_status_obj = self.pool.get('product.status')
 
         if context is None:
             context = {}
@@ -1289,6 +1291,17 @@ class product_attributes(osv.osv):
                         _('Error'),
                         _('White spaces are not allowed in product code'),
                     )
+
+        # update local stock mission report lines :
+        if 'state' in vals:
+            local_smrl_ids = smrl_obj.search(cr, uid, [('product_id', 'in', ids), ('full_view', '=', False)], context=context)
+            for sm_line in smrl_obj.browse(cr, uid, local_smrl_ids, context=context):
+                if vals['state']:
+                    prod_state = prod_status_obj.read(cr, uid, vals['state'], ['code'], context=context)['code']
+                    smrl_obj.write(cr, uid, sm_line.id, {'product_state': prod_state}, context=context)
+                else:
+                    smrl_obj.write(cr, uid, sm_line.id, {'product_state': False}, context=context)
+                
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
