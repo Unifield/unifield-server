@@ -22,7 +22,7 @@
 from osv import osv
 from osv import fields
 
-import uuid
+import uuid as pkg_uuid
 import tools
 from tools.translate import _
 import pprint
@@ -245,8 +245,8 @@ class entity(osv.osv):
     def _check_children(self, cr, uid, entity, uuid_list, context=None):
         children_ids = self._get_all_children(cr, uid, entity.id)
         uuid_child = [child.identifier for child in self.browse(cr, uid, children_ids, context=context)]
-        for u in uuid_list:
-            if not u in uuid_child:
+        for uuid in uuid_list:
+            if not uuid in uuid_child:
                 return False
         return True
 
@@ -279,7 +279,7 @@ class entity(osv.osv):
         if not ids:
             return (False, 'No update is ready for your entity. If you cannot synchronize data, check that your parent has validated your registration')
 
-        token = uuid.uuid4().hex
+        token = pkg_uuid.uuid4().hex
         self.write(cr, 1, ids, {'update_token' : token}, context=context)
         entity = self.browse(cr, uid, ids, context=context)[0]
         groups = [group.name for group in entity.group_ids]
@@ -434,8 +434,8 @@ class entity(osv.osv):
 
     @check_validated
     def validate(self, cr, uid, entity, uuid_list, context=None):
-        for u in uuid_list:
-            if not u:
+        for uuid in uuid_list:
+            if not uuid:
                 return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be activated")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want to validate is not one of your children")
@@ -447,8 +447,8 @@ class entity(osv.osv):
 
     @check_validated
     def invalidate(self, cr, uid, entity, uuid_list, context=None):
-        for u in uuid_list:
-            if not u:
+        for uuid in uuid_list:
+            if not uuid:
                 return (False, "Error: One of the instance you want validate has no Identifier, the instance should register or be activated")
         if not self._check_children(cr, uid, entity, uuid_list, context=context):
             return (False, "Error: One of the entity you want validate is not one of your children")
