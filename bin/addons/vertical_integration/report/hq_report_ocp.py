@@ -48,16 +48,26 @@ class finance_archive(finance_export.finance_archive):
         new_data = []
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
+        aal_obj = pool.get('account.analytic.line')
         # column numbers corresponding to properties
         id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
         instance_code = 1
         journal = 2
         description = 4
+        destination = 10
+        cost_center = 11
+        funding_pool = 12
         for line in data:
             line_list = list(line)
             if line_list[journal] == 'OD':
-                corrected_aml = aml_obj.browse(cr, uid, line_list[id_from_db],
-                                               fields_to_fetch=['corrected_line_id']).corrected_line_id
+                # if it's an analytic line: get the associated aml to get its id
+                if line_list[destination] or line_list[cost_center] or line_list[funding_pool]:
+                    aml = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['move_id']).move_id
+                    aml_id = aml and aml.id
+                else:
+                    # if it's a move line: we get the aml_id directly from the request
+                    aml_id = line_list[id_from_db]
+                corrected_aml = aml_obj.browse(cr, uid, aml_id, fields_to_fetch=['corrected_line_id']).corrected_line_id
                 if corrected_aml and corrected_aml.journal_id.code == 'HQ' or False:
                     line_list[instance_code] = 'SIEG'
                     line_list[journal] = line_list[description][9:12]
