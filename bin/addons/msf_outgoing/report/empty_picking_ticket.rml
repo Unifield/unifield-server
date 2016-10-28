@@ -409,7 +409,7 @@
                         <para style="LineValue"></para>
                     </td>
                     <td>
-                        <para style="LineValue"></para>
+                        <para style="LineValue">[[ m.comment ]]</para>
                     </td>
                     <td>
                         <para style="LineValue"></para>
