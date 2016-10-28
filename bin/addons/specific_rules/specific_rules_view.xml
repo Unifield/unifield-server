@@ -49,7 +49,7 @@
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
-            <field eval="300" name="priority"/>
+            <field name="priority">80</field>
             <field name="inherit_id" ref="product_expiry.view_product_form_expiry" />
             <field name="arch" type="xml">
                 <data>

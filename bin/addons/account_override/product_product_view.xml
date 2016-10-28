@@ -6,7 +6,7 @@
             <field name="model">product.product</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="priority">20</field>
+            <field name="priority">90</field>
             <field name="arch" type="xml">
                 <page string="Accounting" position="inside">
                     <group colspan="4" col="2">
