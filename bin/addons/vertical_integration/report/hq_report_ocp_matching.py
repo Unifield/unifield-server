@@ -38,10 +38,35 @@ class finance_archive(finance_export.finance_archive):
         """
         ##### WARNING #####
         ### THIS CALLS THE METHOD FROM OCB ###
-        Replace 15th column by its reconcile name.
+        - For the reconciled entries: check that all the legs have a posting date within or before the selected period
+          (otherwise: don't keep any of the legs for the report)
+        - Replace 15th column by its reconcile name.
         """
+        new_data = []
+        pool = pooler.get_pool(cr.dbname)
+        aml_obj = pool.get('account.move.line')
+        # column numbers corresponding to properties
+        reconcile_id_col = 14
+        date_stop = 15
+        for line in data:
+            line_list = list(line)
+            if line_list[reconcile_id_col]:
+                reconcile_id = line_list[reconcile_id_col]
+                # get the JI with the same reconcile_id
+                aml_list = aml_obj.search(cr, uid, [('reconcile_id', '=', reconcile_id)])
+                # check that they all have a posting date within or before the selected period
+                nb_aml = aml_obj.search(cr, uid, [('id', 'in', aml_list), ('date', '<=', line_list[date_stop])], count=True)
+                if nb_aml and nb_aml == len(aml_list):
+                    # if the entry is kept, delete the date_stop (not used)
+                    line_list[date_stop] = ''
+                    new_data.append(tuple(line_list))
+            else:
+                # unreconciled entries are kept
+                line_list[date_stop] = ''
+                new_data.append(tuple(line_list))
+        # call the method from OCB (replace the 15th column by its reconcile name)
         finance_archive_ocb = hq_report_ocb_matching.finance_archive(self.sqlrequests, self.processrequests)
-        return finance_archive_ocb.postprocess_reconciliable(cr, uid, data, model, column_deletion)
+        return finance_archive_ocb.postprocess_reconciliable(cr, uid, new_data, model, column_deletion)
 
 
 class hq_report_ocp_matching(report_sxw.report_sxw):
@@ -74,9 +99,16 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         # Prepare SQL requests and PROCESS requests for finance_archive object (CF. account_tools/finance_export.py)
         sqlrequests = {
             # Do not take lines that come from a HQ or MIGRATION journal
+            # This request returns:
+            # - entries where posting date are within the selected period or before
+            # - that have either been unreconciled within the period, or reconciled within the period or after
+            # - if all the legs of the reconciliation are within the period or before
             'reconcilable': """
-                SELECT aml.id, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code, aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name AS "functional_currency", aml.reconcile_id
+                SELECT aml.id, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code,
+                aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", ROUND(aml.debit, 2),
+                ROUND(aml.credit, 2), cc.name AS "functional_currency", aml.reconcile_id, %s AS "date_stop"
                 FROM account_move_line AS aml
+                LEFT JOIN account_move_reconcile amr ON aml.reconcile_id = amr.id
                 INNER JOIN account_move AS m ON aml.move_id = m.id
                 INNER JOIN account_account AS a ON aml.account_id = a.id
                 INNER JOIN res_currency AS c ON aml.currency_id = c.id
@@ -84,13 +116,12 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 INNER JOIN res_currency AS cc ON e.currency_id = cc.id
                 INNER JOIN account_journal AS j ON aml.journal_id = j.id
                 INNER JOIN account_period AS p ON p.id = aml.period_id
-                INNER JOIN account_move_reconcile amr ON aml.reconcile_id = amr.id
                 WHERE j.type not in %s
                 AND p.number not in (0, 16)
                 AND aml.instance_id in %s
                 AND aml.date <= %s
                 AND ((aml.unreconcile_date >= %s and aml.unreconcile_date <= %s) OR aml.reconcile_date >= %s);
-            """,
+                """,
         }
 
         # Define the file name according to the following format:
@@ -110,7 +141,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
                 'filename': reconcilable_entries_filename,
                 'key': 'reconcilable',
-                'query_params': (tuple(excluded_journal_types), tuple(instance_ids), date_stop, date_start, date_stop, date_start),
+                'query_params': (date_stop, tuple(excluded_journal_types), tuple(instance_ids), date_stop, date_start, date_stop, date_start),
                 'function': 'postprocess_reconciliable',
                 'fnct_params': 'account.move.line',
                 },
