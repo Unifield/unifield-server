@@ -261,7 +261,7 @@
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.date, date_time=True) ]]</para>
+                    <para style="Line">[[ formatLang(line.date, date=True) ]]</para>
                 </td>
             </tr>
         </blockTable>
