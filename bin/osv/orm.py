@@ -1727,7 +1727,6 @@ class orm_template(object):
         result = {'type': view_type, 'model': self._name}
 
         ok = True
-        model = True
         sql_res = False
         parent_view_model = None
         while ok:
@@ -1743,9 +1742,6 @@ class orm_template(object):
             if view_id:
                 query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
-                if model:
-                    query += " AND model = %s"
-                    params += (self._name,)
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
@@ -1765,7 +1761,6 @@ class orm_template(object):
 
             ok = sql_res[5]
             view_id = ok or sql_res[3]
-            model = False
             parent_view_model = sql_res[6]
 
         # if a view was found
