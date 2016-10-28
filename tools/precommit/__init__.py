@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import subprocess
+import os
 
 from bzrlib import branch, errors
 from bzrlib.commands import Command, register_command
@@ -9,6 +10,8 @@ from bzrlib.workingtree import WorkingTree
 from distutils.spawn import find_executable
 
 def precommit(local_branch, master_branch, old_revision_number, old_revision_id, future_revision_number, future_revision_id, tree_delta, future_tree):
+    if 'SKIP_PRECOMMIT' in os.environ:
+        return
 
     files_to_check = []
     for i in tree_delta.added, tree_delta.modified:
