@@ -37,14 +37,16 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def _handle_od_entries(self, cr, uid, data):
-        '''
-        Takes data in parameter that results from 'rawdata' or 'bs_entries' requests
+    def _handle_od_entries(self, cr, uid, data, analytic_lines=False):
+        """
+        Takes data in parameter that can be:
+        - either account analytic lines (results from 'rawdata' request)
+        - or account move lines (results from 'bs_entries' or 'plresult' requests)
         Modify it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
         Returns a list of tuples (same format as data)
-        '''
+        """
         new_data = []
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
@@ -54,14 +56,11 @@ class finance_archive(finance_export.finance_archive):
         instance_code = 1
         journal = 2
         description = 4
-        destination = 10
-        cost_center = 11
-        funding_pool = 12
         for line in data:
             line_list = list(line)
             if line_list[journal] == 'OD':
                 # if it's an analytic line: get the associated aml to get its id
-                if line_list[destination] or line_list[cost_center] or line_list[funding_pool]:
+                if analytic_lines:
                     aml = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['move_id']).move_id
                     aml_id = aml and aml.id
                 else:
@@ -74,18 +73,25 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(tuple(line_list))
         return new_data
 
-    def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
+    def postprocess_account_move_lines(self, cr, uid, data, model, column_deletion=False):
         """
         ##### WARNING #####
-        ### THIS CALLS THE METHOD FROM OCB ###
-        Change first column for the DB ID composed of:
-          - database name
-          - model
-          - id
+        ### THIS CALLS THE METHOD postprocess_add_db_id FROM OCB ###
+        - first modify the data for all lines corresponding to OD entries originating from HQ entry corrections
+        - then call OCB method on the new data to change first column for the DB ID
         """
-        # first handle OD entries that originate from HQ entry corrections to get the new data to handle
-        new_data = self._handle_od_entries(cr, uid, data)
-        # then call OCB method on new_data
+        new_data = self._handle_od_entries(cr, uid, data, analytic_lines=False)  # we handle account move lines
+        finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
+        return finance_archive_ocb.postprocess_add_db_id(cr, uid, new_data, model, column_deletion)
+
+    def postprocess_account_analytic_lines(self, cr, uid, data, model, column_deletion=False):
+        """
+        ##### WARNING #####
+        ### THIS CALLS THE METHOD postprocess_add_db_id FROM OCB ###
+        - first modify the data for all lines corresponding to OD entries originating from HQ entry corrections
+        - then call OCB method on the new data to change first column for the DB ID
+        """
+        new_data = self._handle_od_entries(cr, uid, data, analytic_lines=True)  # we handle account analytic lines
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
         return finance_archive_ocb.postprocess_add_db_id(cr, uid, new_data, model, column_deletion)
 
@@ -312,7 +318,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
                 'filename': monthly_export_filename,
                 'key': 'rawdata',
-                'function': 'postprocess_add_db_id',  # to take analytic line IDS and make a DB ID with them
+                'function': 'postprocess_account_analytic_lines',
                 'fnct_params': 'account.analytic.line',
                 'query_params': (period_id, period_id, period.date_start, period.date_stop, tuple(excluded_journal_types), tuple(instance_ids)),
                 'delete_columns': [0],
@@ -329,7 +335,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             {
                 'filename': monthly_export_filename,
                 'key': 'bs_entries',
-                'function': 'postprocess_add_db_id',  # to take analytic line IDS and make a DB ID with them
+                'function': 'postprocess_account_move_lines',
                 'fnct_params': 'account.move.line',
                 'query_params': (period_id, tuple(excluded_journal_types), tuple(instance_ids)),
                 'delete_columns': [0],
@@ -341,7 +347,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             processrequests.append({
                 'filename': monthly_export_filename,
                 'key': 'plresult',
-                'function': 'postprocess_add_db_id',  # to take move line ids and make a DB ID with them
+                'function': 'postprocess_account_move_lines',
                 'fnct_params': 'account.move.line',
                 'query_params': (tuple(plresult_ji_in_ids), ),
                 'delete_columns': [0],
