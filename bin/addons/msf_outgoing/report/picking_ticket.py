@@ -36,6 +36,7 @@ class BatchMoveLines(object):
         self.sale_line_id = move.sale_line_id
         self.product_uom = move.product_id.uom_id
         self.state = move.state
+        self.comment = move.comment
         self.product_qty = 0.00
         self.prodlot_id = None
         self.kc_check = False
