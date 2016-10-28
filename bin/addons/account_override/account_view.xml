@@ -200,5 +200,15 @@
             menu="False"
          />
 
+
+        <menuitem
+            name="Data Finance Integrity"
+            action="board.integrity_finance"
+            id="menu_integrity_finance"
+            parent="account.menu_finance_generic_reporting"
+            sequence="100"
+            type="report.xml"
+        />
+
     </data>
 </openerp>
