@@ -43,11 +43,7 @@ import pooler
 def ops_event(dbname, kind, dat, uid=1):
     try:
         cr = None
-        # Only ask for databases that have already been opened, so that we
-        # avoid doing database upgrades when not expected.
-        if dbname not in pooler.pool_dic.keys():
-            return
-        db, pool = pooler.get_db_and_pool(dbname)
+        db, pool = pooler.get_db_and_pool(dbname, if_open=True)
         cr = db.cursor()
         oe = pool.get('operations.event')
         oe.create(cr, uid, { 'kind': kind, 'data': dat })
@@ -57,6 +53,17 @@ def ops_event(dbname, kind, dat, uid=1):
     finally:
         if cr is not None:
             cr.close()
+
+def ops_count(dbname, cat, what):
+    # these will be logged by osv.py
+    if what == 'object.execute':
+        return
+
+    try:
+        db, pool = pooler.get_db_and_pool(dbname, if_open=True)
+        pool.get('operations.count').increment(':'.join([cat, what]))
+    except:
+        pass
 
 class Service(object):
     """ Base class for *Local* services
@@ -538,13 +545,16 @@ class OpenERPDispatcher:
             auth = getattr(self, 'auth_provider', None)
             result = ExportService.getService(service_name).dispatch(method, auth, params)
             self.log('result', result, channel=logging.DEBUG_RPC_ANSWER)
+            # For service 'db', param[0] is not a dbname, so just skip it.
+            if service_name != 'db':
+                ops_count(params[0], 'dispatch', '.'.join([service_name, method]))
             return result
         except Exception, e:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
             # For service 'db', param[0] is not a dbname, so just skip it.
-            if service_name != 'db':
+            if service_name == 'db':
                 ops_event(params[0], 'traceback', tb_s, params[1])
             if tools.config['debug_mode']:
                 import pdb

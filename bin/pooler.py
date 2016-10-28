@@ -24,7 +24,7 @@ import updater
 pool_dic = {}
 
 def get_db_and_pool(db_name, force_demo=False, status=None,
-                    update_module=False, pooljobs=True, threaded=False, upgrade_modules=True):
+                    update_module=False, pooljobs=True, threaded=False, upgrade_modules=True, if_open=False):
     '''
     Return the db and pool.
 
@@ -45,6 +45,10 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
     if db_name in pool_dic:
         pool = pool_dic[db_name]
     else:
+        # If they only wanted open ones, do not continue
+        if if_open:
+            return
+
         import addons
         import osv.osv
         pool = osv.osv.osv_pool()

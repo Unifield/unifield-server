@@ -41,6 +41,13 @@ class_pool = {}
 PG_CONCURRENCY_ERRORS_TO_RETRY = (errorcodes.LOCK_NOT_AVAILABLE, errorcodes.SERIALIZATION_FAILURE, errorcodes.DEADLOCK_DETECTED)
 MAX_TRIES_ON_CONCURRENCY_FAILURE = 7
 
+def ops_count(dbname, cat, what):
+    try:
+        db, pool = pooler.get_db_and_pool(dbname, if_open=True)
+        pool.get('operations.count').increment(':'.join([cat, what]))
+    except:
+        pass
+
 class except_osv(Exception):
     def __init__(self, name, value, exc_type='warning'):
         self.name = name
@@ -189,6 +196,7 @@ class object_proxy(netsvc.Service):
 
     @check
     def execute(self, db, uid, obj, method, *args, **kw):
+        ops_count(db, 'exec', '.'.join([obj, method]))
         cr = pooler.get_db(db).cursor()
         try:
             try:
@@ -211,6 +219,7 @@ class object_proxy(netsvc.Service):
 
     @check
     def exec_workflow(self, db, uid, obj, method, *args):
+        ops_count(db, 'execwf', '.'.join([obj, method]))
         cr = pooler.get_db(db).cursor()
         try:
             try:

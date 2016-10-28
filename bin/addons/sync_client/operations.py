@@ -21,6 +21,7 @@
 
 from osv import osv, fields
 import logging
+import threading
 
 class operations_event(osv.osv):
     """Operational events are things that happen while Unifield is running
@@ -95,3 +96,72 @@ class operations_event(osv.osv):
         cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
 
 operations_event()
+
+class operations_count(osv.osv):
+    """Operational counts are gathered in memory at runtime
+    and then periodically flushed to the database.
+    """
+
+    _name = 'operations.count'
+    _columns = {
+        'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the measurement was collected."),
+        'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
+        'remote_id': fields.integer('Remote id', help="Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."),
+        'kind': fields.char('Kind', readonly=True, size=64, required=True, help="What kind of count."),
+        'count': fields.integer('Count', readonly=True, required=True, help="The count/measurement."),
+    }
+
+    _sql_constraints = [
+        ('dedup', 'UNIQUE(instance, remote_id)',
+         'Duplicate counts from an instance and not allowed.')
+    ]
+
+    _logger = logging.getLogger('operations.count')
+
+    def __init__(self, pool, cr):
+        osv.osv.__init__(self, pool, cr)
+        self._counts = {}
+        i = pool.get('sync.client.entity').get_entity(cr, 1).name;
+        if i is None:
+            self._instance = "unknown"
+        else:
+            self._instance = i
+        self.lock = threading.Lock()
+
+    def increment(self, kind, count=1):
+        self.lock.acquire()
+        try:
+            self._counts[kind] = self._counts.get(kind, 0) + count
+        finally:
+            self.lock.release()
+        
+    def write(self, cr, uid):
+        # Take a copy of the counts, then reset to zero.
+        # Hold the lock for the shortest time possible.
+        self.lock.acquire()
+        try:
+            counts = self._counts
+            self._counts = {}
+        finally:
+            self.lock.release()
+
+        # Write them all out. Take the time one time so that all
+        # events will have exactly the same time on them, to better
+        # group by time later.
+        now = fields.datetime.now()
+        for kind in counts:
+            self.create(cr, uid, { 'time': now,
+                                   'instance': self._instance,
+                                   'kind': kind,
+                                   'count': counts[kind] })
+        self._logger.debug("Operations count write: %d rows" % len(counts))
+
+    def purge(self, cr, uid, keep='30 day'):
+        """Called from ir.cron every day to purge counts older
+        than X days, where X comes from either an argument like
+        ['5 day'], or defaults to 30 days.
+        """
+        self._logger.info("Operations count purge: keep %s" % keep)
+        cr.execute("delete from operations_count WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
+
+operations_count()
