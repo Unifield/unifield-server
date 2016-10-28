@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 
+# this is only used to export translations
+def _(a):
+    return a
+
+
 queries = [
     {
-        'title': "JI entries in booking currency that do not add up",
-        'headers': ['Period', 'JI', 'Difference'],
+        'title': _('JI entries in booking currency that do not add up'),
+        'headers': [_('Period'), _('JI'), _('Difference')],
         'query': """select p.name period, m.name, sum(l.credit_currency-l.debit_currency) difference from account_move_line l,
 account_period p,
 account_move m,
@@ -21,8 +26,8 @@ order by m.name
     },
 
     {
-        'title': "JI entries in functional currency that do not add up",
-        'headers': ['Period', 'JI', 'Difference'],
+        'title': _('JI entries in functional currency that do not add up'),
+        'headers': [_('Period'), _('JI'), _('Difference')],
         'query': """select p.name period, m.name, sum(l.credit-l.debit) difference from account_move_line l,
 account_period p,
 account_move m,
@@ -38,8 +43,8 @@ having abs(sum(l.credit-l.debit)) > 0.00001
 order by m.name"""
     },
     {
-        'title': "AJI/JI mismatch in functional currency",
-        'headers': ['Period', 'JI', 'JI Fct. Amount', 'AJI Fct. Amount', 'Difference'],
+        'title': _('AJI/JI mismatch in functional currency'),
+        'headers': [_('Period'), _('JI'), _('JI Fct. Amount'), _('AJI Fct. Amount'), _('Difference')],
         'query': """SELECT
 account_period.name,
 account_move.name,
@@ -75,8 +80,8 @@ HAVING abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_a
 order by difference desc, account_move.name"""},
 
     {
-        'title': "AJI/JI mismatch in booking currency",
-        'headers': ['Period', 'JI', 'JI Book. Amount', 'AJI Book. Amount', 'Difference'],
+        'title': _('AJI/JI mismatch in booking currency'),
+        'headers': [_('Period'), _('JI'), _('JI Book. Amount'), _('AJI Book. Amount'), _('Difference')],
         'query': """SELECT
 account_period.name,
 account_move.name,

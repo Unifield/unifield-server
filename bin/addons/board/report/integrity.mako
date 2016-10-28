@@ -5,11 +5,11 @@ xmlns:x="urn:schemas-microsoft-com:office:excel"
 xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
 xmlns:html="http://www.w3.org/TR/REC-html40">
 <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-<Title>${get_title()}</Title>
+<Title>${_t(get_title())|x}</Title>
 </DocumentProperties>
 <Styles>
 <Style ss:ID="ssH">
-<Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+<Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
 <Font ss:Bold="1" />
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -48,7 +48,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     </Borders>
 </Style>
 </Styles>
-<Worksheet ss:Name="Data Integrity">
+<Worksheet ss:Name="${sheet_name(_t(get_title()))}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Column ss:AutoFitWidth="1" ss:Width="150" />
@@ -59,11 +59,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Column ss:AutoFitWidth="1" ss:Width="150" />
 % for check in list_checks():
 <Row>
-<Cell ss:StyleID="ssH" ss:MergeAcross="${len(check.get('headers', 1))-1}"><Data ss:Type="String">${check['title']}</Data></Cell>
+<Cell ss:StyleID="ssH" ss:MergeAcross="${len(check.get('headers', 1))-1}"><Data ss:Type="String">${_t(check['title'])|x}</Data></Cell>
 </Row>
 <Row>
 % for header in check['headers']:
-<Cell ss:StyleID="ssH"><Data ss:Type="String">${header}</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">${_t(header)|x}</Data></Cell>
 % endfor
 </Row>
 % for result in get_results(check.get('query')):
@@ -73,7 +73,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     % if isinstance(cell, (int, float, long)):
     <Data ss:Type="Number">${cell}</Data>
     % else:
-    <Data ss:Type="String">${cell}</Data>
+    <Data ss:Type="String">${cell|x}</Data>
     % endif
   </Cell>
   %endfor
