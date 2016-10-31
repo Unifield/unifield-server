@@ -166,37 +166,29 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 		self.localcontext.update({
 			'time': time,
 			'get_uf_stopped_products': self.get_uf_stopped_products,
+			'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
 		})
+
 
 	def get_uf_stopped_products(self):
 		'''
-		Returns all the products with unidata status = stopped
+		Return browse record list that contains stopped and non-local products
 		'''
-		stock_mission_rl_obj = self.pool.get('stock.mission.report.line')
+		prod_obj = self.pool.get('product.product')
+		stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', 3), ('international_status', '!=', 4)], 
+			order='default_code', context=self.localcontext)
 
-		stopped_ids = stock_mission_rl_obj.search(self.cr, self.uid, [('product_state', '=', 'stopped')], context=self.localcontext)
+		return prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext)
 
-		res = {} # dict[product][instance]
-		for line in stock_mission_rl_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
-			if line.product_id.id not in res:
-				res[line.product_id.id] = {
-					'product_code': line.product_id.default_code,
-					'product_description': line.product_id.name_template,
-					'product_creator': line.product_id.international_status and line.product_id.international_status.name or '',
-					'standardization_level': line.product_id.standard_ok,
-					'unidata_status': line.product_id.state_ud,
-					'instances_data': []
-				}
 
-			res[line.product_id.id]["instances_data"].append({
-				'instance_id': line.mission_report_id.instance_id.id,
-				'instance_name': line.mission_report_id.instance_id.name,
-				'instance_stock': line.internal_qty,
-				'pipeline_qty': line.in_pipe_qty,
-				'unifield_status': line.product_state,
-			})
+	def get_stock_mission_report_lines(self, product_id):
+		'''
+		Return browse record list of stock_mission_report_line with given product_id
+		'''
+		smrl_obj = self.pool.get('stock.mission.report.line')
+		smrl_ids = smrl_obj.search(self.cr, self.uid, [('product_id', '=', product_id)], context=self.localcontext)
 
-		return res
+		return smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext)
 
 
 

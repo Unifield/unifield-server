@@ -65,9 +65,8 @@
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unidata status
 
     ##### Table with all stopped products #####
-    
-    <% bunker = get_uf_stopped_products() %>
-    % for prod_id in bunker:
+
+    % for line in get_uf_stopped_products():
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>
@@ -76,35 +75,38 @@
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Unidata Status</Data></Cell>
         </Row>
 
-        <% standard_level = 'Standard' if bunker[prod_id].get('standardization_level') == 'True' else 'Non-standard' %>
+        <% standard_level = 'Standard' if line.standard_ok == 'True' else 'Non-standard' %>
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('product_code'))|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('product_description'))|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('product_creator'))|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.default_code)|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.name_template)|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.international_status and line.international_status.name or '')|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(standard_level)|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('unidata_status') or '')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud) or ''|x}</Data></Cell>
         </Row>
 
-        # instances linked to the current product :
-        <% instances_data = bunker[prod_id].get('instances_data') %>
-        % if len(instances_data) > 0:
+        <% smrl_list = get_stock_mission_report_lines(line.id) %>
+        % if smrl_list:
             <Row ss:AutoFitHeight="1">
               <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance/Mission</Data></Cell>
               <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Unifield Status</Data></Cell>
               <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance stock</Data></Cell>
               <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Pipeline Qty</Data></Cell>
             </Row>
-            % for i in range(len(instances_data)):
-                <Row ss:AutoFitHeight="1">
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(instances_data[i].get('instance_name'))|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(instances_data[i].get('unifield_status'))|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(instances_data[i].get('instance_stock'))|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(instances_data[i].get('pipeline_qty'))|x}</Data></Cell>
-                </Row>
-            % endfor
+        %endif
+        % for smrl in smrl_list:
+            <% 
+            if smrl.mission_report_id.full_view:
+                continue 
+            %>
+            <Row ss:AutoFitHeight="1">
+              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.name)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.product_state)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(smrl.internal_qty)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(smrl.in_pipe_qty)|x}</Data></Cell>
+            </Row>
+        % endfor
             <Row></Row>
             <Row></Row>
-        % endif
     % endfor
 
   </Table>
