@@ -21,6 +21,7 @@
 
 
 import time
+import threading
 from osv import fields
 from osv import osv
 from report import report_sxw
@@ -55,7 +56,6 @@ class export_report_stopped_products(osv.osv):
 		Generate a report of stopped products
 		Method is called by button on XML view (form)
 		'''
-		attachment_obj = self.pool.get('ir.attachment')
 		prod_obj = self.pool.get('product.product')
 
 		res = {}
@@ -71,34 +71,15 @@ class export_report_stopped_products(osv.osv):
 				'state': 'in_progress'
 			}, context=context)
 
-
 			datas = {
 				'ids': [report.id],
 				'lines': product_ids,
 			}
 
-			# export datas :
-			report_name = "stopped.products.xls"
-			attachment_name = "stopped_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
-			rp_spool = report_spool()
-			res_export = rp_spool.exp_report(cr.dbname, uid, report_name, ids, datas, context)
-			file_res = {'state': False}
-			while not file_res.get('state'):
-				file_res = rp_spool.exp_report_get(cr.dbname, uid, res_export)
-				time.sleep(0.5)
-
-			# attach report to the right panel :
-			attachment_obj.create(cr, uid, {
-				'name': attachment_name,
-				'datas_fname': attachment_name,
-				'description': "Stopped products",
-				'res_model': 'export.report.stopped.products',
-				'res_id': ids[0],
-				'datas': file_res.get('result'),
-			}, context=context)
-
-			# state is now 'ready' :
-			self.write(cr, uid, ids, {'state': 'ready'}, context= context)
+			cr.commit()
+			new_thread = threading.Thread(target=self.generate_report_bkg, args=(cr, uid, report.id, datas, context))
+			new_thread.start()
+			new_thread.join(timeout=30.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
 
 			res = {
 			    'type': 'ir.actions.act_window',
@@ -117,6 +98,55 @@ class export_report_stopped_products(osv.osv):
 			)
 
 		return res
+
+
+
+	def generate_report_bkg(self, cr, uid, report_ids, datas, context=None):
+		'''
+		Generate the report in background (thread)
+		'''
+		attachment_obj = self.pool.get('ir.attachment')
+
+		if context is None:
+			context ={}
+
+		if isinstance(report_ids, (int, long)):
+			report_ids = [report_ids]
+
+		import pooler
+		new_cr = pooler.get_db(cr.dbname).cursor()
+
+		# export datas :
+		report_name = "stopped.products.xls"
+		attachment_name = "stopped_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
+		rp_spool = report_spool()
+		res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
+		file_res = {'state': False}
+		while not file_res.get('state'):
+			file_res = rp_spool.exp_report_get(new_cr.dbname, uid, res_export)
+			time.sleep(0.5)
+
+		# attach report to the right panel :
+		attachment_obj.create(new_cr, uid, {
+			'name': attachment_name,
+			'datas_fname': attachment_name,
+			'description': "Stopped products",
+			'res_model': 'export.report.stopped.products',
+			'res_id': report_ids[0],
+			'datas': file_res.get('result'),
+		}, context=context)
+
+		# state is now 'ready' :
+		self.write(new_cr, uid, report_ids, {'state': 'ready'}, context= context)
+
+		new_cr.commit()
+		new_cr.close(True)
+
+		return True
+
+
+
+
 
 
 
@@ -143,28 +173,28 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 		Returns all the products with unidata status = stopped
 		'''
 		stock_mission_rl_obj = self.pool.get('stock.mission.report.line')
+
 		stopped_ids = stock_mission_rl_obj.search(self.cr, self.uid, [('product_state', '=', 'stopped')], context=self.localcontext)
 
 		res = {} # dict[product][instance]
 		for line in stock_mission_rl_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
-			for s_id in stopped_ids:
-				if s_id not in res:
-					res[s_id] = {
-						'product_code': line.product_id.default_code,
-						'product_description': line.product_id.name_template,
-						'product_creator': line.product_id.international_status and line.product_id.international_status.name or '',
-						'standardization_level': line.product_id.standard_ok,
-						'unidata_status': line.product_id.state_ud,
-						'instances_data': []
-					}
+			if line.product_id.id not in res:
+				res[line.product_id.id] = {
+					'product_code': line.product_id.default_code,
+					'product_description': line.product_id.name_template,
+					'product_creator': line.product_id.international_status and line.product_id.international_status.name or '',
+					'standardization_level': line.product_id.standard_ok,
+					'unidata_status': line.product_id.state_ud,
+					'instances_data': []
+				}
 
-				res[s_id]["instances_data"].append({
-					'instance_id': line.instance_id.id,
-					'instance_name': line.instance_id.name,
-					'instance_stock': line.internal_qty,
-					'pipeline_qty': line.in_pipe_qty,
-					'unifield_status': line.product_state,
-				})
+			res[line.product_id.id]["instances_data"].append({
+				'instance_id': line.mission_report_id.instance_id.id,
+				'instance_name': line.mission_report_id.instance_id.name,
+				'instance_stock': line.internal_qty,
+				'pipeline_qty': line.in_pipe_qty,
+				'unifield_status': line.product_state,
+			})
 
 		return res
 

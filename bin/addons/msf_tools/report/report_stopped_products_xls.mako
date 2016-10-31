@@ -69,19 +69,20 @@
     <% bunker = get_uf_stopped_products() %>
     % for prod_id in bunker:
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Product Code</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Product Description</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Product Creator</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Standardization Level</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Unidata Status</Data></Cell>
         </Row>
 
+        <% standard_level = 'Standard' if bunker[prod_id].get('standardization_level') == 'True' else 'Non-standard' %>
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('product_code'))|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('product_description'))|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('product_creator'))|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('standardization_level'))|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('unidata_status'))|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(standard_level)|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(bunker[prod_id].get('unidata_status') or '')|x}</Data></Cell>
         </Row>
 
         # instances linked to the current product :
@@ -101,6 +102,8 @@
                   <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(instances_data[i].get('pipeline_qty'))|x}</Data></Cell>
                 </Row>
             % endfor
+            <Row></Row>
+            <Row></Row>
         % endif
     % endfor
 
