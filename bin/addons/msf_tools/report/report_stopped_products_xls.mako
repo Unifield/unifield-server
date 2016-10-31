@@ -97,6 +97,8 @@
             <% 
             if smrl.mission_report_id.full_view:
                 continue 
+            if smrl.internal_qty == 0 and smrl.in_pipe_qty == 0:
+                continue
             %>
             <Row ss:AutoFitHeight="1">
               <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.name)|x}</Data></Cell>
