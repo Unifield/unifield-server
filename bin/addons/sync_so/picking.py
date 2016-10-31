@@ -201,6 +201,7 @@ class stock_picking(osv.osv):
                   'name': data['name'],
                   'quantity': data['product_qty'] or 0.0,
                   'note': data['note'],
+                  'comment': data['comment'],
                   }
         return result
 
