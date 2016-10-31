@@ -102,7 +102,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
             # This request returns:
             # - entries where posting date are within the selected period or before
             # - that have either been unreconciled within the period, or reconciled within the period or after
-            # - if all the legs of the reconciliation are within the period or before
+            # Partial reconciliations are excluded.
             'reconcilable': """
                 SELECT aml.id, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code,
                 aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", ROUND(aml.debit, 2),
@@ -120,6 +120,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 AND p.number not in (0, 16)
                 AND aml.instance_id in %s
                 AND aml.date <= %s
+                AND reconcile_partial_id IS NULL
                 AND ((aml.unreconcile_date >= %s and aml.unreconcile_date <= %s) OR aml.reconcile_date >= %s);
                 """,
         }
