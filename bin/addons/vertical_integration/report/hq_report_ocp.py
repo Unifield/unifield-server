@@ -69,7 +69,9 @@ class finance_archive(finance_export.finance_archive):
                 corrected_aml = aml_obj.browse(cr, uid, aml_id, fields_to_fetch=['corrected_line_id']).corrected_line_id
                 if corrected_aml and corrected_aml.journal_id.code == 'HQ' or False:
                     line_list[instance_code] = 'SIEG'
-                    line_list[journal] = line_list[description][9:12]
+                    # for the 3 characters of the journal name taken from the 10th character of the description field:
+                    # exclude the "COR1 - " part
+                    line_list[journal] = '-' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -133,7 +135,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         instance_ids = form.get('instance_ids', False)
         instance_id = form.get('instance_id', False)
         if not fy_id or not period_id or not instance_ids or not instance_id:
-            raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscal year or period or instance.'))
+            raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
         period = pool.get('account.period').browse(cr, uid, period_id, context=context,
                                                    fields_to_fetch=['date_start', 'date_stop', 'number'])
         first_day_of_period = period.date_start

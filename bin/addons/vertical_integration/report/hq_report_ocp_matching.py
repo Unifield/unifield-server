@@ -95,7 +95,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         instance_ids = form.get('instance_ids', False)
         instance_id = form.get('instance_id', False)
         if not fy_id or not period_id or not instance_ids or not instance_id:
-            raise osv.except_osv(_('Warning'), _('Some info are missing. Either fiscal year or period or instance.'))
+            raise osv.except_osv(_('Warning'), _('Some information is missing: either fiscal year or period or instance.'))
         # Prepare SQL requests and PROCESS requests for finance_archive object (CF. account_tools/finance_export.py)
         sqlrequests = {
             # Do not take lines that come from a HQ or MIGRATION journal

@@ -74687,8 +74687,8 @@ msgstr "Vous ne pouvez pas exécuter de recherche sur cet objet sans utiliser au
 #: code:addons/vertical_integration/report/hq_report_ocp.py:136
 #: code:addons/vertical_integration/report/hq_report_ocp_matching.py:98
 #, python-format
-msgid "Some info are missing. Either fiscal year or period or instance."
-msgstr "Des infos sont manquantes. L'année fiscale, la période ou l'instance."
+msgid "Some information is missing: either fiscal year or period or instance."
+msgstr "Des informations sont manquantes : l'année fiscale, la période ou l'instance."
 
 #. module: vertical_integration
 #: code:addons/vertical_integration/wizard/ocp_export.py:60
