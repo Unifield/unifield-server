@@ -93,7 +93,7 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(tuple(line_list))
         return new_data
 
-    def postprocess_account_move_lines(self, cr, uid, data, model, column_deletion=False):
+    def postprocess_ji_entries(self, cr, uid, data, model, column_deletion=False):
         """
         ##### WARNING #####
         ### THIS CALLS THE METHOD postprocess_add_db_id FROM OCB ###
@@ -104,7 +104,7 @@ class finance_archive(finance_export.finance_archive):
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
         return finance_archive_ocb.postprocess_add_db_id(cr, uid, new_data, model, column_deletion)
 
-    def postprocess_account_analytic_lines(self, cr, uid, data, model, column_deletion=False):
+    def postprocess_aji_entries(self, cr, uid, data, model, column_deletion=False):
         """
         ##### WARNING #####
         ### THIS CALLS THE METHOD postprocess_add_db_id FROM OCB ###
@@ -338,7 +338,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
                 'filename': monthly_export_filename,
                 'key': 'rawdata',
-                'function': 'postprocess_account_analytic_lines',
+                'function': 'postprocess_aji_entries',
                 'fnct_params': 'account.analytic.line',
                 'query_params': (period_id, period_id, period.date_start, period.date_stop, tuple(excluded_journal_types), tuple(instance_ids)),
                 'delete_columns': [0],
@@ -355,7 +355,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             {
                 'filename': monthly_export_filename,
                 'key': 'bs_entries',
-                'function': 'postprocess_account_move_lines',
+                'function': 'postprocess_ji_entries',
                 'fnct_params': 'account.move.line',
                 'query_params': (period_id, tuple(excluded_journal_types), tuple(instance_ids)),
                 'delete_columns': [0],
@@ -367,7 +367,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             processrequests.append({
                 'filename': monthly_export_filename,
                 'key': 'plresult',
-                'function': 'postprocess_account_move_lines',
+                'function': 'postprocess_ji_entries',
                 'fnct_params': 'account.move.line',
                 'query_params': (tuple(plresult_ji_in_ids), ),
                 'delete_columns': [0],
