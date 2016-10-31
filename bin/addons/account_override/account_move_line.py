@@ -502,7 +502,10 @@ class account_move_line(osv.osv):
 
     def copy(self, cr, uid, aml_id, default=None, context=None):
         """
-        When duplicate a JI, don't copy the link to register lines
+        When duplicate a JI, don't copy:
+        - the link to register lines
+        - the reconciliation date
+        - the unreconciliation date
         """
         if context is None:
             context = {}
@@ -510,6 +513,8 @@ class account_move_line(osv.osv):
             default = {}
         default.update({
             'imported_invoice_line_ids': [],
+            'reconcile_date': None,
+            'unreconcile_date': None,
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
