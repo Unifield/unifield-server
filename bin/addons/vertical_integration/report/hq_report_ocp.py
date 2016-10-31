@@ -37,11 +37,9 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
-    def _handle_od_entries(self, cr, uid, data, analytic_lines=False):
+    def _handle_od_ji_entries(self, cr, uid, data):
         """
-        Takes data in parameter that can be:
-        - either account analytic lines (results from 'rawdata' request)
-        - or account move lines (results from 'bs_entries' or 'plresult' requests)
+        Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
         Modify it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
@@ -50,6 +48,33 @@ class finance_archive(finance_export.finance_archive):
         new_data = []
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
+        # column numbers corresponding to properties
+        id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
+        instance_code = 1
+        journal = 2
+        description = 4
+        for line in data:
+            line_list = list(line)
+            if line_list[journal] == 'OD':
+                corrected_aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id']).corrected_line_id
+                if corrected_aml and corrected_aml.journal_id.type == 'hq' or False:
+                    line_list[instance_code] = 'SIEG'
+                    # for the 3 characters of the journal name taken from the 10th character of the description field:
+                    # exclude the "COR1 - " part
+                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
+            new_data.append(tuple(line_list))
+        return new_data
+
+    def _handle_od_aji_entries(self, cr, uid, data):
+        """
+        Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
+        Modify it for all OD entries that originate from HQ entry corrections:
+        - instance: becomes 'SIEG'
+        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
+        Returns a list of tuples (same format as data)
+        """
+        new_data = []
+        pool = pooler.get_pool(cr.dbname)
         aal_obj = pool.get('account.analytic.line')
         # column numbers corresponding to properties
         id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
@@ -59,15 +84,8 @@ class finance_archive(finance_export.finance_archive):
         for line in data:
             line_list = list(line)
             if line_list[journal] == 'OD':
-                # if it's an analytic line: get the associated aml to get its id
-                if analytic_lines:
-                    aml = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['move_id']).move_id
-                    aml_id = aml and aml.id
-                else:
-                    # if it's a move line: we get the aml_id directly from the request
-                    aml_id = line_list[id_from_db]
-                corrected_aml = aml_obj.browse(cr, uid, aml_id, fields_to_fetch=['corrected_line_id']).corrected_line_id
-                if corrected_aml and corrected_aml.journal_id.code == 'HQ' or False:
+                corrected_aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id']).last_corrected_id
+                if corrected_aal and corrected_aal.journal_id.type == 'hq' or False:
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 10th character of the description field:
                     # exclude the "COR1 - " part
@@ -82,7 +100,7 @@ class finance_archive(finance_export.finance_archive):
         - first modify the data for all lines corresponding to OD entries originating from HQ entry corrections
         - then call OCB method on the new data to change first column for the DB ID
         """
-        new_data = self._handle_od_entries(cr, uid, data, analytic_lines=False)  # we handle account move lines
+        new_data = self._handle_od_ji_entries(cr, uid, data)  # we handle account move lines
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
         return finance_archive_ocb.postprocess_add_db_id(cr, uid, new_data, model, column_deletion)
 
@@ -93,7 +111,7 @@ class finance_archive(finance_export.finance_archive):
         - first modify the data for all lines corresponding to OD entries originating from HQ entry corrections
         - then call OCB method on the new data to change first column for the DB ID
         """
-        new_data = self._handle_od_entries(cr, uid, data, analytic_lines=True)  # we handle account analytic lines
+        new_data = self._handle_od_aji_entries(cr, uid, data)  # we handle account analytic lines
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
         return finance_archive_ocb.postprocess_add_db_id(cr, uid, new_data, model, column_deletion)
 
