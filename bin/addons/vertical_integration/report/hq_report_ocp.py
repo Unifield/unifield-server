@@ -55,13 +55,22 @@ class finance_archive(finance_export.finance_archive):
         description = 4
         for line in data:
             line_list = list(line)
+            od_hq_entry = False
             if line_list[journal] == 'OD':
-                corrected_aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id']).corrected_line_id
+                aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id', 'reversal_line_id'])
+                corrected_aml = aml.corrected_line_id
+                reversed_aml = aml.reversal_line_id
                 if corrected_aml and corrected_aml.journal_id.type == 'hq' or False:
-                    line_list[instance_code] = 'SIEG'
-                    # for the 3 characters of the journal name taken from the 10th character of the description field:
-                    # exclude the "COR1 - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
+                    # COR entries
+                    od_hq_entry = True
+                elif reversed_aml and reversed_aml.journal_id.type == 'hq' or False:
+                    # REV entries
+                    od_hq_entry = True
+                if od_hq_entry:
+                        line_list[instance_code] = 'SIEG'
+                        # for the 3 characters of the journal name taken from the 10th character of the description field:
+                        # exclude the "COR1 - " or "REV - " part
+                        line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -83,12 +92,21 @@ class finance_archive(finance_export.finance_archive):
         description = 4
         for line in data:
             line_list = list(line)
+            od_hq_entry = False
             if line_list[journal] == 'OD':
-                corrected_aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id']).last_corrected_id
+                aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
+                corrected_aal = aal.last_corrected_id
+                reversed_aal = aal.reversal_origin
                 if corrected_aal and corrected_aal.journal_id.type == 'hq' or False:
+                    # COR entries
+                    od_hq_entry = True
+                elif reversed_aal and reversed_aal.journal_id.type == 'hq' or False:
+                    # REV entries
+                    od_hq_entry = True
+                if od_hq_entry:
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 10th character of the description field:
-                    # exclude the "COR1 - " part
+                    # exclude the "COR1 - " or "REV - " part
                     line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
             new_data.append(tuple(line_list))
         return new_data
