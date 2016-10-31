@@ -71,7 +71,7 @@ class finance_archive(finance_export.finance_archive):
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 10th character of the description field:
                     # exclude the "COR1 - " part
-                    line_list[journal] = '-' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
+                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
             new_data.append(tuple(line_list))
         return new_data
 
