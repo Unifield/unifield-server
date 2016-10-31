@@ -74,6 +74,7 @@ class purchase_order_line_sync(osv.osv):
                 'date': line_dict.get('confirmed_delivery_date', time.strftime('%Y-%m-%d %H:%M:%S')),
                 'change_reason': False,
                 'product_id': line_dict.get('product_id'),
+                'comment': line_dict.get('comment'),
             }],
         }
 
