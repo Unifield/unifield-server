@@ -75,11 +75,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row ss:AutoFitHeight="0" ss:Height="13.5"/>
 <Row>
-    <Cell><Data ss:Type="String">${_('Prop Instance')}: </Data></Cell>
+    <Cell><Data ss:Type="String">${_('Prop. Instance')}: </Data></Cell>
     <Cell ss:StyleID="propinstance"><Data ss:Type="String">${(company.instance_id and company.instance_id.code or '')|x}</Data></Cell>
 </Row>
 <Row>
-    <Cell><Data ss:Type="String">${_('Report date')}:</Data></Cell>
+    <Cell><Data ss:Type="String">${_('Report Date')}:</Data></Cell>
     <Cell ss:StyleID="docdate"><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
 </Row>
 <Row />
