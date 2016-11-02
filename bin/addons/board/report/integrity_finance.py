@@ -17,7 +17,7 @@ class integrity_finance(report_sxw.rml_parse):
         })
 
     def get_title(self):
-        return _('Finance Data Integrity')
+        return _('Entries Data Integrity')
 
     def list_checks(self):
         return queries_finance.queries

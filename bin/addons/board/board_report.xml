@@ -7,6 +7,7 @@
             model="board.board"
             name="integrity.finance"
             file="board/report/integrity.mako"
+            target_filename="Entries Data Integrity %(instance_code)s %(year)s%(month)s%(day)s"
             report_type="webkit"
             header="False"
             auto="False"

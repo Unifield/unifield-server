@@ -10068,10 +10068,11 @@ msgstr "Filename"
 msgid "No %s journal found!"
 msgstr "Le système n'a pas trouvé de journal %s !"
 
-#. module: account_override
+#. modules: account_override, board
 #: report:addons/account_override/report/open_invoices_xls.mako:257
+#: report:addons/board/report/integrity.mako:75
 msgid "Prop. Instance"
-msgstr "Prop. Instance"
+msgstr "Instance Prop."
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -30356,10 +30357,11 @@ msgstr "IntraCom"
 msgid "Mass Reallocation Search"
 msgstr "Recherche de Réallocation Groupée"
 
-#. module: account_override
+#. modules: account_override, board
 #: report:addons/account_override/report/open_invoices_xls.mako:265
+#: report:addons/board/report/integrity.mako:79
 msgid "Report Date"
-msgstr "Report Date"
+msgstr "Date de génération"
 
 #. module: base
 #: help:ir.rule,global:0
@@ -74704,19 +74706,19 @@ msgstr "Différence"
 #: code:addons/board/queries_finance.py:47
 #: code:addons/board/queries_finance.py:84
 #, python-format
-msgid "JI"
+msgid "Entry Sequence"
 msgstr "Entrée Comptable"
 
 #. module: board
 #: code:addons/board/queries_finance.py:83
 #, python-format
-msgid "AJI/JI mismatch in booking currency"
-msgstr "Différence en devise d'enregistrement entre entrées comptables et analytiques"
+msgid "P&L Journal Items vs Analytic Journal Items mismatch in booking currency (except FXA and REV)"
+msgstr "Différence en devise d'enregistrement entre entrées comptables et analytiques (exceptés FAX et REV)"
 
 #. module: board
 #: code:addons/board/queries_finance.py:29
 #, python-format
-msgid "JI entries in functional currency that do not add up"
+msgid "Journal Items that are not balanced in functional currency"
 msgstr "Entrées comptables non équilibrées en devise fonctionnelle"
 
 #. module: board
@@ -74739,19 +74741,19 @@ msgstr "Intégrité des données financières"
 #. module: board
 #: code:addons/board/queries_finance.py:10
 #, python-format
-msgid "JI entries in booking currency that do not add up"
+msgid "Journal Items that are not balanced in booking currency"
 msgstr "Entrées comptables non equilibrées en devise d'enregistrement"
 
 #. module: board
 #: code:addons/board/queries_finance.py:46
 #, python-format
-msgid "AJI/JI mismatch in functional currency"
-msgstr "Différence en devise fonctionnelle entre entrées comptables et analytiques"
+msgid "P&L Journal Items vs Analytic Journal Items mismatch in functional currency (FXA and REV only)"
+msgstr "Différence en devise fonctionnelle entre entrées comptables et analytiques (uniquement FXA et REV)"
 
 #. module: board
 #: code:addons/board/queries_finance.py:47
 #, python-format
-msgid "JI Fct. Amount"
+msgid "JI Func. Amount"
 msgstr "Montant fonctionnel de l'entrée comptable"
 
 #. module: board
@@ -74766,26 +74768,33 @@ msgstr "Période"
 #. module: board
 #: code:addons/board/queries_finance.py:47
 #, python-format
-msgid "AJI Fct. Amount"
+msgid "AJI Func. Amount"
 msgstr "Montant fonctionnel de l'entrée analytique"
 
 #. module: board
-#: code:addons/board/report/integrity_finance.py:20
 #, python-format
 msgid "Finance Data Integrity"
 msgstr "Intégrité des données financières"
 
-#. module: account_override
+#. modules: account_override, board
 #: model:ir.ui.menu,name:account_override.menu_integrity_finance
+#: code:addons/board/report/integrity_finance.py:20
 #, python-format
-msgid "Balances per entry"
-msgstr "Balances des entrées"
+msgid "Entries Data Integrity"
+msgstr "Intégrité des entrées comptables"
 
 #. module: board
 #: code:addons/board/queries_finance.py:119
 #, python-format
 msgid "Unbalanced reconciliations in functional currency"
 msgstr "Lettrages non équilibrés en devise fonctionnelle"
+
+#. module: board
+#: code:addons/board/queries_finance.py:120
+#: code:addons/board/queries_finance.py:131
+#, python-format
+msgid "Reconcile number"
+msgstr "Numéro de lettrage"
 
 #. module: board
 #: code:addons/board/queries_finance.py:129
