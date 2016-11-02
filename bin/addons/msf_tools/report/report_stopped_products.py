@@ -33,121 +33,116 @@ from tools.translate import _
 
 class export_report_stopped_products(osv.osv):
 
-	_name = 'export.report.stopped.products'
+    _name = 'export.report.stopped.products'
 
-	_columns = {
-		'name': fields.datetime(string='Generated On', readonly=True),
-		'state': fields.selection(
-			[('draft', 'Draft'),
-			('in_progress', 'In Progress'),
-			('ready', 'Ready')],
-			string='State',
-			readonly=True,
-		),
-	}
+    _columns = {
+        'name': fields.datetime(string='Generated On', readonly=True),
+        'state': fields.selection(
+            [('draft', 'Draft'),
+            ('in_progress', 'In Progress'),
+            ('ready', 'Ready')],
+            string='State',
+            readonly=True,
+        ),
+    }
 
-	_defaults = {
-		'state': lambda *a: 'draft',
-	}
-
-
-	def generate_report(self, cr, uid, ids, context=None):
-		'''
-		Generate a report of stopped products
-		Method is called by button on XML view (form)
-		'''
-		prod_obj = self.pool.get('product.product')
-
-		res = {}
-		for report in self.browse(cr, uid, ids, context=context):
-			# get ids of all products :
-			product_ids = prod_obj.search(cr, uid, [], context=context)
-			if not product_ids:
-				continue
-
-			# state of report is in progress :
-			self.write(cr, uid, [report.id], {
-				'name': time.strftime('%Y-%m-%d %H:%M:%S'), 
-				'state': 'in_progress'
-			}, context=context)
-
-			datas = {
-				'ids': [report.id],
-				'lines': product_ids,
-			}
-
-			cr.commit()
-			new_thread = threading.Thread(target=self.generate_report_bkg, args=(cr, uid, report.id, datas, context))
-			new_thread.start()
-			new_thread.join(timeout=30.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
-
-			res = {
-			    'type': 'ir.actions.act_window',
-			    'res_model': self._name,
-			    'view_type': 'form',
-			    'view_mode': 'form,tree',
-			    'res_id': report.id,
-			    'context': context,
-			    'target': 'same',
-			}
-
-		if not res:
-			raise osv.except_osv(
-				_('Error'),
-				_("Nothing to generate")
-			)
-
-		return res
+    _defaults = {
+        'state': lambda *a: 'draft',
+    }
 
 
+    def generate_report(self, cr, uid, ids, context=None):
+        '''
+        Generate a report of stopped products
+        Method is called by button on XML view (form)
+        '''
+        prod_obj = self.pool.get('product.product')
 
-	def generate_report_bkg(self, cr, uid, report_ids, datas, context=None):
-		'''
-		Generate the report in background (thread)
-		'''
-		attachment_obj = self.pool.get('ir.attachment')
+        res = {}
+        for report in self.browse(cr, uid, ids, context=context):
+            # get ids of all non-local products :
+            product_ids = prod_obj.search(cr, uid, [('international_status', '!=', 4)], context=context)
+            if not product_ids:
+                continue
 
-		if context is None:
-			context ={}
+            # state of report is in progress :
+            self.write(cr, uid, [report.id], {
+                'name': time.strftime('%Y-%m-%d %H:%M:%S'), 
+                'state': 'in_progress'
+            }, context=context)
 
-		if isinstance(report_ids, (int, long)):
-			report_ids = [report_ids]
+            datas = {
+                'ids': [report.id],
+                'lines': product_ids,
+            }
 
-		import pooler
-		new_cr = pooler.get_db(cr.dbname).cursor()
+            cr.commit()
+            new_thread = threading.Thread(target=self.generate_report_bkg, args=(cr, uid, report.id, datas, context))
+            new_thread.start()
+            new_thread.join(timeout=30.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
 
-		# export datas :
-		report_name = "stopped.products.xls"
-		attachment_name = "stopped_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
-		rp_spool = report_spool()
-		res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
-		file_res = {'state': False}
-		while not file_res.get('state'):
-			file_res = rp_spool.exp_report_get(new_cr.dbname, uid, res_export)
-			time.sleep(0.5)
+            res = {
+                'type': 'ir.actions.act_window',
+                'res_model': self._name,
+                'view_type': 'form',
+                'view_mode': 'form,tree',
+                'res_id': report.id,
+                'context': context,
+                'target': 'same',
+            }
 
-		# attach report to the right panel :
-		attachment_obj.create(new_cr, uid, {
-			'name': attachment_name,
-			'datas_fname': attachment_name,
-			'description': "Stopped products",
-			'res_model': 'export.report.stopped.products',
-			'res_id': report_ids[0],
-			'datas': file_res.get('result'),
-		}, context=context)
+        if not res:
+            raise osv.except_osv(
+                _('Error'),
+                _("Nothing to generate")
+            )
 
-		# state is now 'ready' :
-		self.write(new_cr, uid, report_ids, {'state': 'ready'}, context= context)
-
-		new_cr.commit()
-		new_cr.close(True)
-
-		return True
+        return res
 
 
 
+    def generate_report_bkg(self, cr, uid, report_ids, datas, context=None):
+        '''
+        Generate the report in background (thread)
+        '''
+        attachment_obj = self.pool.get('ir.attachment')
 
+        if context is None:
+            context ={}
 
+        if isinstance(report_ids, (int, long)):
+            report_ids = [report_ids]
+
+        import pooler
+        new_cr = pooler.get_db(cr.dbname).cursor()
+
+        # export datas :
+        report_name = "stopped.products.xls"
+        attachment_name = "stopped_products_report_%s.xls" % time.strftime('%d-%m-%Y_%Hh%M')
+        rp_spool = report_spool()
+        res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
+        file_res = {'state': False}
+        while not file_res.get('state'):
+            file_res = rp_spool.exp_report_get(new_cr.dbname, uid, res_export)
+            time.sleep(0.5)
+
+        # attach report to the right panel :
+        attachment_obj.create(new_cr, uid, {
+            'name': attachment_name,
+            'datas_fname': attachment_name,
+            'description': "Stopped products",
+            'res_model': 'export.report.stopped.products',
+            'res_id': report_ids[0],
+            'datas': file_res.get('result'),
+        }, context=context)
+
+        # state is now 'ready' :
+        self.write(new_cr, uid, report_ids, {'state': 'ready'}, context= context)
+
+        new_cr.commit()
+        new_cr.close(True)
+
+        return True
 
 
 export_report_stopped_products()
@@ -156,70 +151,81 @@ export_report_stopped_products()
 
 
 class parser_report_stopped_products_xls(report_sxw.rml_parse):
-	'''
-	To parse our mako template for stopped products
-	'''
-	def __init__(self, cr, uid, name, context=None):
-		super(parser_report_stopped_products_xls, self).__init__(cr, uid, name, context=context)
+    '''
+    To parse our mako template for stopped products
+    '''
+    def __init__(self, cr, uid, name, context=None):
+        super(parser_report_stopped_products_xls, self).__init__(cr, uid, name, context=context)
 
-		# localcontext allows you to call methods inside mako file :
-		self.localcontext.update({
-			'time': time,
-			'get_uf_stopped_products': self.get_uf_stopped_products,
-			'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
-		})
-
-
-	def get_uf_stopped_products(self):
-		'''
-		Return browse record list that contains stopped and non-local products
-		'''
-		prod_obj = self.pool.get('product.product')
-		stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', 3), ('international_status', '!=', 4)], 
-			order='default_code', context=self.localcontext)
-		
-		return prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext)
+        # localcontext allows you to call methods inside mako file :
+        self.localcontext.update({
+            'time': time,
+            'get_uf_stopped_products': self.get_uf_stopped_products,
+            'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
+            'get_uf_status': self.get_uf_status,
+        })
 
 
-	def get_stock_mission_report_lines(self, product_id):
-		'''
-		Return browse record list of stock_mission_report_line with given product_id
-		'''
-		smrl_obj = self.pool.get('stock.mission.report.line')
-		smrl_ids = smrl_obj.search(self.cr, self.uid, [('product_id', '=', product_id)], context=self.localcontext)
-
-		res = [smrl for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext) if \
-				not smrl.mission_report_id.full_view and smrl.internal_qty != 0 or smrl.in_pipe_qty != 0]
-
-		return res
+    def get_uf_stopped_products(self):
+        '''
+        Return browse record list that contains stopped and non-local products
+        '''
+        prod_obj = self.pool.get('product.product')
+        stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', 3), ('international_status', '!=', 4)], 
+            order='default_code', context=self.localcontext)
+        
+        return prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext)
 
 
+    def get_stock_mission_report_lines(self, product_id):
+        '''
+        Return browse record list of stock_mission_report_line with given product_id
+        '''
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        smrl_ids = smrl_obj.search(self.cr, self.uid, [('product_id', '=', product_id)], context=self.localcontext)
 
+        res = [smrl for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext) if \
+                not smrl.mission_report_id.full_view and smrl.internal_qty != 0 or smrl.in_pipe_qty != 0]
+
+        return res
+
+
+    def get_uf_status(self, code):
+        '''
+        Return the name of the unifield status with the given code
+        '''
+        status_obj = self.pool.get('product.status')
+        code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
+        res = ""
+        if code_ids:
+            res = status_obj.read(self.cr, self.uid, code_ids, ['name'])[0]['name']
+            
+        return res
 
 
 
 class report_stopped_products_xls(SpreadsheetReport):
 
-	def __init(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
-		super(report_stopped_products_xls, self).__init__(
-			name,
-			table,
-			rml=rml,
-			parser=parser,
-			header=header,
-			store=store
-		)
+    def __init(self, name, table, rml=False, parser=report_sxw.rml_parse, header='external', store=False):
+        super(report_stopped_products_xls, self).__init__(
+            name,
+            table,
+            rml=rml,
+            parser=parser,
+            header=header,
+            store=store
+        )
 
-		def create(self, cr, uid, ids, data, context=None):
-			a = super(report_stopped_products_xls, self).create(cr, uid, ids, data, context=context)
-			return (a[0], 'xls')
+    def create(self, cr, uid, ids, data, context=None):
+        a = super(report_stopped_products_xls, self).create(cr, uid, ids, data, context=context)
+        return (a[0], 'xls')
 
 
 
 report_stopped_products_xls(
-	'report.stopped.products.xls',
-	'export.report.stopped.products',
-	'addons/msf_tools/report/report_stopped_products_xls.mako',
-	parser=parser_report_stopped_products_xls,
-	header='internal',
+    'report.stopped.products.xls',
+    'export.report.stopped.products',
+    'addons/msf_tools/report/report_stopped_products_xls.mako',
+    parser=parser_report_stopped_products_xls,
+    header='internal',
 )

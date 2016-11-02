@@ -81,7 +81,7 @@
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.name_template)|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.international_status and line.international_status.name or '')|x}</Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(standard_level)|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud) or ''|x}</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud and getSel(line, 'state_ud') or '')|x}</Data></Cell>
         </Row>
 
         <% smrl_list = get_stock_mission_report_lines(line.id) %>
@@ -94,7 +94,7 @@
         % for smrl in smrl_list:
             <Row ss:AutoFitHeight="1">
               <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.name)|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.product_state)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_uf_status(smrl.product_state))|x}</Data></Cell>
               <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(smrl.internal_qty)|x}</Data></Cell>
               <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(smrl.in_pipe_qty)|x}</Data></Cell>
             </Row>
