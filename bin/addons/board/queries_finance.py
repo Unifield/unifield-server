@@ -47,7 +47,7 @@ order by p.date_start, m.name"""
         'query': """SELECT
 account_period.name,
 account_move.name,
-avg(account_move_line.debit_currency-account_move_line.credit_currency) JI,
+avg(account_move_line.credit_currency-account_move_line.debit_currency) JI,
 sum(account_analytic_line.amount_currency) AJI,
 abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) difference
 FROM
@@ -84,7 +84,7 @@ ORDER BY account_period.date_start, account_move.name"""
         'query': """SELECT
 account_period.name,
 account_move.name,
-avg(account_move_line.credit-account_move_line.debit) JI,
+avg(account_move_line.debit-account_move_line.credit) JI,
 sum(account_analytic_line.amount) AJI,
 abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_analytic_line.amount)) difference
 FROM
@@ -133,7 +133,7 @@ order by rec.name
 from account_move_line l, account_move_reconcile rec
 where l.reconcile_id=rec.id
 group by rec.id, rec.name
-having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(l.currency_id)=1)
+having(abs(sum(l.credit_currency-l.debit_currency)) > 0.0001 and count(distinct(l.currency_id))=1)
 order by rec.name
 """
     },
