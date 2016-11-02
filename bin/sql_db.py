@@ -96,6 +96,10 @@ class Cursor(object):
         self.dbname = dbname
         self._serialized = serialized
         self._cnx = pool.borrow(dsn(dbname))
+        self._oc = None
+        p = pooler.pool_dic.get(self.dbname, None)
+        if p is not None:
+            self._oc = p.get('operations.count')
         self._obj = self._cnx.cursor(cursor_factory=psycopg1cursor)
         self.__closed = False   # real initialisation value
         self.autocommit(False)
@@ -150,7 +154,11 @@ class Cursor(object):
         try:
             params = params or None
             params = self.recursiveCastUid(params)
+            before = time.time()
             res = self._obj.execute(query, params)
+            after = time.time()
+            if self._oc is not None:
+                self._oc.histogram['sql'].add(after-before)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:
                 self.__logger.error("Programming error: %s, in query %s", pe, query)

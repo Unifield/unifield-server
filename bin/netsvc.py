@@ -54,14 +54,16 @@ def ops_event(dbname, kind, dat, uid=1):
         if cr is not None:
             cr.close()
 
-def ops_count(dbname, cat, what):
+def ops_count(dbname, cat, what, how_long):
     # these will be logged by osv.py
     if what == 'object.execute':
         return
 
     try:
         db, pool = pooler.get_db_and_pool(dbname, if_open=True)
-        pool.get('operations.count').increment(':'.join([cat, what]))
+        oc = pool.get('operations.count')
+        oc.increment(':'.join([cat, what]))
+        oc.histogram['netsvc'].add(how_long)
     except:
         pass
 
@@ -543,11 +545,13 @@ class OpenERPDispatcher:
             self.log('method', method)
             self.log('params', replace_request_password(params), depth=(None if logger.isEnabledFor(logging.DEBUG_RPC_ANSWER) else 1))
             auth = getattr(self, 'auth_provider', None)
+            before = time.time()
             result = ExportService.getService(service_name).dispatch(method, auth, params)
+            after = time.time()
             self.log('result', result, channel=logging.DEBUG_RPC_ANSWER)
             # For service 'db', param[0] is not a dbname, so just skip it.
             if service_name != 'db':
-                ops_count(params[0], 'dispatch', '.'.join([service_name, method]))
+                ops_count(params[0], 'dispatch', '.'.join([service_name, method]), after-before)
             return result
         except Exception, e:
             self.log('exception', tools.exception_to_unicode(e))

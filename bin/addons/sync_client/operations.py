@@ -22,6 +22,7 @@
 from osv import osv, fields
 import logging
 import threading
+from histogram import Histogram
 
 class operations_event(osv.osv):
     """Operational events are things that happen while Unifield is running
@@ -121,29 +122,28 @@ class operations_count(osv.osv):
     def __init__(self, pool, cr):
         osv.osv.__init__(self, pool, cr)
         self._counts = {}
+        self.lock = threading.Lock()
         i = pool.get('sync.client.entity').get_entity(cr, 1).name;
         if i is None:
             self._instance = "unknown"
         else:
             self._instance = i
-        self.lock = threading.Lock()
+        self.histogram = {}
+        # Watch OpenERP method calls from 0 to 2 seconds
+        self.histogram['netsvc'] = Histogram( buckets=20, range=2, name='netsvc')
+        # Watch SQL queries from 0 to 50 ms
+        self.histogram['sql'] = Histogram( buckets=20, range=0.050, name='sql')
 
     def increment(self, kind, count=1):
-        self.lock.acquire()
-        try:
+        with self.lock:
             self._counts[kind] = self._counts.get(kind, 0) + count
-        finally:
-            self.lock.release()
-        
-    def write(self, cr, uid):
+
+    def write_counts(self, cr, uid):
         # Take a copy of the counts, then reset to zero.
         # Hold the lock for the shortest time possible.
-        self.lock.acquire()
-        try:
+        with self.lock:
             counts = self._counts
             self._counts = {}
-        finally:
-            self.lock.release()
 
         # Write them all out. Take the time one time so that all
         # events will have exactly the same time on them, to better
@@ -154,7 +154,18 @@ class operations_count(osv.osv):
                                    'instance': self._instance,
                                    'kind': kind,
                                    'count': counts[kind] })
-        self._logger.debug("Operations count write: %d rows" % len(counts))
+        rows = len(counts)
+        # Write out all the histograms
+        for h in self.histogram.values():
+            for i in range(len(h.buckets)):
+                kind = "%s:%s" % (h.name, h.limits[i])
+                self.create(cr, uid, { 'time': now,
+                                       'instance': self._instance,
+                                       'kind': kind,
+                                       'count': h.buckets[i] })
+                rows += 1
+            h.clear()
+        self._logger.debug("Operations count write: %d rows" % rows)
 
     def purge(self, cr, uid, keep='30 day'):
         """Called from ir.cron every day to purge counts older

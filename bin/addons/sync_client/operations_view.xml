@@ -66,7 +66,7 @@
       </field>
     </record>
 
-    <record id="ops_event_search" model="ir.ui.view">
+    <record id="ops_count_search" model="ir.ui.view">
       <field name="name">operations.count.search</field>
       <field name="model">operations.count</field>
       <field name="type">search</field>
