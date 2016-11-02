@@ -85,14 +85,12 @@
         </Row>
 
         <% smrl_list = get_stock_mission_report_lines(line.id) %>
-        % if smrl_list:
-            <Row ss:AutoFitHeight="1">
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance/Mission</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Unifield Status</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance stock</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Pipeline Qty</Data></Cell>
-            </Row>
-        %endif
+        <Row ss:AutoFitHeight="1">
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance/Mission</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Unifield Status</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance stock</Data></Cell>
+          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Pipeline Qty</Data></Cell>
+        </Row>
         % for smrl in smrl_list:
             <Row ss:AutoFitHeight="1">
               <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.name)|x}</Data></Cell>

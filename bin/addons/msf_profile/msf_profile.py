@@ -891,6 +891,21 @@ class patch_scripts(osv.osv):
                     currency_id != %s""", (currency_id, tuple(journal_ids), currency_id))
 
 
+    def us_1671_stopped_products(self, cr, uid, *a, **b):
+        '''
+        Fill field product_state of object stock.mission.report.line with the state of the products (product.product)
+        '''
+        prod_obj = self.pool.get('product.product')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        context = {}
+
+        prod_ids = prod_obj.search(cr, uid, [('state', '!=', False)], context=context)
+        smrl_to_modify = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids)], context=context)
+
+        for smrl in smrl_obj.browse(cr, uid, smrl_to_modify, context=context):
+            smrl_obj.write(cr, uid, smrl.id, {'product_state': smrl.product_id.state.code}, context=context)
+
+
 patch_scripts()
 
 

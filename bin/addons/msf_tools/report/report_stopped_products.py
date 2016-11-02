@@ -177,7 +177,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 		prod_obj = self.pool.get('product.product')
 		stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', 3), ('international_status', '!=', 4)], 
 			order='default_code', context=self.localcontext)
-
+		
 		return prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext)
 
 
