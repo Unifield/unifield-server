@@ -37,7 +37,7 @@ import base64
 from xlwt import Workbook, easyxf, Borders
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
-STOCK_MISSION_REPORT_NAME_PATTERN = 'Stock_Mission_Rerport_%s_%s'
+STOCK_MISSION_REPORT_NAME_PATTERN = 'Mission_Stock_Report_%s_%s'
 CSV_DELIMITER = ';'
 
 HEADER_DICT = {
