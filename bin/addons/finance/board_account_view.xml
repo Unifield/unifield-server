@@ -7,7 +7,7 @@
             <field name="model">account.commitment</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree limit="5" string="Commitment Voucher" noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree limit="5" string="Commitment Voucher">
                     <field name="name"/>
                     <field name="date"/>
                     <field name="partner_id"/>
@@ -18,22 +18,22 @@
             </field>
         </record>
         <record id="account_board_commitment_voucher" model="ir.actions.act_window">
-			<field name="name">Commitment Voucher</field>
-			<field name="res_model">account.commitment</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field name="domain">[('state', 'in', ('draft','open'))]</field>
+            <field name="name">Commitment Voucher</field>
+            <field name="res_model">account.commitment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state', 'in', ('draft','open'))]</field>
             <field name="context">{'board_view': True}</field>
             <field ref="account_board_commitment_voucher_view" name="view_id"/>
             <field name="limit">5</field>
-		</record>
+        </record>
 
         <record id="account_board_supplier_invoice_draft_view" model="ir.ui.view">
             <field name="name">account.invoice</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree limit="5"  string="Suppliers Invoices Pending Validation"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree limit="5"  string="Suppliers Invoices Pending Validation">
                     <field name="number"/>
                     <field name="name"/>
                     <field name="partner_id"/>
@@ -46,25 +46,25 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="account_board_supplier_invoice_draft" model="ir.actions.act_window">
-			<field name="name">Suppliers invoices pending validation</field>
-			<field name="res_model">account.invoice</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field name="domain">[('state', '=', 'draft'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
+            <field name="name">Suppliers invoices pending validation</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state', '=', 'draft'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
             <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
             <field name="limit">5</field>
-		</record>
-		
-		<!-- US-1298: Due to a technical issue with views in Dashboard, do not merge this view def with the previous one! The Label will be wrong! btype def on dashboard -->
+        </record>
+
+    <!-- US-1298: Due to a technical issue with views in Dashboard, do not merge this view def with the previous one! The Label will be wrong! btype def on dashboard -->
         <record id="account_board_supplier_invoice_open_view" model="ir.ui.view">
             <field name="name">account.invoice</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree limit="5"  string="Suppliers Invoices Pending Payment"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree limit="5"  string="Suppliers Invoices Pending Payment">
                     <field name="number"/>
                     <field name="name"/>
                     <field name="partner_id"/>
@@ -77,17 +77,17 @@
                 </tree>
             </field>
         </record>
-		
+
         <record id="account_board_supplier_invoice_open" model="ir.actions.act_window">
-			<field name="name">Suppliers invoices pending payment</field>
-			<field name="res_model">account.invoice</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field name="domain">[('state', '=', 'open'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
+            <field name="name">Suppliers invoices pending payment</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state', '=', 'open'),('type','=','in_invoice'), ('is_direct_invoice', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
             <field ref="account_board_supplier_invoice_open_view" name="view_id"/>
             <field name="limit">5</field>
-		</record>
+        </record>
 
         <record id="account_board_liquidity_view" model="ir.ui.view">
             <field name="name">account.bank.statement</field>
@@ -107,21 +107,21 @@
             </field>
         </record>
         <record id="account_board_liquidity" model="ir.actions.act_window">
-			<field name="name">Liquidity</field>
-			<field name="res_model">account.bank.statement</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="account_board_liquidity_view" name="view_id"/>
+            <field name="name">Liquidity</field>
+            <field name="res_model">account.bank.statement</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_board_liquidity_view" name="view_id"/>
             <field name="context">{'board_view': True}</field>
-		</record>
+        </record>
 
-		<!-- Show the Currency rates -->
+        <!-- Show the Currency rates -->
         <record id="account_board_currency_view" model="ir.ui.view">
             <field name="name">res.currency</field>
             <field name="model">res.currency</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Latest FX Rates"  limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree string="Latest FX Rates" limit="5">
                     <field name="name"/>
                     <field name="rate"/>
                     <field name="date"/>
@@ -129,22 +129,21 @@
             </field>
         </record>
         <record id="account_board_currency" model="ir.actions.act_window">
-			<field name="name">Latest FX rates</field>
-			<field name="res_model">res.currency</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="account_board_currency_view" name="view_id"/>
+            <field name="name">Latest FX rates</field>
+            <field name="res_model">res.currency</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_board_currency_view" name="view_id"/>
             <field name="context">{'board_view': True}</field>
             <field name="limit">3</field>
-		</record>
+        </record>
 
-		<!-- Show the XXX -->	
         <record id="account_board_period_view" model="ir.ui.view">
             <field name="name">account.period.board</field>
             <field name="model">account.period</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account Periods" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
+                <tree string="Account Periods" limit="5">
                     <field name="name"/>
                     <field name="code"/>
                     <field name="date_start"/>
@@ -154,24 +153,24 @@
                 </tree>
             </field>
         </record>
-        
-        <record id="account_board_period" model="ir.actions.act_window">
-			<field name="name">Account Periods</field>
-            <field name="res_model">account.period</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="account_board_period_view" name="view_id"/>
-			<field name="domain">[('state', '=', 'draft'), ('special', '=', False)]</field>
-            <field name="context">{'board_view': True}</field>
-		</record>        
 
-		<!-- Show HQ entries to be validated -->
+        <record id="account_board_period" model="ir.actions.act_window">
+            <field name="name">Account Periods</field>
+            <field name="res_model">account.period</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_board_period_view" name="view_id"/>
+            <field name="domain">[('state', '=', 'draft'), ('special', '=', False)]</field>
+            <field name="context">{'board_view': True}</field>
+        </record>
+
+        <!-- Show HQ entries to be validated -->
         <record id="account_hq_entries_view" model="ir.ui.view">
             <field name="name">hq.entries</field>
             <field name="model">hq.entries</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries To Be Validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1"  >
+                <tree string="HQ Entries To Be Validated" limit="5">
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="date"/>
@@ -184,24 +183,24 @@
             </field>
         </record>
         <record id="account_hq_entries" model="ir.actions.act_window">
-			<field name="name">HQ Entries to be validated</field>
-			<field name="res_model">hq.entries</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="account_hq_entries_view" name="view_id"/>
-			<field name="domain">[('user_validated', '!=', True)]</field>
+            <field name="name">HQ Entries to be validated</field>
+            <field name="res_model">hq.entries</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_hq_entries_view" name="view_id"/>
+            <field name="domain">[('user_validated', '!=', True)]</field>
             <field name="context">{'board_view': True}</field>
             <field name="limit">5</field>
-		</record>
-		<!-- End HQ Entries -->
+        </record>
+        <!-- End HQ Entries -->
 
-		<!-- Show the Payrolls entries to be validated -->
+        <!-- Show the Payrolls entries to be validated -->
         <record id="hr_payroll_board_view" model="ir.ui.view">
             <field name="name">hr.payroll.msf</field>
             <field name="model">hr.payroll.msf</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Payroll Entries To Be Validated" limit="5"   noteditable="1" hide_new_button="1" hide_delete_button="1" notselectable="1" >
+                <tree string="Payroll Entries To Be Validated" limit="5">
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="period_id"/>
@@ -213,16 +212,16 @@
             </field>
         </record>
         <record id="hr_payroll_board" model="ir.actions.act_window">
-			<field name="name">Payroll entries to be validated</field>
-			<field name="res_model">hr.payroll.msf</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">tree,form,calendar,graph</field>
-			<field ref="hr_payroll_board_view" name="view_id"/>
-			<field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
+            <field name="name">Payroll entries to be validated</field>
+            <field name="res_model">hr.payroll.msf</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="hr_payroll_board_view" name="view_id"/>
+            <field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
             <field name="context">{'board_view': True}</field>
             <field name="limit">5</field>
-		</record>
-		<!-- End for Payroll -->
+        </record>
+        <!-- End for Payroll -->
 
         <record id="account_board_budget_search_view" model="ir.ui.view">
             <field name="name">msf.budget.line</field>
@@ -248,15 +247,15 @@
             </field>
         </record>
         <record id="account_board_budgets" model="ir.actions.act_window">
-			<field name="name">Budget synthesis</field>
-			<field name="res_model">msf.budget.line</field>
-			<field name="view_type">form</field>
-			<field name="view_mode">graph,tree,form</field>
-			<field ref="account_board_budget_view" name="view_id"/>
+            <field name="name">Budget synthesis</field>
+            <field name="res_model">msf.budget.line</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph,tree,form</field>
+            <field ref="account_board_budget_view" name="view_id"/>
             <field name="context">{'board_view': 'budget'}</field>
             <field name="domain">[]</field>
             <field name="search_view_id" ref="account_board_budget_search_view"/>
-		</record>
+        </record>
         -->
         <!-- Custom Accounting Board -->
         <record id="inherit_board_account_form" model="ir.ui.view">
@@ -270,17 +269,17 @@
                     <form string="Account Board">
                         <hpaned>
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" btype="1"/>
-                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" btype="1"/>
-                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" />
                                 <!--  DON'T SHOW LIQUIDITY FOR NOW! action colspan="4" height="160" width="400" name="%(account_board_liquidity)d" string="Liquidity" btype="1"/-->
                             </child1>
 
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" btype="1"/>
-                                <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" btype="1"/>
-                                <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" btype="1"/>
-                                <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" btype="1"/>
+                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" />
+                                <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" />
+                                <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
                             </child1>
                         </hpaned>
                     </form>
