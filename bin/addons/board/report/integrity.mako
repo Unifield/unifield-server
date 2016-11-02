@@ -80,7 +80,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row>
     <Cell><Data ss:Type="String">${_('Report date')}:</Data></Cell>
-    <Cell ss:StyleID="docdate"><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000}</Data></Cell>
+    <Cell ss:StyleID="docdate"><Data ss:Type="DateTime">${time.strftime('%Y-%m-%d')|n}T00:00:00.000</Data></Cell>
 </Row>
 <Row />
 <Row />
