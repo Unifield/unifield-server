@@ -488,6 +488,15 @@ class stock_move_in_processor(osv.osv):
                 res[id] = False
         return res
 
+    def _set_comment(self, cr, uid, ml_id, name=None, value=None, fnct_inv_arg=None, context=None):
+        """
+        Just used to not break default OpenERP behaviour
+        """
+        if name and value:
+            sql = "UPDATE "+ self._table + " SET " + name + " = %s WHERE id = %s"
+            cr.execute(sql, (value, ml_id))
+        return True
+
     _columns = {
         # Parent wizard
         'wizard_id': fields.many2one(
@@ -514,6 +523,7 @@ class stock_move_in_processor(osv.osv):
         ),
         'comment': fields.function(
             _get_move_info,
+            fnct_inv=_set_comment,
             method=True,
             string='Comment',
             type='text',

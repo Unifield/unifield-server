@@ -783,7 +783,7 @@ class stock_picking(osv.osv):
             'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
             'asset_id': line.asset_id and line.asset_id.id or False,
             'change_reason': line.change_reason,
-            'comment': move.comment,
+            'comment': line.comment or move.comment,
             # Values from incoming wizard
             'direct_incoming': line.wizard_id.direct_incoming,
             # Values for Direct Purchase Order

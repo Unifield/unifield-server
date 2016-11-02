@@ -454,10 +454,16 @@ class stock_picking(osv.osv):
                                (line.prodlot_id and line.prodlot_id.id == data.get('prodlot_id')) or (not line.prodlot_id and not data.get('prodlot_id')) and \
                                (line.asset_id and line.asset_id.id == data.get('asset_id')) or (not line.asset_id and not data.get('asset_id')):
                                 move_proc.write(cr, uid, [line.id], data, context=context)
+                                if data.get('comment'):
+                                    move_proc.write(cr, uid, line.id, {
+                                        'comment': data['comment']
+                                        }, context=context)
                                 break
                         else:
                             data['ordered_quantity'] = data['quantity']
-                            move_proc.create(cr, uid, data, context=context)
+                            move_proc_id = move_proc.create(cr, uid, data, context=context)
+                            if data.get('comment'):
+                                move_proc.write(cr, uid, move_proc_id, {'comment': data['comment']}, context=context)
                     #US-1294: Add this move and quantity as already shipped, since it's added to the wizard for processing
                     self._add_to_shipped_moves(already_shipped_moves, move_id, data['quantity'])
 
