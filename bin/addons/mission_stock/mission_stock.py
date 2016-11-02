@@ -33,6 +33,7 @@ import os
 import csv
 import codecs
 import cStringIO
+import base64
 from xlwt import Workbook, easyxf, Borders
 
 # the ';' delimiter is recognize by default on the Microsoft Excel version I tried
@@ -270,12 +271,13 @@ class stock_mission_report(osv.osv):
             file_name)])
         if attachment_ids:
             # overwrite existing
-            ir_attachment_obj.write(cr, uid, attachment_ids[0], {'datas': data.getvalue()})
+            ir_attachment_obj.write(cr, uid, attachment_ids[0],
+                    {'datas': base64.encodestring(data.getvalue())})
         else:
             ir_attachment_obj.create(cr, uid,
                     {
                         'name': file_name,
-                        'datas': data.getvalue(),
+                        'datas': base64.encodestring(data.getvalue()),
                         'datas_fname': file_name,
                     })
             del data
@@ -320,9 +322,7 @@ class stock_mission_report(osv.osv):
             except Exception, e:
                 logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file : %s\n""" % e, exc_info=True)
 
-        # close file
         if not write_attachment_in_db:
-            csv_file.close()
             # delete previous reports in DB if any
             ir_attachment_obj = self.pool.get('ir.attachment')
             attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
@@ -331,6 +331,8 @@ class stock_mission_report(osv.osv):
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
             self.write_report_in_database(cr, uid, file_name, csv_file)
+        # close file
+        csv_file.close()
 
     def generate_xls_files(self, cr, uid, request_result, report_id, report_type,
             attachments_path, header, write_attachment_in_db, product_values):
@@ -404,9 +406,7 @@ class stock_mission_report(osv.osv):
             xls_file = cStringIO.StringIO()
         book.save(xls_file)
 
-        # close file
         if not write_attachment_in_db:
-            xls_file.close()
             # delete previous reports in DB if any
             ir_attachment_obj = self.pool.get('ir.attachment')
             attachment_ids = ir_attachment_obj.search(cr, uid, [('datas_fname', '=',
@@ -415,6 +415,8 @@ class stock_mission_report(osv.osv):
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         else:
             self.write_report_in_database(cr, uid, file_name, xls_file)
+        # close file
+        xls_file.close()
 
     def background_update(self, cr, uid, ids, context=None):
         """
