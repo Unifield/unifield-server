@@ -394,6 +394,37 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _src_line_values(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns all field order lines that match with the order category or priority
+        domain given in args.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param obj: Object on which the search is
+        :param field_name: Name of the field on which the search is
+        :param args: The domain
+        :param context: Context of the call
+
+        :return A list of tuples that allows the system to return the list
+                 of matching field order lines
+        :rtype list
+        """
+        if context is None:
+            context = {}
+
+        if not args:
+            return []
+
+        res = []
+        for arg in args:
+            if arg[0] == 'categ':
+                res = [('order_id.categ', arg[1], arg[2])]
+            elif arg[0] == 'priority':
+                res = [('order_id.priority', arg[1], arg[2])]
+
+        return res
+
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
         """
         Returns all field order lines that need to be sourced according to the
@@ -511,6 +542,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'priority': fields.function(
             _get_line_values,
+            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_PRIORITY,
             type='selection',
@@ -521,6 +553,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'categ': fields.function(
             _get_line_values,
+            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_CATEGORY,
             type='selection',
