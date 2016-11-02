@@ -59,8 +59,8 @@ PO_COLUMNS_HEADER_FOR_IMPORT=[
 PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
 
 FO_COLUMNS_HEADER_FOR_IMPORT=[
-(_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
-(_('Delivery requested date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string')]
+(_('fo_import_product_code'), 'string'), (_('fo_import_product_description'), 'string'), (_('fo_import_qty'), 'number'), (_('fo_import_uom'), 'string'),
+(_('fo_import_price'), 'number'), (_('fo_import_drd'), 'date'), (_('fo_import_currency'), 'string'), (_('fo_import_comment'), 'string')]
 FO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in FO_COLUMNS_HEADER_FOR_IMPORT]
 
 INT_COLUMNS_HEADER_FOR_IMPORT = [
@@ -108,6 +108,18 @@ PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
 (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
 
+SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
+    (_('Product Code'), 'string'),
+    (_('Product Description'), 'string'),
+    (_('UoM'), 'string'),
+    (_('Min. Qty'), 'number'),
+    (_('Unit Price'), 'number',),
+    (_('SoQ Rounding'), 'number'),
+    (_('Min. Order Qty.'), 'number'),
+    (_('Comment'), 'string'),
+]
+SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT]
+
 import wizard_import_po
 import stock_partial_picking
 import wizard_import_po_line
@@ -122,5 +134,9 @@ import wizard_import_order_cycle_line
 import wizard_import_threshold_value_line
 import wizard_import_stock_warehouse_order_point_line
 import wizard_import_product_list
+import wizard_import_supplier_catalogue
 import wizard_po_simulation_screen
 import wizard_in_simulation_screen
+
+import abstract_wizard_import
+import wizard_import_batch

@@ -310,6 +310,9 @@ sql_params)
             data_base_values = {}
 
         def touch(data_ids, touched_fields):
+            # (US-1242) Trigger the sync. if the third party (journal, employee) has been modified in a register line
+            if 'partner_type' in touched_fields and self._name == 'account.bank.statement.line':
+                touched_fields.append('transfer_journal_id')
             if synchronize:
                 data.write(cr, uid, data_ids,
                     dict(data_base_values, touched=str(sorted(touched_fields))),
@@ -746,6 +749,11 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         context['rw_sync_in_progress'] = True
         return self.search(cr, user, real_args, offset=offset, limit=limit, order=order, context=context, count=count)
 
+    def is_intersection(self, cr, uid, dest, context=None):
+        if isinstance(dest, browse_record) and dest._name == 'res.partner':
+            return dest.partner_type == 'section'
+        return False
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         """
             @param ids : ids of the record from which we need to find the destination
@@ -779,10 +787,11 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         assert set(ids) == set(result.keys()), "The return value of get_destination_name is not consistent"
         return result
 
-    def get_message_arguments(self, cr, uid, res_id, rule=None, context=None):
+    def get_message_arguments(self, cr, uid, res_id, rule=None, destination=False, context=None):
         """
             @param res_id: Id of the record from which we need to extract the args of the call
             @param rule: the message generating rule (browse record)
+            @param destination: browse object of destination
             @return a list : each element of the list will be an arg after uid
                 If the call is create_po(self, cr, uid, arg1, arg2, context=None)
                 the list should contains exactly 2 element
@@ -791,11 +800,12 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             the object information json serialized
 
         """
+        rule_dest_field = rule.destination_name
         fields = eval(rule.arguments)
-        res =  self.export_data_json(cr, uid, [res_id], fields, context=context)
+        res =  self.export_data_json(cr, uid, [res_id], fields, destination=destination, rule_dest_field=rule_dest_field, context=context)
         return res['datas']
 
-    def export_data_json(self, cr, uid, ids, fields_to_export, context=None):
+    def export_data_json(self, cr, uid, ids, fields_to_export, destination=False, rule_dest_field=False, context=None):
             """
             Export fields for selected objects
 
@@ -803,13 +813,15 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             :param uid: current user id
             :param ids: list of ids
             :param fields_to_export: list of fields
+            :param destination: browse object of destination
+            :param rule_dest_field: if destination if False field on object with destination
             :param context: context arguments, like lang, time zone
             :rtype: dictionary with a *datas* matrix
 
             This method is used when exporting data via client menu
 
             """
-            def __export_row_json(self, cr, uid, row, fields, json_data, context=None):
+            def __export_row_json(self, cr, uid, row, fields, json_data, intersection=False, context=None):
                     if context is None:
                         context = {}
 
@@ -852,6 +864,8 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
 
                         """
                         if field[0] == 'id':
+                            if intersection and row._name == 'product.product':
+                                json_data['msfid'] = row['msfid']
                             json_data[field[0]] = row.get_xml_id(cr, uid, [row.id]).get(row.id)
                         elif field[0] == '.id':
                             json_data[field[0]] = row.id
@@ -883,7 +897,13 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             fields_to_export = map(fsplit, fields_to_export)
             datas = []
             for row in self.browse(cr, uid, ids, context):
-                datas.append(__export_row_json(self, cr, uid, row, fields_to_export, context))
+                intersection = False
+                if not destination and rule_dest_field and hasattr(row, rule_dest_field):
+                    destination = row[rule_dest_field]
+                if destination:
+                    intersection = self.is_intersection(cr, uid, destination)
+                # context is json_data ???
+                datas.append(__export_row_json(self, cr, uid, row, fields_to_export, context, intersection=intersection))
             return {'datas': datas}
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):

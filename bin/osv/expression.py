@@ -362,6 +362,7 @@ class expression(object):
                              '    FROM ir_translation'  \
                              '   WHERE name = %s'       \
                              '     AND lang = %s'       \
+                             '     AND res_id IS NOT NULL' \
                              '     AND type = %s'
                     instr = ' %s'
                     #Covering in,not in operators with operands (%s,%s) ,etc.

@@ -187,12 +187,12 @@ class account_move_line_reconcile(osv.osv_memory):
                 fcredit += line.credit
                 fdebit += line.debit
         # Adapt state value
-        if (debit - credit) == 0.0:
+        if abs(debit - credit) <= 10**-3:
             state = 'total'
         if transfer_with_change:
             debit = fdebit
             credit = fcredit
-            if (fdebit - fcredit) == 0.0:
+            if abs(fdebit - fcredit) <= 10**-3:
                 state = 'total_change'
         # Currencies state
         different_currencies = False
@@ -202,7 +202,7 @@ class account_move_line_reconcile(osv.osv_memory):
             credit = fcredit
         # For salaries, behaviour is the same as total_change: we use functional debit/credit
         if account_id == salary_account_id or (currency_id and currency2_id and not transfer_with_change):
-            if (fdebit - fcredit) == 0.0:
+            if abs(fdebit - fcredit) <= 10**-3:
                 state = 'total'
             else:
                 state = 'partial'

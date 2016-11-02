@@ -41,6 +41,7 @@
         "supplier_catalogue_data.xml",
         "wizard/catalogue_import_lines_view.xml",
         "wizard/catalogue_export_lines_view.xml",
+        "supplier_catalogue_report.xml",
         "security/ir.model.access.csv",
     ],
     'test': [

@@ -410,6 +410,8 @@ class msf_instance(osv.osv):
         return res_id
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         current_instance = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id
@@ -610,6 +612,8 @@ class account_analytic_line(osv.osv):
 
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if not 'cost_center_id' in vals:
@@ -631,6 +635,8 @@ class account_move_line(osv.osv):
     _inherit = 'account.move.line'
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if context is None:
             context = {}
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
@@ -720,6 +726,8 @@ class product_product(osv.osv):
 
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(product_product, self).write(cr, uid, ids, vals, context=context)
         if isinstance(ids, (long, int)):
             ids = [ids]
@@ -787,16 +795,6 @@ class product_asset(osv.osv):
 
 product_asset()
 
-class batch_number(osv.osv):
-    _inherit = "stock.production.lot"
-
-    #UF-1617: unique xml id for batch number with instance id
-    def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
-        batch = self.browse(cr, uid, res_id)
-        #UF-2148: use the xmlid_name for building the xml for this object
-        return get_valid_xml_name('batch_numer', (batch.partner_name or 'no_partner'), (batch.product_id.code or 'noprod'), (batch.xmlid_name or 'noname'))
-
-batch_number()
 
 class ir_model_access(osv.osv):
     """
@@ -879,5 +877,12 @@ class hr_employee(osv.osv):
         else:
             return super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
                 table_name, res_id)
+
+    def unlink(self, cr, uid, ids, context=None):
+        super(hr_employee, self).unlink(cr, uid, ids, context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute("delete from ir_model_data where model=%s and res_id in %s", (self._name, tuple(ids)))
+        return True
 
 hr_employee()

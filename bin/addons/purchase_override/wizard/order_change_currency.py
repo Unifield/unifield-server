@@ -94,8 +94,10 @@ class purchase_order_change_currency(osv.osv_memory):
                     order_data.update({'transport_currency_id': cur_id})
             
             order_obj.write(cr, uid, wiz.order_id.id, order_data)
-            self.infolog(cr, uid, "The currency of the PO/RfQ id:%s has been changed from id:%s to id:%s" % (
-                wiz.order_id.id, wiz.old_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.id,
+            self.infolog(cr, uid, "The currency of the PO/RfQ id:%s (%s) has been changed from id:%s (%s) to id:%s (%s)" % (
+                wiz.order_id.id, wiz.order_id.name,
+                wiz.old_pricelist_id.currency_id.id, wiz.old_pricelist_id.currency_id.name,
+                wiz.new_pricelist_id.currency_id.id, wiz.new_pricelist_id.currency_id.name,
             ))
             
         return {'type': 'ir.actions.act_window_close'}

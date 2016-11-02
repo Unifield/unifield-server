@@ -24,8 +24,9 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 
 class report_account_chart_export(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context=None):
-        if not context:
+        if context is None:
             context = {}
+
         super(report_account_chart_export, self).__init__(cr, uid, name, context=context)
 
 SpreadsheetReport('report.account.chart.export','account.account','addons/account_override/report/account_chart_export.mako', parser=report_account_chart_export)

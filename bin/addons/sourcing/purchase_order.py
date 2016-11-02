@@ -51,6 +51,11 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order.'
             string='PO from replenishment rules',
             readonly=True,
         ),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Sourcing group',
+            readonly=True,
+        ),
     }
 
     _defaults = {

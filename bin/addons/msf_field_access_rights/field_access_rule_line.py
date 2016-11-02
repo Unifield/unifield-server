@@ -73,6 +73,8 @@ class field_access_rule_line(osv.osv):
         return super(field_access_rule_line, self).create(cr, uid, values, context=context)
 
     def write(self, cr, uid, ids, values, context={}):
+        if not ids:
+            return True
         values = self._add_field_name_to_values(cr, uid, values, context)
         return super(field_access_rule_line, self).write(cr, uid, ids, values, context=context)
 

@@ -8,7 +8,19 @@
             <field name="arch" type="xml">
                 <search>
                     <field name="name" />
+                    <field name="type" />
                 </search>
+            </field>
+        </record>
+        <record id="entity_group_tree" model="ir.ui.view">
+            <field name="name">sync.client.entity_group.tree</field>
+            <field name="model">sync.client.entity_group</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name" />
+                    <field name="type" />
+                </tree>
             </field>
         </record>
         <record model="ir.ui.view" id="sync_client_instance_temp_search">

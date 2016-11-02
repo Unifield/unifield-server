@@ -76,8 +76,10 @@ class account_move_line(osv.osv):
             ('reconcile_id','=',False),
             ('state', '=', 'valid'),
             ('move_state', '=', 'posted'), # UFTP-204: Exclude the Direct Invoice from the list
-            ('journal_id.type', 'not in', ['migration']),  # US-70 Open the pending payment to receivable and payable entries from all journals except for the migration journal
-            ('account_id.type_for_register', 'not in', ['down_payment', 'advance', ]),
+            # US-70 Open the pending payment to receivable and payable entries from all journals except for the migration journal
+            # US-1378 Also exclude entries booked in Accrual journal
+            ('journal_id.type', 'not in', ['migration', 'accrual']),
+            ('account_id.type_for_register', 'not in', ['down_payment', 'advance', 'donation', ]),
             # UTP-1088 exclude correction/reversal lines as can be in journal of type correction
             ('corrected_line_id', '=', False),  # is a correction line if has a corrected line
             ('reversal_line_id', '=', False),  # is a reversal line if a reversed line
@@ -339,6 +341,8 @@ class account_move_line(osv.osv):
         """
         Add partner_txt to vals.
         """
+        if not ids:
+            return True
         # Some verifications
         if not context:
             context = {}

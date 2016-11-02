@@ -107,7 +107,6 @@
                         <attribute name="colors">red:life_date &lt; current_date</attribute>
                     </xpath>
                     <field name="ref" position="replace">
-                        <field name="partner_name"/>
                         <field name="type" />
                         <field name="life_date" />
                     </field>
@@ -198,7 +197,6 @@
 
                     <field name="name" position="replace">
                         <field name="name" colspan="2" attrs="{'readonly': [('type', '=', 'internal')]}" />
-                        <field name="partner_name" colspan="2" readonly='1'/>
                     </field>
 
                     <field name="date" position="replace">

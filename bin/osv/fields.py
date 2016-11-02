@@ -63,7 +63,10 @@ class _column(object):
     _symbol_set = (_symbol_c, _symbol_f)
     _symbol_get = None
 
-    def __init__(self, string='unknown', required=False, readonly=False, domain=None, context=None, states=None, priority=0, change_default=False, size=None, ondelete="set null", translate=False, select=False, manual=False, **args):
+    def __init__(self, string='unknown', required=False, readonly=False,
+            domain=None, context=None, states=None, priority=0,
+            change_default=False, size=None, ondelete="set null",
+            translate=False, select=False, manual=False, internal=False, **args):
         """
 
         The 'manual' keyword argument specifies if the field is a custom one.
@@ -92,6 +95,7 @@ class _column(object):
         self.select = select
         self.manual = manual
         self.selectable = True
+        self.internal = internal
         self.group_operator = args.get('group_operator', False)
         self.m2o_order = args.get('m2o_order', False)
         for a in args:
@@ -784,12 +788,12 @@ class function(_column):
             self._symbol_f = float._symbol_f
             self._symbol_set = float._symbol_set
 
-        if type == 'boolean':
+        elif type == 'boolean':
             self._symbol_c = boolean._symbol_c
             self._symbol_f = boolean._symbol_f
             self._symbol_set = boolean._symbol_set
 
-        if type in ['integer','integer_big']:
+        elif type in ['integer','integer_big']:
             self._symbol_c = integer._symbol_c
             self._symbol_f = integer._symbol_f
             self._symbol_set = integer._symbol_set
@@ -925,7 +929,8 @@ class related(function):
         else:
             res = {}.fromkeys(ids, False)
 
-        objlst = obj.browse(cr, 1, ids, context=context)
+        objlst = obj.browse(cr, 1, ids, context=context,
+                fields_to_fetch=self.arg)
         for data in objlst:
             if not data:
                 continue
@@ -1069,11 +1074,11 @@ class property(function):
             company = obj.pool.get('res.company')
             cid = company._company_default_get(cr, uid, obj._name, def_id,
                                                context=context)
-            propdef = obj.pool.get('ir.model.fields').browse(cr, uid, def_id,
-                                                             context=context)
+            propdef = obj.pool.get('ir.model.fields').read(cr, uid, def_id,
+                    ['name'], context=context)
             prop = obj.pool.get('ir.property')
             return prop.create(cr, uid, {
-                'name': propdef.name,
+                'name': propdef['name'],
                 'value': id_val,
                 'res_id': obj._name+','+str(id),
                 'company_id': cid,

@@ -88,6 +88,15 @@ class sale_order_line(osv.osv):
 
         return result
 
+    def requested_product_id_change(self, cr, uid, ids, product_id, comment=False, context=None):
+        result = super(sale_order_line, self).requested_product_id_change(cr, uid, ids, product_id, comment, context)
+        if product_id:
+            prod_obj = self.pool.get('product.product')
+            if prod_obj.browse(cr, uid, product_id).is_ssl:
+                warning = {'title': 'Short Shelf Life product', 'message': _(SHORT_SHELF_LIFE_MESS)}
+                result.update(warning=warning)
+        return result
+
 sale_order_line()
 
 
@@ -97,21 +106,26 @@ class sale_order(osv.osv):
     '''
     _inherit = 'sale.order'
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def ssl_products_in_line(self, cr, uid, ids, context=None):
         '''
         display message if contains short shelf life
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
+            if obj.split_type_sale_order != 'original_sale_order' or can_break:
+                break
             for line in obj.order_line:
                 # log the message
                 if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
+                    can_break = True
+                    break
 
-        return super(sale_order, self).write(cr, uid, ids, vals, context=context)
+        return True
 
 sale_order()
 
@@ -178,21 +192,26 @@ class purchase_order(osv.osv):
     '''
     _inherit = 'purchase.order'
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def ssl_products_in_line(self, cr, uid, ids, context=None):
         '''
         display message if contains short shelf life
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        can_break = False
         for obj in self.browse(cr, uid, ids, context=context):
+            if can_break:
+                break
             for line in obj.order_line:
                 # log the message
                 if line.product_id.is_ssl:
                     # log the message
                     self.log(cr, uid, obj.id, _(SHORT_SHELF_LIFE_MESS))
+                    can_break = True
+                    break
 
-        return super(purchase_order, self).write(cr, uid, ids, vals, context=context)
+        return True
 
 purchase_order()
 
@@ -290,6 +309,8 @@ class stock_warehouse_orderpoint(osv.osv):
         '''
         add message
         '''
+        if not ids:
+            return True
         result = super(stock_warehouse_orderpoint, self).write(cr, uid, ids, vals, context=context)
 
         if isinstance(ids, (int, long)):
@@ -362,6 +383,8 @@ class stock_warehouse_orderpoint_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(stock_warehouse_orderpoint_line, self).write(cr, uid, ids,
             vals, context=context)
         self._check_product_qty(cr, uid, ids, context=context)
@@ -539,6 +562,8 @@ class stock_warehouse_automatic_supply(osv.osv):
         '''
         add message
         '''
+        if not ids:
+            return True
         result = super(stock_warehouse_automatic_supply, self).write(cr, uid, ids, vals, context=context)
 
         if isinstance(ids, (int, long)):
@@ -580,6 +605,8 @@ class stock_warehouse_order_cycle(osv.osv):
         '''
         add message
         '''
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -750,40 +777,60 @@ class stock_move(osv.osv):
         '''
         # objects
         kit_obj = self.pool.get('composition.kit')
+
         result = {}
         for id in ids:
             result[id] = {}
             for f in name:
                 result[id].update({f: False})
+        product_ids = set()
+        read_result = self.read(cr, uid, ids, ['product_id', 'prodlot_id'], context=context)
+        for read_dict in read_result:
+            product_ids.add(read_dict['product_id'][0])
 
-        for obj in self.browse(cr, uid, ids, context=context):
+        product_list_dict = self.pool.get('product.product').read(cr, uid,
+                                                             list(product_ids),
+                                                             ['kc_txt',
+                                                              'ssl_txt',
+                                                              'dg_txt',
+                                                              'cs_txt',
+                                                              'batch_management',
+                                                              'perishable',
+                                                              'type',
+                                                              'subtype',],
+                                                             context=context)
+        product_dict = dict([(x['id'], x) for x in product_list_dict])
+
+        for stock_move_dict in read_result:
+            stock_move_id = stock_move_dict['id']
+            product_id = stock_move_dict['product_id'][0]
+            product = product_dict[product_id]
             # keep cool
-            result[obj.id]['kc_check'] = obj.product_id.kc_txt
+            result[stock_move_id]['kc_check'] = product['kc_txt']
             # ssl
-            result[obj.id]['ssl_check'] = obj.product_id.ssl_txt
+            result[stock_move_id]['ssl_check'] = product['ssl_txt']
             # dangerous goods
-            result[obj.id]['dg_check'] = obj.product_id.dg_txt
+            result[stock_move_id]['dg_check'] = product['dg_txt']
             # narcotic
-            result[obj.id]['np_check'] = obj.product_id.cs_txt
+            result[stock_move_id]['np_check'] = product['cs_txt']
             # lot management
-            if obj.product_id.batch_management:
-                result[obj.id]['lot_check'] = True
+            if product['batch_management']:
+                result[stock_move_id]['lot_check'] = True
             # expiry date management
-            if obj.product_id.perishable:
-                result[obj.id]['exp_check'] = True
+            if product['perishable']:
+                result[stock_move_id]['exp_check'] = True
             # contains a kit and allow the creation of a new composition LIst
             # will be false if the kit is batch management and a composition list already uses this batch number
             # only one composition list can  use a given batch number for a given product
-            if obj.product_id.type == 'product' and obj.product_id.subtype == 'kit':
-                if obj.prodlot_id:
+            if product['type'] == 'product' and product['subtype'] == 'kit':
+                if stock_move_dict['prodlot_id']:
                     # search if composition list already use this batch number
-                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', obj.prodlot_id.id)], context=context)
+                    kit_ids = kit_obj.search(cr, uid, [('composition_lot_id', '=', stock_move_dict['prodlot_id'][0])], context=context)
                     if not kit_ids:
-                        result[obj.id]['kit_check'] = True
+                        result[stock_move_id]['kit_check'] = True
                 else:
                     # not batch management, we can create as many composition list as we want
-                    result[obj.id]['kit_check'] = True
-
+                    result[stock_move_id]['kit_check'] = True
         return result
 
     _columns = {
@@ -958,6 +1005,8 @@ class stock_production_lot(osv.osv):
         '''
         update the sequence for the version management
         '''
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
 
@@ -1365,7 +1414,7 @@ class stock_production_lot(osv.osv):
             if not batch.delete_ok:
                 raise osv.except_osv(_('Error'), _('You cannot remove a batch number which has stock !'))
 
-        return super(stock_production_lot, self).unlink(cr, uid, batch.id, context=context)
+        return super(stock_production_lot, self).unlink(cr, uid, ids, context=context)
 
 
 stock_production_lot()
@@ -1655,10 +1704,10 @@ Expiry date. Only one line with same data is expected."""))
         # super function after production lot creation - production lot are therefore taken into account at stock move creation
         result = super(stock_inventory, self).action_confirm(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The %s inventor%s %s ha%s been confirmed' % (
+        self.infolog(cr, uid, 'The %s inventor%s %s (%s) ha%s been confirmed' % (
             self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
             len(ids) > 1 and 'ies' or 'y',
-            ids,
+            ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
             len(ids) > 1 and 've' or 's',
         ))
 
@@ -1667,10 +1716,10 @@ Expiry date. Only one line with same data is expected."""))
     def action_cancel_draft(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_cancel_draft(cr, uid, ids, context=context)
 
-        for inv_id in ids:
-            self.infolog(cr, uid, "The %s inventory id:%s has been re-set to draft" % (
+        for inv in self.read(cr, uid, ids, ['name'], context=context):
+            self.infolog(cr, uid, "The %s inventory id:%s (%s) has been re-set to draft" % (
                 self._name == 'initial.stock.inventory' and 'Initial stock' or 'Physical',
-                inv_id,
+                inv['id'], inv['name'],
             ))
 
         return res
@@ -1678,9 +1727,9 @@ Expiry date. Only one line with same data is expected."""))
     def action_done(self, cr, uid, ids, context=None):
         res = super(stock_inventory, self).action_done(cr, uid, ids, context=context)
 
-        self.infolog(cr, uid, 'The Physical inventor%s %s ha%s been validated' % (
+        self.infolog(cr, uid, 'The Physical inventor%s %s (%s) ha%s been validated' % (
             len(ids) > 1 and 'ies' or 'y',
-            ids,
+            ids, ', '.join(x['name'] for x in self.read(cr, uid, ids, ['name'], context=context)),
             len(ids) > 1 and 've' or 's',
         ))
 
@@ -1885,6 +1934,8 @@ class stock_inventory_line(osv.osv):
         '''
         complete info normally generated by javascript on_change function
         '''
+        if not ids:
+            return True
         prod_obj = self.pool.get('product.product')
         if vals.get('product_id', False):
             # complete hidden flags - needed if not created from GUI

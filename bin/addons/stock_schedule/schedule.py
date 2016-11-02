@@ -136,6 +136,8 @@ class stock_frequence(osv.osv):
         '''
         Check if all required data aren't empty
         '''
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
             

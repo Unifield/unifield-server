@@ -62,6 +62,8 @@ class Country(osv.osv):
                 context=context)
 
     def write(self, cursor, user, ids, vals, context=None):
+        if not ids:
+            return True
         if 'code' in vals:
             vals['code'] = vals['code'].upper()
         return super(Country, self).write(cursor, user, ids, vals,

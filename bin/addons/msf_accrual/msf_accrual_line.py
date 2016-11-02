@@ -174,19 +174,19 @@ class msf_accrual_line(osv.osv):
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long, )):
             ids = [ids]
-
-        if 'document_date' in vals:
-            # US-192 check doc date reagarding post date
-            # => read date field (as readonly in form)
-            for r in self.read(cr, uid, ids, ['date', ], context=context):
-                self.pool.get('finance.tools').check_document_date(cr, uid,
-                    vals['document_date'], r['date'], context=context)
-
         self._create_write_set_vals(cr, uid, vals, context=context)
+        # US-192 check doc date regarding post date
+        current_values = self.read(cr, uid, ids, ['document_date', 'date'], context=context)[0]
+        document_date = 'document_date' in vals and vals['document_date'] or current_values['document_date']
+        posting_date = 'date' in vals and vals['date'] or current_values['date']
+        self.pool.get('finance.tools').check_document_date(cr, uid, document_date, posting_date, context=context)
+
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
     
     def button_cancel(self, cr, uid, ids, context=None):

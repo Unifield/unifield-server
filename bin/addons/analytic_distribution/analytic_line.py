@@ -107,17 +107,22 @@ class analytic_line(osv.osv):
         - commitment_line_id
         """
         # Checks
-        if not context:
+        if context is None:
             context = {}
         # Prepare some values
         res = {}
         period_obj = self.pool.get('account.period')
         for al in self.browse(cr, uid, ids, context):
             res[al.id] = False
-            # UTP-943: Since this ticket, we search period regarding analytic line posting date.
-            period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
-            if period_ids:
-                res[al.id] = period_ids[0]
+            # US-945: Consider IN PRIORITY the new physical real period field
+            # (else keep default behaviour)
+            if al.real_period_id:
+                res[al.id] = al.real_period_id.id
+            else:
+                # UTP-943: Since this ticket, we search period regarding analytic line posting date.
+                period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
+                if period_ids:
+                    res[al.id] = period_ids[0]
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
@@ -136,9 +141,15 @@ class analytic_line(osv.osv):
 
         (US-650) Management of "NOT IN". For example to exclude Jan 2016 and Oct 2015:
         ['&', '|', ('date', '<', '2016-01-01'), ('date', '>', '2016-01-31'), '|', ('date', '<', '2015-10-01'), ('date', '>', '2015-10-31')]
+
+        AFTER US-945:
+        We use the real_period_id.
+        For the old entries this field doesn't exist: we keep using the posting dates.
+        For example to include a Period 13:
+        ['|', ('real_period_id', '=', 13), '&', '&', ('real_period_id', '=', False), ('date', '>=', '2016-12-01'), ('date', '<=', '2016-12-31')]
         """
         # Checks
-        if not context:
+        if context is None:
             context = {}
         if not args:
             return []
@@ -159,10 +170,20 @@ class analytic_line(osv.osv):
                     period = period_obj.browse(cr, uid, [p_id])[0]
                     if arg[1] == 'not in':
                         new_args.append('|')
+                        new_args.append('|')
                         new_args.append(('date', '<', period.date_start))
                         new_args.append(('date', '>', period.date_stop))
-                    else:
                         new_args.append('&')
+                        new_args.append(('real_period_id', '!=', False))
+                        new_args.append(('real_period_id', '!=', p_id))
+                    else:
+                        new_args.append('|')
+                        new_args.append(('real_period_id', '=', p_id))
+                        # or no real period and in period range
+                        # for previous US-945 entries
+                        new_args.append('&')
+                        new_args.append('&')
+                        new_args.append(('real_period_id', '=', False))
                         new_args.append(('date', '>=', period.date_start))
                         new_args.append(('date', '<=', period.date_stop))
         return new_args
@@ -206,6 +227,8 @@ class analytic_line(osv.osv):
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
         'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        # US-945: real physical period wrapper for the period_id calculated field
+        'real_period_id': fields.many2one('account.period', 'Real period', select=1),
     }
 
     _defaults = {

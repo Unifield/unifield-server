@@ -185,74 +185,72 @@ class product_product(osv.osv):
         states = context.get('states',[])
         what = context.get('what',())
         if not ids:
-            ids = self.search(cr, uid, [])
+            ids = self.search(cr, uid, [], order='NO_ORDER')
         res = {}.fromkeys(ids, 0.0)
         if not ids:
             return res
 
-        # TODO: write in more ORM way, less queries, more pg84 magic
+        if not('in' in what or 'out' in what):
+            return res
+        stock_warehouse_obj = self.pool.get('stock.warehouse')
+        stock_location_obj = self.pool.get('stock.location')
         if context.get('shop', False):
-            cr.execute('select warehouse_id from sale_shop where id=%s', (int(context['shop']),))
-            res2 = cr.fetchone()
-            if res2:
-                context['warehouse'] = res2[0]
+            sale_shop_obj = self.pool.get('sale.shop')
+            warehouse_id = sale_shop_obj.read(cr, uid, int(context['shop']),
+                    ['warehouse_id'], context=context)['warehouse_id']
+            if warehouse_id:
+                context['warehouse'] = warehouse_id[0]
 
         if context.get('warehouse', False):
-            cr.execute('select lot_stock_id from stock_warehouse where id=%s', (int(context['warehouse']),))
-            res2 = cr.fetchone()
-            if res2:
-                context['location'] = res2[0]
+            lot_stock_id = stock_warehouse_obj.read(cr, uid, int(context['warehouse']),
+                    ['lot_stock_id'], context=context)['lot_stock_id']
+            if lot_stock_id:
+                context['location'] = lot_stock_id[0]
 
         if context.get('location', False):
             if type(context['location']) == type(1):
                 location_ids = [context['location']]
             elif type(context['location']) in (type(''), type(u'')):
-                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
+                location_ids = stock_location_obj.search(cr, uid,
+                            [('name','ilike',context['location'])],
+                            order='NO_ORDER', context=context)
             else:
                 location_ids = context['location']
         else:
             location_ids = []
-            wids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
-            for w in self.pool.get('stock.warehouse').browse(cr, uid, wids, context=context):
-                location_ids.append(w.lot_stock_id.id)
+            wids = stock_warehouse_obj.search(cr, uid, [], order='NO_ORDER', context=context)
+            for w in stock_warehouse_obj.read(cr, uid, wids, ['lot_stock_id'], context=context):
+                location_ids.append(w['lot_stock_id'][0])
 
         # build the list of ids of children of the location given by id
         if context.get('compute_child',True):
-            child_location_ids = self.pool.get('stock.location').search(cr, uid, [('location_id', 'child_of', location_ids)])
+            child_location_ids = stock_location_obj.search(cr, uid,
+                    [('location_id', 'child_of', location_ids)],
+                    order='NO_ORDER')
             location_ids = child_location_ids or location_ids
-        else:
-            location_ids = location_ids
 
-        uoms_o = {}
-        product2uom = {}
-        for product in self.read(cr, uid, ids, ['uom_id'], context=context):
-            product2uom[product['id']] = product['uom_id'][0]
-            if product['uom_id'][0] not in uoms_o:
-                uoms_o[product['uom_id'][0]] = self.pool.get('product.uom').browse(cr, uid, product['uom_id'][0], context=context)
         results = []
         results2 = []
-
         from_date = context.get('from_date',False)
         to_date = context.get('to_date',False)
         date_str = False
         date_values = False
-        where = [tuple(location_ids),tuple(location_ids),tuple(ids),tuple(states)]
+        where = [tuple(location_ids), tuple(location_ids), tuple(ids), tuple(states)]
         if from_date and to_date:
-            date_str = "date>=%s and date<=%s"
+            date_str = "date>=%s AND date<=%s"
             where.append(tuple([from_date]))
             where.append(tuple([to_date]))
         elif from_date:
             date_str = "date>=%s"
             date_values = [from_date]
+            where.append(tuple(date_values))
         elif to_date:
             date_str = "date<=%s"
             date_values = [to_date]
-
-        prodlot_id = context.get('prodlot_id', False)
-
-    # TODO: perhaps merge in one query.
-        if date_values:
             where.append(tuple(date_values))
+        prodlot_id = context.get('prodlot_id', False)
+        prodlot_id_str = (prodlot_id and (' AND prodlot_id = %s ' % str(prodlot_id)) or '')
+        date_str = date_str and ' AND %s '% date_str or ''
         if 'in' in what:
             # all moves from a location out of the set to a location in the set
             cr.execute(
@@ -261,8 +259,8 @@ class product_product(osv.osv):
                 'where location_id NOT IN %s '\
                 'and location_dest_id IN %s '\
                 'and product_id IN %s '\
-                '' + (prodlot_id and ('and prodlot_id = ' + str(prodlot_id)) or '') + ' '\
-                'and state IN %s ' + (date_str and 'and '+date_str+' ' or '') +' '\
+                '' + prodlot_id_str + ' '\
+                'and state IN %s ' + date_str +' '\
                 'group by product_id,product_uom',tuple(where))
             results = cr.fetchall()
         if 'out' in what:
@@ -273,30 +271,38 @@ class product_product(osv.osv):
                 'where location_id IN %s '\
                 'and location_dest_id NOT IN %s '\
                 'and product_id  IN %s '\
-                '' + (prodlot_id and ('and prodlot_id = ' + str(prodlot_id)) or '') + ' '\
-                'and state in %s ' + (date_str and 'and '+date_str+' ' or '') + ' '\
+                '' + prodlot_id_str + ' '\
+                'and state in %s ' + date_str + ' '\
                 'group by product_id,product_uom',tuple(where))
             results2 = cr.fetchall()
-        uom_obj = self.pool.get('product.uom')
-        uoms = map(lambda x: x[2], results) + map(lambda x: x[2], results2)
-        if context.get('uom', False):
-            uoms += [context['uom']]
 
-        uoms = filter(lambda x: x not in uoms_o.keys(), uoms)
-        if uoms:
-            uoms = uom_obj.browse(cr, uid, list(set(uoms)), context=context)
-            for o in uoms:
-                uoms_o[o.id] = o
-        #TOCHECK: before change uom of product, stock move line are in old uom.
-        context.update({'raise-exception': False})
-        for amount, prod_id, prod_uom in results:
-            amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                     uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
-            res[prod_id] += amount
-        for amount, prod_id, prod_uom in results2:
-            amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
-                    uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
-            res[prod_id] -= amount
+        if results or results2:
+            uoms_o = {}
+            product2uom = {}
+            uom_obj = self.pool.get('product.uom')
+            for product in self.read(cr, uid, ids, ['uom_id'], context=context):
+                product2uom[product['id']] = product['uom_id'][0]
+                if product['uom_id'][0] not in uoms_o:
+                    uoms_o[product['uom_id'][0]] = uom_obj.browse(cr, uid, product['uom_id'][0], context=context)
+            uoms = map(lambda x: x[2], results) + map(lambda x: x[2], results2)
+            if context.get('uom', False):
+                uoms += [context['uom']]
+
+            uoms = filter(lambda x: x not in uoms_o.keys(), uoms)
+            if uoms:
+                uoms = uom_obj.browse(cr, uid, list(set(uoms)), context=context)
+                for o in uoms:
+                    uoms_o[o.id] = o
+            #TOCHECK: before change uom of product, stock move line are in old uom.
+            context.update({'raise-exception': False})
+            for amount, prod_id, prod_uom in results:
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+                res[prod_id] += amount
+            for amount, prod_id, prod_uom in results2:
+                amount = uom_obj._compute_qty_obj(cr, uid, uoms_o[prod_uom], amount,
+                         uoms_o[context.get('uom', False) or product2uom[prod_id]], context=context)
+                res[prod_id] -= amount
         return res
 
     def _product_available(self, cr, uid, ids, field_names=None, arg=False, context=None):
@@ -314,15 +320,16 @@ class product_product(osv.osv):
             c = context.copy()
             if f == 'qty_available':
                 c.update({ 'states': ('done',), 'what': ('in', 'out') })
-            if f == 'virtual_available':
+            elif f == 'virtual_available':
                 c.update({ 'states': ('confirmed','waiting','assigned','done'), 'what': ('in', 'out') })
-            if f == 'incoming_qty':
+            elif f == 'incoming_qty':
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('in',) })
-            if f == 'outgoing_qty':
+            elif f == 'outgoing_qty':
                 c.update({ 'states': ('confirmed','waiting','assigned'), 'what': ('out',) })
             stock = self.get_product_available(cr, uid, ids, context=c)
-            for id in ids:
-                res[id][f] = stock.get(id, 0.0)
+            if any(stock.values()):
+                for id in ids:
+                    res[id][f] = stock.get(id, 0.0)
         return res
 
     _columns = {
@@ -350,38 +357,39 @@ class product_product(osv.osv):
         if context is None:
             context = {}
         if ('location' in context) and context['location'] and type(context['location']) == type(1):
-            location_info = self.pool.get('stock.location').browse(cr, uid, context['location'])
+            location_info = self.pool.get('stock.location').read(cr, uid,
+                    context['location'], ['usage'])
             fields=res.get('fields',{})
             if fields:
-                if location_info.usage == 'supplier':
+                if location_info['usage'] == 'supplier':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Receptions')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Received Qty')
 
-                if location_info.usage == 'internal':
+                elif location_info['usage'] == 'internal':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Stock')
 
-                if location_info.usage == 'customer':
+                elif location_info['usage'] == 'customer':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Deliveries')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Delivered Qty')
 
-                if location_info.usage == 'inventory':
+                elif location_info['usage'] == 'inventory':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future P&L')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('P&L Qty')
 
-                if location_info.usage == 'procurement':
+                elif location_info['usage'] == 'procurement':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Qty')
                     if fields.get('qty_available'):
                         res['fields']['qty_available']['string'] = _('Unplanned Qty')
 
-                if location_info.usage == 'production':
+                elif location_info['usage'] == 'production':
                     if fields.get('virtual_available'):
                         res['fields']['virtual_available']['string'] = _('Future Productions')
                     if fields.get('qty_available'):

@@ -135,6 +135,8 @@ class payment_order(osv.osv):
         return super(payment_order, self).copy(cr, uid, id, default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         payment_line_obj = self.pool.get('payment.line')

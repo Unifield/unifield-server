@@ -851,7 +851,9 @@ class claim_event(osv.osv):
                           'purchase_id': origin_picking.purchase_id.id,
                           'sale_id': origin_picking.sale_id.id,
                           'reason_type_id': context['common']['rt_goods_return'],
-                          'invoice_state': '2binvoiced'}
+                          'invoice_state': '2binvoiced',
+                          'claim': True,
+                          }
         move_values = {'reason_type_id': context['common']['rt_goods_return']}
         if claim_type == 'supplier':
             picking_values.update({'type': 'out'})
@@ -1012,6 +1014,7 @@ class claim_event(osv.osv):
                     'order_category': claim.category_return_claim,
                     'purchase_id': claim.picking_id_return_claim.purchase_id.id,
                     'reason_type_id': context['common']['rt_internal_supply'],
+                    'claim': True,
                 }
 
                 new_event_picking_id = pick_obj.create(cr, uid, event_picking_values, context=context)
@@ -1286,6 +1289,8 @@ class claim_product_line(osv.osv):
         set the name
         '''
         # common check
+        if not ids:
+            return True
         self._orm_checks(cr, uid, vals, context=context)
         return super(claim_product_line, self).write(cr, uid, ids, vals, context=context)
 

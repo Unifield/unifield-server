@@ -220,15 +220,24 @@ class account_move_line(osv.osv):
         if not args:
             return []
 
+        # US-1031: consider reconciled only if full reconcile.
+        # but kept _get_is_reconciled() behaviour: reconciled if full or partial for no firther impact
         if args[0][2] and args[0][2] == True:
-            return ['|', ('reconcile_partial_id', '!=', False), ('reconcile_id', '!=', False)]
+            return [ ('reconcile_id', '!=', False), ]
         elif args[0] and args[0][2] in [False, 0]:
             # Add account_id.reconcile in #BKLG-70
-            return [('reconcile_id', '=', False),
-                    ('account_id.reconcile', '!=', False)
-                    ]
+            return [
+                ('account_id.reconcile', '!=', False),
+                '|',
+                ('reconcile_id', '=', False),
+                ('reconcile_partial_id', '!=', False),    
+            ]
 
         return []
+
+    def _init_status_move(self, cr, ids, *a, **b):
+        cr.execute('update account_move_line l set status_move = (select status from account_move m where m.id = l.move_id)')
+
 
     _columns = {
         'source_date': fields.date('Source date', help="Date used for FX rate re-evaluation"),
@@ -271,6 +280,7 @@ class account_move_line(osv.osv):
             help="This link implies this line come from the total of an invoice, directly from partner account.", ondelete="cascade"),
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
             help="Invoice line which have produced this line.", ondelete="cascade"),
+        'status_move': fields.related('move_id', 'status', type='char', readonly=True, size=128, store=True, write_relate=False, string="JE status", _fnct_migrate=_init_status_move),
     }
 
     _defaults = {
@@ -310,10 +320,11 @@ class account_move_line(osv.osv):
             return 0.0
         # Create an sql query
         sql =  """
-            SELECT SUM(debit - credit)
+            SELECT SUM(COALESCE(debit,0) - COALESCE(credit,0))
             FROM account_move_line
             WHERE id in %s
         """
+
         cr.execute(sql, (tuple(ids),))
         res = cr.fetchall()
         if isinstance(ids, list):
@@ -443,6 +454,8 @@ class account_move_line(osv.osv):
         """
         Check document_date and date validity
         """
+        if not ids:
+            return True
         if not context:
             context = {}
         if context.get('from_web_menu', False):
@@ -482,6 +495,19 @@ class account_move_line(osv.osv):
             args.append(('move_state', '=', context.get('move_state')))
         return super(account_move_line, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
+
+    def copy(self, cr, uid, aml_id, default=None, context=None):
+        """
+        When duplicate a JI, don't copy the link to register lines
+        """
+        if context is None:
+            context = {}
+        if default is None:
+            default = {}
+        default.update({
+            'imported_invoice_line_ids': [],
+        })
+        return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
     def button_duplicate(self, cr, uid, ids, context=None):
         """
