@@ -102,9 +102,9 @@ HEADER_DICT = {
 
 GET_EXPORT_REQUEST = '''SELECT
         l.product_id AS product_id,
-        replace(l.default_code, '%%', '%%%%') as default_code,
-        replace(pt.name, '%%', '%%%%') as pt_name,
-        replace(pu.name, '%%', '%%%%') as pu_name,
+        l.default_code as default_code,
+        pt.name as pt_name,
+        pu.name as pu_name,
         trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
         trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
         trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
@@ -116,7 +116,7 @@ GET_EXPORT_REQUEST = '''SELECT
         trim(to_char(l.cross_qty, '999999999999.999')) as l_cross_qty,
         trim(to_char(l.cu_qty, '999999999999.999')) as l_cu_qty,
         trim(to_char(pt.standard_price, '999999999999.999')) as pt_standard_price,
-        replace(rc.name, '%%', '%%%%') as rc_name,
+        rc.name as rc_name,
         trim(to_char((l.internal_qty * pt.standard_price), '999999999999.999')) as l_internal_qty_pt_price
     FROM stock_mission_report_line l
          LEFT JOIN product_product pp ON l.product_id = pp.id
