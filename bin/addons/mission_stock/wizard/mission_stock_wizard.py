@@ -90,8 +90,8 @@ class mission_stock_wizard(osv.osv_memory):
     }
 
     _defaults = {
-        'with_valuation': lambda *a: 'false',
-        'split_stock': lambda *a: 'false',
+        'with_valuation': lambda *a: 'true',
+        'split_stock': lambda *a: 'true',
         'fname': lambda *a: 'Mission stock report',
         'processed_value': lambda *a: _('Not started'),
     }
