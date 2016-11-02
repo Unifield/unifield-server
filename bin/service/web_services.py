@@ -65,8 +65,6 @@ class db(netsvc.ExportService):
         self.id = 0
         self.id_protect = threading.Semaphore()
 
-        self._pg_psw_env_var_is_set = False # on win32, pg_dump need the PGPASSWORD env var
-
     def dispatch(self, method, auth, params):
         if method == 'drop':
             passwd = params[0]
@@ -212,13 +210,12 @@ class db(netsvc.ExportService):
         return True
 
     def _set_pg_psw_env_var(self):
-        if os.name == 'nt' and not os.environ.get('PGPASSWORD', ''):
+        if tools.config['db_password']:
             os.environ['PGPASSWORD'] = tools.config['db_password']
-            self._pg_psw_env_var_is_set = True
 
     def _unset_pg_psw_env_var(self):
-        if os.name == 'nt' and self._pg_psw_env_var_is_set:
-            os.environ['PGPASSWORD'] = ''
+        if 'PGPASSWORD' in os.environ:
+            del os.environ['PGPASSWORD']
 
     def exp_dump_file(self, db_name):
         # get a tempfilename

@@ -33,10 +33,10 @@ class message(osv.osv):
     _columns = {
         'identifier': fields.char('Identifier', size=128, select=True),
         'sent': fields.boolean('Sent to destination ?', select=True),
-        'remote_call': fields.text('Method to call', required = True),
+        'remote_call': fields.text('Method to call', select=True, required=True),
         'arguments': fields.text('Arguments of the method', required = True),
         'destination': fields.many2one('sync.server.entity', string="Destination Instance", select=True),
-        'source': fields.many2one('sync.server.entity', string="Source Instance"),
+        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True),
         'sequence': fields.integer('Sequence', required=True, select=True),
     }
 
