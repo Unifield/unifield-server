@@ -16,7 +16,7 @@ account_journal j
 where
 m.period_id = p.id and
 l.move_id = m.id and
-l.state='valid' and
+m.state='posted' and
 m.journal_id = j.id and
 j.type != 'system'
 group by p.name, m.name, l.move_id, p.date_start
@@ -34,7 +34,7 @@ account_journal j
 where
 m.period_id = p.id and
 l.move_id = m.id and
-l.state='valid' and
+m.state='posted' and
 m.journal_id = j.id and
 j.type != 'system'
 group by p.name, m.name, l.move_id, p.date_start
