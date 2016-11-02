@@ -343,6 +343,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 pol_id = wl_brw.rfq_line_id and wl_brw.rfq_line_id.id or False
                 tl_obj.write(cr, uid, [wl_brw.tender_line_id.id], {
                     'purchase_order_line_id': pol_id,
+                    'comment': wl_brw.rfq_line_id.comment or '',
                 }, context=context)
 
             # UF-733: if all tender lines have been compared (have PO Line id),

@@ -338,6 +338,7 @@ class stock_picking(osv.osv):
                     ln = data.get('line_number')
                     # UF-2148: if the line contains 0 qty, just ignore it!
                     qty = data.get('quantity', 0)
+                    comment = data.get('comment', False)
                     if qty == 0:
                         message = "Line number " + str(ln) + " with quantity 0 is ignored!"
                         self._logger.info(message)
