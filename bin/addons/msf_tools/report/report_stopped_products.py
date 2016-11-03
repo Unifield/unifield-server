@@ -202,7 +202,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         smrl_ids = smrl_obj.search(self.cr, self.uid, [('product_id', '=', product_id)], context=self.localcontext)
 
         res = [smrl for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext) if \
-                not smrl.mission_report_id.full_view and smrl.internal_qty != 0 or smrl.in_pipe_qty != 0]
+                not smrl.full_view and (smrl.internal_qty != 0 or smrl.in_pipe_qty != 0)]
 
         return res
 
