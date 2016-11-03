@@ -76,7 +76,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
 
     def create(self, cr, uid, ids, data, context=None):
         """
-        Create a kind of report and return its content.
+        Create a report and return its content.
         The content is composed of:
          - reconcilable lines
         """

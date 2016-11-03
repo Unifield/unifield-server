@@ -67,10 +67,10 @@ class finance_archive(finance_export.finance_archive):
                     # REV entries
                     od_hq_entry = True
                 if od_hq_entry:
-                        line_list[instance_code] = 'SIEG'
-                        # for the 3 characters of the journal name taken from the 10th character of the description field:
-                        # exclude the "COR1 - " or "REV - " part
-                        line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
+                    line_list[instance_code] = 'SIEG'
+                    # for the 3 characters of the journal name taken from the 10th character of the description field:
+                    # exclude the "COR1 - " or "REV - " part
+                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -138,7 +138,7 @@ class finance_archive(finance_export.finance_archive):
         ##### WARNING #####
         ### THIS CALLS THE METHOD FROM OCB ###
         Handle of the consolidate entries:
-        aggregate all lines that are on an account where "Shrink entries for HQ export" is checked
+        aggregate the lines that are on an account where "Shrink entries for HQ export" is checked
         """
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
         return finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
@@ -150,7 +150,7 @@ class hq_report_ocp(report_sxw.report_sxw):
 
     def create(self, cr, uid, ids, data, context=None):
         """
-        Create a kind of report and return its content.
+        Create a report and return its content.
         The content is composed of:
          - Raw data (a kind of synthesis of funding pool analytic lines)
         """
@@ -304,7 +304,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 """,
         }
         if plresult_ji_in_ids:
-            # NOTE: for these entries: booking and functional ccy are same
+            # NOTE: for these entries: booking and functional ccy are the same
             ''' columns
                 'DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description',
                 'Reference', 'Document date', 'Posting date', 'G/L Account',
