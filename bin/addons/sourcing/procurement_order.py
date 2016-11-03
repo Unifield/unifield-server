@@ -124,6 +124,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
                 line.update({'price_unit': procurement.price_unit})
 
+            if procurement.tender_line_id and procurement.tender_line_id.comment:
+                line['comment'] = procurement.tender_line_id
+
         if not line.get('price_unit', False):
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
             if 'pricelist' in kwargs:

@@ -1599,13 +1599,14 @@ class procurement_order(osv.osv):
         # give the purchase order line a link to corresponding procurement
         procurement = kwargs['procurement']
         line.update({'procurement_id': procurement.id, })
+
         # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
         sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
             if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
-                             'comment': sol.comment,
+                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment,
                              'product_qty': sol.product_uom_qty,
                              'price_unit': sol.price_unit,
                              'date_planned': sol.date_planned,
@@ -1620,6 +1621,10 @@ class procurement_order(osv.osv):
                              'nomen_sub_3': sol.nomen_sub_3.id or False,
                              'nomen_sub_4': sol.nomen_sub_4.id or False,
                              'nomen_sub_5': sol.nomen_sub_5.id or False})
+
+        if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id and procurement.tender_line_id.purchase_order_line_id.comment:
+            line['comment'] = procurement.tender_line_id.purchase_order_line_id.comment
+
         return line
 
 procurement_order()
