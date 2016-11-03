@@ -50,6 +50,7 @@ class finance_archive(finance_export.finance_archive):
         date_stop = 15
         for line in data:
             line_list = list(line)
+            entry_kept = False
             if line_list[reconcile_id_col]:
                 reconcile_id = line_list[reconcile_id_col]
                 # get the JI with the same reconcile_id
@@ -57,16 +58,17 @@ class finance_archive(finance_export.finance_archive):
                 # check that they all have a posting date within or before the selected period
                 nb_aml = aml_obj.search(cr, uid, [('id', 'in', aml_list), ('date', '<=', line_list[date_stop])], count=True)
                 if nb_aml and nb_aml == len(aml_list):
-                    # if the entry is kept, delete the date_stop (not used)
-                    line_list[date_stop] = ''
-                    new_data.append(tuple(line_list))
+                    entry_kept = True
             else:
                 # unreconciled entries are kept
-                line_list[date_stop] = ''
+                entry_kept = True
+            if entry_kept:
+                # if the entry is kept, delete the columns not used anymore (in particular date_stop)
+                line_list = column_deletion and self.delete_x_column(line_list, column_deletion)
                 new_data.append(tuple(line_list))
         # call the method from OCB (replace the 15th column by its reconcile name)
         finance_archive_ocb = hq_report_ocb_matching.finance_archive(self.sqlrequests, self.processrequests)
-        return finance_archive_ocb.postprocess_reconciliable(cr, uid, new_data, model, column_deletion)
+        return finance_archive_ocb.postprocess_reconciliable(cr, uid, new_data, model)
 
 
 class hq_report_ocp_matching(report_sxw.report_sxw):
@@ -145,6 +147,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 'query_params': (date_stop, tuple(excluded_journal_types), tuple(instance_ids), date_stop, date_start, date_stop, date_start),
                 'function': 'postprocess_reconciliable',
                 'fnct_params': 'account.move.line',
+                'delete_columns': [15],
                 },
         ]
         # Launch finance archive object
