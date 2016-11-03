@@ -37,6 +37,8 @@ class account_move_line(osv.osv):
             help="Date of reconciliation"),
         'unreconcile_date': fields.date('Unreconciliation date',
             help="Date of unreconciliation"),
+        'unreconcile_txt': fields.text(string='Unreconcile number', required=False, readonly=True,
+                                       help="Store the old reconcile number when the entry has been unreconciled"),
     }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
@@ -178,6 +180,7 @@ class account_move_line(osv.osv):
         self.pool.get('account.move.line').write(cr, uid, merges+unmerge, {
                 'reconcile_date': time.strftime('%Y-%m-%d'),
                 'unreconcile_date': False,
+                'unreconcile_txt': '',
             })
 
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
@@ -292,7 +295,7 @@ class account_move_line(osv.osv):
         # bypass orm methods: for specific lines:
         #  - US-1766 FXA AJI should not be recomputed
         #  - US-1682 yealry REV JI have a dedicated rate
-        cr.execute('update account_move_line set reconcile_date=%s, unreconcile_date=NULL where id in %s',
+        cr.execute("UPDATE account_move_line SET reconcile_date=%s, unreconcile_date=NULL, unreconcile_txt='' WHERE id IN %s",
             (time.strftime('%Y-%m-%d'), tuple(ids))
         )
 
