@@ -34,6 +34,7 @@ from tools.translate import _
 class export_report_stopped_products(osv.osv):
 
     _name = 'export.report.stopped.products'
+    _order = 'name desc'
 
     _columns = {
         'name': fields.datetime(string='Generated On', readonly=True),
@@ -57,11 +58,13 @@ class export_report_stopped_products(osv.osv):
         Method is called by button on XML view (form)
         '''
         prod_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
 
         res = {}
         for report in self.browse(cr, uid, ids, context=context):
             # get ids of all non-local products :
-            product_ids = prod_obj.search(cr, uid, [('international_status', '!=', 4)], context=context)
+            status_local_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+            product_ids = prod_obj.search(cr, uid, [('international_status', '!=', status_local_id)], context=context)
             if not product_ids:
                 continue
 
@@ -90,6 +93,13 @@ class export_report_stopped_products(osv.osv):
                 'context': context,
                 'target': 'same',
             }
+
+            if new_thread.isAlive():
+                view_id = data_obj.get_object_reference(
+                    cr, uid,
+                    'msf_tools',
+                    'report_stopped_products_info_view')[1]
+                res['view_id'] = [view_id]
 
         if not res:
             raise osv.except_osv(
@@ -165,14 +175,21 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
             'get_uf_status': self.get_uf_status,
         })
 
+        self.status_buffer = {}
+
 
     def get_uf_stopped_products(self):
         '''
         Return browse record list that contains stopped and non-local products
         '''
         prod_obj = self.pool.get('product.product')
-        stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', 3), ('international_status', '!=', 4)], 
-            order='default_code', context=self.localcontext)
+        data_obj = self.pool.get('ir.model.data')
+
+        stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
+        status_local_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_4')[1]
+
+        stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', stopped_state_id), 
+            ('international_status', '!=', status_local_id)], order='default_code', context=self.localcontext)
         
         return prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext)
 
@@ -194,12 +211,17 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         '''
         Return the name of the unifield status with the given code
         '''
+        if code in self.status_buffer:
+            return self.status_buffer[code]
+
         status_obj = self.pool.get('product.status')
         code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
         res = ""
         if code_ids:
             res = status_obj.read(self.cr, self.uid, code_ids, ['name'])[0]['name']
-            
+
+        self.status_buffer[code] = res
+
         return res
 
 
