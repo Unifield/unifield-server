@@ -437,6 +437,7 @@ class res_partner(osv.osv):
         instance_name_list = [x['name'] for x in instance_result if x['name']]
 
         section_mission_ids = self.search(cr, uid, [
+            ('id', 'not in', ids),
             ('active', 'in', ('t', 'f')),
             ('partner_type', 'in', ('section', 'intermission'))], context=context)
         read_result = self.read(cr, uid, section_mission_ids, ['name'], context=context)
