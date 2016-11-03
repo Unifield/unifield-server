@@ -37,6 +37,7 @@ from tools.translate import _
 # Addons imports
 from msf_order_date import TRANSPORT_TYPE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from xml.parsers.expat import ExpatError
 
 
 NB_OF_HEADER_LINES = 20
@@ -344,9 +345,13 @@ class wizard_import_po_simulation_screen(osv.osv):
                     raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
             else:
                 xml_file = base64.decodestring(wiz.file_to_import)
-                root = ET.fromstring(xml_file)
-                if root.tag != 'data':
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+                try:
+                    root = ET.fromstring(xml_file)
+                    if root.tag != 'data':
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
+                except ExpatError as e:
+                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file :\n %s') % e)
+
 
         self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
         cr.commit()
