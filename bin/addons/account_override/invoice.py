@@ -286,9 +286,8 @@ class account_invoice(osv.osv):
 
     def onchange_partner_id(self, cr, uid, ids, ctype, partner_id, date_invoice=False, payment_term=False, partner_bank_id=False,
                             company_id=False, is_inkind_donation=False, is_intermission=False, is_debit_note=False, is_direct_invoice=False,
-                            fake_account_id=False):
+                            account_id=False):
         """
-        Update account_id regarding fake_account_id value.
         Get default donation account for Donation invoices.
         Get default intermission account for Intermission Voucher IN/OUT invoices.
         Get default currency from partner if this one is linked to a pricelist.
@@ -300,16 +299,16 @@ class account_invoice(osv.osv):
             account_id = partner and partner.donation_payable_account and partner.donation_payable_account.id or False
             res['value']['account_id'] = account_id
         if is_intermission and partner_id:
-            if fake_account_id:
-                res['value']['account_id'] = fake_account_id
+            if account_id:
+                # if the account_id field is filled in: keep its value
+                res['value']['account_id'] = account_id
             else:
+                # else: use its default value
                 intermission_default_account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
                 account_id = intermission_default_account and intermission_default_account.id or False
                 if not account_id:
                     raise osv.except_osv(_('Error'), _('Please configure a default intermission account in Company configuration.'))
                 res['value']['account_id'] = account_id
-        if res.get('value', False) and 'account_id' in res['value']:
-            res['value'].update({'fake_account_id': res['value'].get('account_id')})
         if partner_id and ctype:
             p = self.pool.get('res.partner').browse(cr, uid, partner_id)
             ai_direct_invoice = False
@@ -330,7 +329,7 @@ class account_invoice(osv.osv):
                         res['value'].update({'currency_id': c_id})
         # UFTP-168: If debit note, set account to False value
         if is_debit_note:
-            res['value'].update({'account_id': False, 'fake_account_id': False})
+            res['value'].update({'account_id': False})
         return res
 
     def _check_document_date(self, cr, uid, ids):
@@ -445,7 +444,7 @@ class account_invoice(osv.osv):
 
     def default_get(self, cr, uid, fields, context=None):
         """
-        Fill in fake account and fake currency for intermission invoice (in context).
+        Fill in fake currency for intermission invoice (in context).
         """
         defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
         if context and context.get('is_intermission', False):
@@ -462,8 +461,7 @@ class account_invoice(osv.osv):
                         defaults['currency_id'] = defaults['fake_currency_id']
                     # get 'intermission counter part' account
                     if user[0].company_id.intermission_default_counterpart:
-                        defaults['fake_account_id'] = user[0].company_id.intermission_default_counterpart.id
-                        defaults['account_id'] = defaults['fake_account_id']
+                        defaults['account_id'] = user[0].company_id.intermission_default_counterpart.id
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
                 # 'INT' intermission journal
