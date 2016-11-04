@@ -24,7 +24,35 @@ import logging
 import threading
 from histogram import Histogram
 
-class operations_event(osv.osv):
+class ratelimit():
+    ''' A mix-in class to implement rate limiting. '''
+    MAX = 10000
+
+    def _rate_limit(self, cr, uid, context=None):
+        """ If this returns False, then the current create should
+        be aborted."""
+        if self._rl == 0:
+            return False
+
+        self._rl -= 1
+        if self._rl > 0:
+            return True
+
+        vals = { 'kind': 'rate-limit',
+                 'data': 'No more %s will be logged until next purge.' % self._rl_name
+                 }
+        # Do not call self.create, because it calls us -> loop.
+        osv.osv.create(self, cr, uid, vals, context=context)
+        return False
+
+    def create(self, cr, uid, vals, context=None):
+        if self._rate_limit(cr, uid, context):
+            return osv.osv.create(self, cr, uid, vals, context=context)
+        else:
+            # Writes not allowed right now.
+            return None
+
+class operations_event(osv.osv, ratelimit):
     """Operational events are things that happen while Unifield is running
     that we would like to have recorded so that we can
     investigate/summarize via queries on non-production
@@ -37,6 +65,17 @@ class operations_event(osv.osv):
     _name = 'operations.event'
     _rec_name = 'time'
     _order = 'time desc'
+
+    def __init__(self, pool, cr):
+        osv.osv.__init__(self, pool, cr)
+
+        self._rl_name = 'events'
+        self._rl_max = ratelimit.MAX
+        self._rl = self._rl_max
+
+    def create(self, cr, uid, vals, context=None):
+        """Override create in order to respect the rate limit."""
+        ratelimit.create(self, cr, uid, vals, context=context)
 
     def _shorten(self, x):
         if not isinstance(x, basestring):
@@ -95,10 +134,11 @@ class operations_event(osv.osv):
         """
         self._logger.info("Operations event purge: keep %s" % keep)
         cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
+        self._rl = self._rl_max
 
 operations_event()
 
-class operations_count(osv.osv):
+class operations_count(osv.osv, ratelimit):
     """Operational counts are gathered in memory at runtime
     and then periodically flushed to the database.
     """
@@ -128,11 +168,21 @@ class operations_count(osv.osv):
             self._instance = "unknown"
         else:
             self._instance = i
+        self.lock = threading.Lock()
+
+        self._rl_name = 'counts'
+        self._rl_max = ratelimit.MAX
+        self._rl = self._rl_max
+
         self.histogram = {}
         # Watch OpenERP method calls from 0 to 2 seconds
         self.histogram['netsvc'] = Histogram( buckets=20, range=2, name='netsvc')
         # Watch SQL queries with auto-range
         self.histogram['sql'] = Histogram( buckets=20, name='sql')
+
+    def create(self, cr, uid, vals, context=None):
+        """Override create in order to respect the rate limit."""
+        ratelimit.create(self, cr, uid, vals, context=context)
 
     def increment(self, kind, count=1):
         with self.lock:
@@ -175,5 +225,6 @@ class operations_count(osv.osv):
         """
         self._logger.info("Operations count purge: keep %s" % keep)
         cr.execute("delete from operations_count WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
+        self._rl = self._rl_max
 
 operations_count()

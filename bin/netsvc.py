@@ -283,7 +283,7 @@ def init_logger():
     # add a handler to copy log messages into the operations.events table
     oeh = OpsEventsHandler()
     oeh.setFormatter(DBFormatter(format))
-    oeh.setLevel(logging.WARNING)
+    oeh.setLevel(logging.ERROR)
     logger.addHandler(oeh)
 
     logger.setLevel(int(tools.config['log_level'] or '0'))
@@ -558,7 +558,7 @@ class OpenERPDispatcher:
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
             # For service 'db', param[0] is not a dbname, so just skip it.
-            if service_name == 'db':
+            if service_name != 'db':
                 ops_event(params[0], 'traceback', tb_s, params[1])
             if tools.config['debug_mode']:
                 import pdb
