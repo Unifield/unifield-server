@@ -1297,9 +1297,10 @@ class product_attributes(osv.osv):
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_id', 'in', ids), ('full_view', '=', False)], context=context)
             prod_state = False
             if vals['state']:
-                if isinstance(vals['state'], (int, long)):
-                    vals['state'] = [vals['state']]
-                prod_state = prod_status_obj.read(cr, uid, vals['state'], ['code'], context=context)[0]['code']
+                state_id = vals['state']
+                if isinstance(state_id, (int, long)):
+                    state_id = [state_id]
+                prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
             smrl_obj.write(cr, uid, local_smrl_ids, {'product_state': prod_state}, context=context)
                 
         product_uom_categ = []
