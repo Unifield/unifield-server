@@ -86,6 +86,8 @@ class stock_partial_move_memory_out(osv.osv_memory):
         '''
         change the function name to do_incoming_shipment
         '''
+        if context is None:
+            context = {}
         result = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
             root = etree.fromstring(result['arch'])
