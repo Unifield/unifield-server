@@ -89,6 +89,11 @@ class view(osv.osv):
         (_check_xml, 'Invalid XML for View Architecture!', ['arch'])
     ]
 
+    _sql_constraints = [
+        ('unique_view', 'unique(priority, inherit_id, model)',
+            'View with this model, inherit_id and priority already exists!'),
+    ]
+
     def _auto_init(self, cr, context=None):
         super(view, self)._auto_init(cr, context)
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'ir_ui_view_model_type_inherit_id\'')
