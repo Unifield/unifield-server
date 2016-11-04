@@ -44,7 +44,7 @@ import pooler
 
 import functools
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import updater
 
 MAX_EXECUTED_UPDATES = 500
@@ -1169,12 +1169,12 @@ class Connection(osv.osv):
             # case 1: the from date is in the past
             # ex. it is 3h, from_date=19h, to_date=7h
             if from_date > now:
-                from_date = datetime(now.year, now.month, now.day - 1, hour_from, min_from)
+                from_date = from_date - timedelta(days=1)
 
             # case 2: the to_date is in the future
             # ex. it is 20h, from_date=19h, to_date=7h
             elif now > to_date:
-                to_date = datetime(now.year, now.month, now.day + 1, hour_to, min_to)
+                to_date = to_date + timedelta(days=1)
 
         return now > from_date and now < to_date
 
