@@ -25,19 +25,23 @@ import pooler
 import base64
 import time
 import xml.etree.ElementTree as ET
+from lxml import etree
+from lxml.etree import XMLSyntaxError
 import logging
+import os
 
 from mx import DateTime
+
 
 # Server imports
 from osv import osv
 from osv import fields
 from tools.translate import _
+import tools
 
 # Addons imports
 from msf_order_date import TRANSPORT_TYPE
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from xml.parsers.expat import ExpatError
 
 
 NB_OF_HEADER_LINES = 20
@@ -344,13 +348,28 @@ class wizard_import_po_simulation_screen(osv.osv):
                 if not excel_file.getWorksheets():
                     raise osv.except_osv(_('Error'), _('The given file is not a valid Excel 2003 Spreadsheet file !'))
             else:
-                xml_file = base64.decodestring(wiz.file_to_import)
                 try:
-                    root = ET.fromstring(xml_file)
-                    if root.tag != 'data':
-                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !'))
-                except ExpatError as e:
-                        raise osv.except_osv(_('Error'), _('The given file is not a valid XML file :\n %s') % e)
+                    xml_file = base64.decodestring(wiz.file_to_import)
+                    dtd_path = os.path.join(tools.config['root_path'], 'tools/import_po.dtd')
+                    dtd = etree.DTD(dtd_path)
+                    tree = etree.fromstring(xml_file)
+                except XMLSyntaxError as ex:
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !\nTechnical details:\n%s') % str(ex))
+
+                if not dtd.validate(tree):
+                    # build error message:
+                    error_msg = ""
+                    for line_obj in dtd.error_log.filter_from_errors():
+                        line = str(line_obj)
+                        err_line = line.split(':')[1]
+                        err_str = line.split(':')[-1]
+                        err_type = line.split(':')[5]
+                        if err_type != 'DTD_UNKNOWN_ELEM':
+                            continue
+                        error_msg += "Line %s: The tag '%s' is not supported\n" % (err_line, err_str.split()[-1])
+
+                    raise osv.except_osv(_('Error'), _("The given XML file is not structured as expected in the DTD:\n %s") % error_msg)
+
 
 
         self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
