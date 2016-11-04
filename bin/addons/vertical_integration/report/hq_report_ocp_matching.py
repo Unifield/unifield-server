@@ -38,9 +38,15 @@ class finance_archive(finance_export.finance_archive):
         """
         ##### WARNING #####
         ### THIS CALLS THE METHOD FROM OCB ###
-        - For the reconciled entries: check that all the legs have a posting date within or before the selected period
-          (otherwise: don't keep any of the legs for the report)
-        - Replace 15th column by its reconcile name.
+        - For the reconciled entries:
+            - check that all the legs have a posting date within or before the selected period
+            - otherwise: don't keep any of the legs for the report
+            - (note that the partial reconciliations are already excluded from the list)
+        - For the unreconciled entries, check the old reconciliation:
+            - all legs must have a posting date within or before the selected period
+            - the old reconciliation must have been total
+            - otherwise: don't keep any of the legs for the report
+        - (OCB method) Replace 15th column by its reconcile name.
         """
         new_data = []
         pool = pooler.get_pool(cr.dbname)
@@ -48,10 +54,12 @@ class finance_archive(finance_export.finance_archive):
         # column numbers corresponding to properties
         reconcile_id_col = 14
         date_stop = 15
+        unreconcile_txt_col = 16
         for line in data:
             line_list = list(line)
             entry_kept = False
             if line_list[reconcile_id_col]:
+                # reconciled entries
                 reconcile_id = line_list[reconcile_id_col]
                 # get the JI with the same reconcile_id
                 aml_list = aml_obj.search(cr, uid, [('reconcile_id', '=', reconcile_id)])
@@ -60,10 +68,23 @@ class finance_archive(finance_export.finance_archive):
                 if nb_aml and nb_aml == len(aml_list):
                     entry_kept = True
             else:
-                # unreconciled entries are kept
-                entry_kept = True
+                # unreconciled entries
+                unreconcile_txt = line_list[unreconcile_txt_col]
+                # get the JI with the same unreconcile_txt (old reconcile number)
+                unreconciled_aml_list = aml_obj.search(cr, uid, [('unreconcile_txt', '=', unreconcile_txt)])
+                # check that they all have a posting date within or before the selected period
+                nb_unreconciled_aml = aml_obj.search(cr, uid, [('id', 'in', unreconciled_aml_list), ('date', '<=', line_list[date_stop])], count=True)
+                if nb_unreconciled_aml and nb_unreconciled_aml == len(unreconciled_aml_list):
+                    # if the dates are ok, check that the entries are balanced
+                    booking_debit = 0
+                    booking_credit = 0
+                    for unreconciled_aml in aml_obj.browse(cr, uid, unreconciled_aml_list, fields_to_fetch=['debit_currency', 'credit_currency']):
+                        booking_debit += unreconciled_aml.debit_currency or 0.0
+                        booking_credit += unreconciled_aml.credit_currency or 0.0
+                    if abs(booking_debit - booking_credit) <= 10 ** -3:
+                        entry_kept = True
             if entry_kept:
-                # if the entry is kept, delete the columns not used anymore (in particular date_stop)
+                # if the entry is kept, delete the columns not used anymore (date_stop, unreconcile_txt...)
                 line_list = column_deletion and self.delete_x_column(line_list, column_deletion)
                 new_data.append(tuple(line_list))
         # call the method from OCB (replace the 15th column by its reconcile name)
@@ -108,7 +129,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
             'reconcilable': """
                 SELECT aml.id, m.name AS "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, a.code,
                 aml.partner_txt, debit_currency, credit_currency, c.name AS "Booking Currency", ROUND(aml.debit, 2),
-                ROUND(aml.credit, 2), cc.name AS "functional_currency", aml.reconcile_id, %s AS "date_stop"
+                ROUND(aml.credit, 2), cc.name AS "functional_currency", aml.reconcile_id, %s AS "date_stop", aml.unreconcile_txt
                 FROM account_move_line AS aml
                 LEFT JOIN account_move_reconcile amr ON aml.reconcile_id = amr.id
                 INNER JOIN account_move AS m ON aml.move_id = m.id
@@ -147,7 +168,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 'query_params': (date_stop, tuple(excluded_journal_types), tuple(instance_ids), date_stop, date_start, date_start),
                 'function': 'postprocess_reconciliable',
                 'fnct_params': 'account.move.line',
-                'delete_columns': [15],
+                'delete_columns': [15, 16],
                 },
         ]
         # Launch finance archive object
