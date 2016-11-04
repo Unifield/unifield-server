@@ -506,6 +506,7 @@ class account_move_line(osv.osv):
         - the link to register lines
         - the reconciliation date
         - the unreconciliation date
+        - the old reconciliation ref (unreconcile_txt)
         """
         if context is None:
             context = {}
@@ -515,6 +516,7 @@ class account_move_line(osv.osv):
             'imported_invoice_line_ids': [],
             'reconcile_date': None,
             'unreconcile_date': None,
+            'unreconcile_txt': '',
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 

@@ -42,7 +42,9 @@ class account_move_reconcile(osv.osv):
                 map(lambda x: x.id, rec.line_partial_ids), {
                     'reconcile_id': rec.id,
                     'reconcile_date': time.strftime('%Y-%m-%d'),  # US-533 date of JI reconciliation
-                    'unreconcile_date': False,  # US-1868 reset unreconcilation date
+                    # US-1868 reset unreconcilation date and unreconcile_txt
+                    'unreconcile_date': False,
+                    'unreconcile_tx': '',
                 }
             )
         # @@@end
