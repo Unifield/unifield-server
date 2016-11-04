@@ -144,7 +144,8 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
                 AND aml.instance_id in %s
                 AND aml.date <= %s
                 AND reconcile_partial_id IS NULL
-                AND (aml.unreconcile_date >= %s OR aml.reconcile_date >= %s);
+                AND (aml.reconcile_date >= %s OR aml.unreconcile_date >= %s)
+                ORDER BY aml.reconcile_id, aml.unreconcile_txt;
                 """,
         }
 
