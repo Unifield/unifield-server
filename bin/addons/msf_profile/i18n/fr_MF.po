@@ -31500,6 +31500,12 @@ msgstr "12e"
 msgid "Purchase order '%s' is validated."
 msgstr "Bon de Commande '%s' validé"
 
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1134
+#, python-format
+msgid "You can not validate a PO with stopped products (line %s)."
+msgstr "Vous ne pouvez pas valider un Bon de Commande avec des produits 'Stopped' (ligne %s)."
+
 #. module: useability_dashboard_and_menu
 #: view:board.board:0
 msgid "Purchase Orders Waiting For Validation"
