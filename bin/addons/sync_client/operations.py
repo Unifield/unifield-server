@@ -176,7 +176,7 @@ class operations_count(osv.osv, ratelimit):
 
         self.histogram = {}
         # Watch OpenERP method calls from 0 to 2 seconds
-        self.histogram['netsvc'] = Histogram( buckets=20, range=2, name='netsvc')
+        self.histogram['osv'] = Histogram( buckets=20, range=2, name='osv')
         # Watch SQL queries with auto-range
         self.histogram['sql'] = Histogram( buckets=20, name='sql')
 
