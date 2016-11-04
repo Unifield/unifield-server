@@ -63,6 +63,7 @@
 			<field name="name">view.picking.out.search</field>
 			<field name="model">stock.picking</field>
 			<field name="type">search</field>
+            <field name="priority">20</field>
 			<field name="inherit_id" ref="stock.view_picking_out_search" />
 			<field name="arch" type="xml">
 				<data>
@@ -76,6 +77,7 @@
 			<field name="name">stock.picking.out.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
+            <field name="priority">20</field>
 			<field name="inherit_id" ref="stock.view_picking_out_tree" />
 			<field name="arch" type="xml">
 				<data>
@@ -101,6 +103,7 @@
 			<field name="name">stock.warehouse</field>
 			<field name="model">stock.warehouse</field>
 			<field name="type">form</field>
+            <field name="priority">25</field>
 			<field name="inherit_id" ref="stock.view_warehouse" />
 			<field name="arch" type="xml">
 				<data>

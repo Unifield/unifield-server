@@ -6,6 +6,7 @@
             <field name="name">account.chart_activable.form</field>
             <field name="model">account.chart</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_account_chart"/>
             <field name="arch" type="xml">
                 <data>

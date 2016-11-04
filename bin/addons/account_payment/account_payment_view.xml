@@ -308,6 +308,7 @@
             <field name="name">account.bank.statement.form.inherit</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
+            <field name="priority">50</field>
             <field name="inherit_id" ref="account.view_bank_statement_form"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="after">

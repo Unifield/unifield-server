@@ -6,6 +6,7 @@
             <field name="name">product.search.stock.form</field>
             <field name="model">product.product</field>
             <field name="type">search</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="product.product_search_form_view"/>
             <field name="arch" type="xml">
                    <field name="pricelist_id" position="before">
@@ -19,6 +20,7 @@
             <field name="name">product.category.stock.property.form.inherit</field>
             <field name="model">product.category</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="product.product_category_form_view"/>
             <field name="arch" type="xml">
                 <form position="inside">
@@ -37,6 +39,7 @@
             <field name="name">product.template.stock.property.form.inherit</field>
             <field name="model">product.template</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
                  <page position="after" string="Information">
@@ -57,7 +60,7 @@
             <field name="name">product.product.standard.price.form.inherit</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
-            <field name="priority">30</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
                 <field name="standard_price" position="replace">
@@ -76,7 +79,7 @@
             <field name="model">product.product</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="priority">95</field>
+            <field name="priority">105</field>
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page/group[@name='properties']" position="before">
                     <group groups="base.group_extended">
@@ -100,7 +103,7 @@
             <field name="name">product.normal.stock.form.inherit</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
-            <field name="priority">60</field>
+            <field name="priority">70</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
                 <group name="status" position="after">
@@ -126,7 +129,7 @@
             <field name="name">product.normal.stock.property.form.inherit</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
-            <field name="priority">55</field>
+            <field name="priority">65</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
                 <group name="store" position="after">

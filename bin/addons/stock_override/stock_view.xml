@@ -6,6 +6,7 @@
             <field name="name">stock.location.chained.nomen.form.view</field>
             <field name="model">stock.location</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_location_form" />
             <field name="arch" type="xml">
                 <data>
@@ -32,6 +33,7 @@
             <field name="name">view.picking.form.inherit.sale</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="sale.stock_picking_inherit_sale" />
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page[@string='Additional info']/field[@name='sale_id']" position="attributes">
@@ -44,6 +46,7 @@
             <field name="name">view.picking.form.out.inherit.sale</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="sale.stock_picking_out_inherit_sale" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='sale_id']" position="attributes">
@@ -65,6 +68,7 @@
             <field name="name">inherit.view.move.form</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="stock.view_move_form" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='product_id']" position="attributes">
@@ -113,6 +117,7 @@
             <field name="name">inherit.view.move.form</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='product_id']" position="attributes">
@@ -249,6 +254,7 @@
             <field name="name">batch.view.inventory.tree</field>
             <field name="model">stock.inventory</field>
             <field name="type">tree</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_inventory_tree" />
             <field name="arch" type="xml">
                 <xpath expr="/tree" position="attributes">
@@ -276,6 +282,7 @@
             <field name="name">unifield.view.move.tree</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="stock.view_move_tree" />
             <field name="arch" type="xml">
                 <xpath expr="/tree" position="attributes">
@@ -1166,7 +1173,7 @@
         <record id="product_form_remove_update_button" model="ir.ui.view">
             <field name="name">product.form.remove.update.button</field>
             <field name="model">product.product</field>
-            <field name="priority">32</field>
+            <field name="priority">40</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_product_standard_price_form" />
             <field name="arch" type="xml">

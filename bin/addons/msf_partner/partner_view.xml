@@ -37,7 +37,7 @@
             <field name="name">msf.view.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="40" />
+            <field name="priority">50</field>
             <field name="inherit_id" ref="partner_modification.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -143,7 +143,7 @@
             <field name="name">view.partner.form.replace</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="50" />
+            <field name="priority">80</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -186,7 +186,7 @@
             <field name="name">view.partner.form.replace.2</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="50" />
+            <field name="priority">75</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -246,6 +246,7 @@
             <field name="name">partner.vat.management.form.view</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_partner_property_form" />
             <field name="arch" type="xml">
                 <data>

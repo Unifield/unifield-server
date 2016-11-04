@@ -7,6 +7,7 @@
             <field name="name">purchase.order.line.form.view.over</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
+            <field name="priority">50</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
                 <data>
@@ -41,6 +42,7 @@
             <field name="name">purchase.order.type.form.view</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -329,6 +331,7 @@
             <field name="name">purchase.order.line.form.view</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
                 <data>

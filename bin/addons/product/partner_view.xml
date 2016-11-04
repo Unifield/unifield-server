@@ -5,6 +5,7 @@
             <field name="name">res.partner.product.property.form.inherit</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
+            <field name="priority">85</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
                 <page string="Sales &amp; Purchases" position="inside">

@@ -40,7 +40,7 @@
             <field name="model">purchase.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_form"/>
-            <field name="priority" eval="50"/>
+            <field name="priority">60</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
@@ -69,7 +69,7 @@
             <field name="name">purchase.order.line.form</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
-            <field name="priority" eval="100" />
+            <field name="priority">60</field>
             <field name="inherit_id" ref="purchase_msf.purchase_order_line_form" />
             <field name="arch" type="xml">
                 <data>

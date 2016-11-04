@@ -6,6 +6,7 @@
             <field name="name">picking.ticket.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
             <field name="arch" type="xml">
             	<data>
@@ -22,6 +23,7 @@
             <field name="name">ppl.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
             <field name="arch" type="xml">
             	<data>

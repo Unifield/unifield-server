@@ -6,7 +6,7 @@
             <field name="name">purchase.order.dates.form.view</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
-            <field name="priority">300</field>
+            <field name="priority">95</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -76,6 +76,7 @@
             <field name="name">dates.purchase.order.line.form</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="purchase.purchase_order_line_form" />
             <field name="arch" type="xml">
                 <data>
@@ -163,7 +164,7 @@
             <field name="name">leadtime.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="30" />
+            <field name="priority">40</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>
@@ -182,6 +183,7 @@
             <field name="name">stock.picking.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.vpicktree" />
             <field name="arch" type="xml">
             	<data>
@@ -200,6 +202,7 @@
             <field name="name">stock.picking.out.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="stock.view_picking_out_tree" />
             <field name="arch" type="xml">
             	<data>
