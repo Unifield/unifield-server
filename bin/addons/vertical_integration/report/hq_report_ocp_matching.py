@@ -49,16 +49,27 @@ class finance_archive(finance_export.finance_archive):
         - (OCB method) Replace 15th column by its reconcile name.
         """
         new_data = []
+        entries_kept = set()
+        entries_not_kept = set()
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         # column numbers corresponding to properties
+        id_from_db = 0  # this has to correspond to the real id from the DB and not the new id displayed in the file
         reconcile_id_col = 14
         date_stop = 15
         unreconcile_txt_col = 16
         for line in data:
             line_list = list(line)
             entry_kept = False
-            if line_list[reconcile_id_col]:
+            line_id = line_list[id_from_db]
+            # if the checks have already been done on the line reconcile number, don't repeat the same checks:
+            # add the line if it must be kept / otherwise skip to next line
+            if line_id in entries_kept:
+                entry_kept = True
+                aml_list = []  # clear the list => avoid to add the old list content to final data
+            elif line_id in entries_not_kept:
+                continue
+            elif line_list[reconcile_id_col]:
                 # reconciled entries
                 reconcile_id = line_list[reconcile_id_col]
                 # get the JI with the same reconcile_id
@@ -71,14 +82,14 @@ class finance_archive(finance_export.finance_archive):
                 # unreconciled entries
                 unreconcile_txt = line_list[unreconcile_txt_col]
                 # get the JI with the same unreconcile_txt (old reconcile number)
-                unreconciled_aml_list = aml_obj.search(cr, uid, [('unreconcile_txt', '=', unreconcile_txt)])
+                aml_list = aml_obj.search(cr, uid, [('unreconcile_txt', '=', unreconcile_txt)])
                 # check that they all have a posting date within or before the selected period
-                nb_unreconciled_aml = aml_obj.search(cr, uid, [('id', 'in', unreconciled_aml_list), ('date', '<=', line_list[date_stop])], count=True)
-                if nb_unreconciled_aml and nb_unreconciled_aml == len(unreconciled_aml_list):
+                nb_aml = aml_obj.search(cr, uid, [('id', 'in', aml_list), ('date', '<=', line_list[date_stop])], count=True)
+                if nb_aml and nb_aml == len(aml_list):
                     # if the dates are ok, check that the entries are balanced
                     booking_debit = 0
                     booking_credit = 0
-                    for unreconciled_aml in aml_obj.browse(cr, uid, unreconciled_aml_list, fields_to_fetch=['debit_currency', 'credit_currency']):
+                    for unreconciled_aml in aml_obj.browse(cr, uid, aml_list, fields_to_fetch=['debit_currency', 'credit_currency']):
                         booking_debit += unreconciled_aml.debit_currency or 0.0
                         booking_credit += unreconciled_aml.credit_currency or 0.0
                     if abs(booking_debit - booking_credit) <= 10 ** -3:
@@ -86,7 +97,13 @@ class finance_archive(finance_export.finance_archive):
             if entry_kept:
                 # if the entry is kept, delete the columns not used anymore (date_stop, unreconcile_txt...)
                 line_list = column_deletion and self.delete_x_column(line_list, column_deletion)
+                # add the line to the final data
                 new_data.append(tuple(line_list))
+                # all the entries from the same reconciliation are acceptable
+                entries_kept.update(aml_list)
+            else:
+                # all the entries from the same reconciliation must be excluded
+                entries_not_kept.update(aml_list)
         # call the method from OCB (replace the 15th column by its reconcile name)
         finance_archive_ocb = hq_report_ocb_matching.finance_archive(self.sqlrequests, self.processrequests)
         return finance_archive_ocb.postprocess_reconciliable(cr, uid, new_data, model)
