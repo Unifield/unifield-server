@@ -131,8 +131,8 @@ class operations_count(osv.osv):
         self.histogram = {}
         # Watch OpenERP method calls from 0 to 2 seconds
         self.histogram['netsvc'] = Histogram( buckets=20, range=2, name='netsvc')
-        # Watch SQL queries from 0 to 50 ms
-        self.histogram['sql'] = Histogram( buckets=20, range=0.050, name='sql')
+        # Watch SQL queries with auto-range
+        self.histogram['sql'] = Histogram( buckets=20, name='sql')
 
     def increment(self, kind, count=1):
         with self.lock:
@@ -157,8 +157,9 @@ class operations_count(osv.osv):
         rows = len(counts)
         # Write out all the histograms
         for h in self.histogram.values():
+            limits = h.limits()
             for i in range(len(h.buckets)):
-                kind = "%s:%s" % (h.name, h.limits[i])
+                kind = "%s:%s" % (h.name, limits[i])
                 self.create(cr, uid, { 'time': now,
                                        'instance': self._instance,
                                        'kind': kind,
