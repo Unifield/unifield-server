@@ -370,8 +370,6 @@ class wizard_import_po_simulation_screen(osv.osv):
 
                     raise osv.except_osv(_('Error'), _("The given XML file is not structured as expected in the DTD:\n %s") % error_msg)
 
-
-
         self.write(cr, uid, ids, {'state': 'simu_progress'}, context=context)
         cr.commit()
         new_thread = threading.Thread(target=self.simulate, args=(cr.dbname, uid, ids, context))
