@@ -1449,22 +1449,23 @@ class orm_template(object):
 
         # translate view
         if ('lang' in context) and not result:
-            if node.get('string'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
+            translation_obj = self.pool.get('ir.translation')
+            if node.get('sum'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
+                if trans:
+                    node.set('sum', trans)
+            elif node.get('confirm'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
+                if trans:
+                    node.set('confirm', trans)
+            elif node.get('string'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
                     # If translation is same as source, perhaps we'd have more luck with the alternative model name
                     # (in case we are in a mixed situation, such as an inherited view where parent_view.model != model
-                    trans = self.pool.get('ir.translation')._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
+                    trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            if node.get('confirm'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
-                if trans:
-                    node.set('confirm', trans)
-            if node.get('sum'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
-                if trans:
-                    node.set('sum', trans)
 
         for f in node:
             if children or (node.tag == 'field' and f.tag in ('filter','separator')):
