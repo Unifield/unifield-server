@@ -559,8 +559,18 @@ def trans_parse_view(de):
         res.append(de.get('sum').encode("utf8"))
     if de.get("confirm"):
         res.append(de.get('confirm').encode("utf8"))
-    if de.tag == 'html':
-        res.append(etree.tostring(de).encode("utf8"))
+    if de.tag == 'translate':
+        text_to_translate = ''
+        if de.text:
+            text_to_translate = de.text.encode("utf8")
+            # this is made for <translate> tags that contain <br /> tags
+            # to incorporate evrything in the same variable
+            for child in de.getchildren():
+                text_to_translate += etree.tostring(child)
+        else:
+            text_to_translate += etree.tostring(child)
+        res.append(text_to_translate)
+
     for n in de:
         res.extend(trans_parse_view(n))
     return res

@@ -1466,14 +1466,15 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            elif node.tag == 'html':
-                source = etree.tostring(node)
+            elif node.tag == 'translate':
+                parent = node.getparent()
+                source = node.text
+                for child in node.getchildren():
+                    source += etree.tostring(child)
                 trans = translation_obj._get_source(cr, user, self._name,
                         'view', context['lang'], source)
-                if trans != source:
-                    new_node = etree.XML(trans)
-                    node.clear()
-                    node[:] = [new_node]
+                parent.remove(node)
+                parent.text = parent.text and parent.text + trans or trans
 
         for f in node:
             if children or (node.tag == 'field' and f.tag in ('filter', 'separator')):
