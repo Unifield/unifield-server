@@ -555,8 +555,11 @@ class OpenERPDispatcher:
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
             # For service 'db', param[0] is not a dbname, so just skip it.
-            if service_name != 'db':
-                ops_event(params[0], 'traceback', tb_s, params[1])
+            if len(params) >= 1 and service_name != 'db':
+                if len(params) >= 2:
+                    ops_event(params[0], 'traceback', tb_s, params[1])
+                else:
+                    ops_event(params[0], 'traceback', tb_s)
             if tools.config['debug_mode']:
                 import pdb
                 pdb.post_mortem(tb[2])
