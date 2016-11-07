@@ -900,7 +900,7 @@ class patch_scripts(osv.osv):
         context = {}
 
         prod_ids = prod_obj.search(cr, uid, [('state', '!=', False)], context=context)
-        smrl_to_modify = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids)], context=context)
+        smrl_to_modify = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids), ('mission_report_id.local_report', '=', True)], context=context)
 
         for smrl in smrl_obj.browse(cr, uid, smrl_to_modify, context=context):
             smrl_obj.write(cr, uid, smrl.id, {'product_state': smrl.product_id.state.code}, context=context)

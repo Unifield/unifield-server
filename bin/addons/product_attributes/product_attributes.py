@@ -1294,7 +1294,7 @@ class product_attributes(osv.osv):
 
         # update local stock mission report lines :
         if 'state' in vals:
-            local_smrl_ids = smrl_obj.search(cr, uid, [('product_id', 'in', ids), ('full_view', '=', False)], context=context)
+            local_smrl_ids = smrl_obj.search(cr, uid, [('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             prod_state = False
             if vals['state']:
                 state_id = vals['state']
