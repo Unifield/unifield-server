@@ -2037,6 +2037,7 @@ stock moves which are already processed : '''
                                                'price_unit': line.price_unit,
                                                'product_uom_qty': line.product_qty,
                                                'date_planned': loan_duration.strftime('%Y-%m-%d'),
+                                               'confirmed_delivery_date': loan_duration.strftime('%Y-%m-%d'),
                                                'delay': 60.0,
                                                'name': line.name,
                                                'type': line.product_id.procure_method})
