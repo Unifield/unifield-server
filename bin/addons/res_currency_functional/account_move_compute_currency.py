@@ -115,7 +115,8 @@ class account_move_compute_currency(osv.osv):
     _columns = {
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
         'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
-        'manual_currency_id': fields.many2one('res.currency', "Book. Currency"),
+        'manual_currency_id': fields.many2one('res.currency', "Book. Currency",
+            hide_default_menu=True),
         'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
         'block_manual_currency_id': fields.boolean("Block manual currency field", help="Block manual currency field if journal have a currency."),
     }

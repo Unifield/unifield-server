@@ -393,7 +393,10 @@ class account_bank_statement_line(osv.osv):
 
     _columns = {
         # UTP-482 linked confirmed PO for an operational advance in cache register
-        'cash_register_op_advance_po_id': fields.many2one('purchase.order', 'OPE ADV - LINK TO PO', required=False, help='Operational advance purchase order'),
+        'cash_register_op_advance_po_id': fields.many2one('purchase.order',
+            'OPE ADV - LINK TO PO', required=False,
+            hide_default_menu=True,
+            help='Operational advance purchase order'),
     }
 
     def check_is_cash_register_op_advance_po_available(self, cr, uid, ids, context=None):

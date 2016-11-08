@@ -187,7 +187,7 @@ class account_move_line(osv.osv):
         'employee_id': fields.many2one("hr.employee", "Employee", ondelete="restrict"),
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
             string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
-            multi="third_parties_key"),
+            multi="third_parties_key", hide_default_menu=True),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'third_parties': fields.function(_get_third_parties, type='reference', method=True,
             string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
