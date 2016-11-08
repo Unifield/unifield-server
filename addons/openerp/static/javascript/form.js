@@ -939,7 +939,7 @@ function open_search_window(relation, domain, context, source, kind, text){
     });
 }
 
-function makeContextMenu(id, kind, relation, val){
+function makeContextMenu(id, kind, relation, val, hide_default_menu){
     var act = get_form_action('get_context_menu');
 
     var prefix = id.indexOf('/') > -1 ? id.slice(0, id.lastIndexOf('/')) : '';
@@ -954,7 +954,8 @@ function makeContextMenu(id, kind, relation, val){
         'field': id,
         'kind': kind,
         'relation': relation,
-        'value': val
+        'value': val,
+        'hide_default_menu': hide_default_menu
     }).addCallback(function(obj){
         var $tbody = jQuery('<tbody>');
         jQuery.each(obj.defaults, function (_, default_) {
@@ -1229,7 +1230,7 @@ function on_context_menu(evt, target){
     $menu.offset({top: 0, left: 0});
     $menu.offset({top: click_position.y - 5, left: click_position.x - 5});
     $menu.hide();
-    makeContextMenu(src, kind, $src.attr('relation'), $src.val());
+    makeContextMenu(src, kind, $src.attr('relation'), $src.val(), $src.attr('hide_default_menu'));
 
     stopEventDammit(evt);
 }

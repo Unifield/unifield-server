@@ -1249,7 +1249,8 @@ class Form(SecuredController):
         return result
 
     @expose('json')
-    def get_context_menu(self, model, field, kind="char", relation=None, value=None):
+    def get_context_menu(self, model, field, kind="char", relation=None,
+            value=None, hide_default_menu=False):
 
         defaults = []
         actions = []
@@ -1258,11 +1259,17 @@ class Form(SecuredController):
         if kind == "many2one" or kind == "reference":
             defaults.append({'text': _('Open resource'), 'action': "new ManyToOne('%s').open_record('%s')" % (field, value)})
 
-        defaults += [
-            {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
-            {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
-            {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
-        ]
+        if isinstance(hide_default_menu, basestring):
+            if hide_default_menu and hide_default_menu.lower() in ('1', 'true'):
+                hide_default_menu = True
+            else:
+                hide_default_menu = False
+        if not hide_default_menu:
+            defaults += [
+                {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
+                {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
+                {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
+            ]
 
         if kind=='many2one':
 

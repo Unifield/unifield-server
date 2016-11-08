@@ -32,7 +32,7 @@ __all__ = ["Reference"]
 class Reference(TinyInputWidget):
 
     template = "/openerp/widgets/form/templates/reference.mako"
-    params = ["options", "domain", "context", "text", "relation"]
+    params = ["options", "domain", "context", "text", "relation", "hide_default_menu"]
 
     options = []
 
@@ -42,6 +42,7 @@ class Reference(TinyInputWidget):
 
         self.domain = attrs.get('domain', [])
         self.context = attrs.get('context', {})
+        self.hide_default_menu = attrs.get('hide_default_menu', 0)
 
         self.validator = validators.Reference()
         self.onchange = None # override onchange in js code

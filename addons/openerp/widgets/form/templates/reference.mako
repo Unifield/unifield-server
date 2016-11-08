@@ -3,7 +3,7 @@
 <tr>
     <td>
         <input type="hidden" id='${name}' name='${name}' class="${css_class}"
-                ${py.attrs(attrs, kind=kind, domain=domain, context=ctx, relation=relation, value=value)}/>
+                ${py.attrs(attrs, kind=kind, domain=domain, context=ctx, relation=relation, value=value, hide_default_menu=hide_default_menu)}/>
         <select id="${name}_reference" name='${name}'>
             <option value=""></option>
             % for (k, v) in options:
@@ -19,7 +19,7 @@
         <div class="m2o_container">
             <span class="m2o">
                 <input type="text" id='${name}_text' class="${css_class}" size="10"
-                    ${py.attrs(attrs, kind=kind, relation=relation, value=text)} style="margin-right: -20px"/>
+                    ${py.attrs(attrs, kind=kind, relation=relation, value=text, hide_default_menu=hide_default_menu)} style="margin-right: -20px"/>
                 % if error:
                     <span class="fielderror">${error}</span>
                 % endif
@@ -38,7 +38,7 @@
     </script>
 % else:
     <span>
-        <span id="${name}" ${py.attrs(kind=kind, value=value, relation=relation)}>
+        <span id="${name}" ${py.attrs(kind=kind, value=value, relation=relation, hide_default_menu=hide_default_menu)}>
             <a style="color:#9A0404;" href="${py.url('/openerp/form/view', model=relation, id=value)}">${text}</a>
         </span>
     </span>
