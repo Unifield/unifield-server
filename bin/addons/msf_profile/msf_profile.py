@@ -46,6 +46,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1482_fix_default_code_on_msf_lines(self, cr, uid, *a, **b):
+        """
+        If the default code set on the MSR lines is different from the
+        default_code set on the related product_id, it means that the MSR lines
+        should be updated.
+        The call of write on them do the job.
+        """
+
+        request = """
+        UPDATE stock_mission_report_line
+        SET default_code=subquerry.pp_code
+        FROM
+            (SELECT msrl.id AS msrl_id, msrl.default_code AS msrl_code,
+             pp.default_code AS pp_code FROM stock_mission_report_line AS msrl
+             JOIN product_product AS pp ON pp.id = msrl.product_id
+             WHERE
+                msrl.default_code != pp.default_code
+            ) AS subquerry
+        WHERE
+            stock_mission_report_line.id = msrl_id
+        """
+        cr.execute(request)
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be
@@ -54,7 +77,7 @@ class patch_scripts(osv.osv):
         seq_obj = self.pool.get('ir.sequence')
         # get the ir_sequence id
         seq_id_list = seq_obj.search(cr, uid,
-                [('code', '=', 'finance.ocb.export')])
+                                     [('code', '=', 'finance.ocb.export')])
         if seq_id_list:
             seq_obj.write(cr, uid, seq_id_list, {'implementation': 'psql'})
 
@@ -190,7 +213,7 @@ class patch_scripts(osv.osv):
             # don't exist anymore, delete the attachement
             model_obj = self.pool.get(attachment.res_model)
             if not model_obj or not model_obj.search(cr, uid,
-                    [('id', '=', attachment.res_id),]):
+                                                     [('id', '=', attachment.res_id),]):
                 attachment_obj.unlink(cr, uid, attachment.id)
                 logger.warn('deleting attachment %s' % attachment.id)
                 deleted_count += 1
@@ -223,7 +246,7 @@ class patch_scripts(osv.osv):
         # children
         period_state_ids = []
         period_state_ids = period_state_obj.search(cr, uid,
-                            [('instance_id', 'not in', children_ids + instance_ids)])
+                                                   [('instance_id', 'not in', children_ids + instance_ids)])
         if period_state_ids:
             period_state_obj.unlink(cr, uid, period_state_ids)
 
@@ -233,7 +256,7 @@ class patch_scripts(osv.osv):
         for period_state_id in period_state_ids:
             period_state_xml_id = period_state_obj.get_sd_ref(cr, uid, period_state_id)
             ids_to_delete.append(model_data._get_id(cr, uid, 'sd',
-                                                   period_state_xml_id))
+                                                    period_state_xml_id))
         model_data.unlink(cr, uid, ids_to_delete)
 
         # touch all ir.model.data object related to the curent
@@ -390,7 +413,7 @@ class patch_scripts(osv.osv):
     def us_822_patch(self, cr, uid, *a, **b):
         fy_obj = self.pool.get('account.fiscalyear')
         level = self.pool.get('res.users').browse(cr, uid,
-            [uid])[0].company_id.instance_id.level
+                                                  [uid])[0].company_id.instance_id.level
 
         # create FY15 /FY16 'system' periods (number 0 and 16)
         if level == 'section':
@@ -407,21 +430,20 @@ class patch_scripts(osv.osv):
                         periods_to_create.insert(0, 0)
 
                     self.pool.get('account.year.end.closing').create_periods(cr,
-                        uid, fy_rec.id, periods_to_create=periods_to_create)
+                                                                             uid, fy_rec.id, periods_to_create=periods_to_create)
 
         # update fiscal year state (new model behaviour-like period state)
         fy_ids = self.pool.get('account.fiscalyear').search(cr, uid, [])
         if fy_ids:
             self.pool.get('account.fiscalyear.state').update_state(cr, uid,
-                fy_ids)
+                                                                   fy_ids)
 
         return True
 
     def us_908_patch(self, cr, uid, *a, **b):
         # add the version to unifield-version.txt as the code which
         # automatically add this version name is contained in the patch itself.
-        from updater import re_version, md5hex_size
-        import re
+        from updater import re_version
         from tools import config
         file_path = os.path.join(config['root_path'], 'unifield-version.txt')
         # get the last known patch line
@@ -439,14 +461,14 @@ class patch_scripts(osv.osv):
         if not version_name:
             # check that the previous patch was UF2.1
             previous_line = lines[-2].rstrip() or lines[-3].rstrip() #  may be
-                                                # there is a blank line between
+            # there is a blank line between
             previous_line_res = re_version.findall(previous_line)
             p_md5sum, p_date, p_version_name = previous_line_res[0]
             if p_md5sum == '16679c0321623dd7e13fdd5fad6f677c':
                 last_line = '%s %s %s' % (md5sum, date, 'UF2.1-0') + os.linesep
                 lines[-1] = last_line
                 with open(file_path, 'w') as file:
-                        file.writelines(lines)
+                    file.writelines(lines)
 
     def uftp_144_patch(self, cr, uid, *a, **b):
         """
@@ -474,7 +496,7 @@ class patch_scripts(osv.osv):
                 ('module', '=', 'sd'),
                 ('model', '=', 'msf_button_access_rights.button_access_rule'),
                 ('res_id', '=', rule['id'])
-                ])
+            ])
             if d_ids:
                 data_obj.unlink(cr, uid, d_ids)
         for view in view_to_gen:
@@ -488,7 +510,6 @@ class patch_scripts(osv.osv):
         rules_obj = self.pool.get('msf_button_access_rights.button_access_rule')
 
         usr = user_obj.browse(cr, uid, [uid], context=context)[0]
-        level_current = False
 
         rule_ids = rules_obj.search(cr, uid, [('xmlname', '=', False), ('type', '=', 'action'), ('view_id', '!=', False), ('active', 'in', ['t', 'f'])])
         if rule_ids:
@@ -496,7 +517,7 @@ class patch_scripts(osv.osv):
                 ('module', '=', 'sd'),
                 ('model', '=', 'msf_button_access_rights.button_access_rule'),
                 ('res_id', 'in', rule_ids)
-                ])
+            ])
             if rule_ids:
                 data_obj.unlink(cr, uid, data_ids)
             for rule in rules_obj.read(cr, uid, rule_ids, ['type', 'name']):
@@ -550,13 +571,11 @@ class patch_scripts(osv.osv):
         :return: True
         """
         prd_obj = self.pool.get('product.product')
-        phs_obj = self.pool.get('product.heat_sensitive')
         data_obj = self.pool.get('ir.model.data')
 
         heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')[1]
         no_heat_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
 
-        phs_ids = phs_obj.search(cr, uid, [('active', '=', False)])
         prd_ids = prd_obj.search(cr, uid, [('heat_sensitive_item', '!=', False), ('active', 'in', ['t', 'f'])])
         if prd_ids:
             cr.execute("""
@@ -624,7 +643,7 @@ class patch_scripts(osv.osv):
         # AT HQ level: untick 8/9 top accounts for display in BS/PL report
         user_rec = self.pool.get('res.users').browse(cr, uid, [uid])[0]
         if user_rec.company_id and user_rec.company_id.instance_id \
-            and user_rec.company_id.instance_id.level == 'section':
+                and user_rec.company_id.instance_id.level == 'section':
             account_obj = self.pool.get('account.account')
             codes = ['8', '9', ]
 
@@ -639,7 +658,6 @@ class patch_scripts(osv.osv):
 
     def us_1263_patch(self, cr, uid, *a, **b):
         ms_obj = self.pool.get('stock.mission.report')
-        msl_obj = self.pool.get('stock.mission.report.line')
 
         ms_touched = "['name']"
         msl_touched = "['internal_qty']"
@@ -799,7 +817,7 @@ class patch_scripts(osv.osv):
                     top_level = usr.company_id.instance_id.parent_id.instance
 
         if instance_name in ('OCG_CM1_COO', 'OCG_CM1_KSR',
-                'OCG_CM1_MRA', 'OCBHT118', 'OCBHT143', 'OCBHT101'):
+                             'OCG_CM1_MRA', 'OCBHT118', 'OCBHT143', 'OCBHT101'):
             self._logger.warn('Replay fr_MF updates')
             cr.execute("""delete from ir_model_data where model='ir.translation' and module='sd'
                 and res_id in (select id from ir_translation where res_id=0 and name='product.template,name')
@@ -820,7 +838,7 @@ class patch_scripts(osv.osv):
                 """)
 
             if instance_id:
-            # delete en_MF translations created on instance for UniData products
+                # delete en_MF translations created on instance for UniData products
                 # sync down deletion
                 cr.execute("""update ir_model_data set last_modification=NOW() where module='sd' and model='ir.translation' and res_id in (
                     select id from ir_translation t where t.lang in ('en_MF', 'fr_MF') and name='product.template,name' and res_id in
@@ -928,7 +946,7 @@ class ir_model_data(osv.osv):
                 logger.warn('Sql done')
                 os.rename(fp.name, "%sold" % fp.name)
                 logger.warn('Sql file renamed')
-            except IOError, e:
+            except IOError:
                 # file does not exist
                 pass
 
@@ -963,7 +981,7 @@ class ir_model_data(osv.osv):
                 logger.warn('Sql done')
                 os.rename(fp.name, "%sold" % fp.name)
                 logger.warn('Sql file renamed')
-            except IOError, e:
+            except IOError:
                 # file does not exist
                 pass
 
@@ -972,7 +990,7 @@ class ir_model_data(osv.osv):
             try:
                 fp = tools.file_open(touch_file, 'r')
                 fp.close()
-            except IOError, e:
+            except IOError:
                 return True
             logger.warn('Execute US-268 queries')
             journal_obj = self.pool.get('account.journal')
@@ -1008,21 +1026,21 @@ class ir_model_data(osv.osv):
                     cr.execute('update account_invoice set journal_id=%s, number=%s where id=%s', (journal_id, reference, invoice_ids[0]))
 
                 self._us_268_gen_message(cr, uid, account_move_obj, move.id,
-                    ['instance_id', 'journal_id', 'name'], [instance_xml_id, journal_xml_id, reference]
-                )
+                                         ['instance_id', 'journal_id', 'name'], [instance_xml_id, journal_xml_id, reference]
+                                         )
                 for line in move.line_id:
                     cr.execute('update account_move_line set instance_id=%s, journal_id=%s where id=%s', (instance_id, journal_id, line.id))
                     self._us_268_gen_message(cr, uid, self.pool.get('account.move.line'), line.id,
-                        ['instance_id', 'journal_id'], [instance_xml_id, journal_xml_id]
-                    )
+                                             ['instance_id', 'journal_id'], [instance_xml_id, journal_xml_id]
+                                             )
 
                     analytic_ids = analytic_obj.search(cr, uid, [('move_id', '=', line.id)])
 
                     for analytic_id in analytic_ids:
                         cr.execute('update account_analytic_line set instance_id=%s, entry_sequence=%s, journal_id=%s where id=%s', (instance_id, reference, analytic_journal_id, analytic_id))
                         self._us_268_gen_message(cr, uid, analytic_obj, analytic_id,
-                            ['instance_id', 'entry_sequence', 'journal_id'], [instance_xml_id, reference, analytic_journal_xml_id]
-                        )
+                                                 ['instance_id', 'entry_sequence', 'journal_id'], [instance_xml_id, reference, analytic_journal_xml_id]
+                                                 )
             os.rename(fp.name, "%sold" % fp.name)
             logger.warn('Set US-268 as executed')
 
@@ -1207,7 +1225,7 @@ class ir_cron_linux(osv.osv_memory):
             args = self._jobs[job][2]
             fct(cr, uid, *args)
             self._logger.info("Linux cron: job %s done" % (job, ))
-        except Exception, e:
+        except Exception:
             self._logger.warning('Linux cron: job %s failed' % (job, ), exc_info=1)
         finally:
             self.running[job].release()
