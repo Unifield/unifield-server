@@ -3739,6 +3739,7 @@ class purchase_order_line(osv.osv):
             string='SoQ updated',
             readonly=True,
         ),
+        'red_color': fields.boolean(string='Red color'),
     }
 
     _defaults = {

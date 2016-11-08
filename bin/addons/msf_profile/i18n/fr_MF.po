@@ -74730,3 +74730,9 @@ msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes avec
 msgid "Product [%s] %s is already in the product list. Line not imported \n"
 ""
 msgstr "Le produit [%s] %s est déjà dans la liste de produits. Ligne non importée \n"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:300
+#, python-format
+msgid "Warning! You are adding new lines which did not exist in the original tender!"
+msgstr "Attention ! Vous avez ajouté une nouvelle ligne qui n'existe pas dans l'appel d'offre original !"
