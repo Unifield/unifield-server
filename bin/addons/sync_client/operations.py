@@ -85,10 +85,10 @@ class operations_event(osv.osv, ratelimit):
         # many times, to calculate an average later.
         tot, ct = self._slow_queries.get(q, (0, 0))
         self._slow_queries[q] = (tot + delta, ct+1)
-        
+
     def _reset_slow_queries(self):
         self._slow_queries = {}
-        
+
     def _shorten(self, x):
         if not isinstance(x, basestring):
             return x
@@ -149,9 +149,9 @@ class operations_event(osv.osv, ratelimit):
         """
         self._logger.info("Operations event purge: keep %s" % keep)
         cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
-        
+
         self._rl = self._rl_max
-        
+
         for q in self._slow_queries:
             tot, n = self._slow_queries[q]
             x = { 'count': n, 'average-latency': float(tot)/n, 'sql': q }
@@ -186,12 +186,6 @@ class operations_count(osv.osv, ratelimit):
         osv.osv.__init__(self, pool, cr)
         self._counts = {}
         self.lock = threading.Lock()
-        i = pool.get('sync.client.entity').get_entity(cr, 1).name;
-        if i is None:
-            self._instance = "unknown"
-        else:
-            self._instance = i
-        self.lock = threading.Lock()
 
         self._rl_name = 'counts'
         self._rl_max = ratelimit.MAX
@@ -202,6 +196,12 @@ class operations_count(osv.osv, ratelimit):
         self.histogram['osv'] = Histogram( buckets=20, range=2, name='osv')
         # Watch SQL queries with auto-range
         self.histogram['sql'] = Histogram( buckets=20, name='sql')
+
+    def _get_inst(self, cr, uid):
+        i = self.pool.get('sync.client.entity').get_entity(cr, uid).name;
+        if i is None:
+            return "unknown"
+        return i
 
     def create(self, cr, uid, vals, context=None):
         """Override create in order to respect the rate limit."""
@@ -222,9 +222,10 @@ class operations_count(osv.osv, ratelimit):
         # events will have exactly the same time on them, to better
         # group by time later.
         now = fields.datetime.now()
+        instance = self._get_inst(cr, uid)
         for kind in counts:
             self.create(cr, uid, { 'time': now,
-                                   'instance': self._instance,
+                                   'instance': instance,
                                    'kind': kind,
                                    'count': counts[kind] })
         rows = len(counts)
@@ -234,7 +235,7 @@ class operations_count(osv.osv, ratelimit):
             for i in range(len(h.buckets)):
                 kind = "%s:%s" % (h.name, limits[i])
                 self.create(cr, uid, { 'time': now,
-                                       'instance': self._instance,
+                                       'instance': instance,
                                        'kind': kind,
                                        'count': h.buckets[i] })
                 rows += 1
