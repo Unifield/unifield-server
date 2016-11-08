@@ -74731,12 +74731,12 @@ msgstr "Si vous cliquez sur le bouton 'Annuler & Ressourcer', toutes les lignes 
 #. module: purchase_override
 #: view:purchase.order.group:0
 msgid "Please note that Orders will only be merged if: "
-msgstr "Veuillez noter que les commandes ne seront fusionnés seulement si : "
+msgstr "Veuillez noter que les commandes seront fusionnées seulement si : "
 
 #. module: purchase_override
 #: view:purchase.order.group:0
 msgid "Purchase Orders are in draft"
-msgstr "les Bons de Commande sous statut Brouillon"
+msgstr "les Bons de Commande sont sous statut Brouillon"
 
 #. module: purchase_override
 #: view:purchase.order.group:0
