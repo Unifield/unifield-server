@@ -74715,3 +74715,18 @@ msgstr "Vous ne pouvez pas confirmer une commande terrain qui contient des produ
 #, python-format
 msgid "You cannot confirm purchase order containing temporary product (line: %s)"
 msgstr "Vous ne pouvez pas confirmer un bon de commande qui contient des produits Temporaires (ligne : %s)"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:194
+#, python-format
+msgid "Line %s in the Excel file was added to the file of the lines with errors.Details: Product already in the product list \n"
+""
+msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes avec erreurs. Détails : Le produit est déjà dans la liste de produits.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:189
+#, python-format
+msgid "Product [%s] %s is already in the product list. Line not imported \n"
+""
+msgstr "Le produit [%s] %s est déjà dans la liste de produits. Ligne non importée \n"
