@@ -26,7 +26,6 @@ from osv import fields
 import time
 import netsvc
 from tools.translate import _
-from tools.misc import flatten
 
 class account_move_line(osv.osv):
     _inherit = 'account.move.line'
@@ -34,11 +33,15 @@ class account_move_line(osv.osv):
 
     _columns = {
         'reconcile_date': fields.date('Reconcile date',
-            help="Date of reconciliation"),
+                                      help="Date of reconciliation"),
+        'unreconcile_date': fields.date('Unreconcile date',
+                                        help="Date of unreconciliation"),
+        'unreconcile_txt': fields.text(string='Unreconcile number', required=False, readonly=True,
+                                       help="Store the old reconcile number when the entry has been unreconciled"),
     }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None,
-        context=None, count=False):
+               context=None, count=False):
         if context is None:
             context = {}
 
@@ -51,16 +54,16 @@ class account_move_line(osv.osv):
             ft_obj = self.pool.get('fields.tools')
             if ft_obj.domain_get_field_index(args, 'reconcile_date') >= 0:
                 is_reconciled_index = ft_obj.domain_get_field_index(args,
-                    'is_reconciled')
+                                                                    'is_reconciled')
                 if is_reconciled_index < 0:
                     # 1)
                     args = ft_obj.domain_remove_field(args, 'reconcile_date')
                 else:
                     reconciled_date_index = ft_obj.domain_get_field_index(args,
-                        'reconcile_date')
+                                                                          'reconcile_date')
                     if  reconciled_date_index >= 0 \
-                        and args[is_reconciled_index][1] == '=' \
-                        and not args[is_reconciled_index][2]:
+                            and args[is_reconciled_index][1] == '=' \
+                            and not args[is_reconciled_index][2]:
                         # 2)
                         reconcile_date = args[reconciled_date_index][2]
                         args = ft_obj.domain_remove_field(args, [
@@ -77,8 +80,8 @@ class account_move_line(osv.osv):
                         args = domain + args
 
         return super(account_move_line, self).search(cr, uid, args,
-            offset=offset, limit=limit, order=order, context=context,
-            count=count)
+                                                     offset=offset, limit=limit, order=order, context=context,
+                                                     count=count)
 
     def check_imported_invoice(self, cr, uid, ids, context=None):
         """
@@ -174,8 +177,10 @@ class account_move_line(osv.osv):
         # US-533: date of JI reconciliation for line_partial_ids linked with
         # above (4, 0)
         self.pool.get('account.move.line').write(cr, uid, merges+unmerge, {
-                'reconcile_date': time.strftime('%Y-%m-%d'),
-            })
+            'reconcile_date': time.strftime('%Y-%m-%d'),
+            'unreconcile_date': False,
+            'unreconcile_txt': '',
+        })
 
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
@@ -192,16 +197,13 @@ class account_move_line(osv.osv):
         self.check_imported_invoice(cr, uid, ids, context)
         # @@@override@account.account_move_line.py
         account_obj = self.pool.get('account.account')
-        move_obj = self.pool.get('account.move')
         move_rec_obj = self.pool.get('account.move.reconcile')
         partner_obj = self.pool.get('res.partner')
-        currency_obj = self.pool.get('res.currency')
         lines = self.browse(cr, uid, ids, context=context)
         unrec_lines = filter(lambda x: not x['reconcile_id'], lines)
         credit = debit = func_debit = func_credit = currency = 0.0
-        account_id = partner_id = employee_id = functional_currency_id = False
+        account_id = partner_id = False
         current_company = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id
-        currency_id = current_company.currency_id.id
         current_instance_level = current_company.instance_id.level
         if context is None:
             context = {}
@@ -234,24 +236,15 @@ class account_move_line(osv.osv):
         for line in unrec_lines:
             if line.state <> 'valid':
                 raise osv.except_osv(_('Error'),
-                        _('Entry "%s" is not valid !') % line.name)
+                                     _('Entry "%s" is not valid !') % line.name)
             credit += line['credit_currency']
             debit += line['debit_currency']
             func_debit += line['debit']
             func_credit += line['credit']
             currency += line['amount_currency'] or 0.0
-#            currency_id = line['currency_id']['id']
-            functional_currency_id = line['currency_id']['id']
             account_id = line['account_id']['id']
             partner_id = (line['partner_id'] and line['partner_id']['id']) or False
-            employee_id = (line['employee_id'] and line['employee_id']['id']) or False
         func_balance = func_debit - func_credit
-
-        # Ifdate_p in context => take this date
-        if context.has_key('date_p') and context['date_p']:
-            date=context['date_p']
-        else:
-            date = time.strftime('%Y-%m-%d')
 
         cr.execute('SELECT account_id, reconcile_id '\
                    'FROM account_move_line '\
@@ -289,9 +282,9 @@ class account_move_line(osv.osv):
         # bypass orm methods: for specific lines:
         #  - US-1766 FXA AJI should not be recomputed
         #  - US-1682 yealry REV JI have a dedicated rate
-        cr.execute('update account_move_line set reconcile_date=%s where id in %s',
-            (time.strftime('%Y-%m-%d'), tuple(ids))
-        )
+        cr.execute("UPDATE account_move_line SET reconcile_date=%s, unreconcile_date=NULL, unreconcile_txt='' WHERE id IN %s",
+                   (time.strftime('%Y-%m-%d'), tuple(ids))
+                   )
 
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
@@ -347,8 +340,8 @@ class account_move_reconcile(osv.osv):
     _columns = {
         'is_multi_instance': fields.boolean(string="Reconcile at least 2 lines that comes from different instance levels."),
         'multi_instance_level_creation': fields.selection([('section', 'Section'), ('coordo', 'Coordo'), ('project', 'Project')],
-            string='Where the adjustement line should be created'
-        )
+                                                          string='Where the adjustement line should be created'
+                                                          )
     }
 
     _defaults = {
