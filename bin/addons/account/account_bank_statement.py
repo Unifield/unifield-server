@@ -461,7 +461,7 @@ class account_bank_statement_line(osv.osv):
             ], 'Type', required=True),
         'partner_id': fields.many2one('res.partner', 'Partner'),
         'account_id': fields.many2one('account.account','Account',
-            required=True),
+            required=True, hide_default_menu=True),
         'statement_id': fields.many2one('account.bank.statement', 'Statement',
             select=True, required=True, ondelete='cascade'),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
