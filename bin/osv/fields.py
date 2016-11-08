@@ -66,7 +66,8 @@ class _column(object):
     def __init__(self, string='unknown', required=False, readonly=False,
             domain=None, context=None, states=None, priority=0,
             change_default=False, size=None, ondelete="set null",
-            translate=False, select=False, manual=False, internal=False, **args):
+            translate=False, select=False, manual=False, internal=False,
+            hide_default_menu=False, **args):
         """
 
         The 'manual' keyword argument specifies if the field is a custom one.
@@ -96,6 +97,7 @@ class _column(object):
         self.manual = manual
         self.selectable = True
         self.internal = internal
+        self.hide_default_menu = hide_default_menu
         self.group_operator = args.get('group_operator', False)
         self.m2o_order = args.get('m2o_order', False)
         for a in args:
