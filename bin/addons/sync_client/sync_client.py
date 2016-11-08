@@ -373,7 +373,7 @@ def get_hardware_id():
                             0, _winreg.KEY_ALL_ACCESS) as registry_key:
                         _winreg.SetValueEx(registry_key, "HardwareId", 0, _winreg.REG_SZ, hw_hash)
                 except WindowsError as e:
-                    logger.error('Error on write of HardwareId in the registry: %s' % set(e))
+                    logger.error('Error on write of HardwareId in the registry: %s' % e)
         else:
             hw_hash = generate_new_hwid()
         return hw_hash
