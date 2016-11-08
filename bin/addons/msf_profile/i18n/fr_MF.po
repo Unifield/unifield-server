@@ -74689,3 +74689,29 @@ msgstr "Désolé, le(s) champ(s) '%s' ne peut(vent) pas être utilisé(s) seul(s
 msgid "You can't search on this object without using at least one exact search term (precede your search with the character '=')."
 msgstr "Vous ne pouvez pas exécuter de recherche sur cet objet sans utiliser au moins une recherche exacte (ajoutez le caractère = devant votre filtre)."
 
+#. module: procurement_request
+#: code:addons/procurement_request/procurement_request.py:553
+#, python-format
+msgid "You can not confirm internal request containing temporary product (line: %s)"
+msgstr "Vous ne pouvez pas confirmer une demande interne qui contient des produits Temporaires (ligne : %s)"
+
+#. module: sourcing
+#: code:addons/sourcing/sale_order_line.py:1205
+#, python-format
+msgid "You can not source lines with Temporary products. Details: \n"
+" %s"
+msgstr "Vous ne pouvez pas sourcer des lignes avec des produits temporaires. Détails : \n"
+" %s"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:1347
+#, python-format
+msgid "You cannot confirm field order containing temporary product (line: %s)"
+msgstr "Vous ne pouvez pas confirmer une commande terrain qui contient des produits temporaires (ligne : %s)"
+
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1122
+#: code:addons/purchase_override/purchase.py:1365
+#, python-format
+msgid "You cannot confirm purchase order containing temporary product (line: %s)"
+msgstr "Vous ne pouvez pas confirmer un bon de commande qui contient des produits Temporaires (ligne : %s)"
