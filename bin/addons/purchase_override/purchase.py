@@ -236,12 +236,34 @@ class purchase_order(osv.osv):
         return res
 
     def _get_no_line(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Compute the number of Purchase order lines in each purchase order.
+        A split line is count as one line
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of purchase.order ID to compute
+        :param field_name: Name of the field to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: A dictionnary with the purchase.order ID as keys and the number of Purchase
+                 order lines for each of them as value
+        """
+        pol_obj = self.pool.get('sale.order.line')
+
+        if context is None:
+            context =  {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         res = {}
-        for order in self.read(cr, uid, ids, ['order_line'], context=context):
-            if order['order_line']:
-                res[order['id']] = False
-            else:
-                res[order['id']] = True
+
+        for order_id in ids:
+            res[order_id] = pol_obj.search_count(cr, uid, [
+                ('order_id', '=', order_id),
+                ('is_line_split', '=', False),
+            ], context=context)
+
         return res
 
     def _po_from_x(self, cr, uid, ids, field_names, args, context=None):
@@ -336,6 +358,52 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _get_customer_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return a concatenation of the PO's customer references from the project (case of procurement request)
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        so_obj = self.pool.get('sale.order')
+        for po_id in ids:
+            res[po_id] = ""
+
+            so_ids = self.get_so_ids_from_po_ids(cr, uid, po_id, context=context)
+            for so in so_obj.read(cr, uid, so_ids, ['client_order_ref'], context=context):
+                if so['client_order_ref']:
+                    if res[po_id]:
+                        res[po_id] += ';'
+                    res[po_id] += so['client_order_ref']
+
+        return res
+
+    def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the number of line(s) for the PO
+        '''
+        pol_obj = self.pool.get('purchase.order.line')
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        line_number_by_order = {}
+
+        lines = pol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
+        for l in pol_obj.read(cr, uid, lines, ['order_id', 'line_number'], context=context):
+            line_number_by_order.setdefault(l['order_id'][0], set())
+            line_number_by_order[l['order_id'][0]].add(l['line_number'])
+
+        res = {}
+        for po_id, ln in line_number_by_order.iteritems():
+            res[po_id] = len(ln)
+
+
+        return res
+
+
+
     _columns = {
         'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
                                         ('donation_st', 'Standard donation'), ('loan', 'Loan'),
@@ -418,6 +486,20 @@ class purchase_order(osv.osv):
         ),
         # US-1765: register the 1st call of wkf_confirm_trigger to prevent recursion error
         'po_confirmed': fields.boolean('PO', readonly=True),
+        'customer_ref': fields.function(
+            _get_customer_ref,
+            method=True,
+            string='Customer Ref.',
+            type='text',
+            store=False,
+        ),
+        'line_count': fields.function(
+            _get_line_count,
+            method=True,
+            type='integer',
+            string="Line count",
+            store=False,
+        ),
     }
 
     _defaults = {
@@ -3698,6 +3780,20 @@ class purchase_order_line(osv.osv):
 
         return res
 
+    def _get_customer_ref(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Return the customer ref from "sale.order".client_order_ref
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        res = {}
+        for pol in self.browse(cr, uid, ids, context=context):
+            res[pol.id] = pol.procurement_id and pol.procurement_id.sale_id and pol.procurement_id.sale_id.client_order_ref or False
+
+        return res
+
+
     _columns = {
         'is_line_split': fields.boolean(string='This line is a split line?'), # UTP-972: Use boolean to indicate if the line is a split line
         'merged_id': fields.many2one('purchase.order.merged.line', string='Merged line'),
@@ -3740,6 +3836,13 @@ class purchase_order_line(osv.osv):
             readonly=True,
         ),
         'red_color': fields.boolean(string='Red color'),
+        'customer_ref': fields.function(
+            _get_customer_ref,
+            method=True,
+            type="text",
+            store=False,
+            string="Customer ref.",
+        ),
     }
 
     _defaults = {

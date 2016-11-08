@@ -226,9 +226,11 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             purchase_domain.append(('pricelist_id', '=', procurement.rfq_id.pricelist_id.id))
 
         line = None
+        order_customer_id = None
         sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if sale_line_ids:
             line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+            order_customer_id = line.order_partner_id.id
             if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request:
                 if ('order_type', '!=', 'direct') in purchase_domain:
                     purchase_domain.remove(('order_type', '!=', 'direct'))
@@ -334,6 +336,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if values.get('priority') and values['priority'] in priority_sorted.keys() and values['priority'] != po.priority:
                 if priority_sorted[values['priority']] < priority_sorted[po.priority]:
                     write_values['priority'] = values['priority']
+            if order_customer_id:
+                write_values['dest_partner_ids'] = [(4, order_customer_id)]
 
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=dict(context, import_in_progress=True))
 
@@ -387,6 +391,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     values.update({'location_id': input_id, })
             if categ:
                 values.update({'categ': categ})
+            if order_customer_id:
+                values['dest_partner_ids'] = [(4, order_customer_id)]
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
 
             if ir_to_link:
@@ -674,15 +680,15 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 'taxes_id': [(6, 0, taxes)]
             })
             values = {
-                      'origin': procurement.origin,
-                      'partner_id': partner.id,
-                      'partner_address_id': address_id,
-                      'location_id': procurement.location_id.id,
-                      'pricelist_id': pricelist_id.id,
-                      'order_line': [(0, 0, line)],
-                      'company_id': procurement.company_id.id,
-                      'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
-                      }
+                'origin': procurement.origin,
+                'partner_id': partner.id,
+                'partner_address_id': address_id,
+                'location_id': procurement.location_id.id,
+                'pricelist_id': pricelist_id.id,
+                'order_line': [(0, 0, line)],
+                'company_id': procurement.company_id.id,
+                'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
+            }
             # values modification from hook
             values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement, line=line,)
             # purchase creation from hook
