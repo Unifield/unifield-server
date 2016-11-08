@@ -373,6 +373,7 @@ class so_po_common(osv.osv_memory):
         split_cancel_line = {}
         split_bypass_lines = {}
         update_lines_sync_order_ids = []
+        msg_err_not_found = "" # prod received by sync but not in our DB
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
@@ -455,6 +456,11 @@ class so_po_common(osv.osv_memory):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_0.id), context=context)
                 if rec_id:
                     values['nomen_manda_0'] = rec_id
+
+            if not values.get('nomen_manda_0') and not values.get('product_id'):
+                if not msg_err_not_found:
+                    msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
+                msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (line.name, line.line_number, line.default_code)
 
             if line_dict.get('nomen_manda_1'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_1.id), context=context)
@@ -552,6 +558,9 @@ class so_po_common(osv.osv_memory):
             else:
                 update_lines_sync_order_ids.append(values['sync_order_line_db_id'])
                 line_result.append((0, 0, values))
+
+        if msg_err_not_found:
+            raise Exception(msg_err_not_found.strip())
 
         for sync_order_line_db_id, line_values in split_bypass_lines.iteritems():
             for line_vals in line_values:
