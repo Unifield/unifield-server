@@ -105,18 +105,21 @@
     <menuitem id="ops_evt_menu" name="Events" parent="ops_menu" action="ops_event_action"/>
     <menuitem id="ops_evt_menu2" name="Counts" parent="ops_menu" action="ops_count_action"/>
 
+    <!-- This was used during development to trigger tracebacks.
+	 
     <record model="ir.actions.server" id="ops_event_bang">
       <field name="name">Bang!</field>
       <field name="model_id" ref="model_operations_event"/>
       <field name="state">code</field>
       <field name="code">obj.bang()</field>
     </record>
-
+    
     <record model="ir.ui.menu" id="ops_event_bang_ui">
       <field name="name">Bang!</field>
       <field name="parent_id" ref="ops_menu"/>
       <field name="action" ref="ops_event_bang"/>
     </record>
+    -->
 
   </data>
 </openerp>

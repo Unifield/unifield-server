@@ -72,11 +72,23 @@ class operations_event(osv.osv, ratelimit):
         self._rl_name = 'events'
         self._rl_max = ratelimit.MAX
         self._rl = self._rl_max
+        # SQL queries longer than this will be logged.
+        self.SLOW_QUERY = 10 # seconds
+        self._reset_slow_queries()
 
     def create(self, cr, uid, vals, context=None):
         """Override create in order to respect the rate limit."""
         ratelimit.create(self, cr, uid, vals, context=context)
 
+    def remember_slow_query(self, q, delta):
+        # Remember the total time spent on this query and how
+        # many times, to calculate an average later.
+        tot, ct = self._slow_queries.get(q, (0, 0))
+        self._slow_queries[q] = (tot + delta, ct+1)
+        
+    def _reset_slow_queries(self):
+        self._slow_queries = {}
+        
     def _shorten(self, x):
         if not isinstance(x, basestring):
             return x
@@ -107,7 +119,7 @@ class operations_event(osv.osv, ratelimit):
 
     _sql_constraints = [
         ('dedup', 'UNIQUE(instance, remote_id)',
-         'Duplicate events from an instance and not allowed.')
+         'Duplicate events from an instance are not allowed.')
     ]
 
     _defaults = {
@@ -123,18 +135,29 @@ class operations_event(osv.osv, ratelimit):
             return "unknown"
         return i
 
-    def bang(self, cr, uid, ids=None, context=None):
-        raise ValueError("bang!")
-        return 1
+    # This was used during development to trigger tracebacks for testing.
+    #def bang(self, cr, uid, ids=None, context=None):
+    #    raise ValueError("bang!")
+    #    return 1
 
     def purge(self, cr, uid, keep='30 day'):
         """Called from ir.cron every day to purge events older
         than X days, where X comes from either an argument like
         ['5 day'], or defaults to 30 days.
+
+        Also dumps slow SQL queries and resets the rate limiter.
         """
         self._logger.info("Operations event purge: keep %s" % keep)
         cr.execute("delete from operations_event WHERE time < CURRENT_DATE - INTERVAL %s;", (keep,))
+        
         self._rl = self._rl_max
+        
+        for q in self._slow_queries:
+            tot, n = self._slow_queries[q]
+            x = { 'count': n, 'average-latency': float(tot)/n, 'sql': q }
+            vals = { 'kind': 'slow-query', 'data': str(x) }
+            self.create(cr, uid, vals)
+        self._reset_slow_queries()
 
 operations_event()
 
@@ -154,7 +177,7 @@ class operations_count(osv.osv, ratelimit):
 
     _sql_constraints = [
         ('dedup', 'UNIQUE(instance, remote_id)',
-         'Duplicate counts from an instance and not allowed.')
+         'Duplicate counts from an instance are not allowed.')
     ]
 
     _logger = logging.getLogger('operations.count')

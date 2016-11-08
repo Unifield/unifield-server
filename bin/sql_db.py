@@ -100,6 +100,7 @@ class Cursor(object):
         p = pooler.pool_dic.get(self.dbname, None)
         if p is not None:
             self._oc = p.get('operations.count')
+            self._oe = p.get('operations.event')
         self._obj = self._cnx.cursor(cursor_factory=psycopg1cursor)
         self.__closed = False   # real initialisation value
         self.autocommit(False)
@@ -157,8 +158,11 @@ class Cursor(object):
             before = time.time()
             res = self._obj.execute(query, params)
             after = time.time()
-            if self._oc is not None:
-                self._oc.histogram['sql'].add(after-before)
+            if self._oc:
+                delta = after-before
+                self._oc.histogram['sql'].add(delta)
+                if self._oe and delta > self._oe.SLOW_QUERY:
+                    self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:
                 self.__logger.error("Programming error: %s, in query %s", pe, query)

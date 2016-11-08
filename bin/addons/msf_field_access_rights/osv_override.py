@@ -157,6 +157,9 @@ def infolog(self, cr, uid, message):
         netsvc.LOG_INFO,
         message,
     )
+    oe = self.pool.get('operations.event')
+    if oe:
+        oe.create(cr, uid, { 'kind': 'infolog', 'data': message })
 
 orm.orm.infolog = infolog
 orm.orm_memory.infolog = infolog
