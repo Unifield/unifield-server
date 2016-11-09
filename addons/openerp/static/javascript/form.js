@@ -301,8 +301,10 @@ function submit_form(action, src, target){
     // Cant use $form.attr due to http://dev.jquery.com/ticket/3113 as there is a form with a field called
     // action when creating an activity
     $form[0].setAttribute('action', action);
+    previous_target = $form.attr("target");
     $form.attr("target", target);
     $form.submit();
+    $form.attr("target", previous_target);
 }
 
 function pager_action(src){
