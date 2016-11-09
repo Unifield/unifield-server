@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="split_purchase_order_line_view" model="ir.ui.view">
+            <field name="name">split.purchase.order.line.view</field>
+            <field name="model">split.purchase.order.line.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Split line">
+                    <separator colspan="4" string="Quantities" />
+                    <field name="original_qty" />
+                    <field name="old_line_qty" />
+                    <field name="new_line_qty" on_change="line_qty_change(original_qty, new_line_qty)" />
+                    <group colspan="2" />
+                    <field name="corresponding_so_line_id_split_po_line_wizard" invisible="True" />
+                    <field name="corresponding_so_id_split_po_line_wizard" attrs="{'invisible': [('corresponding_so_line_id_split_po_line_wizard', '=', False)]}" />
+                    <field name="impact_so_split_po_line_wizard" invisible="True" /><!-- attrs="{'invisible': [('corresponding_so_line_id_split_po_line_wizard', '=', False)]}" /> -->
+                    <separator colspan="4" string="Actions" />
+                    <group>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="split_line" string="Split line" icon="terp-stock_effects-object-colorize" colspan="3" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    
+        <!-- Here we just add a boolean in the page 'Delivery and invoicing' of the purchase order form notebook -->
+        <record id="purchase_cross_docking_form_view2" model="ir.ui.view">
+            <field name="name">purchase.cross.docking.form.view2</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/group/field[@name='categ']" position="replace" >
+                        <field name="categ" on_change="onchange_categ(categ, warehouse_id, cross_docking_ok, location_id)" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="purchase_cross_docking_form_view" model="ir.ui.view">
+            <field name="name">purchase.cross.docking.form.view</field>
+            <field name="model">purchase.order</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Delivery &amp; Invoicing']/group/field[@name='location_id']" position="before" >
+                        <field name="cross_docking_ok"
+                            attrs="{'readonly':['|', '|', '|', ('unallocation_ok', '=', True), ('order_type', '=', 'direct'), ('allocation_setup', '=', 'unallocated'), ('state', '!=', 'draft')]}"
+                            on_change="onchange_cross_docking_ok(cross_docking_ok, warehouse_id, categ)"
+                        />
+                    </xpath>
+                    <field name="location_id" position= "replace">
+                        <!-- attrs="{'readonly':['|', ('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice', 'confirmed_wait']), '|',('cross_docking_ok','=', True), ('categ', 'in', ['service', 'transport'])], 'invisible': [('order_type', '=', 'direct')]}"-->
+                        <!-- [UF-1689] we want the user to select only Cross Docking or Input i.e. to tick or clear the checkbox cross docking
+                        so we set the location_id always readonly-->
+                        <field name="location_id" 
+                        domain="[('usage', '=', 'internal')]"
+                        readonly="1"
+                        on_change="onchange_location_id(location_id,categ)"/>
+                    </field>
+                </data>
+            </field>
+        </record>
+        
+        <!-- Here we add 'purchase_id' in the context for defining a 'default_get'
+         when we want to create a new stock move directly in the delivery form -->
+        <record id="stock_picking_cross_docking_form_view" model="ir.ui.view">
+            <field name="name">stock.picking.in.form.cross.docking</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="stock.view_picking_in_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='General Information']/field[@name='move_lines']" position="attributes" >
+                        <attribute name="default_get">{'purchase_id': purchase_id, 'reason_type_id': reason_type_id, 'warehouse_id': warehouse_id, 'address_in_id': address_id, 'date_expected': min_date} </attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <!-- Delivery Orders : we add 2 buttons and play with attrs to change the source location-->
+        <record id="view_picking_out_cross_docking_form" model="ir.ui.view">
+            <field name="name">view.picking.out.cross.docking</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="stock.view_picking_out_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
+                        <field name="product_type" invisible="1" />
+                        <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"
+                        attrs="{'invisible':['|', '|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}"  />
+                        <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"
+                        attrs="{'invisible':['|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}"  />
+                        <field name="move_cross_docking_ok" invisible='1'/>
+                        <field name="allocation_setup" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state']" position="after" >
+                        <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"
+                        attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'), ('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}" />
+                        <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"
+                        attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}"  />
+                        <field name="allocation_setup" invisible="1" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <!-- Picking Tickets (same feature as delivery order): we add 2 buttons and play with attrs to change the source location -->
+        <record id="view_picking_ticket_cross_docking_form" model="ir.ui.view">
+            <field name="name">picking.ticket.cross.docking</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
+                        <field name="product_type" invisible="1" />
+                        <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"  
+                        attrs="{'invisible':['|', '|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('allocation_setup', '=', 'unallocated'),('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}" />
+                        <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"  
+                        attrs="{'invisible':['|', '|', ('product_type', 'in', ['consu', 'service_recep']), ('move_cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}"  />
+                        <field name="move_cross_docking_ok" invisible='1'/>
+                        <field name="allocation_setup" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='line_state']" position="after" >
+                        <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"  
+                        attrs="{'invisible':['|', '|', ('allocation_setup', '=', 'unallocated'),('cross_docking_ok','=', True), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}" />
+                        <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"  
+                        attrs="{'invisible':['|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel'))]}"
+                        context="{'from_button': True}"  />
+                        <field name="cross_docking_ok" invisible='1'/>
+                        <field name="allocation_setup" invisible="1" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <!-- Pre-Packing Lists (same feature as delivery order): we add 2 buttons and play with attrs to change the source location -->
+        <record id="view_ppl_cross_docking_form" model="ir.ui.view">
+            <field name="name">ppl.cross.docking</field>
+            <field name="model">stock.picking</field>
+            <field name="type">form</field>
+            <field name="priority">16</field>
+            <field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//tree[@string='Stock Moves']//field[@name='location_id']" position="after" >
+                        <button name="button_cross_docking" string="Cross docking" type="object" icon="gtk-select-color"  
+                        attrs="{'invisible':['|', '|', '|', ('allocation_setup', '=', 'unallocated'), ('move_cross_docking_ok','=', True), ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
+                        context="{'from_button': True}"  />
+                        <button name="button_stock" string="Stock" type="object" icon="gtk-media-play"  
+                        attrs="{'invisible':['|', ('move_cross_docking_ok','=', False),'|', ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
+                        context="{'from_button': True}"  />
+                        <field name="move_cross_docking_ok" invisible='1'/>
+                        <field name="allocation_setup" invisible="1" />
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Products']/group/field[@name='state']" position="after" >
+                        <button name="button_cross_docking_all" string="Cross docking" type="object" icon="gtk-select-color"  
+                        attrs="{'invisible':['|', '|', '|', ('cross_docking_ok','=', True), ('allocation_setup', '=', 'unallocated'), ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
+                        context="{'from_button': True}"  />
+                        <button name="button_stock_all" string="Stock" type="object" icon="gtk-media-play"  
+                        attrs="{'invisible':['|', '|', ('cross_docking_ok','=', False), ('state', 'in', ('done','cancel')), ('subtype', '=', 'ppl')]}"
+                        context="{'from_button': True}"  />
+                        <field name="cross_docking_ok" invisible='1' />
+                        <field name="allocation_setup" invisible="1" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+         
+        <!-- We update the form view of stock.location to display the boolean "cross_docking" for cross_docking location-->
+        <record id="view_location_form" model="ir.ui.view">
+            <field name="name">stock.location.form</field>
+            <field name="model">stock.location</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="stock.view_location_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <field name="scrap_location" position="after">
+                        <field name="cross_docking_location_ok" />
+                    </field>
+                </data>
+            </field>
+        </record>
+         
+    </data>
+</openerp>

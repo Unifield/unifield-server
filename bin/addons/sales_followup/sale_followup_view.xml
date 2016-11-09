@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    
+        <record id="action_sale_order_follow_up" model="ir.actions.server">
+            <field name="name">Order Follow Up</field>
+            <field name="model_id" ref="model_sale_order_followup"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.start_order_followup(context=context)</field>
+        </record>
+        
+        <record id="ir_open_sale_order_follow_up" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">sale.order</field>
+            <field name="name">Order Follow Up</field>
+            <field eval="'ir.actions.server,%d'%action_sale_order_follow_up" name="value"/>
+            <field eval="True" name="object"/>
+        </record>
+    
+        <!-- REMOVE THE DOCUMENT VIEW
+            <record id="sale_order_followup_document_view" model="ir.ui.view">
+            <field name="name">sale.order.followup.form.view</field>
+            <field name="model">sale.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up">
+                    <separator colspan="4" string="General Information" />
+                    <field name="order_id" />
+                    <field name="cust_ref" />
+                    <field name="creation_date" />
+                    <field name="state" />
+                    <separator colspan="4" string="Associated documents" />
+                    <field name="requested_date" />
+                    <field name="confirmed_date" />
+                    <field name="line_ids" colspan="4" nolabel="1">
+                        <tree string="Order follow up lines">
+                            <field name="line_number" />
+                            <field name="product_id" />
+                            <field name="procure_method" />
+                            <field name="po_cft" />
+                            <field name="qty_ordered" />
+                            <field name="uom_id" />
+                            <field name="tender_ids" />
+                            <field name="purchase_ids" />
+                            <field name="incoming_ids" />
+                            <field name="available_qty" />
+                            <field name="outgoing_nb" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" />
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+                        <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+                        <button name="switch_progress" string="Switch to progress view" icon="terp-gtk-jump-to-ltr" colspan="2" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>-->
+
+        <record id="sale_order_followup_split_progress_view" model="ir.ui.view">
+            <field name="name">sale.order.followup.progress.view</field>
+            <field name="model">sale.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up">
+                    <separator colspan="4" string="General Information" />
+                    <field name="order_id" />
+                    <field name="cust_ref" />
+                    <field name="creation_date" />
+                    <field name="state" />
+                    <separator colspan="4" string="Associated documents" />
+                    <field name="requested_date" />
+                    <field name="confirmed_date" />
+                    <field name="line_ids" colspan="4" nolabel="1">
+                        <tree string="Order follow up lines">
+                            <field name="original_order_id" />
+                            <field name="line_number" />
+                            <field name="product_id" />
+                            <field name="procure_method" />
+                            <field name="po_cft" />
+                            <field name="qty_ordered" />
+                            <field name="uom_id" />
+                            <field name="sourced_ok" />
+                            <field name="tender_status" />
+                            <!--<field name="quotation_status" />-->
+                            <field name="purchase_status" />
+                            <field name="incoming_status" />
+                            <field name="product_available" />
+                            <field name="outgoing_status" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" />
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Close" icon="gtk-cancel" colspan="2" />
+                        <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+                        <newline />
+                        <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" />
+                        <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="sale_order_followup_progress_view" model="ir.ui.view">
+            <field name="name">sale.order.followup.progress.view</field>
+            <field name="model">sale.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up">
+                    <separator colspan="4" string="General Information" />
+                    <field name="order_id" />
+                    <field name="cust_ref" />
+                    <field name="creation_date" />
+                    <field name="state" />
+                    <separator colspan="4" string="Associated documents" />
+                    <field name="requested_date" />
+                    <field name="confirmed_date" />
+                    <field name="line_ids" colspan="4" nolabel="1">
+                        <tree string="Order follow up lines">
+                            <field name="line_number" />
+                            <field name="product_id" />
+                            <field name="procure_method" />
+                            <field name="po_cft" />
+                            <field name="qty_ordered" />
+                            <field name="uom_id" />
+                            <field name="sourced_ok" />
+                            <field name="tender_status" />
+                            <!--<field name="quotation_status" />-->
+                            <field name="purchase_status" />
+                            <field name="incoming_status" />
+                            <field name="product_available" />
+                            <field name="outgoing_status" />
+                        </tree>
+                    </field>
+                    <separator colspan="4" />
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="Close" icon="gtk-cancel" colspan="2" />
+                        <button name="update_followup" string="Update" icon="gtk-execute" colspan="2" type="object" />
+                        <newline />
+                        <button name="export_xls" string="Export Excel" icon="gtk-execute" colspan="2" type="object" />
+                        <button name="export_pdf" string="Export PDF" icon="gtk-execute" colspan="2" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="sale_order_line_followup_tree_view" model="ir.ui.view">
+            <field name="name">sale.order.line.followup.tree.view</field>
+            <field name="model">sale.order.line.followup</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Order follow up lines">
+                    <field name="original_order_id" />
+                    <field name="line_number" />
+                    <field name="product_id" />
+                    <field name="procure_method" />
+                    <field name="po_cft" />
+                    <field name="qty_ordered" />
+                    <field name="uom_id" />
+                    <field name="sourced_ok" />
+                    <field name="tender_ids" />
+                    <!--<field name="quotation_ids" />-->
+                    <!--<field name="quotation_status" />-->
+                    <field name="purchase_ids" />
+                    <field name="purchase_status" />
+                    <field name="incoming_ids" />
+                    <field name="incoming_status" />
+                    <field name="product_available" />
+                    <field name="available_qty" />
+                    <field name="outgoing_nb" />
+                    <field name="outgoing_status" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="sale_order_line_followup_form_view" model="ir.ui.view">
+            <field name="name">sale.order.line.followup.form.view</field>
+            <field name="model">sale.order.line.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Order follow up line">
+                    <separator colspan="4" string="General Information" />
+                    <field name="line_number" />
+                    <field name="line_id" />
+                    <field name="product_id" />
+                    <field name="qty_ordered" />
+                    <field name="procure_method" />
+                    <field name="po_cft" />
+                    <field name="original_order_id" attrs="{'invisible': [('original_order_id', '=', False)]}" />
+                    <separator colspan="4" string="Associated documents" />
+                    <field name="tender_ids" nolabel="1" string="Tenders" colspan="4">
+                        <tree string="Tender" colors="green:state in ('done');grey: state in ('cancel')">
+                            <field name="product_id" />
+                            <field name="tender_id" />
+                            <field name="qty" />
+                            <field name="product_uom" />
+                            <field name="date_planned" />
+                            <field name="state" />
+                            <button name="go_to_tender_info" type="object" string="Go to tender form" icon="terp-stock_zoom" />
+                        </tree>
+                    </field>
+                    <!--<field name="quotation_ids" nolabel="1" colspan="4" string="Quotations">
+                        <tree string="Request for Quotation"
+                            colors="red: state in ('rfq_sent');blue: state in ('rfq_updated');green: state in ('done')">
+                            <field name="name" />
+                            <field name="order_type" />
+                            <field name="date_order" />
+                            <field name="partner_id" />
+                            <field name="delivery_requested_date" />
+                            <field name="amount_total" />
+                            <field name="state" />
+                            <button name="go_to_rfq_info" type="object" string="Go to RfQ form" icon="terp-stock_zoom" />
+                        </tree>
+                    </field>-->
+                    <field name="purchase_line_ids" nolabel="1" colspan="4" string="Purchase Orders">
+                        <tree string="Purchase Orders"
+                            colors="grey: state in ('cancel', 'done');green: state in ('approved');blue: state in ('confirmed')">
+                            <field name="product_id" />
+                            <field name="order_id" />
+                            <field name="partner_id" />
+                            <field name="order_type" string="Order type" />
+                            <field name="product_qty" />
+                            <field name="product_uom" />
+                            <field name="date_planned" />
+                            <field name="po_state" string="State" />
+                            <button name="go_to_po_info" type="object" string="Go to purchase order form" icon="terp-stock_zoom" />
+                        </tree>
+                    </field>
+                    <field name="incoming_ids" nolabel="1" colspan="4" string="Incoming">
+                        <tree string="Incoming Products"
+                            colors="grey: state in ('cancel', 'done');green: state in ('available')">
+                            <field name="name" />
+                            <field name="picking_id" string="Shipment" />
+                            <field name="order_type" />
+                            <field name="location_id" string="Source Loc." />
+                            <field name="location_dest_id" string="Dest. Loc." />
+                            <field name="partner_id" string="Supplier" />
+                            <field name="product_id" />
+                            <field name="product_qty" />
+                            <field name="product_uom" />
+                            <field name="date_expected" string="Expected receipt" />
+                            <field name="state" />
+                            <button name="go_to_incoming_info" type="object" string="Go to incoming move form" icon="terp-stock_zoom" />
+                        </tree>
+                    </field>
+                    <field name="displayed_out_ids" nolabel="1" colspan="4" string="Outgoing">
+                        <tree string="Outgoing Products"
+                            colors="grey: state in ('cancel', 'done');green: state in ('available')">
+                            <field name="name" />
+                            <field name="parent_doc_id" string="Picking" />
+                            <field name="order_type" />
+                            <field name="location_id" string="Source Loc." />
+                            <field name="location_dest_id" string="Dest. Loc." />
+                            <field name="partner_id" string="Customer" />
+                            <field name="product_id" />
+                            <field name="product_qty" />
+                            <field name="product_uom" />
+                            <field name="date_expected" string="Expected delivery" />
+                            <field name="state" />
+                            <button name="go_to_outgoing_info" type="object" string="Go to outgoing move form" icon="terp-stock_zoom" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+        
+        <record id="sale_order_line_follow_choose_view" model="ir.ui.view">
+            <field name="name">sale.order.line.follow.choose.view</field>
+            <field name="model">sale.order.followup</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Choose the view type">
+                    <separator colspan="4" string="Type of view" />
+                    <field name="choose_type" colspan="4" required="1" />
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" icon="gtk-cancel" colspan="2" />
+                    <button name="go_to_view" string="Go to view" icon="gtk-execute" colspan="2" type="object"/>
+                </form>
+            </field>
+        </record>
+        
+        <record id="sale_order_followup_from_menu" model="ir.ui.view">
+            <field name="name">sale.order.followup.from.menu</field>
+            <field name="model">sale.order.followup.from.menu</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Choose a Sale Order">
+                    <separator colspan="4" string="Select Sale Order" />
+                <field name="order_id" 
+                    attrs="{'readonly': [('cust_order_id', '!=', False)], 'required': [('cust_order_id', '=', False)]}" 
+                    domain="[('state', '!=', 'draft')]"
+                    context="{'active_test': False}"
+                       on_change="change_order_id(order_id, cust_order_id, 'order_id')"/>
+                    <field name="cust_order_id" 
+                                       context="{'from_followup': True, 'active_test': False}" 
+                                       attrs="{'readonly': [('order_id', '!=', False)], 'required': [('cust_order_id', '=', False)]}" 
+                    domain="[('state', '!=', 'draft')]"
+                    on_change="change_order_id(order_id, cust_order_id, 'cust_order_id')" />
+                    <separator colspan="4" string="Actions" />
+                    <button special="cancel" string="Cancel" colspan="2" icon="gtk-cancel" />
+                    <button name="go_to_followup" string="Go to followup" icon="gtk-execute" colspan="2" type="object"/>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_sale_order_followup_from_menu" model="ir.actions.act_window">
+            <field name="name">Sale Order Follow-Up</field>
+            <field name="res_model">sale.order.followup.from.menu</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+        <menuitem id="menuitem_sale_order_followup_from_menu"
+              action="action_sale_order_followup_from_menu"
+              parent="base.menu_sales"
+              sequence="1" />
+
+    
+    </data>
+</openerp>

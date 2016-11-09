@@ -1,0 +1,46 @@
+                    <group col="4" colspan="4">
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Accounts" colspan="3"/>
+                                <field name="display_account" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_account', '=', False)]}">
+                                <group colspan="2" col="2">
+                                    <button name="button_account_clear" type="object" string="Remove all Accounts" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_account_add" type="object" string="Add all Accounts" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_account_ids"/>
+                                <field name="account_ids" colspan="2" nolabel="1" domain="[('parent_id', '!=', False)]">
+                                    <tree string="Accounts" colors="blue:type in ('view');black:type not in ('view')" editable="top" noteditable="1">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="type" string="Type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                        <group col="2" colspan="2">
+                            <group col="4" colspan="2">
+                                <separator string="Account types" colspan="3"/>
+                                <field name="display_type" colspan="1" nolabel="1"/>
+                            </group>
+                            <group colspan="2" col="2" attrs="{'invisible': [('display_type', '=', False)]}">
+                                <group col="2" colspan="2">
+                                    <button name="button_account_type_clear" type="object" string="Remove all Account Types" icon="gtk-clear" colspan="1"/>
+                                    <button name="button_account_type_add" type="object" string="Add all Account Types" icon="gtk-add" colspan="1"/>
+                                </group>
+                                <field name="rev_account_type_ids"/>
+                                <field name="account_type_ids" colspan="2" nolabel="1">
+                                    <tree string="Account types" editable="top" noteditable="1">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </group>
+                    </group>
+                    <group colspan="2" col="2">
+                        <html>
+                            <br />
+                        </html>
+                    </group>

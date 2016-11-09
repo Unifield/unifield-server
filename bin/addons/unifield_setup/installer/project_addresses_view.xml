@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+		
+		<record id="base_setup.view_base_setup_company" model="ir.ui.view">
+      		<field name="name">Company Configuration</field>
+      		<field name="model">base.setup.company</field>
+      		<field name="type">form</field>
+      		<field name="inherit_id" ref="base.res_config_view_base"/>
+      		<field name="arch" type="xml">
+        		<data>
+          			<form position="attributes">
+            			<attribute name="string">Company Configuration</attribute>
+          			</form>
+          			
+          			<xpath expr="//label[@string='description']" position="attributes">
+                		<attribute name="string">Your company information will be used to personalize documents issued with OpenERP such as invoices, sales orders and much more.</attribute>
+          			</xpath>
+          
+          			<xpath expr='//separator[@string="title"]' position='attributes'>
+	                    <attribute name='string'>Configure Your Company Information</attribute>
+    			    </xpath>
+          	
+          			<xpath expr='//separator[@string="vsep"]' position='attributes'>
+                    	<attribute name='rowspan'>25</attribute>
+                    	<attribute name='string'></attribute>
+          			</xpath>
+          			
+          			<group string="res_config_contents" position="replace">
+              			<group colspan="5">
+	                  		<group colspan="2">
+    	              			<notebook>
+        	          				<page string="Default address">
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="second_time" invisible="1" />
+                                        <field name="name" attrs="{'readonly': [('second_time', '=', True)]}"/>
+                                        <field name="partner_name" attrs="{'readonly': [('second_time', '=', True)]}" required="True" />
+				        	            <field name="street" required="True"/>
+				            	        <field name="street2"/>
+				                	    <field name="zip" required="True"/>
+					                    <field name="city" required="True"/>
+					                    <field name="country_id" required="True"/>
+					                    <field name="state_id"/>
+					                    <field name="phone"/>
+					                    <field name="email"/>
+				    	                <field name="website"/>
+				    	                <field name="account_no"/>
+				        	            <field name="currency" widget="selection" invisible="1"/>
+				            	    </page>
+				                	<page string="Ship to address">
+					                	<field name="ship_street" />
+					                    <field name="ship_street2"/>
+					                    <field name="ship_zip" />
+					                    <field name="ship_city" />
+					                    <field name="ship_country_id" />
+				    	                <field name="ship_state_id"/>
+				        	            <field name="ship_phone"/>
+				            	        <field name="ship_email"/>
+				                	</page>
+					                <page string="Bill to address">
+					                	<field name="bill_street" />
+					                    <field name="bill_street2"/>
+					                    <field name="bill_zip" />
+					                    <field name="bill_city" />
+				    	                <field name="bill_country_id" />
+				        	            <field name="bill_state_id"/>
+				            	        <field name="bill_phone"/>
+				                	    <field name="bill_email"/>
+					                </page>
+			                    </notebook>
+        	        		</group>
+            	    		<newline/>
+                			<group colspan="2">
+		            	        <field name="rml_header1" colspan="5" invisible="1" />
+		                    	<field name="rml_footer1" colspan="5" invisible="1" />
+		                	    <field name="rml_footer2" colspan="5" invisible="1" />
+	                    		<separator colspan="4"
+    	                           string="Your Logo - Use a size of about 450x150 pixels."/>
+        	            		<field colspan="5" name="logo" widget="image"
+            	               		nolabel="1"/>
+                	  		</group>
+            			</group>
+            		</group>
+
+<!--					<xpath expr='//button[@name="action_skip"]' position='replace'/>-->
+        		</data>
+      		</field>
+    	</record>
+		
+	</data>
+</openerp>

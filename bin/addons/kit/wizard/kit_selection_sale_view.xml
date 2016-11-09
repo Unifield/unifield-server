@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+    	
+        <record id="view_kit_selection_sale_form_wizard" model="ir.ui.view">
+            <field name="name">view.kit.selection.sale.form.wizard</field>
+            <field name="model">kit.selection.sale</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Replacement Items Selection">
+            	<separator string="You can import replacement items from theoretical kits." colspan="4"/>
+            	<field name="order_line_id_kit_selection_sale" invisible="True" />
+                <field name="product_id_kit_selection_sale" colspan="4" />
+                <field name="kit_id_kit_selection_sale" colspan="3"
+                	context="{'wizard_composition_type': 'theoretical','composition_type': 'theoretical'}"
+                	domain="[('state', '=', 'completed'), ('composition_type', '=', 'theoretical'), ('composition_product_id', '=', product_id_kit_selection_sale)]" />
+                <button name="import_items" type="object" string="Import Items from Theoretical Kit" icon="gtk-sort-descending" colspan="1" />
+                <group col="4" colspan="4">
+                	<field name="product_ids_kit_selection_sale" nolabel="True"
+                		context="{'sol_ids': [order_line_id_kit_selection_sale]}" />
+                </group>
+                <group colspan="2" />
+                <button icon='gtk-cancel' special="cancel"
+                    string="_Close" />
+                <button name="do_de_kitting" string="Ok"
+                    type="object" icon="gtk-ok" />
+            </form>
+            </field>
+        </record>
+        
+        <record id="view_kit_selection_sale_line_tree" model="ir.ui.view">
+            <field name="name">view.kit.selection.sale.line.tree</field>
+            <field name="model">kit.selection.sale.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+            	<tree string="Replacement Items" editable="top" colors="red:integrity_status!='empty'">
+            		<field name="product_id_kit_selection_sale_line"
+            			context="partner_id=parent.partner_id_kit_selection_sale,quantity=qty_kit_selection_sale_line,pricelist=parent.pricelist_id_kit_selection_sale,uom=uom_id_kit_selection_sale_line,warehouse=parent.warehouse_id_kit_selection_sale"
+            			on_change="on_product_id_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
+            		<field name="qty_kit_selection_sale_line"
+            			context="partner_id=parent.partner_id_kit_selection_sale, quantity=qty_kit_selection_sale_line, pricelist=parent.pricelist_id_kit_selection_sale, uom=uom_id_kit_selection_sale_line, warehouse=parent.warehouse_id_kit_selection_sale"
+            			on_change="on_qty_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
+            		<field name="uom_id_kit_selection_sale_line"
+            			on_change="on_uom_id_change(product_id_kit_selection_sale_line,qty_kit_selection_sale_line,uom_id_kit_selection_sale_line,price_unit_kit_selection_sale_line,context)" />
+            		<field name="price_unit_kit_selection_sale_line" />
+            		<field name="integrity_status" />
+            	</tree>
+            </field>
+		</record>
+		
+    </data>
+</openerp>

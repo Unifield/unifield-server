@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_threshold_value_all","threshold.value.all","model_threshold_value",,1,1,1,1
+"access_threshold_value_line_all","threshold.value.line.all","model_threshold_value_line",,1,1,1,1

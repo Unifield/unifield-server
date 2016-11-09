@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_account_form_inherit" model="ir.ui.view">
+            <field name="name">account.account.form</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//notebook" position="inside">
+                    <page string="Currency Revaluation" attrs="{'invisible': [('instance_level', '=', 'project')]}">
+                        <field name="instance_level" invisible="1"/>
+                        <field name="currency_revaluation"
+                            attrs="{'readonly': ['|', ('instance_level', '!=', 'section'), ('user_type_code', 'not in', ['receivables', 'payables', 'cash', 'asset', 'stock'])]}"/>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

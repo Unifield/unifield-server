@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="change_product_move_processor_form_view" model="ir.ui.view">
+            <field name="name">change.product.move.processor.form.view</field>
+            <field name="model">change.product.move.processor</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Change Product of Memory Move">
+                <separator string="Select a new Product - The UoM is restricted" colspan="4"/>
+                <field name="old_product_id" colspan="4" />
+                <field name="old_uom_id" />
+                <field name="old_uom_category_id" invisible="1" />
+                <field name="move_location_ids" invisible="1" />
+                <field name="new_product_id" domain="[('uom_category_id', '=', old_uom_category_id)]" colspan="4" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1, 'location': move_location_ids and eval(move_location_ids) or []}" />
+                <field name="change_reason" colspan="4" attrs="{'required': [('new_product_id', '!=', False)]}"/>
+                <group colspan="2" />
+                <button name="cancel" string="_Cancel"
+                	type="object" icon='gtk-cancel' />
+                <button name="change_product" string="Ok"
+                    type="object" icon="gtk-ok" />
+            </form>
+            </field>
+        </record>
+
+    </data>
+</openerp>

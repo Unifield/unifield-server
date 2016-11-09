@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_account_destination_link_form" model="ir.ui.view">
+            <field name="name">account.destination.link.form</field>
+            <field name="model">account.destination.link</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Account/Destination">
+                    <field name="account_id"/>
+                    <field name="destination_id"/>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_account_destination_link_tree" model="ir.ui.view">
+            <field name="name">account.destination.link.tree</field>
+            <field name="model">account.destination.link</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account/Destination" colors="grey:used" notselectable="used" >
+                    <field name="name" invisible="1"/>
+                    <field name="account_id"/>
+                    <field name="destination_id"/>
+                    <field name="used" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_account_destination_link_search" model="ir.ui.view">
+            <field name="name">account.destination.link.search</field>
+            <field name="model">account.destination.link</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Account/Destination">
+                    <field name="account_id"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_account_form" model="ir.ui.view">
+            <field name="name">account.form</field>
+            <field name="model">account.account</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_account_form"/>
+            <field name="priority" eval="18"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//field[@name='user_type']" position="replace">
+                        <field name="user_type_code" invisible="1"/>
+                        <field name="is_analytic_addicted" invisible="1"/>
+                        <field name="user_type" on_change="onchange_user_type(user_type, code)"/>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='General Information']" position="after">
+                        <page string="Analytical Destination">
+                            <field name="default_destination_id" colspan="2" 
+                                attrs="{'required': [('is_analytic_addicted', '=', True)], 'readonly': [('is_analytic_addicted', '!=', True)]}"/>
+                            <label string="" colspan="2"/>
+                            <field name="destination_ids" nolabel="1" colspan="4" domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]">
+                                <tree string="Destinations">
+                                    <field name="name"/>
+                                    <field name="description"/>
+                                    <field name="date_start"/>
+                                    <field name="date"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="analytic_view_move_form" model="ir.ui.view">
+            <field name="name">analytic.view.move.form</field>
+            <field name="model">account.move</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="priority" eval="23"/>
+            <field name="arch" type="xml">
+              <data>
+                    <xpath expr="/form/notebook" position="before">
+                        <group colspan="4" col="8" attrs="{'invisible': ['|', ('analytic_distribution_id', '=', False), ('imported', '=', True)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-check" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('status', '!=', 'manu'), ('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group colspan="4" col="8" attrs="{'invisible': ['|', ('analytic_distribution_id', '!=', False), ('imported', '=', True)]}">
+                            <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-emblem-important" context="context" colspan="4" attrs="{'invisible': [('analytic_distribution_id', '!=', False)]}"/>
+                            <button name="button_reset_distribution" string="Reset AD at line level" type="object" icon="gtk-undelete" colspan="4" attrs="{'invisible': ['|', ('status', '!=', 'manu'), ('state', '!=', 'draft')]}"/>
+                        </group>
+                        <field name="analytic_distribution_id" invisible="1"/>
+                    </xpath>
+                    <xpath expr="/form//tree" position="attributes">
+                        <attribute name="colors">blue:state in ('draft') and analytic_distribution_state in ('valid', 'none');black:state in ('valid') and analytic_distribution_state in ('valid', 'none');red:analytic_distribution_state in ('invalid') or state in ('draft')</attribute>
+                    </xpath>
+                    <xpath expr="/form//tree//field[@name='partner_id']" position="after">
+                        <field name="analytic_distribution_id" invisible="1"/>
+                        <field name="display_analytic_button" invisible="1"/>
+                        <button name="button_analytic_distribution" string="Analytical Distribution" type="object" icon="terp-stock_symbol-selection" 
+                        context="context" attrs="{'invisible': [('display_analytic_button', '=', False)]}"/>
+                        <field name="analytic_distribution_state" invisible="1"/>
+                        <field name="analytic_distribution_state_recap" />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+
+    </data>
+</openerp>

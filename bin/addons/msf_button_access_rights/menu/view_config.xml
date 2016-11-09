@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+	
+		<!-- view_config wizard install act_window and menu -->
+		<record id="msf_button_access_rights_view_config_wizard_act_window" model="ir.actions.act_window">
+		    <field name="name">Generate Button Access Rules</field>
+		    <field name="type">ir.actions.act_window</field>
+		    <field name="res_model">msf_button_access_rights.view_config_wizard_install</field>
+		    <field name="view_type">form</field>
+		    <field name="view_id" ref="view_config_wizard_install_view_form"/>
+		    <field name="view_mode">form</field>
+		    <field name="target">new</field>
+		</record>
+
+        <menuitem id="msf_button_access_rights.view_config_wizard_menu" 
+            parent="base.menu_config"
+            action="msf_button_access_rights_view_config_wizard_act_window"
+            sequence="90"/>
+		
+	</data>
+</openerp>
+

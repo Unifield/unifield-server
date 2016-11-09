@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="stock_certificate_picking_form_view" model="ir.ui.view">
+            <field name="name">stock.certificate.picking.form.view</field>
+            <field name="model">stock.certificate.picking</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Attach a certificate of donation">
+                    <separator colspan="4" string="Validate the attachment" />
+                    <field name="donation_ok" colspan="4" align="0.5" />
+                    <group colspan="4" col="4" attrs="{'invisible': [('donation_ok', '=', 0)]}">
+                        <separator colspan="4" string="Certificat" />
+                        <field name="attachment" filename="att_fname" />
+                        <field name="att_fname" invisible="1"/>
+                    </group> 
+                    <separator colspan="4" string="Actions" />
+                    <label colspan="2" />
+                    <button name="attach_certificate" string="Validate the attachment" icon="terp-mail-replied" type="object" colspan="2" />
+                </form>
+            </field>
+        </record>
+    
+    </data>
+</openerp>

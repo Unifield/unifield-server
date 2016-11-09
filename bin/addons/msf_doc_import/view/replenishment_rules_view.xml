@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="auto_supply_import_lines" model="ir.ui.view">
+            <field name="name">auto.supply.import.lines</field>
+            <field name="model">stock.warehouse.automatic.supply</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="procurement_auto.automatic_supply_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='line_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_auto_supply_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="order_cycle_import_lines" model="ir.ui.view">
+            <field name="name">order.cycle.import.lines</field>
+            <field name="model">stock.warehouse.order.cycle</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="procurement_cycle.order_cycle_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='product_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_order_cycle_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="threshold_value_import_lines" model="ir.ui.view">
+            <field name="name">threshold.value.import.lines</field>
+            <field name="model">threshold.value</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="threshold_value.threshold_value_form_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='line_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_threshold_value_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="stock_warehouse_order_point_import_lines" model="ir.ui.view">
+            <field name="name">stock.warehouse.orderpoint.import.lines</field>
+            <field name="model">stock.warehouse.orderpoint</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="specific_rules.add_onchange_uom_stock_warehouse_orderpoint_view" />
+            <field name="arch" type="xml">
+                <xpath expr="/form//field[@name='line_ids']" position="before">
+                    <group name="import" string=" Import Lines " colspan="1" col="4">
+                        <button name="wizard_import_stock_warehouse_line" string="Import lines" icon="gtk-dnd" colspan="4" type="object" />
+                        <newline />
+                        <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" type="object" colspan="2" />
+                        <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="2" type="object" />
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</openerp>

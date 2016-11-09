@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    <!-- PURCHASE ORDER and REQUEST FOR QUOTATION are the same object-->
+        <report
+            id="report_purchase_order_xls"
+            string="Purchase Order Excel Export"
+            model="purchase.order"
+            name="purchase.order_xls"
+            file="msf_supply_doc_export/report/report_purchase_order_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+        <report
+            id="report_validated_purchase_order_xls"
+            string="Validated Purchase Order Excel Export"
+            model="purchase.order"
+            name="validated.purchase.order_xls"
+            file="msf_supply_doc_export/report/report_validated_purchase_order_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <report
+            id="report_validated_purchase_order_xml"
+            string="Validated Purchase Order XML Export"
+            model="purchase.order"
+            name="validated.purchase.order_xml"
+            file="msf_supply_doc_export/report/report_validated_purchase_order_xml.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+        <report
+            id="report_request_for_quotation_xls"
+            string="Request For Quotation Excel Export"
+            model="purchase.order"
+            name="request.for.quotation_xls"
+            file="msf_supply_doc_export/report/report_request_for_quotation_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+    <!-- FIELD ORDER == INTERNAL REQUEST== SALE ORDER they are the same object-->
+        <report
+            id="report_sale_order_xls"
+            string="Field Order Excel Export"
+            model="sale.order"
+            name="sale.order_xls"
+            file="msf_supply_doc_export/report/report_sale_order_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+         
+        <report
+            id="report_internal_request_xls"
+            string="Internal Request Excel Export"
+            model="sale.order"
+            name="internal.request_xls"
+            file="msf_supply_doc_export/report/report_internal_request_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+    <!-- TENDER -->
+        <report
+            id="report_tender_xls"
+            string="Tender Excel Export"
+            model="tender"
+            name="tender_xls"
+            file="msf_supply_doc_export/report/report_tender_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+     <!-- STOCK INVENTORY-->
+        <report
+            id="report_stock_inventory_xls"
+            string="Stock Inventory Excel Export"
+            model="stock.inventory"
+            name="stock.inventory_xls"
+            file="msf_supply_doc_export/report/stock_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+     <!-- STOCK INITIAL INVENTORY-->
+        <report
+            id="report_stock_initial_inventory_xls"
+            string="Stock Initial Excel Export"
+            model="initial.stock.inventory"
+            name="initial.stock.inventory_xls"
+            file="msf_supply_doc_export/report/stock_initial_inventory_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+         />
+
+     <!-- STOCK COST REEVALUATION-->
+        <report
+            id="report_stock_cost_reevaluation_xls"
+            string="Cost Reevaluation Excel Export"
+            model="stock.cost.reevaluation"
+            name="stock.cost.reevaluation_xls"
+            file="msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- PRODUCT LIST -->
+        <report
+            id="report_product_list_xls"
+            string="Product List Excel Export"
+            model="product.list"
+            name="product.list.xls"
+            file="msf_supply_doc_export/report/product_list_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- KIT COMPOSITION LIST -->
+        <report
+            id="report_composition_kit_xls"
+            string="Composition Kit Excel Export"
+            model="composition.kit"
+            name="composition.kit.xls"
+            file="msf_supply_doc_export/report/report_composition_kit_xls.mako"
+            report_type="webkit"
+            target_filename='${eval(_get_report_name)}'
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- KIT REAL COMPOSITION LIST -->
+        <report
+            id="report_real_composition_kit_xls"
+            string="Real Composition Kit Excel Export"
+            model="composition.kit"
+            name="real.composition.kit.xls"
+            file="msf_supply_doc_export/report/report_real_composition_kit_xls.mako"
+            target_filename='${eval(_get_report_name)}'
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="True"
+            />
+
+    <!-- INTERNAL MOVE -->
+        <report
+           id="report_internal_move_xls"
+           string="Internal Move Excel Export"
+           model="stock.picking"
+           name="internal.move.xls"
+           file="msf_supply_doc_export/report/report_internal_move_xls.mako"
+           report_type="webkit"
+           header="False"
+           auto="False"
+           menu="True"
+           />
+
+       <!-- EXCEL INCOMING SHIPMENT -->
+       <report
+           id="report_incoming_shipment_xls"
+           string="Incoming Shipment Excel Export"
+           model="stock.picking"
+           name="incoming.shipment.xls"
+           file="msf_supply_doc_export/report/report_incoming_shipment_xls.mako"
+           report_type="webkit"
+           header="False"
+           auto="False"
+           menu="False"
+           />
+
+       <report
+           id="report_incoming_shipment_xml"
+           string="Incoming Shipment Pure XML Export"
+           model="stock.picking"
+           name="incoming.shipment.xml"
+           file="msf_supply_doc_export/report/report_incoming_shipment_xml.mako"
+           report_type="webkit"
+           header="False"
+           auto="False"
+           menu="False"
+           />
+
+    </data>
+</openerp>

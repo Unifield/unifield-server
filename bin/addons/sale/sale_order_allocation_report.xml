@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            auto="False"
+            id="sale_order_allocation_report"
+            model="sale.order"
+            name="sale.order.allocation.report"
+            target_filename="Allocation Report_${name}_%(year)s%(month)s%(day)s"
+            rml="sale/report/sale_order_allocation_report.rml"
+            header="False"
+            string="Allocation report" />
+
+    </data>
+</openerp>

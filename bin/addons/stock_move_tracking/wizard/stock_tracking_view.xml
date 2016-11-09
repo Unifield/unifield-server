@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="stock_move_tracking_form_view" model="ir.ui.view">
+            <field name="name">stock.move.tracking.form.view</field>
+            <field name="model">stock.move.tracking</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Search Items">
+                    <group colspan="4" col="2">
+                        <field name="product_id" />
+                        <field name="prodlot_id" />
+                        <field name="expired_date" />
+                    </group>
+                    <group colspan="4" col="3">
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="print_report" string="Print" icon="gtk-print" type="object" />
+                        <button name="print_view" string="View" icon="terp-check" type="object" />
+                    </group>
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_stock_move_tracking_wizard" model="ir.actions.act_window">
+            <field name="name">Trace Item</field>
+            <field name="res_model">stock.move.tracking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+        <menuitem action="action_stock_move_tracking_wizard"
+                  id="menu_stock_move_tracking"
+                  sequence="-4"
+                  parent="stock.menu_traceability" />
+    
+    </data>
+</openerp>

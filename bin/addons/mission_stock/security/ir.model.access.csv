@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_stock_mission_report","stock.mission.report","model_stock_mission_report","",1,1,1,1
+"access_stock_missior_report_line","stock.mission.report.line","model_stock_mission_report_line","",1,1,1,1

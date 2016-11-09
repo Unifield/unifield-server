@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+<document filename="allocation_report.pdf">
+  <template pageSize="(842.0,595.0)" title="Test" author="Medecins Sans Frontieres" allowSplitting="20">
+    <pageTemplate id="first">
+      <frame id="first" x1="42.0" y1="57.0" width="750" height="530"/>
+    </pageTemplate>
+  </template>
+  <stylesheet>
+   
+    <!-- TABLE STYLES -->    
+    <blockTableStyle id="InformationTable">
+        <blockAlignment value="CENTER" />
+        <blockValign value="MIDDLE" />
+        <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
+        <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
+        <lineStyle kind="LINEBEFORE" colorName="#000000" />
+        <lineStyle kind="LINEAFTER" colorName="#000000" />
+    </blockTableStyle>
+    
+    <blockTableStyle id="LinesList">
+        <blockValign value="MIDDLE" />
+        <lineStyle kind="LINEBELOW" colorName="#000000" start="0,-1" />
+        <lineStyle kind="LINEABOVE" colorName="#000000" start="0,0" stop="-1,0" />
+        <lineStyle kind="LINEBEFORE" colorName="#0b0b0b" />
+        <lineStyle kind="LINEAFTER" colorName="#000000" />
+    </blockTableStyle>
+        
+    <initialize>
+      <paraStyle name="all" alignment="justify"/>
+    </initialize>
+    
+    <!-- PARAGRAPH STYLES -->
+    <paraStyle name="Standard" fontName="Helvetica"/>
+    <paraStyle name="Header" fontName="Helvetica-Bold" fontSize="15.0" leading="20" alignment="CENTER" spaceBefore="0.0" spaceAfter="0.0" />
+    <paraStyle name="InformationHeader" fontName="Helvetica-Bold" fontSize="7.0" leading="10" alignment="CENTER" />
+    <paraStyle name="Information" fontName="Helvetica" fontSize="7.0" leading="10" alignment="CENTER" />
+    
+  </stylesheet>
+  <story>    
+    <!-- LINES LIST -->
+    <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,89.0,65.0,65.0,43.0,43.0,43.0" style="LinesList">
+        <tr>
+            <td>
+                <para style="InformationHeader">PO</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Type</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Cat.</para>
+            </td>
+            <td>
+                <para style="InformationHeader">O. l.</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Product</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Qty</para>
+            </td>
+            <td>
+                <para style="InformationHeader">UoM</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Unit Price</para>
+            </td>
+            <td>
+                <para style="InformationHeader">%</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Subtotal</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Currency</para>
+            </td>
+
+            <td>
+                <para style="InformationHeader">Account</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Destination</para>
+            </td>
+          	<td>
+                <para style="InformationHeader">Cost Center</para>
+            </td>
+
+            <td>
+                <para style="InformationHeader">Source Doc</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Partner</para>
+            </td>
+            <td>
+                <para style="InformationHeader">Partner Doc</para>
+            </td>
+        </tr>
+   </blockTable>
+   
+   
+   <section>
+   [[repeatIn(objects,'o')]]
+   <blockTable colWidths="43.0,43.0,43.0,27.0,105.0,43.0,35.0,35.0,35.0,43.0,43.0,89.0,65.0,65.0,43.0,43.0,43.0" style="LinesList">
+        <tr>
+            <td>
+                <parawrap style="Information">[[ o.order_id.name ]]</parawrap>
+            </td>
+            <td>
+                <para style="Information">[[ getSel(o, 'order_type') ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ getSel(o, 'order_category') ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.line_number ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ '[%s] %s' % (o.product_id.default_code, o.product_id.name) ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.product_qty ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.uom_id.name ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.unit_price ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.percentage ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.subtotal ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.currency_id.name ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.account_id.code ]] [[ o.account_id.name ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.destination_id.code ]]</para>
+            </td>
+            <td>
+                <para style="Information">[[ o.cost_center_id.code ]]</para>
+            </td>
+            <td>
+                <parawrap style="Information">[[ o.source_doc ]]</parawrap>
+            </td>
+            <td>
+                <parawrap style="Information">[[ o.partner_id.name ]]</parawrap>
+            </td>
+            <td>
+                <parawrap style="Information">[[ o.partner_doc ]]</parawrap>
+            </td>
+        </tr>
+   </blockTable>
+   </section>
+       
+    <para style="Standard">
+      <font color="white"> </font>
+    </para>
+    
+  </story>
+</document>
+  

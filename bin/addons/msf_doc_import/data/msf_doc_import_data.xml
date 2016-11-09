@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+    <!-- We deactivate the cat_tbd in the file msf_doc_import/inactive_categ.xml -->
+     <record id="cat_tbd" model="product.category">
+        <field name="name">Product Categ to be defined</field>
+    </record>
+
+    <!-- 'tbd' stands for 'to be defined' -->
+    <record model="product.nomenclature" id="nomen_tbd0">
+        <field name="name">To Be Defined0</field>
+        <field name="type">mandatory</field>
+        <field name="level">0</field>
+        <field name="active" eval="False" />
+    </record>
+    
+    <record model="product.nomenclature" id="nomen_tbd1">
+        <field name="name">To Be Defined1</field>
+        <field name="type">mandatory</field>
+        <field name="level">1</field>
+        <field name="parent_id" ref="nomen_tbd0"/>
+        <field name="active" eval="False" />
+    </record>
+    
+    <record model="product.nomenclature" id="nomen_tbd2">
+        <field name="name">To Be Defined2</field>
+        <field name="type">mandatory</field>
+        <field name="level">2</field>
+        <field name="parent_id" ref="nomen_tbd1"/>
+        <field name="active" eval="False" />
+    </record>
+    
+    <record id="cat_tbd" model="product.category">
+        <field name="name">Product Categ to be defined</field>
+        <field name="family_id" ref="nomen_tbd2" />
+    </record>
+    
+    <record model="product.nomenclature" id="nomen_tbd3">
+        <field name="name">To Be Defined3</field>
+        <field name="type">mandatory</field>
+        <field name="level">3</field>
+        <field name="parent_id" ref="nomen_tbd2"/>
+        <field name="active" eval="False" />
+    </record>
+    
+    <!-- Product Categ uom tbd -->
+    <record id="product_uom_tbd" model="product.uom.categ">
+        <field name="name">Categ uom to be defined</field>
+        <field name="active" eval="False" />
+    </record>
+    
+    <!-- Uom to be defined -->
+    <record id="uom_tbd" model="product.uom">
+        <field name="category_id" ref="product_uom_tbd"/>
+        <field name="name">Uom to be defined</field>
+        <field name="factor" eval="1.0"/>
+        <field name="rounding" eval="1.0"/>
+        <field name="active" eval="False" />
+    </record>
+
+
+
+    <!-- Product to be defined -->
+    <record id="product_tbd" model="product.product">
+        <field name="default_code" >TBD</field>
+        <field name="name">To be defined</field>
+        <field name="type">product</field>
+        <field name="nomen_manda_0" ref="msf_doc_import.nomen_tbd0"/>
+        <field name="nomen_manda_1" ref="msf_doc_import.nomen_tbd1"/>
+        <field name="nomen_manda_2" ref="msf_doc_import.nomen_tbd2"/>
+        <field name="nomen_manda_3" ref="msf_doc_import.nomen_tbd3"/>
+        <field name="uom_id" ref="product.product_uom_unit"/>
+        <field name="uom_po_id" ref="product.product_uom_unit"/>
+        <field name="categ_id" ref="product.cat0"/>
+        <field name="active" eval="False" />
+        <field name="international_status" ref="product_attributes.int_5"/>
+    </record>
+    
+    <!-- Partner to be defined -->
+    <record id="supplier_tbd" model="res.partner">
+        <field name="name">To be defined</field>
+        <field name="active" eval="False" />
+    </record>
+    
+    <!-- Partner address to be defined -->
+    <record id="address_tbd" model="res.partner.address">
+        <field name="type">default</field>
+        <field name="street">To be defined</field>
+        <field name="zip">To be defined</field>
+        <field name="city">To be defined</field>
+        <field name="partner_id" ref="supplier_tbd"/>
+        <field name="active" eval="False" />
+    </record>
+    
+    <!-- SupplierInfo to be defined -->
+    <record id="supplierinfo_tbd" model="product.supplierinfo">
+        <field name="name" ref="supplier_tbd"/>
+        <field name="product_id" ref="product_tbd"/>
+        <field name="active" eval="False" />
+        <!-- 
+        <field name="uom_id" ref="uom_tbd"/>
+        <field name="uom_po_id" ref="uom_tbd"/>
+        <field name="categ_id" ref="cat_tbd"/>
+         -->
+    </record>
+    
+    </data>
+</openerp>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+<data>
+
+    <record id="view_destruction_location_tree" model="ir.ui.view">
+        <field name="name">destruction.locationstock.tree</field>
+        <field name="model">stock.move</field>
+        <field name="type">tree</field>
+        <field name="arch" type="xml">
+            <tree string="Destruction Location">
+                <field name="name"/>
+                <field name="picking_id" string="Reference"/>
+                <field name="origin"/>
+                <field name="reason_type_id"/>
+                <field name="comment"/>
+                <field name="location_id" />
+                <field name="location_dest_id" />
+                <field name="product_id"/>
+                <field name="product_qty" />
+                <field name="product_uom" string="UoM"/>
+                <field name="date"/>
+                <field name="state"/>
+           </tree>
+        </field>
+    </record>
+
+    <record id="view_destruction_location_search" model="ir.ui.view">
+        <field name="name">report.destruction.location.search</field>
+        <field name="model">stock.move</field>
+        <field name="type">search</field>
+        <field name="arch" type="xml">
+            <search string="Destruction Location">
+                <group>
+                	<filter icon="terp-dialog-close" string="Closed" name="done" domain="[('state','=','done')]" help="Stock moves that have been processed"/>
+                	<filter icon="terp-stock" string="Future" name="future" domain="[('state','in',('assigned','confirmed','waiting'))]" help="Stock moves that are Confirmed, Available or Waiting"/>
+                	<filter icon="terp-camera_test" string="Ready" name="ready" domain="[('state','=','assigned')]" help="Stock moves that are Available (Ready to process)"/>
+	                <field name="product_id" default_focus="1"/>
+	                <field name="state" />
+                    <field name="date"/>
+                </group>
+                <newline/>
+                <group expand="0" string="Extended Filters...">
+                    <field name="origin"/>
+                </group>
+                <newline/>
+                <group expand="1" string="Group By...">
+                	<filter string="Product" name="by_product" icon="terp-accessories-archiver" domain="[]"  context="{'group_by':'product_id'}"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Source Location" name="src_location" icon="terp-gtk-jump-to-rtl" context="{'group_by':'location_id'}"/>
+                    <filter string="Dest. Location" name="dest_location" icon="terp-gtk-jump-to-ltr"  context="{'group_by':'location_dest_id'}"/>
+                    <separator orientation="vertical"/>
+                    <filter string="State" name="group_state" icon="terp-stock_effects-object-colorize" context="{'group_by':'state'}"/>
+                    <separator orientation="vertical"/>
+                    <filter string="Date" name="groupby_date" icon="terp-go-month" domain="[]" context="{'group_by':'date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_destruction_location_report" model="ir.actions.act_window">
+        <field name="name">Destruction Report</field>
+        <field name="res_model">stock.move</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">tree,graph</field>
+        <field name="search_view_id" ref="view_destruction_location_search"/>
+        <field name="view_id" ref="view_destruction_location_tree" />
+        <field name="domain">[('location_dest_id.destruction_location', '=', True)]</field>
+        <field name="help">Destruction Location</field>
+    </record>
+    <menuitem action="action_destruction_location_report" id="menu_action_destruction_location_report" parent="stock.menu_traceability" sequence="6"/>
+</data>
+</openerp>

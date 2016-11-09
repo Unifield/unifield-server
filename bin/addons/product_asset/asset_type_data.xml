@@ -1,0 +1,25 @@
+<openerp>
+	<data noupdate="1">
+
+		<record model="product.asset.type" id="asset_type_it">
+			<field name="name">IT</field>
+		</record>
+
+		<record model="product.asset.type" id="asset_type_transport">
+			<field name="name">Transport</field>
+		</record>
+
+		<record model="product.asset.type" id="asset_type_medical">
+			<field name="name">Medical</field>
+		</record>
+
+		<record model="product.asset.type" id="asset_type_telecommunication">
+			<field name="name">Telecommunication</field>
+		</record>
+
+		<record model="product.asset.type" id="asset_type_general">
+			<field name="name">General</field>
+		</record>
+
+	</data>
+</openerp>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+
+        
+            
+        <record id="stock_move_memory_tree_in" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.in</field>
+            <field name="type">tree</field>
+            <field name="priority">1</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<field name="product_id" position="after">
+						<field name="composition_list_id" domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
+							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
+						<field name="kit_mem_check" invisible="True" />
+					</field>
+				
+				</data>
+			</field>
+		</record>
+
+        <record id="stock_move_memory_tree_out" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.out</field>
+            <field name="type">tree</field>
+            <field name="priority">1</field>
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
+			<field name="arch" type="xml">
+				<data>
+				
+					<field name="product_id" position="after">
+						<field name="composition_list_id" domain="[('composition_product_id', '=', product_id), ('state', '=', 'completed'), ('composition_type', '=', 'real')]"
+							attrs="{'readonly': [('kit_mem_check', '=', False)]}" />
+						<field name="kit_mem_check" invisible="True" />
+					</field>
+				
+				</data>
+			</field>
+		</record>
+
+    </data>
+</openerp>

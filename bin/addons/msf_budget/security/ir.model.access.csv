@@ -1,0 +1,5 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_msf_budget","msf.budget","model_msf_budget",,1,1,1,1
+"access_msf_budget_line","msf.budget.line","model_msf_budget_line",,1,1,1,1
+"access_msf_budget_tools","msf.budget.tools","model_msf_budget_tools",,1,1,1,1
+"access_msf_budget_decision_moment","msf.budget.decision.moment","model_msf_budget_decision_moment",,1,1,1,1

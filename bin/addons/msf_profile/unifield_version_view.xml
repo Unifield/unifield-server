@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="unifield_version_form_view" model="ir.ui.view">
+            <field name="name">unifield.version.form.view</field>
+            <field name="model">unifield.version</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Unifield version">
+                    <field name="version" />
+                </form>
+            </field>
+        </record>
+
+        <record id="action_unifield_version_form_view" model="ir.actions.act_window">
+            <field name="name">Unifield version</field>
+            <field name="res_model">unifield.version</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem
+            id="menu_unifield_version"
+            action="action_unifield_version_form_view"
+            sequence="99"
+            parent="base.menu_config" />
+
+    </data>
+</openerp>

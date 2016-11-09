@@ -1,0 +1,6 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_hr_payroll_msf","hr.payroll.msf","model_hr_payroll_msf",,1,1,1,1
+"access_hr_payroll_deletion","hr.payroll.deletion","model_hr_payroll_deletion",,1,1,1,1
+"access_hr_payroll_import_period","hr.payroll.import.period","model_hr_payroll_import_period",,1,1,1,1
+"access_hr_payroll_employee_import_errors","hr.payroll.employee.import.errors","model_hr_payroll_employee_import_errors",,1,1,1,1
+"access_hr_contract_msf","hr.contract.msf","model_hr_contract_msf",,1,1,1,1

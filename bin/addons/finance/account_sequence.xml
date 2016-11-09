@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+        <record forcecreate="1" id="account_move_reconcile_type" model="ir.sequence.type">  
+            <field name="name">Account move reconcile</field>
+            <field name="code">account.move.reconcile</field>
+        </record>
+        <record forcecreate="1" id="account_move_reconcile_sequence" model="ir.sequence">
+            <field name="name">Account move</field>
+            <field name="code">account.move.reconcile</field>
+        </record>
+   </data>
+</openerp>

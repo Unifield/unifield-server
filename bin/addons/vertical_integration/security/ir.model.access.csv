@@ -1,0 +1,3 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_account_mapping_all","account.export.mapping","model_account_export_mapping","",1,1,1,1
+"access_country_mapping_all","country.export.mapping","model_country_export_mapping","",1,1,1,1

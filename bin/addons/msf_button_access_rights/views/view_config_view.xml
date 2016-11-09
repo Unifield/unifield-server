@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <!-- ir.ui.view.config wizard form -->
+        <record id="view_config_wizard_install_view_form" model="ir.ui.view">
+		    <field name="name">Generate Button Access Rules</field>
+		    <field name="model">msf_button_access_rights.view_config_wizard_install</field>
+		    <field name="type">form</field>
+		    <field name="inherit_id" ref="base.res_config_view_base"/>
+		    <field name="arch" type="xml">
+		    	<data>
+					<separator string="title" position="attributes">
+	                    <attribute name="string">Generate Button Access Rules for Existing Views</attribute>
+                	</separator>
+				    <group string="res_config_contents" position="replace">
+				        <label colspan="4" string="Click Next below to start generating Button Access Rules for the views that are already in your database. This process can take a long time."/>
+				        <newline />
+				        <label colspan="4" string="Note: You only need to do this once! Each time a view is created or editted, Button Access Rules will automatically be created or updated." />
+				    </group>
+			    </data>
+			</field>
+		</record>
+
+    <record id="view_config_wizard_install_view_results_form" model="ir.ui.view">
+        <field name="name">Generate Button Access Rules (result)</field>
+        <field name="model">msf_button_access_rights.view_config_wizard_install_results</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Generate Button Access Rules Result">
+                <field name="successes" colspan="4"/>
+                <field name="total" colspan="4"/>
+                <field name="errors" colspan="4"/>
+                <group colspan="4">
+                    <button name="action_next" icon="gtk-go-forward" type="object" string="Next" colspan="1"/>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    </data>
+</openerp>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_account_journal_form_inherit" model="ir.ui.view">
+            <field name="name">account.journal.form.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">form</field>
+            <field name="priority" eval="250" />
+            <field name="inherit_id" ref="account.view_account_journal_form"/>
+            <field name="arch" type="xml">
+                <form string="Account Journal" position="replace">
+                    <form string="Account Journal" hide_duplicate_button="1">
+                        <group colspan="4" col="6">
+                            <field name="has_entries" invisible="1"/>
+                            <field name="name" select="1"/>
+                            <field name="code" select="1" attrs="{'readonly': [('has_entries', '=', True)]}"/>
+                            <field name="type" on_change="onchange_type(type, currency, context)"/>
+                        </group>
+                        <group col="2" colspan="2">
+                               <separator string="Accounts" colspan="4"/>
+                               <field name="default_debit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                               <field name="default_credit_account_id" domain="[('type','&lt;&gt;','view'), ('cash_domain', '=', type)]" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque', 'cur_adj'))]}"/>
+                        </group>
+                        <group colspan="2" col="2">
+                            <separator string="Company" colspan="4"/>
+                            <field name="currency" attrs="{'required': [('type', 'in', ('cash', 'bank', 'cheque'))]}"/>
+                            <field name="analytic_journal_id" domain="[('is_current_instance','=',True)]" attrs="{'required': [('type', 'not in', ('situation', 'stock'))]}"/>
+                            <field name="bank_journal_id" attrs="{'invisible': [('type', '!=', 'cheque')], 'required': [('type', '=', 'cheque')]}"/>
+                        </group>
+                        <group colspan="4" col="4">
+                            <label string="" colspan="2"/>
+                            <button name="button_delete_journal" attrs="{'invisible': [('type', 'not in', ['cash', 'bank', 'cheque'])]}" string="Delete this journal and all attached registers" type="object" icon="gtk-undelete" confirm="This will first DELETE all registers linked to this journal then DELETE this journal. Are you sure?" colspan="2"/>
+                        </group>
+                    </form>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_account_journal_tree_inherit" model="ir.ui.view">
+            <field name="name">account.journal.tree.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="account.view_account_journal_tree"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="user_id" position="replace"/>
+                    <field name="company_id" position="replace"/>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_account_journal_view_search_inherit" model="ir.ui.view">
+            <field name="name">account.journal.view.search.inherit</field>
+            <field name="model">account.journal</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="account.view_account_journal_search"/>
+            <field name="priority" eval="18"/>
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search//field[@name='name']" position="replace">
+                        <field name="name" select="1"/>
+                        <field name="type" select="1"/>
+                    </xpath>
+                    <xpath expr="/search//field[@name='user_id']" position="replace"/>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

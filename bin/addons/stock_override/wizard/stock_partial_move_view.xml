@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="stock_move_memory_tree_in" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.in</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="4000" />
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
+            <field name="arch" type="xml">
+				<data>
+				
+					<xpath expr="/tree" position="attributes">
+                        <attribute name="colors">red:integrity_status_func_stock_memory_move!='empty'</attribute>
+                    </xpath>
+				
+					<field name="integrity_status" position="after">
+                    	<field name="integrity_status_func_stock_memory_move" />
+                    </field>
+                    
+				</data>
+            </field>
+        </record>
+        
+        <record id="stock_move_memory_tree_out" model="ir.ui.view">
+            <field name="name">stock.move.memory.tree</field>
+            <field name="model">stock.move.memory.out</field>
+            <field name="type">tree</field>
+            <field name="priority" eval="4000" />
+            <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
+            <field name="arch" type="xml">
+                <data>
+                
+                	<xpath expr="/tree" position="attributes">
+                        <attribute name="colors">red:integrity_status_func_stock_memory_move!='empty'</attribute>
+                    </xpath>
+				
+					<field name="integrity_status" position="after">
+                    	<field name="integrity_status_func_stock_memory_move" />
+                    </field>
+                    
+				</data>
+            </field>
+        </record>
+
+    </data>
+</openerp>

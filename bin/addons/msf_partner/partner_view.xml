@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="msf_view_partner_tree" model="ir.ui.view">
+            <field name="name">msf.view.partner.tree</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name="colors">green:in_product==True;red:not active</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='ref']" position="after">
+                        <field name="active" invisible="1"/>
+                        <field name="partner_type" />
+                        <field name="in_product" invisible="1" />
+                        <field name="min_qty" invisible="not context.get('choose_supplier')" />
+                        <field name="delay" invisible="not context.get('choose_supplier')" />
+                        <field name="price_unit" invisible="not context.get('choose_supplier')" />
+                        <!-- <field name="property_product_pricelist_purchase" invisible="not context.get('choose_supplier')" string="Currency"/> -->
+                        <field name="price_currency" invisible="not context.get('choose_supplier')" string="Currency" />
+                        <field name="valide_until_date" string="Valid until date"/>
+                    </xpath>
+
+                    <xpath expr="/tree/field[@name='user_id']" position="after">
+                        <field name="catalogue_bool" />
+                        <field name="supplier_lt" string="Supplier LT"/>
+                        <field name="customer_lt" string="Customer LT"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="msf_view_partner_form" model="ir.ui.view">
+            <field name="name">msf.view.partner.form</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="priority" eval="40" />
+            <field name="inherit_id" ref="partner_modification.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/group/group/field[@name='title']" position="replace">
+                        <field name="partner_type" 
+                            on_change="on_change_partner_type(partner_type, property_product_pricelist, property_product_pricelist_purchase)" />
+                    </xpath>
+                    <xpath expr="/form/group/group[2]/field[@name='supplier']" position="after">
+                        <field name="manufacturer" />
+                        <field name="transporter" on_change="transporter_ticked(transporter)" />
+                    </xpath>
+                    <xpath expr="/form/group/group/field[@name='zone']" position="after">
+                        <field name="active"/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="msf_view_res_partner_filter" model="ir.ui.view">
+            <field name="name">msf.view.res.partner.filter</field>
+            <field name="model">res.partner</field>
+            <field name="type">search</field>
+            <field name="inherit_id" ref="base.view_res_partner_filter" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/search" position="replace">
+                        <search string="Search Partner">
+                            <group col='10' colspan='4'>
+                            <filter string="Suppliers" name="supplier" icon="terp-personal" domain="[('supplier','=',1)]" help="Supplier Partners"/>
+                            <filter string="Customers" name="customer" icon="terp-personal" domain="[('customer','=',1)]" help="Customer Partners"/>
+                            <filter string="Manufacturers" name="manufacturer" icon="terp-personal" domain="[('manufacturer','=',1)]" help="Manufacturer Partners"/>
+                            <filter string="Transporters" name="transporter" icon="terp-personal" domain="[('transporter','=',1)]" help="Transporter Partners"/>
+                            <separator orientation="vertical" />
+                            <filter string="International" name="international" icon="gtk-dnd" domain="[('zone','=','international')]" help="International Partners"/>
+                            <filter string="National" name="national" icon="gtk-dnd-multiple" domain="[('zone','=','national')]" help="National Partners"/>
+                            <separator orientation="vertical" />
+                            <filter string="Internal" name="internal" icon="gtk-leave-fullscreen" domain="[('partner_type','=','internal')]" help="Internal Partners"/>
+                            <filter string="Inter-section" name="inter-section" icon="gtk-refresh" domain="[('partner_type','=','section')]" help="Inter-section Partners"/>
+                            <filter string="External" name="external" icon="gtk-quit" domain="[('partner_type','=','external')]" help="External Partners"/>
+                            <filter string="ESC" name="esc" icon="gtk-ok" domain="[('partner_type','=','esc')]" help="ESC Partners"/>
+                            <filter string="Intermission" name="intermission" icon="gtk-ok" domain="[('partner_type','=','intermission')]" help="Intermission Partners"/>
+                            <separator orientation="vertical" />
+                            <filter icon="gtk-missing-image" name="inactive" string="Show Inactive" domain="[('name', '!=', 'To be defined'), ('active', '=', False)]" separator="1" />
+                            <newline />
+                            <field name="name" select="1"/>
+                            <field name="address" select="1"/>
+                            <field name="country" select="1"/>
+                            <field name="category_id" select="1" />
+                            </group>
+                            <newline />
+                            <group expand="0" string="Group By...">
+                                <filter string="Partner type" icon="terp-personal" domain="[]" context="{'group_by' : 'partner_type'}" />
+                                <filter string="Zone" icon="terp-personal" domain="[]" context="{'group_by' : 'zone'}" />
+                            </group>
+                        </search>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <!-- id: view_partner_property_purchase_form, name: res.partner.purchase.property.form.inherit, inherit_id: purchase.view_partner_property_form was here -->
+        <!-- id: view_partner_property_sale_form, name: res.partner.sale.property.form.inherit, inherit_id: product.view_partner_property_form was here -->
+
+        <record id="msf_view_tree_replace" model="ir.ui.view">
+            <field name="name">msf.view.partner.tree.replace</field>
+            <field name="model">res.partner</field>
+            <field name="type">tree</field>
+            <field eval="45" name="priority"/>
+            <field name="inherit_id" ref="base.view_partner_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree/field[@name='user_id']" position="replace">
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <delete id="base.action_partner_sms_send" model="ir.actions.act_window" />
+        <delete id="base.action_partner_mass_mail" model="ir.actions.act_window" />
+        <delete id="base.action_translation" model="ir.actions.act_window" />
+        <delete id="account.account_overdue" model="ir.actions.report.xml" />
+        <delete id="base.res_partner_address_report" model="ir.actions.report.xml" />
+        <delete id="base.act_res_partner_event" model="ir.actions.act_window" />
+        <delete id="account.act_account_invoice_partner_relation" model="ir.actions.act_window" />
+        <delete id="account.action_analytic_open" model="ir.actions.act_window" />
+
+        <act_window
+            context="{'search_default_partner_id': [active_id]}"
+            id="act_res_partner_2_sale_order"
+            name="Field Order"
+            res_model="sale.order"
+            src_model="res.partner"/>
+
+        <act_window
+            domain="[('rfq_ok', '=', False)]"
+            context="{'search_default_partner_id': [active_id]}"
+            id="act_res_partner_2_purchase_order"
+            name="Purchase Orders"
+            res_model="purchase.order"
+            src_model="res.partner"/>
+
+        <record id="view_partner_form_replace" model="ir.ui.view">
+            <field name="name">view.partner.form.replace</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="priority" eval="50" />
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form/notebook/page[@string='Sales &amp; Purchases']" position="replace">
+                        <page string="Sales &amp; Purchases">
+                            <group colspan="2" col="2">
+                                <separator string="Purchase Properties" colspan="2"/>
+                               <field name="property_product_pricelist_purchase" string="Purchase Default Currency" domain="[('type', '=', 'purchase'), ('in_search', '=', partner_type)]" />
+                            </group>
+                            <group colspan="2" col="2">
+                                <separator string="Field Orders Properties" colspan="2"/>
+                                <field name="property_product_pricelist" string="Field Orders Default Currency" domain="[('type', '=', 'sale'), ('in_search', '=', partner_type)]" />
+                            </group>
+                            <newline />
+                            <group colspan="2" col="4">
+                            <separator string="Default Lead Times (days)" colspan="4"/>
+                            <field name="supplier_lt" attrs="{'invisible': [('supplier', '=', False)], 'required': [('supplier', '=', True)]}" /><newline/>
+                            <field name="transport_0" />
+                            <field name="transport_0_lt" on_change="on_change_lead_time(transport_0_lt,procurement_lt)" />
+                            <field name="transport_1" />
+                            <field name="transport_1_lt" />
+                            <field name="transport_2" />
+                            <field name="transport_2_lt" />
+                            <field name="procurement_lt" on_change="on_change_lead_time(transport_0_lt,procurement_lt)" /><newline/>
+                            <field name="customer_lt" attrs="{'invisible': [('customer', '=', False)], 'required': [('customer', '=', True)]}" />
+                            </group>
+                            <newline />
+                            <group colspan="2" col="2">
+                                <separator string="Inventory Properties" colspan="2"/>
+                                <field name="property_stock_customer" domain="[('usage','=','customer')]" />
+                                <field name="property_stock_supplier" domain="[('usage','=','supplier')]" />
+                            </group>
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="view_partner_form_replace_2" model="ir.ui.view">
+            <field name="name">view.partner.form.replace.2</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="priority" eval="50" />
+            <field name="inherit_id" ref="base.view_partner_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//field[@name='active']" position="attributes">
+                        <attribute name="on_change">on_change_active(active)</attribute>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='General']" position="replace">
+                        <page string="General">
+                            <field colspan="4" mode="form,tree" name="address" nolabel="1" select="1" height="260">
+                                <form string="Partner Contacts">
+                                    <newline/>
+                                      <group colspan="2" col="4">
+                                        <separator string="Postal Address" colspan="4" col="4" />
+                                        <field name="type" string="Type" colspan="2"/>
+                                        <field name="street" colspan="4"/>
+                                        <field name="street2" colspan="4"/>
+                                        <field name="zip"/>
+                                        <field name="city"/>
+                                        <field name="country_id" completion="1"/>
+                                        <field name="state_id"/>
+                                     </group>
+                                     <group colspan="2" col="2">
+                                        <separator string="Communication" colspan="2" col="2" />
+                                        <field name="phone"/>
+                                        <field name="mobile"/>
+                                        <field name="fax"/>
+                                        <field name="email" widget="email"/>
+                                     </group>
+                                    <group colspan="4" col="6">
+                                        <separator string="Contact Name" colspan="6" />
+                                        <field name="name"/>
+                                        <field domain="[('domain', '=', 'contact')]" name="title" size="0" widget="selection"/>
+                                        <field name="function"/>
+                                        <field name="active"/>
+                                    </group>
+                                </form>
+                                <tree string="Partner Contacts">
+                                    <field name="name"/>
+                                    <field name="zip"/>
+                                    <field name="city"/>
+                                    <field name="country_id"/>
+                                    <field name="phone"/>
+                                    <field name="email"/>
+                                </tree>
+                            </field>
+                            <group>
+                                    <separator colspan="4" string="Categories"/>
+                                    <field  colspan="4" name="category_id" nolabel="1"/>
+                            </group>
+                        </page>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+        <record id="partner_vat_management_form_view" model="ir.ui.view">
+            <field name="name">partner.vat.management.form.view</field>
+            <field name="model">res.partner</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="account.view_partner_property_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="//field[@name='property_account_position']" position="before">
+                        <field name="vat_ok" invisible="1" />
+                    </xpath>
+                    <xpath expr="//field[@name='property_account_position']" position="attributes">
+                        <attribute name="attrs">{'invisible': [('vat_ok', '=', False)]}</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+
+    </data>
+</openerp>
+

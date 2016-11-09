@@ -1,0 +1,6 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_pack_type","pack.type.user","model_pack_type",,1,1,1,1
+"access_shipment","shipment.user","model_shipment",,1,1,1,1
+"access_ppl_customize_label","ppl.customize.label.user","model_ppl_customize_label",,1,1,1,1
+"access_wizard","wizard.user","model_wizard",,1,1,1,1
+"access_pack_family_memory","pack_family_memory","model_pack_family_memory",,1,1,1,1

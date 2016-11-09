@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+    <!-- SALE ORDER -->
+        <record id="view_order_form" model="ir.ui.view">
+            <field name="name">sale.order.form</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="sale.view_order_form" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        
+        <record id="view_order_tree" model="ir.ui.view">
+            <field name="name">sale.order.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="sale.view_order_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state_hidden_sale_order']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        attrs="{'invisible' : [('state','!=','draft')]}" confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        <record id="view_sales_tree" model="ir.ui.view">
+            <field name="name">sale.order.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="useability_dashboard_and_menu.view_sales_tree" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        states = 'draft' confirm='Do you really want to delete selected record(s) ?'/>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+    <!-- INTERNAL REQUEST -->
+        <record id="procurement_request_form_view" model="ir.ui.view">
+            <field name="name">procurement.request.form.view</field>
+            <field name="model">sale.order</field>
+            <field name="type">form</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="procurement_request.procurement_request_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+        
+        <record id="procurement_request_tree_view" model="ir.ui.view">
+            <field name="name">procurement.request.tree.view</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="priority">300</field>
+            <field name="inherit_id" ref="procurement_request.procurement_request_tree_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/tree" position="attributes">
+                        <attribute name='hide_delete_button'>1</attribute>
+                    </xpath>
+                    <xpath expr="/tree/field[@name='state']" position="after">
+                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
+                        states='draft' confirm='Do you really want to delete selected record(s) ?' />
+                    </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

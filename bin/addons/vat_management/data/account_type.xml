@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data noupdate="1">
+    
+    <!-- Account type for VAT management -->
+        <record id="account_type_tax" model="account.account.type">
+            <field name="name">Tax</field>
+            <field name="code">tax</field>
+            <field name="close_method">unreconciled</field>
+            <field name="not_correctible" eval="True"/>
+        </record>
+    
+    </data>
+</openerp>

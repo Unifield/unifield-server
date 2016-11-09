@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="stock_card_wizard_form_view" model="ir.ui.view">
+            <field name="name">stock.card.wizard.form.view</field>
+            <field name="model">stock.card.wizard</field>
+            <field name="type">form</field>
+            <field name="priority" eval="99" />
+            <field name="arch" type="xml">
+                <form string="Stock card parameters">
+                    <separator colspan="4" string="Location" />
+                    <field name="location_id" domain="[('usage', '!=', 'view')]" 
+                           attrs="{'readonly': [('all_inout', '=', True)], 'required': [('all_inout', '=', False)]}" />
+                    <field name="all_inout" />
+                    <separator colspan="4" string="Product" />
+                    <field name="product_id" 
+                           on_change="onchange_product_id(product_id)" />
+                    <newline />
+                    <field name="perishable" invisible="1" />
+                    <field name="prodlot_id" 
+                           domain="[('product_id', '=', product_id)]"
+                           attrs="{'invisible': [('perishable', '=', False)], 'required': [('perishable', '=', True)]}" />
+                    <separator colspan="4" string="Period" />
+                    <field name="from_date" />
+                    <field name="to_date" />
+                    <separator colspan="4" string="Actions" />
+                    <group colspan="4" col="3">
+                        <label> </label>
+                        <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="show_card" icon="gtk-execute" type="object" string="Show card" />
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_card_form_view" model="ir.ui.view">
+            <field name="name">stock.card.form.view</field>
+            <field name="model">stock.card.wizard</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Stock card" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                    <separator colspan="4" string="Location" />
+                    <field name="location_id" readonly="1" />
+                    <separator colspan="4" string="Product" />
+                    <field name="product_id" readonly="1" />
+                    <group colspan="2" col="3">
+                        <field name="available_stock" readonly="1" />
+                        <field name="uom_id" readonly="1" nolabel="1" />
+                    </group>
+                    <field name="perishable" invisible="1" />
+                    <field name="prodlot_id" attrs="{'invisible': [('perishable', '=', False)]}" readonly="1" />
+                    <field name="expiry_date" readonly="1" attrs="{'invisible': [('perishable', '=', False)]}" />
+                    <separator colspan="4" string="Period" />
+                    <field name="from_date" readonly="1" />
+                    <field name="to_date" readonly="1" />
+                    <separator colspan="4" string="Moves" />
+                    <field name="card_lines" readonly="1" colspan="4" nolabel="1" mode="tree">
+                        <tree string="Lines" editable="top">
+                            <field name="date_done" />
+                            <field name="doc_ref" />
+                            <field name="origin" />
+                            <field name="qty_in" />
+                            <field name="qty_out" />
+                            <field name="balance" />
+                            <field name="src_dest" />
+                            <field name="notes" />
+                        </tree>
+                    </field>
+                </form>
+            </field>
+        </record>
+
+        <record id="stock_card_tree_view" model="ir.ui.view">
+            <field name="name">stock.card.tree.view</field>
+            <field name="model">stock.card.wizard</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Stock cards" hide_new_button="1" hide_delete_button="1" noteditable="1">
+                    <field name="location_id" />
+                    <field name="product_id" />
+                    <field name="prodlot_id" />
+                    <field name="from_date" />
+                    <field name="to_date" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_stock_card" model="ir.actions.act_window">
+            <field name="name">Stock card</field>
+            <field name="res_model">stock.card.wizard</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+            <field name="context">{}</field>
+        </record>
+
+        <record id="action_view_stock_card" model="ir.actions.act_window.view">
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock_card_wizard_form_view" />
+            <field name="act_window_id" ref="action_stock_card" />
+        </record>
+
+        <menuitem id="menu_stock_card"
+                  action="action_stock_card"
+                  sequence="5"
+                  parent="stock.menu_traceability" />
+
+
+        <!-- Menu entry at right hand side of product form -->
+        <act_window 
+            id="act_product_stock_card"
+            name="Stock Card"
+            src_model="product.product"
+            res_model="stock.card.wizard"
+            target="new"
+            view_type="form"
+            view_mode="form"
+            context="{'product_id': active_id}"
+            view_id="stock_card_wizard_form_view"
+            />
+
+
+    </data>
+</openerp>

@@ -1,0 +1,49 @@
+<openerp>
+    <data>
+
+        <record id="product_normal_form_view" model="ir.ui.view">
+            <field name="name">product.normal.form.inherit</field>
+            <field name="model">product.product</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_normal_form_view"/>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <page string="Accounting" position="inside">
+                    <group colspan="4" col="2">
+                        <separator string="Donation Properties"/>
+                        <field name="donation_expense_account" domain="[('restricted_area', '=', 'product_donation')]"/>
+                    </group>
+                </page>
+            </field>
+        </record>
+
+        <record id="view_category_property_form" model="ir.ui.view">
+            <field name="name">product.category.property.form.inherit</field>
+            <field name="model">product.category</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="product.product_category_form_view"/>
+            <field name="priority">20</field>
+            <field name="arch" type="xml">
+                <form position="inside">
+                    <group col="2" colspan="2">
+                        <separator string="Donation Properties" colspan="2"/>
+                        <field name="donation_expense_account" domain="[('restricted_area', '=', 'product_category_donation')]"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_category_property_search" model="ir.ui.view">
+            <field name="name">product.category.property.search</field>
+            <field name="model">product.category</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Products Categories">
+                    <field name="name" select="1"/>
+                    <field name="msfid" select="1"/>
+                </search>
+            </field>
+        </record>
+
+    </data>
+</openerp>

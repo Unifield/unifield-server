@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data noupdate="1">
+
+        <!-- Sequences for procurement.list -->
+        <record id="seq_type_procurement_request" model="ir.sequence.type">
+            <field name="name">Internal Request Sequence Order</field>
+            <field name="code">procurement.request</field>
+        </record>
+
+        <record id="seq_procurement_request" model="ir.sequence">
+            <field name="name">Internal Request</field>
+            <field name="code">procurement.request</field>
+            <field name="prefix">%(y)s/IR</field>
+            <field name="padding">5</field>
+            <field name="implementation">psql</field>
+        </record>
+
+	</data>
+</openerp>
+

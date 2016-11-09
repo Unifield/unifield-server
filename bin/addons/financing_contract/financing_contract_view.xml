@@ -1,0 +1,522 @@
+<?xml version="1.0"?>
+<openerp>
+      <data>
+
+            <record id="view_financing_contract_contract_form" model="ir.ui.view">
+                <field name="name">financing.contract.contract.form</field>
+                <field name="model">financing.contract.contract</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Financing Contract">
+                        <field name="code" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="name" colspan="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="donor_id" colspan="2" on_change="onchange_donor_id(donor_id, format_id, actual_line_ids)"
+                            attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="instance_level" invisible="1" />
+                        <field name="instance_id" colspan="1" domain="[('level','=','coordo')]" attrs="{'readonly': ['|', ('state','in',('soft_closed','hard_closed')), ('instance_level', '!=', 'section')]}" />
+                        <field name="reporting_type" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <separator string="Dates"/>
+                        <field name="eligibility_from_date" on_change="onchange_date(eligibility_from_date, eligibility_to_date)"
+                        required="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <field name="eligibility_to_date" on_change="onchange_date(eligibility_from_date, eligibility_to_date)"
+                        required="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                        <notebook colspan="4">
+                            <page string="Contract information">
+                                <group colspan="4" col="6">
+                                    <field name="donor_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="hq_grant_reference" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                </group>
+                                <group colspan="4" col="8">
+                                    <field name="grant_amount" digits="(24,0)" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="currency_table_id" colspan="2" on_change="onchange_currency_table(currency_table_id, reporting_currency)" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="reporting_currency" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                </group>
+                                <group colspan="4" col="8">
+                                    <field name="overhead_type" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="overhead_percentage" colspan="2" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                                    <field name="overhead_amount" digits="(24,0)" colspan="2"/>
+                                </group>
+                            </page>
+                            <page string="Funding pools">
+                                <field colspan="4" name="funding_pool_ids" nolabel="1"
+                                       attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
+                                    <tree string="Funding pools" editable="top">
+                                        <field name="funding_pool_id" domain="[('type', '!=', 'view'), ('category', '=', 'FUNDING'), ('code', '!=', 'PF')]"/>
+                                        <field name="funded"/>
+                                        <field name="total_project" readonly="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Cost centers">
+                                <field colspan="4" name="cost_center_ids" nolabel="1"
+                                       domain="[('type', '!=', 'view'), ('category', '=', 'OC')]"
+                                       attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
+                                    <tree string="Cost centers">
+                                        <field name="name"/>
+                                        <field name="code"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Reporting lines">
+                                <field name="format_id" invisible="1" required="0"/>
+                                <field colspan="4" name="actual_line_ids" nolabel="1" context="{'reporting_type': reporting_type, 'contract_id': active_id}" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}">
+                                    <tree string="Reporting lines" colors="blue:line_type in ('view')">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="line_type"/>
+                                        <field name="allocated_budget" digits="(24,0)" real_sum="Allocated Total" invisible="context.get('reporting_type')=='project'"/>
+                                        <field name="project_budget" digits="(24,0)" real_sum="Project Total" invisible="context.get('reporting_type')=='allocated'"/>
+                                    </tree>
+                                    <form string="Reporting lines">
+                                        <group colspan="4" col="4">
+                                            <field name="code" colspan="2"/>
+                                            <field name="name" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4">
+                                            <field name="parent_id" colspan="2"
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('code', '!=', code)]"/>
+                                            <field name="line_type" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', 'in', ('view', 'overhead'))]}">
+                                            <field name="allocated_budget_value"
+                                                   string="Funded - Budget"
+                                                   invisible="context.get('reporting_type')=='project'"
+                                                   digits="(24,0)"
+                                                   colspan="2"/>
+                                            <field name="project_budget_value"
+                                                   string="Total project - Budget"
+                                                   invisible="context.get('reporting_type')=='allocated'"
+                                                   digits="(24,0)"
+                                                   colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'consumption')]}">
+                                            <field name="allocated_real_value"
+                                                   string="Funded - Actuals"
+                                                   invisible="context.get('reporting_type')=='project'"
+                                                   digits="(24,0)"
+                                                   colspan="2"/>
+                                            <field name="project_real_value"
+                                                   string="Total project - Actuals"
+                                                   invisible="context.get('reporting_type')=='allocated'"
+                                                   digits="(24,0)"
+                                                   colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
+                                            <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                        </group>
+                                        <button name="button_delete_all_quads" type="object" string="Remove all quads" icon="gtk-clear" colspan="1"
+                                                attrs="{'invisible': [('is_quadruplet', '=', False)]}" />
+                                        <button name="button_delete_all_couples" type="object" string="Remove all couples" icon="gtk-clear" colspan="1"
+                                                attrs="{'invisible': [('is_quadruplet', '=', True)]}" />
+                                        <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
+                                               context="context"
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
+                                        </field>
+                                        <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
+                                               context="context"
+                                               attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '!=', True)]}"
+                                               domain="[('can_be_used','=',True)]">
+                                        </field>
+                                    </form>
+                                </field>
+                            </page>
+                            <page string="Comments">
+                               <field name="notes" nolabel="1" attrs="{'readonly': [('state', 'in', ('soft_closed', 'hard_closed'))]}"/>
+                            </page>
+                        </notebook>
+                        <group col="8" colspan="4">
+                            <field name="open_date" colspan="2" readonly="1"/>
+                            <field name="soft_closed_date" colspan="2" readonly="1"/>
+                            <field name="hard_closed_date" colspan="2" readonly="1"/>
+                            <field name="state" colspan="2" readonly="1"/>
+                        </group>
+                        <button name="contract_open_proxy" states="draft" string="Open" type="object" icon="gtk-go-forward"/>
+                        <button name="contract_soft_closed_proxy" states="open" string="Soft-close" type="object" icon="gtk-go-forward"/>
+                        <button name="contract_reopen" states="soft_closed" string="Re-Open" type="workflow" icon="gtk-go-forward"/>
+                        <button name="contract_hard_closed_proxy" states="soft_closed" string="Hard-close" type="object" icon="gtk-ok"/>
+                    </form>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_contract_warning_form" model="ir.ui.view">
+                <field name="name">wizard.financing.contract.contract.warning.form</field>
+                <field name="model">wizard.financing.contract.contract.warning</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Financing Contract Warning">
+                        <field name="warn_message" nolabel="1" />
+                        <newline />
+                        <button name="btn_close" type="object" string="OK" icon="gtk-ok"/>
+                    </form>
+                </field>
+            </record>
+
+            <record id="view_account_destination_link_for_contract_tree" model="ir.ui.view">
+                <field name="name">account_destination_link_for_contract.tree</field>
+                <field name="model">account.destination.link</field>
+                <field name="priority" eval="250" />
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Account/Destination" colors="grey:used_in_contract" notselectable="used_in_contract">
+                        <field name="name" invisible="1"/>
+                        <field name="account_id"/>
+                        <field name="destination_id"/>
+                        <field name="used_in_contract" invisible='1'/>
+                        </tree>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_account_quadruplet_tree" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.tree</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Account/Destination/Funding Pool/Cost Centre" colors="grey:used_in_contract" notselectable="used_in_contract" editable="top" noteditable="1">
+                        <field name="can_be_used" invisible="1"/>
+                        <field name="account_destination_name"/>
+                        <field name="funding_pool_id"/>
+                        <field name="cost_center_id"/>
+                        <field name="used_in_contract" invisible="1"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_account_quadruplet_form" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.form</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form>
+                        <field name="account_destination_name" readonly="1" />
+                        <field name="account_destination_id"/>
+                        <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
+                        <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+                        <!-- UTP-908 FIXME hiding format_id pre-filled with 'Format' (click on m2o gives let me fix) -->
+                        <field name="format_id" invisible="1"/>
+                        <field name="used_in_contract" invisible='1'/>
+                    </form>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_account_quadruplet_search" model="ir.ui.view">
+                <field name="name">financing.contract.account.quadruplet.search</field>
+                <field name="model">financing.contract.account.quadruplet</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search string="Search Account/Destination/Funding Pool/Cost Centre">
+                            <field name="account_destination_name" string="Account"/>
+                            <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
+                            <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
+                    </search>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_contract_tree" model="ir.ui.view">
+                <field name="name">financing.contract.contract.tree</field>
+                <field name="model">financing.contract.contract</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Financing Contracts">
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="hq_grant_reference"/>
+                        <field name="donor_id"/>
+                        <field name="grant_amount" digits="(24,0)"/>
+                        <field name="reporting_currency"/>
+                        <field name="eligibility_from_date"/>
+                        <field name="eligibility_to_date"/>
+                        <field name="state"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_contract_search" model="ir.ui.view">
+                <field name="name">financing.contract.contract.search</field>
+                <field name="model">financing.contract.contract</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search string="Search Fiscalyear">
+                        <group>
+                            <filter string="Draft" name="draft" icon="terp-document-new" domain="[('state', '=', 'draft')]"/>
+                            <filter string="Open" name="open" icon="terp-camera_test" domain="[('state', '=', 'open')]"/>
+                            <filter string="Soft closed" name="soft_closed" icon="terp-gtk-media-pause" domain="[('state', '=', 'soft_closed')]"/>
+                            <filter string="Hard closed" name="hard_closed" icon="terp-dialog-close" domain="[('state', '=', 'hard_closed')]"/>
+                            <separator orientation="vertical"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                            <newline/>
+                            <field name="hq_grant_reference"/>
+                            <field name="donor_id"/>
+                            <field name="reporting_currency"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+
+            <record id="action_financing_contract_contract_form" model="ir.actions.act_window">
+                <field name="name">Financing Contracts</field>
+                <field name="res_model">financing.contract.contract</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+            </record>
+
+            <record id="view_financing_contract_donor_form" model="ir.ui.view">
+                <field name="name">financing.contract.donor.form</field>
+                <field name="model">financing.contract.donor</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Donor">
+                        <field name="code" colspan="1"/>
+                        <field name="name" colspan="1"/>
+                        <newline/>
+                        <field name="reporting_type"/>
+                        <field name="active" colspan="2"/>
+                        <field name="reporting_currency"/>
+                        <newline/>
+                        <field name="overhead_type"/>
+                        <field name="overhead_percentage" colspan="2"/>
+                        <separator string="Dates"/>
+                        <notebook colspan="4">
+                            <page string="Reporting lines">
+                                <field name="format_id" invisible="1" required="0"/>
+                                <field colspan="4" name="actual_line_ids" nolabel="1" context="{'donor_id': active_id}">
+                                    <tree string="Reporting lines" colors="black:line_type in ('normal');blue:line_type in ('view')">
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                        <field name="line_type" invisible="1"/>
+                                    </tree>
+                                    <form string="Reporting lines">
+                                        <group colspan="4" col="4">
+                                            <field name="code" colspan="2"/>
+                                            <field name="name" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4">
+                                            <field name="parent_id" colspan="2"
+                                                   domain="[('format_id', '=', parent.format_id), ('line_type', '=', 'view'), ('code', '!=', code)]"/>
+                                            <field name="line_type" colspan="2"/>
+                                        </group>
+                                        <group colspan="4" col="4" attrs="{'invisible': [('line_type', '!=', 'overhead')]}">
+                                            <field name="overhead_type" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                            <field name="overhead_percentage" colspan="2" attrs="{'required': [('line_type', '=', 'overhead')]}"/>
+                                        </group>
+                                        <field name="account_destination_ids" colspan="4" string="Account/Destination"
+                                               context="context" 
+                                               attrs="{'invisible': [('line_type', '=', 'view')]}"/>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </form>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_donor_tree" model="ir.ui.view">
+                <field name="name">financing.contract.donor.tree</field>
+                <field name="model">financing.contract.donor</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Donors">
+                        <field name="code"/>
+                        <field name="name"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="view_financing_contract_donor_search" model="ir.ui.view">
+                <field name="name">financing.contract.donor.search</field>
+                <field name="model">financing.contract.donor</field>
+                <field name="type">search</field>
+                <field name="arch" type="xml">
+                    <search string="Search Fiscalyear">
+                        <group>
+                            <filter name="active" icon="terp-check" string="Active"
+                                domain="[('active', '=', True)]"/>
+                            <filter name="inactive" icon="gtk-dialog-error" string="Inactive"
+                                domain="[('active', '=', False)]"/>
+                            <separator orientation="vertical"/>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                    </search>
+                </field>
+            </record>
+
+            <record id="action_financing_contract_donor_form" model="ir.actions.act_window">
+                <field name="name">Donors</field>
+                <field name="res_model">financing.contract.donor</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+                <field name="domain">[('active', 'in', ['t', 'f'])]</field>
+            </record>
+            <menuitem id="donor_reporting_menu" name="Grant Management" parent="account.menu_finance" sequence="12"/>
+            <menuitem action="action_financing_contract_contract_form" id="menu_action_financing_contract_contract_form" parent="donor_reporting_menu"/>
+            <menuitem action="action_financing_contract_donor_form" id="menu_action_financing_contract_donor_form" parent="donor_reporting_menu"/>
+
+            <record id="view_account_analytic_account_donor_tree" model="ir.ui.view">
+                <field name="name">account.analytic.account.donor.tree</field>
+                <field name="model">account.analytic.account</field>
+                <field name="type">tree</field>
+                <field name="field_parent">child_complete_ids</field>
+                <field name="arch" type="xml">
+                    <tree colors="red:(date&lt;current_date);black:(date&gt;=current_date);black:(date==False)" string="Analytic Accounts" 
+                     toolbar="1" hide_new_button="1" hide_delete_button="1" editable="top" noteditable="1">
+                        <field name="name"/>
+                        <field name="code"/>
+                        <field name="description"/>
+                        <field name="category"/>
+                        <field name="type" />
+                        <field name="date_start"/>
+                        <field name="date"/>
+                        <field name="parent_id" invisible="1"/>
+                        <button name="button_wiz_hard_posting" states="open" string="Hard Posting" type="object" icon="terp-camera_test" context="context"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="action_account_analytic_account_form" model="ir.actions.act_window">
+                <field name="name">Analytic Accounts</field>
+                <field name="res_model">account.analytic.account</field>
+                <field name="view_type">form</field>
+                <field name="domain">[('category','=','FUNDING')]</field>
+                <field name="view_id" ref="view_account_analytic_account_donor_tree"/>
+                <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1}</field>
+            </record>
+
+            <menuitem action="action_account_analytic_account_form" id="menu_action_account_analytic_account_form" parent="donor_reporting_menu" />
+
+            <record id="view_financing_contract_format_line_tree" model="ir.ui.view">
+                <field name="name">financing.contract.format.line.tree</field>
+                <field name="model">financing.contract.format.line</field>
+                <field name="type">tree</field>
+                <field name="arch" type="xml">
+                    <tree string="Reporting Lines">
+                        <field name="code"/>
+                        <field name="name"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="view_donor_reporting_line_tree_all" model="ir.ui.view">
+                <field name="name">financing.contract.donor.reporting.line.tree.all</field>
+                <field name="model">financing.contract.donor.reporting.line</field>
+                <field name="type">tree</field>
+                <field name="field_parent">child_ids</field>
+                <field name="arch" type="xml">
+                    <tree string="Interactive Report" colors="blue:line_type in ('view')">
+                        <field name="code"/>
+                        <field name="name"/>
+                         <field name="line_type"/>
+                        <field name="allocated_budget" digits="(24,0)" widget="float"/>
+                        <field name="allocated_real" digits="(24,0)" widget="float"/>
+                        <field name="allocated_balance" digits="(24,0)" widget="float"/>
+                        <field name="project_budget" digits="(24,0)" widget="float"/>
+                        <field name="project_real" digits="(24,0)" widget="float"/>
+                        <field name="project_balance" digits="(24,0)" widget="float"/>
+                        <field name="parent_id" invisible="1"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="view_donor_reporting_line_tree_allocated" model="ir.ui.view">
+                <field name="name">financing.contract.donor.reporting.line.tree.allocated</field>
+                <field name="model">financing.contract.donor.reporting.line</field>
+                <field name="type">tree</field>
+                <field name="field_parent">child_ids</field>
+                <field name="arch" type="xml">
+                    <tree string="Interactive Report" colors="blue:line_type in ('view')">
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="line_type"/>
+                        <field name="allocated_budget" digits="(24,0)"/>
+                        <field name="allocated_real" digits="(24,0)"/>
+                        <field name="parent_id" invisible="1"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="view_donor_reporting_line_tree_project" model="ir.ui.view">
+                <field name="name">financing.contract.donor.reporting.line.tree.project</field>
+                <field name="model">financing.contract.donor.reporting.line</field>
+                <field name="type">tree</field>
+                <field name="field_parent">child_ids</field>
+                <field name="arch" type="xml">
+                    <tree string="Interactive Report" colors="blue:line_type in ('view')">
+                        <field name="code"/>
+                        <field name="name"/>
+                        <field name="line_type"/>
+                        <field name="project_budget" digits="(24,0)"/>
+                        <field name="project_real" digits="(24,0)"/>
+                        <field name="parent_id" invisible="1"/>
+                    </tree>
+                </field>
+            </record>
+
+            <record id="wizard_financing_currency_export_view" model="ir.ui.view">
+                <field name="name">Select output currency</field>
+                <field name="model">wizard.financing.currency.export</field>
+                <field name="type">form</field>
+                <field name="arch" type="xml">
+                    <form string="Select currency">
+                        <field name="out_currency" string="Select output currency"/>
+                        <separator colspan="4"/>
+                        <group colspan="4" col="6">
+                            <button special="cancel" string="Cancel" icon="gtk-cancel"/>
+                            <button name="button_create_budget_2" string="Create report" type="object" icon="gtk-ok"/>
+                        </group>
+                    </form>
+                </field>
+            </record>
+
+            <record id="act_financing_contract_donor_reporting_tree" model="ir.actions.server">
+                <field name="name">Interactive Report</field>
+                <field name="model_id" ref="model_financing_contract_contract"/>
+                <field name="state">code</field>
+                <field name="code">action = obj.menu_interactive_report(context=context)</field>
+            </record>
+
+            <record id="ir_financing_contract_donor_reporting_tree" model="ir.values">
+                <field eval="'client_action_multi'" name="key2"/>
+                <field eval="'financing.contract.contract'" name="model"/>
+                <field name="name">Interactive Report</field>
+                <field eval="'ir.actions.server,%d'%act_financing_contract_donor_reporting_tree" name="value"/>
+                <field eval="True" name="object"/>
+            </record>
+
+        <!-- Allocated expense report -->
+            <record id="act_allocated_expenses_report" model="ir.actions.server">
+                <field name="name">Allocated Expenses</field>
+                <field name="model_id" ref="model_financing_contract_contract"/>
+                <field name="state">code</field>
+                <field name="code">action = obj.allocated_expenses_report(context=context)</field>
+            </record>
+
+            <record id="ir_allocated_expenses_report" model="ir.values">
+                <field eval="'client_print_multi'" name="key2"/>
+                <field eval="'financing.contract.contract'" name="model"/>
+                <field name="name">Allocated Expenses</field>
+                <field eval="'ir.actions.server,%d'%act_allocated_expenses_report" name="value"/>
+                <field eval="True" name="object"/>
+                <field name="sequence" eval="1"/>
+            </record>
+
+            <record id="action_open_analytic_lines_button" model="ir.actions.act_window">
+                <field name="name">Analytic Items</field>
+                <field name="res_model">account.analytic.line</field>
+                <field name="view_type">form</field>
+                <field name="view_mode">tree,form</field>
+                <field name="search_view_id" ref="account.view_account_analytic_line_filter"/>
+                <field name="context">{'search_financing_contract': 1, 'reporting_line_id': active_id}</field>
+            </record>
+
+            <record id="ir_open_donor_reporting_line" model="ir.values">
+                <field name="key2">tree_but_open</field>
+                <field name="model">financing.contract.donor.reporting.line</field>
+                <field name="name">Open Analytic Lines</field>
+                <field eval="'ir.actions.act_window,%d'%action_open_analytic_lines_button" name="value"/>
+                <field eval="True" name="object"/>
+            </record>
+
+       </data>
+</openerp>

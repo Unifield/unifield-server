@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="wizard_report_currency_table_view" model="ir.ui.view">
+            <field name="name">wizard.report.currency.table.view</field>
+            <field name="model">wizard.report.currency.table</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="FX rates by currency">
+                    <group colspan="4" col="6">
+                        <field name="currency_id"/>
+                        <field name="start_period_id" widget="selection"/>
+                        <field name="end_period_id" widget="selection"/>
+                    </group>
+                    <separator colspan="4"/>
+                    <field name="currency_table_ids"/>
+                    <group colspan="4" col="6">
+                        <button special="cancel" string="No" icon="gtk-cancel"/>
+                        <button name="button_create_report" string="Create report" type="object" icon="gtk-ok"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_report_currency_table_menu" model="ir.actions.act_window">
+            <field name="name">FX rates by currency</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">wizard.report.currency.table</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+        <menuitem action="action_report_currency_table_menu" id="menu_action_report_currency_table_form" parent="account.menu_finance_currency_mgmt"/>
+
+    </data>
+</openerp>

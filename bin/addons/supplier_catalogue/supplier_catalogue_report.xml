@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <report
+            id="supplier_catalogue_lines_xls"
+            string="Supplier catalogue lines (xls)"
+            model="supplier.catalogue"
+            name="supplier.catalogue.lines.xls"
+            file="supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako"
+            report_type="webkit"
+            auto="False"
+            menu="False" />
+
+    </data>
+</openerp>

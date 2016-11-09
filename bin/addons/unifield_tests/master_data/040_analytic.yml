@@ -1,0 +1,71 @@
+-
+  I create CC1 analytic account
+-
+  !record {model: account.analytic.account, id: analytic_cc1}:
+    name: "CC1"
+    code: CC1
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date_start: !eval time.strftime('%Y-01-01')
+-
+  I create CC2 analytic account
+-
+  !record {model: account.analytic.account, id: analytic_cc2}:
+    name: "CC2"
+    code: CC2
+    type: normal
+    category: OC
+    parent_id: analytic_distribution.analytic_account_project
+    date_start: !eval time.strftime('%Y-01-01')
+-
+  I create an analytical distribution
+-
+  !record {model: analytic.distribution, id: distrib_1}:
+    name: DISTRIB 1
+-
+  I create a cost center distribution line for CC1
+-
+  !record {model: cost.center.distribution.line, id: ccline_1}:
+    name: CC Line 1
+    amount: 0.0
+    percentage: 75.0
+    currency_id: base.EUR
+    analytic_id: analytic_cc1
+    distribution_id: distrib_1
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a cost center distribution line for CC2
+-
+  !record {model: cost.center.distribution.line, id: ccline_2}:
+    name: CC Line 2
+    amount: 0.0
+    percentage: 25.0
+    currency_id: base.EUR
+    analytic_id: analytic_cc2
+    distribution_id: distrib_1
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a funding pool distribution line for CC1
+-
+  !record {model: funding.pool.distribution.line, id: fpline_1}:
+    name: FP Line 1
+    amount: 0.0
+    percentage: 75.0
+    currency_id: base.EUR
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
+    distribution_id: distrib_1
+    cost_center_id: analytic_cc1
+    destination_id: analytic_distribution.analytic_account_destination_operation
+-
+  I create a funding pool distribution line for CC2
+-
+  !record {model: funding.pool.distribution.line, id: fpline_2}:
+    name: FP Line 2
+    amount: 0.0
+    percentage: 25.0
+    currency_id: base.EUR
+    analytic_id: analytic_distribution.analytic_account_msf_private_funds
+    cost_center_id: analytic_cc2
+    destination_id: analytic_distribution.analytic_account_destination_operation
+    distribution_id: distrib_1

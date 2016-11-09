@@ -1,0 +1,7 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_procurement_batch_cron_all","procurement.batch.cron","model_procurement_batch_cron",,1,1,1,1
+"access_procurement_rules_report_all","procurement.rules.report all","model_procurement_rules_report",,1,1,1,1
+"access_auto_supply_rules_report_all","auto.supply.rules.report all","model_auto_supply_rules_report",,1,1,1,1
+"access_min_max_report_all","min.max.rules.report all","model_min_max_rules_report",,1,1,1,1
+"access_order_cycle_rules_report_all","order.cycle.rules.report all","model_order_cycle_rules_report",,1,1,1,1
+"access_threshold_value_rules_report_all","threshold.value.rules.report all","model_threshold_value_rules_report",,1,1,1,1

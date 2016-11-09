@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+        <record id="view_import_composition_kit_form" model="ir.ui.view">
+            <field name="name">composition.kit.form.view</field>
+            <field name="model">composition.kit</field>
+            <field name="type">form</field>
+            <field name="priority">18</field>
+            <field name="inherit_id" ref="kit.view_composition_kit_form" />
+            <field name="arch" type="xml">
+                <data>
+                <xpath expr="/form//field[@name='composition_item_ids']" position="before" >
+                <group name="import" string=" Import Lines " colspan="4" col="24" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                    <field name="file_to_import" colspan="2" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}" />
+                    <field name="real_file_to_import" colspan="2" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
+                    <button name="import_file_real" string="Import lines" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '=', 'theoretical')]}" />
+                    <button name="import_file" string="Import lines" icon="gtk-execute" colspan="1" type="object" attrs="{'invisible': [('composition_type', '!=', 'theoretical')]}"/>
+                    <button name="button_remove_lines" string="Remove lines" icon="gtk-remove" colspan="1" type="object" />
+                    <field name="hide_column_error_ok" invisible="1" colspan="1" />
+                    <newline />
+                    <button name="add_multiple_lines" string="Add multiple lines" icon="gtk-add" colspan="4" type="object" />
+                </group>
+                </xpath>
+                <xpath expr="/form//field[@name='composition_item_ids']/tree" position="attributes" >
+                    <attribute name="colors">red:to_correct_ok == True</attribute>
+                </xpath>
+                <xpath expr="/form//field[@name='composition_item_ids']" position="attributes" >
+                    <attribute name="context">{'hide_column_error_ok': hide_column_error_ok, 'active_id': active_id}</attribute>
+                </xpath>
+                <xpath expr="/form//field[@name='composition_item_ids']/tree/field[@name='hidden_perishable_mandatory']" position="after" >
+                    <field name="to_correct_ok" invisible="1"/>
+                    <field name="text_error" invisible="context.get('hide_column_error_ok', False) != True" />
+                </xpath>
+                </data>
+            </field>
+        </record>
+    </data>
+</openerp>

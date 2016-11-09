@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+
+        <record id="purchase.action_stock_move_report_po" model="ir.actions.act_window">
+            <field name="context">{'search_default_month':1, 'search_default_group_product':1, 'search_default_group_partner':1, 'search_default_done':1, 'search_default_in': 1, 'group_by':['product_uom'], 'group_by_no_leaf':1, 'contact_display': 'partner'}</field>
+        </record>
+
+        <!-- we move the parent menu 'receive products from the menu purchase to the menu warehouse' -->
+        <menuitem id="purchase.menu_procurement_management_inventory" 
+        parent="stock.menu_stock_root" 
+        />
+        
+        <!-- we move 'receptions analysis' from purchase to warehouse (reporting) -->
+        <menuitem id="purchase.menu_action_stock_move_report_po" 
+        parent="stock.next_id_61" 
+        />
+    
+        <!-- we move the menu 'deliver products' from the menu sale to the menu warehouse' -->
+        <menuitem id="sale_override.menu_sale_action_picking_tree_out_move" 
+        parent="stock.menu_stock_root" 
+        />
+        
+        
+        <!-- WAREHOUSE MANAGEMENT -->
+        <menuitem name="Picking"
+                  action="msf_outgoing.action_picking_ticket" 
+                  id="msf_outgoing.menu_action_picking_ticket" 
+                  parent="msf_outgoing.menu_warehouse_deliveries" 
+                  sequence="4"/>
+        
+        <menuitem name="Packing"
+                  action="msf_outgoing.action_ppl" 
+                  id="msf_outgoing.menu_action_ppl" 
+                  parent="msf_outgoing.menu_warehouse_deliveries" 
+                  sequence="5" />
+        
+        <menuitem name="Shipment"
+                  action="msf_outgoing.action_shipment" 
+                  id="msf_outgoing.menu_action_shipment" 
+                  parent="msf_outgoing.menu_warehouse_deliveries" 
+                  sequence="6"/>
+        
+        <!-- WE order the sequence of menu -->
+                  
+        <menuitem name="Minimum Stock Rules"
+                  id="procurement.menu_stock_order_points"
+                  parent="stock_schedule.stock_automatic_procurements_menu"
+                  action="procurement.action_orderpoint_form"
+                  sequence="10" />
+                  
+        <menuitem name="Automatic Supply"
+                  id="procurement_auto.menu_automatic_supply"
+                  action="procurement_auto.action_automatic_supply_tree"
+                  parent="stock_schedule.stock_automatic_procurements_menu"
+                  sequence="11" />
+                  
+        <menuitem name="Order Cycle"
+                  id="procurement_cycle.menu_order_cycle"
+                  action="procurement_cycle.action_order_cycle_tree"
+                  parent="stock_schedule.stock_automatic_procurements_menu"
+                  sequence="12" />
+                  
+        <menuitem name="Threshold value"
+                  id="threshold_value.menu_threshold_value"
+                  action="threshold_value.action_threshold_value"
+                  parent="stock_schedule.stock_automatic_procurements_menu"
+                  sequence="13" />
+                  
+        <menuitem name="Replenishment Rules Analysis"
+                  id="procurement_report.menu_procurement_rules_report"
+                  parent="stock_schedule.stock_automatic_procurements_menu"
+                  action="procurement_report.action_procurement_rules_report"
+                  sequence="14" />
+                  
+        <menuitem action="stock_override.action_destruction_location_report" 
+                  id="stock_override.menu_action_destruction_location_report" 
+                  parent="stock.menu_traceability" 
+                  sequence="4"/>
+    
+        <menuitem id="consumption_calculation.menu_products_to_expire"
+                  action="consumption_calculation.action_products_to_expire"
+                  sequence="1"
+                  parent="consumption_calculation.menu_warehouse_expiry" />
+        
+        <!-- INVENTORY MANAGEMENT -->
+        <menuitem id="stock.menu_stock_inventory_control" 
+                  name="Inventory Management" 
+                  parent="stock.menu_stock_root" 
+                  sequence="6"/>
+                  
+        <menuitem name="Location Structure"
+                  action="stock.action_location_tree"
+	              id="stock.menu_action_location_tree"
+	              parent="stock.menu_stock_inventory_control"
+	              sequence="20"/>
+	              
+        <menuitem name="Inventory level"
+                  action="stock.action_stock_inventory_report"
+                  id="stock.menu_action_stock_inventory_report" 
+                  parent="stock.menu_stock_inventory_control" 
+                  sequence="21"/>
+	              
+        <menuitem name="Mission stock"
+                  id="mission_stock.mission_stock_wizard_menu"
+                  parent="stock.menu_stock_inventory_control"
+                  sequence="23"
+                  action="mission_stock.mission_stock_wizard_action" />
+	              
+	    <menuitem name="Physical Inventories"
+	              action="stock.action_inventory_form" 
+	              id="stock.menu_action_inventory_form" 
+	              parent="stock.menu_stock_inventory_control" 
+	              sequence="24"/>
+	              
+        <menuitem name="Last Product Inventories"
+                  parent="stock.menu_stock_inventory_control" 
+                  action="stock.action_stock_line_date" 
+                  id="stock.menu_report_stock_line_date" 
+                  sequence="25"/>
+                  
+    </data>
+</openerp>

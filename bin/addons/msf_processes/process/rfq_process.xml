@@ -1,0 +1,124 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+        <!--
+            Process
+        -->
+
+        <record id="purchase.process_process_rfq0" model="process.process">
+            <field eval="1" name="active"/>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field eval="&quot;&quot;&quot;Request for Quotation&quot;&quot;&quot;" name="name"/>
+        </record>
+
+        <!--
+            Process Node
+        -->
+        
+        <record id="purchase.process_node_rfq_draft" model="process.node">
+            <field name="menu_id" ref="purchase.menu_purchase_rfq"/>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;RFQ - draft&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Draft state of request for quotation.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="purchase.process_process_rfq0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('draft', 'rfq_sent', 'rfq_updated', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="purchase.process_node_rfq_sent" model="process.node">
+            <field name="menu_id" ref="purchase.menu_purchase_rfq"/>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;RFQ - sent&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Sent state of request for quotation.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="purchase.process_process_rfq0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('rfq_sent', 'rfq_updated', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="purchase.process_node_rfq_updated" model="process.node">
+            <field name="menu_id" ref="purchase.menu_purchase_rfq"/>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;RFQ - updated&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Updated state of request for quotation.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="purchase.process_process_rfq0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('rfq_updated', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="purchase.process_node_rfq_done" model="process.node">
+            <field name="menu_id" ref="purchase.menu_purchase_rfq"/>
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;RFQ - closed&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Closed state of request for quotation.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="purchase.process_process_rfq0"/>
+            <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <!--
+            Process Condition
+        -->
+
+        <record id="purchase.process_condition_rfq_draft_rfq_ok" model="process.condition">
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="node_id" ref="purchase.process_node_rfq_draft"/>
+            <field eval="&quot;&quot;&quot;object.rfq_ok&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;condition_rfq_draft&quot;&quot;&quot;" name="name"/>
+        </record>
+        
+        <record id="purchase.process_condition_rfq_sent_rfq_ok" model="process.condition">
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="node_id" ref="purchase.process_node_rfq_sent"/>
+            <field eval="&quot;&quot;&quot;object.rfq_ok&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;condition_rfq_sent&quot;&quot;&quot;" name="name"/>
+        </record>
+        
+        <record id="purchase.process_condition_rfq_updated_rfq_ok" model="process.condition">
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="node_id" ref="purchase.process_node_rfq_updated"/>
+            <field eval="&quot;&quot;&quot;object.rfq_ok&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;condition_rfq_updated&quot;&quot;&quot;" name="name"/>
+        </record>
+        
+        <record id="purchase.process_condition_rfq_done_rfq_ok" model="process.condition">
+            <field name="model_id" ref="purchase.model_purchase_order"/>
+            <field name="node_id" ref="purchase.process_node_rfq_done"/>
+            <field eval="&quot;&quot;&quot;object.rfq_ok&quot;&quot;&quot;" name="model_states"/>
+            <field eval="&quot;&quot;&quot;condition_rfq_done&quot;&quot;&quot;" name="name"/>
+        </record>
+        
+        <!--
+            Process Transition
+        -->
+
+        <record id="purchase.process_transition_rfq_draft_sent" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From Draft to Sent&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From Draft to Sent&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="purchase.process_node_rfq_draft"/>
+            <field model="process.node" name="target_node_id" ref="purchase.process_node_rfq_sent"/>
+        </record>
+        
+        <record id="purchase.process_transition_rfq_sent_updated" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From Sent to Updated&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From Sent to Updated&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="purchase.process_node_rfq_sent"/>
+            <field model="process.node" name="target_node_id" ref="purchase.process_node_rfq_updated"/>
+        </record>
+        
+        <record id="purchase.process_transition_rfq_updated_done" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From Updated to Done&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From Updated to Done&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="purchase.process_node_rfq_updated"/>
+            <field model="process.node" name="target_node_id" ref="purchase.process_node_rfq_done"/>
+        </record>
+
+    </data>
+</openerp>

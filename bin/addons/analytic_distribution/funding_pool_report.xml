@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <report id="funding_pool"
+        string="Funding Pool export (pdf)"
+        model="account.analytic.account"
+        name="funding.pool"
+        rml="analytic_distribution/report/funding_pool.rml"
+        auto="False"
+        menu="True"
+        header="False"/>
+
+      <report
+        id="account_analytic_chart_export"
+        string="Balance by analytic account"
+        model="account.analytic.account"
+        name="account.analytic.chart.export"
+        file="analytic_distribution/report/report_account_analytic_chart_export.mako"
+        report_type="webkit"
+        header="False"
+        auto="False"
+        menu="False"
+      />
+
+    </data>
+</openerp>
+

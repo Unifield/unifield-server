@@ -1,0 +1,127 @@
+<?xml version="1.0" ?>
+<openerp>
+    <data>
+
+		<!-- Process process -->
+        
+        <record id="msf_outgoing.process_process_picking0" model="process.process">
+            <field eval="&quot;&quot;&quot;Picking Ticket&quot;&quot;&quot;" name="name"/>
+            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field eval="1" name="active"/>
+        </record>
+        
+        <!-- Process Node -->
+        
+        <record id="msf_outgoing.process_node_pick_confirmed" model="process.node">
+            <field name="menu_id" ref="msf_outgoing.menu_action_picking_ticket"/>
+            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Picking - not avail.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Not available state of picking ticket.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_picking0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('auto', 'confirmed', 'assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="1" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_pick_assigned" model="process.node">
+            <field name="menu_id" ref="msf_outgoing.menu_action_picking_ticket"/>
+            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Picking - available&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Available state of picking ticket.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_picking0"/>
+            <field eval="&quot;&quot;&quot;object.state in ('assigned', 'done')&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_pick_done" model="process.node">
+            <field name="menu_id" ref="msf_outgoing.menu_action_picking_ticket"/>
+            <field name="model_id" ref="msf_outgoing.model_stock_picking"/>
+            <field eval="&quot;&quot;&quot;state&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Picking - closed&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Closed state of picking ticket.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_picking0"/>
+            <field eval="&quot;&quot;&quot;object.state == 'done'&quot;&quot;&quot;" name="model_states"/>
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_pick_ppl" model="process.node">
+        	<field name="menu_id" ref="msf_outgoing.menu_action_ppl"/>
+            <!-- <field name="model_id" ref="msf_outgoing.model_stock_picking"/> -->
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;PPL&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Pre-packing list subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_picking0"/>
+            <field name="subflow_id" ref="msf_outgoing.process_process_ppl0"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_pick_draft_ship" model="process.node">
+        	<field name="menu_id" ref="msf_outgoing.menu_action_shipment"/>
+            <!-- <field name="model_id" ref="msf_outgoing.model_stock_picking"/> -->
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Draft Shipment&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Draft shipment subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_picking0"/>
+            <field name="subflow_id" ref="msf_outgoing.process_process_draft_ship0"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <record id="msf_outgoing.process_node_pick_ship" model="process.node">
+        	<field name="menu_id" ref="msf_outgoing.menu_action_shipment"/>
+            <!-- <field name="model_id" ref="msf_outgoing.model_stock_picking"/> -->
+            <field eval="&quot;&quot;&quot;subflow&quot;&quot;&quot;" name="kind"/>
+            <field eval="&quot;&quot;&quot;Shipment&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;Shipment subflow.&quot;&quot;&quot;" name="note"/>
+            <field name="process_id" ref="msf_outgoing.process_process_picking0"/>
+            <field name="subflow_id" ref="msf_outgoing.process_process_ship0"/>
+            <!-- <field eval="&quot;&quot;&quot;object.state in ('assigned', 'confirmed')&quot;&quot;&quot;" name="model_states"/> -->
+            <field eval="0" name="flow_start"/>
+        </record>
+        
+        <!-- Transition Node -->
+        
+        <record id="msf_outgoing.process_transition_pick_confirmed_assigned" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From confirmed to assigned.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From confirmed to assigned.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_pick_confirmed"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_pick_assigned"/>
+        </record>
+        
+        <record id="msf_outgoing.process_transition_pick_assigned_done" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From assigned to closed.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From assigned to closed.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_pick_assigned"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_pick_done"/>
+        </record>
+        
+        <record id="msf_outgoing.process_transition_pick_assigned_ppl" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From assigned to ppl.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From assigned to ppl.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_pick_assigned"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_pick_ppl"/>
+        </record>
+        
+		<record id="msf_outgoing.process_transition_pick_ppl_draft_ship" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From ppl to draft shipment.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From ppl to draft shipment.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_pick_ppl"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_pick_draft_ship"/>
+        </record>
+        
+        <record id="msf_outgoing.process_transition_pick_draft_ship_ship" model="process.transition">
+            <field eval="[(6,0,[])]" name="transition_ids"/>
+            <field eval="&quot;&quot;&quot;From draft shipment to shipment.&quot;&quot;&quot;" name="name"/>
+            <field eval="&quot;&quot;&quot;From draft shipment to shipment.&quot;&quot;&quot;" name="note"/>
+            <field model="process.node" name="source_node_id" ref="msf_outgoing.process_node_pick_draft_ship"/>
+            <field model="process.node" name="target_node_id" ref="msf_outgoing.process_node_pick_ship"/>
+        </record>
+        
+    </data>
+</openerp>

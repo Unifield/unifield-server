@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="purchase_sourced" model="ir.actions.act_window">
+            <field name="name">Sourced Purchase Orders</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">purchase.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','sourced'), ('rfq_ok', '=', False)]</field>
+            <field name="search_view_id" ref="purchase.purchase_order_tree"/>
+        </record>
+
+        <record id="board_purchase_form_msf" model="ir.ui.view">
+            <field name="name">board.purchase.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="My Board">
+                    <hpaned>
+                        <child1>
+                            <action colspan="4" height="220" name="%(tender_flow.purchase_draft)d" string="Purchase Orders Waiting For Validation"  width="510" menu_ref="%(purchase.menu_purchase_form_action)d,%(purchase.menu_procurement_management)d" />
+                            <action colspan="4" height="220" name="%(purchase_sourced)d" string="Purchase Orders Sourced" width="510" menu_ref="%(purchase.menu_purchase_form_action)d,%(purchase.menu_procurement_management)d" />
+                            <action colspan="4" height="220" name="%(tender_flow.purchase_waiting)d" string="Purchase Orders Waiting Confirmation"  width="510" menu_ref="%(purchase.menu_purchase_form_action)d,%(purchase.menu_procurement_management)d" />
+                            <action colspan="4" height="220" name="%(tender_flow.tender_action)d" string="Tender" width="510" menu_ref="%(tender_flow.menu_tender)d,%(purchase.menu_procurement_management)d" />
+                            <action colspan="4" height="220" name="%(tender_flow.rfq_draft)d" string="Requests for Quotation Waiting For Validation"  width="510" menu_ref="%(purchase.menu_purchase_rfq)d,%(purchase.menu_procurement_management)d" />
+                            <action colspan="4" height="220" name="%(tender_flow.rfq_waiting)d" string="Requests for Quotation Waiting For Confirmation"  width="510" menu_ref="%(purchase.menu_purchase_rfq)d,%(purchase.menu_procurement_management)d" />
+                        </child1>
+                    </hpaned>
+                </form>
+            </field>
+        </record>
+        
+        <record id="tender_flow.open_board_purchase" model="ir.actions.act_window">
+            <field name="name">Purchase Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="board_purchase_form_msf"/>
+        </record>
+        
+    </data>
+</openerp>

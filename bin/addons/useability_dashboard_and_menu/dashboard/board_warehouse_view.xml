@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="action_picking_tree_available" model="ir.actions.act_window">
+            <field name="name">Incoming Shipments</field>
+            <field name="res_model">stock.picking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <!-- 'assigned' is for 'Available' -->
+            <field name="domain">[('type','=','in'), ('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="context">{'contact_display': 'partner_address',"search_default_available":1, 'wh_dashboard': True, 'pick_type': 'incoming', 'picking_type': 'incoming_shipment'}</field>
+            <field name="search_view_id" ref="stock.view_picking_in_search"/>
+        </record>
+        <record id="action_picking_tree_available_tree" model="ir.actions.act_window.view">
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="stock.view_picking_in_tree" />
+            <field name="act_window_id" ref="action_picking_tree_available" />
+        </record>
+        <record id="action_picking_tree_available_form" model="ir.actions.act_window.view">
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock.view_picking_in_form" />
+            <field name="act_window_id" ref="action_picking_tree_available" />
+        </record>
+
+        <record id="action_incoming_shipment_tree_view" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="action_picking_tree_available" />
+            <field name="sequence">1</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="stock.view_picking_in_tree" />
+        </record>
+
+        <record id="action_incoming_shipment_form_view" model="ir.actions.act_window.view">
+            <field name="act_window_id" ref="action_picking_tree_available" />
+            <field name="sequence">2</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock.view_picking_in_form" />
+        </record>
+
+        <record id="action_outgoing_product_board" model="ir.actions.act_window">
+            <field name="name">Delivery Orders</field>
+            <field name="res_model">stock.picking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'standard'), ('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="context">{'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard', 'wh_dashboard': True, 'pick_type': 'delivery'}</field>
+            <field name="search_view_id" ref="stock.view_picking_out_search"/>
+        </record>
+        <record id="action_outgoing_product_tree_board" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="stock.view_picking_out_tree"/>
+            <field name="act_window_id" ref="action_outgoing_product_board"/>
+        </record>
+        <record id="action_outgoing_product_form_board" model="ir.actions.act_window.view">
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="stock.view_picking_out_form" />
+            <field name="act_window_id" ref="action_outgoing_product_board" />
+        </record>
+
+        <record id="action_picking_ticket_board" model="ir.actions.act_window">
+            <field name="name">Picking Tickets</field>
+            <field name="res_model">stock.picking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'picking'), ('overall_qty', '!=', 0.00), ('state', 'not in', ['done', 'cancel'])]</field>
+            <field name="context">{'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1, 'wh_dashboard': True, 'pick_type': 'picking_ticket'}</field>
+            <!-- <field name="context">{'picking_screen':True, 'test':True, 'group_by':'origin', 'search_default_not_empty':1}</field> -->
+            <field name="search_view_id" ref="msf_outgoing.view_picking_ticket_search"/>
+        </record>
+        <record id="action_picking_ticket_tree_board" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="msf_outgoing.view_picking_ticket_tree"/>
+            <field name="act_window_id" ref="action_picking_ticket_board"/>
+        </record>
+        <record id="action_picking_ticket_form_board" model="ir.actions.act_window.view">
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="msf_outgoing.view_picking_ticket_form" />
+            <field name="act_window_id" ref="action_picking_ticket_board" />
+        </record>
+
+        <record id="action_ppl_board" model="ir.actions.act_window">
+            <field name="name">Pre-Packing Lists</field>
+            <field name="res_model">stock.picking</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('type','=','out'), ('subtype', '=', 'ppl'), ('state', 'not in', ['draft', 'done'])]</field>
+            <field name="context">{'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1, 'wh_dashboard': True, 'pick_type': 'pack'}</field>
+            <!-- <field name="context">{'contact_display': 'partner_address', 'ppl_screen':True, 'group_by':'origin', 'search_default_available':1}</field> -->
+            <field name="search_view_id" ref="msf_outgoing.view_ppl_search"/>
+        </record>
+        <record id="action_ppl_tree_board" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="msf_outgoing.view_ppl_tree"/>
+            <field name="act_window_id" ref="action_ppl_board"/>
+        </record>
+        <record id="action_ppl_form_board" model="ir.actions.act_window.view">
+            <field eval="2" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="msf_outgoing.view_ppl_form"/>
+            <field name="act_window_id" ref="action_ppl_board"/>
+        </record>
+
+        <record id="action_shipment" model="ir.actions.act_window">
+            <field name="name">Shipment Lists</field>
+            <field name="res_model">shipment</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state', 'not in', ['done', 'cancel']), ('num_of_packs','!=', 0)]</field>
+            <field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
+            <field name="search_view_id" ref="msf_outgoing.view_shipment_search"/>
+        </record>
+
+        <record id="board_warehouse_form_default" model="ir.ui.view">
+            <field name="name">board.warehouse.form.default</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Warehouse board">
+                    <hpaned position="100">
+                        <child1>
+                            <action name="%(action_picking_tree_available)d" string="Incoming Shipments" menu_ref="%(stock.menu_action_picking_tree4)d,%(stock.menu_stock_warehouse_mgmt)d" />
+                            <action name="%(action_outgoing_product_board)d" string="Delivery Orders" menu_ref="%(stock.menu_action_picking_tree)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
+                            <action name="%(action_picking_ticket_board)d" string="Picking Tickets" menu_ref="%(msf_outgoing.menu_action_picking_ticket)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
+                            <action name="%(action_ppl_board)d" string="Pre-Packing Lists" menu_ref="%(msf_outgoing.menu_action_ppl)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
+                            <action name="%(action_shipment)d" string="Shipments" menu_ref="%(msf_outgoing.menu_action_shipment)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
+                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" />
+                        </child1>
+                    </hpaned>
+                </form>
+            </field>
+        </record>
+
+        <record id="board_warehouse_form_default_only_out" model="ir.ui.view">
+            <field name="name">board.warehouse.form.default</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Warehouse board">
+                    <hpaned position="100">
+                        <child1>
+                            <action name="%(action_picking_tree_available)d" string="Incoming Shipments"/>
+                            <action name="%(action_outgoing_product_board)d" string="Delivery Orders"/>
+                            <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" />
+                        </child1>
+                    </hpaned>
+                </form>
+            </field>
+        </record>
+        
+        <record id="open_board_warehouse_unifield" model="ir.actions.act_window">
+            <field name="name">Warehouse Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="board_warehouse_form_default"/>
+        </record>
+
+        <menuitem id="stock.menu_stock_root" 
+        name="Warehouse"  
+        action="open_board_warehouse_unifield"/>
+        
+    </data>
+</openerp>

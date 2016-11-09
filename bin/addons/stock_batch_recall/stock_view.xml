@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+	    <record id="view_batch_recall_search" model="ir.ui.view">
+	        <field name="name">report.batch.search</field>
+	        <field name="model">report.batch.recall</field>
+	        <field name="type">search</field>
+	        <field name="arch" type="xml">
+	            <search string="Batch Recall">
+	                <group expand="0" string="Filters...">
+	                    <filter icon="terp-go-home" name="location_type_internal" string="Internal" domain="[('location_type','=','internal')]"/>
+	                    <separator orientation="vertical"/>
+	                    <filter icon="terp-partner" name="location_type_supplier" string="Supplier" domain="[('location_type','=','supplier')]"/>
+	                    <filter icon="terp-partner" name="location_type_customer" string="Customer" domain="[('location_type','=','customer')]"/>
+	                    <separator orientation="vertical" />
+	                    <field name="location_id" />
+	                    <field name="product_id" />
+	                    <field name="prodlot_id" />
+	                    <field name="expired_date" />
+	                </group>
+	            </search>
+	        </field>
+	    </record>
+	        
+	    <record id="stock_batch_recall_tree" model="ir.ui.view">
+	        <field name="name">stock.batch.recall.tree</field>
+	        <field name="model">report.batch.recall</field>
+	        <field name="type">tree</field>
+	        <field name="arch" type="xml">
+	            <tree string="Batch Recall">
+	                <field name="location_type" invisible="1"/>
+	                <field name="product_id"/>
+                    <field name="prodlot_id"/>
+	                <field name="expired_date"/>
+	                <field name="location_id"/>
+                    <!--field name="partner_id" context="{'contact_display':'partner'}"/>-->
+	                <field name="product_qty" />
+	           </tree>
+	        </field>
+	    </record>
+        
+        <!-- Wizard view -->
+        <record id="batch_recall_form_view" model="ir.ui.view">
+            <field name="name">batch.recall.form.view</field>
+            <field name="model">stock.batch.recall</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Batch Recall">
+                    <field name="product_id" colspan="4" />
+                    <field name="prodlot_id" colspan="4" />
+                    <field name="expired_date" colspan="4" />
+                    <label colspan="3" />
+                    <button name="return_view" type="object" icon="terp-check" string="Go" />
+                </form>
+            </field>
+        </record>
+        
+        <record id="action_batch_recall" model="ir.actions.act_window">
+            <field name="name">Batch Recall</field>
+            <field name="res_model">stock.batch.recall</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+        
+        <menuitem action="action_batch_recall"
+                  id="menu_batch_recall"
+                  sequence="-5"
+                  parent="stock.menu_traceability" />
+                  
+        <record id="action_report_batch_recall" model="ir.actions.act_window">
+            <field name="name">Batch Recall</field>
+            <field name="res_model">report.batch.recall</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+        </record>
+            
+            
+    </data>
+</openerp>

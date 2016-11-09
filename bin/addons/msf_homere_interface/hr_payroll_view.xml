@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+    <data>
+
+    <!--
+        Payroll Form
+    -->
+        <record id="view_hr_payroll_msf_form" model="ir.ui.view">
+            <field name="name">hr.payroll.msf.form</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Payroll" hide_delete_button="1" hide_new_button="1" hide_duplicate_button="1">
+                    <notebook colspan="4">
+                        <page string="General Information">
+                            <group colspan="6" col="8">
+                                <field name="name"/>
+                                <field name="ref"/>
+                                <field name="document_date"/>
+                                <field name="date"/>
+                                <field name="period_id"/>
+                                <field name="employee_id_number"/>
+                            </group>
+                            <group colspan="4" col="6">
+                                <group colspan="2" col="4">
+                                    <separator string="Accounting"/>
+                                    <field name="account_id"/>
+                                    <field name="amount"/>
+                                    <field name="currency_id"/>
+                                </group>
+                                <group colspan="2" col="4">
+                                    <separator string="Analytic Accounting"/>
+                                    <field name="destination_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
+                                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                    <group colspan="4" col="4">
+                        <field name="analytic_state" colspan="2"/>
+                        <field name="state" colspan="2"/>
+                        <field name="employee_id" invisible="1"/>
+                        <field name="partner_id" invisible="1"/>
+                        <field name="journal_id" invisible="1"/>
+                    </group>
+                </form>
+            </field>
+        </record>
+
+    <!--
+        Payroll Search
+    -->
+
+        <record id="view_hr_payroll_msf_filter" model="ir.ui.view">
+            <field name="name">Payroll Entries</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Search Journal Items">
+                    <filter name="active" icon="terp-check" domain="[('analytic_state', '=', 'valid')]" string="Valid"/>
+                    <filter name="inactive" icon="gtk-dialog-error" domain="[('analytic_state', '!=', 'valid')]" string="Invalid"/>
+                    <separator orientation="vertical"/>
+                    <field name="employee_id" select="1"/>
+                    <field name="account_id" select="1"/>
+                </search>
+            </field>
+        </record>
+
+    <!--
+        Payroll Tree
+    -->
+        <record id="view_hr_payroll_msf_tree" model="ir.ui.view">
+            <field name="name">hr.payroll.msf.tree</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payroll List" editable="bottom" colors="blue:analytic_state in ('valid');red:analytic_state in ('invalid');black:analytic_state in ('none')" hide_delete_button="1" hide_new_button="1">
+                    <field name="document_date"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="employee_id" invisible="1"/>
+                    <field name="partner_id" invisible="1"/>
+                    <field name="journal_id" invisible="1"/>
+                    <field name="partner_type"/>
+                    <field name="employee_id_number"/>
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="account_id"/>
+                    <field name="amount" sum="Total amount"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                    <field name="destination_id" on_change="onchange_destination(destination_id, funding_pool_id, account_id)" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="cost_center_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="funding_pool_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': document_date}"/>
+                    <field name="free1_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="free2_id" context="{'search_default_active': 1, 'hide_inactive': 1, 'date': date}"/>
+                    <field name="analytic_state"/>
+                </tree>
+            </field>
+        </record>
+
+    <!--
+        Actions
+    -->
+        <record id="action_payroll_tree" model="ir.actions.act_window">
+            <field name="name">Payroll entries</field>
+            <field name="res_model">hr.payroll.msf</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_hr_payroll_msf_tree"/>
+            <field name="search_view_id" ref="view_hr_payroll_msf_filter"/>
+            <field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
+        </record>
+
+        <record id="action_employee_allocation_tree" model="ir.actions.act_window">
+            <field name="name">Local Staff Allocation</field>
+            <field name="res_model">hr.employee</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="editable_view_employee_tree"/>
+            <field name="search_view_id" ref="view_employee_filter_2"/>
+            <field name="domain">[('employee_type', '=', 'local')]</field>
+        </record>
+
+        <record id="action_employee_import_wizard" model="ir.actions.act_window">
+            <field name="name">Employee Update</field>
+            <field name="res_model">hr.payroll.employee.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="payroll_employee_import"/>
+            <field name="target">new</field>
+        </record>
+
+        <record id="action_payroll_import_wizard" model="ir.actions.act_window">
+            <field name="name">Import Payroll</field>
+            <field name="res_model">hr.payroll.import</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="payroll_import_wizard"/>
+            <field name="target">new</field>
+        </record>
+
+    <!--
+        Menu
+    -->
+        <menuitem id="menu_finance_payroll" name="Payroll" parent="account.menu_finance" sequence="5"/>
+        <menuitem string="Employee Update" action="action_employee_import_wizard" id="menu_finance_employees_import" parent="menu_finance_payroll" sequence="1"/>
+        <menuitem string="Import Payroll" action="action_payroll_import_wizard" id="menu_finance_payroll_import" parent="menu_finance_payroll" sequence="2"/>
+        <menuitem string="Payroll entries" action="action_payroll_tree" id="menu_finance_payroll_entries" parent="menu_finance_payroll" sequence="3"/>
+        <menuitem string="Local Staff Allocation" action="action_employee_allocation_tree" id="menu_finance_payroll_employees" parent="menu_finance_payroll" sequence="4"/>
+
+    </data>
+</openerp>

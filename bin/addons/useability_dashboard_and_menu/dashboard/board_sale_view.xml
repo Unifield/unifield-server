@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <record id="view_sales_tree" model="ir.ui.view">
+            <field name="name">sale.order.tree</field>
+            <field name="model">sale.order</field>
+            <field name="type">tree</field>
+            <field name="priority">99</field>
+            <field name="arch" type="xml">
+                <tree string="Field Orders" >
+                    <field name="name"/>
+                    <field name="date_order"/>
+                    <field name="client_order_ref" />
+                    <field name="partner_id"/>
+                    <field name="user_id" />
+                    <field name="picked_rate" widget="progressbar"/>
+                    <!-- Remove invoiced rate because it's always N/A 
+                    <field name="invoiced_rate" widget="progressbar"/>-->
+                    <field name="vat_ok" invisible="1" />
+                    <field name="amount_untaxed" sum="Total Tax Excluded" attrs="{'invisible': [('vat_ok', '=', False)]}"/>
+                    <field name="amount_total" sum="Total Tax Included"/>
+                    <field name="procurement_request" invisible="1"/>
+                    <field name="state" string="State" />
+                </tree>
+            </field>
+        </record>
+        
+        <record id="internal_request_action_draft" model="ir.actions.act_window">
+            <field name="name">Internal Request Waiting For Validation</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'procurement_request': True}</field>
+            <field name="domain">[('state','=','draft'), ('procurement_request', '=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+    
+        <record id="order_action_draft" model="ir.actions.act_window">
+            <field name="name">Order Waiting For Validation</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'procurement_request': False}</field>
+            <field name="domain">[('state','=','draft'),('procurement_request', '!=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+    
+        <record id="internal_request_action_validated" model="ir.actions.act_window">
+            <field name="name">Internal Request Waiting For Sourcing</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'procurement_request': True}</field>
+            <field name="domain">[('state','=','validated'), ('procurement_request', '=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+
+        <record id="order_action_validated" model="ir.actions.act_window">
+            <field name="name">Order Waiting For Sourcing</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="context">{'procurement_request': False}</field>
+            <field name="domain">[('state','=','validated'), ('procurement_request', '!=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+
+        <record id="order_action_sourced" model="ir.actions.act_window">
+            <field name="name">Order Sourced</field>
+            <field name="res_model">sale.order</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('state','=','sourced'), '|', ('procurement_request', '=', True), ('procurement_request', '!=', True)]</field>
+            <field name="view_id" ref="view_sales_tree"/>
+        </record>
+
+        <record id="board_sales_manager_form_msf" model="ir.ui.view">
+            <field name="name">board.sales.manager.form</field>
+            <field name="model">board.board</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Sales Manager Dashboard">
+                    <hpaned position="100">
+                        <child1>
+                            <action  name="%(internal_request_action_draft)d" string="Internal Request Waiting For Validation" menu_ref="%(procurement_request.menu_procurement_request)d,%(base.menu_sales)d" />
+                            <action  name="%(order_action_draft)d" string="Order Waiting For Validation" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
+                            <action  name="%(internal_request_action_validated)d" string="Internal Request Waiting For Sourcing" menu_ref="%(procurement_request.menu_procurement_request)d,%(base.menu_sales)d" />
+                            <action  name="%(order_action_validated)d" string="Order Waiting For Sourcing" menu_ref="%(sale.menu_sale_order)d,%(base.menu_sales)d" />
+                            <!-- Remove the two lines because there are same as above and made let me fix on Field order follow-up (see UF-1650) 
+                            <action colspan="4" height="220" name="%(order_action_draft)d" string="Orders Waiting For Validation" width="510"/>
+                            <action colspan="4" height="220" name="%(order_action_validated)d" string="Orders Waiting For Sourcing" width="510"/> -->
+                            <action colspan="4" height="220" name="%(order_action_sourced)d" string="Orders Sourced" width="510" menu_ref="%(base.menu_sales)d" />
+                        </child1>
+                    </hpaned>
+                </form>
+            </field>
+        </record>
+
+        <record id="sale.open_board_sales_manager" model="ir.actions.act_window">
+            <field name="name">Sales Manager Dashboard</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="board_sales_manager_form_msf"/>
+        </record>
+    </data>
+</openerp>

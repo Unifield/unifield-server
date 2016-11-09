@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_currency_functional_tree" model="ir.ui.view">
+            <field name="name">res.currency_functional.tree</field>
+            <field name="model">res.currency</field>
+            <field name="type">tree</field>
+            <field name="inherit_id" ref="base.view_currency_tree"/>
+            <field name="arch" type="xml">
+                <tree string="Currencies" position="replace">
+                    <tree string="Currencies">
+	                    <field name="name"/>
+                        <field name="currency_name"/>
+                        <field name="rate"/>
+                        <field name="date"/>
+	                    <field name="rounding"/>
+                        <field name="active"/>
+	                </tree>
+	            </tree>
+            </field>
+        </record>
+        
+        <record id="view_currency_functional_form" model="ir.ui.view">
+            <field name="name">res.currency_functional.form</field>
+            <field name="model">res.currency</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.view_currency_form"/>
+            <field name="arch" type="xml">
+                <data>
+                    <field name="company_id" position="replace">
+                        <field name="currency_name"/>
+                    </field>
+                    <field name="base" position="replace">
+                    </field>
+                    <form string="Rates" position="replace">
+                        <form string="Rates">
+                            <field name="name"/>
+                            <field name="rate"/>
+                        </form>
+                    </form>
+                    <tree string="Rates"  position="replace">
+                        <tree string="Rates">
+                            <field name="name"/>
+                            <field name="rate"/>
+                        </tree>
+                    </tree>
+                </data>
+            </field>
+        </record>
+        
+         <record id="view_currency_functional_search" model="ir.ui.view">
+            <field name="name">res.currency_functional.search</field>
+            <field name="model">res.currency</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Currencies">
+                    <group>
+                        <filter name="active" icon="terp-check" string="Active" domain="[('active','=', True)]" />
+	                    <separator orientation="vertical"/>
+	                    <field name="name"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+        
+        <record id="action_currency_functional_form" model="ir.actions.act_window">
+            <field name="name">Currencies</field>
+            <field name="res_model">res.currency</field>
+            <field name="inherit_id" ref="base.action_currency_form"/>
+            <field name="search_view_id" ref="view_currency_functional_search"/>
+            <field name="view_id" ref="view_currency_functional_tree"/>
+            <field name="domain">[('active','in',['t','f'])]</field>
+            <field name="context">{'search_default_active': 1}</field>
+        </record>
+        <menuitem id="account.menu_finance_currency_mgmt" name="Currency Management" parent="account.menu_finance_configuration" sequence="3"/>
+        <menuitem action="action_currency_functional_form" id="base.menu_action_currency_form" parent="account.menu_finance_currency_mgmt" sequence="3"/>
+        
+        
+        <!--Account Move lines-->
+        <record id="activate_currencies_view" model="ir.ui.view">
+            <field name="name">Activate/Deactivate Currencies</field>
+            <field name="model">activate.currencies</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+            <form string="Activate/Deactivate Currencies">
+                <field name="active_status"/>
+                <button icon="gtk-cancel" special="cancel" string="Cancel"/>
+                <button icon="terp-camera_test" string="Approve" name="change_currency_status" type="object" default_focus="1"/>
+            </form>
+            </field>
+        </record>
+
+        <record id="action_activate_currencies" model="ir.actions.act_window">
+            <field name="name">Activate/Deactivate Currencies</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">activate.currencies</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="activate_currencies_view"/>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.values" id="activate_currencies_values">
+            <field name="model_id" ref="base.model_res_currency" />
+            <field name="object" eval="1" />
+            <field name="name">Activate/Deactivate Currencies</field>
+            <field name="key2">client_action_multi</field>
+            <field name="value" eval="'ir.actions.act_window,' + str(ref('action_activate_currencies'))" />
+            <field name="key">action</field>
+            <field name="model">res.currency</field>
+        </record>
+        
+    </data>
+</openerp>

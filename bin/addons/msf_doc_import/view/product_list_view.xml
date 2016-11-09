@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+            
+        <record id="product_list_form_import" model="ir.ui.view">
+            <field name="name">product.list.form.import</field>
+            <field name="model">product.list</field>
+            <field name="type">form</field>
+            <field name="priority">301</field>
+            <field name="inherit_id" ref="product_list.product_list_form_view" />
+            <field name="arch" type="xml">
+                <data>
+                    <xpath expr="/form//group[@name='import']" position="replace">
+                        <group colspan="4" name="import" string="Import Lines" >
+                            <button name="wizard_import_product_list_line" string="Import lines" icon="gtk-execute" colspan="1" type="object" />
+                            <button name="button_remove_lines" string="Delete Lines" icon="gtk-remove" colspan="1" type="object" />
+                            <button name="%(product_list.action_add_product_in_list)d" type="action" icon="gtk-add" string="Add multiple products" colspan="4" />
+                        </group>
+                    </xpath>
+                </data>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

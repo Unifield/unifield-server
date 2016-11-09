@@ -1,0 +1,4 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_audittrail_rule_all","audittrail.rule","model_audittrail_rule","",1,1,1,1
+"access_audittrail_log_line_all","audittrail.log.line","model_audittrail_log_line","",1,1,1,1
+"access_audittrail_log_sequence_all","audittrail.log.sequence","model_audittrail_log_sequence","",1,1,1,1

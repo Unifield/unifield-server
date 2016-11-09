@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+	<data>
+<!-- We remove the right link on the sale order with attribut menu="False"-->
+        <wizard
+            id="wizard_request_to_order"
+            model="sale.order"
+            name="wizard_request_to_order"
+            keyword="client_action_relate"
+            menu="False"
+            string="Purchase Orders" />
+
+        <wizard
+            id="wizard_request_to_rfq"
+            model="sale.order"
+            name="wizard_request_to_rfq"
+            keyword="client_action_relate"
+            menu="False"
+            string="Requests for Quotation" />
+
+	</data>
+</openerp>
+

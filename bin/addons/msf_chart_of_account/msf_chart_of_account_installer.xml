@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <!-- configartion view -->
+
+        <record id="view_config_msf_coa_amount" model="ir.ui.view">
+            <field name="name">Create Journals</field>
+            <field name="model">msf_chart_of_account.installer</field>
+            <field name="type">form</field>
+            <field name="inherit_id" ref="base.res_config_view_base"/>
+            <field name="arch" type="xml">
+              <data>
+                <form position="attributes">
+                  <attribute name="string">Create Journals</attribute>
+                </form>
+                <separator string="title" position="attributes">
+                    <attribute name="string">Create Journals</attribute>
+                </separator>
+                <xpath expr="//label[@string='description']" position="attributes">
+                    <attribute name="string">Create Journals</attribute>
+                </xpath>
+                <group string="res_config_contents" position="replace">
+                  <field name="create"/>
+                  <newline/>
+                  <field name="import_invoice_default_account" />
+                  <newline/>
+                  <field name="counterpart_hq_entries_default_account" />
+                </group>
+              </data>
+            </field>
+        </record>
+
+        <record id="action_config_msf_coa_amount" model="ir.actions.act_window">
+            <field name="name">Create Journals</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">msf_chart_of_account.installer</field>
+            <field name="view_id" ref="view_config_msf_coa_amount"/>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- register configuration wizard -->
+        <record id="config_wizard_config_msf_coa_amount" model="ir.actions.todo">
+            <field name="action_id" ref="action_config_msf_coa_amount"/>
+            <field name="sequence" eval="13" />
+            <field name="restart">never</field>
+        </record>
+        
+    </data>
+</openerp>

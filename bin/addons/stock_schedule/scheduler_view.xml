@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+    <data>
+    
+        <record id="stock_frequence_form_view" model="ir.ui.view">
+            <field name="name">stock.frequence.form.view</field>
+            <field name="model">stock.frequence</field>
+            <field name="type">form</field>
+            <field name="arch" type="xml">
+                <form string="Repeat Options">
+                    <separator string="Periodicity" colspan="4" />
+                    <field name="name" colspan="4" />
+                    <group colspan="4" col="16" attrs="{'invisible': [('name', '!=', 'daily')]}">
+                        <separator colspan="16" string="Daily configuration" />
+                        <label />
+                        <field name="daily_frequency_ok" nolabel="1" readonly="1" />
+                        <field name="daily_frequency" attrs="{'readonly': [('daily_frequency_ok', '=', 0)], 'required': [('daily_frequency_ok', '=', True)]}" />
+                        <label string="day(s)" />
+                        <newline />
+                    </group>
+                    <group colspan="4" col="16" attrs="{'invisible': [('name', '!=', 'weekly')]}">
+                        <separator colspan="16" string="Weekly configuration" />
+                        <label />
+                        <field name="weekly_frequency" attrs="{'required': [('name', '=', 'weekly')]}"/>
+                        <label string="week(s)" />
+                        <newline />
+                        <label />
+                        <label string="On :" />
+                        <field name="weekly_sunday_ok" />
+                        <field name="weekly_monday_ok" />
+                        <field name="weekly_tuesday_ok" />
+                        <field name="weekly_wednesday_ok" />
+                        <field name="weekly_thursday_ok" />
+                        <field name="weekly_friday_ok" />
+                        <field name="weekly_saturday_ok" />
+                    </group>
+                    <group colspan="4" col="16" attrs="{'invisible': [('name', '!=', 'monthly')]}">
+                        <separator colspan="16" string="Monthly configuration" />
+                        <label />
+                        <field name="monthly_frequency" attrs="{'required': [('name', '=', 'monthly')]}"/>
+                        <label string="month(s)" />
+                        <newline />
+                        <label />
+                        <field name="monthly_one_day" nolabel="1" on_change="monthly_freq_change(monthly_one_day, False)" />
+                        <field name="monthly_choose_freq" nolabel="1" colspan="4" attrs="{'readonly': [('monthly_one_day', '=', False)], 'required': [('monthly_one_day', '=', True)]}" />
+                        <field name="monthly_choose_day" nolabel="1" colspan="4" attrs="{'readonly': [('monthly_one_day', '=', False)], 'required': [('monthly_one_day', '=', True)]}" />
+                        <newline />
+                        <label />
+                        
+                        <field name="monthly_repeating_ok" nolabel="1" on_change="monthly_freq_change(False, monthly_repeating_ok)" />
+                        <label string="On the :" colspan="1" />
+                        <newline />
+                        <group colspan="14" col="32">
+	                        <label colspan="8" />
+	                        <field name="monthly_day01" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day02" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day03" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day04" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day05" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day06" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day07" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <label colspan="10" />
+	                        <newline />
+	                        <label colspan="8" />
+	                        <field name="monthly_day08" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day09" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day10" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day11" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day12" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day13" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day14" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <label colspan="10" />
+	                        <newline />
+	                        <label colspan="8" />
+	                        <field name="monthly_day15" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day16" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day17" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day18" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day19" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day20" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day21" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <label colspan="10" />
+	                        <newline />
+	                        <label colspan="8" />
+	                        <field name="monthly_day22" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day23" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day24" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day25" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day26" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day27" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day28" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <label colspan="10" />
+	                        <newline />
+	                        <label colspan="8" />
+	                        <field name="monthly_day29" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day30" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+	                        <field name="monthly_day31" attrs="{'readonly': [('monthly_repeating_ok', '=', False)]}" />
+                        </group>
+                    </group>
+                    <group colspan="4" col="16" attrs="{'invisible': [('name', '!=', 'yearly')]}">
+                        <separator colspan="16" string="Yearly configuration" />
+                        <label />
+                        <field name="yearly_frequency" attrs="{'required': [('name', '=', 'yearly')]}"/>
+                        <label string="year(s)" />
+                        <newline />
+                        <label />
+                        <field name="yearly_day_ok" nolabel="1" on_change="yearly_freq_change(yearly_day_ok, False)" />
+                        <field name="yearly_day" nolabel="1" attrs="{'readonly': [('yearly_day_ok', '=', False)], 'required': [('yearly_day_ok', '=', True)]}" on_change="check_date_in_month(yearly_day, yearly_choose_month)" />
+                        <field name="yearly_choose_month" nolabel="1" attrs="{'readonly': [('yearly_day_ok', '=', False)], 'required': [('yearly_day_ok', '=', True)]}" on_change="check_date_in_month(yearly_day, yearly_choose_month)" />
+                        <newline />
+                        <label />
+                        <field name="yearly_date_ok" nolabel="1" on_change="yearly_freq_change(False, yearly_date_ok)" />
+                        <field name="yearly_choose_freq" nolabel="1" attrs="{'readonly': [('yearly_date_ok', '=', False)], 'required': [('yearly_date_ok', '=', True)]}" />
+                        <field name="yearly_choose_day" nolabel="1" attrs="{'readonly': [('yearly_date_ok', '=', False)], 'required': [('yearly_date_ok', '=', True)]}" />
+                        <newline />
+                        <label />
+                        <label />
+                        <label string="In : " />
+                        <field name="yearly_choose_month_freq" nolabel="1" attrs="{'readonly': [('yearly_date_ok', '=', False)], 'required': [('yearly_date_ok', '=', True)]}" />
+                    </group>
+                    <group colspan="4" col="16">
+                        <separator colspan="16" string="Replenishment scheduling" />
+                        <label />
+                        <field name="start_date" />
+                        <newline />
+                        <label />
+                        <field name="no_end_date" nolabel="1" on_change="change_recurrence('no_end_date', no_end_date, False, False)" />
+                        <label string="No end date" />
+                        <newline />
+                        <label />
+                        <field name="end_date_ok" nolabel="1" on_change="change_recurrence('end_date_ok', False, end_date_ok, False)" />
+                        <field name="end_date" attrs="{'readonly': [('end_date_ok', '=', False)], 'required': [('end_date_ok', '=', True)]}"/>
+                        <newline />
+                        <label />
+                        <field name="recurrence_ok" nolabel="1" on_change="change_recurrence('recurrence_ok', False, False, recurrence_ok)" />
+                        <field name="recurrence_nb" attrs="{'readonly': [('recurrence_ok', '=', False)], 'required': [('recurrence_ok', '=', True)]}" />
+                        <field name="recurrence_type" nolabel="1" attrs="{'readonly': [('recurrence_ok', '=', False)], 'required': [('recurrence_ok', '=', True)]}" />
+                    </group>
+                    <group  colspan="4" col="6">
+                        <field name="last_run" />
+                        <field name="calculated_end_date" />
+                        <field name="next_date" widget="date" />
+                    </group>
+                    <label colspan="2" />
+                    <button colspan="2" name="choose_frequency" type="object" string="Validate the frequency" icon="gtk-ok" />
+                 </form>
+            </field>
+        </record>
+        
+        <record id="strock_frequence_tree" model="ir.ui.view">
+            <field name="name">stock.frequence.tree</field>
+            <field name="model">stock.frequence</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Frequence">
+                    <field name="name" />
+                    <field name="start_date" />
+                    <field name="calculated_end_date" />
+                    <field name="next_date" />
+                </tree>
+            </field>
+        </record>
+    
+        <record id="action_stock_frequence_new" model="ir.actions.act_window">
+            <field name="name">Stock Frequence</field>
+            <field name="res_model">stock.frequence</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        
+<!--         <menuitem action="action_stock_frequence_new"
+                  id="menu_stock_frequence"
+                  parent="stock.menu_stock_warehouse_mgmt" /> -->
+
+        <!-- REWORKING OF WAREHOUSE MENU ACCORDING TO UF-657 ERGONOMIC IMPROVEMENTS -->
+        <menuitem id="stock.menu_traceability" name="Traceability" parent="stock.menu_stock_root" sequence="5"/>
+        <menuitem id="stock.menu_stock_inventory_control" name="Inventory Control" parent="stock.menu_stock_root" sequence="6"/>
+        <menuitem id="procurement.menu_stock_sched" name="POs Creation" parent="stock.menu_stock_root" sequence="10"/>
+        <menuitem id="stock.next_id_61" name="Reporting" parent="stock.menu_stock_root" sequence="8" />
+
+        <!-- REWORKING OF TRACEABILITY MENU -->
+        <record id="stock.action_production_lot_form" model="ir.actions.act_window">
+            <field name="name">Batch numbers</field>
+            <field name="context">{'full':'1',"search_default_real":1}</field>
+            <field name="help">This is the list of all the batch numbers you recorded. When you select a lot, you can get the upstream or downstream traceability of the products contained in batch. By default, the list is filtred on the batch numbers that are available in your warehouse but you can uncheck the 'Available' button to get all the batch numbers you produced, received or delivered to customers.</field>
+        </record>
+
+        <menuitem id="stock.menu_action_production_lot_form" action="stock.action_production_lot_form" sequence="-10" parent="stock.menu_traceability" />
+
+        <!-- DELETE PRODUCTS -->
+        <!-- MOVED THIS BLOCK TO hidden_menu.xml === DO NOT HARD DELETE MenuItem -->
+
+        <menuitem id="stock_automatic_procurements_menu"
+                  name="Replenishment Rules"
+                  sequence="4"
+                  parent="stock.menu_stock_root" />
+
+        <menuitem action="procurement.action_orderpoint_form"
+                  id="procurement.menu_stock_order_points"
+                  parent="stock_automatic_procurements_menu"
+                  sequence="1" />
+    
+    </data>
+</openerp>

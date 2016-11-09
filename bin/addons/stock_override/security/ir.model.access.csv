@@ -1,0 +1,2 @@
+"id","name","model_id:id","group_id:id","perm_read","perm_write","perm_create","perm_unlink"
+"access_stock_location_chained_options_all","stock.location.chained.options.all","model_stock_location_chained_options",,1,1,1,1

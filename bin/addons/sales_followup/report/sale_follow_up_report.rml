@@ -1,0 +1,251 @@
+<?xml version="1.0" ?>
+<document filename="sale_follow_up_report.pdf">
+
+    <template pageSize="(842.0,595.0)" title="FO Follow Up" author="Medecins Sans Frontieres" allowSplitting="20">
+        <pageTemplate id="first">
+            <frame id="first" x1="0.0" y1="10.0" width="842" height="570" />
+
+            <pageGraphics>
+                <image x="725" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8"/>
+                <fill color="grey" />
+                <drawString x="400.0" y="15.0">Page : <pageNumber /> / </drawString>
+                <drawString x="442.0" y="15.0"><pageCount /></drawString>
+            </pageGraphics>
+
+        </pageTemplate>
+
+        <pageTemplate id="second">
+            <frame id="second" x1="0.0" y1="10.0" width="842" height="525" />
+
+            <pageGraphics>
+                <image x="725" y="525.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
+                <setFont name="Helvetica" size="8"/>
+                <fill color="grey" />
+                <drawString x="400.0" y="15.0">Page : <pageNumber /> / </drawString>
+                <drawString x="442.0" y="15.0"><pageCount /></drawString>
+            </pageGraphics>
+
+        </pageTemplate>
+    </template>
+
+    <stylesheet>
+
+        <blockTableStyle id="TitleTable">
+            <blockAlignment value="CENTRE"/>
+            <blockValign value="MIDDLE"/>
+            <lineStyle kind="OUTLINE" colorName="black" />
+        </blockTableStyle>
+        <blockTableStyle id="DocInfo">
+            <blockAlignment value="LEFT"/>
+            <blockValign value="MIDDLE"/>
+        </blockTableStyle>
+        <blockTableStyle id="LinesTable">
+        <blockAlignment value="LEFT"/>
+            <blockValign value="MIDDLE"/>
+            <blockBackground colorName="#c0c0c0" strart="0,0" stop="-1,0" />
+            <lineStyle kind="LINEABOVE" colorName="black" thickness="0.5" start="0,0" stop="-1,-1" />
+            <lineStyle kind="LINEBELOW" colorName="black" thickness="0.5" start="0,1" stop="-1,-1" />
+            <lineStyle kind="LINEBEFORE" colorName="black" thickness="0.5" start="0,0" stop="0,-1" />
+            <lineStyle kind="LINEAFTER" colorName="black" thickness="0.5" start="-1,0" stop="-1,-1" />
+
+        </blockTableStyle>
+        <blockTableStyle id="LinesTableTotal">
+            <blockAlignment value="LEFT"/>
+            <blockValign value="MIDDLE"/>
+        </blockTableStyle>
+
+        <initialize>
+            <paraStyle name="all" alignment="justify"/>
+        </initialize>
+
+        <paraStyle name="Standard" fontName="Helvetica" fontSize="8.0" />
+
+        <paraStyle name="Title" fontName="Helvetica-Bold" fontSize="12.0" leading="15.0" alignement="CENTER" />
+        <paraStyle name="TextInfo" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="CENTER" />
+        <paraStyle name="TextInfoLeft" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="LEFT" />
+        <paraStyle name="TextInfoRight" fontName="Helvetica" fontSize="8.0" leading="7.0" textColor="blue" alignment="RIGHT" />
+        <paraStyle name="TextInfoBold" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" />
+        <paraStyle name="TextInfoBoldCenter" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" alignment="CENTER" />
+        <paraStyle name="TextInfoBoldRight" fontName="Helvetica-Bold" fontSize="8.0" leading="7.0" alignment="RIGHT" />
+
+    </stylesheet>
+
+    <story>
+
+        <blockTable colWidths="150.0,232.0,150.0" style="TitleTable">
+            <tr>
+                <td>
+                    <para style="Title"> </para>
+                </td>
+                <td>
+                    <para style="Title">FIELD ORDER FOLLOW UP</para>
+                </td>
+                <td>
+                    <para style="Title"> </para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <setNextTemplate name="second" />
+
+        <blockTable colWidths="112.0,250.0,410.0" style="DocInfo">
+            <tr>
+                <td>
+                    <para style="TextInfoBold">Internal reference:</para>
+                </td>
+                <td>
+                    <para style="TextInfoLeft">[[ objects[0].order_id and objects[0].order_id.name or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInfoBold">Customer reference:</para>
+                </td>
+                <td>
+                    <para style="TextInfoLeft">[[ objects[0].cust_ref or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInfoBold">Creation date:</para>
+                </td>
+                <td>
+                    <para style="TextInfoLeft">[[ formatLang(objects[0].creation_date[0:10], date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInfoBold">Order state:</para>
+                </td>
+                <td>
+                    <para style="TextInfoLeft">[[ objects[0].state or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInfoBold">Requested date:</para>
+                </td>
+                <td>
+                    <para style="TextInfoLeft">[[ formatLang(objects[0].requested_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInfoBold">Confirmed date:</para>
+                </td>
+                <td>
+                    <para style="TextInfoLeft">[[ formatLang((objects[0].confirmed_date, date=True) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo"> </para>
+                </td>
+            </tr>
+        </blockTable>
+
+        <para style="Standard">
+            <font color="white"> </font>
+        </para>
+
+        <blockTable colWidths="30.0,122.0,50.0,50.0,50.0,50.0,50.0,50.0,80.0,80.0,80.0,80.0" style="LinesTable" repeatRows="1">
+            <tr>
+                <td>
+                    <para style="TextInfoBoldCenter">ORDER LINE</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">PRODUCT CODE</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">PROC. METHOD</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">PO/CFT</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">ORDERED QTY</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">UOM</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">SOURCED</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">TENDER</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">PURCHASE ORDER</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">INCOMING SHIPMENT</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">PRODUCT AVAILABLE</para>
+                </td>
+                <td>
+                    <para style="TextInfoBoldCenter">OUTGOING DELIVERY</para>
+                </td>
+            </tr>
+            <tr>
+                [[ repeatIn(objects[0].line_ids, 'line') ]]
+                <td>
+                    <para style="TextInfo">[[ line.line_number ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.product_id and '[%s] %s' % (line.product_id.default_code, line.product_id.name) or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.procure_method and getSel(line, 'procure_method') or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.po_cft and getSel(line, 'po_cft') or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfoRight">[[ formatLang(line.qty_ordered or 0) ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.uom_id and line.uom_id.name or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.sourced_ok or '']]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.tender_status or '']]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.purchase_status ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.incoming_status or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.product_available or '' ]]</para>
+                </td>
+                <td>
+                    <para style="TextInfo">[[ line.outgoing_status or '' ]]</para>
+                </td>
+            </tr>
+        </blockTable>
+
+    </story>
+
+</document>
