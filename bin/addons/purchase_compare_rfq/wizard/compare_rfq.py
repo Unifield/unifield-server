@@ -450,6 +450,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     'digits': (16,2),
                     'string': _('Unit price'),
                 },
+                # Confirmed delivery date on the related RfQ line
+                'confirmed_delivery_date_%s' % sid: {
+                    'selectable': True,
+                    'type': 'date',
+                    'string': _('Confirmed delivery'),
+                },
                 # Comment of the related RfQ line
                 'comment_%s' % sid: {
                     'selectable': True,
@@ -515,6 +521,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 r.update({
                     'name_%s' % sid: sup.name,
                     'unit_price_%s' % sid: rfql and pu or 0.00,
+                    'confirmed_delivery_date_%s' % sid: rfql.confirmed_delivery_date,
                     'comment_%s' % sid: rfql and rfql.comment or '',
                 })
 
@@ -544,7 +551,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 <field name="quantity" readonly="1" />
                 <field name="uom_id" readonly="1" />
             """
-            fld_to_add = ['name', 'unit_price', 'comment']
+            fld_to_add = ['name', 'unit_price', 'comment', 'confirmed_delivery_date']
             t_id = context.get('tender_id', False)
             s_ids = []
             if t_id:

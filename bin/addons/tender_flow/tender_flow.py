@@ -627,19 +627,25 @@ class tender(osv.osv):
             for line in tender.tender_line_ids:
                 if line.line_state == 'cancel':
                     continue
-                data.setdefault(line.supplier_id.id, {}) \
-                    .setdefault('order_line', []).append((0,0,{'name': line.product_id.partner_ref,
-                                                               'product_qty': line.qty,
-                                                               'product_id': line.product_id.id,
-                                                               'product_uom': line.product_uom.id,
-                                                               'change_price_manually': 'True',
-                                                               'price_unit': line.price_unit,
-                                                               'date_planned': line.date_planned,
-                                                               'move_dest_id': False,
-                                                               'notes': line.product_id.description_purchase,
-                                                               'comment': line.comment,
-                                                               }))
 
+                pol_values = {
+                    'name': line.product_id.partner_ref,
+                    'product_qty': line.qty,
+                    'product_id': line.product_id.id,
+                    'product_uom': line.product_uom.id,
+                    'change_price_manually': 'True',
+                    'price_unit': line.price_unit,
+                    'date_planned': line.date_planned,
+                    'move_dest_id': False,
+                    'notes': line.product_id.description_purchase,
+                    'comment': line.comment,
+                }
+
+                if line.purchase_order_line_id:
+                    pol_values.update({'confirmed_delivery_date': line.purchase_order_line_id.confirmed_delivery_date})
+
+                data.setdefault(line.supplier_id.id, {}) \
+                    .setdefault('order_line', []).append((0,0, dict(pol_values)))
                 # fill data corresponding to po creation
                 address_id = partner_obj.address_get(cr, uid, [line.supplier_id.id], ['default'])['default']
                 pricelist = line.supplier_id.property_product_pricelist_purchase.id,
@@ -958,6 +964,7 @@ class tender_line(osv.osv):
                 # functions
                 'supplier_id': fields.related('purchase_order_line_id', 'order_id', 'partner_id', type='many2one', relation='res.partner', string="Supplier", readonly=True),
                 'price_unit': fields.related('purchase_order_line_id', 'price_unit', type="float", string="Price unit", digits_compute=dp.get_precision('Purchase Price Computation'), readonly=True), # same precision as related field!
+                'delivery_confirmed_date': fields.related('purchase_order_line_id', 'confirmed_delivery_date', type="date", string="Delivery Confirmed Date", readonly=True),
                 'total_price': fields.function(_get_total_price, method=True, type='float', string="Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
                 'currency_id': fields.function(_get_total_price, method=True, type='many2one', relation='res.currency', string='Cur.', multi='total'),
                 'func_total_price': fields.function(_get_total_price, method=True, type='float', string="Func. Total Price", digits_compute=dp.get_precision('Purchase Price'), multi='total'),
