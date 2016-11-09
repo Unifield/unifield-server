@@ -8,42 +8,38 @@ def _(a):
 queries = [
     {
         'title': _('Journal Items that are not balanced in booking currency'),
-        'headers': [_('Period'), _('Entry Sequence'), _('Account Code'),  _('Difference')],
-        'query': """select p.name period, m.name, a.code, sum(l.credit_currency-l.debit_currency) difference
+        'headers': [_('Period'), _('Entry Sequence'), _('Difference')],
+        'query': """select p.name period, m.name, sum(l.credit_currency-l.debit_currency) difference
 from account_move_line l,
 account_period p,
 account_move m,
-account_journal j,
-account_account a
+account_journal j
 where
 m.period_id = p.id and
 l.move_id = m.id and
 m.state='posted' and
 m.journal_id = j.id and
-a.id = l.account_id and
 j.type != 'system'
-group by p.name, m.name, l.move_id, p.date_start, a.code
+group by p.name, m.name, l.move_id, p.date_start
 having abs(sum(l.credit_currency-l.debit_currency)) > 0.00001
 order by p.date_start, m.name
 """
     },
     {
         'title': _('Journal Items that are not balanced in functional currency'),
-        'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('Difference')],
-        'query': """select p.name period, m.name, a.code, sum(l.credit-l.debit) difference
+        'headers': [_('Period'), _('Entry Sequence'), _('Difference')],
+        'query': """select p.name period, m.name, sum(l.credit-l.debit) difference
 from account_move_line l,
 account_period p,
 account_move m,
-account_journal j,
-account_account a
+account_journal j
 where
 m.period_id = p.id and
 l.move_id = m.id and
 m.state='posted' and
 m.journal_id = j.id and
-a.id = l.account_id and
 j.type != 'system'
-group by p.name, m.name, l.move_id, p.date_start, a.code
+group by p.name, m.name, l.move_id, p.date_start
 having abs(sum(l.credit-l.debit)) > 0.00001
 order by p.date_start, m.name"""
     },

@@ -74803,10 +74803,8 @@ msgid "Unbalanced reconciliations in booking currency"
 msgstr "Lettrages non équilibrés en devise d'enregistement"
 
 #. module: board
-#: code:addons/board/queries_finance.py:11
-#: code:addons/board/queries_finance.py:30
-#: code:addons/board/queries_finance.py:47
-#: code:addons/board/queries_finance.py:84
+#: code:addons/board/queries_finance.py:48
+#: code:addons/board/queries_finance.py:86
 #, python-format
 msgid "Account Code"
 msgstr "Compte"
