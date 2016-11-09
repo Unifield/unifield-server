@@ -291,7 +291,11 @@ class hq_entries_validation(osv.osv_memory):
             new_expense_ml_ids = new_res_move.values()
             pure_ad_cor_ji_ids += new_expense_ml_ids
             corr_name = 'COR1 - ' + original_move.name
-            aml_obj.write(cr, uid, new_expense_ml_ids, {'corrected_line_id': original_ml_result, 'name': corr_name, 'have_an_historic': True}, context=context, check=False, update_check=False)
+            # US-1347: JI COR Entry Ref. must be the Entry Sequence from the original entry
+            ji_entry_seq = original_move.move_id.name
+            aml_obj.write(cr, uid, new_expense_ml_ids,
+                          {'corrected_line_id': original_ml_result, 'name': corr_name, 'have_an_historic': True, 'reference': ji_entry_seq},
+                          context=context, check=False, update_check=False)
 
             # get the move_id
             corr_moves = aml_obj.browse(cr, uid, new_expense_ml_ids, context=context)
