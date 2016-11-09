@@ -2305,6 +2305,7 @@ stock moves which are already processed : '''
                     'date': order_line.confirmed_delivery_date,
                     'date_expected': order_line.confirmed_delivery_date,
                     'line_number': order_line.line_number,
+                    'comment': order_line.comment,
                 }
 
                 if reason_type_id:
@@ -3175,7 +3176,7 @@ class purchase_order_line(osv.osv):
 
         # utp-518:we write the comment from the sale.order.line on the PO line through the procurement (only for the create!!)
         po_procurement_id = vals.get('procurement_id', False)
-        if po_procurement_id:
+        if po_procurement_id and not vals.get('comment'):
             sale_id = sol_obj.search(cr, uid, [('procurement_id', '=', po_procurement_id)], context=context)
             if sale_id:
                 comment_so = sol_obj.read(cr, uid, sale_id, ['comment'], context=context)[0]['comment']

@@ -18127,6 +18127,7 @@ msgstr "Disponible pour envoi entrant ?"
 #: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:77
 #: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:227
 #: field:automated.import.job,comment:0
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:70
 #: field:purchase.order.line,comment:0
 #: field:purchase.order.merged.line,comment:0
 #: field:sale.order.line,comment:0
@@ -74977,3 +74978,15 @@ msgstr "Les bons de Commande appartiennent au même fournisseur et à la même d
 #: view:purchase.order.line.unlink.wizard:0
 msgid "Would you re-source the needs sourced by this purchase order line ?"
 msgstr "Souhaitez-vous re-sourcer les besoins couverts par cette ligne de commande d'achat ?"
+
+#. module: msf_instance
+#: code:addons/msf_instance/analytic.py:45
+#, python-format
+msgid "Domain %s not suported"
+msgstr "Domaine %s non supporté"
+
+#. module: msf_instance
+#: code:addons/msf_instance/analytic.py:48
+#, python-format
+msgid "Operator '%s' not suported"
+msgstr "Opérateur '%s' non supporté"

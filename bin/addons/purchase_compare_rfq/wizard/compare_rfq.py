@@ -24,9 +24,6 @@ from osv import fields
 from tools.translate import _
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
-import netsvc
-import decimal_precision as dp
-
 
 class wizard_compare_rfq(osv.osv_memory):
     _name = 'wizard.compare.rfq'
@@ -62,7 +59,7 @@ class wizard_compare_rfq(osv.osv_memory):
         return res
 
     def _write_all_supplier(
-        self, cr, uid, ids, field_name, values, args, context=None):
+            self, cr, uid, ids, field_name, values, args, context=None):
         """
         Write the selected supplier on the wizard
         """
@@ -316,7 +313,7 @@ class wizard_compare_rfq(osv.osv_memory):
         Remove the supplier from all lines
         """
         return self.add_supplier_all_lines(cr, uid, ids,
-                context=context, deselect=True)
+                                           context=context, deselect=True)
 
 
     def update_tender(self, cr, uid, ids, context=None):
@@ -343,6 +340,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 pol_id = wl_brw.rfq_line_id and wl_brw.rfq_line_id.id or False
                 tl_obj.write(cr, uid, [wl_brw.tender_line_id.id], {
                     'purchase_order_line_id': pol_id,
+                    'comment': wl_brw.rfq_line_id.comment or '',
                 }, context=context)
 
             # UF-733: if all tender lines have been compared (have PO Line id),
@@ -416,7 +414,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
             type='char',
             size=256,
         ),
-   }
+    }
 
     def fields_get(self, cr, uid, fields=None, context=None):
         """
@@ -523,7 +521,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form',
-            context=None, toolbar=False, submenu=False):
+                        context=None, toolbar=False, submenu=False):
         """
         Display the computed fields according to number of suppliers in the
         tender.

@@ -1923,6 +1923,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             'price_currency_id': order.procurement_request and order.functional_currency_id.id or order.pricelist_id.currency_id.id,
             'price_unit': order.procurement_request and line.cost_price or line.price_unit,
             'line_number': line.line_number,
+            'comment': line.comment,
         }
 
         if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer' and not line.product_id and line.comment:

@@ -58,6 +58,17 @@
             <blockBackground colorName="#c0c0c0" start="0,1" stop="-1,-1" />
             <lineStyle kind="OUTLINE" colorName="black" start="-5,0" stop="-1,0" />
             <lineStyle kind="GRID" colorName="black" start="0,1" stop="-1,-1" />
+            <blockSpan start="0,1" stop="0,-1" />
+            <blockSpan start="3,1" stop="3,-1" />
+            <blockSpan start="4,1" stop="4,-1" />
+            <blockSpan start="5,1" stop="5,-1" />
+            <blockSpan start="6,1" stop="6,-1" />
+            <blockSpan start="7,1" stop="7,-1" />
+            <blockSpan start="8,1" stop="8,-1" />
+            <blockSpan start="9,1" stop="9,-1" />
+            <blockSpan start="10,1" stop="10,-1" />
+            <blockSpan start="11,1" stop="11,-1" />
+            <blockSpan start="12,1" stop="12,-1" />
         </blockTableStyle>
 
         <blockTableStyle id="LinesValues">
@@ -251,6 +262,50 @@
                     <para style="LineHeader">(w x l x h) (cm)</para>
                 </td>
             </tr>
+            <tr>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeaderLeft"></para>
+                </td>
+                <td>
+                    <para style="LineHeaderLeft">Comment</para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+                <td>
+                    <para style="LineHeader"></para>
+                </td>
+            </tr>
         </blockTable>
 
         <pto>
@@ -344,6 +399,50 @@
                             <para style="LineHeader">Size (w x l x h) (cm)</para>
                         </td>
                     </tr>
+                    <tr>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeaderLeft">Comment</para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                        <td>
+                            <para style="LineHeader"></para>
+                        </td>
+                    </tr>
                 </blockTable>
             </pto_header>
 
@@ -409,7 +508,7 @@
                         <para style="LineValue"></para>
                     </td>
                     <td>
-                        <para style="LineValue"></para>
+                        <para style="LineValueLeft">[[ m.comment ]]</para>
                     </td>
                     <td>
                         <para style="LineValue"></para>
