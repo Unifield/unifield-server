@@ -46,6 +46,10 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1725_force_sync_on_hr_employee(self, cr, uid, *a, **b):
+        touched = "['birthday', 'code', 'employee_type', 'filter_for_third_party', 'gender', 'identification_id', 'job_id/id', 'marital/id', 'mobile_phone', 'name', 'name_resource', 'notes', 'passport_id', 'private_phone', 'resource_type', 'sinid', 'ssnid', 'work_email', 'work_location', 'work_phone']"
+        cr.execute("update ir_model_data set last_modification=NOW(), touched=%s WHERE module='sd' AND model='hr.employee'", (touched,))
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be
