@@ -46,7 +46,7 @@ if os.name == 'nt':
     py2exe_keywords['console'] = [
         { "script": join("bin", "openerp-server.py"),
           "icon_resources": [(1, join("pixmaps","openerp-icon.ico"))]
-        }]
+          }]
     py2exe_keywords['options'] = {
         "py2exe": {
             "compressed": 0,
@@ -65,7 +65,7 @@ if os.name == 'nt':
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
-                "pylzma"
+                "pylzma", "xlwt"
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
@@ -257,5 +257,5 @@ setup(name             = name,
           'SSL' : ['pyopenssl'],
       },
       **py2exe_keywords
-)
+      )
 

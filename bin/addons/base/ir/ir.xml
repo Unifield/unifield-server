@@ -921,6 +921,7 @@
                         <group col="2" colspan="4" attrs="{'invisible':[('type','=','url')]}">
                             <field name="datas" filename="datas_fname"/>
                             <field name="datas_fname" select="1"/>
+                            <field name="path"/>
                         </group>
                         <group col="2" colspan="4" attrs="{'invisible':[('type','=','binary')]}">
                             <field name="url" widget="url"/>

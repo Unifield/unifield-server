@@ -104,6 +104,8 @@ class configmanager(object):
             'osv_memory_count_limit': None, # number of records in each osv_memory virtual table
             'osv_memory_age_limit': 1, # hours
             'additional_xml': False,
+            'attachments_path': None,
+            'create_db_dir_for_attachment': True,
         }
 
         self.blacklist_for_save = set(["publisher_warranty_url", "load_language"])
@@ -113,7 +115,7 @@ class configmanager(object):
         self.has_ssl = check_ssl()
 
         self._LOGLEVELS = dict([(getattr(netsvc, 'LOG_%s' % x), getattr(logging, x))
-                          for x in ('CRITICAL', 'ERROR', 'WARNING', 'INFO', 'TEST', 'DEBUG', 'DEBUG_RPC', 'DEBUG_SQL', 'DEBUG_RPC_ANSWER','NOTSET')])
+                                for x in ('CRITICAL', 'ERROR', 'WARNING', 'INFO', 'TEST', 'DEBUG', 'DEBUG_RPC', 'DEBUG_SQL', 'DEBUG_RPC_ANSWER','NOTSET')])
 
         version = "%s %s" % (release.description, release.version)
         self.parser = parser = optparse.OptionParser(version=version)
@@ -220,10 +222,10 @@ class configmanager(object):
         parser.add_option_group(group)
 
         group = optparse.OptionGroup(parser, "Internationalisation options",
-            "Use these options to translate OpenERP to another language."
-            "See i18n section of the user manual. Option '-d' is mandatory."
-            "Option '-l' is mandatory in case of importation"
-            )
+                                     "Use these options to translate OpenERP to another language."
+                                     "See i18n section of the user manual. Option '-d' is mandatory."
+                                     "Option '-l' is mandatory in case of importation"
+                                     )
 
         group.add_option('--load-language', dest="load_language",
                          help="specifies the languages for the translations you want to be loaded")
@@ -291,7 +293,7 @@ class configmanager(object):
 
         self.rcfile = os.path.abspath(
             self.config_file or opt.config \
-                or os.environ.get('OPENERP_SERVER') or rcfilepath)
+            or os.environ.get('OPENERP_SERVER') or rcfilepath)
         self.load()
 
 
@@ -448,7 +450,7 @@ class configmanager(object):
                 if os.path.isdir(modpath) and \
                    os.path.exists(os.path.join(modpath, '__init__.py')) and \
                    (os.path.exists(os.path.join(modpath, '__openerp__.py')) or \
-                    os.path.exists(os.path.join(modpath, '__terp__.py'))):
+                        os.path.exists(os.path.join(modpath, '__terp__.py'))):
 
                     contains_addons = True
                     break
