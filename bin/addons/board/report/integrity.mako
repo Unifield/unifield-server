@@ -110,5 +110,21 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Row />
 % endfor /* list_checks
 </Table>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+<PageSetup>
+<Layout x:Orientation="Landscape"/>
+<Header x:Margin="0.51181102362204722"/>
+<Footer x:Margin="0.51181102362204722"/>
+<PageMargins x:Bottom="0.98425196850393704" x:Left="0.78740157480314965"
+x:Right="0.78740157480314965" x:Top="0.98425196850393704"/>
+</PageSetup>
+<FitToPage/>
+<Print>
+<FitHeight>0</FitHeight>
+</Print>
+<Selected/>
+<ProtectObjects>False</ProtectObjects>
+<ProtectScenarios>False</ProtectScenarios>
+</WorksheetOptions>
 </Worksheet>
 </Workbook>
