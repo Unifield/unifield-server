@@ -2,7 +2,7 @@
   Track sync_server.sync_rule
 -
   !python {model: audittrail.rule}: |
-    name = 'Sync server, sync_rule '
+    name = 'Sync server, sync_rule'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync_server.sync_rule')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
@@ -27,11 +27,11 @@
   Track sync_server.message_rule
 -
   !python {model: audittrail.rule}: |
-    name = 'Sync server, message_rule '
+    name = 'Sync server, message_rule'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync_server.message_rule')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
-        fields = ["id", "active", "applies_to_type", "arguments", "domain", "destination_name", "type_id", "remote_call", "model_id", "name", "sequence_number"]
+        fields = ['active', 'applies_to_type', 'arguments', 'domain', 'destination_name', 'type_id', 'remote_call', 'model_id', 'name', 'sequence_number']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'sync_server.message_rule'), ('name', 'in', fields)], context=context)
         vals = {'name': name,
                 'object_id': object_ids[0],
@@ -77,7 +77,7 @@
   Track sync_server.entity_group
 -
   !python {model: audittrail.rule}: |
-    name = 'Sync server, entity_group '
+    name = 'Sync server, entity_group'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync.server.entity_group')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
@@ -102,7 +102,7 @@
   Track sync_server.group_type
 -
   !python {model: audittrail.rule}: |
-    name = 'Sync server, group_type '
+    name = 'Sync server, group_type'
     object_ids = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'sync.server.group_type')], context=context)
     rule_id = self.search(cr, uid, [('name', '=', name)], context=context)
     if object_ids:
