@@ -337,9 +337,12 @@ class hq_entries_validation(osv.osv_memory):
             original_aal_ids = ana_line_obj.search(cr, uid, [('move_id', '=', original_ml_result)])
             new_aal_ids = ana_line_obj.search(cr, uid, [('move_id', 'in', new_expense_ml_ids)])
             browse_aals = ana_line_obj.browse(cr, uid, new_aal_ids, context=context)
+            # US-1347: COR Entry Ref. must be the Entry Sequence from the original entry
+            reverse_entry = ana_line_obj.read(cr, uid, res_reverse, ['ref'], context=context)
+            cor_ref = reverse_entry and reverse_entry[0] and reverse_entry[0]['ref'] or False
             for aal in browse_aals:
                 cor_name = 'COR1 - ' + aal.name
-                ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name})
+                ana_line_obj.write(cr, uid, aal.id, {'last_corrected_id': original_aal_ids[0],'name': cor_name, 'ref': cor_ref})
             # also write the OD entry_sequence to the REV aal
             # ana_line_obj.write(cr, uid, res_reverse, {'journal_id': acor_journal_id, 'entry_sequence': aal.entry_sequence})
             cr.execute('''update account_analytic_line set entry_sequence = '%s' where id = %s''' % (aal.entry_sequence, res_reverse[0]))
