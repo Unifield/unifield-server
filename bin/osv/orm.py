@@ -2330,6 +2330,8 @@ class orm_memory(orm_template):
     def write(self, cr, user, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         vals2 = {}
         upd_todo = []
         for field in vals:
