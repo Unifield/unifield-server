@@ -74687,6 +74687,11 @@ msgid "\n"
 msgstr "\n"
 "	Le nombre de colonnes n'est pas égal à %s"
 
+#. module: msf_partner
+#: constraint:res.partner:0
+msgid "You can't define a partner name with the name of a existing Intermission/Intersection or an external patner with name of existing instance."
+msgstr "Vous ne pouvez pas créer un partenaire avec le nom d'une Intermission/Intersection existante, ni un partenaire externe avec le nom d'une instance existante."
+
 #. module: specific_rules
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
 msgid "Exp Date"
