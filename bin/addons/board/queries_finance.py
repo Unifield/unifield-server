@@ -8,45 +8,52 @@ def _(a):
 queries = [
     {
         'title': _('Journal Items that are not balanced in booking currency'),
-        'headers': [_('Period'), _('Entry Sequence'), _('Difference')],
-        'query': """select p.name period, m.name, sum(l.credit_currency-l.debit_currency) difference from account_move_line l,
+        'headers': [_('Period'), _('Entry Sequence'), _('Account Code'),  _('Difference')],
+        'query': """select p.name period, m.name, a.code, sum(l.credit_currency-l.debit_currency) difference
+from account_move_line l,
 account_period p,
 account_move m,
-account_journal j
+account_journal j,
+account_account a
 where
 m.period_id = p.id and
 l.move_id = m.id and
 m.state='posted' and
 m.journal_id = j.id and
+a.id = l.account_id and
 j.type != 'system'
-group by p.name, m.name, l.move_id, p.date_start
+group by p.name, m.name, l.move_id, p.date_start, a.code
 having abs(sum(l.credit_currency-l.debit_currency)) > 0.00001
 order by p.date_start, m.name
 """
     },
     {
         'title': _('Journal Items that are not balanced in functional currency'),
-        'headers': [_('Period'), _('Entry Sequence'), _('Difference')],
-        'query': """select p.name period, m.name, sum(l.credit-l.debit) difference from account_move_line l,
+        'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('Difference')],
+        'query': """select p.name period, m.name, a.code, sum(l.credit-l.debit) difference
+from account_move_line l,
 account_period p,
 account_move m,
-account_journal j
+account_journal j,
+account_account a
 where
 m.period_id = p.id and
 l.move_id = m.id and
 m.state='posted' and
 m.journal_id = j.id and
+a.id = l.account_id and
 j.type != 'system'
-group by p.name, m.name, l.move_id, p.date_start
+group by p.name, m.name, l.move_id, p.date_start, a.code
 having abs(sum(l.credit-l.debit)) > 0.00001
 order by p.date_start, m.name"""
     },
     {
         'title': _('P&L Journal Items vs Analytic Journal Items mismatch in booking currency (except FXA and REV)'),
-        'headers': [_('Period'), _('Entry Sequence'), _('JI Book. Amount'), _('AJI Book. Amount'), _('Difference')],
+        'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('JI Book. Amount'), _('AJI Book. Amount'), _('Difference')],
         'query': """SELECT
 account_period.name,
 account_move.name,
+account_account.code,
 avg(account_move_line.credit_currency-account_move_line.debit_currency) JI,
 sum(account_analytic_line.amount_currency) AJI,
 abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) difference
@@ -74,16 +81,17 @@ WHERE
 account_account.user_type = account_account_type.id and
 account_account_type.code in ('income', 'expense')
 )
-GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start
+GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start, account_account.code
 HAVING abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) > 0.00001
 ORDER BY account_period.date_start, account_move.name"""
     },
     {
         'title': _('P&L Journal Items vs Analytic Journal Items mismatch in functional currency (FXA and REV only)'),
-        'headers': [_('Period'), _('Entry Sequence'), _('JI Func. Amount'), _('AJI Func. Amount'), _('Difference')],
+        'headers': [_('Period'), _('Entry Sequence'), _('Account Code'), _('JI Func. Amount'), _('AJI Func. Amount'), _('Difference')],
         'query': """SELECT
 account_period.name,
 account_move.name,
+account_account.code,
 avg(account_move_line.debit-account_move_line.credit) JI,
 sum(account_analytic_line.amount) AJI,
 abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_analytic_line.amount)) difference
@@ -111,7 +119,7 @@ WHERE
 account_account.user_type = account_account_type.id and
 account_account_type.code in ('income', 'expense')
 )
-GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start
+GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start, account_account.code
 HAVING abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_analytic_line.amount)) > 0.00001
 order by account_period.date_start, account_move.name"""
     },
