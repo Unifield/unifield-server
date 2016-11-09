@@ -167,9 +167,12 @@ def _print_data(data):
     else:
         if not data.get('result') and data.get('path'):
             try:
+                serve_data = {'delete': data.get('delete', False)}
+                if data.get('filename'):
+                    serve_data['name'] = data.get('filename')
                 return serve_file.serve_file(data['path'],
                                              "application/x-download", 'attachment',
-                                             name=data.get('filename', ''), delete=data.get('delete', False))
+                                             **serve_data)
             except Exception, e:
                 cherrypy.response.headers['Content-Type'] = 'text/html'
                 if 'Content-Disposition' in cherrypy.response.headers:
