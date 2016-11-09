@@ -498,7 +498,7 @@ class hq_entries_validation(osv.osv_memory):
                     'account_id':line.analytic_id.id, 'destination_id':line.destination_id.id, 'journal_id':acor_journal_id, 'last_correction_id':fp_old_lines[0]}
 
                 # US-1347: Use the entry sequence of HQ for reference, not the description
-                entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'])
+                entry_seq = ana_line_obj.read(cr, uid, res_reverse, ['ref'], context=context)
                 if entry_seq and entry_seq[0]:
                     entry_seq = entry_seq[0].get('ref')
                     vals_cor.update({'ref': entry_seq}) 
