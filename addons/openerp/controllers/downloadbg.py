@@ -31,25 +31,29 @@ class DownLoadBg(SecuredController):
     _cp_path = "/openerp/downloadbg"
 
     @expose(template="/openerp/controllers/templates/downloadbg.mako")
-    def index(self, res_id):
-    
+    def index(self, res_id, from_button=False):
         download = rpc.RPCProxy('memory.background.report')
         data_bg = download.read(int(res_id), ['report_id', 'percent', 'report_name', 'finished'], rpc.session.context)
         finish = ""
         finished = "False"
+        data_collected = "False"
         if data_bg['percent'] >= 1.00:
+            data_collected = "True"
             if not data_bg['finished']:
                 download.write([int(res_id)], {'finished': True}, rpc.session.context)
-                finished = "True"
             else:
-                report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
-                finish = report['state'] or ""
+                report_state = rpc.session.execute('report', 'report_get_state', data_bg['report_id'])
+                finish = report_state or ""
                 if finish:
+                    finished = "True"
+                if from_button:
+                    report = rpc.session.execute('report', 'report_get', data_bg['report_id'])
                     report_type = report['format']
                     cherrypy.response.headers['Content-Type'] = 'application/octet-stream'
                     cherrypy.response.headers['Content-Disposition'] = 'filename="' + data_bg['report_name'] + '.' + report_type + '"'
                     return actions._print_data(report)
 
-        return dict(finish=finish, percent=data_bg['percent'], total=finished, report_name=data_bg['report_name'], res_id=res_id)
+        return dict(finish=finish, percent=data_bg['percent'], total=finished,
+                    data_collected=data_collected, report_name=data_bg['report_name'], res_id=res_id)
 
 

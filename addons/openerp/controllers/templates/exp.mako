@@ -132,7 +132,7 @@
 
         function do_export(form){
             pre = do_pre_submit();
-            if (jQuery('#export_format').val() == 'excel') {
+            if (jQuery('#export_format').val() == 'xls') {
                 file_name = "data.xls";
             } else {
                 file_name = "data.csv";
@@ -203,19 +203,15 @@
                         <td class="label"><label for="export_format">${_("Format:")}</label></td>
                         <td>
                             <select id="export_format" name="export_format">
-                                <option value="excel" style="padding-right: 15px;">${_("Excel")}</option>
+                                <option value="xls" style="padding-right: 15px;">${_("Excel")}</option>
                                 <option value="csv" ${'selected=selected' if export_format == "csv" else ''}>${_("CSV")}</option>
                             </select>
                         </td>
                         <td class="label">
-                            %if model == 'product.product':
-                            <label for="all_records">Export all query results (<span style="color: #ff0000;">WARNING: could break down machines</span>):</label>
-                            %else:
-                            <label for="all_records">Export all query results (limited to 2000 records):</label>
-                            %endif
+                            <label for="all_records">Export all query results: (<span style="color: #ff0000;">could impact machine performance</span>):</label>
                         </td>
                         <td>
-                            <input type="checkbox" id="all_records" name="all_records" value="1" 
+                            <input type="checkbox" id="all_records" name="all_records" value="1"
                                 ${'checked=checked' if all_records=='1' else ''}
                                 ${'disabled=disabled' if not ids else ''}
                             />

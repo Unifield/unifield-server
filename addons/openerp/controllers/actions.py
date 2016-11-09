@@ -42,7 +42,7 @@ import os
 def restart_pooler_if_new_module():
     from openobject import pooler
     autoreloader_enabled = bool(
-            getattr(cherrypy.engine.autoreload, 'thread', None))
+        getattr(cherrypy.engine.autoreload, 'thread', None))
     if autoreloader_enabled:
         # stop (actually don't listen to) the auto-reloader the process
         # doesn't restart due to downloading new add-ons or refreshing
@@ -97,7 +97,7 @@ def execute_window(view_ids, model, res_id=False, domain=None, view_type='form',
         params.action_id = action_id
 
     if name:
-         params.context['_terp_view_name'] = name
+        params.context['_terp_view_name'] = name
     else:
         if params.context.get('_terp_view_name'):
             del params.context['_terp_view_name']
@@ -141,19 +141,19 @@ def execute_wizard(name, **datas):
     return Wizard().create(params)
 
 PRINT_FORMATS = {
-     'pdf' : 'application/pdf',
-     'doc' : 'application/vnd.ms-word',
-     'html': 'text/html',
-     'sxw' : 'application/vnd.sun.xml.writer',
-     'odt' : 'application/vnd.oasis.opendocument.text',
-     'ods' : 'application/vnd.oasis.opendocument.spreadsheet',
-     'xls' : 'application/vnd.ms-excel',
-     'xml' : 'application/force-download',
-     'csv' : 'text/csv',
-     'rtf' : 'application/rtf',
-     'txt' : 'text/plain',
-     'zip' : 'application/zip',
-     'dump': 'application/octet-stream',
+    'pdf' : 'application/pdf',
+    'doc' : 'application/vnd.ms-word',
+    'html': 'text/html',
+    'sxw' : 'application/vnd.sun.xml.writer',
+    'odt' : 'application/vnd.oasis.opendocument.text',
+    'ods' : 'application/vnd.oasis.opendocument.spreadsheet',
+    'xls' : 'application/vnd.ms-excel',
+    'xml' : 'application/force-download',
+    'csv' : 'text/csv',
+    'rtf' : 'application/rtf',
+    'txt' : 'text/plain',
+    'zip' : 'application/zip',
+    'dump': 'application/octet-stream',
 }
 
 def _print_data(data):
@@ -167,7 +167,9 @@ def _print_data(data):
     else:
         if not data.get('result') and data.get('path'):
             try:
-                return serve_file.serve_file(data['path'], "application/x-download", 'attachment', delete=data.get('delete', False))
+                return serve_file.serve_file(data['path'],
+                                             "application/x-download", 'attachment',
+                                             name=data.get('filename', ''), delete=data.get('delete', False))
             except Exception, e:
                 cherrypy.response.headers['Content-Type'] = 'text/html'
                 if 'Content-Disposition' in cherrypy.response.headers:
@@ -279,8 +281,8 @@ def act_window(action, data):
         data[key] = action.get(key, data.get(key))
     if not data.get('search_view') and data.get('search_view_id'):
         data['search_view'] = str(rpc.session.execute(
-                'object', 'execute', data['res_model'], 'fields_view_get',
-                data['search_view_id'], 'search', data['context']))
+            'object', 'execute', data['res_model'], 'fields_view_get',
+            data['search_view_id'], 'search', data['context']))
     # store action limit within request and set it as None for action
     # so that view specific can differenciate between defaults (i.e this
     # act_window limit) and user's choosen value
@@ -290,12 +292,12 @@ def act_window(action, data):
         #       once we're sure there is *no* performance impact.
         cherrypy.request.action_limit = 20
     data['limit'] = None
-    
+
     if action.get('target') and action['target'] == 'popup' and action.get('res_model') and isinstance(action.get('context'), dict):
         search_view_id = rpc.RPCProxy('ir.ui.view').search([('type','=', 'search'), ('model','=',action['res_model'])], 0, 0, 0, rpc.session.context)
         if search_view_id and action['context'].get('search_view'):
             action['context']['search_view'] = search_view_id[0]
-    
+
     view_ids = False
     if action.get('views', []):
         if isinstance(action['views'], list):
@@ -310,15 +312,15 @@ def act_window(action, data):
         action['domain'] = '[]'
 
     ctx = dict(data.get('context', {}),
-        active_id=data.get('id', False),
-        active_ids=data.get('ids', []),
-        active_model=data.get('model', False)
-    )
-    
+               active_id=data.get('id', False),
+               active_ids=data.get('ids', []),
+               active_model=data.get('model', False)
+               )
+
     if action.get('context') and isinstance(action['context'], dict):
         if not action['context'].get('active_ids'):
             action['context']['active_ids'] = ctx['active_ids'] or []
-    
+
     ctx.update(expr_eval(action.get('context', '{}'), ctx))
 
     search_view = action.get('search_view_id')
@@ -358,9 +360,9 @@ def act_window(action, data):
 
 def server(action, data):
     context = dict(data.get('context', {}),
-        active_id=data.get('id', False),
-        active_ids=data.get('ids', [])
-    )
+                   active_id=data.get('id', False),
+                   active_ids=data.get('ids', [])
+                   )
     action_result = rpc.RPCProxy('ir.actions.server').run([action['id']], context)
     if action_result:
         if not isinstance(action_result, list):
@@ -393,10 +395,10 @@ def xml_report(action, data):
 
 def act_url(action, data):
     return execute_url(**dict(data,
-        url=action['url'],
-        target=action['target'],
-        type=action['type']
-    ))
+                              url=action['url'],
+                              target=action['target'],
+                              type=action['type']
+                              ))
 
 ACTIONS_BY_TYPE = {
     'ir.actions.act_window_close': act_window_close,
@@ -415,7 +417,7 @@ def act_window_opener(action, data):
     # or if it is not tied to an object (ex: home action after login)
     open_new_tab = False
     if action['target'] == 'current' and action.get('res_model') != 'ir.ui.menu'\
-        and data.get('model') != 'ir.ui.menu' and not 'home_action' in data:
+            and data.get('model') != 'ir.ui.menu' and not 'home_action' in data:
         action['target'] = 'popup'
         open_new_tab = True
 
@@ -430,13 +432,13 @@ def act_window_opener(action, data):
     if getattr(cherrypy.request, 'params', []):
         if getattr(cherrypy.request.params, 'context', {}):
             cherrypy.response.headers['active_id'] = cherrypy.request.params.get('_terp_id')\
-            or cherrypy.request.params.context.get('active_id')
+                or cherrypy.request.params.context.get('active_id')
 
     # Add 'opened' mark to indicate we're now within the popup and can
     # continue on during the second round of execution
     payload = str({
-      'action': dict(action, opened=True),
-      'data': data
+        'action': dict(action, opened=True),
+        'data': data
     })
     # Use compressed payloads in order to keep the URL under MSIE's size
     # limitations. Plus repeated urlencodings of serialized Python data
@@ -450,7 +452,7 @@ def act_window_opener(action, data):
 
     if open_new_tab:
         url = '/?' + urllib.urlencode({'next': url})
-        
+
     cherrypy.response.headers['X-Target'] = action['target']
     cherrypy.response.headers['Location'] = url
     return """<script type="text/javascript">
@@ -497,7 +499,7 @@ def execute_url(**data):
                   openLink('%s')
               </script>
             """ % url
-    
+
 
 def get_action_type(act_id):
     """Get the action type for the given action id.
@@ -526,7 +528,7 @@ def execute_by_id(act_id, type=None, **data):
 
     if type is None:
         type = get_action_type(act_id)
-        
+
     ctx = dict(rpc.session.context, **(data.get('context') or {}))   
 
     res = rpc.session.execute('object', 'execute', type, 'read', act_id, False, ctx)
@@ -591,6 +593,6 @@ def close_popup(reload=True, o2m_refresh=False):
 def report_link(report_name, **kw):
     cherrypy.response.headers['X-Target'] = 'download'
     cherrypy.response.headers['Location'] = tools.url(
-            '/openerp/report', report_name=report_name, **kw)
+        '/openerp/report', report_name=report_name, **kw)
     return dict(name=report_name, data=kw)
-    
+

@@ -31,44 +31,9 @@ from openobject import tools
 from openobject.tools import expose, redirect, ast
 import simplejson
 import time
-from openobject.i18n import format
-import re
-
+import os
 
 product_remove_fields = ['qty_available', 'virtual_available', 'product_amc', 'reviewed_consumption', 'monthly_consumption']
-def datas_read(ids, model, flds, context=None):
-    ctx = dict((context or {}), **rpc.session.context)
-    return rpc.RPCProxy(model).export_data(ids, flds, ctx)
-
-def export_csv(fields, result):
-    try:
-        fp = StringIO.StringIO()
-        writer = csv.writer(fp, quoting=csv.QUOTE_ALL)
-
-        writer.writerow(fields)
-
-        for data in result:
-            row = []
-            for d in data:
-                if isinstance(d, basestring):
-                    d = d.replace('\n',' ').replace('\t',' ')
-                    try:
-                        d = d.encode('utf-8')
-                    except:
-                        pass
-                if d is False: d = None
-                row.append(d)
-
-            writer.writerow(row)
-
-        fp.seek(0)
-        data = fp.read()
-        fp.close()
-
-        return data
-    except IOError, (errno, strerror):
-        raise common.message(_("Operation failed\nI/O error")+"(%s)" % (errno,))
-
 def _fields_get_all(model, views, context=None):
 
     context = context or {}
@@ -119,7 +84,7 @@ class ImpEx(SecuredController):
             for i, view in enumerate(params.view_mode):
                 views[view] = params.view_ids[i]
 
-        export_format = data.get('export_format', 'excel')
+        export_format = data.get('export_format', 'xls')
         all_records = data.get('all_records', '0')
 
         if not params.ids:
@@ -248,12 +213,12 @@ class ImpEx(SecuredController):
                     for s in sl:
                         ok = ok or (s==('readonly',False))
                 if not ok: continue
-                
+
             id = prefix + (prefix and '/' or '') + field
             nm = name + (name and '/' or '') + value['string']
 
             if is_importing and (value.get('type') not in ('reference',)) and (not value.get('readonly') \
-                        or not dict(value.get('states', {}).get('draft', [('readonly', True)])).get('readonly', True)):
+                                                                               or not dict(value.get('states', {}).get('draft', [('readonly', True)])).get('readonly', True)):
 
                 record.update(id=id, items={'name': nm},
                               action='javascript: void(0)', target=None,
@@ -340,8 +305,8 @@ class ImpEx(SecuredController):
         fields = ir_export_line.read(field['export_fields'])
 
         name_list = [
-                (f['name'], res.get(f['name']))
-                for f in fields]
+            (f['name'], res.get(f['name']))
+            for f in fields]
 
         return dict(name_list=name_list)
 
@@ -382,30 +347,11 @@ class ImpEx(SecuredController):
             return _fields
 
         return rec(fields)
-    
-    @expose(template="/openerp/controllers/templates/expxml.mako")
-    def export_html(self, fields, result, view_name):
-        cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
-        cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.xls"'%(view_name, time.strftime('%Y%m%d'))
-        return {'fields': fields, 'result': result, 'title': 'Export %s %s'%(view_name, time.strftime(format.get_datetime_format())), 're': re}
-
-    def get_grp_data(self, result, flds):
-        data = []
-        for r in result:
-            tmp_data = []
-            for f in flds:
-                value = r.get(f,'')
-                if isinstance(value, tuple):
-                    value = value and value[1] or ''
-                tmp_data.append(value)
-            data.append(tmp_data)
-        return data
 
     @expose(content_type="application/octet-stream")
     def export_data(self, fname, fields, import_compat=False, export_format='csv', all_records=False, **kw):
 
         params, data_index = TinyDict.split(kw)
-        proxy = rpc.RPCProxy(params.model)
 
         flds = []
         for item in fields:
@@ -435,11 +381,12 @@ class ImpEx(SecuredController):
 
         view_name = ctx.get('_terp_view_name', '')
 
+        ids = None
+        report_path = None
+        domain = params.search_domain or []
         if ctx.get('group_by_no_leaf'):
             ctx['client_export_data'] = True  # UTP-580-582-697 client export flag
 
-            rpc_obj = rpc.RPCProxy(params.model)
-            domain = params.search_domain or []
             to_group = ctx.get('group_by', [])
             group_by = []
             for gr in to_group:
@@ -456,61 +403,35 @@ class ImpEx(SecuredController):
 
             flds = fields_to_read[:]
             params.fields2 = fields_to_read[:]
+            report_path = rpc.session.execute('report', 'export', flds, domain,
+                                              params.model, params.fields2, group_by, export_format, ids, ctx)
 
-            data = rpc_obj.read_group(domain, flds, group_by, 0, 2000, ctx)
-
-            result_tmp = []  # List of processed data lines (dictionaries)
-            # Closure to recursively prepare and insert lines in 'result_tmp'
-            # (as much as the number of 'group_by' levels)
-            def process_data(line):
-                domain_line = line.get('__domain', [])
-                grp_by_line = line.get('__context', {}).get('group_by', [])
-                # If there is a 'group_by', we fetch data one level deeper
-                if grp_by_line:
-                    data = rpc_obj.read_group(domain_line, flds, grp_by_line, 0, 0, ctx)
-                    for line2 in data:
-                        line_copy = line.copy()
-                        line_copy.update(line2)
-                        process_data(line_copy)
-                # If 'group_by' is empty, this means we were at the last level
-                # so we insert the line in the final result
-                else:
-                    result_tmp.append(line)
-            # Prepare recursively the data to export (inserted in 'result_tmp')
-            for data_line in data:
-                process_data(data_line)
-            result = self.get_grp_data(result_tmp, flds)
-
-            result, params.fields2 = rpc_obj.filter_export_data_result(result, params.fields2)
-            if export_format == "excel":
-                return self.export_html(params.fields2, result, view_name)
-            return export_csv(params.fields2, result)
-
-        if not params.ids or all_records:
-            domain = params.search_domain or []
-
-            # (US-1360) Use not only the domain corresponding to the filters selected but also
-            # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
-            if 'original_domain' in ctx:
-                domain.extend(ctx['original_domain'])
-
-            if params.model == 'product.product':
-                ids = proxy.search(domain, 0, None, 0, ctx)
-            else:
-                ids = proxy.search(domain, 0, 2000, 0, ctx)
         else:
-            ids = params.ids or []
-        result = datas_read(ids, params.model, flds, context=ctx)
-        if result.get('warning'):
-            common.warning(unicode(result.get('warning', False)), _('Export Error'))
-            return False
-        result = result.get('datas',[])
+            if not params.ids or all_records:
+                # (US-1360) Use not only the domain corresponding to the filters selected but also
+                # the original domain for the view (for instance from SI: do not show Supplier Refunds nor DI)
+                if 'original_domain' in ctx:
+                    domain.extend(ctx['original_domain'])
+            else:
+                ids = params.ids or []
 
-        if import_compat == "1":
-            params.fields2 = flds
-        if export_format == "excel":
-            return self.export_html(params.fields2, result, view_name)
-        return export_csv(params.fields2, result)
+            if import_compat == "1":
+                params.fields2 = flds
+            report_path = rpc.session.execute('report', 'export', flds, domain,
+                                              params.model, params.fields2, None, export_format, ids, ctx)
+
+        if isinstance(report_path, (int, long)):
+            # this is a background_id, the background wizzard should be displayed
+            cherrypy.response.headers['Content-Type'] = 'text/html'
+            raise tools.redirect('/openerp/downloadbg', res_id=report_path)
+        else:
+            with open(report_path['result'], 'rb') as report_file:
+                result = report_file.read()
+            os.remove(report_path['result'])
+            if export_format == 'xls':
+                cherrypy.response.headers['Content-Type'] = 'application/vnd.ms-excel'
+            cherrypy.response.headers['Content-Disposition'] = 'attachment; filename="%s_%s.%s"'%(view_name, time.strftime('%Y%m%d'), export_format)
+        return result
 
     @expose(template="/openerp/controllers/templates/imp.mako")
     def imp(self, error=None, records=None, success=None, **kw):
@@ -525,13 +446,13 @@ class ImpEx(SecuredController):
 
         headers = [{'string' : 'Name', 'name' : 'name', 'type' : 'char'}]
         tree = treegrid.TreeGrid('import_fields',
-                                    model=params.model,
-                                    headers=headers,
-                                    url=tools.url('/openerp/impex/get_fields'),
-                                    field_parent='relation',
-                                    views=views,
-                                    context=ctx,
-                                    is_importing=1)
+                                 model=params.model,
+                                 headers=headers,
+                                 url=tools.url('/openerp/impex/get_fields'),
+                                 field_parent='relation',
+                                 views=views,
+                                 context=ctx,
+                                 is_importing=1)
 
         tree.show_headers = False
         return dict(error=error, records=records, success=success,
@@ -559,8 +480,8 @@ class ImpEx(SecuredController):
             fields_order.sort(lambda x,y: str_comp(fields[x].get('string', ''), fields[y].get('string', '')))
             for field in fields_order:
                 if (not fields[field].get('readonly')\
-                            or not dict(fields[field].get('states', {}).get(
-                            'draft', [('readonly', True)])).get('readonly',True)):
+                    or not dict(fields[field].get('states', {}).get(
+                                'draft', [('readonly', True)])).get('readonly',True)):
 
                     st_name = prefix_value+fields[field]['string'] or field
                     _fields[prefix_node+field] = st_name
@@ -618,7 +539,7 @@ class ImpEx(SecuredController):
 
         params, data = TinyDict.split(kw)
         res = None
-        
+
         content = csvfile.file.read()
         input=StringIO.StringIO(content)
         limit = 0
@@ -655,12 +576,12 @@ class ImpEx(SecuredController):
                 datas.append(map(lambda x:x.decode(csvcode).encode('utf-8'), line))
             except:
                 datas.append(map(lambda x:x.decode('latin').encode('utf-8'), line))
-        
+
         # If the file contains nothing,
         if not datas:
             error = {'message': _('The file is empty !'), 'title': _('Importation !')}
             return self.imp(error=error, **kw)
-        
+
         #Inverting the header into column names
         try:
             res = rpc.session.execute('object', 'execute', params.model, 'import_data', fields, datas, 'init', '', False, ctx)
