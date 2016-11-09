@@ -571,15 +571,15 @@ class orm_template(object):
 
         """
         self._list_class = list_class or browse_record_list
-        cache = {}
+        bcache = {}
         # need to accepts ints and longs because ids coming from a method
         # launched by button in the interface have a type long...
         if isinstance(select, (int, long)):
-            return browse_record(cr, uid, select, self, cache, context=context,
+            return browse_record(cr, uid, select, self, bcache, context=context,
                                  list_class=self._list_class, fields_process=fields_process,
                                  fields_to_fetch=fields_to_fetch)
         elif isinstance(select, list):
-            return self._list_class([browse_record(cr, uid, id, self, cache,
+            return self._list_class([browse_record(cr, uid, id, self, bcache,
                                                    context=context, list_class=self._list_class,
                                                    fields_process=fields_process, fields_to_fetch=fields_to_fetch) for id in select], context=context)
         else:
@@ -914,7 +914,7 @@ class orm_template(object):
                 if field[len(prefix)]=='id':
                     try:
                         data_res_id = value and _get_id(model_name, value, current_module, 'id')
-                    except ValueError, e:
+                    except ValueError:
                         pass
                     xml_id = value
                     continue
@@ -1025,10 +1025,6 @@ class orm_template(object):
 
         fields_def = self.fields_get(cr, uid, context=context)
 
-        if config.get('import_partial', False) and filename:
-            data = pickle.load(file(config.get('import_partial')))
-            original_value = data.get(filename, 0)
-
         from osv import except_osv
         position = 0
         while position<len(datas):
@@ -1041,9 +1037,9 @@ class orm_template(object):
                 return (-1, res, 'Line ' + str(position) +' : ' + '!\n'.join(warning), '')
 
             try:
-                id = ir_model_data_obj._update(cr, uid, self._name,
-                                               current_module, res, mode=mode, xml_id=xml_id,
-                                               noupdate=noupdate, res_id=res_id, context=context)
+                ir_model_data_obj._update(cr, uid, self._name,
+                                          current_module, res, mode=mode, xml_id=xml_id,
+                                          noupdate=noupdate, res_id=res_id, context=context)
             except except_osv, e:
                 cr.rollback()
                 return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e.value), '')
@@ -1449,25 +1445,35 @@ class orm_template(object):
 
         # translate view
         if ('lang' in context) and not result:
-            if node.get('string'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
+            translation_obj = self.pool.get('ir.translation')
+            if node.get('sum'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
+                if trans:
+                    node.set('sum', trans)
+            elif node.get('confirm'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
+                if trans:
+                    node.set('confirm', trans)
+            elif node.get('string'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
                     # If translation is same as source, perhaps we'd have more luck with the alternative model name
                     # (in case we are in a mixed situation, such as an inherited view where parent_view.model != model
-                    trans = self.pool.get('ir.translation')._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
+                    trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            if node.get('confirm'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
-                if trans:
-                    node.set('confirm', trans)
-            if node.get('sum'):
-                trans = self.pool.get('ir.translation')._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
-                if trans:
-                    node.set('sum', trans)
+            elif node.tag == 'translate':
+                parent = node.getparent()
+                source = node.text
+                for child in node.getchildren():
+                    source += etree.tostring(child)
+                trans = translation_obj._get_source(cr, user, self._name,
+                                                    'view', context['lang'], source)
+                parent.remove(node)
+                parent.text = parent.text and parent.text + trans or trans
 
         for f in node:
-            if children or (node.tag == 'field' and f.tag in ('filter','separator')):
+            if children or (node.tag == 'field' and f.tag in ('filter', 'separator')):
                 fields.update(self.__view_look_dom(cr, user, f, view_id, context))
 
         return fields
