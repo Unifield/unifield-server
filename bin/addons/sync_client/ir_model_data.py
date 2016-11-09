@@ -20,7 +20,6 @@
 ##############################################################################
 
 import logging
-from psycopg2 import IntegrityError
 
 from osv import osv, fields
 import tools
@@ -249,8 +248,6 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
             values['force_recreation'] = not context.get('sync_update_execution', False)
 
         id = super(ir_model_data_sync, self).create(cr, uid, values, context=context)
-#        import pdb
-#        pdb.set_trace()
 
         # when a module load a specific xmlid, the sdref is updated according
         # that xmlid
