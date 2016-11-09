@@ -20,11 +20,13 @@
       <field name="type">search</field>
       <field name="arch" type="xml">
         <search string="Synchronization Monitor">
+          <field name="identifier"/>
           <field name="remote_call"/>
           <field name="sequence"/>
           <newline/>
           <field name="source"/>
           <field name="destination"/>
+          <field name="arguments"/>
         </search>
       </field>
     </record>

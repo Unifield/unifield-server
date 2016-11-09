@@ -21,7 +21,7 @@ class base_language_export(osv.osv_memory):
 
 
     _columns = {
-        'only_translated_terms': fields.boolean('Export only translated terms'),
+        'only_translated_terms': fields.selection([('', 'All terms'), ('y', 'Only translated'), ('n', 'Only untranslated')], 'Filter'),
         'format': fields.selection([('csv', 'CSV File'), ('po', 'PO File'), ('tgz', 'TGZ Archive'), ('xls', 'Microsoft SpreadSheet XML'), ('compact.xls', 'Compact SpreadSheet XML')], 'File Format', required=True),
         'advanced': fields.boolean('Show advanced options'),
     }

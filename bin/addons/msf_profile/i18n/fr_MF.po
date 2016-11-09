@@ -31500,6 +31500,12 @@ msgstr "12e"
 msgid "Purchase order '%s' is validated."
 msgstr "Bon de Commande '%s' validé"
 
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:1134
+#, python-format
+msgid "You can not validate a PO with stopped products (line %s)."
+msgstr "Vous ne pouvez pas valider un Bon de Commande avec des produits 'Stopped' (ligne %s)."
+
 #. module: useability_dashboard_and_menu
 #: view:board.board:0
 msgid "Purchase Orders Waiting For Validation"
@@ -74616,3 +74622,75 @@ msgstr "\n"
 #: constraint:res.partner:0
 msgid "You can't define a partner name with the name of a existing Intermission/Intersection or an external patner with name of existing instance."
 msgstr "Vous ne pouvez pas créer un partenaire avec le nom d'une Intermission/Intersection existante, ni un partenaire externe avec le nom d'une instance existante."
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:143
+msgid "Exp Date"
+msgstr "Date Exp."
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:147
+msgid "Total Qty"
+msgstr "Qté Totale"
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+msgid "Generate report (all locations)"
+msgstr "Générer le rapport (toutes les zones)"
+
+#. module: specific_rules
+#: view:export.report.stock.inventory:0
+#: view:unconsistent.stock.report:0
+msgid "Generate report"
+msgstr "Générer le rapport"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:142
+msgid "Batch"
+msgstr "Lot"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:139
+#: field:unconsistent.stock.report.line,product_code:0
+msgid "Product Code"
+msgstr "Code Produit"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
+#: field:export.report.stock.inventory,name:0
+msgid "Generated on"
+msgstr "Généré le"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:125
+msgid "DB/instance name"
+msgstr "BD/nom de l'instance"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:140
+msgid "Product Description"
+msgstr "Description Produit"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:145
+#: field:unconsistent.stock.report.line,quantity:0
+msgid "Qty"
+msgstr "Qté"
+
+#. module: specific_rules
+#: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:141
+msgid "UoM"
+msgstr "UdM"
+
+#. module: base
+#: code:addons/orm.py:1945
+#, python-format
+msgid "Sorry, the field(s) '%s' can not be searched alone with '='. Use '=' with others search fields."
+msgstr "Désolé, le(s) champ(s) '%s' ne peut(vent) pas être utilisé(s) seul(s). Utilisez '=' avec d'autres champs de recherche."
+
+#. module: base
+#: code:addons/orm.py:1946
+#, python-format
+msgid "You can't search on this object without using at least one exact search term (precede your search with the character '=')."
+msgstr "Vous ne pouvez pas exécuter de recherche sur cet objet sans utiliser au moins une recherche exacte (ajoutez le caractère = devant votre filtre)."
+
