@@ -74763,3 +74763,10 @@ msgstr "Document source :"
 #: report:msf.purchase.order:0
 msgid "Customer reference :"
 msgstr "Référence client :"
+
+#. module: purchase_override
+#: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
+msgid "Print date:"
+msgstr "Date d'impression :"

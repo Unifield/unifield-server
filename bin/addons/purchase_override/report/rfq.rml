@@ -3,7 +3,7 @@
 
     <template pageSize="(842.0,595.0)" title="Purchase Order" author="Medecins Sans Frontieres" allowSplitting="20">
         <pageTemplate id="first">
-            <frame id="first" x1="30.0" y1="0.0" width="772" height="520" />
+            <frame id="first" x1="30.0" y1="0.0" width="772" height="500" />
 
         <pageGraphics>
             <drawString x="35" y="560.0">REQUEST FOR QUOTATION ([[ getSel(objects[0], 'order_type') ]])</drawString>
@@ -12,10 +12,11 @@
             <image x="700" y="530.0" height="53.3" width="100">[[ company.logo or removeParentNode('image') ]]</image>
             <setFont name="Helvetica" size="8"/>
             <fill color="black"/>
-            <drawString x="730" y="520.0">Page : <pageNumber /></drawString>
+            <drawString x="700" y="520.0">Page : <pageNumber /></drawString>
             <!-- TODO: OEB-148 - Waiting integration on unifield-server -->
-            <!--            <drawString x="765" y="520.0">/</drawString>
-            <drawString x="770" y="520.0"><pageCount /> </drawString>-->
+            <drawString x="735" y="520.0">/</drawString>
+            <drawString x="740" y="520.0"><pageCount /> </drawString>
+            <drawString x="700" y="510.0">Print date: [[ time.strftime('%d/%b/%Y') ]]</drawString>
         </pageGraphics>
 
     </pageTemplate>
@@ -77,11 +78,11 @@
         <paraStyle name="Header_9" fontName="Helvetica-Bold" fontSize="8.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="3.0" />
         <paraStyle name="HeaderBlue" textColor="blue" fontName="Helvetica-Bold" fontSize="13.0" leading="15" alignment="LEFT" spaceBefore="0.0" spaceAfter="35.0" />
 		<!-- Information font style -->
-        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextInformationOrigin" fontName="Helvetica" fontSize="8.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
-        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="9.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformation" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextInformationOrigin" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" spaceBefore="1.0" spaceAfter="1.0" />
+        <paraStyle name="TextRemarks" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="15.0" spaceBefore="1.0" spaceAfter="1.0" />
         <!-- Lines font style -->
-        <paraStyle name="Lines" fontName="Helvetica" fontSize="6.0" alignment="LEFT" leading="7.0" />
+        <paraStyle name="Lines" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
         <paraStyle name="LinesBlue" textColor="blue" fontName="Helvetica" fontSize="7.0" alignment="LEFT" leading="7.0" />
     </stylesheet>
 
