@@ -74989,3 +74989,8 @@ msgstr "Domaine %s non supporté"
 #, python-format
 msgid "Operator '%s' not suported"
 msgstr "Opérateur '%s' non supporté"
+
+#. module: stock_override
+#: field:stock.picking,incoming_id:0
+msgid "Incoming ref"
+msgstr "Ref. Réception"

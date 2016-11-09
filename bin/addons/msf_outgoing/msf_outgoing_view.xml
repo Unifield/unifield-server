@@ -152,6 +152,7 @@
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
+					<field name="incoming_id" />
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
@@ -202,6 +203,7 @@
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
 							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
+							<field name="incoming_id" readonly="True" />
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>

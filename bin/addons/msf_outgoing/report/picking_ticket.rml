@@ -120,7 +120,7 @@
 
         <!-- Picking Ticket header values -->
 
-        <blockTable colWidths="20.0,60.0,235.0,5.0,80.0,120.0,5.0,242.0,80.0" style="HeaderInfos">
+        <blockTable colWidths="20.0,70.0,225.0,5.0,80.0,120.0,5.0,242.0,80.0" style="HeaderInfos">
             <tr>
                 <td>
                     <para style="HeaderInfosTitle"></para>
@@ -128,12 +128,14 @@
                 <td>
                     <para style="HeaderInfosTitle">FO ref.:</para>
                     <para style="HeaderInfosTitle">Origin ref.:</para>
+                    <para style="HeaderInfosTitle">Incoming ref:</para>
                     <para style="HeaderInfosTitle">Category:</para>
                     <para style="HeaderInfosTitle">Total items:</para>
                 </td>
                 <td>
                     <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.name or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.sale_id and pt.sale_id.client_order_ref and pt.sale_id.client_order_ref or '-' ]]</para>
+                    <para style="HeaderInfosValue">[[ pt.incoming_id.name or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ pt.sale_id and getSel(pt.sale_id, 'categ') or '-' ]]</para>
                     <para style="HeaderInfosValue">[[ getNbItems(pt) ]]</para>
                 </td>
