@@ -427,31 +427,37 @@ class res_partner(osv.osv):
     def check_partner_name_is_not_instance_name(self, cr, uid, ids, context=None):
         '''
         verify that the name of the partner is not used by an msf.instance
+        Return False if any name already exists
         '''
         if context is None:
             context = {}
-        instance_ojb = self.pool.get('msf.instance')
-        instance_ids = instance_ojb.search(cr, uid, [], context=context)
-        instance_result = instance_ojb.read(cr, uid, instance_ids,
-                                            ['name'], context=context)
-        instance_name_list = [x['name'] for x in instance_result if x['name']]
 
-        section_mission_ids = self.search(cr, uid, [
+        read_result = self.read(cr, uid, ids, ['name', 'partner_type'], context=context)
+        name_list = [x['name'] for x in read_result if x['name']]
+
+        # check the current name is not already used by another section or
+        # intermission partner
+        name_exists = self.search_exist(cr, uid, [
             ('id', 'not in', ids),
+            ('name', 'in', name_list),
             ('active', 'in', ('t', 'f')),
             ('partner_type', 'in', ('section', 'intermission'))], context=context)
-        read_result = self.read(cr, uid, section_mission_ids, ['name'], context=context)
-        section_mission_names = [x['name'] for x in read_result]
-        for partner in self.read(cr, uid, ids, ['name', 'partner_type'], context=context):
-            if partner['name'] in section_mission_names:
+        if name_exists:
+            return False
+
+        # check that external partner don't use a name of existing instance
+        external_result = [x for x in read_result if x['partner_type'] == 'external']
+        if external_result:
+            instance_ojb = self.pool.get('msf.instance')
+            name_exists = instance_ojb.search_exist(cr, uid,
+                                                    [('name', 'in', [x['name'] for x in external_result])],
+                                                    context=context)
+            if name_exists:
                 return False
-            if partner['partner_type'] == 'external':
-                if partner['name'] and partner['name'] in instance_name_list:
-                    return False
         return True
 
     _constraints = [
-        (check_partner_name_is_not_instance_name, "You can't define a partner name with the name of a existing instance or existing Intermission/Intersection.", ['name'])
+        (check_partner_name_is_not_instance_name, "You can't define a partner name with the name of a existing Intermission/Intersection or an external patner with name of existing instance.", ['name'])
     ]
 
     def transporter_ticked(self, cr, uid, ids, transporter, context=None):
