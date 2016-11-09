@@ -1264,7 +1264,8 @@ class Form(SecuredController):
                 hide_default_menu = True
             else:
                 hide_default_menu = False
-        if not hide_default_menu:
+
+        if kind != 'reference' and not hide_default_menu:
             defaults += [
                 {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
                 {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
