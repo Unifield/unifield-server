@@ -291,7 +291,7 @@ class hq_entries_validation(osv.osv_memory):
             new_expense_ml_ids = new_res_move.values()
             pure_ad_cor_ji_ids += new_expense_ml_ids
             corr_name = 'COR1 - ' + original_move.name
-            # US-1347: JI COR Entry Ref. must be the Entry Sequence from the original entry
+            # US-1347: JI COR and REV Entries Ref. must be the Entry Sequence from the original entry
             ji_entry_seq = original_move.move_id.name
             aml_obj.write(cr, uid, new_expense_ml_ids,
                           {'corrected_line_id': original_ml_result, 'name': corr_name, 'have_an_historic': True, 'reference': ji_entry_seq},
@@ -316,7 +316,7 @@ class hq_entries_validation(osv.osv_memory):
                 'analytic_distribution_id': distrib_id,
                 'reversal_line_id': original_move.id,
                 'partner_txt': original_move.partner_txt or '',
-                'reference': line.ref or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
+                'reference': ji_entry_seq or ' ', # UFTP-342: if HQ entry reference is empty, do not display anything. As a field function exists for account_move_line object, so we add a blank char to avoid this problem
                 'document_date': line.document_date,  # US-1361
                 }, context=context, check=False, update_check=False)
 
