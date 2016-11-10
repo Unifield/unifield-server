@@ -365,6 +365,7 @@ class account_account(osv.osv):
         'has_partner_type_local': fields.boolean('Employee Local'),  # NAT employee
         'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
         'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
+        'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
     }
 
     _defaults = {
@@ -382,6 +383,7 @@ class account_account(osv.osv):
         'has_partner_type_local': True,
         'has_partner_type_ex': True,
         'has_partner_type_book': True,
+        'has_partner_type_empty': True,
     }
 
     # UTP-493: Add a dash between code and account name
