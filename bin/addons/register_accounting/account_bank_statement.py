@@ -2133,7 +2133,7 @@ class account_bank_statement_line(osv.osv):
             raise osv.except_osv(_('Warning'), _('There is no active_id. Please contact an administrator to resolve the problem.'))
         acc_move_obj = self.pool.get("account.move")
         # browse all statement lines for creating move lines
-        for absl in self.browse(cr, uid, ids, context=context):
+        for absl in self.browse(cr, 1, ids, context=context):
             if not context.get('from_wizard_di'):
                 if absl.statement_id and absl.statement_id.journal_id and absl.statement_id.journal_id.type in ['cheque'] and not absl.cheque_number:
                     raise osv.except_osv(_('Warning'), _('Cheque Number is missing!'))
@@ -2184,11 +2184,11 @@ class account_bank_statement_line(osv.osv):
             if absl.state == 'draft' and not absl.direct_invoice:
                 self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
-                absl = self.browse(cr, uid, absl.id, context=context)
+                absl = self.browse(cr, 1, absl.id, context=context)
             if absl.state in ('draft','temp') and absl.direct_invoice and postype != 'hard':
                 self.create_move_from_st_line(cr, uid, absl, absl.statement_id.journal_id.company_id.currency_id.id, '/', context=context)
                 # reset absl browse_record cache, because move_ids have been created by create_move_from_st_line
-                absl = self.browse(cr, uid, absl.id, context=context)
+                absl = self.browse(cr, 1, absl.id, context=context)
 
             if postype == 'temp' and absl.direct_invoice:  #utp-917
                 # Optimization on write() for this field
