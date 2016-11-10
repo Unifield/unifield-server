@@ -88,7 +88,7 @@ ORDER BY account_period.date_start, account_move.name"""
 account_period.name,
 account_move.name,
 account_account.code,
-avg(account_move_line.debit-account_move_line.credit) JI,
+avg(account_move_line.credit-account_move_line.debit) JI,
 sum(account_analytic_line.amount) AJI,
 abs(avg(account_move_line.credit-account_move_line.debit) - sum(account_analytic_line.amount)) difference
 FROM
