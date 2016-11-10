@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 MSF, TeMPO Consulting
+#    Copyright (C) 2016 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -19,33 +19,33 @@
 #
 ##############################################################################
 
-{
-    "name": "MSF Tools",
-    "version": "1.0",
-    "depends": ["base",
-                "product",
-                "object_query",
-                ],
-    "author": "MSF, TeMPO Consulting",
-    "website": "",
-    "category": "Specific Modules",
-    "description": """
-        Interface for Msf Tools
-    """,
-    "init_xml": [
-    ],
-    'update_xml': [
-        'views/automated_import_view.xml',
-        'views/automated_import_function_view.xml',
-        'views/automated_import_job_view.xml',
-        'views/manual_import_job_view.xml',
-        'security/ir.model.access.csv',
-        'automated_import_data.xml',
-    ],
-    'demo_xml': [
-    ],
-    'test': [# tests should be performed in base classes to avoid cyclic dependencies
-    ],
-    'installable': True,
-    'active': False,
-}
+from osv import osv
+from osv import fields
+
+from tools.translate import _
+from automated_import_job import all_files_under, move_to_process_path
+
+
+class manual_import_job(osv.osv):
+    _name = 'manual.import.job'
+    _inherit = 'automated.import.job'
+
+    _columns = {
+        'import_id': fields.many2one(
+            'automated.import',
+            string='Automated import',
+            readonly=True,
+            required=False,
+        ),
+        'file_to_import': fields.binary(
+            string='File to import',
+            required=True,
+        ),
+        'function_id': fields.many2one(
+            'automated.import.function',
+            string='Functionality',
+            required=True,
+        ),
+    }
+
+manual_import_job()

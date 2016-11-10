@@ -25,6 +25,7 @@ import time
 import shutil
 import base64
 import hashlib
+from tempfile import NamedTemporaryFile
 
 from osv import osv
 from osv import fields
@@ -78,7 +79,10 @@ class automated_import_job(osv.osv):
 
         res = {}
         for job in self.browse(cr, uid, ids, context=context):
-            res[job.id] = '%s - %s' % (job.import_id.function_id.name, job.start_time or _('Not started'))
+            if self._name == 'manual.import.job':
+                res[job.id] = '%s' % (job.start_time or _('Not started'))
+            else:                
+                res[job.id] = '%s - %s' % (job.import_id.function_id.name, job.start_time or _('Not started'))
 
         return res
 
@@ -177,8 +181,9 @@ class automated_import_job(osv.osv):
             filename = False
 
             try:
-                for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
-                    import_obj.path_is_accessible(job.import_id[path[0]], path[1])
+                if self._name != 'manual.import.job':
+                    for path in [('src_path', 'r'), ('dest_path', 'w'), ('report_path', 'w')]:
+                        import_obj.path_is_accessible(job.import_id[path[0]], path[1])
             except osv.except_osv as e:
                 error = str(e)
                 # In case of manual processing, raise the error
@@ -215,40 +220,51 @@ class automated_import_job(osv.osv):
                     }, context=context)
                     continue
             else:
-                oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
-                oldest_file.write(base64.decodestring(job.file_to_import))
-                oldest_file.close()
                 md5 = hashlib.md5(job.file_to_import).hexdigest()
 
-                if job.file_sum != md5:
-                    if self.search(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], limit=1, order='NO_ORDER', context=context):
-                        self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
-                        return {
-                            'type': 'ir.actions.act_window',
-                            'res_model': self._name,
-                            'res_id': ids[0],
-                            'view_type': 'form',
-                            'view_mode': 'form,tree',
-                            'target': 'new',
-                            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
-                            'context': context,
-                        }
+                if self._name != 'manual.import.job':
+                    oldest_file = open(os.path.join(job.import_id.src_path, job.filename), 'wb+')
+                    oldest_file.write(base64.decodestring(job.file_to_import))
+                    oldest_file.close()
+                    oldest_file = os.path.join(job.import_id.src_path, job.filename)
 
-                oldest_file = os.path.join(job.import_id.src_path, job.filename)
-                filename = job.filename
+                    if job.file_sum != md5:
+                        if self.search(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], limit=1, order='NO_ORDER', context=context):
+                            self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
+                            return {
+                                'type': 'ir.actions.act_window',
+                                'res_model': self._name,
+                                'res_id': ids[0],
+                                'view_type': 'form',
+                                'view_mode': 'form,tree',
+                                'target': 'new',
+                                'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'automated_import_job_file_view')[1]],
+                                'context': context,
+                            }
+
+                else:
+                    temp_file = NamedTemporaryFile('w', suffix='.xml')
+                    temp_file.write(base64.decodestring(job.file_to_import))
+                    temp_file.flush()
+                    oldest_file = temp_file.name # temp file path
+                    
                 data64 = base64.encodestring(job.file_to_import)
+                filename = job.filename
 
             # Process import
             try:
                 processed, rejected, headers = getattr(
-                    self.pool.get(job.import_id.function_id.model_id.model),
-                    job.import_id.function_id.method_to_call
+                    self.pool.get(job.function_id.model_id.model),
+                    job.function_id.method_to_call
                 )(cr, uid, oldest_file)
-                if processed:
-                    nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
 
-                if rejected:
-                    nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
+                if self._name == 'manual.import.job':
+                    nb_processed, nb_rejected = 0, 0
+                else:
+                    if processed:
+                        nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
+                    if rejected:
+                        nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
@@ -273,7 +289,8 @@ class automated_import_job(osv.osv):
                     'state': 'error',
                 }, context=context)
             finally:
-                move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
+                if self._name != 'manual.import.job':
+                    move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
         return {
             'type': 'ir.actions.act_window',
@@ -281,7 +298,8 @@ class automated_import_job(osv.osv):
             'res_id': ids[0],
             'view_type': 'form',
             'view_mode': 'form,tree',
-            'target': 'current',
+            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'manual_import_job_form_view')[1]],
+            'target': 'toto',
             'context': context,
         }
 
@@ -326,7 +344,7 @@ class automated_import_job(osv.osv):
             'name': filename,
             'datas_fname': filename,
             'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
-            'res_model': 'automated.import.job',
+            'res_model': self._name,
             'res_id': job_brw.id,
             'datas': base64.encodestring(csvfile.read())
         })
