@@ -212,7 +212,7 @@ class register_creation(osv.osv_memory):
                 # FIXME: search old caracteristics from previous register
 
                 # UF-1750: copy responsible
-                if prev_reg.journal_id and prev_reg.journal_id.type == 'cash' and prev_reg.responsible_ids:
+                if prev_reg.journal_id and prev_reg.responsible_ids:
                     reg_vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
 
             # Create the register
