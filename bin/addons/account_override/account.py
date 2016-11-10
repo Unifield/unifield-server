@@ -553,7 +553,9 @@ class account_account(osv.osv):
 
         field = 'has_partner_type_%s' % (should_have_field_suffix, )
         for r in self.browse(cr, uid, ids, context=context):
-            res[r.id] = hasattr(r, field) and getattr(r, field) or False
+            # US-1307 If the account has a "Type for specific Treatment": bypass the check on "Allowed Partner type"
+            type_for_specific_treatment = hasattr(r, 'type_for_register') and getattr(r, 'type_for_register') != 'none' or False
+            res[r.id] = type_for_specific_treatment or (hasattr(r, field) and getattr(r, field)) or False
 
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
