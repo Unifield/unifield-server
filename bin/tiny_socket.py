@@ -33,7 +33,7 @@ class Myexception(Exception):
     * faulestring
     * args
     """
-    
+
     def __init__(self, faultCode, faultString):
         self.faultCode = faultCode
         self.faultString = faultString
@@ -51,19 +51,18 @@ class mysocket:
         # time, but should exit as soon as the net is down
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
         self.is_gzip = is_gzip
-        
+
     def connect(self, host, port=False):
         if not port:
             protocol, buf = host.split('//')
             host, port = buf.split(':')
         self.sock.connect((host, int(port)))
-        
+
     def disconnect(self):
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
-        
+
     def mysend(self, msg, exception=False, traceback=None):
-	#print type(msg), type(traceback)
         msg = cPickle.dumps([msg,traceback])
         if self.is_gzip:
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
@@ -73,7 +72,7 @@ class mysocket:
             n8size = len(msg)%10**8
             n16size = len(msg)/10**8
             self.sock.sendall('%8d%s%16d%s%s' % (n8size, "3", n16size, exception and "1" or "0", msg))
-            
+
     def myreceive(self):
         def read(sock, size):
             buf=''
