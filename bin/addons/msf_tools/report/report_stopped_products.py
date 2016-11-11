@@ -181,17 +181,37 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
     def get_uf_stopped_products(self):
         '''
         Return browse record list that contains stopped and non-local products
+        taking in account non-local products stopped in the current instance,
+        and products in stock mission if they have qty in stock or in pipe
         '''
         prod_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
+        smrl_obj = self.pool.get('stock.mission.report.line')
 
         stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
         status_local_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_4')[1]
 
-        stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', stopped_state_id), 
-            ('international_status', '!=', status_local_id)], order='default_code', context=self.localcontext)
+        hq_stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', stopped_state_id), 
+            ('international_status', '!=', status_local_id)], context=self.localcontext)
+
+        smrl_ids = smrl_obj.search(self.cr, self.uid, [
+            ('full_view', '=', False), 
+            ('product_state', '=', 'stopped'),
+            '|', ('internal_qty', '!=', 0),
+            ('in_pipe_qty', '!=', 0)
+        ], context=self.localcontext)
+
+        sm_stopped_ids = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id'], context=self.localcontext)
+        sm_stopped_ids = [x.get('product_id')[0] for x in sm_stopped_ids]
+
+        # build a list of stopped products with unique ids and sorted by default_code:
+        stopped_ids = list(set(hq_stopped_ids + sm_stopped_ids))
+        ls = []
+        for prod in prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
+            ls.append( (prod.id, prod.default_code) )
+        sorted_stopped_ids = [x[0] for x in sorted(ls, key=lambda tup: tup[1])]
         
-        return prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext)
+        return prod_obj.browse(self.cr, self.uid, sorted_stopped_ids, context=self.localcontext)
 
 
     def get_stock_mission_report_lines(self, product_id):
