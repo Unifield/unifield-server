@@ -279,8 +279,9 @@ if tools.config['pidfile']:
 
 netsvc.Server.startAll()
 
-logger.info('OpenERP server is running, waiting for connections...')
+updater.check_mako_xml()
 updater.reconnect_sync_server()
+logger.info('OpenERP server is running, waiting for connections...')
 
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
     mainthread_sleep(5)

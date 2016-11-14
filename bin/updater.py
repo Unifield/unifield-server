@@ -483,3 +483,23 @@ def reconnect_sync_server():
                 message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
                 logger.error(message % (unicode(e)))
 
+
+def check_mako_xml():
+    """
+    read all xml and mako files to check that the tag ExpandedColumnCount is
+    not present in it. This tag is useless and can lead to regression if the
+    count change.
+    """
+    import tools
+    logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
+    for file_path in find(tools.config['root_path']):
+        full_path = os.path.join(tools.config['root_path'], file_path)
+        if not os.path.isfile(full_path):
+            continue
+        if full_path.endswith('.xml') or full_path.endswith('.mako'):
+            with open(full_path, 'r') as file_to_check:
+                for line in file_to_check:
+                    if 'ExpandedColumnCount' in line:
+                        logger.error('ExpandedColumnCount is present in file %s.' % full_path)
+    logger.info("Check mako and xml files finished.")
+
