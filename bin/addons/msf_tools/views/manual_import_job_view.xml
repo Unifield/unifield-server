@@ -40,7 +40,7 @@
                 <form string="Import job report">
                     <separator colspan="4" string="Import file" />
                     <field name="file_to_import" filename="filename" required="1" />
-                    <field name="function_id" required="1" widget="selection" />
+                    <field name="function_id" required="1" widget="selection" attrs="{'readonly': [('state', 'in', ['done', 'error'])]}" />
                     <field name="filename" invisible="1" />
                     <group colspan="4" states='done,error'>
                         <separator colspan="4" string="Import results" />
@@ -103,7 +103,7 @@
         </record>
 
         <record id="manual_import_job_action" model="ir.actions.act_window">
-            <field name="name">Manual import</field>
+            <field name="name">Manual imports</field>
             <field name="res_model">manual.import.job</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>

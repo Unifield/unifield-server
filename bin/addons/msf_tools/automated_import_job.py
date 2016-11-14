@@ -248,19 +248,22 @@ class automated_import_job(osv.osv):
                     temp_file.flush()
                     oldest_file = temp_file.name # temp file path
                     
-                data64 = base64.encodestring(job.file_to_import)
                 filename = job.filename
+                data64 = base64.encodestring(job.file_to_import)
 
             # Process import
             try:
-                processed, rejected, headers = getattr(
-                    self.pool.get(job.function_id.model_id.model),
-                    job.function_id.method_to_call
-                )(cr, uid, oldest_file)
-
                 if self._name == 'manual.import.job':
-                    nb_processed, nb_rejected = 0, 0
+                    processed, rejected, headers = getattr(
+                        self.pool.get(job.function_id.model_id.model),
+                        job.function_id.method_to_call
+                    )(cr, uid, oldest_file)
+                    nb_processed, nb_rejected = len(processed), len(rejected)
                 else:
+                    processed, rejected, headers = getattr(
+                        self.pool.get(job.import_id.function_id.model_id.model),
+                        job.import_id.function_id.method_to_call
+                    )(cr, uid, oldest_file)
                     if processed:
                         nb_processed = self.generate_file_report(cr, uid, job, processed, headers)
                     if rejected:
@@ -292,16 +295,24 @@ class automated_import_job(osv.osv):
                 if self._name != 'manual.import.job':
                     move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
-        return {
+        res = {
             'type': 'ir.actions.act_window',
             'res_model': self._name,
             'res_id': ids[0],
             'view_type': 'form',
             'view_mode': 'form,tree',
-            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'manual_import_job_form_view')[1]],
-            'target': 'toto',
+            'target': 'current',
             'context': context,
         }
+
+        if self._name == 'manual.import.job':
+            res.update({
+                'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'manual_import_job_form_view')[1]],
+                'target': 'toto',
+            })
+
+
+        return res
 
 
     def generate_file_report(self, cr, uid, job_brw, data_lines, headers, rejected=False):
