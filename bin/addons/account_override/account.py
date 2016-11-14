@@ -507,10 +507,10 @@ class account_account(osv.osv):
         Get the "Allowed Partner type" field to check (for the model account.account)
         :return: a String containing the field to check (for instance "has_partner_type_intermission"), or False
         '''
-        allowed_partner_field = False
         if 'allowed_partner_field' in context:
             allowed_partner_field = context['allowed_partner_field']
         else:
+            allowed_partner_field = False
             should_have_field_suffix = False
             if not partner_type and not partner_txt and not employee_id and not transfer_journal_id and not partner_id:
                 # empty partner
@@ -532,28 +532,28 @@ class account_account(osv.osv):
                     elif pt_model == 'res.partner':
                         partner_id = pt_id
                 elif partner_txt:
-                    employee_ids = emp_obj.search(cr, uid,
-                        [('name', '=', partner_txt)], context=context)
+                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)],
+                                                  order='NO_ORDER', limit=1, context=context)
                     if employee_ids:
                         employee_id = employee_ids[0]
                     else:
-                        partner_ids = partner_obj.search(cr, uid,
-                            [('name', '=', partner_txt)], context=context)
+                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)],
+                                                         order='NO_ORDER', limit=1, context=context)
                         if partner_ids:
                             partner_id = partner_ids[0]
                 if employee_id:
-                    tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
+                    tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type'], context=context)
                     # note: allowed for employees with no type
                     should_have_field_suffix = tp_rec.employee_type or False
                 elif transfer_journal_id:
                     should_have_field_suffix = 'book'
                 elif partner_id:
-                    tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
+                    tp_rec = partner_obj.browse(cr, uid, partner_id, fields_to_fetch=['partner_type'], context=context)
                     should_have_field_suffix = tp_rec.partner_type or False
             if should_have_field_suffix:
                 allowed_partner_field = 'has_partner_type_%s' % (should_have_field_suffix,)
-            # store the field in context in order not to do the same check several times
-            context.update({'allowed_partner_field': should_have_field_suffix})
+            # store the returned value in context in order not to do the same check several times
+            context.update({'allowed_partner_field': allowed_partner_field})
         return allowed_partner_field
 
     def is_allowed_for_thirdparty(self, cr, uid, ids, partner_type=False, partner_txt=False, employee_id=False,
@@ -572,8 +572,14 @@ class account_account(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
+        if context is None:
+            context = {}
         res = {}
-        for r in self.browse(cr, uid, ids, context=context):
+        fields_to_fetch = ['type_for_register', 'has_partner_type_internal', 'has_partner_type_external', 'has_partner_type_esc',
+                           'has_partner_type_local', 'has_partner_type_ex', 'has_partner_type_empty', 'has_partner_type_book',
+                           'has_partner_type_intermission', 'has_partner_type_section']
+        # browse the accounts and check if the third party is compatible
+        for r in self.browse(cr, uid, ids, fields_to_fetch=fields_to_fetch, context=context):
             # US-1307 If the account has a "Type for specific Treatment": bypass the check on "Allowed Partner type"
             type_for_specific_treatment = hasattr(r, 'type_for_register') and getattr(r, 'type_for_register') != 'none' or False
             if type_for_specific_treatment:
@@ -590,8 +596,8 @@ class account_account(osv.osv):
             if not_compatible_ids:
                 errors = [ _('following accounts are not compatible with' \
                     ' partner:') ]
-                for r in self.pool.get('account.account').browse(cr, uid,
-                    not_compatible_ids, context=context):
+                for r in self.pool.get('account.account').browse(cr, uid, not_compatible_ids,
+                                                                 fields_to_fetch=['code', 'name'], context=context):
                     errors.append(_('%s - %s') % (r.code, r.name))
                 raise osv.except_osv(_('Error'), "\n- ".join(errors))
         return res
