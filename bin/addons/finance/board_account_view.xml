@@ -131,7 +131,7 @@
             <field name="context">{'board_view': True}</field>
 		</record>
 
-        <!-- Show the Currency rates -->
+		<!-- Show the Currency rates -->
         <record id="account_board_currency_view" model="ir.ui.view">
             <field name="name">res.currency</field>
             <field name="model">res.currency</field>
@@ -154,7 +154,7 @@
             <field name="limit">3</field>
 		</record>
 
-        <!-- Show the Account periods -->
+		<!-- Show the XXX -->	
         <record id="account_board_period_view" model="ir.ui.view">
             <field name="name">account.period.board</field>
             <field name="model">account.period</field>
@@ -170,6 +170,7 @@
                 </tree>
             </field>
         </record>
+        
         <record id="account_board_period" model="ir.actions.act_window">
 			<field name="name">Account Periods</field>
             <field name="res_model">account.period</field>
@@ -178,9 +179,9 @@
 			<field ref="account_board_period_view" name="view_id"/>
 			<field name="domain">[('state', '=', 'draft'), ('special', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
-		</record>
+		</record>        
 
-        <!-- Show HQ entries to be validated -->
+		<!-- Show HQ entries to be validated -->
         <record id="account_hq_entries_view" model="ir.ui.view">
             <field name="name">hq.entries</field>
             <field name="model">hq.entries</field>
@@ -208,9 +209,9 @@
             <field name="context">{'board_view': True}</field>
             <field name="limit">5</field>
 		</record>
-        <!-- End HQ Entries -->
+		<!-- End HQ Entries -->
 
-        <!-- Show the Payrolls entries to be validated -->
+		<!-- Show the Payrolls entries to be validated -->
         <record id="hr_payroll_board_view" model="ir.ui.view">
             <field name="name">hr.payroll.msf</field>
             <field name="model">hr.payroll.msf</field>
@@ -237,7 +238,7 @@
             <field name="context">{'board_view': True}</field>
             <field name="limit">5</field>
 		</record>
-        <!-- End for Payroll -->
+		<!-- End for Payroll -->
 
         <record id="account_board_budget_search_view" model="ir.ui.view">
             <field name="name">msf.budget.line</field>
@@ -272,7 +273,7 @@
             <field name="domain">[]</field>
             <field name="search_view_id" ref="account_board_budget_search_view"/>
 		</record>
-
+        -->
         <!-- Custom Accounting Board -->
         <record id="inherit_board_account_form" model="ir.ui.view">
             <field name="name">inherit.board.account.form</field>
@@ -292,7 +293,7 @@
                             </child1>
 
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payrolls Entries to validate" />
+                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payroll Entries to validate" />
                                 <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" />
                                 <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" />
