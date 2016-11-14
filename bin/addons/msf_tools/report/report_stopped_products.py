@@ -180,7 +180,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 
     def get_uf_stopped_products(self):
         '''
-        Return browse record list that contains stopped and non-local products
+        Return browse record list that contains stopped products
         taking in account non-local products stopped in the current instance,
         and products in stock mission if they have qty in stock or in pipe
         '''
@@ -190,12 +190,16 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
 
         stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
         status_local_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_4')[1]
+        temporary_status_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_5')[1]
 
-        hq_stopped_ids = prod_obj.search(self.cr, self.uid, [('state', '=', stopped_state_id), 
-            ('international_status', '!=', status_local_id)], context=self.localcontext)
+        hq_stopped_ids = prod_obj.search(self.cr, self.uid, [
+            ('state', '=', stopped_state_id), 
+            ('international_status', '!=', status_local_id),
+            ('international_status', '!=', temporary_status_id)],
+            context=self.localcontext)
 
         smrl_ids = smrl_obj.search(self.cr, self.uid, [
-            ('full_view', '=', False), 
+            ('full_view', '=', False),
             ('product_state', '=', 'stopped'),
             '|', ('internal_qty', '!=', 0),
             ('in_pipe_qty', '!=', 0)
