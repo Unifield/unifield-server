@@ -177,9 +177,9 @@ class hq_entries(osv.osv):
 
         for r in self.browse(cr, uid, ids, context=context):
             res[r.id] = True
-            if r.account_id and r.partner_txt:
+            if r.account_id:
                 res[r.id] = account_obj.is_allowed_for_thirdparty(cr, uid,
-                    r.account_id.id, partner_txt=r.partner_txt,
+                    r.account_id.id, partner_txt=r.partner_txt or False,
                     context=context)[r.account_id.id]
         return res
 

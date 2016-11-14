@@ -156,9 +156,9 @@ class hq_entries_split_lines(osv.osv_memory):
         # US-672/2
         hq_entry = self._get_original_line(cr, uid, context=context,
             wizard_id=vals.get('wizard_id', False))
-        if hq_entry and hq_entry.partner_txt:
+        if hq_entry:
             self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
-                [vals['account_id']], partner_txt=hq_entry.partner_txt,
+                [vals['account_id']], partner_txt=hq_entry.partner_txt or False,
                 raise_it=True, context=context)
         res = super(hq_entries_split_lines, self).create(cr, uid, vals, context=context)
         # Check that amount is not superior to what expected
@@ -204,9 +204,9 @@ class hq_entries_split_lines(osv.osv_memory):
         # US-672/2
         for line in self.browse(cr, uid, ids, context=context):
             hq_entry = line.wizard_id and line.wizard_id.original_id or False
-            if hq_entry and hq_entry.partner_txt:
+            if hq_entry:
                 self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
-                    [vals['account_id']], partner_txt=hq_entry.partner_txt,
+                    [vals['account_id']], partner_txt=hq_entry.partner_txt or False,
                     raise_it=True, context=context)
 
         res = super(hq_entries_split_lines, self).write(cr, uid, ids, vals, context=context)

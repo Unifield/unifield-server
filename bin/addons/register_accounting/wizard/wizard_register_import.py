@@ -488,16 +488,16 @@ class wizard_register_import(osv.osv_memory):
                                 continue
                         r_partner = tp_ids[0]
 
-                        # US-672 TP compat with account
-                        tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
-                            cr, uid, [r_account],
-                            employee_id=partner_type == 'employee' and r_partner or False,
-                            transfer_journal_id=partner_type == 'journal' and r_partner or False,
-                            partner_id=partner_type == 'partner' and r_partner or False,
-                            context=context)[r_account]
-                        if not tp_check_res:
-                            errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
-                            continue
+                    # US-672 TP compat with account
+                    tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
+                        cr, uid, [r_account],
+                        employee_id=partner_type == 'employee' and r_partner or False,
+                        transfer_journal_id=partner_type == 'journal' and r_partner or False,
+                        partner_id=partner_type == 'partner' and r_partner or False,
+                        context=context)[r_account]
+                    if not tp_check_res:
+                        errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
+                        continue
 
                     # free 1
                     if line[cols['free1']]:

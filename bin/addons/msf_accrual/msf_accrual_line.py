@@ -150,8 +150,7 @@ class msf_accrual_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
 
         # US-672/2
-        if not context.get('sync_update_execution', False) \
-            and account_ids and (employee_id or partner_id):
+        if not context.get('sync_update_execution', False) and account_ids:
             self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
                 account_ids, employee_id=employee_id, partner_id=partner_id,
                 raise_it=True,  context=context)

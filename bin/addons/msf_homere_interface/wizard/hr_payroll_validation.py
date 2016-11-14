@@ -222,8 +222,6 @@ class hr_payroll_validation(osv.osv_memory):
         account_partner_not_compat_log = []
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
             'name', 'ref', 'partner_id', 'account_id', 'amount', ]):
-            if not line['partner_id']:
-                continue
 
             account_id = line.get('account_id', False) and line.get('account_id')[0] or False
             if not account_id:
@@ -238,7 +236,7 @@ class hr_payroll_validation(osv.osv_memory):
                     entry_msg = "%s - %s / %0.02f / %s / %s" % (
                         line['name'] or '',  line['ref'] or '',
                         round(line['amount'], 2),
-                        line['account_id'][1], line['partner_id'][1], )
+                        line['account_id'][1], line['partner_id'] and line['partner_id'][1] or '', )
                     account_partner_not_compat_log.append(entry_msg)
         if account_partner_not_compat_log:
             account_partner_not_compat_log.insert(0,
