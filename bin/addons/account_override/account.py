@@ -459,14 +459,31 @@ class account_account(osv.osv):
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
+    def _check_allowed_partner_type(self, vals):
+        '''
+        Check that at least one partner type has been allowed. If not, raise a warning.
+        '''
+        if 'has_partner_type_internal' in vals and not vals['has_partner_type_internal'] and \
+                'has_partner_type_external' in vals and not vals['has_partner_type_external'] and \
+                'has_partner_type_esc' in vals and not vals['has_partner_type_esc'] and \
+                'has_partner_type_local' in vals and not vals['has_partner_type_local'] and \
+                'has_partner_type_ex' in vals and not vals['has_partner_type_ex'] and \
+                'has_partner_type_empty' in vals and not vals['has_partner_type_empty'] and \
+                'has_partner_type_book' in vals and not vals['has_partner_type_book'] and \
+                'has_partner_type_intermission' in vals and not vals['has_partner_type_intermission'] and \
+                'has_partner_type_section' in vals and not vals['has_partner_type_section']:
+            raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
+
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals, context=context)
+        self._check_allowed_partner_type(vals)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
         self._check_date(vals, context=context)
+        self._check_allowed_partner_type(vals)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
