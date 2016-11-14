@@ -114,10 +114,6 @@ class import_currencies(osv.osv_memory):
             if not import_data:
                 raise osv.except_osv(_('Warning'), _('File is empty.'))
 
-            if import_data[0][0].startswith('Date:'):
-                # the Date: line is used by auto_import, remove it
-                import_data.pop(0)
-
             self._check_periods(cr, uid, wizard.rate_date, context=context)
             date = wizard.rate_date
             processed_lines = []
@@ -128,6 +124,10 @@ class import_currencies(osv.osv_memory):
                 if not line:
                     # ignore empty lines
                     continue
+                if auto_import:
+                    # auto_import uses a Date column, useless here
+                    # remove it
+                    line = line[1:]
                 if line_index == 0:
                     headers = line
                     if headers[0] != 'Currency Code' and headers[0] != 'Rate':

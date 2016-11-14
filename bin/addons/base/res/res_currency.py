@@ -20,6 +20,7 @@
 ##############################################################################
 import time
 import datetime
+import csv
 from osv import fields, osv
 from tools.translate import _
 
@@ -142,21 +143,37 @@ class res_currency(osv.osv):
         processed = []
         rejected = []
         headers = []
-
-        # read the first line of the file to get the date
-        first_line = None
         date = None
+
+        # check all lines have the same date
         with open(file_to_import, 'r') as csv_file:
-            first_line = csv_file.next().rstrip()
-            if 'Date' in first_line:
-                date = first_line.split('Date: ')[1]
-                # check that tis date is a real date
-                try:
-                    datetime.datetime.strptime(date, '%Y-%m-%d')
-                except:
-                    date = None
-        if not date:
-            raise osv.except_osv(_('Error'), _("A date is needed at first line of %s in this form: 'Date: 2016-01-01'." % file_to_import))
+            line_list = list(csv.reader(csv_file, quoting=csv.QUOTE_ALL,
+                delimiter=','))
+            line_number = 0
+            headers = None
+            for line in line_list:
+                if line_number == 0:
+                    headers = line
+                    assert(line[0] == 'Date'), _('Date column is mandatory for auto import.')
+                else:
+                    if line and line[0]:
+                        if date is None:
+                            date = line[0]
+                        elif line[0] != date:
+                            raise osv.except_osv(_('Error'),
+                                    _("All dates should be equal for all lines in file %s." % file_to_import))
+                line_number += 1
+
+            # check that this date is a real date
+            try:
+                date = datetime.datetime.strptime(date, '%d/%m/%Y')
+                date = date.strftime('%Y-%m-%d')
+            except:
+                date = None
+
+            if not date:
+                raise osv.except_osv(_('Error'), _("A 'Date' column is needed for each line of %s in this format: '18/10/2016'." % file_to_import))
+
         import_obj = self.pool.get('import.currencies')
         import_id = import_obj.create(cr, uid, {
             'rate_date': date,
