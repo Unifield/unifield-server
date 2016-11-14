@@ -501,11 +501,63 @@ class account_account(osv.osv):
         return super(account_account, self).search(cr, uid, args, offset,
                 limit, order, context=context, count=count)
 
-    def is_allowed_for_thirdparty(self, cr, uid, ids,
-        partner_type=False, partner_txt=False,
-        employee_id=False, transfer_journal_id=False, partner_id=False,
-        from_vals=False, raise_it=False,
-        context=None):
+    def _get_allowed_partner_field(self, cr, uid, partner_type=False, partner_txt=False, employee_id=False,
+                          transfer_journal_id=False, partner_id=False, from_vals=False, context=None):
+        '''
+        Get the "Allowed Partner type" field to check (for the model account.account)
+        :return: a String containing the field to check (for instance "has_partner_type_intermission"), or False
+        '''
+        allowed_partner_field = False
+        if 'allowed_partner_field' in context:
+            allowed_partner_field = context['allowed_partner_field']
+        else:
+            should_have_field_suffix = False
+            if not partner_type and not partner_txt and not employee_id and not transfer_journal_id and not partner_id:
+                # empty partner
+                should_have_field_suffix = 'empty'
+            else:
+                # existing partner
+                emp_obj = self.pool.get('hr.employee')
+                partner_obj = self.pool.get('res.partner')
+                if partner_type:
+                    pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
+                        else (partner_type._name, partner_type.id, )
+                    if from_vals:
+                        pt_id = int(pt_id)
+                    employee_id = transfer_journal_id = partner_id = False
+                    if pt_model == 'hr.employee':
+                        employee_id = pt_id
+                    elif pt_model == 'account.journal':
+                        transfer_journal_id = pt_id
+                    elif pt_model == 'res.partner':
+                        partner_id = pt_id
+                elif partner_txt:
+                    employee_ids = emp_obj.search(cr, uid,
+                        [('name', '=', partner_txt)], context=context)
+                    if employee_ids:
+                        employee_id = employee_ids[0]
+                    else:
+                        partner_ids = partner_obj.search(cr, uid,
+                            [('name', '=', partner_txt)], context=context)
+                        if partner_ids:
+                            partner_id = partner_ids[0]
+                if employee_id:
+                    tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
+                    # note: allowed for employees with no type
+                    should_have_field_suffix = tp_rec.employee_type or False
+                elif transfer_journal_id:
+                    should_have_field_suffix = 'book'
+                elif partner_id:
+                    tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
+                    should_have_field_suffix = tp_rec.partner_type or False
+            if should_have_field_suffix:
+                allowed_partner_field = 'has_partner_type_%s' % (should_have_field_suffix,)
+            # store the field in context in order not to do the same check several times
+            context.update({'allowed_partner_field': should_have_field_suffix})
+        return allowed_partner_field
+
+    def is_allowed_for_thirdparty(self, cr, uid, ids, partner_type=False, partner_txt=False, employee_id=False,
+                                  transfer_journal_id=False, partner_id=False, from_vals=False, raise_it=False, context=None):
         """
         US-672/2 is allowed regarding to thirdparty
         partner_type then partner_txt fields prevails on
@@ -520,60 +572,19 @@ class account_account(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-
         res = {}
-        should_have_field_suffix = False
-        for id in ids:
-            res[id] = True  # allowed by default
-        if not partner_type and not partner_txt and not employee_id and not transfer_journal_id and not partner_id:
-            # empty partner
-            should_have_field_suffix = 'empty'
-        else:
-            # existing partner
-            emp_obj = self.pool.get('hr.employee')
-            partner_obj = self.pool.get('res.partner')
-
-            if partner_type:
-                pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
-                    else (partner_type._name, partner_type.id, )
-                if from_vals:
-                    pt_id = int(pt_id)
-                employee_id = transfer_journal_id = partner_id = False
-                if pt_model == 'hr.employee':
-                    employee_id = pt_id
-                elif pt_model == 'account.journal':
-                    transfer_journal_id = pt_id
-                elif pt_model == 'res.partner':
-                    partner_id = pt_id
-            elif partner_txt:
-                employee_ids = emp_obj.search(cr, uid,
-                    [('name', '=', partner_txt)], context=context)
-                if employee_ids:
-                    employee_id = employee_ids[0]
-                else:
-                    partner_ids = partner_obj.search(cr, uid,
-                        [('name', '=', partner_txt)], context=context)
-                    if partner_ids:
-                        partner_id = partner_ids[0]
-
-            if employee_id:
-                tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
-                # note: allowed for employees with no type
-                should_have_field_suffix = tp_rec.employee_type or False
-            elif transfer_journal_id:
-                should_have_field_suffix = 'book'
-            elif partner_id:
-                tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
-                should_have_field_suffix = tp_rec.partner_type or False
-            if not should_have_field_suffix:
-                return res  # allowed with no specific field suffix
-
-        field = 'has_partner_type_%s' % (should_have_field_suffix, )
         for r in self.browse(cr, uid, ids, context=context):
             # US-1307 If the account has a "Type for specific Treatment": bypass the check on "Allowed Partner type"
             type_for_specific_treatment = hasattr(r, 'type_for_register') and getattr(r, 'type_for_register') != 'none' or False
-            res[r.id] = type_for_specific_treatment or (hasattr(r, field) and getattr(r, field)) or False
-
+            if type_for_specific_treatment:
+                res[r.id] = True
+            else:
+                allowed_partner_field = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
+                                                                        transfer_journal_id, partner_id, from_vals, context)
+                if not allowed_partner_field:
+                    res[r.id] = True  # allowed with no specific field
+                else:
+                    res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
@@ -583,7 +594,6 @@ class account_account(osv.osv):
                     not_compatible_ids, context=context):
                     errors.append(_('%s - %s') % (r.code, r.name))
                 raise osv.except_osv(_('Error'), "\n- ".join(errors))
-
         return res
 
 account_account()
