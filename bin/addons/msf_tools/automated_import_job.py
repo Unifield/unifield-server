@@ -23,6 +23,7 @@ import os
 import csv
 import time
 import shutil
+import pooler
 import base64
 import hashlib
 from tempfile import NamedTemporaryFile
@@ -165,10 +166,13 @@ class automated_import_job(osv.osv):
         data_obj = self.pool.get('ir.model.data')
 
         if context is None:
-            context = []
+            context = {}
 
         if isinstance(ids, (int, long)):
             ids = [ids]
+
+        if context.get('import_in_bg'):
+            cr = pooler.get_db(cr.dbname).cursor()
 
         for job in self.browse(cr, uid, ids, context=context):
             nb_rejected = 0
@@ -254,6 +258,9 @@ class automated_import_job(osv.osv):
             # Process import
             try:
                 if self._name == 'manual.import.job':
+                    self.write(cr, uid, [job.id], {'state': 'in_progress'}, context=context)
+                    if context.get('import_in_bg'):
+                        cr.commit()
                     processed, rejected, headers = getattr(
                         self.pool.get(job.function_id.model_id.model),
                         job.function_id.method_to_call
@@ -308,9 +315,13 @@ class automated_import_job(osv.osv):
         if self._name == 'manual.import.job':
             res.update({
                 'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'manual_import_job_form_view')[1]],
-                'target': 'toto',
+                'target': 'same',
             })
 
+        if context.get('import_in_bg'):
+            cr.commit()
+            cr.close(True)
+            return
 
         return res
 

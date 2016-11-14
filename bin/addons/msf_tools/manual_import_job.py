@@ -21,6 +21,7 @@
 
 from osv import osv
 from osv import fields
+import threading
 
 from tools.translate import _
 from automated_import_job import all_files_under, move_to_process_path
@@ -47,5 +48,41 @@ class manual_import_job(osv.osv):
             required=True,
         ),
     }
+
+    _order = "name desc"
+
+
+    def process_import_bg(self, cr, uid, ids, context):
+        """
+        Method called when user click on button 'import in background' in Manual imports
+        Create a new thread that process import in background
+        """
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        context.update({'import_in_bg': True})
+
+        cr.commit()
+        new_thread = threading.Thread(
+            target=self.process_import,
+            args=(cr, uid, ids, context)
+        )
+        new_thread.start()
+
+        res = {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': ids[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'view_id': [data_obj.get_object_reference(cr, uid, 'msf_tools', 'manual_import_job_info_view')[1]],
+            'target': 'same',
+            'context': context,
+        }
+
+        return res
+
 
 manual_import_job()
