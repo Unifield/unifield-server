@@ -256,6 +256,7 @@ class automated_import_job(osv.osv):
                 data64 = base64.encodestring(job.file_to_import)
 
             # Process import
+            nb_processed, nb_rejected = 0, 0
             try:
                 if self._name == 'manual.import.job':
                     self.write(cr, uid, [job.id], {'state': 'in_progress'}, context=context)
@@ -266,6 +267,15 @@ class automated_import_job(osv.osv):
                         job.function_id.method_to_call
                     )(cr, uid, oldest_file)
                     nb_processed, nb_rejected = len(processed), len(rejected)
+                    if nb_processed == 0 and nb_rejected == 0:
+                        raise Exception(_("The input file seems to be empty"))
+                    elif nb_processed == 0:
+                        raise Exception(_("All entries have been rejected , bad file format ?"))
+                    elif nb_rejected > 0:
+                        nb_rejected += nb_processed
+                        nb_processed = 0
+                        raise Exception(_("Some lines has been rejected, so we did not import anything. \
+                            Please check your import file and try again"))
                 else:
                     processed, rejected, headers = getattr(
                         self.pool.get(job.import_id.function_id.model_id.model),
@@ -291,8 +301,8 @@ class automated_import_job(osv.osv):
                     'filename': False,
                     'start_time': start_time,
                     'end_time': time.strftime('%Y-%m-%d'),
-                    'nb_processed_records': 0,
-                    'nb_rejected_records': 0,
+                    'nb_processed_records': nb_processed,
+                    'nb_rejected_records': nb_rejected,
                     'comment': str(e),
                     'file_sum': md5,
                     'file_to_import': data64,

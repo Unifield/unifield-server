@@ -46,6 +46,8 @@
                         <separator colspan="4" string="Import results" />
                         <field name="nb_processed_records" />
                         <field name="nb_rejected_records" />
+                        <field name="start_time" />
+                        <field name="end_time" />
                         <field name="comment" colspan="4" />
                         <separator colspan="4" string="States" />
                     </group>
