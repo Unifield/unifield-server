@@ -60,6 +60,7 @@ class account_mcdb(osv.osv):
         'account_type_ids': fields.many2many(obj='account.account.type', rel='account_account_type_mcdb', id1='mcdb_id', id2='account_type_id',
             string="Account type"),
         'reconcile_id': fields.many2one('account.move.reconcile', string="Reconcile Reference"),
+        'reconcile_date': fields.date("Reconciled at"),
         'ref': fields.char(string='Reference', size=255),
         'name': fields.char(string='Description', size=255),
         'rev_account_ids': fields.boolean('Exclude account selection'),
@@ -335,10 +336,17 @@ class account_mcdb(osv.osv):
                 # total or partial and override  reconciled status
                 domain.append(('reconcile_total_partial_id', '=', wiz.reconcile_id.id))
             elif wiz.reconciled:
+                # US-533: new search matrix
+                # http://jira.unifield.org/browse/US-533?focusedCommentId=50218&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50218
+                # search always regarding FULL reconcile (is_reconciled do that)
                 if wiz.reconciled == 'reconciled':
-                    domain.append(('reconcile_id', '!=', False))  # only full reconcile
+                    domain.append(('is_reconciled', '=', True))
                 elif wiz.reconciled == 'unreconciled':
-                    domain.append(('reconcile_id', '=', False))   # partial or not reconcile (dont take care of reconcile_partial_id state)
+                    domain.append(('is_reconciled', '=', False))
+            if wiz.reconcile_date:
+                domain.append(('reconcile_date', '<=', wiz.reconcile_date))
+            # note that for US-533 JI search is overrided in
+            # account_reconcile/account_move_line.py
 
             # REALLOCATION field
             if wiz.reallocated:

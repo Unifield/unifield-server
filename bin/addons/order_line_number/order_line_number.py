@@ -487,12 +487,13 @@ class ir_sequence(osv.osv):
             'min': time.strftime('%M'),
             'sec': time.strftime('%S'),
         }
-        if s and '%(instance)s' in s:
-            data['instance'] = self._get_instance(cr, uid)
-        if s and '%(hqcode)s' in s:
-            data['hqcode'] = self._get_hqcode(cr, uid)
-        if s and '%(instance_code)s' in s:
-            data['instance_code'] = self._get_instance_code(cr, uid)
+        if s:
+            if '%(instance)s' in s:
+                data['instance'] = self._get_instance(cr, uid)
+            if '%(hqcode)s' in s:
+                data['hqcode'] = self._get_hqcode(cr, uid)
+            if '%(instance_code)s' in s:
+                data['instance_code'] = self._get_instance_code(cr, uid)
 
         return (s or '') % data
 ir_sequence()

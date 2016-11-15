@@ -63,7 +63,6 @@ class stock_inventory_line_split(osv.osv_memory):
         @return: 
         """                    
         prodlot_obj = self.pool.get('stock.production.lot')
-        ir_sequence_obj = self.pool.get('ir.sequence')
         line_obj = self.pool.get('stock.inventory.line')
         new_line = []        
         for data in self.browse(cr, uid, ids, context=context):
@@ -97,7 +96,6 @@ class stock_inventory_line_split(osv.osv_memory):
                             'product_id': inv_line.product_id.id},
                         context=context)
                     line_obj.write(cr, uid, [current_line], {'prod_lot_id': prodlot_id})
-                    prodlot = prodlot_obj.browse(cr, uid, prodlot_id)                    
                     
                     update_val = {}
                     if quantity_rest > 0:                        

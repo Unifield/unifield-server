@@ -346,6 +346,8 @@ class sync_rule(osv.osv):
         return new_id
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
 
@@ -661,6 +663,8 @@ class message_rule(osv.osv):
         return new_id
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if 'included_fields_sel' in values:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
 

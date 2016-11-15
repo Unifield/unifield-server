@@ -78,6 +78,8 @@ class account_move(osv.osv):
         return super(account_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
 
@@ -107,6 +109,8 @@ class account_move_line(osv.osv):
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=sync_check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         # UTP-632: re-add write(), but only for the check variable
         if not context:
             context = {}
@@ -175,7 +179,6 @@ class account_move_line(osv.osv):
             ('journal_id', 'id'),
             ('move_id', 'id'),
             ('partner_id', 'id'),
-            ('partner_txt', False),
             ('period_id', 'id'),
             ('ref', False),
             ('state', False),
@@ -191,6 +194,10 @@ class account_move_line(osv.osv):
                 rec_val = getattr(ji_rec, f)
                 val = vals[f]
 
+                # US-1737 consider False and '' equal
+                if not val and not rec_val:
+                    continue
+
                 if t == 'id':
                     if rec_val:
                         has_diff = not val or val != rec_val.id
@@ -203,7 +210,7 @@ class account_move_line(osv.osv):
 
             if has_diff:
                 raise osv.except_osv(_('Error !'),
-                    _('You can not modify entries in a HQ closed journal'))
+                    _('You can not modify entries in a HQ closed journal. Field: %s, db value: %s, update value: %s') % (f, rec_val, val))
 
 account_move_line()
 

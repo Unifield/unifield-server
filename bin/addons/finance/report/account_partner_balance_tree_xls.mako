@@ -337,13 +337,13 @@ partner_name = (p_obj.name or '')
     <Data ss:Type="Number">${aml.get('account', '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${aml.get('deb', 0.0)}</Data>
+    <Data ss:Type="Number">${aml.get('deb') or 0}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${aml.get('cred', 0.0)}</Data>
+    <Data ss:Type="Number">${aml.get('cred') or 0}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumber">
-    <Data ss:Type="Number">${aml.get('total', 0.0)}</Data>
+    <Data ss:Type="Number">${aml.get('total') or 0}</Data>
 </Cell>
 </Row>
 % endfor

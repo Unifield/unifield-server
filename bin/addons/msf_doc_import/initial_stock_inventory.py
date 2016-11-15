@@ -186,18 +186,12 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     batch = str(batch)
                 try:
                     batch = batch.strip()
-                    if ',' in batch:
-                        bad_batch_name = True
-                        batch_name = False
+                    batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
+                    if not batch_ids:
+                        batch_name = batch
                         batch = False
                         to_correct_ok = True
                     else:
-                        batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch)], context=context)
-                        if not batch_ids:
-                            batch_name = batch
-                            batch = False
-                            to_correct_ok = True
-                        else:
                             batch = batch_ids[0]
                 except Exception:
                     batch = False
@@ -500,6 +494,8 @@ class stock_inventory_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         comment = ''
 
         line = self.browse(cr, uid, ids[0], context=context)
@@ -705,16 +701,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
             # Batch
             batch = row.cells[4].data
-            if batch:
-                try:
-                    batch = batch.strip()
-                    batch_name = batch
-                    if ',' in batch_name:
-                        batch_name = False
-                        batch = False
-                        bad_batch_name = True
-                except Exception:
-                    pass
 
             # Expiry date
             if row.cells[5].data:
@@ -1016,6 +1002,8 @@ class initial_stock_inventory_line(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         comment = ''
 
         line = self.browse(cr, uid, ids[0], context=context)

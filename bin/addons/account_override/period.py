@@ -38,14 +38,27 @@ def get_period_from_date(self, cr, uid, date=False, context=None):
     if context.get('extend_december', False) and date[5:7] == '12':
         # extend search to periods 12, 13, 14, 15 for december date
         limit = 4
+    if context.get('from_correction', False):
+        # US-945 AJI correction are never processed on special periods
+        number_criteria = ('number', '<', 13)
+    else:
+        number_criteria = ('number', '!=', 16)
 
     # Search period in which this date come from
-    period_ids = self.pool.get('account.period').search(cr, uid, [('date_start', '<=', date), ('date_stop', '>=', date), ('number', '!=', 16)], limit=limit,
+    period_ids = self.pool.get('account.period').search(cr, uid, [
+            ('date_start', '<=', date),
+            ('date_stop', '>=', date),
+            number_criteria,
+        ], limit=limit,
         order='date_start asc, name asc', context=context) or []
     # Get last period if no period found
     if not period_ids:
-        period_ids = self.pool.get('account.period').search(cr, uid, [('state', '=', 'open'), ('number', '!=', 16)], limit=limit,
-            order='date_stop desc, name desc', context=context) or []
+        period_ids = self.pool.get('account.period').search(cr, uid, [
+                ('state', '=', 'open'),
+                number_criteria,
+        ], limit=limit,
+        order='date_stop desc, name desc', context=context) or []
+
     if isinstance(period_ids, (int, long)):
         period_ids = [period_ids]
     return period_ids

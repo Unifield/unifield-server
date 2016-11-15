@@ -609,6 +609,9 @@ class account_move_line(osv.osv):
         'period_id': lambda self, cr, uid, c: c.get('period_id', False),
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'account.move.line', context=c),
         'is_counterpart': lambda *a: False,
+        # prevent NULL value in sql record
+        'debit': 0,
+        'credit': 0,
     }
     _order = "date desc, id desc"
     _sql_constraints = [
@@ -617,10 +620,11 @@ class account_move_line(osv.osv):
     ]
 
     def _auto_init(self, cr, context=None):
-        super(account_move_line, self)._auto_init(cr, context=context)
+        ret = super(account_move_line, self)._auto_init(cr, context=context)
         cr.execute('SELECT indexname FROM pg_indexes WHERE indexname = \'account_move_line_journal_id_period_id_index\'')
         if not cr.fetchone():
             cr.execute('CREATE INDEX account_move_line_journal_id_period_id_index ON account_move_line (journal_id, period_id)')
+        return ret
 
     def _check_no_view(self, cr, uid, ids, context=None):
         lines = self.browse(cr, uid, ids, context=context)
@@ -1135,6 +1139,9 @@ class account_move_line(osv.osv):
         unlink_ids += part_rec_ids
         if unlink_ids:
             obj_move_rec.unlink(cr, uid, unlink_ids)
+        obj_move_line.write(cr, uid, move_ids, {
+                'reconcile_date': False,  # US-533 reset reconcilation date
+            }, context=context)
         return True
 
     def check_unlink(self, cr, uid, ids, context=None):
@@ -1168,6 +1175,7 @@ class account_move_line(osv.osv):
                 move_obj.validate(cr, uid, [line.move_id.id], context=context)
             elif context.get('sync_update_execution'):
                 move_obj.validate_sync(cr, uid, [line.move_id.id], context=context)
+
         return result
 
     def _check_date(self, cr, uid, vals, context=None, check=True):
@@ -1204,6 +1212,8 @@ class account_move_line(osv.osv):
             self._update_check(cr, uid, ids, context)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if context is None:
             context={}
         move_obj = self.pool.get('account.move')

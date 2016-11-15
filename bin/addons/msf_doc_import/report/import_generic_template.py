@@ -19,26 +19,12 @@
 #
 ##############################################################################
 
-import time
-from osv import osv
-from tools.translate import _
-from report import report_sxw
+from report_webkit.webkit_report import XlsWebKitParser
 
-class pre_packing_list(report_sxw.rml_parse):
-    def __init__(self, cr, uid, name, context=None):
-        super(pre_packing_list, self).__init__(cr, uid, name, context=context)
-        self.localcontext.update({
-            'time': time,
-        })
-        
-    def set_context(self, objects, data, ids, report_type=None):
-        '''
-        opening check
-        '''
-        for obj in objects:
-            if obj.subtype != 'ppl' or obj.state != 'done':
-                raise osv.except_osv(_('Warning !'), _('Pre-Packing List is only available for completed Pre-Packing List Objects!'))
-        
-        return super(pre_packing_list, self).set_context(objects, data, ids, report_type=report_type)
+XlsWebKitParser(
+    'report.wizard.import.generic.template',
+    'abstract.wizard.import',
+    'addons/msf_doc_import/report/import_generic_template.mako',
+)
 
-report_sxw.report_sxw('report.pre.packing.list', 'stock.picking', 'addons/msf_outgoing/report/pre_packing_list.rml', parser=pre_packing_list, header=False)
+# vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -167,6 +167,8 @@ class ir_cron(osv.osv, netsvc.Agent):
         return res
 
     def write(self, cr, user, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(ir_cron, self).write(cr, user, ids, vals, context=context)
         self.update_running_cron(cr)
         return res

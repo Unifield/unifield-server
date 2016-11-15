@@ -22,6 +22,7 @@ from datetime import date
 from dateutil.relativedelta import relativedelta
 import threading
 import time
+import logging
 
 import netsvc
 from osv import osv, fields
@@ -393,6 +394,37 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return res
 
+    def _src_line_values(self, cr, uid, obj, name, args, context=None):
+        """
+        Returns all field order lines that match with the order category or priority
+        domain given in args.
+
+        :param cr: Cursor to the database
+        :param uid: ID of the user that runs the method
+        :param obj: Object on which the search is
+        :param field_name: Name of the field on which the search is
+        :param args: The domain
+        :param context: Context of the call
+
+        :return A list of tuples that allows the system to return the list
+                 of matching field order lines
+        :rtype list
+        """
+        if context is None:
+            context = {}
+
+        if not args:
+            return []
+
+        res = []
+        for arg in args:
+            if arg[0] == 'categ':
+                res = [('order_id.categ', arg[1], arg[2])]
+            elif arg[0] == 'priority':
+                res = [('order_id.priority', arg[1], arg[2])]
+
+        return res
+
     def _search_need_sourcing(self, cr, uid, obj, name, args, context=None):
         """
         Returns all field order lines that need to be sourced according to the
@@ -510,6 +542,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'priority': fields.function(
             _get_line_values,
+            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_PRIORITY,
             type='selection',
@@ -520,6 +553,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ),
         'categ': fields.function(
             _get_line_values,
+            fnct_search=_src_line_values,
             method=True,
             selection=ORDER_CATEGORY,
             type='selection',
@@ -755,10 +789,13 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         ir = False
         order_p_type = False
         if vals.get('order_id', False):
-            order = order_obj.browse(cr, uid, vals['order_id'], context=context)
-            ir = order.procurement_request
-            order_p_type = order.partner_type
-            if order.order_type == 'loan' and order.state == 'validated':
+            order = order_obj.read(cr, uid, vals['order_id'],
+                        ['procurement_request', 'partner_type', 'state',
+                            'order_type'],
+                        context=context)
+            ir = order['procurement_request']
+            order_p_type = order['partner_type']
+            if order['order_type'] == 'loan' and order['state'] == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
                     'po_cft': False,
@@ -1059,6 +1096,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         :return True if all is ok else False
         :rtype boolean
         """
+        if not ids:
+            return True
         # Objects
         product_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
@@ -1263,7 +1302,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
 
         return True
 
-    def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None):
+    def check_confirm_order(self, cr, uid, ids, run_scheduler=False, context=None, update_lines=True):
         """
         Run the confirmation of the FO/IR if all lines are confirmed
         :param cr: Cursor to the database
@@ -1290,10 +1329,11 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if order_data['state'] != 'validated':
                 continue
             state_to_use = order_proc and 'confirmed' or 'sourced'
-            self.write(cr, uid, [line['id']], {
-                'state': state_to_use,
-                'cf_estimated_delivery_date': line['estimated_delivery_date'],
-            }, context=context)
+            if update_lines:
+                self.write(cr, uid, [line['id']], {
+                    'state': state_to_use,
+                    'cf_estimated_delivery_date': line['estimated_delivery_date'],
+                }, context=context)
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
 
@@ -1397,6 +1437,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                 }, context=context)
             except osv.except_osv, e:
+                logging.getLogger('so confirmation').warn('Osv Exception', exc_info=True)
                 cr.rollback()
                 self.pool.get('sale.order').write(cr, uid, order_id,
                                                   {'sourcing_trace_ok': True,
@@ -1408,6 +1449,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'error': e.value,
                 }, context=context)
             except Exception, e:
+                logging.getLogger('so confirmation').warn('Exception', exc_info=True)
                 cr.rollback()
                 self.pool.get('sale.order').write(cr, uid, order_id,
                                                   {'sourcing_trace_ok': True,

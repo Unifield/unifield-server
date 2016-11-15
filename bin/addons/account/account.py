@@ -577,6 +577,8 @@ class account_account(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -685,6 +687,8 @@ class account_journal(osv.osv):
         return super(account_journal, self).copy(cr, uid, id, default, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         for journal in self.browse(cr, uid, ids, context=context):
@@ -975,6 +979,8 @@ class account_period(osv.osv):
         return self.name_get(cr, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'company_id' in vals:
             move_lines = self.pool.get('account.move.line').search(cr, uid, [('period_id', 'in', ids)])
             if move_lines:
@@ -1052,6 +1058,8 @@ class account_journal_period(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self._check(cr, uid, ids, context=context)
         return super(account_journal_period, self).write(cr, uid, ids, vals, context=context)
 
@@ -1288,6 +1296,8 @@ class account_move(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
         c = context.copy()
@@ -1504,6 +1514,7 @@ class account_move(osv.osv):
 
             journal = move.journal_id
             amount = 0
+            amount_currency = 0
             line_ids = []
             line_draft_ids = []
             company_id = None
@@ -1511,6 +1522,7 @@ class account_move(osv.osv):
                 # Hook to check line
                 self._hook_check_move_line(cr, uid, line, context=context)
                 amount += line.debit - line.credit
+                amount_currency += line.debit_currency or 0.0 - line.credit_currency or 0.0
                 line_ids.append(line.id)
                 if line.state=='draft':
                     line_draft_ids.append(line.id)
@@ -1524,17 +1536,24 @@ class account_move(osv.osv):
                     if line.account_id.currency_id.id != line.currency_id.id and (line.account_id.currency_id.id != line.account_id.company_id.currency_id.id):
                         raise osv.except_osv(_('Error'), _("""Couldn't create move with currency different from the secondary currency of the account "%s - %s". Clear the secondary currency field of the account definition if you want to accept all currencies.""") % (line.account_id.code, line.account_id.name))
 
-            # When clicking on "Save" for a Manual Journal Entry:
-            # IF there are JI, check that there are at least 2 lines and that the entry is balanced
+            # When clicking on "Save" for a MANUAL Journal Entry:
+            # IF there are JI, check that there are at least 2 lines
+            # and that the entry is balanced using the booking amounts
             if context.get('from_web_menu', False) and move.line_id \
                     and context.get('journal_id', False) and not context.get('button', False) \
                     and not context.get('copy'):
                 if len(move.line_id) < 2:
                     raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
-                elif abs(amount) > 10 ** -4:
+                elif abs(amount_currency) > 10 ** -4:
                     raise osv.except_osv(_('Warning'), _('The entry must be balanced.'))
 
-            if abs(amount) < 10 ** -4:
+            # (US-1709) For a manual entry check that it's balanced using the booking amounts
+            # For the other entries keep using the functional amounts
+            if move.status == 'manu':
+                entry_balanced = abs(amount_currency) < 10 ** -4 or False
+            else:
+                entry_balanced = abs(amount) < 10 ** -4 or False
+            if entry_balanced:
                 # If the move is balanced
                 # Add to the list of valid moves
                 # (analytic lines will be created later for valid moves)
@@ -1913,6 +1932,8 @@ class account_tax(osv.osv):
         return self.name_get(cr, user, ids, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('type', False) and vals['type'] in ('none', 'code'):
             vals.update({'amount': 0.0})
         return super(account_tax, self).write(cr, uid, ids, vals, context=context)

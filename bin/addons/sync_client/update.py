@@ -302,6 +302,7 @@ class update_received(osv.osv):
         'values' : fields.text("Values"),
         'run' : fields.boolean("Run", readonly=True, select=True),
         'log' : fields.text("Execution Messages", readonly=True),
+        'log_first_notrun' : fields.text("First not run message", readonly=True),
         'fallback_values':fields.text('Fallback values'),
         'handle_priority': fields.boolean('Handle Priority', readonly=True),
 
@@ -313,6 +314,28 @@ class update_received(osv.osv):
     line_error_re = re.compile(r"^Line\s+(\d+)\s*:\s*(.+)", re.S)
 
     _logger = logging.getLogger('sync.client')
+
+    def _set_not_run(self, cr, uid, ids, log, context=None):
+        data = {
+            'run': False,
+            'editable': False,
+            'execution_date': datetime.now()
+        }
+        if log:
+            data['log'] = log
+        self.write(cr, uid, ids, data, context=context)
+
+        # store 1st not run message
+        if log:
+            if isinstance(ids, (int, long)):
+                ids = [ids]
+            cr.execute("""update sync_client_update_received set log_first_notrun=%s
+                where id in %s and
+                coalesce(log_first_notrun, '')=''
+            """, (log, tuple(ids)))
+
+        return True
+
 
     @translate_column('model', 'ir_model', 'model', 'character varying(64)')
     @add_sdref_column
@@ -371,6 +394,7 @@ class update_received(osv.osv):
 
     def execute_update(self, cr, uid, ids=None, priorities=None, context=None):
         context = dict(context or {}, sync_update_execution=True)
+        context['lang'] = 'en_US'
         local_entity = self.pool.get('sync.client.entity').get_entity(
             cr, uid, context=context)
 
@@ -450,7 +474,7 @@ class update_received(osv.osv):
                         'execution_date': execution_date,
                         'editable' : False,
                         'run' : True,
-                        #'log' : '', #SP-228: Do not reset the log message even the update got run.
+                        'log' : '',
                     }, context=context)
                 for update_id in ids_in_logs:
                     self.write(cr, uid, [update_id], {
@@ -486,11 +510,7 @@ class update_received(osv.osv):
                 if self.search(cr, uid, [('sdref', '=', update.sdref), ('is_deleted', '=', False), ('run', '=', False),
                         ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)], limit=1, order='NO_ORDER'):
                     # previous not run on the same (sdref, rule_sequence): do not execute
-                    self.write(cr, uid, [update.id], {
-                        'execution_date': datetime.now(),
-                        'run' : False,
-                        'log' : "Cannot execute due to previous not run on the same record/rule."
-                    }, context=context)
+                    self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
                     continue
 
                 row = eval(update.values)
@@ -514,11 +534,10 @@ class update_received(osv.osv):
                         sd_ref = eval(update.values)[index_id]
                         logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
                 else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
-                    self.write(cr, uid, [update.id], {
-                        'execution_date': datetime.now(),
-                        'run' : False,
-                        'log' : "Cannot execute due to missing the account_move_line"
-                    }, context=context)
+                    self._set_not_run(cr, uid, [update.id],
+                        log="Cannot execute due to missing the account_move_line",
+                        context=context
+                    )
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -530,11 +549,10 @@ class update_received(osv.osv):
                 except Exception, import_error:
                     import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, tools.ustr(import_error), "\n".join([tools.ustr(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
-                    self.write(cr, uid, update_ids, {
-                        'execution_date': datetime.now(),
-                        'run' : False,
-                        'log' : import_error.strip(),
-                    }, context=context)
+                    self._set_not_run(cr, uid, update_ids,
+                        log=import_error.strip(),
+                        context=context
+                    )
                     raise Exception(message+import_error)
                 # end of the loop: all remaining values has been imported
                 if res[0] == len(values):
@@ -557,11 +575,10 @@ class update_received(osv.osv):
                         # remove the row that failed
                         values.pop(value_index)
                         versions.pop(value_index)
-                        self.write(cr, uid, [update_ids.pop(value_index)], {
-                            'execution_date': datetime.now(),
-                            'run' : False,
-                            'log' : import_message.strip(),
-                        }, context=context)
+                        self._set_not_run(cr, uid, [update_ids.pop(value_index)],
+                            log=import_message.strip(),
+                            context=context
+                        )
                     else:
                         # Rare case where no line is given by import_data
                         self.write(cr, uid, update_ids, {
@@ -609,11 +626,10 @@ class update_received(osv.osv):
                         error = e
                     e = "Error during unlink on model %s!\nid: %s\nUpdate id: %s\nReason: %s\nSD ref:\n%s\n" \
                         % (obj._name, id, update_id, tools.ustr(error), update.sdref)
-                    self.write(cr, uid, [update_id], {
-                        'execution_date': datetime.now(),
-                        'run' : False,
-                        'log' : tools.ustr(e)
-                    }, context=context)
+                    self._set_not_run(cr, uid, [update_id],
+                        log=tools.ustr(e),
+                        context=context
+                    )
 
                     ########################################################################
                     #

@@ -48,6 +48,8 @@ class account_subscription_generate(osv.osv_memory):
                 acc_model_lines = acc_model.lines_id or []
                 if not acc_model_lines:
                     raise osv.except_osv(_('Warning'), _('The Recurring Model %s has no accounting lines!') % (acc_model.name))
+                elif len(acc_model_lines) < 2:
+                    raise osv.except_osv(_('Warning'), _('The Recurring Model %s must have at least two lines.') % (acc_model.name))
                 else:
                     credit = 0.0
                     debit = 0.0

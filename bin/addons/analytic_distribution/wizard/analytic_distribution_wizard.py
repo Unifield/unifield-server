@@ -342,6 +342,8 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         Calculate amount and percentage regarding context content
         """
         # Some verifications
+        if not ids:
+            return True
         if not context:
             context = {}
         if isinstance(ids, (int, long)):
@@ -1147,8 +1149,10 @@ class analytic_distribution_wizard(osv.osv_memory):
             move_id = False
             if wiz.move_id:
                 move_id = wiz.move_id.id
+                wiz.move_id.write({'id': move_id})
             elif wiz.move_line_id:
                 move_id = wiz.move_line_id.move_id.id
+                wiz.move_line_id.write({'id': wiz.move_line_id.id})
             # Prepare some values
             ana_obj = self.pool.get('account.analytic.line')
             move = self.pool.get('account.move').browse(cr, uid, [move_id])[0]

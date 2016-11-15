@@ -29,8 +29,23 @@ class account_analytic_line(osv.osv):
     _name = 'account.analytic.line'
     _inherit = 'account.analytic.line'
 
+    def _is_aji_corrigible(self, cr, uid, ids, name, args, context=None):
+        '''
+        Returns True for all AJI corrigible
+        '''
+        if context is None:
+            context = {}
+        res = {}
+        for aml in self.browse(cr, uid, ids, context=context):
+            res[aml.id] = True
+            if aml.is_reallocated or aml.is_reversal or aml.journal_type == 'engagement' or \
+                    (aml.real_period_id and aml.real_period_id.special) or \
+                    not aml.move_id or not aml.move_id.is_corrigible:
+                res[aml.id] = False
+        return res
+
     _columns = {
-        'is_corrigible': fields.related('move_id', 'is_corrigible', string='Is correctible?', type="boolean", readonly=True),
+        'is_corrigible': fields.function(_is_aji_corrigible, method=True, string='Is corrigible?', type='boolean', readonly=True, store=False),
         'last_corrected_id': fields.many2one('account.analytic.line', string="Last corrected entry", readonly=True),
     }
 

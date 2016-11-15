@@ -345,8 +345,9 @@ class sale_order_sync(osv.osv):
 
         res = super(sale_order_sync, self)._hook_create_sync_split_fo_messages(cr, uid, split_ids, original_id, context=context)
 
-        def generate_msg_to_send(rule, model_obj, object_id, partner_name):
-            arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+        def generate_msg_to_send(rule, model_obj, object_id, partner):
+            partner_name = partner.name
+            arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, destination=partner, context=context)
             identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
             if not identifiers:
                 return
@@ -381,7 +382,7 @@ class sale_order_sync(osv.osv):
         csp_model_obj = csp_rule and self.pool.get(csp_rule.model) or None
 
         if original_id:
-            orig_partner_name = self.browse(cr, uid, original_id, context=context).partner_id.name
+            orig_partner = self.browse(cr, uid, original_id, context=context).partner_id
 
             # Generate messages for cancel lines
             if solccl_rule:
@@ -393,21 +394,21 @@ class sale_order_sync(osv.osv):
                         ('sync_order_line_db_id', '=', asolc.resource_sync_line_db_id),
                     ], context=context)
                     if sol_ids:
-                        generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner_name)
+                        generate_msg_to_send(solccl_rule, solccl_model_obj, asolc.id, orig_partner)
 
             if nfo_model_obj and nfo_rule:
                 available_nfo_ids = self.search(cr, uid, eval(nfo_rule.domain),
                         order='NO_ORDER', context=context)
                 if original_id in available_nfo_ids:
-                    generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner_name)
+                    generate_msg_to_send(nfo_rule, nfo_model_obj, original_id, orig_partner)
             if vfo_model_obj and vfo_rule:
-                generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner_name)
+                generate_msg_to_send(vfo_rule, vfo_model_obj, original_id, orig_partner)
 
         if split_ids and csp_rule and csp_model_obj:
             available_split_ids = self.search(cr, uid, eval(csp_rule.domain), context=context)
             for fo in self.browse(cr, uid, split_ids, context=context):
                 if fo.id in available_split_ids:
-                    generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id.name)
+                    generate_msg_to_send(csp_rule, csp_model_obj, fo.id, fo.partner_id)
 
         return
 
