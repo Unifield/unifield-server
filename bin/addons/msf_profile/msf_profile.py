@@ -899,7 +899,7 @@ class patch_scripts(osv.osv):
         smrl_obj = self.pool.get('stock.mission.report.line')
         context = {}
 
-        prod_ids = prod_obj.search(cr, uid, [('state', '!=', False)], context=context)
+        prod_ids = prod_obj.search(cr, uid, [('state', '!=', False), ('active', 'in', ['t', 'f'])], context=context)
         smrl_to_modify = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids), ('mission_report_id.local_report', '=', True)], context=context)
 
         for smrl in smrl_obj.browse(cr, uid, smrl_to_modify, context=context):
