@@ -22,12 +22,15 @@
 ##############################################################################
 
 ACCOUNT_RESTRICTED_AREA = {
+
+    # Note: some domains are defined directly inside the method _search_restricted_area (account_override/account.py)
+
     # REGISTER LINES
     'register_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '!=', True),
-        ('code', 'not like', '8%'),  # US-791 exclude 8 accounts
-        ('code', 'not like', '9%'),  # US-791 exclude 9 accounts
+        '!', ('code', '=like', '8%'),  # US-791 exclude 8 accounts
+        '!', ('code', '=like', '9%'),  # US-791 exclude 9 accounts
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         '|', ('type', '!=', 'other'), ('user_type_code', '!=', 'stock'), # Do not allow Regular / Stock accounts
         '|', ('user_type_code', '!=', 'expense'), ('user_type.report_type', '!=', 'none'), # Disallow extra-accounting expenses accounts
@@ -46,7 +49,7 @@ ACCOUNT_RESTRICTED_AREA = {
    'in_invoice': [
         ('type', '!=', 'view'),
         # Either Payable/Payables accounts or Regular / Debt accounts
-        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash']),
+        '|', '&', ('type', '=', 'payable'), ('user_type_code', '=', 'payables'), '&', ('type', '=', 'other'), ('user_type_code', 'in', ['debt','cash','income']),
         ('type_for_register', '!=', 'donation'),
     ],
     # HEADER OF:
@@ -55,8 +58,9 @@ ACCOUNT_RESTRICTED_AREA = {
     #+ Debit Notes
     'out_invoice': [
         ('type', '!=', 'view'),
-        # Either Receivable/Receivables accounts or Regular / Cash accounts
-        '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']), '&', ('type', '=', 'other'), ('user_type_code', '=', 'cash'),
+        # Either Receivable/Receivables or Receivable/Cash or Regular/Cash or Regular/Income accounts
+        '|', '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables','cash']),
+        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
     ],
     # HEADER OF donation
     'donation_header': [
@@ -100,7 +104,7 @@ ACCOUNT_RESTRICTED_AREA = {
     'intermission_lines': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False),
-        ('user_type_code', '=', 'expense'),
+        ('user_type_code', 'in', ['expense', 'income', 'receivables']),
         ('user_type.report_type', '!=', 'none'), # To only use Expense extra-accounting accounts
     ],
     # RECURRING MODELS
@@ -139,8 +143,8 @@ ACCOUNT_RESTRICTED_AREA = {
     # MANUEL JOURNAL ENTRIES
     'account_move_lines': [
         ('type', 'not in', ['view', 'consolidation', 'closed']),
-        ('code', 'not like', '8%'),  # US-791 exclude 8 accounts
-        ('code', 'not like', '9%'),  # US-791 exclude 9 accounts
+        '!', ('code', '=like', '8%'),  # US-791 exclude 8 accounts
+        '!', ('code', '=like', '9%'),  # US-791 exclude 9 accounts
         '|', ('type', '!=', 'liquidity'), ('user_type_code', '!=', 'cash'), # Do not allow Liquidity / Cash accounts
         ('is_not_hq_correctible', '=', False),
     ],
@@ -191,8 +195,8 @@ ACCOUNT_RESTRICTED_AREA = {
     'correction_wizard': [
         ('type', '!=', 'view'),
         ('is_not_hq_correctible', '=', False), # Do not allow user to select accounts with "Not HQ correctible" set to True
-        ('code', 'not like', '8%'),  # UTP-1187 exclude 8/9 accounts
-        ('code', 'not like', '9%'),  # UTP-1187 exclude 8/9 accounts
+        '!', ('code', '=like', '8%'),  # UTP-1187 exclude 8/9 accounts
+        '!', ('code', '=like', '9%'),  # UTP-1187 exclude 8/9 accounts
         ('code', 'not in', ['10100', '10200', '10210']),  # UTP-1187 exclude liquidity / cash (10100, 10200, 10210) accounts
         ('is_not_hq_correctible', '!=', True)  # UTP-1187 exclude with the "Can not be corrected on HQ entries" attribute set to "True" accounts
     ],

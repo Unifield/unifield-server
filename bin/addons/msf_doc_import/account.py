@@ -156,7 +156,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         - check integrity of data in files
         """
         # Some checks
-        if not context:
+        if context is None:
             context = {}
         # Prepare some values
         from_yml = False
@@ -184,16 +184,17 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.pool.get('msf.doc.import.accounting.lines').unlink(cr, uid, old_lines_ids)
 
             # Check wizard data
+            period_obj = self.pool.get('account.period')
+            period_ctx = context.copy()
+            period_ctx['extend_december'] = True
             for wiz in self.browse(cr, uid, ids):
                 # Update wizard
                 self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': 2.00})
                 # UF-2045: Check that the given date is in an open period
-                wiz_period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, wiz.date, context)
+                wiz_period_ids = period_obj.get_period_from_date(
+                    cr, uid, wiz.date, period_ctx)
                 if not wiz_period_ids:
                     raise osv.except_osv(_('Warning'), _('No period found!'))
-                period = self.pool.get('account.period').browse(cr, uid, wiz_period_ids[0], context)
-                if not period or period.state in ['created', 'done']:
-                    raise osv.except_osv(_('Warning'), _('Period is not open!'))
                 date = wiz.date or False
 
                 # Check that a file was given
@@ -215,7 +216,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'message': _('Reading headers…'), 'progression': 5.00})
                 # Use the first row to find which column to use
                 cols = {}
-                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Partner', 'Employee', 'Journal', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
+                col_names = ['Journal Code', 'Description', 'Reference', 'Document Date', 'Posting Date', 'Period', 'G/L Account', 'Partner', 'Employee', 'Journal', 'Destination', 'Cost Centre', 'Funding Pool', 'Booking Debit', 'Booking Credit', 'Booking Currency']
                 for num, r in enumerate(rows):
                     header = [x and x.data for x in r.iter_cells()]
                     for el in col_names:
@@ -406,11 +407,19 @@ class msf_doc_import_accounting(osv.osv_memory):
                         if not line[cols['Cost Centre']]:
                             errors.append(_('Line %s. No cost center specified!') % (current_line_num,))
                             continue
+                        # If necessary cast the CC into a string, otherwise the below search would crash
+                        if not isinstance(line[cols['Cost Centre']], basestring):
+                            line[cols['Cost Centre']] = '%s' % (line[cols['Cost Centre']])
                         cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['Cost Centre']]), ('code', '=', line[cols['Cost Centre']])])
                         if not cc_ids:
                             errors.append(_('Line %s. Cost Center %s not found!') % (current_line_num, line[cols['Cost Centre']]))
                             continue
                         r_cc = cc_ids[0]
+                        # Check Cost Center type
+                        cc = self.pool.get('account.analytic.account').browse(cr, uid, r_cc, context)
+                        if cc.type == 'view':
+                            errors.append(_('Line %s. %s is a VIEW type Cost Center!') % (current_line_num, line[cols['Cost Centre']]))
+                            continue
                         # Check Funding Pool (added since UTP-1082)
                         r_fp = msf_fp_id
                         if line[cols['Funding Pool']]:
@@ -419,6 +428,22 @@ class msf_doc_import_accounting(osv.osv_memory):
                                 errors.append(_('Line %s. Funding Pool %s not found!') % (current_line_num, line[cols['Funding Pool']]))
                                 continue
                             r_fp = fp_ids[0]
+                    # US-937: use period of import file
+                    if line[cols['Period']] == 'Period 16':
+                        raise osv.except_osv(_('Warning'), _("You can't import entries in Period 16."))
+                    period_ids = period_obj.search(
+                        cr, uid, [
+                            ('id', 'in', wiz_period_ids),
+                            ('name', '=', line[cols['Period']]),
+                        ], limit=1, context=context)
+                    if not period_ids:
+                        raise osv.except_osv(_('Warning'),
+                            _('The date chosen in the wizard is not in the same period as the imported entries.'))
+                    period = period_obj.browse(
+                        cr, uid, period_ids[0], context=context)
+                    if period.state in ('created', 'done'):
+                        raise osv.except_osv(_('Warning'), _('%s is not open!') % (period.name, ))
+
                     # NOTE: There is no need to check G/L account, Cost Center and Destination regarding document/posting date because this check is already done at Journal Entries validation.
 
                     # Registering data regarding these "keys":

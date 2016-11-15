@@ -31,6 +31,8 @@
                     <field name="import_in_progress" readonly="1" invisible="0" />
                 </xpath>
                 <xpath expr="/form/notebook/page[@string='Notes']/field[@name='project_ref']" position="after">
+                    <separator colspan="4" string="Sourcing group" />
+                    <field name="related_sourcing_id" readonly="True" />
                     <separator colspan="4" string="Import filenames" />
                     <field name="import_filenames" mode="tree" readonly="1" nolabel="1" colspan="4">
                         <tree string="Imported filenames">
@@ -96,6 +98,7 @@
                                         font-weight: bold;
                                         text-transform: uppercase;
                                         padding: 5px;
+                                        width: 90%%;
                                     }
                                 </style>
 

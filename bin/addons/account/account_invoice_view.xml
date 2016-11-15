@@ -190,7 +190,7 @@
                                 <field name="tax_line" nolabel="1">
                                     <tree editable="bottom" string="Taxes">
                                         <field name="invoice_id" invisible="True"/>
-                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id,parent.amount_untaxed,parent.amount_total,context)"/>
+                                        <field name="account_tax_id" on_change="tax_code_change(account_tax_id,parent.amount_untaxed,context)"/>
                                         <field name="name"/>
 
                                         <field name="account_id" groups="account.group_account_invoice" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation'),('user_type.code','not in',['income','expense'])]"/>
@@ -285,7 +285,7 @@
                             <field domain="[('company_id', '=', company_id),('type','=', 'receivable')]" name="account_id" groups="account.group_account_user"/>
                             <field name="name"/>
                             <field name="payment_term" widget="selection"/>
-                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list"/>
+                            <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'fake':1}"/>
                             <group col="1" colspan="2">
                                 <field name="tax_line" nolabel="1">
                                     <tree editable="bottom" string="Taxes">

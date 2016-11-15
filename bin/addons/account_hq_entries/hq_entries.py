@@ -457,6 +457,8 @@ class hq_entries(osv.osv):
         """
         Change Expat salary account is not allowed
         """
+        if not ids:
+            return True
         if context is None:
             context={}
 
@@ -491,6 +493,21 @@ class hq_entries(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot delete original entries!'))
         return super(hq_entries, self).unlink(cr, uid, ids, context)
 
+    def _is_dec_period_open(self, cr, uid, context):
+        '''
+        Returns True if at least one December period (12,13,14,15) is Open or Field-Closed,
+        otherwise returns False
+        '''
+        if context is None:
+            context = {}
+        domain = [
+                ('number', 'in', range(12, 16)),
+                ('state', 'in', ['draft', 'field-closed', ]),
+            ]
+        if self.pool.get('account.period').search(cr, uid, domain, context=context, count=True):
+            return True
+        return False
+
     def check_hq_entry_transaction(self, cr, uid, ids, wizard_model,
         context=None):
         if not ids:
@@ -512,16 +529,16 @@ class hq_entries(osv.osv):
         # period; but they can come from HQ mission opened via SYNC)
         period_ids = list(set([ he.period_id.id \
             for he in self.browse(cr, uid, ids, context=context) ]))
+        # warning if an HQ Entry is in a non-opened period
         if period_ids:
-            domain = [
-                ('id', 'in', period_ids),
-                ('state', 'in', ['mission-closed', 'done', ]),
-            ]
-            if self.pool.get('account.period').search(cr, uid, domain,
-                context=context, count=True):
-                raise osv.except_osv(_("Warning"),
-                    _("You can not validate HQ Entry in a mission-closed" \
-                      " period"))
+            periods = self.pool.get("account.period").browse(cr, uid, period_ids, context)
+            mission_closed_except = osv.except_osv(_("Warning"), _("You can not validate HQ Entry in a mission-closed" \
+                                                       " period"))
+            for p in periods:
+                if p.number != 12 and p.state in ['mission-closed', 'done', ]:
+                    raise mission_closed_except
+                elif p.number == 12 and not self._is_dec_period_open(cr, uid, context):
+                    raise mission_closed_except
 
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

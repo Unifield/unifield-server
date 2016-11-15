@@ -119,36 +119,6 @@ class stock_incoming_processor(osv.osv):
 
         return super(stock_incoming_processor, self).create(cr, uid, vals, context=context)
 
-    def _get_prodlot_from_expiry_date(self, cr, uid, expiry_date, product_id, context=None):
-        """
-        Search if an internal batch exists in the system with this expiry date.
-        If no, create the batch.
-        """
-        # Objects
-        lot_obj = self.pool.get('stock.production.lot')
-        seq_obj = self.pool.get('ir.sequence')
-
-        # Double check to find the corresponding batch
-        lot_ids = lot_obj.search(cr, uid, [
-                            ('life_date', '=', expiry_date),
-                            ('type', '=', 'internal'),
-                            ('product_id', '=', product_id),
-                            ], context=context)
-
-        # No batch found, create a new one
-        if not lot_ids:
-            vals = {
-                'product_id': product_id,
-                'life_date': expiry_date,
-                'name': seq_obj.get(cr, uid, 'stock.lot.serial'),
-                'type': 'internal',
-            }
-            lot_id = lot_obj.create(cr, uid, vals, context)
-        else:
-            lot_id = lot_ids[0]
-
-        return lot_id
-
     def do_incoming_shipment(self, cr, uid, ids, context=None):
         """
         Made some integrity check on lines and run the do_incoming_shipment of stock.picking
@@ -215,7 +185,8 @@ class stock_incoming_processor(osv.osv):
                    and not line.prodlot_id \
                    and line.expiry_date:
                     if line.type_check == 'in':
-                        prodlot_id = self._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
+                        # US-838: The method has been moved to addons/stock_batch_recall/product_expiry.py
+                        prodlot_id = self.pool.get('stock.production.lot')._get_prodlot_from_expiry_date(cr, uid, line.expiry_date, line.product_id.id, context=context)
                         in_proc_obj.write(cr, uid, [line.id], {'prodlot_id': prodlot_id}, context=context)
                     else:
                         # Should not be reached thanks to UI checks
@@ -459,32 +430,57 @@ class stock_move_in_processor(osv.osv):
         # scan moves' purchase line and check if associated with a SO/FO
         po_obj = self.pool.get('purchase.order')
         sol_obj = self.pool.get('sale.order.line')
-        for move in self.pool.get('stock.move').browse(cr, uid,
-            moves_to_ids.keys(), context=context):
+        # store the result as most of the time lines have same order_id
+        move_purchase_line = self.pool.get('stock.move').read(cr,
+                uid, moves_to_ids.keys(), ['id', 'purchase_line_id'],
+                context=context)
+
+        move_id_to_purchase_line_id = {}
+        for ret in move_purchase_line:
+            if ret['purchase_line_id']:
+                move_id_to_purchase_line_id[ret['id']] = ret['purchase_line_id'][0]
+
+        purchase_line_order_id = self.pool.get('purchase.order.line').read(cr,
+                uid, set(move_id_to_purchase_line_id.values()), ['id', 'order_id'], context=context)
+
+        purchase_line_id_by_order_id = dict([(ret['id'], ret['order_id'][0])
+            for ret in purchase_line_order_id])
+        order_id_set = set(purchase_line_id_by_order_id.values())
+
+        order_id_location_dict = {}
+        for order_id in order_id_set:
+            sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
+                    [order_id], context=context)
+            if sol_ids:
+                location_ids = [main_stock_id] if main_stock_id else []
+                # move associated with a SO, check not with an IR (so is FO)
+                is_from_fo = True
+                for sol in sol_obj.browse(cr, uid, sol_ids,
+                    context=context):
+                    if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
+                        # from an IR then not from FO
+                        is_from_fo = False
+                        break
+
+                if is_from_fo:
+                    if not cd_id:
+                        cd_id = self.pool.get('ir.model.data').get_object_reference(
+                            cr, uid, 'msf_cross_docking',
+                            'stock_location_cross_docking')[1]
+                    location_ids.append(cd_id)
+                order_id_location_dict[order_id] = location_ids
+
+        for move_id, id in moves_to_ids.iteritems():
             location_ids = [main_stock_id] if main_stock_id else []
-            is_from_fo = False
 
-            if move.purchase_line_id and move.purchase_line_id.order_id:
-                sol_ids = po_obj.get_sol_ids_from_po_ids(cr, uid,
-                        [move.purchase_line_id.order_id.id], context=context)
-                if sol_ids:
-                    # move associated with a SO, check not with an IR (so is FO)
-                    is_from_fo = True
-                    for sol in sol_obj.browse(cr, uid, sol_ids,
-                        context=context):
-                        if sol.order_id and sol.order_id.procurement_request and sol.order_id.location_requestor_id.usage != 'customer':
-                            # from an IR then not from FO
-                            is_from_fo = False
-                            break
+            if move_id in move_id_to_purchase_line_id:
+                purchase_line_id = move_id_to_purchase_line_id[move_id]
+                if purchase_line_id in purchase_line_id_by_order_id:
+                    order_id = purchase_line_id_by_order_id[purchase_line_id]
+                    if order_id in order_id_location_dict:
+                        location_ids = order_id_location_dict[order_id]
 
-            if is_from_fo:
-                if not cd_id:
-                    cd_id = self.pool.get('ir.model.data').get_object_reference(
-                        cr, uid, 'msf_cross_docking',
-                        'stock_location_cross_docking')[1]
-                location_ids.append(cd_id)
-
-            res[moves_to_ids[move.id]] = ','.join(map(lambda id: str(id), location_ids))
+            res[id] = ','.join(map(lambda id: str(id), location_ids))
 
         # set ids default value for ids with no specific location
         for id in ids:

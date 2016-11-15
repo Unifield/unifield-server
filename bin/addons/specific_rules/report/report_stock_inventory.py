@@ -61,7 +61,7 @@ will be shown.""",
             string='Specific location',
             help="""If a location is choosen, only product quantities in this
 location will be shown.""",
-            required=True,
+            required=False,
         ),
         'state': fields.selection(
             selection=[
@@ -84,7 +84,18 @@ location will be shown.""",
     def update(self, cr, uid, ids, context=None):
         return {}
 
-    def generate_report(self, cr, uid, ids, context=None):
+    def generate_report_all_locations(self, cr, uid, ids, context=None):
+        """
+        Launch the generation of a report with the inventory of each products on each locations
+        @param cr: Cursor to the database
+        @param uid: ID of the res.users that calls this method
+        @param ids: List of ID of export wizard
+        @param context: Context of the call
+        @return: An action to the view with a waiting message
+        """
+        return self.generate_report(cr, uid, ids, context=context, all_locations=True)
+
+    def generate_report(self, cr, uid, ids, context=None, all_locations=False):
         """
         Select the good lines on the report.stock.inventory table
         """
@@ -109,10 +120,15 @@ location will be shown.""",
                     domain.append(('product_id', '=', report.product_id.id))
                 if report.expiry_date:
                     domain.append(('expired_date', '=', report.expiry_date))
-            if report.location_id:
+            if not all_locations and report.location_id:
                 domain.append(('location_id', '=', report.location_id.id))
+            elif all_locations:
+                domain.append(('location_id.usage', '=', 'internal'))
 
-            context['domain'] = domain
+            context.update({
+                'domain': domain,
+                'all_locations': all_locations,
+            })
 
             rsi_ids = rsi_obj.search(cr, uid, domain, context=context)
             if not rsi_ids:
@@ -131,7 +147,7 @@ location will be shown.""",
             cr.commit()
             new_thread = threading.Thread(
                 target=self.generate_report_bkg,
-                args=(cr, uid, report.id, datas, context)
+                args=(cr, uid, report.id, datas, context, all_locations)
             )
             new_thread.start()
             new_thread.join(30.0)
@@ -159,7 +175,7 @@ location will be shown.""",
             _('No inventory lines found for these parameters'),
         )
 
-    def generate_report_bkg(self, cr, uid, ids, datas, context=None):
+    def generate_report_bkg(self, cr, uid, ids, datas, context=None, all_locations=False):
         """
         Generate the report in background
         """
@@ -172,21 +188,27 @@ location will be shown.""",
         import pooler
         new_cr = pooler.get_db(cr.dbname).cursor()
 
+        report_name = 'stock.inventory.xls'
+        attachment_name = 'stock_inventory_location_view_%s.xls'
+        if all_locations:
+            report_name = 'stock.inventory.all.locations.xls'
+            attachment_name = 'stock_inventory_global_view_%s.xls'
+
         rp_spool = report_spool()
         result = rp_spool.\
             exp_report(
                 cr.dbname, uid,
-                'stock.inventory.xls', ids, datas, context)
+                report_name, ids, datas, context)
 
         file_res = {'state': False}
         while not file_res.get('state'):
-            file_res = rp_spool.exp_report_get(cr.dbname, uid, result)
+            file_res = rp_spool.exp_report_get(new_cr.dbname, uid, result)
             time.sleep(0.5)
         attachment = self.pool.get('ir.attachment')
         attachment.create(new_cr, uid, {
-            'name': 'stock_inventory_%s.xls' % (
+            'name': attachment_name % (
                 time.strftime('%Y_%m_%d_%H_%M')),
-            'datas_fname': 'stock_inventory_%s.xls' % (
+            'datas_fname': attachment_name % (
                 time.strftime('%Y_%m_%d_%H_%M')),
             'description': 'Stock inventory',
             'res_model': 'export.report.stock.inventory',
@@ -239,6 +261,8 @@ location will be shown.""",
         """
         Call onchange_prodlot if a lot is defined
         """
+        if not ids:
+            return True
         if vals.get('prodlot_id'):
             vals.update(
                 self.onchange_prodlot(
@@ -260,7 +284,18 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
         self.localcontext.update({
             'time': time,
             'getLines': self.getLines,
+            'getLocations': self.getLocations,
         })
+
+    def getLocations(self):
+        loc_obj = self.pool.get('stock.location')
+        location_ids = loc_obj.search(
+            self.cr,
+            self.uid,
+            [('usage', '=', 'internal')],
+            context=self.localcontext
+        )
+        return loc_obj.browse(self.cr, self.uid, location_ids, context=self.localcontext)
 
     def getLines(self):
         res = {}
@@ -270,8 +305,9 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
             self.datas['lines'],
             context=self.localcontext
         ):
-            if not line.product_id.default_code in res:
-                res[line.product_id.default_code] = {
+            key = line.product_id.default_code
+            if not key in res:
+                res[key] = {
                     'product_code': line.product_id.default_code,
                     'product_name': line.product_id.name,
                     'uom': line.product_id.uom_id.name,
@@ -280,8 +316,8 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                     'lines': {},
                 }
 
-            res[line.product_id.default_code]['sum_qty'] += line.product_qty
-            res[line.product_id.default_code]['sum_value'] += line.value
+            res[key]['sum_qty'] += line.product_qty
+            res[key]['sum_value'] += line.value
             batch_id = 'no_batch'
             batch_name = ''
             expiry_date = False
@@ -291,16 +327,19 @@ class parser_report_stock_inventory_xls(report_sxw.rml_parse):
                 batch_name = line.prodlot_id.name
                 expiry_date = line.prodlot_id.life_date
 
-            if batch_id not in res[line.product_id.default_code]['lines']:
-                res[line.product_id.default_code]['lines'][batch_id] = {
+            if batch_id not in res[key]['lines']:
+                res[key]['lines'][batch_id] = {
                     'batch': batch_name,
                     'expiry_date': expiry_date,
                     'qty': 0.00,
                     'value': 0.00,
+                    'location_ids': {},
                 }
 
-            res[line.product_id.default_code]['lines'][batch_id]['qty'] += line.product_qty
-            res[line.product_id.default_code]['lines'][batch_id]['value'] += line.value
+            res[key]['lines'][batch_id]['qty'] += line.product_qty
+            res[key]['lines'][batch_id]['value'] += line.value
+            res[key]['lines'][batch_id]['location_ids'].setdefault(line.location_id.id, 0.00)
+            res[key]['lines'][batch_id]['location_ids'][line.location_id.id] += line.product_qty
 
         fres = []
         for k in sorted(res.keys()):
@@ -326,10 +365,19 @@ class report_stock_inventory_xls(SpreadsheetReport):
             cr, uid, ids, data, context=context)
         return (a[0], 'xls')
 
+
 report_stock_inventory_xls(
     'report.stock.inventory.xls',
     'export.report.stock.inventory',
     'addons/specific_rules/report/report_stock_inventory_xls.mako',
+    parser=parser_report_stock_inventory_xls,
+    header='internal',
+)
+
+report_stock_inventory_xls(
+    'report.stock.inventory.all.locations.xls',
+    'export.report.stock.inventory',
+    'addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako',
     parser=parser_report_stock_inventory_xls,
     header='internal',
 )

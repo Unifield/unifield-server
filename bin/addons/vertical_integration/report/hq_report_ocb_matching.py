@@ -96,7 +96,6 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 AND aml.journal_id = j.id
                 AND p.id = aml.period_id
                 AND a.reconcile = 't'
-                AND a.type != 'liquidity'
                 AND j.type not in %s
                 AND p.number not in (0, 16)
                 AND aml.instance_id in %s;

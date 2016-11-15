@@ -80,17 +80,10 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
 
     def sum_dr(self):
         # UFTP-312: If this method is "sum_dr", we except it returns the sum of debit. That's all
-        '''if self._deduce_accounts_data and self._deduce_accounts_data['debit']:
-            if self.result_sum_dr < 0:
-                self.result_sum_dr += self._deduce_accounts_data['debit']
-            else:
-                self.result_sum_dr -= self._deduce_accounts_data['debit']'''
         return self.result_sum_dr
 
     def sum_cr(self):
         # UFTP-312: If thismethod is "sum_cr", we except it returns the sum of credit. That's all
-        '''if self._deduce_accounts_data and self._deduce_accounts_data['credit']:
-            self.result_sum_cr -= self._deduce_accounts_data['credit']'''
         return self.result_sum_cr
 
     def get_data(self, data):
@@ -118,10 +111,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             ctx['date_from'] = data['form'].get('date_from', False)
             ctx['date_to'] = data['form'].get('date_to', False)
         if 'instance_ids' in data['form']:
-            ctx['instance_ids'] = data['form']['instance_ids']
-            
-        # US-227/6: accounts 8*, 9* are not displayed:
-        '''self._deduce_accounts_data = { 'debit': 0., 'credit': 0., }'''            
+            ctx['instance_ids'] = data['form']['instance_ids']       
 
         cal_list = {}
         account_id = data['form'].get('chart_account_id', False)
@@ -131,13 +121,6 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         for typ in types:
             accounts_temp = []
             for account in accounts:
-                '''if account.code.startswith('8') or account.code.startswith('9'):
-                    # US-227/6: accounts 8*, 9* are not displayed
-                    if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
-                        self._deduce_accounts_data['debit'] += abs(account.debit - account.credit)
-                    if typ == 'income' and account.type <> 'view' and (account.debit <> account.credit):
-                        self._deduce_accounts_data['credit'] += abs(account.debit - account.credit)
-                    continue'''
                 if (account.user_type.report_type) and (account.user_type.report_type == typ):
                     currency = account.currency_id and account.currency_id or account.company_id.currency_id
                     if typ == 'expense' and account.type <> 'view' and (account.debit <> account.credit):
@@ -256,9 +239,11 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             if data['form'].get('instance_ids', False):
                 self.cr.execute('select code from msf_instance where id IN %s',
                     (tuple(data['form']['instance_ids']),))
+                instances = [x for x, in self.cr.fetchall()]
             else:
-                self.cr.execute('select code from msf_instance')
-            instances = [x for x, in self.cr.fetchall()]
+                # US-1166: mission only instances if none provided
+                instances = self._get_instances(get_code=True,
+                    mission_filter=True)
         return ', '.join(instances)
 
 report_sxw.report_sxw('report.pl.account.horizontal', 'account.account',

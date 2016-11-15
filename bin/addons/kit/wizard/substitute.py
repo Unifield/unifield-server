@@ -613,6 +613,8 @@ class substitute_item(osv.osv_memory):
         '''
         force writing of expired_date which is readonly for batch management products
         '''
+        if not ids:
+            return True
         vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item, self).write(cr, uid, ids, vals, context=context)
     
@@ -955,6 +957,8 @@ class substitute_item_mirror(osv.osv_memory):
         product_id is readonly, we're getting into trouble over. write forced for lot with perishable will simply not work.
         there is however not fonctional issue about this point. as the name of the lot is not used for perishable when processing the screen.
         '''
+        if not ids:
+            return True
         #vals = self._common_update(cr, uid, vals, context=context)
         return super(substitute_item_mirror, self).write(cr, uid, ids, vals, context=context)
     

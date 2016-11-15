@@ -44,6 +44,19 @@ import datetime
 from updater import get_server_version
 
 
+def check_tz():
+    db = sql_db.db_connect('template1')
+    cr = db.cursor()
+    try:
+        cr.execute('select now() - %s', (datetime.datetime.now(),))
+        now = cr.fetchone()[0]
+        if abs(now) >= datetime.timedelta(hours=1):
+            return _('Time zones of UniField server and PostgreSQL server differ. Please check the computer configuration.')
+    finally:
+        cr.close()
+    return ''
+
+
 class db(netsvc.ExportService):
     def __init__(self, name="db"):
         netsvc.ExportService.__init__(self, name)
@@ -51,8 +64,6 @@ class db(netsvc.ExportService):
         self.actions = {}
         self.id = 0
         self.id_protect = threading.Semaphore()
-
-        self._pg_psw_env_var_is_set = False # on win32, pg_dump need the PGPASSWORD env var
 
     def dispatch(self, method, auth, params):
         if method == 'drop':
@@ -72,7 +83,8 @@ class db(netsvc.ExportService):
             passwd = params[0]
             params = params[1:]
             security.check_super(passwd)
-        elif method in [ 'db_exist', 'list', 'list_lang', 'server_version', 'check_timezone' ]:
+        elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
+                'check_timezone', 'connected_to_prod_sync_server' ]:
             # params = params
             # No security check for these methods
             pass
@@ -91,7 +103,7 @@ class db(netsvc.ExportService):
             cr.autocommit(True) # avoid transaction block
             cr.execute("""CREATE DATABASE "%s" ENCODING 'unicode' TEMPLATE "template0" """ % name)
         finally:
-            cr.close()
+            cr.close(True)
 
     def exp_create(self, db_name, demo, lang, user_password='admin'):
         self.id_protect.acquire()
@@ -112,7 +124,7 @@ class db(netsvc.ExportService):
                     tools.init_db(cr)
                     tools.config['lang'] = lang
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                     cr = None
                     pool = pooler.restart_pool(db_name, demo, serv.actions[id],
                             update_module=True)[1]
@@ -132,7 +144,7 @@ class db(netsvc.ExportService):
                     serv.actions[id]['users'] = cr.dictfetchall()
                     serv.actions[id]['clean'] = True
                     cr.commit()
-                    cr.close()
+                    cr.close(True)
                 except Exception, e:
                     serv.actions[id]['clean'] = False
                     serv.actions[id]['exception'] = e
@@ -144,7 +156,7 @@ class db(netsvc.ExportService):
                     netsvc.Logger().notifyChannel('web-services', netsvc.LOG_ERROR, 'CREATE DATABASE\n%s' % (traceback_str))
                     serv.actions[id]['traceback'] = traceback_str
                     if cr:
-                        cr.close()
+                        cr.close(True)
         logger = netsvc.Logger()
         logger.notifyChannel("web-services", netsvc.LOG_INFO, 'CREATE DATABASE: %s' % (db_name.lower()))
         dbi = DBInitialize()
@@ -153,6 +165,9 @@ class db(netsvc.ExportService):
         create_thread.start()
         self.actions[id]['thread'] = create_thread
         return id
+
+    def exp_check_timezone(self):
+        return check_tz()
 
     def exp_get_progress(self, id):
         if self.actions[id]['thread'].isAlive():
@@ -195,13 +210,12 @@ class db(netsvc.ExportService):
         return True
 
     def _set_pg_psw_env_var(self):
-        if os.name == 'nt' and not os.environ.get('PGPASSWORD', ''):
+        if tools.config['db_password']:
             os.environ['PGPASSWORD'] = tools.config['db_password']
-            self._pg_psw_env_var_is_set = True
 
     def _unset_pg_psw_env_var(self):
-        if os.name == 'nt' and self._pg_psw_env_var_is_set:
-            os.environ['PGPASSWORD'] = ''
+        if 'PGPASSWORD' in os.environ:
+            del os.environ['PGPASSWORD']
 
     def exp_dump_file(self, db_name):
         # get a tempfilename
@@ -298,18 +312,6 @@ class db(netsvc.ExportService):
         ## Not True: in fact, check if connection to database is possible. The database may exists
         return bool(sql_db.db_connect(db_name))
 
-    def exp_check_timezone(self):
-        db = sql_db.db_connect('template1')
-        cr = db.cursor()
-        try:
-            cr.execute('select now() - %s', (datetime.datetime.now(),))
-            now = cr.fetchone()[0]
-            if abs(now) >= datetime.timedelta(hours=1):
-                return _('Time zones of UniField server and PostgreSQL server differ. Please check the computer configuration.')
-        finally:
-            cr.close()
-        return ''
-
     def exp_list(self, document=False):
         if not tools.config['list_db'] and not document:
             raise Exception('AccessDenied')
@@ -337,6 +339,29 @@ class db(netsvc.ExportService):
             cr.close()
         res.sort()
         return res
+
+    def exp_connected_to_prod_sync_server(self, db_name):
+        """Return True if db_name is connected to a production SYNC_SERVER,
+        False otherwise"""
+
+        connection = sql_db.db_connect(db_name)
+        # it the db connnected to a sync_server ?
+        server_connecion_module = pooler.get_pool(db_name, upgrade_modules=False).get('sync.client.sync_server_connection')
+        if not server_connecion_module:
+            return False
+
+        if not getattr(server_connecion_module, '_uid', False):
+            return False
+
+        cr = connection.cursor()
+        cr.execute('''SELECT host, database
+        FROM sync_client_sync_server_connection''')
+        host, database = cr.fetchone()
+        cr.close()
+        if host and database and database.strip() == 'SYNC_SERVER' and \
+            ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
+            return True
+        return False
 
     def exp_change_admin_password(self, new_password):
         tools.config['admin_passwd'] = new_password
@@ -428,14 +453,15 @@ class common(_ObjectService):
             res = security.login(params[0], params[1], params[2])
             msg = res and 'successful login' or 'bad login or password'
             # TODO log the client ip address..
-            logger.notifyChannel("web-service", netsvc.LOG_INFO, "%s from '%s' using database '%s'" % (msg, params[1], params[0].lower()))
+            if params[1].lower() != 'unidata':
+                logger.notifyChannel("web-service", netsvc.LOG_INFO, "%s from '%s' using database '%s'" % (msg, params[1], params[0].lower()))
             return res or False
         elif method == 'number_update_modules':
             return security.number_update_modules(params[0])
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])
-            logger.notifyChannel("web-service", netsvc.LOG_INFO,'Logout %s from database %s'%(login,db))
+            logger.notifyChannel("web-service", netsvc.LOG_INFO,'Logout %s from database %s' % (params[1], db))
             return True
         elif method in ['about', 'timezone_get', 'get_server_environment',
                         'login_message','get_stats', 'check_connectivity',

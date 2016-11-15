@@ -180,16 +180,39 @@ class common_report_header(object):
             return pooler.get_pool(self.cr.dbname).get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).company_id.name
         return ''
 
-    def _get_journal(self, data):
+    def _get_journal(self, data, instance_ids=False):
         codes = []
         if data.get('form', False) and data['form'].get('journal_ids', False):
-            self.cr.execute('select code from account_journal where id IN %s',(tuple(data['form']['journal_ids']),))
-            codes = [x for x, in self.cr.fetchall()]
+            if instance_ids:
+                self.cr.execute('select code from account_journal where id IN %s and instance_id IN %s', (
+                    tuple(data['form']['journal_ids']),
+                    tuple(instance_ids),
+                ))
+            else:
+                self.cr.execute('select code from account_journal where id IN %s', (
+                    tuple(data['form']['journal_ids']),
+                ))
+            codes = [ x for x, in self.cr.fetchall() ]
         return codes
 
     def _get_currency(self, data):
         if data.get('form', False) and data['form'].get('chart_account_id', False):
             return pooler.get_pool(self.cr.dbname).get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).company_id.currency_id.symbol
         return ''
+
+    def _get_instances(self, get_code=False, mission_filter=False):
+        """
+        :param get_code: True to return code list vs ids list
+        :type get_code: boolean
+        :param mission_filter: only mission instance ?
+        :type mission_filter: boolean
+        :rtype : list/False
+        """
+        instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
+        ids = instance_obj.search(self.cr, self.uid,
+            mission_filter and [('instance_to_display_ids','=',True)] or [])
+        if not get_code or not ids:
+            return ids
+        return [ i.code for i in instance_obj.browse(self.cr, self.uid, ids) ]
 
 #vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

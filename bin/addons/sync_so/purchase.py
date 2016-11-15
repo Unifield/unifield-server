@@ -404,13 +404,11 @@ class purchase_order_sync(osv.osv):
         res_id = self.create(cr, uid, default , context=context)
         so_po_common.update_next_line_number_fo_po(cr, uid, res_id, self, 'purchase_order_line', context)
 
-        #self.manage_split_po_lines(cr, uid, res_id, context=context)
 
         proc_ids = []
         order_ids = []
         order = self.browse(cr, uid, res_id, context=context)
         origin_lines = []
-        #pdb.set_trace()
         for order_line in order.order_line:
             if order_line.original_purchase_line_id:
                 orig_line = line_obj.search(cr, uid, [('sync_order_line_db_id', '=', order_line.original_purchase_line_id)], context=context)
@@ -429,34 +427,13 @@ class purchase_order_sync(osv.osv):
                     if line.order_id:
                         order_ids.append(line.order_id.id)
 
-        # Remove the original PO lines that are not in the split PO
-#        for original_line in original_po.order_line:
-#            if original_line.id not in origin_lines:
-#                line_obj.fake_unlink(cr, uid, [original_line.id], context=context)
-        
+
         self.manage_split_po_lines(cr, uid, res_id, context=context)
 
         if proc_ids:
             self.pool.get('procurement.order').write(cr, uid, proc_ids, {'purchase_id': res_id}, context=context)
-            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr)
+            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', proc_ids, 'purchase.order', order_ids, res_id, cr, force=True)
 
-#        for orig_line, split_lines in to_split.iteritems():
-#            pol_ids = line_obj.search(cr, uid, [('order_id', '=', res_id), ('original_purchase_line_id', '=', orig_line)], context=context)
-#            if pol_ids:
-#                pol_brw = line_obj.browse(cr, uid, pol_ids[0], context=context)
-#                for sp in split_lines:
-#                    line_obj.write(cr, uid, pol_ids[0], {'product_qty': pol_brw.product_qty + sp.get('product_qty')}, context=context)
-#                    split_obj = self.pool.get('split.purchase.order.line.wizard')
-#                    split_id = split_obj.create(cr, uid, {
-#                        'purchase_line_id': pol_brw.id,
-#                        'original_qty': pol_brw.product_qty + sp.get('product_qty'),
-#                        'old_line_qty': pol_brw.product_qty,
-#                        'new_line_qty': sp.get('product_qty'),
-#                    }, context=context)
-#                    split_obj.split_line(cr, uid, [split_id], context=context)
-#                    new_line_ids = line_obj.search(cr, uid, [('order_id', '=', res_id)], order='id desc', limit=1)
-#                    if new_line_ids and sp.get('sync_order_line_db_id'):
-#                        line_obj.write(cr, uid, new_line_ids, {'sync_order_line_db_id': sp.get('sync_order_line_db_id')}, context=context)
 
         fo_ids = self.pool.get('sale.order').search(cr, uid, [('loan_id', '=', po_id)], context=context)
         if fo_ids:
@@ -548,7 +525,7 @@ class purchase_order_sync(osv.osv):
                         if sol.procurement_id and sol.procurement_id.purchase_id:
                             self.pool.get('procurement.order').write(cr, uid, [sol.procurement_id.id], {'purchase_id': po_id}, context=context)
                             line_obj.write(cr, uid, [line.id], {'procurement_id': sol.procurement_id.id}, context=context)
-                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr)
+                            netsvc.LocalService("workflow").trg_change_subflow(uid, 'procurement.order', [sol.procurement_id.id], 'purchase.order', [po_id], po_id, cr, force=True)
                         if sol.order_id and (not sol.order_id.procurement_request or sol.order_id.location_requestor_id.usage == 'customer'):
                             self.write(cr, uid, [po_id], {'cross_docking_ok': True}, context=context)
 

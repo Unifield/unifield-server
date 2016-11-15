@@ -31,6 +31,8 @@ class report_fully_report(report_sxw.rml_parse):
             'getAnalyticLines': self.getAnalyticLines,
             'getImportedMoveLines': self.getImportedMoveLines,
             'getRegRef': self.getRegRef,
+            'getFreeRef': self.getFreeRef,
+            'getDownPaymentReversals': self.getDownPaymentReversals,
         })
 
     def getRegRef(self, reg_line):
@@ -136,6 +138,54 @@ class report_fully_report(report_sxw.rml_parse):
         if al_ids:
             res = al_obj.browse(self.cr, self.uid, al_ids)
         return res
+
+    def getFreeRef(self, acc_move_line):
+        '''
+        Return the "manual" invoice reference associated with the account move line if it exists
+        (field Reference in DI and Free Reference in SI)
+        Note: for Supplier Refund and SI with Source Doc that are synched from Project to Coordo,
+        the free ref will appear in Project only (US-970)
+        '''
+        db = pooler.get_pool(self.cr.dbname)
+        acc_inv = db.get('account.invoice')
+        free_ref = False
+        if acc_move_line:
+            acc_move = acc_move_line.move_id
+            inv_id = acc_inv.search(self.cr, self.uid, [('move_id', '=', acc_move.id)])
+            if inv_id:
+                inv = acc_inv.browse(self.cr, self.uid, inv_id)
+                free_ref = inv and inv[0].reference
+            if not free_ref:
+                # display the free ref if it is different from the "standard" ref
+                if acc_move.name != acc_move.ref:
+                    free_ref = acc_move.ref
+        return free_ref or ''
+
+    def getDownPaymentReversals(self, reg_line):
+        '''
+        If the register line corresponds to a down payment that has been totally or partially reversed,
+        returns a list of the related account move line(s), else returns an empty list.
+        '''
+        dp_reversals = []
+        db = pooler.get_pool(self.cr.dbname)
+        acc_move_line_obj = db.get('account.move.line')
+        second_acc_move_line_id = False
+        if reg_line and reg_line.account_id.type_for_register == 'down_payment' and reg_line.first_move_line_id and reg_line.first_move_line_id.move_id:
+            acc_move = reg_line.first_move_line_id.move_id
+            acc_move_line_id = acc_move_line_obj.search(self.cr, self.uid, [('move_id', '=', acc_move.id), ('id', '!=', reg_line.first_move_line_id.id)])
+            acc_move_line = acc_move_line_obj.browse(self.cr, self.uid, acc_move_line_id)
+            # totally reconciled
+            reconcile_id = acc_move_line[0] and acc_move_line[0].reconcile_id or False
+            if reconcile_id:
+                second_acc_move_line_id = acc_move_line_obj.search(self.cr, self.uid, [('reconcile_id', '=', reconcile_id.id), ('id', '!=', acc_move_line[0].id)])
+            else:
+            # partially reconciled
+                reconcile_partial_id = acc_move_line[0] and acc_move_line[0].reconcile_partial_id or False
+                if reconcile_partial_id:
+                    second_acc_move_line_id = acc_move_line_obj.search(self.cr, self.uid, [('reconcile_partial_id', '=', reconcile_partial_id.id), ('id', '!=', acc_move_line[0].id)])
+            if second_acc_move_line_id:
+                dp_reversals = acc_move_line_obj.browse(self.cr, self.uid, second_acc_move_line_id)
+        return dp_reversals
 
 SpreadsheetReport('report.fully.report','account.bank.statement','addons/register_accounting/report/fully_report_xls.mako', parser=report_fully_report)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

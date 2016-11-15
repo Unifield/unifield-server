@@ -16,7 +16,7 @@
             <field name="model">account.mcdb</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1">
+                <form string="Selector - G/L" hide_new_button="1" hide_duplicate_button="1" hide_delete_button="1" >
                     &general;
                     <group col="4" colspan="4">
                         <group col="2" colspan="2">
@@ -67,7 +67,9 @@
                     &account;
                     <separator string="Reconciliation" colspan="4"/>
                     <field name="reconciled"/>
+                    <field name="reconcile_date" string="At"/>
                     <field name="reconcile_id"/>
+
                     &currency;
                     <group colspan="4" col="6">
                         <separator string="Third Party" colspan="6"/>
@@ -342,7 +344,7 @@
             <field name="view_id" ref="account_mcdb_tree"/>
             <field name="search_view_id" ref="account_mcdb_search"/>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
-            <field name="context">{'search_default_user': uid}</field>
+            <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
         </record>
 
         <record id="action_account_mcdb_analytic" model="ir.actions.act_window">
@@ -365,7 +367,7 @@
             <field name="view_id" ref="account_mcdb_form"/>
             <field name="search_view_id" ref="account_mcdb_search"/>
             <field name="domain">[('description', '!=', False), ('model', '=', 'account.move.line')]</field>
-            <field name="context">{'search_default_user': uid}</field>
+            <field name="context">{'search_default_user': uid, 'from_web_menu': True}</field>
         </record>
 
         <record id="action_account_mcdb_analytic_form" model="ir.actions.act_window">

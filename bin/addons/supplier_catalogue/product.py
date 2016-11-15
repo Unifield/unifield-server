@@ -271,6 +271,8 @@ class pricelist_partnerinfo(osv.osv):
         '''
         Check the constraint
         '''
+        if not ids:
+            return True
         res = super(pricelist_partnerinfo, self).write(cr, uid, ids, vals, context=context)
 
         self._check_min_quantity(cr, uid, ids, context=context)
@@ -294,11 +296,10 @@ class product_product(osv.osv):
             
         partner_price = self.pool.get('pricelist.partnerinfo')
         info_prices = []
-                
+        suppinfo_ids = self.pool.get('product.supplierinfo').search(cr, uid, [('name', '=', partner_id), ('product_id', '=', product.product_tmpl_id.id)], context=context)
         domain = [('min_quantity', '<=', product_qty),
                   ('uom_id', '=', product_uom_id),
-                  ('partner_id', '=', partner_id),
-                  ('product_id', '=', product.product_tmpl_id.id),
+                  ('suppinfo_id', 'in', suppinfo_ids),
                   '|', ('valid_from', '<=', order_date),
                   ('valid_from', '=', False),
                   '|', ('valid_till', '>=', order_date),
@@ -595,6 +596,8 @@ class res_currency(osv.osv):
         '''
         Disallow the uncheck of section/esc checkbox if a section/esc partner use this currency
         '''
+        if not ids:
+            return True
         property_obj = self.pool.get('ir.property')
         partner_obj = self.pool.get('res.partner')
         pricelist_obj = self.pool.get('product.pricelist')

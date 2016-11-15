@@ -30,7 +30,12 @@ class account_invoice(osv.osv):
         '''
         Check if the Purchase order contains a line with an inactive products
         '''
-        inactive_lines = self.pool.get('account.invoice.line').search(cr, uid, [
+        if self._name and self._name == 'wizard.account.invoice':
+            invoice_line = self.pool.get('wizard.account.invoice.line')
+        else:
+            invoice_line = self.pool.get('account.invoice.line')
+
+        inactive_lines = invoice_line.search(cr, uid, [
             ('product_id.active', '=', False),
             ('invoice_id', 'in', ids),
             ('invoice_id.state', 'not in', ['draft', 'cancel', 'done'])

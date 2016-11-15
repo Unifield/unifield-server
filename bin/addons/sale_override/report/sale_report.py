@@ -37,22 +37,21 @@ class sale_report(osv.osv):
         partner_obj = self.pool.get('res.partner')
         partner = False
         res = {}
-        
         for report in self.browse(cr, uid, ids):
             sale = report.order_id
             if sale.partner_id:
                partner = partner_obj.browse(cr, uid, [sale.partner_id.id])[0]
             if sale.state != 'draft' and (sale.order_type != 'regular' or (partner and partner.partner_type == 'internal')):
-                res[sale.id] = True
+                res[report.id] = True
             else:
-                res[sale.id] = True
+                res[report.id] = True
                 for invoice in sale.invoice_ids:
                     if invoice.state != 'paid':
-                        res[sale.id] = False
+                        res[report.id] = False
                         break
                 if not sale.invoice_ids:
-                    res[sale.id] = False
-            return res
+                    res[report.id] = False
+        return res
 
     _columns = {
         'date': fields.date('Date Order', readonly=True),

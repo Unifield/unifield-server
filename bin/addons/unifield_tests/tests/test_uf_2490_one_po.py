@@ -14,27 +14,6 @@ class UF2490OnePO(ResourcingTest):
         super(UF2490OnePO, self).setUp()
         self.need_ext_loc = False
 
-    def create_po_from_scratch(self):
-        """
-        Create a PO from scratch, then cancel it.
-        :return: The ID of the new purchase order
-        """
-        db = self.used_db
-
-        # Create PO
-        partner_id = self.get_record(db, 'ext_supplier_1')
-        po_values = {
-            'partner_id': partner_id,
-            'partner_address_id': self.get_record(db, 'ext_supplier_1_addr'),
-            'location_id': self.get_record(db, 'stock_location_stock', module='stock'),
-        }
-        po_values.update(
-            self.po_obj.onchange_partner_id(None, partner_id, time.strftime('%Y-%m-%d'), None, None).get('value', {})
-        )
-        po_id = self.po_obj.create(po_values)
-
-        return po_id
-
     def create_po_line(self, order_id):
         """
         Create a purchase order line

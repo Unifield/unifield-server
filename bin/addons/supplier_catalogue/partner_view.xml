@@ -28,19 +28,26 @@
                 </data>
             </field>
         </record>
-        	
+
+        <delete id="action_new_catalogue_supplier" model="ir.actions.act_window" />
+        <record id="action_create_new_catalogue" model="ir.actions.server">
+            <field name="name">New Catalogue</field>
+            <field name="model_id" ref="model_supplier_catalogue"/>
+            <field name="state">code</field>
+            <field name="code">action = obj.open_new_catalogue_form(context=context)</field>
+        </record>
+
         <!-- Action to create a new catalogue for this supplier -->
-        <act_window
-        	name="New catalogue"
-        	res_model="supplier.catalogue"
-        	src_model="res.partner"
-        	view_mode="form,tree"
-        	view_type="form"
-        	key2="client_action_multi"
-        	domain="[('partner_id', '=', active_id)]"
-        	context="{'partner_id': active_id}"
-        	id="action_new_catalogue_supplier" />
-        	
+        <record id="action_new_catalogue_supplier2" model="ir.values">
+            <field name="key2">client_action_multi</field>
+            <field name="model">res.partner</field>
+            <field name="name">New catalogue</field>
+            <field eval="'ir.actions.server,%d'%action_create_new_catalogue" name="value"/>
+            <field name="context">{'partner_id': active_id}</field>
+            <field name="sequence" eval="1" />
+            <field eval="True" name="object"/>
+        </record>
+
         <!-- Choose catalogue from supplier (osv_memory) form view -->
         <record id="from_supplier_choose_catalogue_form_view" model="ir.ui.view">
         	<field name="name">from.supplier.choose.catalogue.form.view</field>

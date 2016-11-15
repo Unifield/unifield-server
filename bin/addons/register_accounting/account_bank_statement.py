@@ -218,6 +218,8 @@ class account_bank_statement(osv.osv):
         """
         Bypass disgusting default account_bank_statement write function.
         """
+        if not ids:
+            return True
         return osv.osv.write(self, cr, uid, ids, values, context=context)
 
     def unlink(self, cr, uid, ids, context=None):
@@ -1020,6 +1022,23 @@ class account_bank_statement_line(osv.osv):
             res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
         return res
 
+    def _get_free_analytic_lines(self, cr, uid, ids, field_name=None, args=None, context=None):
+        """
+        Get analytic lines Free 1 and Free 2 linked to the given register lines
+        """
+        if not context:
+            context = {}
+        res = {}
+        aal_obj = self.pool.get('account.analytic.line')
+        for absl in self.browse(cr, uid, ids, context=context):
+            # UTP-1055: In case of Cash Advance register line, we don't need to see all other advance lines allocation (analytic lines).
+            # So we keep only analytic lines with the same "name" than register line
+            aal_ids = self.pool.get('account.analytic.line').search(cr, uid, [('move_id.move_id', 'in', self._get_move_ids(cr, uid, [absl.id], context=context)),
+                                                                              ('account_id.category', 'in', ['FREE1', 'FREE2']), ('name', '=ilike', '%%%s' % absl.name)])
+            # Then retrieve all corrections/reversals from them
+            res[absl.id] = aal_obj.get_corrections_history(cr, uid, aal_ids, context=context)
+        return res
+
     def _check_red_on_supplier(self, cr, uid, ids, name, arg, context=None):
         result = {}
         for id in ids:
@@ -1076,6 +1095,7 @@ class account_bank_statement_line(osv.osv):
             ('transfer', 'Internal Transfer'), ('transfer_same', 'Internal Transfer (same currency)'), ('advance', 'Operational Advance'),
             ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation')] , readonly=True),
         'fp_analytic_lines': fields.function(_get_fp_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines linked to the given register line(s). Correction(s) included."),
+        'free_analytic_lines': fields.function(_get_free_analytic_lines, type="one2many", obj="account.analytic.line", method=True, string="Analytic lines Free 1 and Free 2 linked to the given register line(s). Correction(s) included."),
         'red_on_supplier': fields.function(_check_red_on_supplier, method=True, type="boolean", string="Supplier flag", store=False, readonly=True, multi="m"),
         'journal_id': fields.related('statement_id','journal_id', string="Journal", type='many2one', relation='account.journal', readonly=True),
         'direct_invoice_move_id': fields.many2one('account.move', 'Direct Invoice Move', readonly=True, help="This field have been added to get the move that comes from the direct invoice because after synchronization some lines lost the direct invoice link. And so we can't see which move have been linked to the invoice in case the register line is temp posted."),
@@ -1906,11 +1926,15 @@ class account_bank_statement_line(osv.osv):
         """
         Write some existing account bank statement lines with 'values'.
         """
+        if not ids:
+            return True
 
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
             context = {}
+        if not values:
+            return False
         # Optimization: if only one field to change and that this field is not needed by some other, no impact on them and no change, so we can call the super method.
         #+ We prepare some boolean to test what permit to skip some checks.
         #+ SKIP_WRITE_CHECK is a param in context that permit to directly write thing without any check or changes. Use it with caution.
@@ -1922,8 +1946,10 @@ class account_bank_statement_line(osv.osv):
         # Prepare some values
         state = self._get_state(cr, uid, ids, context=context).values()[0]
         # Verify that the statement line isn't in hard state
-        if state  == 'hard':
-            if values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or 'from_correction' in context or context.get('sync_update_execution', False):
+        if state == 'hard':
+            if values.get('partner_move_ids') or values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
+                    (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
+                    'from_correction' in context or context.get('sync_update_execution', False):
                 return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
@@ -1996,7 +2022,8 @@ class account_bank_statement_line(osv.osv):
                         # copy distribution
                         new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, new_distrib, {}, context=context)
                         # write changes - first on account move line WITH account_id from wizard, THEN on register line with given account
-                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': account_id}, check=False, update_check=False)
+                        # US-1343: The account to be updated must the new one, not the old account of the move line!
+                        self.pool.get('account.move.line').write(cr, uid, ml_ids, {'analytic_distribution_id': new_distrib_id, 'account_id': values.get('account_id')}, check=False, update_check=False)
 
         # US-289: The following block is moved down after the employee update, so that the call to _update_move_from_st_line will also update
         # the distribution analytic in case there is a change of this value on the reg line, issued from the new block right above
@@ -2052,6 +2079,7 @@ class account_bank_statement_line(osv.osv):
             'transfer_currency': False,
             'down_payment_id': False,
             'cash_return_move_line_id': False,  # BKLG-60
+            'partner_move_ids': [],
         })
         # Copy analytic distribution if exists
         line = self.browse(cr, uid, [absl_id], context=context)[0]
@@ -2204,8 +2232,8 @@ class account_bank_statement_line(osv.osv):
 
                     for inv_move_line in absl.imported_invoice_line_ids:
                         imported_total_amount += inv_move_line.amount_currency
-                    if absl.amount_out > abs(imported_total_amount) or\
-                            absl.amount_in > abs(imported_total_amount):
+                    if absl.amount_out - abs(imported_total_amount) > 0.001 or \
+                        absl.amount_in - abs(imported_total_amount) > 0.001:
                         raise osv.except_osv(_('Warning'),
                             _('You can not hard post with an amount greater'
                                 ' than total of imported invoices'))
@@ -2417,6 +2445,14 @@ class account_bank_statement_line(osv.osv):
                 self.pool.get('account.invoice').unlink(cr, uid, [st_line.invoice_id.id], {'from_register': True})
             elif st_line.direct_invoice and st_line.direct_invoice_move_id and not context.get('from_direct_invoice', False):
                 self.pool.get('account.move').unlink(cr, uid, [st_line.direct_invoice_move_id.id], context=context)
+            # If a sequence number had been generated for the register line, keep track of it
+            if st_line.sequence_for_reference and not context.get('sync_update_execution', False):
+                vals = {
+                    'statement_id': st_line.statement_id.id,
+                    'sequence': st_line.sequence_for_reference,
+                    'instance_id': st_line.instance_id.id,
+                }
+                self.pool.get('account.bank.statement.line.deleted').create(cr, uid, vals, context=context)
         return super(account_bank_statement_line, self).unlink(cr, uid, ids)
 
     def button_advance(self, cr, uid, ids, context=None):
@@ -2836,7 +2872,8 @@ class account_bank_statement_line(osv.osv):
             return False
         if isinstance(ids, (int, long)):
             ids = [ids]
-        return self.unlink(cr, uid, ids, context=context)
+        real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
+        return self.unlink(cr, real_uid, ids, context=context)
 
     def _check_account_partner_compat(self, cr, uid, vals, context=None):
         # US-672/2

@@ -199,6 +199,7 @@ def compute_location_value(cr, uid, **kwargs):
     product_id = kwargs.get('product_id')
     pick_type = kwargs.get('pick_type')
     pick_subtype = kwargs.get('pick_subtype')
+    context = kwargs.get('context', {})
     loc_id = None
     loc_name = None
     msg = ''
@@ -225,7 +226,7 @@ def compute_location_value(cr, uid, **kwargs):
                     pack_loc_id = loc_obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_outgoing', 'stock_location_packing')[1]
                     domain.extend([('id', '=', pack_loc_id)])
 
-                loc_ids = loc_obj.search(cr, uid, domain)
+                loc_ids = loc_obj.search(cr, uid, domain, context=context)
                 if loc_ids:
                     loc_id = loc_ids[0]
                 elif loc_obj.search(cr, uid, [('name', '=ilike', loc_name)]):

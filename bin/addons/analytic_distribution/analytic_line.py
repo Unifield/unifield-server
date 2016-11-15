@@ -107,17 +107,22 @@ class analytic_line(osv.osv):
         - commitment_line_id
         """
         # Checks
-        if not context:
+        if context is None:
             context = {}
         # Prepare some values
         res = {}
         period_obj = self.pool.get('account.period')
         for al in self.browse(cr, uid, ids, context):
             res[al.id] = False
-            # UTP-943: Since this ticket, we search period regarding analytic line posting date.
-            period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
-            if period_ids:
-                res[al.id] = period_ids[0]
+            # US-945: Consider IN PRIORITY the new physical real period field
+            # (else keep default behaviour)
+            if al.real_period_id:
+                res[al.id] = al.real_period_id.id
+            else:
+                # UTP-943: Since this ticket, we search period regarding analytic line posting date.
+                period_ids = period_obj.get_period_from_date(cr, uid, date=al.date)
+                if period_ids:
+                    res[al.id] = period_ids[0]
         return res
 
     def _search_period_id(self, cr, uid, obj, name, args, context=None):
@@ -136,9 +141,15 @@ class analytic_line(osv.osv):
 
         (US-650) Management of "NOT IN". For example to exclude Jan 2016 and Oct 2015:
         ['&', '|', ('date', '<', '2016-01-01'), ('date', '>', '2016-01-31'), '|', ('date', '<', '2015-10-01'), ('date', '>', '2015-10-31')]
+
+        AFTER US-945:
+        We use the real_period_id.
+        For the old entries this field doesn't exist: we keep using the posting dates.
+        For example to include a Period 13:
+        ['|', ('real_period_id', '=', 13), '&', '&', ('real_period_id', '=', False), ('date', '>=', '2016-12-01'), ('date', '<=', '2016-12-31')]
         """
         # Checks
-        if not context:
+        if context is None:
             context = {}
         if not args:
             return []
@@ -159,10 +170,20 @@ class analytic_line(osv.osv):
                     period = period_obj.browse(cr, uid, [p_id])[0]
                     if arg[1] == 'not in':
                         new_args.append('|')
+                        new_args.append('|')
                         new_args.append(('date', '<', period.date_start))
                         new_args.append(('date', '>', period.date_stop))
-                    else:
                         new_args.append('&')
+                        new_args.append(('real_period_id', '!=', False))
+                        new_args.append(('real_period_id', '!=', p_id))
+                    else:
+                        new_args.append('|')
+                        new_args.append(('real_period_id', '=', p_id))
+                        # or no real period and in period range
+                        # for previous US-945 entries
+                        new_args.append('&')
+                        new_args.append('&')
+                        new_args.append(('real_period_id', '=', False))
                         new_args.append(('date', '>=', period.date_start))
                         new_args.append(('date', '<=', period.date_stop))
         return new_args
@@ -206,6 +227,8 @@ class analytic_line(osv.osv):
         'is_unposted': fields.function(_get_is_unposted, method=True, type='boolean', string="Unposted?"),
         'imported_commitment': fields.boolean(string="From imported commitment?"),
         'imported_entry_sequence': fields.text("Imported Entry Sequence"),
+        # US-945: real physical period wrapper for the period_id calculated field
+        'real_period_id': fields.many2one('account.period', 'Real period', select=1),
     }
 
     _defaults = {
@@ -338,7 +361,7 @@ class analytic_line(osv.osv):
                 self.pool.get('account.move.line').corrected_upstream_marker(cr, uid, [aline.move_id.id], context=context)
         return True
 
-    def check_analytic_account(self, cr, uid, ids, account_id, context=None):
+    def check_analytic_account(self, cr, uid, ids, account_id, wiz_date, context=None):
         """
         Analytic distribution validity verification with given account for given ids.
         Return all valid ids.
@@ -372,6 +395,14 @@ class analytic_line(osv.osv):
             # since US-711 date_stop is to be excluded itself as a frontier
             # => >= date_stop vs > date_stop
             # => http://jira.unifield.org/browse/US-711?focusedCommentId=45744&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-45744
+            if account_type in ['OC', 'DEST']:
+                if aline.journal_id.type == 'hq' or aline.period_id and aline.period_id.state in ['done', 'mission-closed']:
+                    aline_cmp_date = wiz_date
+                    # these lines will be reverted, check if the reverted line is active
+                    oc_dest_date_start = max(aline.cost_center_id.date_start, aline.destination_id.date_start)
+                    oc_dest_date_stop = min(aline.cost_center_id.date or '9999-01-01', aline.destination_id.date or '9999-01-01')
+                    if (oc_dest_date_start and wiz_date < oc_dest_date_start) or (oc_dest_date_stop and wiz_date >= oc_dest_date_stop):
+                        expired_date_ids.append(aline.id)
             if (date_start and aline_cmp_date < date_start) or (date_stop and aline_cmp_date >= date_stop):
                 expired_date_ids.append(aline.id)
         # Process regarding account_type

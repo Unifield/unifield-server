@@ -238,7 +238,8 @@
             <field name="arch" type="xml">
                 <form string="Debit Note" hide_duplicate_button="1">
                     <group colspan="4" col="8">
-                        <field name="journal_id" domain="[('is_current_instance','=',True)]" on_change="onchange_journal_id(journal_id)"/>
+                        <field name="journal_id" domain="[('is_current_instance','=',True), ('type', '=', context.get('journal_type'))]"
+                               on_change="onchange_journal_id(journal_id)"/>
                         <field name="number"/>
                         <field name="type" invisible="1"/>
                         <field name="currency_id" width="50"/>

@@ -32,11 +32,21 @@ class ir_module_module(osv.osv):
     _name = 'ir.module.module'
     _inherit = 'ir.module.module'
 
+    @tools.read_cache(prefetch=[], context=[], timeout=8000, size=2000)
+    def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
+        return super(ir_module_module, self)._read_flat(cr, user, ids, fields_to_read, context, load)
+
+    def _clean_cache(self):
+        super(ir_module_module, self)._clean_cache()
+        # radical but this doesn't frequently happen
+        self._read_flat.clear_cache()
+
     def check(self, cr, uid, ids, context=None):
         if ids and \
-            self.search(cr, uid, [('id', 'in', ids), ('name', '=',
-                'sync_client'), ('state', 'in', ['to install', 'to upgrade'])],
-                limit=1, order='NO_ORDER'):
+            self.search_exist(cr, uid,
+                    [('id', 'in', ids),
+                     ('name', 'in', ['sync_client', 'sync_so', 'update_client']),
+                     ('state', 'in', ['to install', 'to upgrade'])]):
                 self.pool.get('ir.model.data').create_all_sdrefs(cr)
         return super(ir_module_module, self).check(cr, uid, ids, context=context)
 

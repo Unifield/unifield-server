@@ -22,6 +22,7 @@
 from osv import osv
 from osv import fields
 
+import tools
 from tools.translate import _
 
 import pooler
@@ -38,6 +39,51 @@ def replace_all(text):
         text = text.replace(i, j)
     return text
 
+
+class msr_in_progress(osv.osv_memory):
+    '''
+        US-1218: This memory class is used to store temporary values regarding the report process, when a report is in progress, at it into the table
+        so that it will not be reprocessed again in the same transaction.
+        If a thread is already started, another one will be ignored if the current one is not done!
+    '''
+    _name = "msr_in_progress"
+
+    _columns = {
+        'report_id': fields.many2one('stock.mission.report', "Report"),
+        'done_ok': fields.boolean(string='Processing done'),
+        'start_date': fields.datetime(string='Start date'),
+    }
+
+    _defaults = {
+        'done_ok': lambda *a: False,
+        'start_date': lambda *a: time.strftime('%Y-%m-%d %H:%M:%S'),
+    }
+
+    def create(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            super(msr_in_progress, self).create(cr, 1, {'report_id': id}, context=None)
+        return
+
+    def _already_processed(self, cr, uid, id, context=None):
+        report_ids = self.search(cr, 1, [('report_id', '=', id), ('done_ok', '=', True)], context=context)
+        if report_ids:
+            return True
+        return False
+
+    def _is_in_progress(self, cr, uid, context=None):
+        report_ids = self.search(cr, 1, [], context=context)
+        if report_ids:
+            return True
+        return False
+
+    def _delete_all(self, cr, uid, context=None):
+        report_ids = self.search(cr, 1, [], context=context)
+        self.unlink(cr, 1, report_ids, context)
+        return
+
+msr_in_progress()
 
 class stock_mission_report(osv.osv):
     _name = 'stock.mission.report'
@@ -140,11 +186,21 @@ class stock_mission_report(osv.osv):
     def update_newthread(self, cr, uid, ids=[], context=None):
         # Open a new cursor : Don't forget to close it at the end of method
         cr = pooler.get_db(cr.dbname).cursor()
+        msr_in_progress = self.pool.get('msr_in_progress')
         try:
+            if msr_in_progress._is_in_progress(cr, uid, context):
+                logging.getLogger('MSR').info("""____________________ Another process is progress, this request is ignore: %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
+                return
+
+            logging.getLogger('MSR').info("""____________________ Start the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
             self.update(cr, uid, ids=[], context=None)
+            msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
-        except Exception:
+            logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
+        except Exception as e:
             cr.rollback()
+            logging.getLogger('MSR').error("""____________________ Error while running the update process of MSR, at %s - Error: %s""" % (time.strftime('%Y-%m-%d %H:%M:%S'), str(e)))
+            msr_in_progress._delete_all(cr, uid, context)
         finally:
             cr.close(True)
 
@@ -159,11 +215,12 @@ class stock_mission_report(osv.osv):
             ids = [ids]
 
         line_obj = self.pool.get('stock.mission.report.line')
+        msr_in_progress = self.pool.get('msr_in_progress')
 
-        report_ids = self.search(cr, uid, [('local_report', '=', True)], context=context)
+        report_ids = self.search(cr, uid, [('local_report', '=', True), ('full_view', '=', False)], context=context)
         full_report_ids = self.search(cr, uid, [('full_view', '=', True)], context=context)
+
         instance_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        line_ids = []
 
         # Create a local report if no exist
         if not report_ids and context.get('update_mode', False) not in ('update', 'init') and instance_id:
@@ -185,43 +242,62 @@ class stock_mission_report(osv.osv):
 
         if context.get('update_full_report'):
             report_ids = full_report_ids
+        else:
+            all_report_ids = report_ids + full_report_ids
+            for report_id in all_report_ids:
+                # register immediately this report id into the table temp
+                msr_in_progress.create(cr, uid, report_id, context)
 
-        product_ids = self.pool.get('product.product').search(cr, uid, [], context=context)
+        product_obj = self.pool.get('product.product')
+        product_ids = product_obj.search(cr, uid, [], context=context)
         product_values = {}
-        for product in self.pool.get('product.product').read(cr, uid, product_ids, ['product_amc', 'reviewed_consumption'], context=context):
+        temp_prods = product_obj.read(cr, uid, product_ids, ['product_amc', 'reviewed_consumption'], context=context)
+
+        logging.getLogger('MSR').info("""___ Number of MSR lines to be updated: %s, at %s""" % (len(temp_prods), time.strftime('%Y-%m-%d %H:%M:%S')))
+
+        for product in temp_prods:
             product_values.setdefault(product['id'], {})
             product_values[product['id']].setdefault('product_amc', product['product_amc'])
             product_values[product['id']].setdefault('reviewed_consumption', product['reviewed_consumption'])
 
-
         # Check in each report if new products are in the database and not in the report
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
-            #self.write(cr, uid, [report.id], {'export_ok': False}, context=context)
             # Create one line by product
-            cr.execute('''SELECT id FROM product_product
-                        EXCEPT
-                          SELECT product_id FROM stock_mission_report_line WHERE mission_report_id = %s''' % report['id'])
+            cr.execute('''SELECT p.id from product_product p
+                          WHERE NOT EXISTS (
+                            SELECT product_id
+                            FROM
+                            stock_mission_report_line smrl WHERE mission_report_id = %s
+                            AND p.id = smrl.product_id)
+                        ''' % report['id'])
             for product in cr.fetchall():
-                line_ids.append(line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report['id']}, context=context))
+                line_obj.create(cr, uid, {'product_id': product, 'mission_report_id': report['id']}, context=context)
 
             # Don't update lines for full view or non local reports
             if not report['local_report']:
                 continue
 
-            # Update the update date on report
-            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S'),
-                                              'export_ok': False}, context=context)
+            #US-1218: If this report is previously processed, then do not redo it again for this transaction!
+            if msr_in_progress._already_processed(cr, uid, report['id'], context):
+                continue
 
+            logging.getLogger('MSR').info("""___ updating the report lines of the report: %s, at %s (this may take very long time!)""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             if context.get('update_full_report'):
                 full_view = self.search(cr, uid, [('full_view', '=', True)])
                 if full_view:
-                    line_ids = line_obj.search(cr, uid, [('mission_report_id', 'in', full_view)])
-                    line_obj.update_full_view_line(cr, uid, line_ids, context=context)
+                    line_obj.update_full_view_line(cr, uid, context=context)
             elif not report['full_view']:
                 # Update all lines
                 self.update_lines(cr, uid, [report['id']])
 
+            msr_ids = msr_in_progress.search(cr, uid, [('report_id', '=', report['id'])], context=context)
+            msr_in_progress.write(cr, uid, msr_ids, {'done_ok': True}, context=context)
+
+            logging.getLogger('MSR').info("""___ exporting the report lines of the report %s to csv, at %s""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
             self._get_export_csv(cr, uid, report['id'], product_values, context=context)
+            # Update the update date on report
+            self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)
+            logging.getLogger('MSR').info("""___ finished processing completely for the report: %s, at %s \n""" % (report['id'], time.strftime('%Y-%m-%d %H:%M:%S')))
 
         # After update of all normal reports, update the full view report
         if not context.get('update_full_report'):
@@ -231,7 +307,7 @@ class stock_mission_report(osv.osv):
 
         return True
 
-    def update_lines(self, cr, uid, ids, context=None):
+    def update_lines(self, cr, uid, report_ids, context=None):
         location_obj = self.pool.get('stock.location')
         data_obj = self.pool.get('ir.model.data')
         line_obj = self.pool.get('stock.mission.report.line')
@@ -262,33 +338,60 @@ class stock_mission_report(osv.osv):
         if company.instance_id.level == 'project' and coordo:
             coordo_id = self.pool.get('msf.instance').browse(cr, uid, coordo[0], context=context).instance
 
-        for id in ids:
+        for report_id in report_ids:
             # In-Pipe moves
-            cr.execute('''SELECT m.product_id, m.product_qty, m.product_uom, p.name, m.id
+            cr.execute('''SELECT m.product_id, sum(m.product_qty), m.product_uom, p.name
                           FROM stock_move m
                               LEFT JOIN stock_picking s ON m.picking_id = s.id
                               LEFT JOIN res_partner p ON s.partner_id2 = p.id
-                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')''')
+                          WHERE s.type = 'in' AND m.state in ('confirmed', 'waiting', 'assigned')
+                          GROUP BY m.product_id, m.product_uom, p.name
+                          ORDER BY m.product_id''')
 
             in_pipe_moves = cr.fetchall()
-            for product_id, qty, uom, partner, move_id in in_pipe_moves:
-                line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
-                                                    ('mission_report_id', '=', id)])
-                if line_id:
-                    line = line_obj.browse(cr, uid, line_id[0])
-                    if uom != line.product_id.uom_id.id:
-                        qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
+            current_product = None
+            line = None
+            vals = {}
+            in_pipe_products = set()
+            for product_id, qty, uom, partner in in_pipe_moves:
+                if current_product != product_id:
+                    if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
+                        in_pipe_products.add(current_product)
+                        line_obj.write(cr, uid, [line.id], vals)
+                    line_id = line_obj.search(cr, uid, [('product_id', '=', product_id),
+                                                        ('mission_report_id', '=', report_id)])
 
                     vals = {'in_pipe_qty': 0.00,
                             'in_pipe_coor_qty': 0.00,
                             'updated': True}
+                    current_product = product_id
+                    if not line_id:
+                        continue
 
-                    vals['in_pipe_qty'] = vals['in_pipe_qty'] + qty
+                line = line_obj.browse(cr, uid, line_id[0],
+                        fields_to_fetch=['id', 'product_id'])
+                if uom != line.product_id.uom_id.id:
+                    qty = self.pool.get('product.uom')._compute_qty(cr, uid, uom, qty, line.product_id.uom_id.id)
 
-                    if partner == coordo_id:
-                        vals['in_pipe_coor_qty'] = vals['in_pipe_coor_qty'] + qty
+                vals['in_pipe_qty'] += qty
 
-                    line_obj.write(cr, uid, line.id, vals)
+                if partner == coordo_id:
+                    vals['in_pipe_coor_qty'] += qty
+
+            if line and vals and (vals.get('in_pipe_qty', False) or vals.get('in_pipe_coor_qty', False)):
+                in_pipe_products.add(current_product)
+                line_obj.write(cr, uid, [line.id], vals)
+
+            # Update in-pipe quantities for all other lines
+            no_pipe_line_ids = line_obj.search(cr, uid, [
+                ('product_id', 'not in', list(in_pipe_products)),
+                ('mission_report_id', '=', report_id),
+                '|', ('in_pipe_qty', '!=', 0.00), ('in_pipe_coor_qty', '!=', 0.00),
+            ], order='NO_ORDER', context=context)
+            line_obj.write(cr, uid, no_pipe_line_ids, {
+                'in_pipe_qty': 0.00,
+                'in_pipe_coor_qty': 0.00,
+            }, context=context)
 
             # All other moves
             cr.execute('''
@@ -296,13 +399,15 @@ class stock_mission_report(osv.osv):
                         FROM stock_move
                         WHERE state = 'done'
                         AND id not in (SELECT move_id FROM mission_move_rel WHERE mission_id = %s)
-            ''' % (id))
+            ''' % (report_id))
             res = cr.fetchall()
             for move in res:
-                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' % (id, move[0]))
-                product = product_obj.browse(cr, uid, move[1])
+                cr.execute('INSERT INTO mission_move_rel VALUES (%s, %s)' %
+                        (report_id, move[0]))
+                product = product_obj.browse(cr, uid, move[1],
+                        fields_to_fetch=['uom_id', 'standard_price'])
                 line_id = line_obj.search(cr, uid, [('product_id', '=', move[1]),
-                                                    ('mission_report_id', '=', id)])
+                                                    ('mission_report_id', '=', report_id)])
                 if line_id:
                     line = line_obj.browse(cr, uid, line_id[0])
                     qty = self.pool.get('product.uom')._compute_qty(cr, uid, move[2], move[3], product.uom_id.id)
@@ -315,34 +420,33 @@ class stock_mission_report(osv.osv):
                             'updated': True}
 
                     if move[4] in internal_loc:
-                        vals['internal_qty'] = vals['internal_qty'] - qty
+                        vals['internal_qty'] -= qty
                     if move[4] in stock_loc:
-                        vals['stock_qty'] = vals['stock_qty'] - qty
+                        vals['stock_qty'] -= qty
                     if move[4] in central_loc:
-                        vals['central_qty'] = vals['central_qty'] - qty
+                        vals['central_qty'] -= qty
                     if move[4] in cross_loc:
-                        vals['cross_qty'] = vals['cross_qty'] - qty
+                        vals['cross_qty'] -= qty
                     if move[4] in secondary_location_ids:
-                        vals['secondary_qty'] = vals['secondary_qty'] - qty
+                        vals['secondary_qty'] -= qty
                     if move[4] in cu_loc:
-                        vals['cu_qty'] = vals['cu_qty'] - qty
+                        vals['cu_qty'] -= qty
 
                     if move[5] in internal_loc:
-                        vals['internal_qty'] = vals['internal_qty'] + qty
+                        vals['internal_qty'] += qty
                     if move[5] in stock_loc:
-                        vals['stock_qty'] = vals['stock_qty'] + qty
+                        vals['stock_qty'] += qty
                     if move[5] in central_loc:
-                        vals['central_qty'] = vals['central_qty'] + qty
+                        vals['central_qty'] += qty
                     if move[5] in cross_loc:
-                        vals['cross_qty'] = vals['cross_qty'] + qty
+                        vals['cross_qty'] += qty
                     if move[5] in secondary_location_ids:
-                        vals['secondary_qty'] = vals['secondary_qty'] + qty
+                        vals['secondary_qty'] += qty
                     if move[5] in cu_loc:
-                        vals['cu_qty'] = vals['cu_qty'] + qty
+                        vals['cu_qty'] += qty
 
                     vals.update({'internal_val': vals['internal_qty'] * product.standard_price})
                     line_obj.write(cr, uid, line.id, vals)
-
         return True
 
     def _get_export_csv(self, cr, uid, ids, product_values, context=None):
@@ -606,7 +710,8 @@ class stock_mission_report(osv.osv):
                  LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
                  LEFT JOIN product_uom pu ON pt.uom_id = pu.id
                  LEFT JOIN res_currency rc ON pp.currency_id = rc.id
-            WHERE l.mission_report_id = %s'''
+            WHERE l.mission_report_id = %s
+            ORDER BY l.default_code'''
 
             cr.execute(request, (report_id, ))
             res = cr.dictfetchall()
@@ -675,22 +780,36 @@ class stock_mission_report_line(osv.osv):
 
     def _get_wh_qty(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
+        for line in self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=['id', 'stock_qty', 'central_qty']):
             res[line.id] = line.stock_qty + line.central_qty
 
         return res
 
     def _get_internal_val(self, cr, uid, ids, field_name, args, context=None):
         res = {}
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = line.internal_qty * line.cost_price
-
+        for line in self.read(cr, uid, ids, ['internal_qty', 'cost_price'],
+                context=context):
+            res[line['id']] = line['internal_qty'] * line['cost_price']
         return res
 
+    def xmlid_code_migration(self, cr, ids):
+        cr.execute('UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)')
+        print 'UPDATE stock_mission_report_line l set xmlid_code = (select xmlid_code from product_product p where p.id=l.product_id)'
+        print cr.statusmessage
+        return True
+
+    def is_migration(self, cr, ids):
+        cr.execute('UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)')
+        print 'UPDATE stock_mission_report_line l set international_status = (select international_status from product_product p where p.id=l.product_id)'
+        print cr.statusmessage
+
+        return True
+
     _columns = {
-        'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade"),
+        'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
         'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False),
-        'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False),
+        'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False, _fnct_migrate=xmlid_code_migration),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
         'categ_id': fields.related('product_id', 'categ_id', string='Category', type='many2one', relation='product.category',
@@ -713,6 +832,7 @@ class stock_mission_report_line(osv.osv):
             string='International status',
             store=True,
             write_relate=False,
+            _fnct_migrate=is_migration,
         ),
         # mandatory nomenclature levels
         'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
@@ -776,6 +896,7 @@ class stock_mission_report_line(osv.osv):
         ),
     }
 
+    @tools.cache(skiparg=2)
     def _get_default_destination_instance_id(self, cr, uid, context=None):
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         if instance:
@@ -783,6 +904,7 @@ class stock_mission_report_line(osv.osv):
                 if instance.parent_id.parent_id:
                     return instance.parent_id.parent_id.id
                 return instance.parent_id.id
+            return instance.id
 
         return False
 
@@ -807,12 +929,7 @@ class stock_mission_report_line(osv.osv):
         'instance_id': _get_default_destination_instance_id,
     }
 
-    def update_full_view_line(self, cr, uid, ids, context=None):
-        is_project = False
-        if self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.level == 'project':
-            is_project = True
-
-
+    def update_full_view_line(self, cr, uid, context=None):
         request = '''SELECT l.product_id AS product_id,
                             sum(l.internal_qty) AS internal_qty,
                             sum(l.stock_qty) AS stock_qty,
@@ -847,31 +964,29 @@ class stock_mission_report_line(osv.osv):
         cr.execute(request)
 
         vals = cr.fetchall()
-        mission_report_id = self.pool.get('stock.mission.report').search(cr, uid, [('full_view', '=', True)], context=context)
+        mission_report_id = False
         for line in vals:
-            line_ids = self.search(cr, uid, [('mission_report_id.full_view', '=', True), ('product_id', '=', line[0])], context=context)
+            line_ids = self.search(cr, uid, [('full_view', '=', True), ('product_id', '=', line[0])],
+                    limit=1, order='NO_ORDER', context=context)
             if not line_ids:
                 if not mission_report_id:
-                    continue
+                    mission_report_id = self.pool.get('stock.mission.report').search(cr, uid,
+                            [('full_view', '=', True)], limit=1,
+                            order='NO_ORDER', context=context)
+                    if not mission_report_id:
+                        continue
                 line_id = self.create(cr, uid, {'mission_report_id': mission_report_id[0],
                                                 'product_id': line[0]}, context=context)
             else:
                 line_id = line_ids[0]
 
-            in_pipe = line[7] or 0.00
-            if not is_project:
-                in_pipe = (line[7] or 0.00) - (line[8] or 0.00)
-
-            self.write(cr, uid, [line_id], {'internal_qty': line[1] or 0.00,
-                                            'internal_val': line[9] or 0.00,
-                                            'stock_qty': line[2] or 0.00,
-                                            'central_qty': line[3] or 0.00,
-                                            'cross_qty': line[4] or 0.00,
-                                            'secondary_qty': line[5] or 0.00,
-                                            'cu_qty': line[6] or 0.00,
-                                            'in_pipe_qty': line[7] or 0.00,
-                                            'in_pipe_coor_qty': line[8] or 0.00,}, context=context)
-
+            cr.execute("""UPDATE stock_mission_report_line SET
+                    internal_qty=%s, stock_qty=%s,
+                    central_qty=%s, cross_qty=%s, secondary_qty=%s,
+                    cu_qty=%s, in_pipe_qty=%s, in_pipe_coor_qty=%s,
+                    wh_qty=%s
+                    WHERE id=%s""" % (line[1] or 0.00, line[2] or 0.00,
+                        line[3] or 0.00,line[4] or 0.00, line[5] or 0.00,line[6] or 0.00,line[7] or 0.00,line[8] or 0.00, (line[2] or 0.00) + (line[3] or 0.00), line_id))
         return True
 
 stock_mission_report_line()

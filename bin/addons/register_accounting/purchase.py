@@ -60,6 +60,8 @@ class purchase_order(osv.osv):
         1) state 'confirm_waiting' + 'approved' + 'done' (done tolerated if partially invoiced)
         2) order_type 'regular', 'purchase_list', 'direct'
         3) rfq_ok != True
+
+        US-1064: new rule: as soon as all goods are received on a PO (state 'done') no new Down Payment is possible
         """
         # Create default result
         res = [('id', 'in', [])]
@@ -76,7 +78,7 @@ class purchase_order(osv.osv):
             LEFT JOIN purchase_invoice_rel as pir ON (po.id = pir.purchase_id)
             LEFT JOIN account_invoice as inv ON (pir.invoice_id = inv.id AND inv.state not in ('draft', 'cancel'))
             LEFT JOIN product_pricelist as prod ON (po.pricelist_id = prod.id AND prod.currency_id = %s)
-            WHERE po.state in ('confirmed_wait', 'approved', 'done')
+            WHERE po.state in ('confirmed_wait', 'approved')
             AND po.pricelist_id = prod.id
             AND NOT (po.order_type = 'regular' AND po.partner_type in ('internal', 'esc'))
             AND po.order_type in ('regular', 'purchase_list', 'direct')

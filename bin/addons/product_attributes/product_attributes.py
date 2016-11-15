@@ -622,6 +622,13 @@ class product_attributes(osv.osv):
 
         return res
 
+    def do_not_migrate(self, cr, ids):
+        """
+        Don't compute this fields.function because values are already set with execute_migration method
+        and patch.
+        """
+        return True
+
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -638,6 +645,7 @@ class product_attributes(osv.osv):
         'product_catalog_path' : fields.char('Product Catalog Path', size=1024),
         'is_ssl': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is Short Shelf Life ?',
@@ -649,6 +657,7 @@ class product_attributes(osv.osv):
         ),
         'ssl_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -695,6 +704,7 @@ class product_attributes(osv.osv):
 
         'is_kc': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is Keep Cool ?',
@@ -706,6 +716,7 @@ class product_attributes(osv.osv):
         ),
         'kc_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -766,6 +777,7 @@ class product_attributes(osv.osv):
         ),
         'is_dg': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is a Dangerous Goods ?',
@@ -777,6 +789,7 @@ class product_attributes(osv.osv):
         ),
         'dg_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -832,6 +845,7 @@ class product_attributes(osv.osv):
                 ('P1', 'P1 - Psychotrop 1'),
                 ('P3', 'P3 - Psychotrop 3'),
                 ('P4', 'P4 - Psychotrop 4'),
+                ('DP', 'DP - Drug Precursor'),
                 ('Y', 'Y - Kit or module with controlled substance'),
                 ('True', 'CS / NP - Controlled Substance / Narcotic / Psychotropic')
             ],
@@ -839,6 +853,7 @@ class product_attributes(osv.osv):
         ),
         'is_cs': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='boolean',
             string='Is Controlled subst.',
@@ -850,6 +865,7 @@ class product_attributes(osv.osv):
         ),
         'cs_txt': fields.function(
             _compute_kc_dg_cs_ssl_values,
+            _fnct_migrate=do_not_migrate,
             method=True,
             type='char',
             size=8,
@@ -898,11 +914,6 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'prodlot_ids': fields.one2many(
-            'stock.production.lot',
-            'product_id',
-            string='Batch Numbers',
-        ),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
@@ -1114,6 +1125,39 @@ class product_attributes(osv.osv):
 #        (_check_uom_category, _('There are some stock moves with this product on the system. So you should keep the same UoM category than these stock moves.'), ['uom_id', 'uom_po_id']),
 #    ]
 
+    def change_soq_quantity(self, cr, uid, ids, soq, uom_id, context=None):
+        """
+        When the SoQ quantity is changed, check if the new quantity is consistent
+        with rounding value of the product UoM
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls the method
+        :param ids: List of ID of product.product on which the SoQ quantity is changed
+        :param soq: New value for SoQ Quantity
+        :param uom_id: ID of the product.uom linked to the product
+        :param context: Context of the call
+        :return: A dictionary that contains a warning message and the SoQ quantity
+                 rounded with the UoM rounding value
+        """
+        uom_obj = self.pool.get('product.uom')
+
+        if context is None:
+            context = {}
+
+        if not soq or not uom_id:
+            return {}
+
+        res = {}
+        rd_soq = uom_obj._compute_qty(cr, uid, uom_id, soq, uom_id)
+        if rd_soq != soq:
+            res['warning'] = {
+                'title': _('Warning'),
+                'message': _('''SoQ quantity value (%s) is not consistent with UoM rounding value.
+                The SoQ quantity has been automatically rounded to consistent value (%s)''') % (soq, rd_soq),
+            }
+
+        res['value'] = {'soq_quantity': rd_soq}
+        return res
+
     def _on_change_restriction_error(self, cr, uid, ids, *args, **kwargs):
         '''
         Update the message on on_change of product
@@ -1214,6 +1258,16 @@ class product_attributes(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
+        data_obj = self.pool.get('ir.model.data')
+
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         if 'batch_management' in vals:
             vals['track_production'] = vals['batch_management']
             vals['track_incoming'] = vals['batch_management']
@@ -1252,6 +1306,22 @@ class product_attributes(osv.osv):
                 heat2_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_attributes', 'heat_no')[1]
                 vals['heat_sensitive_item'] = heat2_id
             vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
+
+        if context.get('sync_update_execution') and not context.get('bypass_sync_update', False):
+#            stopped_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
+#            phase_out_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
+            if vals.get('active', None) is False:
+                if self.deactivate_product(cr, uid, ids, context=context) is not True:
+                    vals.update({
+                        'active': True,
+#                        'state': stopped_status,
+                    })
+#            elif vals.get('active', None) is True and vals.get('state') == stopped_status:
+            elif vals.get('active', None) is True:
+                vals.update({
+                    'active': True,
+#                    'state': phase_out_status,
+                })
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
@@ -1295,6 +1365,7 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1317,9 +1388,6 @@ class product_attributes(osv.osv):
         error_line_obj = self.pool.get('product.deactivation.error.line')
 
         internal_loc = location_obj.search(cr, uid, [('usage', '=', 'internal')], context=context)
-
-        c = context.copy()
-        c.update({'location_id': internal_loc})
 
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
@@ -1379,7 +1447,12 @@ class product_attributes(osv.osv):
                                                             ('invoice_id.state', 'not in', ['paid', 'proforma', 'proforma2', 'cancel'])], context=context)
 
             # Check if the product has stock in internal locations
-            has_stock = product.qty_available
+            for loc_id in internal_loc:
+                c = context.copy()
+                c.update({'location': [loc_id]})
+                has_stock = self.read(cr, uid, product.id, ['qty_available'], context=c)['qty_available'] > 0.00
+                if has_stock:
+                    break
 
             opened_object = has_kit or has_initial_inv_line or has_inventory_line or has_move_line or has_fo_line or has_tender_line or has_po_line or has_invoice_line
             if has_stock or opened_object:
@@ -1528,6 +1601,13 @@ class product_attributes(osv.osv):
                                                         'doc_ref': invoice.invoice_id.number,
                                                         'doc_id': invoice.invoice_id.id}, context=context)
 
+                if context.get('sync_update_execution', False):
+                    context['bypass_sync_update'] = True
+                self.write(cr, uid, product.id, {
+                    'active': True,
+#                    'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1],
+                }, context=context)
+
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
                         'view_type': 'form',
@@ -1573,6 +1653,8 @@ class product_attributes(osv.osv):
                 orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
                     context=context)
 
+        if context.get('sync_update_execution', False):
+            context['bypass_sync_update'] = True
         self.write(cr, uid, ids, {'active': False}, context=context)
 
         return True
@@ -1659,6 +1741,8 @@ class product_template(osv.osv):
         :param context: Context of the call
         :return: super write() method.
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 
