@@ -122,7 +122,7 @@ class date_tools(osv.osv):
         '''
         return self.get_db_date_format(cr, uid, context=context) + ' ' + self.get_db_time_format(cr, uid, context=context)
 
-    def get_date_formatted(self, cr, uid, d_type='date', fdatetime=None, context=None):
+    def get_date_formatted(self, cr, uid, d_type='date', datetime=None, context=None):
         '''
         Return the datetime in the format of the user
         @param d_type: 'date' or 'datetime' : determines which is the out format
@@ -130,16 +130,16 @@ class date_tools(osv.osv):
         '''
         assert d_type in ('date', 'datetime'), 'Give only \'date\' or \'datetime\' as type parameter'
 
-        if not fdatetime:
-            fdatetime = time.strftime('%Y-%m-%d')
+        if not datetime:
+            datetime = time.strftime('%Y-%m-%d')
 
         if d_type == 'date':
             d_format = self.get_date_format(cr, uid)
-            date_to_format = time.strptime(fdatetime, '%Y-%m-%d')
+            date_to_format = time.strptime(datetime, '%Y-%m-%d')
             return time.strftime(d_format, date_to_format)
         elif d_type == 'datetime':
             d_format = self.get_datetime_format(cr, uid)
-            date_to_format = time.strptime(fdatetime, '%Y-%m-%d %H:%M:%S')
+            date_to_format = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
             return time.strftime(d_format, date_to_format)
 
     def orm2date(self, dt):
