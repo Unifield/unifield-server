@@ -155,13 +155,17 @@ class account_move_line(osv.osv):
 
     def _get_reconciled_move_lines(self, cr, uid, ids, context=None):
         res = []
-        for line in self.browse(cr, uid, ids):
+        for line in self.browse(cr, uid, ids, context=context,
+                                fields_to_fetch=['reconcile_id', 'reconcile_partial_id', 'reconcile_txt']):
             if line.reconcile_id:
                 for t in line.reconcile_id.line_id:
                     res.append(t.id)
             elif line.reconcile_partial_id:
                 for p in line.reconcile_partial_id.line_partial_ids:
                     res.append(p.id)
+            # when an "unreconciliation" is synchronized the reconcile_txt must be reset
+            elif line.reconcile_txt and context.get('sync_update_execution'):
+                res.append(line.id)
         return res
 
     def _balance_currency(self, cr, uid, ids, name, arg, context=None):
@@ -498,7 +502,11 @@ class account_move_line(osv.osv):
 
     def copy(self, cr, uid, aml_id, default=None, context=None):
         """
-        When duplicate a JI, don't copy the link to register lines
+        When duplicate a JI, don't copy:
+        - the link to register lines
+        - the reconciliation date
+        - the unreconciliation date
+        - the old reconciliation ref (unreconcile_txt)
         """
         if context is None:
             context = {}
@@ -506,6 +514,9 @@ class account_move_line(osv.osv):
             default = {}
         default.update({
             'imported_invoice_line_ids': [],
+            'reconcile_date': None,
+            'unreconcile_date': None,
+            'unreconcile_txt': '',
         })
         return super(account_move_line, self).copy(cr, uid, aml_id, default, context=context)
 
