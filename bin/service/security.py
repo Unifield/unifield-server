@@ -23,6 +23,11 @@ import pooler
 import tools
 import threading
 import updater
+import re
+from passlib.hash import bcrypt
+from tools.translate import _
+from osv import osv
+PASSWORD_MIN_LENGHT = 6
 
 # When rejecting a password, hide the traceback
 class ExceptionNoTb(Exception):
@@ -32,8 +37,10 @@ class ExceptionNoTb(Exception):
 
 def number_update_modules(db):
     cr = pooler.get_db_only(db).cursor()
-    n = _get_number_modules(cr)
-    cr.close()
+    try:
+        n = _get_number_modules(cr)
+    finally:
+        cr.close()
     return n
 
 def _get_number_modules(cr, testlogin=False):
@@ -51,57 +58,145 @@ def _get_number_modules(cr, testlogin=False):
         return True
     return False
 
-def login(db, login, password):
-    cr = pooler.get_db_only(db).cursor()
-    nb = _get_number_modules(cr, testlogin=True)
-    patch_failed = [0]
-    cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='patch_scripts'")
-    if cr.rowcount:
-        cr.execute("SELECT count(id) FROM patch_scripts WHERE run = \'f\'")
-        patch_failed = cr.fetchone()
-    to_update = False
-    if not nb:
-        to_update = updater.test_do_upgrade(cr)
-    cr.close()
-    if nb or to_update:
-        s = threading.Thread(target=pooler.get_pool, args=(db,),
-                kwargs={'threaded': True})
-        s.start()
-        raise Exception("ServerUpdate: Server is updating modules ...")
+def change_password(db_name, login, password, new_password, confirm_password):
+    '''
+    Call the res.user change_password method
+    '''
+    db, pool = pooler.get_db_and_pool(db_name)
+    cr = db.cursor()
+    try:
+        user_obj = pool.get('res.users')
+        result = user_obj.change_password(db_name, login, password, new_password,
+                                          confirm_password)
+    finally:
+        cr.close()
+    return result
 
+def login(db_name, login, password):
+    # it is required here not to get pool but only the db, if the pool it also
+    # get, then the server will update the module at this step without display
+    # the "Server is updating modules ..." message
+    cr = pooler.get_db_only(db_name).cursor()
+    try:
+        nb = _get_number_modules(cr, testlogin=True)
+        patch_failed = [0]
+        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='patch_scripts'")
+        if cr.rowcount:
+            cr.execute("SELECT count(id) FROM patch_scripts WHERE run = \'f\'")
+            patch_failed = cr.fetchone()
+        to_update = False
+        if not nb:
+            to_update = updater.test_do_upgrade(cr)
+        if nb or to_update:
+            s = threading.Thread(target=pooler.get_pool, args=(db_name,),
+                                 kwargs={'threaded': True})
+            s.start()
+            raise Exception("ServerUpdate: Server is updating modules ...")
 
-    pool = pooler.get_pool(db)
+        pool = pooler.get_pool(db_name)
+        # check if the user have to change his password
+        cr.execute("""SELECT force_password_change
+        FROM res_users
+        WHERE login='%s'""" % (login))
+        force_password = [x[0] for x in cr.fetchall()]
+        if any(force_password):
+            raise Exception("ForcePasswordChange: The admin requests your password change ...")
+    finally:
+        cr.close()
+
     user_obj = pool.get('res.users')
-    user_res = user_obj.login(db, login, password)
+    user_res = user_obj.login(db_name, login, password)
 
     if user_res != 1 and patch_failed[0]:
         raise Exception("PatchFailed: A script during upgrade has failed. Login is forbidden. Please contact your administrator")
 
     return user_res
 
-def check_super(passwd):
-    if passwd == tools.config['admin_passwd']:
+def check_password_validity(self, cr, uid, old_password, new_password, confirm_password, login):
+    '''
+    Check password respect some conditions
+    Raise is any of the condition is not respected
+
+    :param self: the caller of this method. It is needed for _get_lang to be
+    able to know the language of the requested user
+    :param cr: database cursor
+    :param uid: the user id of the password to check
+    :param old_password: the previous password
+    :param new_password: the new password to setup
+    :param confirm_password: the confirmation of the new password
+    :param login: the login that request the password check
+    :return: True if the password check pass
+    :rtype: boolean
+    :raise osv.except_osv: if the password is not ok
+    '''
+    # check it contains at least one digit
+    if not re.search(r'\d', new_password):
+        message = _('The new password is not strong enough. '\
+                    'Password must contain at least one digit.')
+        raise osv.except_osv(_('Operation Canceled'), message)
+
+    # check new_password lenght
+    if len(new_password) < PASSWORD_MIN_LENGHT:
+        message = _('The new password is not strong enough. '\
+                    'Password must be at least %s characters long.' % PASSWORD_MIN_LENGHT)
+        raise osv.except_osv(_('Operation Canceled'), message)
+
+    # check login != new_password:
+    if new_password == login:
+        message = _('The new password cannot be equal to the login.')
+        raise osv.except_osv(_('Operation Canceled'), message)
+
+    # check confirm_password == new_password:
+    if new_password != confirm_password:
+        message = _('The new password does not match the confirm password.')
+        raise osv.except_osv(_('Operation Canceled'), message)
+
+    # check new_password != old_password
+    if new_password == old_password:
+        message = _('The new password must be different from the actual one.')
+        raise osv.except_osv(_('Operation Canceled'), message)
+    return True
+
+def check_password(password, hashed_password):
+    '''
+    Check that the password match the hashed_password
+
+    :param password: a string containing the password to check
+    :param hashed_password: a string containing the hash to check against, such
+    as returned by encrypt()
+    :return: True if the password match
+    :rtype: boolean
+    :raise ExceptionNoTb: if password don't match
+    '''
+    hashed_password = tools.ustr(hashed_password)
+    password = tools.ustr(password)
+
+    # check the password is a bcrypt encrypted one
+    if bcrypt.identify(hashed_password) and \
+            bcrypt.verify(password, hashed_password):
+        return True
+    elif password == hashed_password:
+        # this is a not encrypted password (we want to keep compatibility with
+        # old way password
         return True
     else:
         raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+
+def check_super_password_validity(password):
+    check_password_validity(None, None, 1, None, password, password, 'admin')
+    return True
+
+def check_super(passwd):
+    return check_password(passwd, tools.config['admin_passwd'])
 
 def check_super_dropdb(passwd):
-    if passwd == tools.config['admin_dropdb_passwd']:
-        return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+    return check_password(passwd, tools.config['admin_dropdb_passwd'])
 
 def check_super_bkpdb(passwd):
-    if passwd == tools.config['admin_bkpdb_passwd']:
-        return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+    return check_password(passwd, tools.config['admin_bkpdb_passwd'])
 
 def check_super_restoredb(passwd):
-    if passwd == tools.config['admin_restoredb_passwd']:
-        return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+    return check_password(passwd, tools.config['admin_restoredb_passwd'])
 
 def check(db, uid, passwd):
     pool = pooler.get_pool(db)

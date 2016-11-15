@@ -69,6 +69,21 @@ class patch_scripts(osv.osv):
         """
         cr.execute(request)
 
+    def us_1381_encrypt_passwords(self, cr, uid, *a, **b):
+        """
+        encrypt all passwords
+        """
+        from passlib.hash import bcrypt
+        users_obj = self.pool.get('res.users')
+        user_ids = users_obj.search(cr, uid, [])
+        for user in users_obj.read(cr, uid, user_ids, ['password']):
+            original_password = tools.ustr(user['password'])
+            # check the password is not already encrypted
+            if not bcrypt.identify(original_password):
+                encrypted_password = bcrypt.encrypt(original_password)
+                users_obj.write(cr, uid, user['id'],
+                                {'password': encrypted_password})
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be

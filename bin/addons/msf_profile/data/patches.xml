@@ -5,6 +5,10 @@
             <field name="method">us_1482_fix_default_code_on_msf_lines</field>
         </record>
 
+        <record id="us_1381" model="patch.scripts">
+            <field name="method">us_1381_encrypt_passwords</field>
+        </record>
+
         <record id="us_1388" model="patch.scripts">
             <field name="method">us_1388_change_sequence_implementation</field>
         </record>

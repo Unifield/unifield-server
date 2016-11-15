@@ -31,8 +31,6 @@ import os
 from os.path import join, isfile, basename
 import glob
 
-from pprint import pprint as pp
-
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
@@ -41,7 +39,7 @@ from setup_py2exe_custom import custom_py2exe, fixup_data_pytz_zoneinfo
 has_py2exe = False
 py2exe_keywords = {}
 if os.name == 'nt':
-    import py2exe
+    #    import py2exe
     has_py2exe = True
     py2exe_keywords['console'] = [
         { "script": join("bin", "openerp-server.py"),
@@ -65,7 +63,7 @@ if os.name == 'nt':
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
-                "pylzma", "xlwt"
+                "pylzma", "passlib", "bcrypt", "six", "cffi", "xlwt",
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
@@ -75,8 +73,8 @@ sys.path.append(join(os.path.abspath(os.path.dirname(__file__)), "bin"))
 
 execfile(join('bin', 'release.py'))
 
-if 'bdist_rpm' in sys.argv:
-    version = version.split('-')[0]
+#if 'bdist_rpm' in sys.argv:
+#    version = version.split('-')[0]
 
 # get python short version
 py_short_version = '%s.%s' % sys.version_info[:2]
@@ -120,7 +118,7 @@ def find_addons():
     #look for extra modules
     try:
         empath = os.getenv('EXTRA_MODULES_PATH', '../addons/')
-        for mname in open(join(empath, 'server_modules.list')):
+        for mname in file(join(empath, 'server_modules.list')):
             mname = mname.strip()
             if not mname:
                 continue
@@ -160,7 +158,7 @@ def data_files():
         files.append((join(man_directory, 'man1'), ['man/openerp-server.1']))
         files.append((join(man_directory, 'man5'), ['man/openerp_serverrc.5']))
 
-        doc_directory = join('share', 'doc', 'openerp-server-%s' % version)
+        doc_directory = join('share', 'doc', 'openerp-server')
         files.append((doc_directory, filter(isfile, glob.glob('doc/*'))))
         files.append((join(doc_directory, 'migrate', '3.3.0-3.4.0'),
                       filter(isfile, glob.glob('doc/migrate/3.3.0-3.4.0/*'))))
@@ -207,7 +205,7 @@ class openerp_server_install(install):
         start_script = "#!/bin/sh\ncd %s\nexec %s ./openerp-server.py $@\n"\
             % (join(self.install_libbase, "openerp-server"), sys.executable)
         # write script
-        f = open('openerp-server', 'w')
+        f = file('openerp-server', 'w')
         f.write(start_script)
         f.close()
         install.run(self)
@@ -215,47 +213,48 @@ class openerp_server_install(install):
 
 
 
-setup(name             = name,
-      version          = version,
-      description      = description,
-      long_description = long_desc,
-      url              = url,
-      author           = author,
-      author_email     = author_email,
-      classifiers      = filter(None, classifiers.split("\n")),
-      license          = license,
-      data_files       = data_files(),
-      cmdclass         = {
-          'install' : openerp_server_install,
-          'py2exe': custom_py2exe,
-      },
-      scripts          = ['openerp-server'],
-      packages = [
-          '.'.join(['openerp-server'] + package.split('.')[1:])
-          for package in find_packages()
-      ],
-      include_package_data = True,
-      package_data = {
-          '': ['*.yml', '*.xml', '*.po', '*.pot', '*.csv'],
-      },
-      package_dir      = find_package_dirs(),
-      install_requires = [
-          'lxml',
-          'mako',
-          'python-dateutil',
-          'psycopg2',
-          'pychart',
-          'pydot',
-          'pytz',
-          'reportlab',
-          'caldav',
-          'pyyaml',
-          'pywebdav',
-          'feedparser',
-      ],
-      extras_require={
-          'SSL' : ['pyopenssl'],
-      },
-      **py2exe_keywords
-      )
+setup(
+    #name             = name,
+    #      version          = version,
+    #      description      = description,
+    #      long_description = long_desc,
+    #      url              = url,
+    #      author           = author,
+    #      author_email     = author_email,
+    #      classifiers      = filter(None, classifiers.split("\n")),
+    license          = license,
+    data_files       = data_files(),
+    cmdclass         = {
+        'install' : openerp_server_install,
+        'py2exe': custom_py2exe,
+    },
+    scripts          = ['openerp-server'],
+    packages = [
+        '.'.join(['openerp-server'] + package.split('.')[1:])
+        for package in find_packages()
+    ],
+    include_package_data = True,
+    package_data = {
+        '': ['*.yml', '*.xml', '*.po', '*.pot', '*.csv'],
+    },
+    package_dir      = find_package_dirs(),
+    install_requires = [
+        'lxml',
+        'mako',
+        'python-dateutil',
+        'psycopg2',
+        'pychart',
+        'pydot',
+        'pytz',
+        'reportlab',
+        'caldav',
+        'pyyaml',
+        'pywebdav',
+        'feedparser',
+    ],
+    extras_require={
+        'SSL' : ['pyopenssl'],
+    },
+    **py2exe_keywords
+)
 
