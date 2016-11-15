@@ -1031,9 +1031,14 @@ class board_board(osv.osv):
                 elif child.get('name'):
                     action_id = int(child.get('name'))
                     model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
-                    if not self.pool.get('ir.model.access').check(cr, uid, model, mode='read', raise_exception=False):
+                    user_groups_id = self.pool.get('res.users').read(cr, uid, uid,
+                            ['groups_id'])['groups_id']
+                    ima_obj = self.pool.get('ir.model.access')
+                    write_perm = ima_obj.check_group(cr, uid, model, 'write',
+                            user_groups_id)
+
+                    if not write_perm:
                         node.remove(child)
-                        break
 
                 if child.get('menu_ref'):
                     menu_ids = child.get('menu_ref').split(',')
