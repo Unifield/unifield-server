@@ -74813,3 +74813,34 @@ msgstr "Nom du fichier à importer"
 #: field:manual.import.job,nb_processed_records:0
 msgid "# of processed records"
 msgstr "Nombre d'enregistrements exécutés"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:273
+#, python-format
+msgid "All entries have been rejected , bad file format ?"
+msgstr "Toutes les entrées ont été rejeté, le fichier est-il bien formaté ?"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:277
+#, python-format
+msgid "Some lines has been rejected, so we did not import anything. Please check your import file and try again"
+msgstr "Quelques entrées ont été rejeté, donc nous n'avons rien importé. Veuillez vérifier votre fichier et recommencer l'import."
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:271
+#, python-format
+msgid "The input file do not contains any record"
+msgstr "Le fichier ne contient aucun enregistrement"
+
+#. module: msf_tools
+#: model:ir.actions.act_window,name:msf_tools.manual_import_job_action
+#: model:ir.ui.menu,name:msf_tools.manual_import_job_menu
+msgid "Manual imports"
+msgstr "Import manuel"
+
+#. module: msf_tools
+#: view:automated.import:0
+#: model:ir.actions.act_window,name:msf_tools.automated_import_action
+#: model:ir.ui.menu,name:msf_tools.automated_import_menu
+msgid "Automated imports"
+msgstr "Import automatique"

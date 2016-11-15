@@ -268,14 +268,13 @@ class automated_import_job(osv.osv):
                     )(cr, uid, oldest_file)
                     nb_processed, nb_rejected = len(processed), len(rejected)
                     if nb_processed == 0 and nb_rejected == 0:
-                        raise Exception(_("The input file seems to be empty"))
+                        raise Exception(_("The input file do not contains any record"))
                     elif nb_processed == 0:
                         raise Exception(_("All entries have been rejected , bad file format ?"))
                     elif nb_rejected > 0:
                         nb_rejected += nb_processed
                         nb_processed = 0
-                        raise Exception(_("Some lines has been rejected, so we did not import anything. \
-                            Please check your import file and try again"))
+                        raise Exception(_("Some lines has been rejected, so we did not import anything. Please check your import file and try again"))
                 else:
                     processed, rejected, headers = getattr(
                         self.pool.get(job.import_id.function_id.model_id.model),
