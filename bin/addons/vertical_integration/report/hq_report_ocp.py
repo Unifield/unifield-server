@@ -346,7 +346,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         # Define the file name according to the following format:
         # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Monthly Export.csv (ex: KE1_201609_171116110306_Monthly Export.csv)
         inst = mi_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
-        instance_code = inst and '_' in inst.code and inst.code.split('_')[1][:3] or ''
+        instance_code = inst and inst.code[:3] or ''
         selected_period = strftime('%Y%m', strptime(first_day_of_period, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
         monthly_export_filename = '%s_%s_%s_Monthly Export.csv' % (instance_code, selected_period, current_time)

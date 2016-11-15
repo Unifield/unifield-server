@@ -170,7 +170,7 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
         # First3DigitsOfInstanceCode_chosenPeriod_currentDatetime_Check on reconcilable entries.csv
         # (ex: KE1_201610_171116110306_Check on reconcilable entries.csv)
         instance = instance_obj.browse(cr, uid, instance_id, context=context, fields_to_fetch=['code'])
-        instance_code = instance and '_' in instance.code and instance.code.split('_')[1][:3] or ''
+        instance_code = instance and instance.code[:3] or ''
         period = period_obj.browse(cr, uid, period_id, context=context, fields_to_fetch=['date_start', 'date_stop'])
         date_start = period.date_start
         date_stop = period.date_stop
