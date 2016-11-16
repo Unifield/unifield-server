@@ -228,6 +228,9 @@ class TinyInputWidget(TinyWidget, InputWidget):
                 'onchange': self.onchange
             })
 
+        if self.hide_default_menu:
+            params['attrs']['hide_default_menu'] = '1'
+
         if self.default_focus:
             params['attrs']['autofocus'] = 'autofocus'
         if self.readonly:
