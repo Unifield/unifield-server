@@ -388,6 +388,7 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        res = {}.fromkeys(ids, 0)
         line_number_by_order = {}
 
         lines = pol_obj.search(cr, uid, [('order_id', 'in', ids)], context=context)
@@ -395,10 +396,8 @@ class purchase_order(osv.osv):
             line_number_by_order.setdefault(l['order_id'][0], set())
             line_number_by_order[l['order_id'][0]].add(l['line_number'])
 
-        res = {}
         for po_id, ln in line_number_by_order.iteritems():
             res[po_id] = len(ln)
-
 
         return res
 
