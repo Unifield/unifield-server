@@ -95,7 +95,7 @@ class finance_archive(finance_export.finance_archive):
                     if abs(booking_debit - booking_credit) <= 10 ** -3:
                         entry_kept = True
             if entry_kept:
-                # if the entry is kept, delete the columns not used anymore (date_stop, unreconcile_txt...)
+                # if the entry is kept, delete the columns not used anymore
                 line_list = column_deletion and self.delete_x_column(line_list, column_deletion)
                 # add the line to the final data
                 new_data.append(tuple(line_list))
@@ -180,13 +180,15 @@ class hq_report_ocp_matching(report_sxw.report_sxw):
 
         processrequests = [
             {
-                'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
+                'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account',
+                            'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit',
+                            'Functional Credit', 'Functional Currency', 'Reconcile reference', 'Unreconcile reference'],
                 'filename': reconcilable_entries_filename,
                 'key': 'reconcilable',
                 'query_params': (date_stop, tuple(excluded_journal_types), tuple(instance_ids), date_stop, date_start, date_start),
                 'function': 'postprocess_reconciliable',
                 'fnct_params': 'account.move.line',
-                'delete_columns': [15, 16],
+                'delete_columns': [15],
                 },
         ]
         # Launch finance archive object
