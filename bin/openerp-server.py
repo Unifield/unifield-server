@@ -94,6 +94,15 @@ import pooler
 # import basic modules
 #----------------------------------------------------------
 import service
+import osv
+import workflow
+import report
+import service
+
+#----------------------------------------------------------
+# import addons
+#----------------------------------------------------------
+import addons
 
 #----------------------------------------------------------
 # Load and update databases if requested
