@@ -391,7 +391,7 @@ class account_move_line_compute_currency(osv.osv):
                         # (we can't use directly the creation date of the account_move_reconcile since if the reconciliation
                         # is done in coordo and then synched to project, the date is different in the 2 instances)
                         reconcile_date = self.browse(cr, uid, reconciled_line_ids[0], fields_to_fetch=['reconcile_date'],
-                                                     context=context).reconcile_date or None
+                                                     context=new_ctx).reconcile_date or None
                         cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
                                    (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
         return True
