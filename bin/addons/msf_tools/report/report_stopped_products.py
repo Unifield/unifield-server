@@ -181,7 +181,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
     def get_uf_stopped_products(self):
         '''
         Return browse record list that contains stopped products
-        taking in account non-local products stopped in the current instance,
+        taking in account non-local/temp products stopped in the current instance,
         and products in stock mission if they have qty in stock or in pipe
         '''
         prod_obj = self.pool.get('product.product')
