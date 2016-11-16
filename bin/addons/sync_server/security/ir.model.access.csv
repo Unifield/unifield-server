@@ -6,4 +6,11 @@
 "sync_read_sync_update_id","sync_read_sync_update","sync.server.update","True","","","","sync_common.sync_read_group"
 "sync_read_message_rule_id","sync_read_message_rule","sync_server.message_rule","True","","","","sync_common.sync_read_group"
 "sync_read_message_id","sync_read_message","sync.server.message","True","","","","sync_common.sync_read_group"
-
+"access_module_ir_module_user_all","module_ir_module_user all","ir.module.module",1,0,0,0,
+"access_publisher_waranty_user_all","publisher_waranty_user all","publisher_warranty.contract",1,0,0,0,
+"access_ir_act_window_user_all","ir_act_window_user all","ir.actions.act_window",1,0,0,0,
+"access_ir_ui_view_user_all","ir_ui_view_user all","ir.ui.view",1,0,0,0,
+"access_ir_action_server_user_all","ir_action_server_user all","ir.actions.server",1,0,0,0,
+"access_res_widget_user_user_all","res_widget_user_user all","res.widget.user",1,0,0,0,
+"access_res_log_user_all","res_log_user all","res.log",1,0,0,0,
+"access_ir_ui_menu_user_all","ir_ui_menu_user all","ir.ui.menu",1,0,0,0,

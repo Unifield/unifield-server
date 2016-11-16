@@ -46,6 +46,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def setup_security_on_sync_server(self, cr, uid, *a, **b):
+        update_module = self.pool.get('sync.server.update')
+        if not update_module:
+            # this script is exucuted on server side, update the first delete
+            return
+
+        data_obj = self.pool.get('ir.model.data')
+        group_id = data_obj.get_object_reference(cr, uid, 'base',
+                'group_erp_manager')[1]
+
+        model_obj = self.pool.get('ir.model')
+        model_list_not_to_change = ['res.users', 'res.lang', 'res.widget',
+                'res.widget.user', 'res.log', 'publisher_warranty.contract',
+                'module.module']
+        model_ids = model_obj.search(cr, uid,
+                [('model', 'not like', "ir%"),
+                 ('model', 'not in', model_list_not_to_change)])
+
+        access_obj = self.pool.get('ir.model.access')
+        no_group_access = access_obj.search(cr, uid, [('group_id', '=', False),
+            ('model_id', 'in', model_ids)])
+        access_obj.write(cr, uid, no_group_access, {'group_id': group_id})
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be
