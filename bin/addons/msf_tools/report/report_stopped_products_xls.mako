@@ -65,16 +65,7 @@
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unidata status
 
     ##### Table with all stopped products #####
-
-    <% stopped_products = get_uf_stopped_products() %>
-    % if not stopped_products:
-        <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">There is no stopped products to report</Data></Cell>
-        </Row>
-    % endif
-
-    % for line in stopped_products:
+    % for line in get_uf_stopped_products():
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>

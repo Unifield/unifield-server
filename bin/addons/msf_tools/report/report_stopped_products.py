@@ -60,6 +60,9 @@ class export_report_stopped_products(osv.osv):
         prod_obj = self.pool.get('product.product')
         data_obj = self.pool.get('ir.model.data')
 
+        if not self.has_stopped_products(cr, uid, ids, context):
+            raise osv.except_osv(_("Error"),_("There is no stopped products to report"))
+
         res = {}
         for report in self.browse(cr, uid, ids, context=context):
             # get ids of all non-local products :
@@ -110,7 +113,6 @@ class export_report_stopped_products(osv.osv):
         return res
 
 
-
     def generate_report_bkg(self, cr, uid, report_ids, datas, context=None):
         '''
         Generate the report in background (thread)
@@ -153,6 +155,43 @@ class export_report_stopped_products(osv.osv):
         new_cr.close(True)
 
         return True
+
+
+    def has_stopped_products(self, cr, uid, ids, context):
+        '''
+        Return True if there is stopped products to report, False otherwise
+        '''
+        prod_obj = self.pool.get('product.product')
+        data_obj = self.pool.get('ir.model.data')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+
+        stopped_state_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
+        status_local_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_4')[1]
+        temporary_status_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'int_5')[1]
+
+        hq_stopped_ids = prod_obj.search(cr, uid, [
+            ('state', '=', stopped_state_id), 
+            ('international_status', '!=', status_local_id),
+            ('international_status', '!=', temporary_status_id)],
+            context=context)
+
+        smrl_ids = smrl_obj.search(cr, uid, [
+            ('full_view', '=', False),
+            ('product_state', '=', 'stopped'),
+            '|', ('internal_qty', '!=', 0),
+            ('in_pipe_qty', '!=', 0)
+        ], context=context)
+
+        sm_stopped_ids = smrl_obj.read(cr, uid, smrl_ids, ['product_id'], context=context)
+        sm_stopped_ids = [x.get('product_id')[0] for x in sm_stopped_ids]
+
+        # build a list of stopped products with unique ids and sorted by default_code:
+        stopped_ids = list(set(hq_stopped_ids + sm_stopped_ids))
+
+        if stopped_ids:
+            return True
+
+        return False
 
 
 export_report_stopped_products()
@@ -214,7 +253,7 @@ class parser_report_stopped_products_xls(report_sxw.rml_parse):
         for prod in prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
             ls.append( (prod.id, prod.default_code) )
         sorted_stopped_ids = [x[0] for x in sorted(ls, key=lambda tup: tup[1])]
-        
+
         return prod_obj.browse(self.cr, self.uid, sorted_stopped_ids, context=self.localcontext)
 
 

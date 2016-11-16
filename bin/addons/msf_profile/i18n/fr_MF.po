@@ -74708,3 +74708,9 @@ msgstr "Exporter produits stoppés"
 #: view:export.report.stopped.products:0
 msgid "Status of the report"
 msgstr "Status du rapport"
+
+#. module: msf_tools
+#: code:addons/msf_tools/report/report_stopped_products.py:64
+#, python-format
+msgid "There is no stopped products to report"
+msgstr "Il n'y a aucun produit stoppé à afficher"
