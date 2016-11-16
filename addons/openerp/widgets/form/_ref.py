@@ -42,7 +42,6 @@ class Reference(TinyInputWidget):
 
         self.domain = attrs.get('domain', [])
         self.context = attrs.get('context', {})
-        self.hide_default_menu = attrs.get('hide_default_menu', 0)
 
         self.validator = validators.Reference()
         self.onchange = None # override onchange in js code
