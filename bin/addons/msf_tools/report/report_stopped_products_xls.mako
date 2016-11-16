@@ -65,7 +65,16 @@
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unidata status
 
     ##### Table with all stopped products #####
-    % for line in get_uf_stopped_products():
+
+    <% stopped_products = get_uf_stopped_products() %>
+    % if not stopped_products:
+        <Row ss:AutoFitHeight="1">
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">There is no stopped products to report</Data></Cell>
+        </Row>
+    % endif
+    
+    % for line in stopped_products:
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>
@@ -83,7 +92,7 @@
           <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud and getSel(line, 'state_ud') or '')|x}</Data></Cell>
         </Row>
 
-        <% smrl_list = get_stock_mission_report_lines(line.id) %>
+        <% smrl_list = get_stock_mission_report_lines(line) %>
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance/Mission</Data></Cell>
           <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Unifield Status</Data></Cell>
