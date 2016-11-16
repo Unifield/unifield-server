@@ -42,7 +42,7 @@ class finance_archive(finance_export.finance_archive):
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
         Modify it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
-        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
+        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
         Returns a list of tuples (same format as data)
         """
         new_data = []
@@ -68,9 +68,9 @@ class finance_archive(finance_export.finance_archive):
                     od_hq_entry = True
                 if od_hq_entry:
                     line_list[instance_code] = 'SIEG'
-                    # for the 3 characters of the journal name taken from the 10th character of the description field:
+                    # for the 3 characters of the journal name taken from the 11th character of the description field:
                     # exclude the "COR1 - " or "REV - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
+                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -79,7 +79,7 @@ class finance_archive(finance_export.finance_archive):
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
         Modify it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
-        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 10th one
+        - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
         Returns a list of tuples (same format as data)
         """
         new_data = []
@@ -105,9 +105,9 @@ class finance_archive(finance_export.finance_archive):
                     od_hq_entry = True
                 if od_hq_entry:
                     line_list[instance_code] = 'SIEG'
-                    # for the 3 characters of the journal name taken from the 10th character of the description field:
+                    # for the 3 characters of the journal name taken from the 11th character of the description field:
                     # exclude the "COR1 - " or "REV - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][9:12] or ''
+                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
 
