@@ -181,9 +181,10 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
             <form string="Export to HQ system">
-                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"/>
+                <field name="instance_id" domain="['&amp;', ('level', '=', 'coordo'), ('instance_to_display_ids','=',True)]"
+                       on_change="onchange_instance_id()"/>
                 <field name="fiscalyear_id"/>
-                <field name="period_id" domain="[('fiscalyear_id', '=', fiscalyear_id), ('state', '&lt;&gt;', 'created'), ('number', '&lt;', 16)]"/>
+                <field name="period_id" domain="[('child_mission_closed', '=', [instance_id, fiscalyear_id]), ('number', '&lt;', 16)]"/>
                 <newline/>
                 <group colspan="6" col="4">
                     <label string="" colspan="2"/>

@@ -40,24 +40,15 @@ class ocp_export_wizard(osv.osv_memory):
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, strftime('%Y-%m-%d'), context=c),
     }
 
-    def _check_period_state(self, cr, uid, period, instance, context=None):
+    def onchange_instance_id(self, cr, uid, ids, context=None):
         '''
-        Check that the selected instance is Mission-Closed for the selected period
+        Reset the period field when another prop. instance is selected.
+        Cover the case when in HQ the user selects a period mission-closed in a coordo,
+        and then select another coordo in which the period previously selected is not mission-closed
         '''
-        if context is None:
-            context = {}
-        if not period:
-            raise osv.except_osv(_('Warning!'), _('You must select a period.'))
-        elif not instance:
-            raise osv.except_osv(_('Warning!'), _('You must select a proprietary instance.'))
-        period_state_obj = self.pool.get('account.period.state')
-        domain = [
-            ('instance_id', '=', instance.id),
-            ('period_id', '=', period.id),
-            ('state', '=', 'mission-closed'),
-        ]
-        if not period_state_obj.search_exist(cr, uid, domain, context=context):
-            raise osv.except_osv(_('Warning!'), _('The selected instance must be Mission-Closed.'))
+        res = {}
+        res['value'] = {'period_id': False}
+        return res
 
     def button_ocp_export_to_hq(self, cr, uid, ids, context=None):
         """
@@ -81,13 +72,6 @@ class ocp_export_wizard(osv.osv_memory):
             data['form'].update({'period_id': period.id})
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
-        # Check that the export is run at HQ level
-        user_obj = self.pool.get('res.users')
-        company = user_obj.browse(cr, uid, uid).company_id
-        if company.instance_id.level != 'section':
-            raise osv.except_osv(_('Warning!'), _('The report can be run at HQ level only.'))
-        # Check that the period state is ok
-        self._check_period_state(cr, uid, period, inst, context)
         # The file name is composed of:
         # - the first 3 digits of the Prop. Instance code
         # - the year and month of the selected period
