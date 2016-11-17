@@ -396,12 +396,11 @@ class account_move_line(osv.osv):
 
     def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
         # US-672/2
-        if context and context.get('from_web_menu', False) \
-                and vals.get('account_id', False) \
-                and vals.get('partner_type', False):
-
+        if context and context.get('from_web_menu', False) and vals.get('account_id', False):
+            # US-1307 Check must be done also for "Empty" partner
+            partner_type = 'partner_type' in vals and vals['partner_type'] or False
             self.pool.get('account.account').is_allowed_for_thirdparty(
-                cr, uid, vals['account_id'], partner_type=vals['partner_type'],
+                cr, uid, vals['account_id'], partner_type=partner_type,
                 from_vals=True, raise_it=True, context=context)
 
     def create(self, cr, uid, vals, context=None, check=True):

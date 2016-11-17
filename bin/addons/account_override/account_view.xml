@@ -30,6 +30,7 @@
                                 <newline />
                                 <field name="has_partner_type_local" />
                                 <field name="has_partner_type_ex" />
+                                <field name="has_partner_type_empty" />
                                 <newline />
                                 <field name="has_partner_type_book" />
                             </group>
@@ -37,6 +38,7 @@
                             <group col="2" colspan="2">
                                 <field name="has_partner_type_intermission" />
                                 <field name="has_partner_type_section" />
+
                                 <label /><label />
                                 <newline />
                                 <label /><label />

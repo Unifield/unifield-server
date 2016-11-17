@@ -1215,7 +1215,7 @@ class account_invoice(osv.osv):
                 and r.partner_id.id or False
 
             # header check
-            if partner_id and hasattr(r, 'account_id') and r.account_id:
+            if hasattr(r, 'account_id') and r.account_id:
                 if not account_obj.is_allowed_for_thirdparty(cr, uid,
                                                              [r.account_id.id], partner_id=partner_id,
                                                              context=context)[r.account_id.id]:
@@ -1234,12 +1234,11 @@ class account_invoice(osv.osv):
                         if line_level_partner_type:
                             # partner at line level
                             partner_type = l.partner_type
-                        if (partner_id or partner_type) \
-                            and not account_obj.is_allowed_for_thirdparty(cr,
-                                                                          uid, [l.account_id.id],
-                                                                          partner_type=partner_type,
-                                                                          partner_id=partner_id,
-                                                                          context=context)[l.account_id.id]:
+                        if not account_obj.is_allowed_for_thirdparty(cr,
+                                                                     uid, [l.account_id.id],
+                                                                     partner_type=partner_type or False,
+                                                                     partner_id=partner_id or False,
+                                                                     context=context)[l.account_id.id]:
                             num = hasattr(l, 'line_number') and l.line_number \
                                 or line_index
                             if not lines_errors:

@@ -75229,3 +75229,9 @@ msgid "The given XML file is not structured as expected in the DTD:\n"
 " %s"
 msgstr "La structure du fichier XML ne respecte pas la déclaration DTD:\n"
 " %s"
+
+#. module: account_override
+#: code:addons/account_override/account.py:475
+#, python-format
+msgid "At least one Allowed Partner type must be selected."
+msgstr "Au moins un type de Partenaire Autorisé doit être sélectionné."
