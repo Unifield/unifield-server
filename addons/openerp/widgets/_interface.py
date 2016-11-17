@@ -132,6 +132,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
         'change_default',
         'onchange',
         'kind',
+        'hide_default_menu',
         'filters' # filter buttons within an input widget, part of the same implicit "group"
     ]
 
@@ -147,7 +148,8 @@ class TinyInputWidget(TinyWidget, InputWidget):
     states = None
     callback = None
     change_default = None
-    kind=None
+    kind = None
+    hide_default_menu = False
 
     label_type = InputWidgetLabel
 
@@ -169,6 +171,7 @@ class TinyInputWidget(TinyWidget, InputWidget):
 
         self.callback = attrs.get('on_change', None)
         self.kind = attrs.get('type', None)
+        self.hide_default_menu = _boolean_attr(attrs, 'hide_default_menu')
 
         self.default_focus = attrs.get('default_focus', False)
         self.label = self.label_type(self.name, self.string, self.help)
@@ -217,12 +220,16 @@ class TinyInputWidget(TinyWidget, InputWidget):
             kind=self.kind,
             editable=self.editable,
             inline=self.inline,
+            hide_default_menu=self.hide_default_menu,
             attrs={
                 #'attrs': self.attributes or None,
                 'change_default': self.change_default or None,
                 'callback': self.callback or None,
                 'onchange': self.onchange
             })
+
+        if self.hide_default_menu:
+            params['attrs']['hide_default_menu'] = '1'
 
         if self.default_focus:
             params['attrs']['autofocus'] = 'autofocus'

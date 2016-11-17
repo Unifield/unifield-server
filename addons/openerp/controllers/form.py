@@ -18,17 +18,16 @@
 #  You can see the MPL licence at: http://www.mozilla.org/MPL/MPL-1.1.html
 #
 ###############################################################################
-import base64,os,re
+import base64,re
 
 import cherrypy
-from openerp import utils, widgets as tw, validators
+from openerp import utils, widgets as tw
 from openerp.controllers import SecuredController
 from openerp.utils import rpc, common, TinyDict, TinyForm, expr_eval
 from error_page import _ep
 from openobject.tools import expose, redirect, validate, error_handler, exception_handler
 import openobject
 import openobject.paths
-import simplejson
 
 FIELDS_INTERNAL_NAME = '__openerp__real_fiels'
 
@@ -255,7 +254,7 @@ class Form(SecuredController):
                     shortcut_ids.append(sc['res_id'][0])
                 else:
                     shortcut_ids.append(sc['res_id'])        
-        
+
         title = form.screen.string or ''
         display_name = {}
         if params.view_type == 'form':
@@ -268,11 +267,11 @@ class Form(SecuredController):
 
         # For Corporate Intelligence visibility.
         obj_process = rpc.RPCProxy('ir.model').search([('model', '=', 'process.process')]) or None
-        
+
         tips = params.display_menu_tip
         if params.view_type == params.view_mode[0] and tips:
             tips = tips
-        
+
         is_dashboard = form.screen.is_dashboard or False
         return dict(form=form, pager=pager, buttons=buttons, path=self.path, can_shortcut=can_shortcut, shortcut_ids=shortcut_ids, display_name=display_name, title=title, tips=tips, obj_process=obj_process, is_dashboard=is_dashboard, sidebar_closed=params._terp_sidebar_closed)
 
@@ -445,19 +444,19 @@ class Form(SecuredController):
             params.id = params.ids[0]
         if params.id and params.editable:
             raise redirect(self.path + "/view", model=params.model,
-                                               id=params.id,
-                                               ids=ustr(params.ids),
-                                               view_ids=ustr(params.view_ids),
-                                               view_mode=ustr(params.view_mode),
-                                               domain=ustr(params.domain),
-                                               context=ustr(params.context),
-                                               offset=params.offset,
-                                               limit=params.limit,
-                                               count=params.count,
-                                               search_domain=ustr(params.search_domain),
-                                               search_data = ustr(params.search_data),
-                                               filter_domain= ustr(params.filter_domain),
-                                               sidebar_closed=params._terp_sidebar_closed)
+                           id=params.id,
+                           ids=ustr(params.ids),
+                           view_ids=ustr(params.view_ids),
+                           view_mode=ustr(params.view_mode),
+                           domain=ustr(params.domain),
+                           context=ustr(params.context),
+                           offset=params.offset,
+                           limit=params.limit,
+                           count=params.count,
+                           search_domain=ustr(params.search_domain),
+                           search_data = ustr(params.search_data),
+                           filter_domain= ustr(params.filter_domain),
+                           sidebar_closed=params._terp_sidebar_closed)
 
         params.view_type = 'tree'
         return self.create(params)
@@ -494,10 +493,10 @@ class Form(SecuredController):
                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
                 if params.button and params.button.name:
                     ctx.update({'button': params.button.name})
-                
+
                 #original_data = Model.read(params.id, data.keys())
                 #modified = {}
-                
+
                 #if original_data and isinstance(original_data, dict):
                 #    for field, original_value in original_data.iteritems():
                 #        if isinstance(original_value, tuple):
@@ -636,9 +635,9 @@ class Form(SecuredController):
             cherrypy.session['wizard_parent_params'] = params.parent_params or params
 
         res = actions.execute_by_id(
-                action_id, type=action_type,
-                model=model, id=id, ids=ids,
-                context=ctx or {})
+            action_id, type=action_type,
+            model=model, id=id, ids=ids,
+            context=ctx or {})
         if res:
             return res
         params.button = None
@@ -720,7 +719,7 @@ class Form(SecuredController):
         idx = -1
         if current.id:
             ctx = utils.context_with_concurrency_info(current.context, params.concurrency_info)
-            res = proxy.unlink([current.id], ctx)
+            proxy.unlink([current.id], ctx)
             if current.ids:
                 idx = current.ids.index(current.id)
                 if idx >= 0:
@@ -765,14 +764,14 @@ class Form(SecuredController):
             form = params.datas['form']
             res = form.get(params.field)
             return base64.decodestring(res)
-        
+
         elif params.id:
             proxy = rpc.RPCProxy(params.model)
             res = proxy.read([params.id],[params.field], rpc.session.context)
             return base64.decodestring(res[0][params.field])
         else:
             return base64.decodestring(data[params.field])
-        
+
 
     @expose()
     def clear_binary_data(self, **kw):
@@ -820,7 +819,6 @@ class Form(SecuredController):
 
     @expose("json")
     def binary_image_delete(self, **kw):
-        saved = kw.get('saved') or None
         model = kw.get('model')
         id = kw.get('id')
         if id:
@@ -858,7 +856,7 @@ class Form(SecuredController):
                 id = rpc.RPCProxy(params.model).create(data, ctx)
                 params.ids.append(id)
                 params.count += 1
-            
+
         l = params.limit or 50
         o = params.offset or 0
         c = params.count or 0
@@ -973,7 +971,7 @@ class Form(SecuredController):
     @exception_handler(default_exception_handler)
     def previous_o2m(self, **kw):
         params, data = TinyDict.split(kw)
-        
+
         if params.get('_terp_save_current_id'):
             ctx = dict((params.context or {}), **rpc.session.context)
             if params.id:
@@ -982,10 +980,10 @@ class Form(SecuredController):
                 id = rpc.RPCProxy(params.model).create(data, ctx)
                 params.ids.append(id)
                 params.count += 1
-        
+
         current = params.chain_get(params.source or '') or params
         idx = -1
-        
+
         if current.id:
             # save current record
             if params.editable:
@@ -1005,7 +1003,6 @@ class Form(SecuredController):
     @expose()
     def next_o2m(self, **kw):
         params, data = TinyDict.split(kw)
-        c = params.count or 0
         current = params.chain_get(params.source or '') or params
 
         idx = 0
@@ -1066,13 +1063,13 @@ class Form(SecuredController):
             return actions.execute_by_keyword(name, adds=adds, model=model, id=id, ids=ids, report_type='pdf')
         else:
             raise common.message(_("No record selected"))    
-    
+
     @expose()
     def report(self, **kw):
         return self.do_action('client_print_multi', adds={'Print Screen': {'report_name':'printscreen.list',
                                                                            'name': _('Print Screen'),
                                                                            'type':'ir.actions.report.xml'}}, datas=kw)
-    
+
     @expose()
     def action(self, **kw):
         params, data = TinyDict.split(kw)
@@ -1188,7 +1185,7 @@ class Form(SecuredController):
         try:
             response = getattr(proxy, func_name)(ids, *args)
         except Exception, e:
-             return dict(error=_ep.render())
+            return dict(error=_ep.render())
 
         if response is False: # response is False when creating new record for inherited view.
             response = {}
@@ -1217,7 +1214,7 @@ class Form(SecuredController):
                 digit = field[k].get('digits')
                 if digit: digit = digit[1]
                 values2[k]['digit'] = digit or 2
-                
+
                 # custom fields - decimal_precision computation
                 computation = field[k].get('computation')
                 values2[k]['computation'] = computation
@@ -1249,7 +1246,8 @@ class Form(SecuredController):
         return result
 
     @expose('json')
-    def get_context_menu(self, model, field, kind="char", relation=None, value=None):
+    def get_context_menu(self, model, field, kind="char", relation=None,
+                         value=None, hide_default_menu=False):
 
         defaults = []
         actions = []
@@ -1258,19 +1256,26 @@ class Form(SecuredController):
         if kind == "many2one" or kind == "reference":
             defaults.append({'text': _('Open resource'), 'action': "new ManyToOne('%s').open_record('%s')" % (field, value)})
 
-        defaults += [
-            {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
-            {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
-            {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
-        ]
+        if isinstance(hide_default_menu, basestring):
+            if hide_default_menu and hide_default_menu.lower() in ('1', 'true'):
+                hide_default_menu = True
+            else:
+                hide_default_menu = False
+
+        if kind != 'reference' and not hide_default_menu:
+            defaults += [
+                {'text': _('Set to default value'), 'action': "set_to_default('%s', '%s')" % (field, model)},
+                {'text': _('Set as default'), 'action': "set_as_default('%s', '%s')"  % (field, model)},
+                {'text': _('Reset default'), 'action': "reset_default('%s', '%s')"  % (field, model)},
+            ]
 
         if kind=='many2one':
 
             act = (value or None) and "javascript: void(0)"
 
             actions += [{'text': _('Action'), 'relation': relation, 'field': field, 'action': act and "do_action(this, true)"},
-                       {'text': _('Report'), 'action': act and "do_report('%s', '%s')" %(field, relation)}]
-            
+                        {'text': _('Report'), 'action': act and "do_report('%s', '%s')" %(field, relation)}]
+
             res = rpc.RPCProxy('ir.values').get('action', 'client_action_relate', [(relation, False)], False, rpc.session.context)
             res = [x[2] for x in res]
 
@@ -1333,7 +1338,7 @@ class Form(SecuredController):
                 rpc.session.active_id and
                 ((cherrypy.request.path_info == '/openerp/execute'
                   and action_data.get('model') == 'ir.ui.menu')
-                # FIXME: hack hack hack
+                 # FIXME: hack hack hack
                  or cherrypy.request.params.get('_terp_source_view_type') == 'tree'))
 
     @expose()
