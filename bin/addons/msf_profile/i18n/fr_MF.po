@@ -32008,6 +32008,11 @@ msgstr "37 J(PM)"
 msgid "In Progress"
 msgstr "En Cours"
 
+#. module: procurement_request
+#: view:sale.order:0
+msgid "Confirmed"
+msgstr "Confirmé"
+
 #. module: msf_outgoing
 #: field:shipment,shipment_actual_date:0
 msgid "Actual Ship Date"

@@ -23826,6 +23826,11 @@ msgstr "Crédito total"
 msgid "In Progress"
 msgstr "En curso"
 
+#. module: procurement_request
+#: view:sale.order:0
+msgid "Confirmed"
+msgstr "En curso"
+
 #. module: account
 #: code:addons/account/invoice.py:740
 #, python-format
