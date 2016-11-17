@@ -44,6 +44,8 @@ import functools
 
 from datetime import datetime, timedelta
 
+from sync_common import OC_LIST_TUPLE
+
 MAX_EXECUTED_UPDATES = 500
 MAX_EXECUTED_MESSAGES = 500
 
@@ -387,7 +389,7 @@ class Entity(osv.osv):
     _logger = logging.getLogger('sync.client')
     _hardware_id = get_hardware_id()
 
-    def _auto_init(self,cr,context=None):
+    def _auto_init(self, cr, context=None):
         res = super(Entity, self)._auto_init(cr, context=context)
         if not self.search(cr, 1, [], limit=1, order='NO_ORDER', context=context):
             self.create(cr, 1, {'identifier' : self.generate_uuid()}, context=context)
@@ -434,6 +436,9 @@ class Entity(osv.osv):
     _columns = {
         'name':fields.char('Instance Name', size=64, readonly=True),
         'identifier':fields.char('Identifier', size=64, readonly=True),
+        'oc': fields.selection(OC_LIST_TUPLE,
+                               'Operational Center'), # not required here because _auto_init create
+        # before to know from witch OC it is part of
         'parent':fields.char('Parent Instance', size=64, readonly=True),
         'update_last': fields.integer('Last update', required=True),
         'update_offset' : fields.integer('Update Offset', required=True, readonly=True),

@@ -31,6 +31,8 @@ from datetime import datetime, timedelta
 from sync_common import get_md5, check_md5
 import time
 import psycopg2
+from sync_common import OC_LIST_TUPLE
+
 pp = pprint.PrettyPrinter(indent=4)
 MAX_ACTIVITY_DELAY = timedelta(minutes=5)
 
@@ -87,13 +89,18 @@ class entity_group(osv.osv):
         'name': fields.char('Group Name', size = 64, required=True),
         'entity_ids': fields.many2many('sync.server.entity', 'sync_entity_group_rel', 'group_id', 'entity_id', string="Instances"),
         'type_id': fields.many2one('sync.server.group_type', 'Group Type', ondelete="set null", required=True),
+        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center', required=True),
     }
 
     def get_group_name(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         res = []
         for group in self.browse(cr, uid, ids, context=context):
-            res.append({'name': group.name, 'type': group.type_id.name})
+            res.append({
+                'name': group.name,
+                'type': group.type_id.name,
+                'oc': group.oc
+            })
         return res
 
     def get(self, cr, uid, name, context=None):
@@ -190,6 +197,8 @@ class entity(osv.osv):
         'identifier':fields.char('Identifier', size=64, readonly=True, select=True),
         'hardware_id' : fields.char('Hardware Identifier', size=128, select=True),
         'parent_id':fields.many2one('sync.server.entity', 'Parent Instance', ondelete='cascade'),
+        'oc': fields.selection(OC_LIST_TUPLE, 'Operational Center',
+                               required=True),
         'group_ids':fields.many2many('sync.server.entity_group', 'sync_entity_group_rel', 'entity_id', 'group_id', string="Groups"),
         'state' : fields.selection([('pending', 'Pending'), ('validated', 'Validated'), ('invalidated', 'Invalidated'), ('updated', 'Config updated')], 'State'),
         'email':fields.char('Contact Email', size=512),
@@ -350,6 +359,7 @@ class entity(osv.osv):
                 'name' : 'name',
                 'email' : 'cur.email',
                 'max_size' : '5',
+                'oc': 'oca',
             }
         """
         def get_parent(parent_name):
