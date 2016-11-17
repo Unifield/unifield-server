@@ -47,8 +47,28 @@ class patch_scripts(osv.osv):
     }
 
     def us_1725_force_sync_on_hr_employee(self, cr, uid, *a, **b):
+        '''
+        force sync on all local employee
+        '''
         touched = "['birthday', 'code', 'employee_type', 'filter_for_third_party', 'gender', 'identification_id', 'job_id/id', 'marital/id', 'mobile_phone', 'name', 'name_resource', 'notes', 'passport_id', 'private_phone', 'resource_type', 'sinid', 'ssnid', 'work_email', 'work_location', 'work_phone']"
-        cr.execute("update ir_model_data set last_modification=NOW(), touched=%s WHERE module='sd' AND model='hr.employee'", (touched,))
+
+        # get all local employee
+        hr_employee_obj = self.pool.get('hr.employee')
+        local_employee_ids = hr_employee_obj.search(cr, uid,
+                [('employee_type', '=', 'local'),
+                 ('name','!=','Administrator')])
+
+        total_employee = len(local_employee_ids)
+        start_chunk = 0
+        chunk_size = 100
+        while start_chunk < total_employee:
+            ids_chunk = local_employee_ids[start_chunk:start_chunk+chunk_size]
+            cr.execute("""UPDATE
+                ir_model_data SET last_modification=NOW(), touched=%s
+            WHERE
+                module='sd' AND model='hr.employee' AND res_id in %s""",
+                (touched, tuple(ids_chunk)))
+            start_chunk += chunk_size
 
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
