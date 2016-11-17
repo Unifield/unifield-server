@@ -335,6 +335,11 @@ def generate_new_hwid():
         for line in os.popen("/sbin/ifconfig"):
             if line.find('Ether') > -1:
                 mac_list.append(line.split()[4])
+
+    if not mac_list:
+        executable = sys.platform == 'win32' and 'ipconfig /all' or '/sbin/ifconfig'
+        raise Exception, '%s give no result, please check it is correctly installed' % executable
+
     mac_list.sort()
 
     logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
@@ -374,7 +379,6 @@ def get_hardware_id():
     else:
         hw_hash = generate_new_hwid()
     return hw_hash
-
 
 class Entity(osv.osv):
     """ OpenERP entity name and unique identifier """
