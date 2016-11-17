@@ -1058,7 +1058,8 @@ class account_bank_statement_line(osv.osv):
             ('draft', 'Draft'), ('temp', 'Temp'), ('hard', 'Hard'), ('unknown', 'Unknown')]),
         'direct_state': fields.char(string="Direct Invoice State", size=8),  # draft, temp, hard. See ticket utp917
         'partner_type': fields.function(_get_third_parties, fnct_inv=_set_third_parties, type='reference', method=True,
-                                        string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')], multi="third_parties_key"),
+                                        string="Third Parties", selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')],
+                                        multi="third_parties_key", hide_default_menu=True),
         'partner_type_mandatory': fields.boolean('Third Party Mandatory'),
         'reconciled': fields.function(_get_reconciled_state, fnct_search=_search_reconciled, method=True, string="Amount Reconciled",
                                       type='boolean', store=False),
