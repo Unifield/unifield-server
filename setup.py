@@ -31,8 +31,6 @@ import os
 from os.path import join, isfile, basename
 import glob
 
-from pprint import pprint as pp
-
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
@@ -65,7 +63,7 @@ if os.name == 'nt':
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
-                "pylzma", "xlwt"
+                "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }

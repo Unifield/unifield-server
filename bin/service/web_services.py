@@ -49,6 +49,7 @@ from mako.template import Template
 from mako import exceptions
 from mako.runtime import Context
 import codecs
+from passlib.hash import bcrypt
 
 def export_csv(fields, result, result_file_path):
     try:
@@ -111,7 +112,8 @@ class db(netsvc.ExportService):
             params = params[1:]
             security.check_super(passwd)
         elif method in [ 'db_exist', 'list', 'list_lang', 'server_version',
-                         'check_timezone', 'connected_to_prod_sync_server' ]:
+                         'check_timezone', 'connected_to_prod_sync_server',
+                         'check_super_password_validity' ]:
             # params = params
             # No security check for these methods
             pass
@@ -137,10 +139,11 @@ class db(netsvc.ExportService):
         self.id += 1
         id = self.id
         self.id_protect.release()
-
         self.actions[id] = {'clean': False}
-
         self._create_empty_database(db_name)
+
+        # encrypt the db admin password
+        user_password = bcrypt.encrypt(tools.ustr(user_password))
 
         class DBInitialize(object):
             def __call__(self, serv, id, db_name, demo, lang, user_password='admin'):
@@ -171,7 +174,6 @@ class db(netsvc.ExportService):
                     serv.actions[id]['users'] = cr.dictfetchall()
                     serv.actions[id]['clean'] = True
                     cr.commit()
-                    cr.close(True)
                 except Exception, e:
                     serv.actions[id]['clean'] = False
                     serv.actions[id]['exception'] = e
@@ -182,6 +184,7 @@ class db(netsvc.ExportService):
                     e_str.close()
                     netsvc.Logger().notifyChannel('web-services', netsvc.LOG_ERROR, 'CREATE DATABASE\n%s' % (traceback_str))
                     serv.actions[id]['traceback'] = traceback_str
+                finally:
                     if cr:
                         cr.close(True)
         logger = netsvc.Logger()
@@ -192,6 +195,13 @@ class db(netsvc.ExportService):
         create_thread.start()
         self.actions[id]['thread'] = create_thread
         return id
+
+    def exp_check_super_password_validity(self, password):
+        try:
+            security.check_super_password_validity(password)
+        except Exception as e:
+            return str(e)
+        return True
 
     def exp_check_timezone(self):
         return check_tz()
@@ -380,10 +390,12 @@ class db(netsvc.ExportService):
             return False
 
         cr = connection.cursor()
-        cr.execute('''SELECT host, database
-        FROM sync_client_sync_server_connection''')
-        host, database = cr.fetchone()
-        cr.close()
+        try:
+            cr.execute('''SELECT host, database
+            FROM sync_client_sync_server_connection''')
+            host, database = cr.fetchone()
+        finally:
+            cr.close()
         if host and database and database.strip() == 'SYNC_SERVER' and \
                 ('sync.unifield.net' in host.lower() or '212.95.73.129' in host):
             return True
@@ -409,16 +421,18 @@ class db(netsvc.ExportService):
         db = sql_db.db_connect(dbname)
         cr = db.cursor()
 
-        # check sync_client_version table existance
-        cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
-        if not cr.fetchone():
-            # the table sync_client_version doesn't exists, fallback on the
-            # version from release.py file
-            return release.version or 'UNKNOWN_VERSION'
+        try:
+            # check sync_client_version table existance
+            cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname='sync_client_version'")
+            if not cr.fetchone():
+                # the table sync_client_version doesn't exists, fallback on the
+                # version from release.py file
+                return release.version or 'UNKNOWN_VERSION'
 
-        cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
-        res = cr.fetchone()
-        cr.close(True)
+            cr.execute("SELECT name, sum FROM sync_client_version WHERE state='installed' ORDER BY applied DESC")
+            res = cr.fetchone()
+        finally:
+            cr.close(True)
         if res and res[0]:
             return res[0]
         elif res[1]:
@@ -459,10 +473,12 @@ class _ObjectService(netsvc.ExportService):
         params = params[3:]
         security.check(db,uid,passwd)
         cr = pooler.get_db(db).cursor()
-        fn = getattr(self, 'exp_'+method)
-        res = fn(cr, uid, *params)
-        cr.commit()
-        cr.close()
+        try:
+            fn = getattr(self, 'exp_'+method)
+            res = fn(cr, uid, *params)
+            cr.commit()
+        finally:
+            cr.close()
         return res
 
 class common(_ObjectService):
@@ -484,6 +500,17 @@ class common(_ObjectService):
             return res or False
         elif method == 'number_update_modules':
             return security.number_update_modules(params[0])
+        elif method == 'change_password':
+            try:
+                security.change_password(params[0], params[1], params[2],
+                                         params[3], params[4])
+            except Exception as e:
+                if hasattr(e, 'value'):
+                    msg = tools.ustr(e.value)
+                else:
+                    msg = tools.ustr(e)
+                return msg
+            return True
         elif method == 'logout':
             if auth:
                 auth.logout(params[1])
@@ -1009,8 +1036,9 @@ class report_spool(netsvc.ExportService):
                 else:
                     self._reports[id]['exception'] = ExceptionWithTraceback(tools.exception_to_unicode(exception), tb)
                 self._reports[id]['state'] = True
-            cr.commit()
-            cr.close()
+            finally:
+                cr.commit()
+                cr.close()
             return True
 
         thread.start_new_thread(go, (id, uid, ids, datas, context))

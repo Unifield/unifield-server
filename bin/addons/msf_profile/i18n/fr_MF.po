@@ -75240,3 +75240,81 @@ msgstr "La structure du fichier XML ne respecte pas la déclaration DTD:\n"
 #, python-format
 msgid "At least one Allowed Partner type must be selected."
 msgstr "Au moins un type de Partenaire Autorisé doit être sélectionné."
+
+#. module: base
+#: code:addons/base/res/res_user.py:550
+#, python-format
+msgid "The new password is not strong enough. Password must contain at least one digit."
+msgstr "Le nouveau mot de passe n'est pas assez robuste. Il doit contenir au moins un chiffre."
+
+#. module: base
+#: code:addons/base/res/res_user.py:556
+#, python-format
+msgid "The new password is not strong enough. Password must be at least %s characters long."
+msgstr "Le nouveau mot de passe n'est pas assez robuste. Il doit être d'au moins %s caractères."
+
+#. module: base
+#: code:addons/base/res/res_user.py:561
+#, python-format
+msgid "The new password cannot be equal to the login."
+msgstr "Le nouveau mot de passe ne peut pas être égal à l'identifiant."
+
+#. module: base
+#: code:addons/base/res/res_user.py:566
+#, python-format
+msgid "The new password does not match the confirm password."
+msgstr "Le nouveau mot de passe ne correspond pas à la confirmation."
+
+#. module: base
+#: code:addons/base/res/res_user.py:571
+#, python-format
+msgid "The new password must be different from the actual one."
+msgstr "Le nouveau mot de passe doit être différent de l'actuel."
+
+#. module: base
+#: code:addons/base/res/res_user.py:537
+#, python-format
+msgid "Bad username or password"
+msgstr "Mauvais nom d'utilisateur ou mot de passe"
+
+#. module: base
+#: code:addons/base/res/res_user.py:623
+#, python-format
+msgid "Setting empty passwords is not allowed for security reasons!"
+msgstr "La définition de mot de passe vides n'est pas autorisée pour des raisons de sécurité !"
+
+#. module: base
+#: code:addons/base/res/res_user.py:229
+#, python-format
+msgid "Change password"
+msgstr "Changer le mot de passe"
+
+#. module: base
+#: code:addons/base/res/res_user.py:226
+#, python-format
+msgid "Password"
+msgstr "Mot de passe"
+
+#. module: base
+#: code:addons/base/res/res_user.py:224
+#, python-format
+msgid "Login"
+msgstr "Identifiant"
+
+#. module: base
+#: code:addons/base/res/res_user.py:238
+#, python-format
+msgid "Change password on next login"
+msgstr "Changer le mot de passe à la prochaine connexion"
+
+#. module: base
+#: code:addons/base/res/res_user.py:239
+#, python-format
+msgid "Check out this box to force this user to change his password on next login."
+msgstr "Cocher cette case pour forcer l'utilisateur à changer son mot de passe à la prochaine connexion."
+
+#. module: base
+#: code:addons/base/res/res_user.py:216
+#, python-format
+msgid "Please use the change password wizard (in User Preferences or User menu) to change your own password."
+msgstr "Merci d'utiliser l'assistant (dans les préférences de l'utilisateur ou le menu de l'utilisateur) pour changer votre propre mot de passe."
