@@ -134,6 +134,8 @@ class RPCGateway(object):
                 common.error('updater.py', err.code)
             elif err.code.startswith('ServerUpdate'):
                 common.error('ServerUpdate', err.code)
+            elif err.code.startswith('ForcePasswordChange'):
+                common.error('ForcePasswordChange', err.code)
             elif err.code.startswith('PatchFailed'):
                 common.error('PatchFailed', err.code)
             elif err.code.startswith('AccessDenied'):
@@ -312,6 +314,8 @@ class RPCSession(object):
                 return -3
             elif e.title == 'PatchFailed':
                 return -4
+            elif e.title == 'ForcePasswordChange':
+                return -5
             return -1
 
         if uid <= 0:
@@ -328,11 +332,12 @@ class RPCSession(object):
 
         # read the full name of the user
         res_users = self.execute('object', 'execute', 'res.users', 'read',
-                [uid], ['name', 'company_id', 'login', 'force_password_change'])[0]
+                                 [uid], ['name', 'company_id', 'login', 'force_password_change'])[0]
         self.storage['user_name'] = res_users['name']
         self.storage['company_id'], self.storage['company_name'] = res_users['company_id']
         self.storage['loginname'] = res_users['login']
         self.storage['force_password_change'] = res_users['force_password_change']
+
         # set the context
         self.context_reload()
 
@@ -344,6 +349,19 @@ class RPCSession(object):
 
     def is_logged(self):
         return self.uid and self.open
+
+    def change_password(self, db, user, password, new_password,
+                        confirm_password):
+
+        if not (db and user and password and new_password and confirm_password):
+            return _('All fields are required.')
+
+        try:
+            error_message = self.execute_noauth('common', 'change_password', db, user,
+                                                password, new_password, confirm_password)
+        except Exception, e:
+            error_message = e.message
+        return error_message
 
     def context_reload(self):
         """Reload the context for the current user
@@ -368,11 +386,11 @@ class RPCSession(object):
         # set locale in session
         self.storage['locale'] = self.context.get('lang', 'en_US')
         lang_ids = self.execute(
-                'object', 'execute', 'res.lang',
-                'search', [('code', '=', self.storage['locale'])])
+            'object', 'execute', 'res.lang',
+            'search', [('code', '=', self.storage['locale'])])
         if lang_ids:
             self.storage['lang'] = self.execute(
-                    'object', 'execute', 'res.lang', 'read', lang_ids[0], [])
+                'object', 'execute', 'res.lang', 'read', lang_ids[0], [])
 
     def execute(self, obj, method, *args):
         if not self.is_logged():

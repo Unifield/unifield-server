@@ -25,38 +25,35 @@ import cherrypy
 from openerp.utils import rpc
 
 from openobject import tools
-from openobject.tools import expose
+from openobject.tools import expose, redirect
 import openobject
 
 
-__all__ = ["secured", "unsecured", "login"]
+__all__ = ["secured", "unsecured", "login", "change_password"]
 
-
-@expose(template="/openerp/controllers/templates/login.mako")
-def login(target, db=None, user=None, password=None, action=None, message=None, origArgs={}):
-
-    url = rpc.session.connection_string
-    url = str(url[:-1])
-
+def get_db_list():
     dblist = []
 
-    bad_regional = ''
-    tz_offset = ''
+    result = {
+        'bad_regional':'',
+        'tz_offset':'',
+        'dblist': []
+    }
 
     if os.name == 'nt':
         try:
             import _winreg
             reg = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER,
-                "Control Panel\\International", 0, _winreg.KEY_READ)
+                                  "Control Panel\\International", 0, _winreg.KEY_READ)
             value, regtype = _winreg.QueryValueEx(reg, "LocaleName")
             _winreg.CloseKey(reg)
             if value != 'en-US':
-                bad_regional = _("On the server system user account must have English (United States) as Format in the regional settings")
+                result['bad_regional'] = _("On the server system user account must have English (United States) as Format in the regional settings")
         except:
             pass
     try:
         dblist = rpc.session.listdb()
-        tz_offset = rpc.session.gateway.execute_noauth('db', 'check_timezone')
+        result['tz_offset'] = rpc.session.gateway.execute_noauth('db', 'check_timezone')
     except:
         message = _("Could not connect to server")
 
@@ -88,6 +85,19 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
                     db = None
             else:
                 dblist = [d for d in dblist if d.startswith(base + '_') or d == base]
+    result['dblist'] = dblist
+    return result
+
+@expose(template="/openerp/controllers/templates/login.mako")
+def login(target, db=None, user=None, password=None, action=None, message=None, origArgs={}):
+
+    url = rpc.session.connection_string
+    url = str(url[:-1])
+
+    result = get_db_list()
+    dblist = result['dblist']
+    bad_regional = result['bad_regional']
+    tz_offset = result['tz_offset']
 
     info = None
     try:
@@ -98,7 +108,31 @@ def login(target, db=None, user=None, password=None, action=None, message=None, 
     if target != do_login_page:
         origArgs['target'] = target
     return dict(target=do_login_page, url=url, dblist=dblist, db=db, user=user, password=password,
-            action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
+                action=action, message=message, origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
+
+@expose(template="/openerp/controllers/templates/change_password.mako")
+def change_password(target, db=None, user=None, password=None,
+                    action=None, message=None, origArgs={}):
+
+    url = rpc.session.connection_string
+    url = str(url[:-1])
+
+    result = get_db_list()
+    dblist = result['dblist']
+    bad_regional = result['bad_regional']
+    tz_offset = result['tz_offset']
+
+    new_password = origArgs.get('new_password', None)
+    confirm_password = origArgs.get('confirm_password', None)
+
+    info = None
+    do_change_password_page = '/openerp/do_change_password'
+    if target != do_change_password_page:
+        origArgs['target'] = target
+    return dict(target=do_change_password_page, url=url, dblist=dblist, db=db,
+                user=user, password=password, new_password=new_password,
+                confirm_password=confirm_password, action=action, message=message,
+                origArgs=origArgs, info=info, bad_regional=bad_regional, tz_offset=tz_offset)
 
 def secured(fn):
     """A Decorator to make a SecuredController controller method secured.
@@ -114,6 +148,15 @@ def secured(fn):
             if k.startswith('login_'):
                 del kw[k]
 
+    def clear_change_password_fields(kw):
+        for k in ('db', 'user', 'password', 'new_password', 'confirm_password'):
+            if k in kw:
+                kw.pop(k, None)
+        for k in kw.keys():
+            if k.startswith('login_'):
+                del kw[k]
+
+
     def get_orig_args(kw):
         if not kw.get('login_action'):
             return kw
@@ -127,16 +170,6 @@ def secured(fn):
         """
 
         if rpc.session.is_logged() and kw.get('login_action') != 'login':
-            # do not display the requested page if the user have to change his
-            # password
-            if rpc.session.force_password_change:
-                clear_login_fields(kw)
-                if fn.__name__ in ('menu'):
-                    kw['next'] = '/openerp/pref/update_password'
-                    kw['active'] = None
-                    clear_login_fields(kw)
-                    return fn(*args, **kw)
-
             # User is logged in and don't need to change his password; allow access
             clear_login_fields(kw)
             return fn(*args, **kw)
@@ -158,20 +191,42 @@ def secured(fn):
             login_ret = rpc.session.login(db, user, password)
             if action == 'login' and login_ret == -2:
                 return login(cherrypy.request.path_info, message=_('Database newer than UniField version'),
-                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
+                             db=db, user=user, action=action, origArgs=get_orig_args(kw))
             if action == 'login' and login_ret == -3:
                 nb_mod = rpc.session.number_update_modules(db) or ''
                 return login(cherrypy.request.path_info, message=_('The server is updating %s modules, please wait ...') % (nb_mod,),
-                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
+                             db=db, user=user, action=action, origArgs=get_orig_args(kw))
             if action == 'login' and login_ret == -4:
                 return login(cherrypy.request.path_info, message=_('A script during patch failed! Login is forbidden for the moment. Please contact your administrator'),
-                    db=db, user=user, action=action, origArgs=get_orig_args(kw))
+                             db=db, user=user, action=action, origArgs=get_orig_args(kw))
+            if action == 'login' and login_ret == -5: # must change password
+                if 'confirm_password' in kw:
+                    message = rpc.session.change_password(db, user, password, kw['new_password'], kw['confirm_password'])
+                    if message is not True:
+                        clear_change_password_fields(kw)
+                        result = change_password(cherrypy.request.path_info,
+                                                 message=message, db=db, user=user, password=password,
+                                                 action=action, origArgs=get_orig_args(kw))
+                        clear_change_password_fields(kw)
+
+                        return result
+                    clear_change_password_fields(kw)
+                    return login(cherrypy.request.path_info,
+                                 message=_('Password changed.'),
+                                 db=db, user=user, action=action, origArgs=get_orig_args(kw))
+
+                result = change_password(cherrypy.request.path_info,
+                                         message=_('You have to change your password.'),
+                                         db=db, user=user, password=password, action=action, origArgs=get_orig_args(kw))
+                clear_change_password_fields(kw)
+                return result
             elif login_ret <= 0:
                 # Bad login attempt
                 if action == 'login':
                     message = _("Bad username or password")
+                    clear_change_password_fields(kw)
                     return login(cherrypy.request.path_info, message=message,
-                        db=db, user=user, action=action, origArgs=get_orig_args(kw))
+                                 db=db, user=user, action=action, origArgs=get_orig_args(kw))
                 else:
                     message = ''
 
@@ -213,15 +268,6 @@ def secured(fn):
             cookie['terp_user']['max-age'] = 3600
             cookie['terp_db']['path'] = '/'
             cookie['terp_user']['path'] = '/'
-
-            # check if logged in user have to change his password
-            if rpc.session.force_password_change:
-                clear_login_fields(kw)
-                if fn.__name__ in ('menu'):
-                    kw['next'] = '/openerp/pref/update_password'
-                    kw['active'] = None
-                    clear_login_fields(kw)
-                    return fn(*args, **kw)
 
             # User is now logged in, so show the content
             clear_login_fields(kw)

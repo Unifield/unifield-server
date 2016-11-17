@@ -1658,6 +1658,30 @@ msgstr "Vue étendue"
 msgid "Expand All"
 msgstr "Vue Étendue"
 
+msgid "Current password:"
+msgstr "Mot de passe actuel :"
+
+msgid "New password:"
+msgstr "Nouveau mot de passe :"
+
+msgid "Confirm new password:"
+msgstr "Confirmation nouveau mot de passe :"
+
+msgid "You have to change your password."
+msgstr "Vous devez changer votre mot de passe."
+
+msgid "Your password has been reset by an administrator. Please choose a new password. It must be at least 6 characters long and must contain at least one number."
+msgstr "Votre mot de passe à été réinitialisé par un administrateur. Merci d'en choisir un nouveau. Celui ci doit être d'au moins 6 caractères et doit contenir au moins un chiffre."
+
+msgid "All passwords have to be filled."
+msgstr "Tous les mot de passes doivent être complétés."
+
+msgid "Update password"
+msgstr "Mettre à jour le mot de passe"
+
+msgid "Password changed."
+msgstr "Mot de passe modifé."
+
 #~ msgid "Add Resource:"
 #~ msgstr "Ajouter une ressource :"
 

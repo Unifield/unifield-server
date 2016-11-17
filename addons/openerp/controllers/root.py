@@ -50,10 +50,10 @@ class Root(SecuredController):
         """
         if not next:
             read_result = rpc.RPCProxy("res.users").read(rpc.session.uid,
-                    ['action_id'], rpc.session.context)
+                                                         ['action_id'], rpc.session.context)
             if read_result['action_id']:
                 next = '/openerp/home'
-        
+
         return self.menu(next=next)
 
     @expose()
@@ -70,15 +70,15 @@ class Root(SecuredController):
     def report(self, report_name=None, **kw):
         import actions
         return actions.execute_report(report_name, **TinyDict(**kw))
-    
+
     @expose()
     def custom_action(self, action):
         menu_ids = rpc.RPCProxy('ir.ui.menu').search(
-                [('id', '=', int(action))], 0, 0, 0, rpc.session.context)
+            [('id', '=', int(action))], 0, 0, 0, rpc.session.context)
 
         return actions.execute_by_keyword(
-                'tree_but_open', model='ir.ui.menu', id=menu_ids[0], ids=menu_ids,
-                context=rpc.session.context, report_type='pdf')
+            'tree_but_open', model='ir.ui.menu', id=menu_ids[0], ids=menu_ids,
+            context=rpc.session.context, report_type='pdf')
 
     @expose()
     def info(self):
@@ -142,8 +142,8 @@ class Root(SecuredController):
             for tool in tools:
                 tid = tool['id']
                 tool['tree'] = tree = tree_view.ViewTree(view, 'ir.ui.menu', tid,
-                                        domain=[('parent_id', '=', tid)],
-                                        context=ctx, action="/openerp/tree/action", fields=fields)
+                                                         domain=[('parent_id', '=', tid)],
+                                                         context=ctx, action="/openerp/tree/action", fields=fields)
                 tree._name = "tree_%s" %(tid)
                 tree.tree.onselection = None
                 tree.tree.onheaderclick = None
@@ -153,11 +153,11 @@ class Root(SecuredController):
             tools = None
 
         force_password_change = rpc.RPCProxy("res.users").read([rpc.session.uid],
-                ['force_password_change'],
-                rpc.session.context)[0]['force_password_change']
+                                                               ['force_password_change'],
+                                                               rpc.session.context)[0]['force_password_change']
         widgets= openobject.pooler.get_pool()\
-                .get_controller('/openerp/widgets')\
-                .user_home_widgets(ctx)
+            .get_controller('/openerp/widgets')\
+            .user_home_widgets(ctx)
         display_shortcut = True
         if next == '/openerp/pref/update_password' and force_password_change and tools:
             cherrypy.session['terp_shortcuts']=[]
@@ -197,7 +197,37 @@ class Root(SecuredController):
 
         if style in ('ajax', 'ajax_small'):
             return dict(db=db, user=user, password=password, location=location,
-                    style=style, cp_template="/openerp/controllers/templates/login_ajax.mako")
+                        style=style, cp_template="/openerp/controllers/templates/login_ajax.mako")
+
+        return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message)
+
+    @expose()
+    def do_change_password(self, *arg, **kw):
+        target = kw.get('target') or '/'
+        if target.startswith('/openerp/do_change_password'):
+            target = '/'
+        raise redirect(target)
+
+    @expose(allow_json=True)
+    @unsecured
+    def change_password(self, db=None, user=None, password=None,
+                        new_password=None, confirm_password=None, style=None,
+                        location=None, message=None, **kw):
+        location = url(location or '/', kw or {})
+
+        if cherrypy.request.params.get('tg_format') == 'json':
+            if rpc.session.change_password(db, user, password, new_password,
+                                           confirm_password) > 0:
+                return dict(result=1)
+            return dict(result=0)
+
+        if style in ('ajax', 'ajax_small'):
+            return dict(db=db, user=user, password=password,
+                        new_password=new_password,
+                        confirm_password=confirm_password,
+                        location=location,
+                        style=style,
+                        cp_template="/openerp/controllers/templates/change_password_ajax.mako")
 
         return tiny_login(target=location, db=db, user=user, password=password, action="login", message=message)
 
@@ -215,11 +245,11 @@ class Root(SecuredController):
         from openobject import release
         version = _("Version %s") % (release.version,)
         return dict(version=version)
-    
+
     @expose()
     def blank(self):
         return ''
-    
+
     @openobject.tools.expose('json', methods=('POST',))
     def remove_log(self, log_id):
         error = None
