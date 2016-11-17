@@ -141,7 +141,13 @@ class finance_archive(finance_export.finance_archive):
         aggregate the lines that are on an account where "Shrink entries for HQ export" is checked
         """
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
-        return finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
+        new_data = finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
+        # For the Instance column (never empty), display only the first 3 characters
+        instance_code_col = 1
+        for line in new_data:
+            line[instance_code_col] = line[instance_code_col][:3]
+        return new_data
+
 
 class hq_report_ocp(report_sxw.report_sxw):
 
@@ -212,7 +218,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         sqlrequests = {
             # Pay attention to take analytic lines that are not on HQ and MIGRATION journals.
             'rawdata': """
-                SELECT al.id, i.code,
+                SELECT al.id, SUBSTR(i.code, 1, 3),
                        CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
                        al.entry_sequence, al.name, al.ref, al.document_date, al.date,
                        a.code, al.partner_txt, aa.code AS dest, aa2.code AS cost_center_id, aa3.code AS funding_pool, 
@@ -272,7 +278,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
             'bs_entries': """
-                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date, 
+                SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date,
                        a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name,
                        ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id, hr.name_resource as hr_name
                 FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
@@ -313,7 +319,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'Functional debit', 'Functional credit', 'Functional CCY',
                 'Emplid', 'Partner DB ID' '''
             sqlrequests['plresult'] = """
-                SELECT aml.id, i.code, j.code, m.name as "entry_sequence", aml.name,
+                SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name,
                     aml.ref, aml.document_date, aml.date, a.code,
                     aml.partner_txt, '', '', '',
                     ROUND(aml.debit_currency, 2), ROUND(aml.credit_currency, 2), c.name,
