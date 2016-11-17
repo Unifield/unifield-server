@@ -104,7 +104,6 @@ class configmanager(object):
             'osv_memory_count_limit': None, # number of records in each osv_memory virtual table
             'osv_memory_age_limit': 1, # hours
             'additional_xml': False,
-            'attachments_path': None,
             'create_db_dir_for_attachment': True,
         }
 

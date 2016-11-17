@@ -20,10 +20,9 @@
         <form string="Attachment configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
             <group col="4" colspan="4">
                 <field name="name" colspan="2"/>
-                <!--<separator string="Old attachments migration" />-->
-                <!--<field name="next_migration" colspan="2"
-                    attrs="{'invisible':[('migration_error','=', False), ('migration_date', '!=', False)]}"/>-->
-                <field name="next_migration" colspan="2" invisible="1"/>
+                <separator string="Old attachments migration"/>
+                <field name="next_migration" colspan="2"
+                    attrs="{'invisible':[('migration_error','=', False), ('migration_date', '!=', False)]}"/>
                 <field name="migration_date" attrs="{'invisible':[('migration_date', '=', False)]}"/>
                 <newline />
                 <field name="is_migration_running" colspan="4" invisible="1"/>

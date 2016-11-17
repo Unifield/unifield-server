@@ -598,24 +598,23 @@ class attachment_config(osv.osv):
             if migration_error:
                 raise osv.except_osv(_('Error'),
                                      _("You cannot change the path to save attachment because the migration have some errors. Please fix them before."))
-        # This above code come from US-1690 and is not needed in this ticket
-        #    # if new_path is different from current one
-        #    current_path = self.read(cr, uid, ids, ['name'], context)[0]['name']
-        #    if attachments_path != current_path:
-        #        self.move_all_attachments(cr, uid, ids, attachments_path,
-        #                context=context)
+            # if new_path is different from current one
+            current_path = self.read(cr, uid, ids, ['name'], context)[0]['name']
+            if attachments_path != current_path:
+                self.move_all_attachments(cr, uid, ids, attachments_path,
+                                          context=context)
 
-        #if 'next_migration' in vals and vals['next_migration']:
-        #    # create a ir_cron with this values
-        #    cron_obj = self.pool.get('ir.cron')
-        #    default_migrate_attachment = self.pool.get('ir.model.data').get_object(cr, uid,
-        #            'base', 'ir_cron_migrate_attachment')
-        #    values = {
-        #        'nextcall': vals['next_migration'],
-        #        'numbercall': 1,
-        #        'active': True,
-        #    }
-        #    cron_obj.write(cr, uid, default_migrate_attachment.id, values, context=context) 
+        if 'next_migration' in vals and vals['next_migration']:
+            # create a ir_cron with this values
+            cron_obj = self.pool.get('ir.cron')
+            default_migrate_attachment = self.pool.get('ir.model.data').get_object(cr, uid,
+                                                                                   'base', 'ir_cron_migrate_attachment')
+            values = {
+                'nextcall': vals['next_migration'],
+                'numbercall': 1,
+                'active': True,
+            }
+            cron_obj.write(cr, uid, default_migrate_attachment.id, values, context=context) 
         return super(attachment_config, self).write(cr, uid, ids, vals, context=context)
 
 attachment_config()
