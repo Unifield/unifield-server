@@ -197,7 +197,7 @@ class automated_import_job(osv.osv):
                 if not error:
                     if no_file:
                         error = _('No file to import in %s !') % job.import_id.src_path
-                    elif md5 and self.search(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], limit=1, order='NO_ORDER', context=context):
+                    elif md5 and self.search_exist(cr, uid, [('import_id', '=', job.import_id.id), ('file_sum', '=', md5)], context=context):
                         error = _('A file with same checksum has been already imported !')
                         move_to_process_path(filename, job.import_id.src_path, job.import_id.dest_path)
 
@@ -206,7 +206,7 @@ class automated_import_job(osv.osv):
                         'filename': filename,
                         'file_to_import': data64,
                         'start_time': start_time,
-                        'end_time': time.strftime('%Y-%m-%d'),
+                        'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                         'nb_processed_records': 0,
                         'nb_rejected_records': 0,
                         'comment': error,
@@ -221,7 +221,7 @@ class automated_import_job(osv.osv):
                 md5 = hashlib.md5(job.file_to_import).hexdigest()
 
                 if job.file_sum != md5:
-                    if self.search(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], limit=1, order='NO_ORDER', context=context):
+                    if self.search_exist(cr, uid, [('file_sum', '=', md5), ('id', '!=', job.id)], context=context):
                         self.write(cr, uid, [job.id], {'file_sum': md5}, context=context)
                         return {
                             'type': 'ir.actions.act_window',
@@ -264,7 +264,7 @@ class automated_import_job(osv.osv):
                 self.write(cr, uid, [job.id], {
                     'filename': False,
                     'start_time': start_time,
-                    'end_time': time.strftime('%Y-%m-%d'),
+                    'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': 0,
                     'nb_rejected_records': 0,
                     'comment': str(e),

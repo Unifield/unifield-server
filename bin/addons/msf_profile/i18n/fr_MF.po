@@ -75318,3 +75318,20 @@ msgstr "Cocher cette case pour forcer l'utilisateur à changer son mot de passe 
 #, python-format
 msgid "Please use the change password wizard (in User Preferences or User menu) to change your own password."
 msgstr "Merci d'utiliser l'assistant (dans les préférences de l'utilisateur ou le menu de l'utilisateur) pour changer votre propre mot de passe."
+
+#. module: base
+#: code:addons/base/res/res_currency.py:159
+msgid "Date column is mandatory for auto import."
+msgstr "La colonne Date est obligatoire pour l'import automatique."
+
+#. module: base
+#: code:addons/base/res/res_currency.py:166
+#, python-format
+msgid "All dates should be equal for all lines in file %s."
+msgstr "Toutes les dates doivent être égales pour toutes les lignes du fichier %s."
+
+#. module: base
+#: code:addons/base/res/res_currency.py:175
+#, python-format
+msgid "A 'Date' column is needed for each line of %s in this format: '18/10/2016'."
+msgstr "La colonne 'Date' est nécessaire pour chaque ligne de %s sous ce format : '18/10/2016'."
