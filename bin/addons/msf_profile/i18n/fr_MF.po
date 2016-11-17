@@ -75211,3 +75211,21 @@ msgstr "Lettrages non équilibrés en devise d'enregistement"
 #, python-format
 msgid "Account Code"
 msgstr "Compte"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:357
+#, python-format
+msgid "The given file is not a valid XML file !\n"
+"Technical details:\n"
+"%s"
+msgstr "Le fichier XML n'est pas valide.\n"
+"Détails techniques:\n"
+"%s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:371
+#, python-format
+msgid "The given XML file is not structured as expected in the DTD:\n"
+" %s"
+msgstr "La structure du fichier XML ne respecte pas la déclaration DTD:\n"
+" %s"
