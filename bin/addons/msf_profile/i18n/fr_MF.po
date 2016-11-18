@@ -75092,3 +75092,8 @@ msgstr "Dossier dans lequel les pièces jointes seront stockées."
 msgid "Attachment configuration"
 msgstr "Configuration des pièces jointes"
 
+#. module: purchase_override
+#: code:addons/purchase_override/purchase.py:706
+#, python-format
+msgid "You cannot create a direct purchase order from scratch"
+msgstr "Vous ne pouvez pas créer d'ordre d'achat direct en dehors du flux d'approvisionnement"
