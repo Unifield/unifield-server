@@ -297,12 +297,6 @@ class hq_entries_import_wizard(osv.osv_memory):
         if not journal_ids:
             raise osv.except_osv(_('Error'), _('You cannot import HQ entries because no HQ Journal exists.'))
 
-        def manage_error(line_index, msg, name='', code='', status=''):
-            if auto_import:
-                rejected_lines.append((line_index, [name, code, status], msg))
-            else:
-                raise osv.except_osv(_('Error'), 'Line %s, %s' % (line_index, _(msg)))
-
         # Prepare some values
         message = _("HQ Entries import failed.")
         res = False
@@ -312,6 +306,12 @@ class hq_entries_import_wizard(osv.osv_memory):
         filename = ""
         processed_lines = []
         rejected_lines = []
+
+        def manage_error(line_index, msg, name='', code='', status=''):
+            if auto_import:
+                rejected_lines.append((line_index, [name, code, status], msg))
+            else:
+                errors.append('Line %s, %s' % (line_index, _(msg)))
 
         # Browse all given wizard
         for wiz in self.browse(cr, uid, ids):
@@ -356,7 +356,13 @@ class hq_entries_import_wizard(osv.osv_memory):
             message = _("HQ Entries import successful")
         context.update({'message': message})
 
-        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
+        if errors or rejected_lines:
+            cr.rollback()
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr,
+                                                                          uid, 'msf_homere_interface', 'payroll_import_error')
+        else:
+            view_id = self.pool.get('ir.model.data').get_object_reference(cr,
+                                                                          uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
 
         # This is to redirect to HQ Entries Tree View

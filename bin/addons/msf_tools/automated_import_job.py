@@ -239,6 +239,8 @@ class automated_import_job(osv.osv):
                 data64 = base64.encodestring(job.file_to_import)
 
             # Process import
+            error_message = []
+            state = 'done'
             try:
                 processed, rejected, headers = getattr(
                     self.pool.get(job.import_id.function_id.model_id.model),
@@ -249,6 +251,11 @@ class automated_import_job(osv.osv):
 
                 if rejected:
                     nb_rejected = self.generate_file_report(cr, uid, job, rejected, headers, rejected=True)
+                    state = 'error'
+                    for resjected_line in rejected:
+                        line_message = _('Line %s: ' % resjected_line[0])
+                        line_message += resjected_line[2]
+                        error_message.append(line_message)
 
                 self.write(cr, uid, [job.id], {
                     'filename': filename,
@@ -256,9 +263,10 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
+                    'comment': '\n'.join(error_message),
                     'file_sum': md5,
                     'file_to_import': data64,
-                    'state': 'done',
+                    'state': state,
                 }, context=context)
             except Exception as e:
                 self.write(cr, uid, [job.id], {
