@@ -143,9 +143,13 @@ class finance_archive(finance_export.finance_archive):
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
         new_data = finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
         # For the Instance column (never empty), display only the first 3 characters
+        # Use the same value to fill in the Cost Center column (that is empty otherwise)
         instance_code_col = 1
+        cc_col = 11
         for line in new_data:
-            line[instance_code_col] = line[instance_code_col][:3]
+            instance_code = line[instance_code_col][:3]
+            line[instance_code_col] = instance_code
+            line[cc_col] = instance_code
         return new_data
 
 
@@ -277,9 +281,10 @@ class hq_report_ocp(report_sxw.report_sxw):
                 """,
             # Do not take lines that come from a HQ or MIGRATION journal
             # Do not take journal items that have analytic lines because they are taken from "rawdata" SQL request
+            # For these entries instead of the "Cost centre" we take the same value as in the "Instance" column
             'bs_entries': """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date,
-                       a.code, aml.partner_txt, '', '', '', aml.debit_currency, aml.credit_currency, c.name,
+                       a.code, aml.partner_txt, '', SUBSTR(i.code, 1, 3), '', aml.debit_currency, aml.credit_currency, c.name,
                        ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id, hr.name_resource as hr_name
                 FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
                      account_account AS a, 
@@ -311,6 +316,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         }
         if plresult_ji_in_ids:
             # NOTE: for these entries: booking and functional ccy are the same
+            # For these entries instead of the "Cost centre" we take the same value as in the "Instance" column
             ''' columns
                 'DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description',
                 'Reference', 'Document date', 'Posting date', 'G/L Account',
@@ -321,7 +327,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             sqlrequests['plresult'] = """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name,
                     aml.ref, aml.document_date, aml.date, a.code,
-                    aml.partner_txt, '', '', '',
+                    aml.partner_txt, '', SUBSTR(i.code, 1, 3), '',
                     ROUND(aml.debit_currency, 2), ROUND(aml.credit_currency, 2), c.name,
                     ROUND(aml.debit, 2), ROUND(aml.credit, 2), c.name,
                     '', ''
