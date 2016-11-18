@@ -130,5 +130,9 @@
         <record id="us_635_dest_partner_ids" model="patch.scripts">
             <field name="method">us_635_dest_partner_ids</field>
         </record>
+
+        <record id="us_1671_stopped_products" model="patch.scripts">
+            <field name="method">us_1671_stopped_products</field>
+        </record>
     </data>
 </openerp>

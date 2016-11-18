@@ -6413,7 +6413,10 @@ msgstr "Numéro de Compte Bancaire : Compte bancaire de la société si la factu
 msgid "Either there are no moves linked to the picking or Accounting Journals are misconfigured!"
 msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de mouvement connexe à ce prélèvement !"
 
-#. modules: tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, account_msf, return_claim, res_currency_tables, procurement_request, stock_forecast, analytic, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock
+#. modules: msf_tools, tender_flow, financing_contract, account_voucher, account_override, purchase_allocation_report, register_accounting, msf_accrual, account_msf, return_claim, res_currency_tables, procurement_request, stock_forecast, analytic, msf_doc_import, analytic_distribution, msf_order_date, account_payment, msf_homere_interface, msf_instance, purchase_override, specific_rules, kit, out_step, base, msf_budget, account_corrections, account, msf_outgoing, sale_override, sale, sales_followup, procurement, sourcing, purchase, msf_audittrail, stock
+#: view:automated.import.job:0
+#: selection:automated.import.job,state:0
+#: selection:export.report.stopped.products,state:0
 #: view:account.bank.statement:0
 #: selection:account.bank.statement,state:0
 #: view:account.invoice:0
@@ -11616,7 +11619,8 @@ msgstr "Montant d'enregistrement"
 msgid "Net weight"
 msgstr "Net weight"
 
-#. modules: stock_forecast, procurement, sync_client, stock_override, stock
+#. modules: stock_forecast, procurement, sync_client, stock_override, stock, msf_tools
+#: selection:export.report.stopped.products,state:0
 #: selection:procurement.order,state:0
 #: view:stock.move:0
 #: selection:stock.forecast.line,state:0
@@ -31985,7 +31989,8 @@ msgstr "TURKMENISTANI MANAT"
 msgid "37 J(PM)"
 msgstr "37 J(PM)"
 
-#. modules: sales_followup, reason_types_moves, procurement_request, order_types, msf_doc_import, return_claim, sourcing, register_accounting
+#. modules: msf_tools, sales_followup, reason_types_moves, procurement_request, order_types, msf_doc_import, return_claim, sourcing, register_accounting
+#: selection:export.report.stopped.products,state:0
 #: selection:wizard.import.fo.line,state:0
 #: selection:wizard.import.ir.line,state:0
 #: selection:wizard.import.po.line,state:0
@@ -43883,7 +43888,9 @@ msgstr "Vous ne pouvez pas créer des écritures dans un journal clôturé."
 msgid "Average monthly consumption"
 msgstr "consommation mensuelle réelle"
 
-#. modules: account_override, msf_doc_import, account, consumption_calculation 
+#. modules: account_override, msf_doc_import, account, consumption_calculation, msf_tools
+#: field:automated.import.job,state:0
+#: field:export.report.stopped.products,state:0
 #: selection:account.journal.column,field:0
 #: report:addons/account_override/report/open_invoices_xls.mako:304
 #: field:real.average.consumption,state:0
@@ -74714,9 +74721,10 @@ msgstr "Qté Totale"
 msgid "Generate report (all locations)"
 msgstr "Générer le rapport (toutes les zones)"
 
-#. module: specific_rules
+#. modules: specific_rules, msf_tools
 #: view:export.report.stock.inventory:0
 #: view:unconsistent.stock.report:0
+#: view:export.report.stopped.products:0
 msgid "Generate report"
 msgstr "Générer le rapport"
 
@@ -74731,8 +74739,9 @@ msgstr "Lot"
 msgid "Product Code"
 msgstr "Code Produit"
 
-#. module: specific_rules
+#. modules: specific_rules, msf_tools
 #: report:addons/specific_rules/report/report_stock_inventory_all_locations_xls.mako:129
+#: field:export.report.stopped.products,name:0
 #: field:export.report.stock.inventory,name:0
 msgid "Generated on"
 msgstr "Généré le"
@@ -75680,3 +75689,27 @@ msgstr "Des informations sont manquantes : l'année fiscale, la période ou l'in
 #, python-format
 msgid "No data retrieved. Check that the wizard is filled in."
 msgstr "Aucune donnée récupérée. Vérifiez que le wizard est rempli."
+
+#. module: msf_tools
+#: view:export.report.stopped.products:0
+msgid "Request information"
+msgstr "Information"
+
+#. module: msf_tools
+#: view:export.report.stopped.products:0
+#: model:ir.actions.act_window,name:msf_tools.export_report_stopped_products_action
+#: model:ir.ui.menu,name:msf_tools.export_report_stopped_products_menu
+msgid "Export Stopped Products"
+msgstr "Exporter produits stoppés"
+
+#. module: msf_tools
+#: view:export.report.stopped.products:0
+msgid "Status of the report"
+msgstr "Status du rapport"
+
+#. module: msf_tools
+#: code:addons/msf_tools/report/report_stopped_products.py:64
+#, python-format
+msgid "There is no stopped products to report"
+msgstr "Il n'y a aucun produit stoppé à afficher"
+

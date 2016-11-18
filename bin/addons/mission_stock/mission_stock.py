@@ -696,7 +696,8 @@ class stock_mission_report(osv.osv):
                             'cross_qty': line.cross_qty or 0.00,
                             'secondary_qty': line.secondary_qty or 0.00,
                             'cu_qty': line.cu_qty or 0.00,
-                            'updated': True}
+                            'updated': True,
+                            'product_state': line.product_id.state and line.product_id.state.code,}
 
                     if move[4] in internal_loc:
                         vals['internal_qty'] -= qty
@@ -916,6 +917,7 @@ class stock_mission_report_line(osv.osv):
             write_relate=False,
             _fnct_migrate=is_migration,
         ),
+        'product_state': fields.char(size=128, string='Unifield state'),
         # mandatory nomenclature levels
         'nomen_manda_0': fields.related('product_id', 'nomen_manda_0', type='many2one', relation='product.nomenclature', string='Main Type'),
         'nomen_manda_1': fields.related('product_id', 'nomen_manda_1', type='many2one', relation='product.nomenclature', string='Group'),
