@@ -73853,7 +73853,7 @@ msgstr "Aucun contenu."
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors: %s: %s\n"
 ""
-msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes avec erreurs : %s\n"
+msgstr "La ligne %s du fichier Excel a été ajoutée au fichier des lignes avec erreurs : %s: %s\n"
 ""
 
 #. module: register_accounting
@@ -74174,7 +74174,7 @@ msgstr "Ligne %s : %s"
 msgid "Defined type of header '%s' is not in the list of possible type: %s - Please contact\n"
 "your support team and give us this message.\n"
 "            "
-msgstr "Le type d'en-tête \'%s\' n'est pas dans la liste des types possibles : %s - Veuillez contacter\n"
+msgstr "Le type d'en-tête '%s' n'est pas dans la liste des types possibles : %s - Veuillez contacter\n"
 "votre équipe de support et leur indiquer ce message.\n"
 "            "
 
@@ -74521,7 +74521,6 @@ msgid "\n"
 "	You can not import this file because the header of columns doesn't match with the expected headers: %s"
 msgstr "\n"
 "	Vous ne pouvez pas importer ce fichier car les entêtes de colonnes ne correspondent aux entêtes attendues : %s"
-msgstr "\n"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:127
