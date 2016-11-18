@@ -3,7 +3,7 @@ import sys
 import pprint
 import hashlib
 import json
-
+import traceback
 
 import tools
 from tools.translate import _
@@ -73,6 +73,7 @@ MODELS_TO_IGNORE = [
     'res.widget',
     'product.likely.expire.report',
     'product.likely.expire.report.line',
+    'operations.event',
 ]
 
 MODELS_TO_IGNORE_DOMAIN = [
@@ -114,11 +115,11 @@ def xmlid_to_sdref(xmlid):
 
 
 # TODO deprecated, should disappear
-def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
+def sync_log(obj, message=None, level='debug', ids=None, data=None, tb=False):
     if not hasattr(obj, '_logger'):
         raise Exception("No _logger specified for object %s!" % obj._name)
     output = ""
-    if traceback:
+    if tb:
         output += traceback.format_exc()
     if message is None:
         previous_frame = sys._getframe(1)

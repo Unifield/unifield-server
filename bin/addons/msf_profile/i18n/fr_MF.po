@@ -74945,6 +74945,195 @@ msgstr "\n"
 "                                    Toutes les informations du modèle de BC seront écrites dans le nouveau BC, <br/>sauf la date de livraison souhaitée qui sera la date la plus ancienne de tous les BCs.<br/>Tout groupe de sourcing sera perdu.\n"
 "                                "
 
+#. module: sync_client
+#: model:ir.actions.act_window,name:sync_client.ops_count_action
+msgid "Operations Counts"
+msgstr "Décomptes opérationnels"
+
+#. module: sync_client
+#: model:ir.ui.menu,name:sync_client.ops_menu
+msgid "Operations"
+msgstr "Opérations"
+
+#. module: sync_client
+#: model:ir.ui.menu,name:sync_client.ops_evt_menu
+#: view:operations.event:0
+msgid "Events"
+msgstr "Evénements"
+
+#. module: sync_client
+#: help:operations.event,time:0
+msgid "When the event happened."
+msgstr "Quand l'événement s'est passé"
+
+#. module: sync_client
+#: help:operations.count,remote_id:0
+msgid "Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during count centralization."
+msgstr "Conserve l'ID de la ligne des lignes importées d'une instance à distance. Non utilisé à l'exception de la déduplication lors de la centralisation du décompte."
+
+#. module: sync_client
+#: field:operations.count,remote_id:0
+#: field:operations.event,remote_id:0
+msgid "Remote id"
+msgstr "Id distante"
+
+#. module: sync_client
+#: field:operations.event,data_short:0
+msgid "unknown"
+msgstr "pas connue"
+
+#. module: sync_client
+#: help:operations.count,kind:0
+msgid "What kind of count."
+msgstr "Quel genre de décompte."
+
+#. module: sync_client
+#: help:operations.event,kind:0
+msgid "What kind of event it was."
+msgstr "Quel genre d'événement c'était."
+
+#. module: sync_client
+#: field:operations.count,instance:0
+#: field:operations.event,instance:0
+#: field:sync.monitor,instance_id:0
+#: field:sync.version.instance.monitor,instance_id:0
+msgid "Instance"
+msgstr "Instance"
+
+#. module: sync_client
+#: help:operations.event,remote_id:0
+msgid "Holds the row id of rows imported from a remote instance. Unused except for de-duplicating during event centralization."
+msgstr "Conserve l'ID de ligne des lignes importées d'une instance à distance. Non utilisé à l'exception de la déduplication lors de la centralisation des événements."
+
+#. module: sync_client
+#: view:operations.count:0
+#: field:operations.count,count:0
+msgid "Count"
+msgstr "Décompte"
+
+#. module: sync_client
+#: help:operations.count,count:0
+msgid "The count/measurement."
+msgstr "Le décompte/mesure"
+
+#. module: sync_client
+#: view:operations.event:0
+msgid "Event"
+msgstr "Evénenement"
+
+#. module: sync_client
+#: sql_constraint:operations.event:0
+msgid "Duplicate events from an instance are not allowed."
+msgstr "La duplication des événements d'une instance n'est pas autorisé."
+
+#. module: sync_client
+#: sql_constraint:operations.count:0
+msgid "Duplicate counts from an instance are not allowed."
+msgstr "La duplication des décomptes d'une instance n'est pas autorisé."
+
+#. module: sync_client
+#: field:operations.count,kind:0
+#: field:operations.event,kind:0
+msgid "Kind"
+msgstr "Genre"
+
+#. module: sync_client
+#: model:ir.ui.menu,name:sync_client.ops_evt_menu2
+#: view:operations.count:0
+msgid "Counts"
+msgstr "Décomptes"
+
+#. module: sync_client
+#: field:operations.event,data:0
+msgid "Data"
+msgstr "Donnés"
+
+#. module: sync_client
+#: model:ir.actions.act_window,name:sync_client.ops_event_action
+msgid "Operations Events"
+msgstr "Evénements operationels"
+
+#. module: sync_client
+#: view:operations.event:0
+msgid "Event Data"
+msgstr "Donnés de l'événement"
+
+#. module: sync_client
+#: help:operations.event,data:0
+msgid "The data associated with the event."
+msgstr "Les données associées avec l'événement."
+
+#. module: sync_client
+#: view:operations.event:0
+msgid "Event contents:"
+msgstr "Le contenu de l'événement:"
+
+#. module: sync_client
+#: help:operations.count,instance:0
+#: help:operations.event,instance:0
+msgid "The originating instance."
+msgstr "L'instance d'origine."
+
+#. module: sync_client
+#: field:operations.count,time:0
+#: field:operations.event,time:0
+msgid "Time"
+msgstr "Heure"
+
+#. module: sync_client
+#: selection:sync.client.child_entity,state:0
+msgid "Updated"
+msgstr "Mise à jour"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:413
+#: constraint:sync.client.entity:0
+#, python-format
+msgid "The Instance is unique, you cannot create a new one"
+msgstr "L'instance est unique, vous ne pouvez pas en créer une nouvelle."
+
+#. module: sync_client
+#: field:sync.client.log_sale_purchase,is_product_price_modified:0
+msgid "Product price changed"
+msgstr "Le prix du produit a changé"
+
+#. module: sync_client
+#: view:sync.monitor:0
+msgid "Status Ok"
+msgstr "Etat Ok"
+
+#. module: sync_client
+#: help:operations.count,time:0
+msgid "When the measurement was collected."
+msgstr "Quand la mesure à été collectée"
+
+#. module: sync_client
+#: view:sync.client.register_entity:0
+msgid "Next"
+msgstr "Suivant"
+
+#. module: sync_client
+#: selection:sync.client.log_sale_purchase,action_type:0
+msgid "Modified"
+msgstr "Modifié"
+
+#. module: sync_client
+#: view:sync.client.sync_manager:0
+msgid "Recover Data and Messages"
+msgstr "Récupérer les données et les messages"
+
+#. module: sync_client
+#: code:addons/sync_client/hq_monitor.py:85
+#, python-format
+msgid "\n"
+"\n"
+"This is an automatically generated email, please do not reply.\n"
+""
+msgstr "\n"
+"\n"
+"Ceci est un message généré automatiquement, ne pas répondre svp.\n"
+""
+
 #. module: purchase_override
 #: view:purchase.order.group:0
 msgid "WARNING: "
@@ -75335,3 +75524,139 @@ msgstr "Toutes les dates doivent être égales pour toutes les lignes du fichier
 #, python-format
 msgid "A 'Date' column is needed for each line of %s in this format: '18/10/2016'."
 msgstr "La colonne 'Date' est nécessaire pour chaque ligne de %s sous ce format : '18/10/2016'."
+
+#. module: sync_client
+#: field:sync.client.update_to_send,sent:0
+msgid "Sent?"
+msgstr "Envoyé?"
+
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:85
+#: code:addons/sync_client/sync_client.py:218
+#, python-format
+msgid "Not connected: please try to log on in the Connection Manager"
+msgstr "Pas connecté : svp essayez de vous connecter avec le Gestionnaire de connexion"
+
+#. module: sync_client
+#: view:sync.client.sync_manager:0
+msgid "Recover After Restoring"
+msgstr "Récupérer après la restauration"
+
+#. module: sync_client
+#: view:sync.client.update_to_send:0
+msgid "Session"
+msgstr "Session"
+
+#. module: sync_client
+#: field:sync.client.update_received,is_deleted:0
+#: field:sync.client.update_to_send,is_deleted:0
+msgid "Is deleted?"
+msgstr "Est supprimé?"
+
+#. module: sync_client
+#: field:sync.client.message_received,run:0
+#: field:sync.client.update_received,run:0
+msgid "Run"
+msgstr "Exécuter"
+
+#. module: sync_client
+#: help:sync.client.message_rule,filter_method:0
+msgid "The method to use to find target records instead of a domain."
+msgstr "La méthode à utiliser pour trouver les entrées cibles au lieu du domaine"
+
+#. module: sync_client
+#: field:sync.client.message_to_send,destination_name:0
+msgid "Destination Name"
+msgstr "Nom de destination"
+
+#. module: sync_client
+#: field:sync.client.entity_manager,entity_status:0
+msgid "Instance Status"
+msgstr "Statut de l'instance"
+
+#. module: sync_client
+#: view:sync.monitor:0
+msgid "send"
+msgstr "envoyé"
+
+#. module: sync_client
+#: view:sync.monitor:0
+msgid "Interrupt"
+msgstr "Interrompre"
+
+#. module: sync_client
+#: model:ir.actions.act_window,name:sync_client.sync_monitor_action
+msgid "Synchronisation Monitor"
+msgstr "Moniteur de synchronisation"
+
+#. module: sync_client
+#: field:sync.monitor,my_instance:0
+#: field:sync.version.instance.monitor,my_instance:0
+msgid "My Instance"
+msgstr "Mon Instance"
+
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:269
+#, python-format
+msgid "You cannot perform this action now."
+msgstr "Vous ne pouvez pas faire cette action maintenant."
+
+#. module: sync_client
+#: field:sync.client.message_rule,domain:0
+#: field:sync.client.rule,domain:0
+msgid "Domain"
+msgstr "Domaine"
+
+#. module: sync_client
+#: code:addons/sync_client/special_handling.py:147
+#, python-format
+msgid "You can not do this modification on a confirmed entry ! Please note that you can just change some non important fields !"
+msgstr "Vous ne pouvez pas faire cette modification sur une entrée confirmée. Vous pouvez changer seulement les champs non-critiques."
+
+#. module: sync_client
+#: field:sync.client.log_sale_purchase,document:0
+msgid "Document"
+msgstr "Document"
+
+#. module: sync_client
+#: field:ir.model.data,force_recreation:0
+msgid "Force record re-creation"
+msgstr "Forcer à recréer l'entrée"
+
+#. module: sync_client
+#: field:sync.monitor,msg_push:0
+msgid "Msg Push"
+msgstr "Env msg"
+
+#. module: sync_client
+#: code:addons/sync_client/special_handling.py:153
+#, python-format
+msgid "You can not do this modification on a reconciled entry ! Please note that you can just change some non important fields !"
+msgstr "Vous ne pouvez pas faire cette modification sur une entrée réconciliée. Vous pouvez changer seulement les champs non-critiques."
+
+#. module: sync_client
+#: view:sync.client.activate_entity:0
+msgid "Activate"
+msgstr "Activer"
+
+#. module: sync_client
+#: field:sync.client.update_to_send,sent_date:0
+msgid "Sent date"
+msgstr "Date d'envoi"
+
+#. module: sync_client
+#: selection:sync.client.entity_manager,state:0
+msgid "Ready"
+msgstr "Prêt"
+
+#. module: sync_client
+#: code:addons/sync_client/special_handling.py:61
+#, python-format
+msgid "Period '%s' of the given date %s is not open! No AJI is created"
+msgstr "Période '%s' de la date donnée %s n'est pas ouverte! Aucun AJI n'est crée"
+
+#. module: sync_client
+#: field:sync.client.sync_server_connection,automatic_patching:0
+msgid "Silent Upgrade"
+msgstr "Mise à jour silencieuse"
