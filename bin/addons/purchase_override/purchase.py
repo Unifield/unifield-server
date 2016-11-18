@@ -695,6 +695,18 @@ class purchase_order(osv.osv):
         w = {}
         local_market = None
 
+        # check if the current PO was created from scratch :
+        proc_obj = self.pool.get('procurement.order')
+        if order_type == 'direct':
+            if not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids)]):
+                return {
+                    'value': {'order_type': 'regular'},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('You cannot create a direct purchase order from scratch')
+                    },
+                }
+
         # Search the local market partner id
         data_obj = self.pool.get('ir.model.data')
         data_id = data_obj.search(cr, uid,
