@@ -277,6 +277,7 @@ class account_move_line_compute_currency(osv.osv):
             ids = [ids]
         reconciled_obj = self.pool.get('account.move.reconcile')
         al_obj = self.pool.get('account.analytic.line')
+        res_users_obj = self.pool.get('res.users')
         # Search Miscellaneous Transactions journal
         j_obj = self.pool.get('account.journal')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
@@ -303,47 +304,62 @@ class account_move_line_compute_currency(osv.osv):
                 if not reconciled_line_ids:
                     continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
-                # update addendum line if needed
-                partner_db = partner_cr = addendum_db = addendum_cr = None
-                if total < 0.0:
-                    partner_cr = addendum_db = abs(total)
-                    addendum_line_account_id = addendum_line_credit_account_id
-                    addendum_line_account_default_destination_id = addendum_line_credit_account_default_destination_id
+
+                # US-1878 While synchronizing the reconciliation of project lines reconciled in coordo or coordo lines
+                # reconciled in HQ, if the balance is zero, delete the addendum line instead of updating it.
+                # (Before: the FXA line which is first created with the amount of the first
+                # reconciled leg was then updated to "zero")
+                first_line_inst = self.browse(cr, uid, reconciled_line_ids[0], context=context, fields_to_fetch=['instance_id']).instance_id
+                first_line_inst_lvl = first_line_inst and first_line_inst.level
+                are_project_lines = not reconciled.is_multi_instance and first_line_inst_lvl and first_line_inst_lvl == 'project' or False
+                are_coordo_lines = not reconciled.is_multi_instance and first_line_inst_lvl and first_line_inst_lvl == 'coordo' or False
+                reconcile_inst = reconciled.instance_id
+                project_lines_rec_in_coordo = reconcile_inst and reconcile_inst.level == 'coordo' and are_project_lines
+                coordo_lines_rec_in_hq = reconcile_inst and reconcile_inst.level == 'section' and are_coordo_lines
+                if context.get('sync_update_execution') and abs(total) < 10**-3 and (project_lines_rec_in_coordo or coordo_lines_rec_in_hq):
+                    reconciled_obj.remove_addendum_line(cr, uid, addendum_line_ids, context)
                 else:
-                    partner_db = addendum_cr = abs(total)
-                    addendum_line_account_id = addendum_line_debit_account_id
-                    addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
-                for al in self.browse(cr, uid, addendum_line_ids, context=context):
-                    # search other line from same move in order to update its amount
-                    other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
-                    # Update addendum line
-                    sql = """
-                        UPDATE account_move_line
-                        SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
-                        WHERE id=%s
-                    """
-                    cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
-                    # Update partner line
-                    if isinstance(other_line_ids, (int, long)):
-                        other_line_ids = [other_line_ids]
-                    for o in self.pool.get('account.move.line').browse(cr, uid, other_line_ids):
-                        cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple([o.id])])
-                    # Update analytic lines
-                    analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
-                    al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total, 'currency_id': al.functional_currency_id.id}, context=context)
-                    # Update Addendum line that's not reconciled
-                    addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
-                    if not addendum_counterpart_ids:
-                        continue
-                    counterpart_sql = """
-                        UPDATE account_move_line
-                        SET account_id=%s
-                        WHERE id=%s
-                    """
-                    cr.execute(counterpart_sql, [addendum_line_account_id, tuple(addendum_counterpart_ids)])
-                    # then update their analytic lines with default destination
-                    analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', addendum_counterpart_ids)])
-                    al_obj.write(cr, uid, analytic_line_ids, {'general_account_id': addendum_line_account_id, 'destination_id': addendum_line_account_default_destination_id,})
+                    # update addendum line if needed
+                    partner_db = partner_cr = addendum_db = addendum_cr = None
+                    if total < 0.0:
+                        partner_cr = addendum_db = abs(total)
+                        addendum_line_account_id = addendum_line_credit_account_id
+                        addendum_line_account_default_destination_id = addendum_line_credit_account_default_destination_id
+                    else:
+                        partner_db = addendum_cr = abs(total)
+                        addendum_line_account_id = addendum_line_debit_account_id
+                        addendum_line_account_default_destination_id = addendum_line_debit_account_default_destination_id
+                    for al in self.browse(cr, uid, addendum_line_ids, context=context):
+                        # search other line from same move in order to update its amount
+                        other_line_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id)], context=context)
+                        # Update addendum line
+                        sql = """
+                            UPDATE account_move_line
+                            SET debit_currency=%s, credit_currency=%s, amount_currency=%s, debit=%s, credit=%s
+                            WHERE id=%s
+                        """
+                        cr.execute(sql, [0.0, 0.0, 0.0, addendum_db or 0.0, addendum_cr or 0.0, tuple([al.id])])
+                        # Update partner line
+                        if isinstance(other_line_ids, (int, long)):
+                            other_line_ids = [other_line_ids]
+                        for o in self.pool.get('account.move.line').browse(cr, uid, other_line_ids):
+                            cr.execute(sql, [0.0, 0.0, 0.0, partner_db or 0.0, partner_cr or 0.0, tuple([o.id])])
+                        # Update analytic lines
+                        analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', other_line_ids)], context=context)
+                        al_obj.write(cr, uid, analytic_line_ids, {'amount': -1*total, 'amount_currency': -1*total, 'currency_id': al.functional_currency_id.id}, context=context)
+                        # Update Addendum line that's not reconciled
+                        addendum_counterpart_ids = self.search(cr, uid, [('move_id', '=', al.move_id.id), ('id', '!=', al.id), ('is_addendum_line', '=', True)])
+                        if not addendum_counterpart_ids:
+                            continue
+                        counterpart_sql = """
+                            UPDATE account_move_line
+                            SET account_id=%s
+                            WHERE id=%s
+                        """
+                        cr.execute(counterpart_sql, [addendum_line_account_id, tuple(addendum_counterpart_ids)])
+                        # then update their analytic lines with default destination
+                        analytic_line_ids = al_obj.search(cr, uid, [('move_id', 'in', addendum_counterpart_ids)])
+                        al_obj.write(cr, uid, analytic_line_ids, {'general_account_id': addendum_line_account_id, 'destination_id': addendum_line_account_default_destination_id,})
             else:
                 # Search all lines that have same reconcile_id
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)
@@ -353,7 +369,7 @@ class account_move_line_compute_currency(osv.osv):
                 if abs(total) > 10**-3:
                     # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization
                     multi_instance = reconciled.is_multi_instance
-                    current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+                    current_instance = res_users_obj.browse(cr, uid, uid).company_id.instance_id
                     current_instance_id = current_instance.id
                     current_instance_level = current_instance.level
                     # UF-2501: when proj + coor are reconciled from HQ adj line should be created at coordo only
@@ -384,7 +400,7 @@ class account_move_line_compute_currency(osv.osv):
                     if partner_line_id:
                         # Add it to reconciliation (same that other lines)
                         reconcile_txt = ''
-                        data = self.pool.get('account.move.reconcile').name_get(cr, uid, [reconciled.id])
+                        data = reconciled_obj.name_get(cr, uid, [reconciled.id])
                         if data and data[0] and data[0][1]:
                             reconcile_txt = data[0][1]
                         # US-1878 Add the reconciliation date in the FX adjustment entry
