@@ -59,10 +59,12 @@ def check_validated(f):
 class entity_group0(osv.osv):
     """ OpenERP group of entities """
     _name = "sync.server.entity_group"
+    _trace = True
 entity_group0()
 
 class entity0(osv.osv):
     _name = "sync.server.entity"
+    _trace = True
 entity0()
 
 class group_type(osv.osv):
@@ -70,6 +72,7 @@ class group_type(osv.osv):
 
     _name = "sync.server.group_type"
     _description = "Synchronization Instance Group Type"
+    _trace = True
 
     _columns = {
         'name': fields.char('Type Name', size = 64, required = True),
@@ -84,6 +87,7 @@ class entity_group(osv.osv):
 
     _name = "sync.server.entity_group"
     _description = "Synchronization Instance Group"
+    _trace = True
 
     _columns = {
         'name': fields.char('Group Name', size = 64, required=True),
@@ -134,6 +138,7 @@ class entity(osv.osv):
     _name = "sync.server.entity"
     _description = "Synchronization Instance"
     _parent_store = True
+    _trace = True
 
     def init(self, cr):
         cr.execute("""select column_name
@@ -282,8 +287,8 @@ class entity(osv.osv):
 
     def update(self, cr, uid, identifier, hardware_id, context=None):
         ids = self.search(cr, uid, [('identifier', '=' , identifier),
-                                    ('hardware_id', '=', hardware_id), 
-                                    ('user_id', '=', uid), 
+                                    ('hardware_id', '=', hardware_id),
+                                    ('user_id', '=', uid),
                                     ('state', '=', 'updated')], context=context)
         if not ids:
             return (False, 'No update is ready for your entity. If you cannot synchronize data, check that your parent has validated your registration')
@@ -307,7 +312,7 @@ class entity(osv.osv):
         return (True, data)
 
     def ack_update(self, cr, uid, uuid, hardware_id, token, context=None):
-        ids = self.search(cr, uid, [('identifier', '=' , uuid), 
+        ids = self.search(cr, uid, [('identifier', '=' , uuid),
                                     ('hardware_id', '=', hardware_id),
                                     ('user_id', '=', uid), 
                                     ('state', '=', 'updated'), 
@@ -354,7 +359,7 @@ class entity(osv.osv):
             data = {
                 'parent_name' : 'name'
                 'group_names' : ['group1', 'group2']
-                'identifier' : 'uuid', 
+                'identifier' : 'uuid',
                 'hardware_id' : 'hardware_id'
                 'name' : 'name',
                 'email' : 'cur.email',
@@ -619,7 +624,7 @@ class sync_manager(osv.osv):
             @param entity: string : uuid of the synchronizing entity
             @return tuple : (a, b, c):
                     a is True is if the call is succesfull, False otherwise
-                    b : is a list of dictionaries that contains all the rule 
+                    b : is a list of dictionaries that contains all the rule
                         that apply for the synchronizing instance.
                         The format of the dict that contains a single rule definition
                         {
@@ -673,7 +678,7 @@ class sync_manager(osv.osv):
             Synchronizing entity confirm that all the packet of this session are sent
             @param entity : string : uuid of the synchronizing entity
             @param session_id : string : the synchronization session_id given at the beginning of the session by get_model_sync.
-            @return tuple : (a, b) 
+            @return tuple : (a, b)
                 a : boolean : is True is if the call is succesfull, False otherwise
                 b : int : sequence number given
         """
@@ -702,17 +707,17 @@ class sync_manager(osv.osv):
     def get_update(self, cr, uid, entity, last_seq, offset, max_size, max_seq, recover=False, context=None):
         """
             @param entity : string : uuid of the synchronizing entity
-            @param last_seq : integer : Last sequence of update receive succefully in the previous pull session. 
+            @param last_seq : integer : Last sequence of update receive succefully in the previous pull session.
             @param offset : integer : Number of record receive after the last_seq
-            @param max_size : integer : The number of record max per packet. 
+            @param max_size : integer : The number of record max per packet.
             @param max_seq : interger : The sequence max that the update the sync server send to the client in get_max_sequence, to tell the server don't send me
                             newer update then the one already their when the pull session start.
             @param recover : flag : If set to True, will recover self-owned package too.
-            @return tuple : (a,b,c) 
+            @return tuple : (a,b,c)
                 a : boolean : True if the call is successfull, False otherwise
                 b : dictionnary : Package if there is some update to send remaining, False otherwise
                 c : boolean : False if there is some update to send remaining, True otherwise
-                              Package format : 
+                              Package format :
                               {
                                     'model': string : model's name of the update
                                     'source_name' : string : source entity's name
@@ -744,7 +749,7 @@ class sync_manager(osv.osv):
             @param entity: string : uuid of the synchronizing entity
             @return a Tuple (a, b):
                     a : boolean : is True is if the call is succesfull, False otherwise
-                    b : list of dictionaries : if a is True, is a list of dictionaries that contains all the rule 
+                    b : list of dictionaries : if a is True, is a list of dictionaries that contains all the rule
                         that apply for the synchronizing instance.
                         The format of the dict that contains a single rule definition
                         {
@@ -772,7 +777,7 @@ class sync_manager(osv.osv):
                                 'call' : string : name of the method to call when the receiver will execute the message
                                 'dest' : string : name of the destination (generaly a partner Name)
                                 'args' : string : Arguments of the call, the format is a a dictionnary that represent is object that generate the message serialiaze in json
-                                        see export_data_jso in ir_model_data.py 
+                                        see export_data_jso in ir_model_data.py
                             }
             @return: tuple : (a, b):
                      a : boolean : is True is if the call is succesfull, False otherwise
@@ -789,7 +794,7 @@ class sync_manager(osv.osv):
     @check_validated
     def get_message_ids(self, cr, uid, entity, context=None):
         # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
-        # to avoid having messages that are not belonging to the same "sequence" of the update  
+        # to avoid having messages that are not belonging to the same "sequence" of the update
         msg_ids_tmp = self.pool.get("sync.server.message").search(cr, uid,
                                                                   [('destination', '=', entity.id), ('sent', '=', False)],
                                                                   order='NO_ORDER', context=context)
@@ -805,7 +810,7 @@ class sync_manager(osv.osv):
     @check_validated
     def reset_message_ids(self, cr, uid, entity, context=None):
         # UTP-1179: store temporarily this ids of messages to be sent to this entity at the moment of getting the update
-        # to avoid having messages that are not belonging to the same "sequence" of the update  
+        # to avoid having messages that are not belonging to the same "sequence" of the update
         self.pool.get('sync.server.entity').write(cr, 1, entity.id, {'msg_ids_tmp': False}, context=context)
         return (True, 0)
 

@@ -25,7 +25,7 @@
     'version': '0.1',
     'category': 'Tools',
     'description': """
-        
+
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
@@ -39,6 +39,7 @@
         'security/ir.model.access.csv',
         'data/cron.xml',
         'data/alert_email.xml',
+        'data/audittrail_sync_server.yml',
         'data/automated_import_sync_groups.xml',
     ],
     'demo_xml': [
@@ -49,4 +50,3 @@
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
-
