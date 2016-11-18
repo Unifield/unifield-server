@@ -75666,3 +75666,17 @@ msgstr "Mise à jour silencieuse"
 #, python-format
 msgid "You cannot create a direct purchase order from scratch"
 msgstr "Vous ne pouvez pas créer d'ordre d'achat direct en dehors du flux d'approvisionnement"
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/report/hq_report_ocp.py:136
+#: code:addons/vertical_integration/report/hq_report_ocp_matching.py:98
+#, python-format
+msgid "Some information is missing: either fiscal year or period or instance."
+msgstr "Des informations sont manquantes : l'année fiscale, la période ou l'instance."
+
+#. module: vertical_integration
+#: code:addons/vertical_integration/report/hq_report_ocp.py:129
+#: code:addons/vertical_integration/report/hq_report_ocp_matching.py:91
+#, python-format
+msgid "No data retrieved. Check that the wizard is filled in."
+msgstr "Aucune donnée récupérée. Vérifiez que le wizard est rempli."
