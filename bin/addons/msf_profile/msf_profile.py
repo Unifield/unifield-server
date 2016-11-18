@@ -119,6 +119,32 @@ class patch_scripts(osv.osv):
                                 '"oc" or "OC" in its name. Please set up the '\
                                 'oc mannually' % entity['name'])
 
+    def us_1725_force_sync_on_hr_employee(self, cr, uid, *a, **b):
+        '''
+        force sync on all local employee
+        '''
+
+        if _get_instance_level(self, cr, uid) == 'coordo':
+
+            # get all local employee
+            hr_employee_obj = self.pool.get('hr.employee')
+            local_employee_ids = hr_employee_obj.search(cr, uid,
+                                                        [('employee_type', '=', 'local'),
+                                                         ('name','!=','Administrator')])
+
+            total_employee = len(local_employee_ids)
+            start_chunk = 0
+            chunk_size = 100
+            while start_chunk < total_employee:
+                ids_chunk = local_employee_ids[start_chunk:start_chunk+chunk_size]
+                cr.execute("""UPDATE
+                    ir_model_data SET last_modification=NOW(), touched='[''code'']'
+                WHERE
+                    module='sd' AND model='hr.employee' AND res_id in %s""",
+                           (tuple(ids_chunk),))
+                start_chunk += chunk_size
+
+
     def us_1388_change_sequence_implementation(self, cr, uid, *a, **b):
         """
         change the implementation of the finance.ocb.export ir_sequence to be
