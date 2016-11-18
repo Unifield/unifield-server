@@ -1369,7 +1369,7 @@ class account_move(osv.osv):
         toremove = []
         obj_move_line = self.pool.get('account.move.line')
         for move in self.browse(cr, uid, ids, context=context):
-            if move['state'] != 'draft':
+            if move['state'] != 'draft' and not context.get('from_remove_addendum_line'):
                 raise osv.except_osv(_('UserError'),
                         _('You can not delete posted movement: "%s"!') % \
                                 move['name'])
