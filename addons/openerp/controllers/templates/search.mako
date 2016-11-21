@@ -120,7 +120,7 @@
             <tr>
                 <td>
                 % if params.selectable == KINDS['M2M']:
-                    <a style="cursor:pointer" title="${_('View selected records.')}" onclick="new ListView('_terp_list').show_selected_records();"><span id="num_selected">0</span> selected record(s)</a>
+                    <a style="cursor:pointer" title="${_('View selected records.')}" onclick="new ListView('_terp_list').show_selected_records();"><span id="num_selected">0</span> ${_('selected record(s)')}</a>
                 % endif
                 </td>
             </tr>

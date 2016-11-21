@@ -1686,6 +1686,8 @@ msgstr "Mot de passe modifé."
 msgid "Please choose a new password. It must be at least 6 characters long and must contain at least one number."
 msgstr "Merci de choisir un nouveau mot de passe. Celui ci doit être d'au moins 6 caractères et doit contenir au moins un chiffre."
 
+msgid "selected record(s)"
+msgstr "enregistrement(s) sélectionné(s)"
 #~ msgid "Add Resource:"
 #~ msgstr "Ajouter une ressource :"
 
