@@ -52,7 +52,20 @@ class manual_import_job(osv.osv):
     _order = "name desc"
 
 
-    def process_import_bg(self, cr, uid, ids, context):
+    def unlink(self, cr, uid, ids, context=None):
+        '''
+        method called when user wants to delete import
+        '''
+        # do not delete a job which is in progress:
+        for job_id in ids:
+            job_state = self.read(cr, uid, [job_id], ['state'], context=context)[0]['state']
+            if job_state == 'in_progress':
+                raise osv.except_osv(_('Error'), _('You cannot delete an import job which is in progress'))
+
+        return super(manual_import_job, self).unlink(cr, uid, ids, context=context)
+
+
+    def process_import_bg(self, cr, uid, ids, context=None):
         """
         Method called when user click on button 'import in background' in Manual imports
         Create a new thread that process import in background

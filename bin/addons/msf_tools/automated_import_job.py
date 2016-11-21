@@ -183,6 +183,10 @@ class automated_import_job(osv.osv):
             error = None
             data64 = None
             filename = False
+            
+            self.write(cr, uid, [job.id], {'state': 'in_progress'}, context=context)
+            if context.get('import_in_bg'):
+                cr.commit()
 
             try:
                 if self._name != 'manual.import.job':
