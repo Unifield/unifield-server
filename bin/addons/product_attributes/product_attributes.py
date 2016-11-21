@@ -1226,18 +1226,16 @@ class product_attributes(osv.osv):
         def update_existing_translations(model, res_id, xmlid):
             # If we are in the creation of product by sync. engine, attach the already existing translations to this product
             if context.get('sync_update_execution'):
-                for fld_name, fld in self.pool.get(model)._columns.iteritems():
-                    if fld.translate:
-                        trans_ids = trans_obj.search(cr, uid, [
-                            ('res_id', '=', 0),
-                            ('xml_id', '=', xmlid),
-                            ('type', '=', 'model'),
-                            ('name', '=', '%s,%s' % (model, fld_name)),
-                        ], context=context)
-                        if trans_ids:
-                            trans_obj.write(cr, uid, trans_ids, {
-                                'res_id': res_id,
-                                }, context=context)
+                trans_ids = trans_obj.search(cr, uid, [
+                    ('res_id', '=', 0),
+                    ('xml_id', '=', xmlid),
+                    ('type', '=', 'model'),
+                    ('name', '=', '%s,%s' % (model, fld_name)),
+                ], context=context)
+                if trans_ids:
+                    trans_obj.write(cr, uid, trans_ids, {
+                        'res_id': res_id,
+                    }, context=context)
 
         if 'default_code' in vals:
             vals['default_code'] = vals['default_code'].strip()
