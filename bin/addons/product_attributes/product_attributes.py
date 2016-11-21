@@ -1217,9 +1217,25 @@ class product_attributes(osv.osv):
         :return: The ID of the new product.template record
         """
         sptc_obj = self.pool.get('standard.price.track.changes')
+        trans_obj = self.pool.get('ir.translation')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
+
+        def update_existing_translations(model, res_id, xmlid):
+            # If we are in the creation of product by sync. engine, attach the already existing translations to this product
+            if context.get('sync_update_execution'):
+                trans_ids = trans_obj.search(cr, uid, [
+                    ('res_id', '=', 0),
+                    ('xml_id', '=', xmlid),
+                    ('type', '=', 'model'),
+                    ('name', '=like', '%s,%%' % model),
+                ], context=context)
+                if trans_ids:
+                    trans_obj.write(cr, uid, trans_ids, {
+                        'res_id': res_id,
+                    }, context=context)
 
         if 'default_code' in vals:
             vals['default_code'] = vals['default_code'].strip()
@@ -1251,6 +1267,17 @@ class product_attributes(osv.osv):
 
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
+
+        if context.get('sync_update_execution'):
+            # Update existing translations for product.product and product.template
+            product_tmpl_id = self.read(cr, uid, [res], ['product_tmpl_id'])[0]['product_tmpl_id'][0]
+            prd_data_ids = data_obj.search(cr, uid, [
+                ('res_id', '=', res),
+                ('model', '=', 'product.product'),
+            ], context=context)
+            for prd_data in data_obj.browse(cr, uid, prd_data_ids, context=context):
+                update_existing_translations('product.product', res, prd_data.name)
+                update_existing_translations('product.template', product_tmpl_id, prd_data.name)
 
         sptc_obj.track_change(cr, uid, res, _('Product creation'), vals,
                               context=context)
