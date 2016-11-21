@@ -75378,6 +75378,7 @@ msgstr "Montant fonctionnel de l'entrée analytique"
 
 #. module: board
 #, python-format
+#: code:addons/board/report/integrity_finance.py:20
 msgid "Finance Data Integrity"
 msgstr "Intégrité des données financières"
 
