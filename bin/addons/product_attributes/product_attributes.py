@@ -1230,7 +1230,7 @@ class product_attributes(osv.osv):
                     ('res_id', '=', 0),
                     ('xml_id', '=', xmlid),
                     ('type', '=', 'model'),
-                    ('name', '=like', '%s,%%' % model),
+                    ('name', '=', '%s,%%' % model),
                 ], context=context)
                 if trans_ids:
                     trans_obj.write(cr, uid, trans_ids, {
