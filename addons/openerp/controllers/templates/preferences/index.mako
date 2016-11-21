@@ -8,8 +8,8 @@
             jQuery.frame_dialog({
                 'src': '/openerp/pref/password'
             }, null, {
-                'width': 500,
-                'height': 250
+                'width': 600,
+                'height': 400
             });
         }
     </script>

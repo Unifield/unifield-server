@@ -34,6 +34,9 @@ from form import Form
 class PrefsPassword(database.FormPassword):
     action = "/openerp/pref/password"
     string = _('Change your password')
+    description = _("""Please choose a new password. It must be at least 6 characters long and must contain at least one number.""")
+    display_string = True
+    display_description = True
     fields = [
         database.ReplacePasswordField(name='old_password', label=_('Current password:')),
         database.ReplacePasswordField(name='new_password', label=_('New password:')),
