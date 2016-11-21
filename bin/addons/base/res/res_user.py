@@ -651,14 +651,10 @@ class users(osv.osv):
 
     def pref_change_password(self, cr, uid, old_passwd, new_passwd,
                              confirm_passwd, context=None):
-        self.check(cr.dbname, uid, old_passwd)
+        self.check(cr.dbname, uid, tools.ustr(old_passwd))
         login = self.read(cr, uid, uid, ['login'])['login']
-        security.check_password_validity(self, cr, uid, old_passwd, new_passwd, confirm_passwd, login)
-        vals = {
-            'password': new_passwd,
-            'force_password_change': False,
-        }
-        return self.write(cr, 1, uid, vals)
+        return self.change_password(cr.dbname, login, old_passwd, new_passwd,
+                                    confirm_passwd, context=context)
 
     def change_password(self, db_name, login, old_passwd, new_passwd,
                         confirm_passwd, context=None):
