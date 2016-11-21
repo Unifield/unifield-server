@@ -76,9 +76,7 @@
 
         <menuitem id="mon_menu" name="Monitoring" parent="main_menu" sequence="30"/>
 
-        <menuitem id="syncback_menu" name="Backup"
-            groups="sync_common.sync_read_group"
-            parent="main_menu" sequence="25"/>
+        <menuitem id="syncback_menu" name="Backup" parent="main_menu" sequence="25"/>
 
         <menuitem id="connection_manager_menu" name="Connection Manager" parent="reg_menu"
                 action="connection_manager_action"/>

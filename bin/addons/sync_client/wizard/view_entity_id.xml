@@ -23,7 +23,6 @@
 
         <menuitem name="Entity Id" parent="maint_menu"
             id="view_entity_id_menu"
-            groups="sync_common.sync_read_group"
             action="view_entity_id_action" sequence="100"/>
      </data> 
 </openerp>

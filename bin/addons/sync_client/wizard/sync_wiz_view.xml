@@ -169,12 +169,10 @@
 
         <menuitem name="Activate Instance" parent="maint_menu"
             id="activate_wiz_menu"
-            groups="sync_common.sync_read_group"
             action="activate_wizard_action" sequence="99"/>
 
         <menuitem name="Update Instance" parent="maint_menu"
             id="update_wiz_menu"
-            groups="sync_common.sync_read_group"
             action="update_wizard_action"/>
 
        <!-- ================ DATA synchronization ===================== -->
@@ -256,17 +254,14 @@
 
         <menuitem name="Register" parent="reg_menu"
             id="reg_wiz_menu"
-            groups="sync_common.sync_read_group"
             action="register_wizard_action"/>
 
         <menuitem name="Registration Status" parent="mon_menu"
             id="manage_child_wiz_menu"
-            groups="sync_common.sync_read_group"
             action="manage_children_wizard_action" sequence="10"/>
 
         <menuitem name="Manual" parent="sync_menu"
             id="sync_wiz_menu"
-            groups="sync_common.sync_read_group"
             action="sync_wizard_action"/>
 
     </data>
