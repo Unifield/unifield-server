@@ -1272,9 +1272,13 @@ class product_attributes(osv.osv):
 
         # Update existing translations for product.product and product.template
         product_tmpl_id = self.read(cr, uid, [res], ['product_tmpl_id'])[0]['product_tmpl_id'][0]
-        xmlid_code = 'product_%s' % vals['default_code']
-        update_existing_translations('product.product', res, xmlid_code)
-        update_existing_translations('product.template', product_tmpl_id, xmlid_code)
+        prd_data_ids = data_obj.search(cr, uid, [
+            ('res_id', '=', res),
+            ('model', '=', 'product.product'),
+        ], context=context)
+        for prd_data in data_obj.browse(cr, uid, prd_data_ids, context=context):
+            update_existing_translations('product.product', res, prd_data.name)
+            update_existing_translations('product.template', product_tmpl_id, prd_data.name)
 
         sptc_obj.track_change(cr, uid, res, _('Product creation'), vals,
                               context=context)
