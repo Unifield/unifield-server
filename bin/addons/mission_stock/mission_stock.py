@@ -1011,6 +1011,7 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_qty': 0.00,
         'in_pipe_coor_val': 0.00,
         'instance_id': _get_default_destination_instance_id,
+        'product_state': '',
     }
 
     def update_full_view_line(self, cr, uid, context=None):

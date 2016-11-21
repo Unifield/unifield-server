@@ -1293,7 +1293,7 @@ class product_attributes(osv.osv):
 
         # update local stock mission report lines :
         if 'state' in vals:
-            prod_state = False
+            prod_state = ''
             if vals['state']:
                 state_id = vals['state']
                 if isinstance(state_id, (int, long)):
