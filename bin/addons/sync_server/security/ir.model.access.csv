@@ -2,7 +2,7 @@
 "sync_read_sync_server_entity_group_id","sync_server_entity_user sync","sync.server.entity_group",1,0,0,0,"sync_common.sync_read_group"
 "sync_read_group_type","read_group_user sync","sync.server.group_type",1,0,0,0,"sync_common.sync_read_group"
 "sync_read_sync_server_entity","sync_read_sync_server_entity_user sync","sync.server.entity",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_sync_server_entity_activity","sync_read_sync_server_entity_activity_user sync","sync.server.entity.activity",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_sync_server_entity_activity","sync_read_sync_server_entity_activity_user sync","sync.server.entity.activity",1,1,1,1,"sync_common.sync_read_group"
 "sync_read_sync_rule_id","sync_read_sync_rule","sync_server.sync_rule",1,0,0,0,"sync_common.sync_read_group"
 "sync_read_sync_update_id","sync_read_sync_update","sync.server.update",1,0,0,0,"sync_common.sync_read_group"
 "sync_read_message_rule_id","sync_read_message_rule","sync_server.message_rule",1,0,0,0,"sync_common.sync_read_group"
@@ -31,3 +31,7 @@
 "access_ir_actions_actions_user_all","ir_actions_actions_user all","ir.actions.actions",1,0,0,0,
 "access_res_log_report_user_all","res_log_report_user all","res.log.report",1,0,0,0,
 "access_ir_actions_report_xml_user_all","ir_actions_report_xml_user all","ir.actions.report.xml",1,0,0,0,
+"access_ir_audittrail_log_line_user_all","ir_audittrail_log_line_user all","audittrail.log.line",1,1,1,1,"sync_common.sync_read_group"
+"access_ir_mode_data_user_all","ir_model_data_user all","ir.model.data",1,1,1,1,"sync_common.sync_read_group"
+"access_res_users_user_all","res_users_user all","res.users",1,0,0,0,
+"access_ir_translation_user_all","ir_translation_user all","ir.translation",1,0,0,0,
