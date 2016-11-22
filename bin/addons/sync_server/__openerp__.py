@@ -29,8 +29,11 @@
     """,
     'author': 'OpenERP SA',
     'website': 'http://openerp.com',
-    'depends': ['sync_common', 'msf_tools'],
-    'init_xml': [],
+    'depends': ['sync_common', 'msf_tools', 'useability_dashboard_and_menu',
+        'sync_client', 'product_attributes', 'sale_override'],
+    'init_xml': [
+        'sync_server_menu.xml',
+        ],
     'data': [
         'sync_server_view.xml',
         'update_view.xml',
