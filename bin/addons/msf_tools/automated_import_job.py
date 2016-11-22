@@ -27,6 +27,7 @@ import pooler
 import base64
 import hashlib
 from tempfile import NamedTemporaryFile
+from tools import ustr
 
 from osv import osv
 from osv import fields
@@ -288,7 +289,7 @@ class automated_import_job(osv.osv):
                         report_content = temp_report.read()
                         temp_report.close()
                     else:
-                        report_content = _("All records have been successfully processed")
+                        report_content = _('All records have been successfully processed')
 
                     self.pool.get('ir.attachment').create(cr, uid, {
                         'name': report_name,
@@ -301,13 +302,13 @@ class automated_import_job(osv.osv):
                     
                     nb_processed, nb_rejected = len(processed), len(rejected)
                     if nb_processed == 0 and nb_rejected == 0:
-                        raise Exception(_("The input file doesn't contain any record"))
+                        raise Exception(_('The input file doesn\'t contain any record'))
                     elif nb_processed == 0:
-                        raise Exception(_("All entries have been rejected , bad file format ? See the import report in attachment for further informations"))
+                        raise Exception(_('All entries have been rejected , bad file format ? See the import report in attachment for further informations'))
                     elif nb_rejected > 0:
                         nb_rejected += nb_processed
                         nb_processed = 0
-                        raise Exception(_("Some lines has been rejected, so we did not import anything. See the import report in attachment for further informations"))
+                        raise Exception(_('Some lines has been rejected, so we did not import anything. See the import report in attachment for further informations'))
                 else:
                     processed, rejected, headers = getattr(
                         self.pool.get(job.import_id.function_id.model_id.model),
@@ -335,7 +336,7 @@ class automated_import_job(osv.osv):
                     'end_time': time.strftime('%Y-%m-%d'),
                     'nb_processed_records': nb_processed,
                     'nb_rejected_records': nb_rejected,
-                    'comment': str(e),
+                    'comment': ustr(e),
                     'file_sum': md5,
                     'file_to_import': data64,
                     'state': 'error',
