@@ -1,11 +1,12 @@
 "id","name","model_id","perm_read","perm_write","perm_create","perm_unlink","group_id/id"
-"sync_read_group_id","sync_read_group","sync.server.entity_group",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_group_type_id","sync_read_group_type","sync.server.group_type",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_group_entity_id","sync_read_group_entity","sync.server.entity",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_sync_rule_id","sync_read_sync_rule","sync_server.sync_rule",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_sync_update_id","sync_read_sync_update","sync.server.update",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_message_rule_id","sync_read_message_rule","sync_server.message_rule",1,1,1,1,"sync_common.sync_read_group"
-"sync_read_message_id","sync_read_message","sync.server.message",1,1,1,1,"sync_common.sync_read_group"
+"sync_read_sync_server_entity_group_id","sync_server_entity_user sync","sync.server.entity_group",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_group_type","read_group_user sync","sync.server.group_type",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_sync_server_entity","sync_read_sync_server_entity_user sync","sync.server.entity",1,1,1,1,"sync_common.sync_read_group"
+"sync_read_sync_server_entity_activity","sync_read_sync_server_entity_activity_user sync","sync.server.entity.activity",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_sync_rule_id","sync_read_sync_rule","sync_server.sync_rule",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_sync_update_id","sync_read_sync_update","sync.server.update",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_message_rule_id","sync_read_message_rule","sync_server.message_rule",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_message_id","sync_read_message","sync.server.message",1,0,0,0,"sync_common.sync_read_group"
 "access_module_ir_module_user_all","module_ir_module_user all","ir.module.module",1,0,0,0,
 "access_publisher_waranty_user_all","publisher_waranty_user all","publisher_warranty.contract",1,0,0,0,
 "access_ir_act_window_user_all","ir_act_window_user all","ir.actions.act_window",1,0,0,0,
@@ -21,4 +22,11 @@
 "access_res_company_user_all","res_company_user all","res.company",1,0,0,0,
 "access_ir_actions_act_window_view_user_all","ir_actions_act_window_view_user all","ir.actions.act_window.view",1,0,0,0,
 "access_ir_filters_user_all","ir_filters_user all","ir.filters",1,0,0,0,
+"access_process_process_user_all","ir_process_process_user all","process.process",1,0,0,0,
+"access_process_node_user_all","ir_process_node_user all","process.node",1,0,0,0,
 "access_ir_attachment_user_all","ir_attachment_user all","ir.attachment",1,0,0,0,
+"access_ir_ui_view_sc_user_all","ir_ui_view_sc_user all","ir.ui.view_sc",1,0,0,0,
+"access_board_board_user_all","board_board_user all","board.board",1,0,0,0,
+"access_ir_ui_view_custom_user_all","ir_ui_view_custom_user all","ir.ui.view.custom",1,0,0,0,
+"access_ir_actions_actions_user_all","ir_actions_actions_user all","ir.actions.actions",1,0,0,0,
+"access_res_log_report_user_all","res_log_report_user all","res.log.report",1,0,0,0,
