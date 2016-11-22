@@ -74850,3 +74850,9 @@ msgstr "Import automatique"
 #, python-format
 msgid "You cannot delete an import job which is in progress"
 msgstr "Vous ne pouvez pas supprimer un import en cours"
+
+#. module: msf_tools
+#: code:addons/msf_tools/automated_import_job.py:291
+#, python-format
+msgid "All records have been successfully processed"
+msgstr "Tous les enregistrements ont été correctement traité"

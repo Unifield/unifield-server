@@ -288,7 +288,7 @@ class automated_import_job(osv.osv):
                         report_content = temp_report.read()
                         temp_report.close()
                     else:
-                        report_content = "All records have been successfully processed"
+                        report_content = _("All records have been successfully processed")
 
                     self.pool.get('ir.attachment').create(cr, uid, {
                         'name': report_name,
