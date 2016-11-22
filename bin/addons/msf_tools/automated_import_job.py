@@ -270,15 +270,44 @@ class automated_import_job(osv.osv):
                         self.pool.get(job.function_id.model_id.model),
                         job.function_id.method_to_call
                     )(cr, uid, oldest_file)
+
+                    # create a report that resume rejected lines, so user can
+                    # modify his input file according to errors :
+                    report_name = job.filename[0:job.filename.rfind('.')] + '.csv' if job.filename.rfind('.') != -1 else job.filename + '.csv'
+                    report_name = "report_" + report_name
+                    report_content = ""
+                    if rejected:
+                        temp_report = NamedTemporaryFile()
+                        csv_writer = csv.writer(temp_report, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+                        headers_row = [_('Line number')] + headers + [_('Error')]
+                        csv_writer.writerow(headers_row)
+                        for pl in rejected:
+                            pl_row = [pl[0]] + pl[1] + [pl[2]]
+                            csv_writer.writerow(pl_row)
+                        temp_report.seek(0)
+                        report_content = temp_report.read()
+                        temp_report.close()
+                    else:
+                        report_content = "All records have been successfully processed"
+
+                    self.pool.get('ir.attachment').create(cr, uid, {
+                        'name': report_name,
+                        'datas_fname': filename,
+                        'description': '%s Lines' % (rejected and _('Rejected') or _('Processed')),
+                        'res_model': self._name,
+                        'res_id': job.id,
+                        'datas': base64.encodestring(report_content), 
+                    })
+                    
                     nb_processed, nb_rejected = len(processed), len(rejected)
                     if nb_processed == 0 and nb_rejected == 0:
-                        raise Exception(_("The input file do not contains any record"))
+                        raise Exception(_("The input file doesn't contain any record"))
                     elif nb_processed == 0:
-                        raise Exception(_("All entries have been rejected , bad file format ?"))
+                        raise Exception(_("All entries have been rejected , bad file format ? See the import report in attachment for further informations"))
                     elif nb_rejected > 0:
                         nb_rejected += nb_processed
                         nb_processed = 0
-                        raise Exception(_("Some lines has been rejected, so we did not import anything. Please check your import file and try again"))
+                        raise Exception(_("Some lines has been rejected, so we did not import anything. See the import report in attachment for further informations"))
                 else:
                     processed, rejected, headers = getattr(
                         self.pool.get(job.import_id.function_id.model_id.model),

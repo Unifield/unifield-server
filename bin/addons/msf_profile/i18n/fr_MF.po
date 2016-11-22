@@ -74815,16 +74815,16 @@ msgid "# of processed records"
 msgstr "Nombre d'enregistrements exécutés"
 
 #. module: msf_tools
-#: code:addons/msf_tools/automated_import_job.py:273
+#: code:addons/msf_tools/automated_import_job.py:306
 #, python-format
-msgid "All entries have been rejected , bad file format ?"
-msgstr "Toutes les entrées ont été rejeté, le fichier est-il bien formaté ?"
+msgid "All entries have been rejected , bad file format ? See the import report in attachment for further informations"
+msgstr "Toutes les entrées ont été rejeté, le fichier est-il bien formaté ? Pour plus d'informations, vous pouvez consulter le rapport en attachement."
 
 #. module: msf_tools
-#: code:addons/msf_tools/automated_import_job.py:277
+#: code:addons/msf_tools/automated_import_job.py:310
 #, python-format
-msgid "Some lines has been rejected, so we did not import anything. Please check your import file and try again"
-msgstr "Quelques entrées ont été rejeté, donc nous n'avons rien importé. Veuillez vérifier votre fichier et recommencer l'import."
+msgid "Some lines has been rejected, so we did not import anything. See the import report in attachment for further informations"
+msgstr "Des enregistrements ont été rejeté, nous n'avons rien importé. Pour plus d'informations, vous pouvez consulter le rapport en attachement."
 
 #. module: msf_tools
 #: code:addons/msf_tools/automated_import_job.py:271
