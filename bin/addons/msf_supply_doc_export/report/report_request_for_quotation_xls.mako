@@ -66,6 +66,7 @@
 <Column ss:AutoFitWidth="1" ss:Width="250" />
     
     <Row>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line Number')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
@@ -77,6 +78,7 @@
     </Row>
     % for line in o.order_line:
     <Row>
+        <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.line_number or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>

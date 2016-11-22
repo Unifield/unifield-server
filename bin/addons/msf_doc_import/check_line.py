@@ -286,7 +286,9 @@ def product_value(cr, uid, **kwargs):
     except IndexError:
         comment += _(' Product Code to be defined')
         error_list.append(_('The Product\'s Code has to be defined'))
-    return {'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit, 'cost_price': cost_price}
+    return {
+        'default_code': default_code, 'proc_type': proc_type, 'comment': comment, 'error_list': error_list, 'price_unit': price_unit,
+        'cost_price': cost_price, 'product_code':product_code}
 
 
 def quantity_value(**kwargs):
@@ -477,7 +479,6 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     bn_obj = kwargs['bn_obj']
     product_obj = kwargs['product_obj']
     product_id = kwargs['product_id']
-    date_format = kwargs['date_format']
     error_list = kwargs['to_write']['error_list']
     warning_list = kwargs['to_write']['warning_list']
     picking_type = kwargs.get('picking_type', 'internal')
@@ -610,6 +611,28 @@ def comment_value(**kwargs):
     except IndexError:
         warning_list.append(_("No comment was defined"))
     return {'comment': comment, 'warning_list': warning_list}
+
+
+def line_number_value(**kwargs):
+    '''
+    Retrives line number from Excel file
+    '''
+    row = kwargs["row"]
+    cell_nb  = kwargs['cell_nb']
+    line_number = kwargs['to_write']['line_number']
+    error_list = kwargs['to_write']['error_list']
+    try:
+        if not row.cells[cell_nb]:
+            error_list.append(_("No line number was defined"))
+        elif row.cells[cell_nb].type != 'int':
+            error_list.append(_("The line number must be an integer"))
+        else:
+            line_number = row.cells[cell_nb].data
+    except IndexError:
+        error_list.append(_("No line number was defined"))
+    return {'line_number': line_number, 'error_list':error_list}
+
+
 
 def check_lines_currency(rows, ccy_col_index, ccy_expected_code):
     """

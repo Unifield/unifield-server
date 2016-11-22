@@ -84,11 +84,8 @@ def synchronized(lock_attr='_lock'):
         @wraps(func)
         def wrapper(self, *args, **kwargs):
             lock = getattr(self, lock_attr)
-            try:
-                lock.acquire()
+            with lock:
                 return func(self, *args, **kwargs)
-            finally:
-                lock.release()
         return wrapper
     return decorator
 
@@ -100,7 +97,7 @@ def frame_codeinfo(fframe, back=0):
     """ Return a (filename, line) pair for a previous frame .
         @return (filename, lineno) where lineno is either int or string==''
     """
-    
+
     try:
         if not fframe:
             return ("<unknown>", '')

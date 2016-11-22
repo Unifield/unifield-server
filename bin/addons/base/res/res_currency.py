@@ -19,11 +19,9 @@
 #
 ##############################################################################
 import time
-import netsvc
+import datetime
+import csv
 from osv import fields, osv
-import ir
-
-from tools.misc import currency
 from tools.translate import _
 
 class res_currency(osv.osv):
@@ -51,7 +49,7 @@ class res_currency(osv.osv):
         'name': fields.char('Currency', size=32, required=True, help="Currency Code (ISO 4217)"),
         'symbol': fields.char('Symbol', size=3, help="Currency sign, to be used when printing amounts"),
         'rate': fields.function(_current_rate, method=True, string='Current Rate', digits=(12,6),
-            help='The rate of the currency to the currency of rate 1'),
+                                help='The rate of the currency to the currency of rate 1'),
         'rate_ids': fields.one2many('res.currency.rate', 'currency_id', 'Rates'),
         'accuracy': fields.integer('Computational Accuracy'),
         'rounding': fields.float('Rounding factor', digits=(12,6)),
@@ -109,8 +107,8 @@ class res_currency(osv.osv):
                 raise osv.except_osv(_('Error'), _('Report can not be edited due to missing FX rates in specific currency table %s') % rct_browse.name)
             else:
                 raise osv.except_osv(_('Error'), _('No rate found \n' \
-                    'for the currency: %s \n' \
-                    'at the date: %s') % (currency_name, date))
+                                                   'for the currency: %s \n' \
+                                                   'at the date: %s') % (currency_name, date))
         return to_currency['rate']/from_currency['rate']
 
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
@@ -139,6 +137,51 @@ class res_currency(osv.osv):
         ids = self.search(cr, uid, args, limit=limit)
         res = self.name_get(cr, uid, ids, context)
         return res
+
+    def auto_import(self, cr, uid, file_to_import):
+        import base64
+        processed = []
+        rejected = []
+        headers = []
+        date = None
+
+        # check all lines have the same date
+        with open(file_to_import, 'r') as csv_file:
+            line_list = list(csv.reader(csv_file, quoting=csv.QUOTE_ALL,
+                                        delimiter=','))
+            line_number = 0
+            headers = None
+            for line in line_list:
+                if line_number == 0:
+                    headers = line
+                    assert(line[0] == 'Date'), _('Date column is mandatory for auto import.')
+                else:
+                    if line and line[0]:
+                        if date is None:
+                            date = line[0]
+                        elif line[0] != date:
+                            raise osv.except_osv(_('Error'),
+                                                 _("All dates should be equal for all lines in file %s." % file_to_import))
+                line_number += 1
+
+            # check that this date is a real date
+            try:
+                date = datetime.datetime.strptime(date, '%d/%m/%Y')
+                date = date.strftime('%Y-%m-%d')
+            except:
+                date = None
+
+            if not date:
+                raise osv.except_osv(_('Error'), _("A 'Date' column is needed for each line of %s in this format: '18/10/2016'." % file_to_import))
+
+        import_obj = self.pool.get('import.currencies')
+        import_id = import_obj.create(cr, uid, {
+            'rate_date': date,
+            'import_file': base64.encodestring(open(file_to_import, 'r').read()),
+        })
+        processed, rejected, headers = import_obj.import_rates(cr, uid, [import_id], auto_import=True)
+        return processed, rejected, headers
+
 res_currency()
 
 class res_currency_rate(osv.osv):
@@ -147,7 +190,7 @@ class res_currency_rate(osv.osv):
     _columns = {
         'name': fields.date('Date', required=True, select=True),
         'rate': fields.float('Rate', digits=(12,6), required=True,
-            help='The rate of the currency to the currency of rate 1'),
+                             help='The rate of the currency to the currency of rate 1'),
         'currency_id': fields.many2one('res.currency', 'Currency', readonly=True),
     }
     _defaults = {

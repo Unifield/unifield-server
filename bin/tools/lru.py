@@ -33,6 +33,12 @@ class LRU:
         return obj in self.d
 
     @synchronized()
+    def get(self, key, default=None):
+        if key in self.d:
+            return self[key]
+        return default
+
+    @synchronized()
     def __getitem__(self, obj):
         a = self.d[obj].me
         self[a[0]] = a[1]
@@ -113,3 +119,8 @@ class LRU:
         del self[key]
         return v
 
+    @synchronized()
+    def del_map(self, f):
+        for k in self.keys():
+            if f(k):
+                del self[k]

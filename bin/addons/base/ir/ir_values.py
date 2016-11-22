@@ -36,10 +36,10 @@ class ir_values(osv.osv):
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(ir_values, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 
-    def _clean_cache(self):
-        super(ir_values, self)._clean_cache()
+    def _clean_cache(self, dbname):
+        super(ir_values, self)._clean_cache(dbname)
         # radical but this doesn't frequently happen
-        self._read_flat.clear_cache()
+        self._read_flat.clear_cache(dbname)
 
     def _real_unpickle(self, cr, uid, ids, name, arg, context=None):
         res = {}
@@ -78,33 +78,33 @@ class ir_values(osv.osv):
         if not object_id: return {}
         act = self.pool.get('ir.model').browse(cr, uid, object_id, context=context)
         return {
-                'value': {'model': act.model}
+            'value': {'model': act.model}
         }
 
     def onchange_action_id(self, cr, uid, ids, action_id, context={}):
         if not action_id: return {}
         act = self.pool.get('ir.actions.actions').browse(cr, uid, action_id, context=context)
         return {
-                'value': {'value_unpickle': act.type+','+str(act.id)}
+            'value': {'value_unpickle': act.type+','+str(act.id)}
         }
 
     _columns = {
         'name': fields.char('Name', size=128),
         'model_id': fields.many2one('ir.model', 'Object', size=128,
-            help="This field is not used, it only helps you to select a good model."),
+                                    help="This field is not used, it only helps you to select a good model."),
         'model': fields.char('Object Name', size=128, select=True),
         'action_id': fields.many2one('ir.actions.actions', 'Action',
-            help="This field is not used, it only helps you to select the right action."),
+                                     help="This field is not used, it only helps you to select the right action."),
         'value': fields.text('Value'),
         'value_unpickle': fields.function(_value_unpickle, fnct_inv=_value_pickle,
-            method=True, type='text', string='Value'),
+                                          method=True, type='text', string='Value'),
         'real_value':  fields.function(_real_unpickle, method=True, type='text', string='Value'),
         'object': fields.boolean('Is Object'),
         'key': fields.selection([('action','Action'),('default','Default')], 'Type', size=128, select=True),
         'key2' : fields.char('Event Type',help="The kind of action or button in the client side that will trigger the action.", size=128, select=True),
         'meta': fields.text('Meta Datas'),
         'meta_unpickle': fields.function(_value_unpickle, fnct_inv=_value_pickle,
-            method=True, type='text', string='Metadata'),
+                                         method=True, type='text', string='Metadata'),
         'res_id': fields.integer('Object ID', help="Keep 0 if the action must appear on all resources.", select=True),
         'user_id': fields.many2one('res.users', 'User', ondelete='cascade', select=True),
         'company_id': fields.many2one('res.company', 'Company', select=True),
@@ -134,7 +134,7 @@ class ir_values(osv.osv):
 
         uid_access = uid
         if key == 'default' and uid != 1 and (preserve_user or self.pool.get('res.users').get_admin_profile(cr, uid)):
-                uid_access = 1
+            uid_access = 1
 
         for model in models:
             if isinstance(model, (list, tuple)):
@@ -205,7 +205,7 @@ class ir_values(osv.osv):
                 else:
                     where.append('res_id=%s')
                     params.append(res_id)
-            
+
             where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
             params.append(uid)
             clause = ' and '.join(where)

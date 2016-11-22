@@ -30,7 +30,7 @@ from tools.translate import _
 from service import security
 import netsvc
 import logging
-import re
+from passlib.hash import bcrypt
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -40,7 +40,7 @@ class groups(osv.osv):
         'name': fields.char('Group Name', size=64, required=True),
         'model_access': fields.one2many('ir.model.access', 'group_id', 'Access Controls'),
         'rule_groups': fields.many2many('ir.rule', 'rule_group_rel',
-            'group_id', 'rule_group_id', 'Rules', domain=[('global', '=', False)]),
+                                        'group_id', 'rule_group_id', 'Rules', domain=[('global', '=', False)]),
         'menu_access': fields.many2many('ir.ui.menu', 'ir_ui_menu_group_rel', 'gid', 'menu_id', 'Access Menu'),
         'comment' : fields.text('Comment',size=250),
     }
@@ -59,7 +59,7 @@ class groups(osv.osv):
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
-                        _('The name of the group can not start with "-"'))
+                                     _('The name of the group can not start with "-"'))
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return res
@@ -68,7 +68,7 @@ class groups(osv.osv):
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
-                        _('The name of the group can not start with "-"'))
+                                     _('The name of the group can not start with "-"'))
         gid = super(groups, self).create(cr, uid, vals, context=context)
         if context and context.get('noadmin', False):
             pass
@@ -103,7 +103,6 @@ class users(osv.osv):
     _name = "res.users"
     _order = 'name'
 
-    PASSWORD_MIN_LENGHT = 6
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
         "\"%(name)s\".\n\nYour login is %(login)s, "\
@@ -135,15 +134,15 @@ class users(osv.osv):
 
     def send_welcome_email(self, cr, uid, id, context=None):
         logger= netsvc.Logger()
-        user = self.pool.get('res.users').read(cr, uid, id, context=context)
+        user = self.read(cr, uid, id, context=context)
         if not tools.config.get('smtp_server'):
             logger.notifyChannel('mails', netsvc.LOG_WARNING,
-                _('"smtp_server" needs to be set to send mails to users'))
+                                 _('"smtp_server" needs to be set to send mails to users'))
             return False
         if not tools.config.get('email_from'):
             logger.notifyChannel("mails", netsvc.LOG_WARNING,
-                _('"email_from" needs to be set to send welcome mails '
-                  'to users'))
+                                 _('"email_from" needs to be set to send welcome mails '
+                                   'to users'))
             return False
         if not user.get('email'):
             return False
@@ -214,11 +213,69 @@ class users(osv.osv):
             # so that the new password is immediately used for further RPC requests, otherwise the user
             # will face unexpected 'Access Denied' exceptions.
             raise osv.except_osv(_('Operation Canceled'), _('Please use the change password wizard (in User Preferences or User menu) to change your own password.'))
-        if not all(self.is_password_strong(value, login).values()):
-            raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                    'Password must be different from the login, it must contain '\
-                    'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-        self.write(cr, uid, id, {'password': value})
+        security.check_password_validity(self, cr, uid, None, value, value, login)
+        encrypted_password = bcrypt.encrypt(tools.ustr(value))
+        self.write(cr, uid, id, {'password': encrypted_password})
+
+    def _is_erp_manager(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return True if the user is member of the group_erp_manager (usually,
+        admin of the site).
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        manager_group_id = None
+        result = dict.fromkeys(ids, False)
+        try:
+            dataobj = self.pool.get('ir.model.data')
+            dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                                                                   'group_erp_manager')
+        except ValueError:
+            # If these groups does not exists anymore
+            pass
+        if manager_group_id:
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if manager_group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
+        return result
+
+    def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return True if the user is member of the Sync_Config
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = dict.fromkeys(ids, False)
+        group_id = None
+        res_group_obj = self.pool.get('res.groups')
+        group_ids = res_group_obj.search(cr, uid,
+                                         [('name', '=', 'Sync_Config')], context=context)
+        if group_ids:
+            group_id = group_ids[0]
+            read_result = self.read(cr, uid, ids, ['groups_id'], context=context)
+            for current_user in read_result:
+                if group_id in current_user['groups_id']:
+                    result[current_user['id']] = True
+        return result
+
+    def _get_instance_level(self, cr, uid, ids, name=None, arg=None, context=None):
+        '''
+        return the level of the instance related to the company of the user
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        result = {}
+        for user_id in ids:
+            level = False
+            company_id = self._get_company(cr, user_id, context=context)
+            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
+                                                            ['instance_id'], context=context)['instance_id']
+            instance_id = instance_id and instance_id[0] or False
+            if instance_id:
+                level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
+            result[user_id] = level
+        return result
 
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
@@ -226,21 +283,21 @@ class users(osv.osv):
                                  " and most listings"),
         'login': fields.char('Login', size=64, required=True,
                              help="Used to log into the system"),
-        'password': fields.char('Password', size=64, invisible=True, help="Keep empty if you don't want the user to be able to connect on the system."),
+        'password': fields.char('Password', size=128, invisible=True, help="Keep empty if you don't want the user to be able to connect on the system."),
         'new_password': fields.function(lambda *a:'', method=True, type='char', size=64,
-                                fnct_inv=_set_new_password,
-                                string='Change password', help="Only specify a value if you want to change the user password. "
-                                "This user will have to logout and login again!"),
+                                        fnct_inv=_set_new_password,
+                                        string='Change password', help="Only specify a value if you want to change the user password. "
+                                        "This user will have to logout and login again!"),
         'email': fields.char('E-mail', size=64,
-            help='If an email is provided, the user will be sent a message '
-                 'welcoming him.\n\nWarning: if "email_from" and "smtp_server"'
-                 " aren't configured, it won't be possible to email new "
-                 "users."),
+                             help='If an email is provided, the user will be sent a message '
+                             'welcoming him.\n\nWarning: if "email_from" and "smtp_server"'
+                             " aren't configured, it won't be possible to email new "
+                             "users."),
         'signature': fields.text('Signature', size=64),
         'address_id': fields.many2one('res.partner.address', 'Address'),
         'force_password_change':fields.boolean('Change password on next login',
-            help="Check out this box to force this user to change his "\
-            "password on next login."),
+                                               help="Check out this box to force this user to change his "\
+                                               "password on next login."),
         'active': fields.boolean('Active'),
         'action_id': fields.many2one('ir.actions.actions', 'Home Action', help="If specified, this action will be opened at logon for this user, in addition to the standard menu."),
         'menu_id': fields.many2one('ir.actions.actions', 'Menu Action', help="If specified, the action will replace the standard menu for this user."),
@@ -250,44 +307,49 @@ class users(osv.osv):
         # available to the current user (should be the user's companies?), when the user_preference
         # context is set.
         'company_id': fields.many2one('res.company', 'Company', required=True,
-            help="The company this user is currently working for.", context={'user_preference': True}),
+                                      help="The company this user is currently working for.", context={'user_preference': True}),
 
         'company_ids':fields.many2many('res.company','res_company_users_rel','user_id','cid','Companies'),
         'context_lang': fields.selection(_lang_get, 'Language', required=True,
-            help="Sets the language for the user's user interface, when UI "
-                 "translations are available"),
+                                         help="Sets the language for the user's user interface, when UI "
+                                         "translations are available"),
         'context_tz': fields.selection(_tz_get,  'Timezone', size=64,
-            help="The user's timezone, used to perform timezone conversions "
-                 "between the server and the client."),
+                                       help="The user's timezone, used to perform timezone conversions "
+                                       "between the server and the client."),
         'view': fields.function(_get_interface_type, method=True, type='selection', fnct_inv=_set_interface_type,
                                 selection=[('simple','Simplified'),('extended','Extended')],
                                 string='Interface', help="Choose between the simplified interface and the extended one"),
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
+        'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
+        'is_erp_manager': fields.function(_is_erp_manager, method=True, string='Is ERP Manager ?', type="boolean"),
+        'is_sync_config': fields.function(_is_sync_config, method=True, string='Is Sync Config ?', type="boolean"),
+        'instance_level': fields.function(_get_instance_level, method=True, string='Instance level', type="char"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
         return {
-                'warning' : {
-                    'title': _("Company Switch Warning"),
-                    'message': _("Please keep in mind that documents currently displayed may not be relevant after switching to another company. If you have unsaved changes, please make sure to save and close all forms before switching to a different company. (You can click on Cancel in the User Preferences now)"),
-                }
+            'warning' : {
+                'title': _("Company Switch Warning"),
+                'message': _("Please keep in mind that documents currently displayed may not be relevant after switching to another company. If you have unsaved changes, please make sure to save and close all forms before switching to a different company. (You can click on Cancel in the User Preferences now)"),
+            }
         }
 
     def read(self,cr, uid, ids, fields=None, context=None, load='_classic_read'):
         def override_password(o):
-            if 'password' in o and ( 'id' not in o or o['id'] != uid ):
+            if 'id' not in o or o['id'] != uid:
                 o['password'] = '********'
             return o
 
         result = super(users, self).read(cr, uid, ids, fields, context, load)
-        canwrite = self.pool.get('ir.model.access').check(cr, uid, 'res.users', 'write', raise_exception=False)
-        if not canwrite:
-            if isinstance(ids, (int, float)):
-                result = override_password(result)
-            else:
-                result = map(override_password, result)
+        if 'password' in result:
+            canwrite = self.pool.get('ir.model.access').check(cr, uid, 'res.users', 'write', raise_exception=False)
+            if not canwrite:
+                if isinstance(ids, (int, float)):
+                    result = override_password(result)
+                else:
+                    result = map(override_password, result)
         return result
 
 
@@ -321,7 +383,7 @@ class users(osv.osv):
     def _get_company(self,cr, uid, context=None, uid2=False):
         if not uid2:
             uid2 = uid
-        user = self.pool.get('res.users').read(cr, uid, uid2, ['company_id'], context)
+        user = self.read(cr, uid, uid2, ['company_id'], context)
         company_id = user.get('company_id', False)
         return company_id and company_id[0] or False
 
@@ -398,6 +460,13 @@ class users(osv.osv):
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
+        # uncheck synchronize checkbox if the user is manager or sync config
+        if values.get('groups_id'):
+            if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
+               any(self._is_erp_manager(cr, uid, ids, context=context).values()):
+                vals = {'synchronize': False}
+                res = super(users, self).write(cr, uid, ids, vals, context=context)
+
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
@@ -461,50 +530,83 @@ class users(osv.osv):
         data_id = dataobj._get_id(cr, 1, 'base', 'action_res_users_my')
         return dataobj.browse(cr, uid, data_id, context=context).res_id
 
+    def get_user_database_password_from_uid(self, cr, uid):
+        '''
+        return encrypted password from the database using uid
+        '''
+        cr.execute("""SELECT password from res_users
+                      WHERE id=%s AND active""",
+                   (uid,))
+        res = cr.fetchone()
+        if res:
+            return tools.ustr(res[0])
+        return False
+
+    def get_user_database_password_from_login(self, cr, login):
+        '''
+        return encrypted password from the database using login
+        '''
+        login = tools.ustr(login).lower()
+        cr.execute("""SELECT password from res_users
+                      WHERE login=%s AND active""",
+                   (login,))
+        res = cr.fetchone()
+        if res:
+            return tools.ustr(res[0])
+        return False
+
     def login(self, db, login, password):
         if not password:
             return False
         login = tools.ustr(login).lower()
         cr = pooler.get_db(db).cursor()
         try:
-            # autocommit: our single request will be performed atomically.
-            # (In this way, there is no opportunity to have two transactions
-            # interleaving their cr.execute()..cr.commit() calls and have one
-            # of them rolled back due to a concurrent access.)
-            # We effectively unconditionally write the res_users line.
-            cr.autocommit(True)
-            # Even w/ autocommit there's a chance the user row will be locked,
-            # in which case we can't delay the login just for the purpose of
-            # update the last login date - hence we use FOR UPDATE NOWAIT to
-            # try to get the lock - fail-fast
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active FOR UPDATE NOWAIT""",
-                       (login, tools.ustr(password)), log_exceptions=False)
-            cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
-                    (login, tools.ustr(password)))
+            database_password = self.get_user_database_password_from_login(cr, login)
+            # check the password is a bcrypt encrypted one
+            database_password = tools.ustr(database_password)
+            password = tools.ustr(password)
+            if bcrypt.identify(database_password):
+                if not bcrypt.verify(password, database_password):
+                    return False
+            elif password != database_password:
+                return False
+            try:
+                # autocommit: our single request will be performed atomically.
+                # (In this way, there is no opportunity to have two transactions
+                # interleaving their cr.execute()..cr.commit() calls and have one
+                # of them rolled back due to a concurrent access.)
+                # We effectively unconditionally write the res_users line.
+                cr.autocommit(True)
+                # Even w/ autocommit there's a chance the user row will be locked,
+                # in which case we can't delay the login just for the purpose of
+                # update the last login date - hence we use FOR UPDATE NOWAIT to
+                # try to get the lock - fail-fast
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active FOR UPDATE NOWAIT""",
+                           (login, tools.ustr(database_password)), log_exceptions=False)
+                cr.execute('UPDATE res_users SET date=now() WHERE login=%s AND password=%s AND active RETURNING id',
+                           (login, tools.ustr(database_password)))
+            except Exception:
+                # Failing to acquire the lock on the res_users row probably means
+                # another request is holding it - no big deal, we skip the update
+                # for this time, and let the user login anyway.
+                logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
+                cr.rollback()
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND password=%s
+                                    AND active""",
+                           (login, tools.ustr(database_password)))
+            finally:
+                res = cr.fetchone()
+                if res:
+                    return res[0]
         except Exception:
-            # Failing to acquire the lock on the res_users row probably means
-            # another request is holding it - no big deal, we skip the update
-            # for this time, and let the user login anyway.
-            logging.getLogger('res.users').warn('Can\'t acquire lock on res users', exc_info=True)
-            cr.rollback()
-            cr.execute("""SELECT id from res_users
-                          WHERE login=%s AND password=%s
-                                AND active""",
-                       (login, tools.ustr(password)))
+            # Failing to decode password given by the user
+            logging.getLogger('res.users').warn('Can\'t decode password given by user at login', exc_info=True)
         finally:
-            res = cr.fetchone()
             cr.close()
-            if res:
-                return res[0]
         return False
-
-    def check_super(self, passwd):
-        if passwd == tools.config['admin_passwd']:
-            return True
-        else:
-            raise security.ExceptionNoTb('AccessDenied')
 
     def check(self, db, uid, passwd):
         """Verifies that the given (uid, password) pair is authorized for the database ``db`` and
@@ -516,11 +618,16 @@ class users(osv.osv):
             return
         cr = pooler.get_db(db).cursor()
         try:
-            cr.execute('SELECT COUNT(1) FROM res_users WHERE id=%s AND password=%s AND active=%s',
-                        (int(uid), passwd, True))
-            res = cr.fetchone()[0]
-            if not res:
+            database_password = self.get_user_database_password_from_uid(cr, uid)
+            # check the password is a bcrypt encrypted one
+            database_password = tools.ustr(database_password)
+            passwd = tools.ustr(passwd)
+            if bcrypt.identify(database_password):
+                if not bcrypt.verify(passwd, database_password):
+                    raise security.ExceptionNoTb('AccessDenied')
+            elif passwd != database_password:
                 raise security.ExceptionNoTb('AccessDenied')
+
             if self._uid_cache.has_key(db):
                 ulist = self._uid_cache[db]
                 ulist[uid] = passwd
@@ -542,55 +649,51 @@ class users(osv.osv):
         finally:
             cr.close()
 
-    def is_password_strong(self, password, login):
-        """
-        Check that given password is strong enough.
-        In case it is, all values of the returned dict are True
-        """
-        result = {
-                'has_digit': False,
-                'long_enough': False,
-                'login_not_equal_password': False,
-        }
+    def pref_change_password(self, cr, uid, old_passwd, new_passwd,
+                             confirm_passwd, context=None):
+        self.check(cr.dbname, uid, tools.ustr(old_passwd))
+        login = self.read(cr, uid, uid, ['login'])['login']
+        return self.change_password(cr.dbname, login, old_passwd, new_passwd,
+                                    confirm_passwd, context=context)
 
-        # check it contains at least one digit
-        if re.search(r'\d', password):
-            result['has_digit'] = True
-
-        # check password lenght
-        if len(password) >= self.PASSWORD_MIN_LENGHT:
-            result['long_enough'] = True
-
-        # check login != password:
-        if password != login:
-            result['login_not_equal_password'] = True
-
-        return result
-
-    def change_password(self, cr, uid, old_passwd, new_passwd, context=None):
+    def change_password(self, db_name, login, old_passwd, new_passwd,
+                        confirm_passwd, context=None):
         """Change current user password. Old password must be provided explicitly
         to prevent hijacking an existing user session, or for cases where the cleartext
         password is not used to authenticate requests.
 
-        The write of the new password is done with uid=1 to prevent raise it
+        The write of the new password is done with uid=1 to prevent raise if
         the current logged user don't have permission on res_users.
 
         :return: True
         :raise: security.ExceptionNoTb when old password is wrong
         :raise: except_osv when new password is not set or empty
         """
-        self.check(cr.dbname, uid, old_passwd)
         if new_passwd:
-            login = self.read(cr, uid, uid, ['login'])['login']
-            if not all(self.is_password_strong(new_passwd, login).values()):
-                raise osv.except_osv(_('Operation Canceled'), _('The new password is not strong enough. '\
-                        'Password must be diffrent from the login, it must contain '\
-                        'at least one number and be at least %s characters.' % self.PASSWORD_MIN_LENGHT))
-            vals = {
-                'password': new_passwd,
-                'force_password_change': False,
-            }
-            return self.write(cr, 1, uid, vals)
+            cr = pooler.get_db(db_name).cursor()
+            try:
+                # get user_uid
+                cr.execute("""SELECT id from res_users
+                              WHERE login=%s AND active=%s""",
+                           (login, True))
+                res = cr.fetchone()
+                uid = None
+                if res:
+                    uid = res[0]
+                if not uid:
+                    raise security.ExceptionNoTb('AccessDenied')
+                security.check_password_validity(self, cr, uid, old_passwd, new_passwd, confirm_passwd, login)
+                new_passwd = bcrypt.encrypt(tools.ustr(new_passwd))
+                vals = {
+                    'password': new_passwd,
+                    'force_password_change': False,
+                }
+                self.check(db_name, uid, tools.ustr(old_passwd))
+                result = self.write(cr, 1, uid, vals)
+                cr.commit()
+            finally:
+                cr.close()
+            return result
         raise osv.except_osv(_('Warning!'), _("Setting empty passwords is not allowed for security reasons!"))
 
     def get_admin_profile(self, cr, uid, context=None):
@@ -606,7 +709,7 @@ class config_users(osv.osv_memory):
         return _('--\n%(name)s %(email)s\n') % {
             'name': name or '',
             'email': email and ' <'+email+'>' or '',
-            }
+        }
 
     def create_user(self, cr, uid, new_id, context=None):
         """ create a new res.user instance from the data stored
@@ -629,7 +732,7 @@ class config_users(osv.osv_memory):
             signature=self._generate_signature(
                 cr, base_data['name'], base_data['email'], context=context),
             address_id=address,
-            )
+        )
         new_user = self.pool.get('res.users').create(
             cr, uid, user_data, context)
         self.send_welcome_email(cr, uid, new_user, context=context)
@@ -644,10 +747,10 @@ class config_users(osv.osv_memory):
             "view_mode": 'form',
             'res_model': 'res.config.users',
             'view_id':self.pool.get('ir.ui.view')\
-                .search(cr,uid,[('name','=','res.config.users.confirm.form')]),
+            .search(cr,uid,[('name','=','res.config.users.confirm.form')]),
             'type': 'ir.actions.act_window',
             'target':'new',
-            }
+        }
 config_users()
 
 class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
@@ -668,8 +771,8 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
                 user_names = user_names[:5]
                 user_names += '...'
             raise osv.except_osv(_('Warning !'),
-                        _('Group(s) cannot be deleted, because some user(s) still belong to them: %s !') % \
-                            ', '.join(user_names))
+                                 _('Group(s) cannot be deleted, because some user(s) still belong to them: %s !') % \
+                                 ', '.join(user_names))
         return super(groups2, self).unlink(cr, uid, ids, context=context)
 
 groups2()
@@ -690,7 +793,7 @@ class res_config_view(osv.osv_memory):
     def execute(self, cr, uid, ids, context=None):
         res = self.read(cr, uid, ids)[0]
         self.pool.get('res.users').write(cr, uid, [uid],
-                                 {'view':res['view']}, context=context)
+                                         {'view':res['view']}, context=context)
 
 res_config_view()
 

@@ -1,87 +1,90 @@
 import re
 import sys
-import traceback
 import pprint
 import hashlib
 import json
-
+import traceback
 
 import tools
 from tools.translate import _
 
+OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
+OC_LIST_TUPLE = zip([x.lower() for x in OC_LIST], OC_LIST)
+
 MODELS_TO_IGNORE = [
-                    'ir.actions.wizard',
-                    'ir.actions.act_window.view',
-                    'ir.report.custom',
-                    'ir.actions.act_window.view',
-                    'ir.actions.wizard',
-                    'ir.report.custom',
-                    'ir.ui.view',
-                    'ir.sequence',
-                    'ir.actions.url',
-                    'ir.values',
-                    'ir.report.custom.fields',
-                    'ir.cron',
-                    'ir.actions.report.xml',
-                    'ir.property',
-                    'ir.actions.todo',
-                    'ir.sequence.type',
-                    #'ir.actions.act_window',
-                    'ir.module.module',
-                    'ir.ui.view',
-                    'ir.module.repository',
-                    'ir.model.data',
-                    'ir.model.fields',
-                    'ir.ui.view_sc',
-                    'ir.config_parameter',
+    'ir.actions.wizard',
+    'ir.actions.act_window.view',
+    'ir.report.custom',
+    'ir.actions.act_window.view',
+    'ir.actions.wizard',
+    'ir.report.custom',
+    'ir.ui.view',
+    'ir.sequence',
+    'ir.actions.url',
+    'ir.values',
+    'ir.report.custom.fields',
+    'ir.cron',
+    'ir.actions.report.xml',
+    'ir.property',
+    'ir.actions.todo',
+    'ir.sequence.type',
+    #'ir.actions.act_window',
+    'ir.module.module',
+    'ir.ui.view',
+    'ir.module.repository',
+    'ir.model.data',
+    'ir.model.fields',
+    'ir.ui.view_sc',
+    'ir.config_parameter',
 
-                    #'sync.monitor',
-                    'sync.client.rule',
-                    'sync.client.push.data.information',
-                    'sync.client.update_to_send',
-                    'sync.client.update_received',
-                    'sync.client.entity',
-                    'sync.client.sync_server_connection',
-                    'sync.client.message_rule',
-                    'sync.client.message_to_send',
-                    'sync.client.message_received',
-                    'sync.client.message_sync',
-                    'sync.client.orm_extended',
+    #'sync.monitor',
+    'sync.client.rule',
+    'sync.client.push.data.information',
+    'sync.client.update_to_send',
+    'sync.client.update_received',
+    'sync.client.entity',
+    'sync.client.sync_server_connection',
+    'sync.client.message_rule',
+    'sync.client.message_to_send',
+    'sync.client.message_received',
+    'sync.client.message_sync',
+    'sync.client.orm_extended',
 
-                    'sync.server.test',
-                    'sync_server.version.manager',
-                    'sync.server.entity_group',
-                    'sync.server.entity',
-                    'sync.server.group_type',
-                    'sync.server.entity_group',
-                    'sync.server.entity',
-                    'sync.server.sync_manager',
-                    'sync_server.sync_rule',
-                    'sync_server.message_rule',
-                    'sync_server.sync_rule.forced_values',
-                    'sync_server.sync_rule.fallback_values',
-                    'sync_server.rule.validation.message',
-                    'sync.server.update',
-                    'sync.server.message',
-                    'sync_server.version',
-                    'sync.server.puller_logs',
-                    'audittrail.log.sequence',
-                    'audittrail.log.line',
+    'sync.server.test',
+    'sync_server.version.manager',
+    'sync.server.entity_group',
+    'sync.server.entity',
+    'sync.server.group_type',
+    'sync.server.entity_group',
+    'sync.server.entity',
+    'sync.server.sync_manager',
+    'sync_server.sync_rule',
+    'sync_server.message_rule',
+    'sync_server.sync_rule.forced_values',
+    'sync_server.sync_rule.fallback_values',
+    'sync_server.rule.validation.message',
+    'sync.server.update',
+    'sync.server.message',
+    'sync_server.version',
+    'sync.server.puller_logs',
+    'audittrail.log.sequence',
+    'audittrail.log.line',
 
-                    'res.widget',
-                    'product.likely.expire.report',
-                    'product.likely.expire.report.line',
-                  ]
+    'res.widget',
+    'product.likely.expire.report',
+    'product.likely.expire.report.line',
+    'operations.event',
+]
 
 MODELS_TO_IGNORE_DOMAIN = [
-        'sync_client.%',
-        'sync_server.%',
-        'res.widget%',
-        'base%',
-        'board%',
-        'audittrail%',
-        'workflow%',
-    ]
+    'sync_client.%',
+    'sync_server.%',
+    'res.widget%',
+    'base%',
+    'board%',
+    'audittrail%',
+    'workflow%',
+]
 
 def __compile_models_to_ignore():
     global MODELS_TO_IGNORE_DOMAIN
@@ -112,11 +115,11 @@ def xmlid_to_sdref(xmlid):
 
 
 # TODO deprecated, should disappear
-def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
+def sync_log(obj, message=None, level='debug', ids=None, data=None, tb=False):
     if not hasattr(obj, '_logger'):
         raise Exception("No _logger specified for object %s!" % obj._name)
     output = ""
-    if traceback:
+    if tb:
         output += traceback.format_exc()
     if message is None:
         previous_frame = sys._getframe(1)
@@ -149,9 +152,9 @@ def fancy_integer(self, cr, uid, ids, name, arg, context=None):
     target_field = re_match.group(1)
     res = self.read(cr, uid, ids, [target_field], context=context)
     return dict(zip(
-            (rec['id'] for rec in res),
-            (rec[target_field] or '' for rec in res),
-        ))
+        (rec['id'] for rec in res),
+        (rec[target_field] or '' for rec in res),
+    ))
 
 
 

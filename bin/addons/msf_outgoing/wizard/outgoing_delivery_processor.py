@@ -21,9 +21,7 @@
 
 from osv import fields, osv
 from tools.translate import _
-import time
 
-import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 class outgoing_delivery_processor(osv.osv):
@@ -188,6 +186,18 @@ class outgoing_delivery_move_processor(osv.osv):
             },
             readonly=True,
             help="Expected product to receive",
+            multi='move_info',
+        ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'outgoing.delivery.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
             multi='move_info',
         ),
         'ordered_uom_id': fields.function(

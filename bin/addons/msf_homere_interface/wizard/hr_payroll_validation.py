@@ -52,25 +52,25 @@ class hr_payroll_validation(osv.osv_memory):
         account_partner_not_compat_log = []
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
             'name', 'ref', 'account_id',
-            'partner_id', 'employee_id', 'journal_id', ]):
+                'partner_id', 'employee_id', 'journal_id', ]):
             if line['account_id'] \
-                and not account_obj.is_allowed_for_thirdparty(cr, uid,
-                line['account_id'][0],
-                employee_id=line['employee_id'] and line['employee_id'][0] or False,
-                transfer_journal_id=line['journal_id'] and line['journal_id'][0] or False,
-                partner_id=line['partner_id'] and line['partner_id'][0] or False,
-                context=context)[line['account_id'][0]]:
-                    partner = line['employee_id'] or line['journal_id'] \
-                        or line['partner_id']
-                    entry_msg = "%s - %s: %s / %s" % (
-                        line['name'] or '', line['ref'] or '',
-                        line['account_id'][1] or '',
-                        partner and partner[1] or '')
-                    account_partner_not_compat_log.append(entry_msg)
+                    and not account_obj.is_allowed_for_thirdparty(cr, uid,
+                                                                  line['account_id'][0],
+                                                                  employee_id=line['employee_id'] and line['employee_id'][0] or False,
+                                                                  transfer_journal_id=line['journal_id'] and line['journal_id'][0] or False,
+                                                                  partner_id=line['partner_id'] and line['partner_id'][0] or False,
+                                                                  context=context)[line['account_id'][0]]:
+                partner = line['employee_id'] or line['journal_id'] \
+                    or line['partner_id']
+                entry_msg = "%s - %s: %s / %s" % (
+                    line['name'] or '', line['ref'] or '',
+                    line['account_id'][1] or '',
+                    partner and partner[1] or '')
+                account_partner_not_compat_log.append(entry_msg)
 
         if account_partner_not_compat_log:
             account_partner_not_compat_log.insert(0,
-                _('Following entries have account/partner not compatible:'))
+                                                  _('Following entries have account/partner not compatible:'))
             res = "\n".join(account_partner_not_compat_log)
         return res
 
@@ -89,7 +89,6 @@ class hr_payroll_validation(osv.osv_memory):
             res.update({field_name: {'selectable': True, 'type': 'char', 'size': 255, 'string': '', 'readonly': 1}})
             # Add third party field
             third_name = 'third%s' % line.get('id')
-            account = self.pool.get('account.account').read(cr, uid, line.get('account_id')[0], ['type_for_register'])
             res.update({third_name: {'selectable': True, 'type': 'many2one', 'relation': 'res.partner', 'string': 'Partner'}})
 
             # Add fourth party field
@@ -166,7 +165,6 @@ class hr_payroll_validation(osv.osv_memory):
         if not context:
             context = {}
         # Delete non-working fields (third*)
-        partner_obj = self.pool.get('res.partner')
         pattern = re.compile('^(third(.*))$')
         to_delete = []
         for field in vals:
@@ -175,7 +173,6 @@ class hr_payroll_validation(osv.osv_memory):
                 to_delete.append(field)
                 # Write changes to lines
                 if m.groups() and m.groups()[0] and m.groups()[1]:
-                    partner_id = vals.get(m.groups()[0])
                     newvals = {'partner_id': vals.get(m.groups()[0])}
                     hpm_id = m.groups()[1]
                     if isinstance(hpm_id, str):
@@ -221,9 +218,7 @@ class hr_payroll_validation(osv.osv_memory):
         # (expenses lines are checked at wizard init in fields_get)
         account_partner_not_compat_log = []
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, [
-            'name', 'ref', 'partner_id', 'account_id', 'amount', ]):
-            if not line['partner_id']:
-                continue
+                'name', 'ref', 'partner_id', 'account_id', 'amount', ]):
 
             account_id = line.get('account_id', False) and line.get('account_id')[0] or False
             if not account_id:
@@ -232,17 +227,17 @@ class hr_payroll_validation(osv.osv_memory):
 
             if not account.is_analytic_addicted:
                 if not self.pool.get('account.account').is_allowed_for_thirdparty(
-                    cr, uid, [account_id],
-                    partner_id=line['partner_id'] and line['partner_id'][0] or False,
-                    context=context)[account_id]:
+                        cr, uid, [account_id],
+                        partner_id=line['partner_id'] and line['partner_id'][0] or False,
+                        context=context)[account_id]:
                     entry_msg = "%s - %s / %0.02f / %s / %s" % (
                         line['name'] or '',  line['ref'] or '',
                         round(line['amount'], 2),
-                        line['account_id'][1], line['partner_id'][1], )
+                        line['account_id'][1], line['partner_id'] and line['partner_id'][1] or '', )
                     account_partner_not_compat_log.append(entry_msg)
         if account_partner_not_compat_log:
             account_partner_not_compat_log.insert(0,
-                _('Following counterpart entries have account/partner not compatible:'))
+                                                  _('Following counterpart entries have account/partner not compatible:'))
             raise osv.except_osv(_('Error'),  "\n".join(account_partner_not_compat_log))
 
         # Fetch default funding pool: MSF Private Fund
@@ -266,8 +261,8 @@ class hr_payroll_validation(osv.osv_memory):
 
         # Create lines into this move
         for line in self.pool.get('hr.payroll.msf').read(cr, uid, line_ids, ['amount', 'cost_center_id', 'funding_pool_id', 'free1_id', 
-            'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id', 
-            'destination_id']):
+                                                                             'free2_id', 'currency_id', 'date', 'name', 'ref', 'partner_id', 'employee_id', 'journal_id', 'account_id', 'period_id', 
+                                                                             'destination_id']):
             line_vals = {}
             # fetch amounts
             amount = line.get('amount', 0.0)
@@ -287,7 +282,7 @@ class hr_payroll_validation(osv.osv_memory):
             distrib_id = False
             # Note @JFB: this is a correction for UF-1356 that have been already done in another UF. This is the good one.
             if account.is_analytic_addicted:
-            # End of Note
+                # End of Note
                 cc_id = line.get('cost_center_id', False) and line.get('cost_center_id')[0] or False
                 fp_id = line.get('funding_pool_id', False) and line.get('funding_pool_id')[0] or False
                 f1_id = line.get('free1_id', False) and line.get('free1_id')[0] or False
@@ -310,9 +305,9 @@ class hr_payroll_validation(osv.osv_memory):
                         # End of Note
                     }
                     common_vals.update({'analytic_id': cc_id,})
-                    cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                    self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                     common_vals.update({'analytic_id': fp_id, 'cost_center_id': cc_id,})
-                    fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                    self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     del common_vals['cost_center_id']
                     if f1_id:
                         common_vals.update({'analytic_id': f1_id,})
@@ -354,12 +349,12 @@ class hr_payroll_validation(osv.osv_memory):
         context.update({'message': _('Payroll entries validation is successful for this period: %s and for that field: %s') % (period.name, field,)})
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'msf_homere_interface', 'payroll_import_confirmation')
         view_id = view_id and view_id[1] or False
-        
+
         # This is to redirect to Payroll Tree View
         context.update({'from': 'payroll_import'})
-        
+
         res_id = self.pool.get('hr.payroll.import.confirmation').create(cr, uid, {'state': 'none'}, context=context)
-        
+
         return {
             'name': 'Payroll Validation Confirmation',
             'type': 'ir.actions.act_window',

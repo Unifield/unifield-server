@@ -33,6 +33,7 @@
                                         on_change="onchange_uom_qty(product_uom, qty)" />
                                     <field name="product_uom" attrs="{'readonly': [('state', '!=', 'draft')]}" domain="[('uom_by_product', '=', product_id)]"/>
                                     <field name="supplier_id" />
+                                    <field name="delivery_confirmed_date" />
                                     <field name="price_unit" />
                                     <field name="total_price" />
                                     <field name="currency_id" />
