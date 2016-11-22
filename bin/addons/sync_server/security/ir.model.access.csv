@@ -30,3 +30,4 @@
 "access_ir_ui_view_custom_user_all","ir_ui_view_custom_user all","ir.ui.view.custom",1,0,0,0,
 "access_ir_actions_actions_user_all","ir_actions_actions_user all","ir.actions.actions",1,0,0,0,
 "access_res_log_report_user_all","res_log_report_user all","res.log.report",1,0,0,0,
+"access_ir_actions_report_xml_user_all","ir_actions_report_xml_user all","ir.actions.report.xml",1,0,0,0,
