@@ -242,13 +242,17 @@
             <field name="context">{'search_default_all' : 1}</field>
         </record>
 
-        <menuitem id="rules_menu" name="Rules" parent="sync_menu" sequence="20"/>
+        <menuitem id="rules_menu" name="Rules" parent="sync_menu"
+            groups="base.group_erp_manager"
+            sequence="20"/>
 
         <menuitem id="sync_rule_menu" name="Data Synchronization Rules" parent="rules_menu"
-                action="sync_rule_action" />
+            groups="base.group_erp_manager"
+            action="sync_rule_action" />
 
         <menuitem id="message_rule_menu" name="Messages Rules" parent="rules_menu"
-                action="message_rule_action" />
+            groups="base.group_erp_manager"
+            action="message_rule_action" />
 
 
        <record model="ir.ui.view" id="rule_validation_view">
