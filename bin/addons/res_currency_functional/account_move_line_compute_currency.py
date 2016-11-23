@@ -305,8 +305,8 @@ class account_move_line_compute_currency(osv.osv):
                     continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
 
-                # US-1878 While synchronizing the reconciliation of project lines reconciled in coordo or coordo lines
-                # reconciled in HQ, if the balance is zero, delete the addendum line instead of updating it.
+                # US-1878 While synchronizing the reconciliation of project lines reconciled in coordo or in HQ, or
+                # coordo lines reconciled in HQ, if the balance is zero, delete the addendum line instead of updating it
                 # (Before: the FXA line which is first created with the amount of the first
                 # reconciled leg was then updated to "zero")
                 first_line_inst = self.browse(cr, uid, reconciled_line_ids[0], context=context, fields_to_fetch=['instance_id']).instance_id
@@ -314,9 +314,10 @@ class account_move_line_compute_currency(osv.osv):
                 are_project_lines = not reconciled.is_multi_instance and first_line_inst_lvl and first_line_inst_lvl == 'project' or False
                 are_coordo_lines = not reconciled.is_multi_instance and first_line_inst_lvl and first_line_inst_lvl == 'coordo' or False
                 reconcile_inst = reconciled.instance_id
-                project_lines_rec_in_coordo = reconcile_inst and reconcile_inst.level == 'coordo' and are_project_lines
-                coordo_lines_rec_in_hq = reconcile_inst and reconcile_inst.level == 'section' and are_coordo_lines
-                if context.get('sync_update_execution') and abs(total) < 10**-3 and (project_lines_rec_in_coordo or coordo_lines_rec_in_hq):
+                project_lines_rec_in_another_lvl = are_project_lines and reconcile_inst and reconcile_inst.level != 'project'
+                coordo_lines_rec_in_another_lvl = are_coordo_lines and reconcile_inst and reconcile_inst.level != 'coordo'
+                if context.get('sync_update_execution') and abs(total) < 10**-3 and \
+                        (project_lines_rec_in_another_lvl or coordo_lines_rec_in_another_lvl):
                     reconciled_obj.remove_addendum_line(cr, uid, addendum_line_ids, context)
                 else:
                     # update addendum line if needed
