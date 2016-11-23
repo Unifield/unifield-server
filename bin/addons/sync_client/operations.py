@@ -130,7 +130,8 @@ class operations_event(osv.osv, ratelimit):
     _logger = logging.getLogger('operations.event')
 
     def _get_inst(self, cr, uid):
-        i = self.pool.get('sync.client.entity').get_entity(cr, uid).name;
+        i = self.pool.get('sync.client.entity').get_entity(cr, uid,
+                fields_to_fetch=['name']).name;
         if i is None:
             return "unknown"
         return i
@@ -198,7 +199,8 @@ class operations_count(osv.osv, ratelimit):
         self.histogram['sql'] = Histogram( buckets=20, name='sql')
 
     def _get_inst(self, cr, uid):
-        i = self.pool.get('sync.client.entity').get_entity(cr, uid).name;
+        i = self.pool.get('sync.client.entity').get_entity(cr, uid,
+                fields_to_fetch=['name']).name;
         if i is None:
             return "unknown"
         return i

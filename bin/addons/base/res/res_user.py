@@ -515,11 +515,13 @@ class users(osv.osv):
         return super(users, self).copy(cr, uid, id, copydef, context)
 
     def context_get(self, cr, uid, context=None):
-        user = self.browse(cr, uid, uid, context)
         result = {}
-        for k in self._columns.keys():
-            if k.startswith('context_'):
-                res = getattr(user,k) or False
+        fields_to_fetch = [k for k in self._columns.keys() if k.startswith('context_')]
+        if fields_to_fetch:
+            user = self.browse(cr, uid, uid, context=context,
+                    fields_to_fetch=fields_to_fetch)
+            for k in fields_to_fetch:
+                res = getattr(user, k) or False
                 if isinstance(res, browse_record):
                     res = res.id
                 result[k[8:]] = res or False

@@ -466,15 +466,20 @@ class Entity(osv.osv):
         'message_last' : 0,
     }
 
-    def get_entity(self, cr, uid, context=None):
+    def get_entity(self, cr, uid, context=None, fields_to_fetch=None):
         ids = self.search(cr, uid, [], context=context)
-        return self.browse(cr, uid, ids, context=context)[0]
+        if fields_to_fetch is None:
+            fields_to_fetch = []
+        return self.browse(cr, uid, ids, context=context,
+                fields_to_fetch=fields_to_fetch)[0]
 
-    def _get_entity(self, cr):
+    def _get_entity(self, cr, fields_to_fetch=None):
         """
         private method to get entity with uid = 1
         """
         ids = self.search(cr, 1, [])
+        if fields_to_fetch:
+            return self.browse(cr, 1, ids, fields_to_fetch=fields_to_fetch)[0]
         return self.browse(cr, 1, ids)[0]
 
     def generate_uuid(self):
