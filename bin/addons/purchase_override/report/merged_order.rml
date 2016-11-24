@@ -94,13 +94,24 @@
 
         <para style="Standard">[[ setLang(objects[0].partner_id.lang) ]]</para>
 
-        <blockTable colWidths="72.0,600.0,100.0" style="Origin">
+        <blockTable colWidths="90.0,600.0,100.0" style="Origin">
             <tr>
                 <td>
-                    <para style="TextInformation">Origin ref. :</para>
+                    <para style="TextInformation">Source Document :</para>
                 </td>
                 <td>
                     <para style="TextInformation">[[ getOrigin(objects[0].origin, 5)[0] ]]</para>
+                </td>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation">Customer reference :</para>
+                </td>
+                <td>
+                    <para style="TextInformation">[[ objects[0].customer_ref ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
