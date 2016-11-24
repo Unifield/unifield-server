@@ -358,6 +358,28 @@ class purchase_order(osv.osv):
 
         return res
 
+
+    def _src_customer_ref(self, cr, uid, obj, name, args, context=None):
+        '''
+        return a domain when user filter on the customer_ref field
+        '''
+        if not args:
+            return []
+
+        po_obj = self.pool.get('purchase.order')
+        so_obj = self.pool.get('sale.order')
+
+        po_ids = []
+        for tu in args:
+            if tu[1] == 'ilike' or tu[1] == 'not ilike' or tu[1] == '=' or tu[1] == '!=':
+                so_ids = so_obj.search(cr, uid, [('client_order_ref', tu[1], tu[2])], context=context)
+                po_ids = so_obj.get_po_ids_from_so_ids(cr, uid, so_ids, context=context)
+            else:
+                raise osv.except_osv(_('Error'), _('Bad operator : You can only use \'=\', \'!=\', \'ilike\' or \'not ilike\' as operator'))
+
+        return [('id', 'in', po_ids)]
+
+
     def _get_customer_ref(self, cr, uid, ids, field_name, args, context=None):
         '''
         Return a concatenation of the PO's customer references from the project (case of procurement request)
@@ -378,6 +400,7 @@ class purchase_order(osv.osv):
                     res[po_id] += so['client_order_ref']
 
         return res
+
 
     def _get_line_count(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -400,7 +423,6 @@ class purchase_order(osv.osv):
             res[po_id] = len(ln)
 
         return res
-
 
 
     _columns = {
@@ -487,6 +509,7 @@ class purchase_order(osv.osv):
         'po_confirmed': fields.boolean('PO', readonly=True),
         'customer_ref': fields.function(
             _get_customer_ref,
+            fnct_search=_src_customer_ref,
             method=True,
             string='Customer Ref.',
             type='text',
