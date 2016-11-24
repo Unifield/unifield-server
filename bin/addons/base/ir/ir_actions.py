@@ -249,7 +249,8 @@ class act_window(osv.osv):
         return res
 
     def _get_help_status(self, cr, uid, ids, name, arg, context=None):
-        activate_tips = self.pool.get('res.users').browse(cr, uid, uid).menu_tips
+        activate_tips = self.pool.get('res.users').browse(cr, uid, uid,
+                fields_to_fetch=['menu_tips']).menu_tips
         return dict([(id, activate_tips) for id in ids])
 
     def _get_groups_txt(self, cr, uid, ids, name, arg, context=None):
