@@ -366,6 +366,12 @@ class account_move_line_compute_currency(osv.osv):
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)
                 if not reconciled_line_ids:
                     continue
+                if context.get('sync_update_execution'):
+                    # US-1997 If the reconciliation isn't balanced in booking, it means that not all legs of the
+                    # reconciliation have been received from the synchro yet: we don't create the FXA line at this step
+                    total_booking = self._accounting_booking_balance(cr, uid, reconciled_line_ids, context=context)[0]
+                    if abs(total_booking) > 10**-3:
+                        continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 if abs(total) > 10**-3:
                     # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization

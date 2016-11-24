@@ -335,6 +335,27 @@ class account_move_line(osv.osv):
             res = res[0]
         return res
 
+    def _accounting_booking_balance(self, cr, uid, ids, context=None):
+        """
+        Get the accounting balance of the given lines in booking currency
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if not ids:
+            return 0.0
+        sql = """
+            SELECT SUM(COALESCE(debit_currency,0) - COALESCE(credit_currency,0))
+            FROM account_move_line
+            WHERE id in %s
+        """
+        cr.execute(sql, (tuple(ids),))
+        res = cr.fetchall()
+        if isinstance(ids, list):
+            res = res[0]
+        return res
+
     def _check_date(self, cr, uid, vals, context=None, check=True):
         if 'date' in vals and vals['date'] is not False and 'account_id' in vals:
             do_check = True
