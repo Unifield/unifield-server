@@ -30,6 +30,7 @@ from osv import fields
 from osv import osv
 import pooler
 from tools.translate import _
+import tools
 
 from msf_order_date import TRANSPORT_TYPE
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
@@ -551,7 +552,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                     file_line_error = []
                     line_number = values.get(x, [False])[0] and int(values.get(x, [False])[0]) or False
                     ext_ref = values.get(x, [False, False])[1]
-                    ext_ref = ext_ref and str(ext_ref) or False
+                    ext_ref = ext_ref and tools.ustr(ext_ref) or False
                     for manda_field in LINES_COLUMNS:
                         if manda_field[2] == 'mandatory' and not values.get(x, [])[manda_field[0]]:
                             not_ok = True
@@ -617,9 +618,9 @@ class wizard_import_in_simulation_screen(osv.osv):
                             except ValueError:
                                 exp_value = False
 
-                        if exp_value and not prodlot_cache.get(product_id, {}).get(str(vals[8])):
+                        if exp_value and not prodlot_cache.get(product_id, {}).get(tools.ustr(vals[8])):
                             prodlot_cache.setdefault(product_id, {})
-                            prodlot_cache[product_id].setdefault(str(vals[8]), exp_value)
+                            prodlot_cache[product_id].setdefault(tools.ustr(vals[8]), exp_value)
 
                     file_lines[x] = (line_number, product_id, uom_id, qty, ext_ref)
 
@@ -1122,12 +1123,12 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             # UoM
             uom_value = values[4]
-            if str(uom_value) == line.move_uom_id.name:
+            if tools.ustr(uom_value) == line.move_uom_id.name:
                 write_vals['imp_uom_id'] = line.move_uom_id.id
             else:
-                uom_id = UOM_NAME_ID.get(str(uom_value))
+                uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom_id'] = uom_ids[0]
                     else:
@@ -1160,7 +1161,7 @@ class wizard_import_in_line_simulation_screen(osv.osv):
 
             if line_currency:
                 write_vals['imp_currency_id'] = line_currency.id
-                if str(currency_value) != line_currency.name:
+                if tools.ustr(currency_value) != line_currency.name:
                     err_msg = _('The currency on the Excel file is not the same as the currency of the IN line - You must have the same currency on both side - Currency of the initial line kept.')
                     errors.append(err_msg)
 
@@ -1174,35 +1175,35 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if not lot_check and not exp_check and batch_value:
                 warnings.append(_('A batch is defined on the imported file but the product doesn\'t require batch number - Batch ignored'))
             elif batch_value:
-                batch_id = PRODLOT_NAME_ID.get(str(batch_value))
+                batch_id = PRODLOT_NAME_ID.get(tools.ustr(batch_value))
                 batch_ids = prodlot_obj.search(cr, uid, [('product_id', '=', write_vals['imp_product_id'])], context=context)
                 if not batch_id or batch_id not in batch_ids:
                     batch_id = None # UFTP-386: If the batch number does not belong to the batch_idS of the given product --> set it to None again!
-                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', tools.ustr(batch_value)), ('product_id', '=', write_vals['imp_product_id'])], context=context)
                     if batch_ids:
                         batch_id = batch_ids[0]
-                        PRODLOT_NAME_ID.setdefault(str(batch_value), batch_id)
+                        PRODLOT_NAME_ID.setdefault(tools.ustr(batch_value), batch_id)
                     else:
-                        if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(str(batch_value)):
+                        if lot_check and prodlot_cache.get(write_vals['imp_product_id'], {}).get(tools.ustr(batch_value)):
                             write_vals.update({
-                                'imp_batch_name': str(batch_value),
-                                'imp_exp_date': prodlot_cache[write_vals['imp_product_id']][str(batch_value)],
+                                'imp_batch_name': tools.ustr(batch_value),
+                                'imp_exp_date': prodlot_cache[write_vals['imp_product_id']][tools.ustr(batch_value)],
                             })
                         else:
-                            write_vals['imp_batch_name'] = str(batch_value)
+                            write_vals['imp_batch_name'] = tools.ustr(batch_value)
 
                 if batch_id:
                     write_vals.update({
                         'imp_batch_id': batch_id,
-                        'imp_batch_name': str(batch_value),
+                        'imp_batch_name': tools.ustr(batch_value),
                     })
                 else:
                     # UFTP-386: Add the warning message indicating that the batch does not exist for THIS product (but for others!)
                     # If the batch is a completely new, no need to warn.
-                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', str(batch_value))], context=context)
+                    batch_ids = prodlot_obj.search(cr, uid, [('name', '=', tools.ustr(batch_value))], context=context)
                     if batch_ids:
                         warnings.append(_('The given batch does not exist for the given product, but will be created automatically during the process.'))
-                        write_vals.update({'imp_batch_name': str(batch_value),})
+                        write_vals.update({'imp_batch_name': tools.ustr(batch_value),})
 
             # Expired date
             exp_value = values[8]
@@ -1256,9 +1257,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if batch_value and exp_date:
                     # If a name and an expiry date for batch are defined, create a new batch
                     prodlot_cache.setdefault(product.id, {})
-                    prodlot_cache[product.id].setdefault(str(batch_value), exp_date)
+                    prodlot_cache[product.id].setdefault(tools.ustr(batch_value), exp_date)
                     write_vals.update({
-                        'imp_batch_name': str(batch_value),
+                        'imp_batch_name': tools.ustr(batch_value),
                         'imp_exp_date': exp_date,
                     })
 
