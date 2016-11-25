@@ -1409,12 +1409,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # UoM
             uom_value = values[5]
-            if str(uom_value) == line.in_uom.name:
+            if tools.ustr(uom_value) == line.in_uom.name:
                 write_vals['imp_uom'] = line.in_uom.id
             else:
                 uom_id = UOM_NAME_ID.get(str(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom'] = uom_ids[0]
                     else:
@@ -1452,7 +1452,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Currency
             currency_value = values[7]
-            if str(currency_value) == line.in_currency.name:
+            if tools.ustr(currency_value) == line.in_currency.name:
                 write_vals['imp_currency'] = line.in_currency.id
             elif line.in_currency.name:
                 err_msg = _('The currency on the file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')
