@@ -434,37 +434,31 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
 
+        ids_to_check = ids[:]
+
         # get current name of partners
         read_result = self.read(cr, uid, ids, ['name', 'partner_type'], context=context)
         name_list = [x['name'] for x in read_result if x['name']]
 
-        # US-2014 get the partner name linked to the current instance
+        # US-2014 get the partner id linked to the current instance
         user_obj = self.pool.get('res.users')
         partner_id = user_obj.get_current_company_partner_id(cr, uid)
         partner_id = partner_id and partner_id[0] or None
-        if partner_id:
-            partner_obj = self.pool.get('res.partner')
-            partner_name = partner_obj.read(cr, uid, partner_id, ['name'],
-                    context=context)['name']
-            if partner_name in name_list:
-                # the current partner is the one linked to the current instance
-                # it is possible to edit it
-                name_list.remove(partner_name)
+        if partner_id and partner_id not in ids_to_check:
+            ids_to_check.append(partner_id)
 
         # check the current name is not already used by another section or
         # intermission partner
-        if name_list:
-            name_exists = self.search_exist(cr, uid, [
-                ('id', 'not in', ids),
-                ('name', 'in', name_list),
-                ('active', 'in', ('t', 'f')),
-                ('partner_type', 'in', ('section', 'intermission'))], context=context)
-            if name_exists:
-                return False
+        name_exists = self.search_exist(cr, uid, [
+            ('id', 'not in', ids),
+            ('name', 'in', name_list),
+            ('active', 'in', ('t', 'f')),
+            ('partner_type', 'in', ('section', 'intermission'))], context=context)
+        if name_exists:
+            return False
 
         # check that external partner don't use a name of existing instance
-        external_result = [x for x in read_result\
-                if x['partner_type'] == 'external' and x['id'] != partner_id]
+        external_result = [x for x in read_result if x['partner_type'] == 'external']
         if external_result:
             instance_ojb = self.pool.get('msf.instance')
             name_exists = instance_ojb.search_exist(cr, uid,
