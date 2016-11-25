@@ -366,13 +366,13 @@ class wizard_import_po_simulation_screen(osv.osv):
                     dtd = etree.DTD(dtd_path)
                     tree = etree.fromstring(xml_file)
                 except XMLSyntaxError as ex:
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !\nTechnical details:\n%s') % str(ex))
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !\nTechnical details:\n%s') % tools.ustr(ex))
 
                 if not dtd.validate(tree):
                     # build error message:
                     error_msg = ""
                     for line_obj in dtd.error_log.filter_from_errors():
-                        line = str(line_obj)
+                        line = tools.ustr(line_obj)
                         err_line = line.split(':')[1]
                         err_str = line.split(':')[-1]
                         err_type = line.split(':')[5]
@@ -576,10 +576,10 @@ class wizard_import_po_simulation_screen(osv.osv):
                     LN_BY_EXT_REF.setdefault(wiz.id, {})
                     EXT_REF_BY_LN.setdefault(wiz.id, {})
                     if line.in_ext_ref:
-                        LN_BY_EXT_REF[wiz.id].setdefault(str(line.in_ext_ref), [])
+                        LN_BY_EXT_REF[wiz.id].setdefault(tools.ustr(line.in_ext_ref), [])
                         EXT_REF_BY_LN[wiz.id].setdefault(l_num, [])
                         LN_BY_EXT_REF[wiz.id][line.in_ext_ref].append(l_num)
-                        EXT_REF_BY_LN[wiz.id][l_num].append(str(line.in_ext_ref))
+                        EXT_REF_BY_LN[wiz.id][l_num].append(tools.ustr(line.in_ext_ref))
 
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
@@ -803,7 +803,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
-                    ext_ref = values.get(x, ['', ''])[1] and str(values.get(x, ['', ''])[1])
+                    ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
                     if not line_number and not ext_ref:
                         not_ok = True
@@ -1409,12 +1409,12 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # UoM
             uom_value = values[5]
-            if str(uom_value) == line.in_uom.name:
+            if tools.ustr(uom_value) == line.in_uom.name:
                 write_vals['imp_uom'] = line.in_uom.id
             else:
                 uom_id = UOM_NAME_ID.get(str(uom_value))
                 if not uom_id:
-                    uom_ids = uom_obj.search(cr, uid, [('name', '=', str(uom_value))], context=context)
+                    uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
                     if uom_ids:
                         write_vals['imp_uom'] = uom_ids[0]
                     else:
@@ -1452,7 +1452,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
 
             # Currency
             currency_value = values[7]
-            if str(currency_value) == line.in_currency.name:
+            if tools.ustr(currency_value) == line.in_currency.name:
                 write_vals['imp_currency'] = line.in_currency.id
             elif line.in_currency.name:
                 err_msg = _('The currency on the file is not the same as the currency of the PO line - You must have the same currency on both side - Currency of the initial line kept.')
