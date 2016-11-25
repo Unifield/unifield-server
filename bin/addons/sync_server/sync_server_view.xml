@@ -134,20 +134,29 @@
 
 
 
-        <menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration" sequence="0"/>
+        <menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration"
+            groups="sync_common.sync_read_group"
+            sequence="0"/>
 
-        <menuitem id="mon_menu" name="Monitoring" parent="sync_menu" sequence="10"/>
+        <menuitem id="mon_menu" name="Monitoring" parent="sync_menu"
+            groups="base.group_erp_manager"
+            sequence="10"/>
 
-        <menuitem id="conf_menu" name="Configuration" parent="sync_menu" sequence="90"/>
+        <menuitem id="conf_menu" name="Configuration" parent="sync_menu"
+            groups="sync_common.sync_read_group"
+            sequence="90"/>
 
         <menuitem id="entity_menu" name="Instance" parent="conf_menu" sequence="10"
-                action="entity_action"/>
+            groups="sync_common.sync_read_group"
+            action="entity_action"/>
 
         <menuitem id="group_menu" name="Groups" parent="conf_menu" sequence="20"
-                action="group_action"/>
+            groups="base.group_erp_manager"
+            action="group_action"/>
 
         <menuitem id="group_type_menu" name="Type of Group" parent="conf_menu" sequence="30"
-                action="group_type_action"/>
+            groups="base.group_erp_manager"
+            action="group_type_action"/>
 
     </data>
 </openerp>
