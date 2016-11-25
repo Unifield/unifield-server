@@ -65,6 +65,7 @@ class operations_event(osv.osv, ratelimit):
     _name = 'operations.event'
     _rec_name = 'time'
     _order = 'time desc'
+    _log_access = False
 
     def __init__(self, pool, cr):
         osv.osv.__init__(self, pool, cr)
@@ -167,6 +168,7 @@ class operations_count(osv.osv, ratelimit):
     """
 
     _name = 'operations.count'
+    _log_access = False
     _columns = {
         'time': fields.datetime('Time', readonly=True, select=True, required=True, help="When the measurement was collected."),
         'instance': fields.char('Instance', readonly=True, size=64, required=True, help="The originating instance."),
