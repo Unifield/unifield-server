@@ -366,13 +366,13 @@ class wizard_import_po_simulation_screen(osv.osv):
                     dtd = etree.DTD(dtd_path)
                     tree = etree.fromstring(xml_file)
                 except XMLSyntaxError as ex:
-                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !\nTechnical details:\n%s') % str(ex))
+                    raise osv.except_osv(_('Error'), _('The given file is not a valid XML file !\nTechnical details:\n%s') % tools.ustr(ex))
 
                 if not dtd.validate(tree):
                     # build error message:
                     error_msg = ""
                     for line_obj in dtd.error_log.filter_from_errors():
-                        line = str(line_obj)
+                        line = tools.ustr(line_obj)
                         err_line = line.split(':')[1]
                         err_str = line.split(':')[-1]
                         err_type = line.split(':')[5]
@@ -576,10 +576,10 @@ class wizard_import_po_simulation_screen(osv.osv):
                     LN_BY_EXT_REF.setdefault(wiz.id, {})
                     EXT_REF_BY_LN.setdefault(wiz.id, {})
                     if line.in_ext_ref:
-                        LN_BY_EXT_REF[wiz.id].setdefault(str(line.in_ext_ref), [])
+                        LN_BY_EXT_REF[wiz.id].setdefault(tools.ustr(line.in_ext_ref), [])
                         EXT_REF_BY_LN[wiz.id].setdefault(l_num, [])
                         LN_BY_EXT_REF[wiz.id][line.in_ext_ref].append(l_num)
-                        EXT_REF_BY_LN[wiz.id][l_num].append(str(line.in_ext_ref))
+                        EXT_REF_BY_LN[wiz.id][l_num].append(tools.ustr(line.in_ext_ref))
 
                 # Variables
                 lines_to_ignored = []   # Bad formatting lines
@@ -803,7 +803,7 @@ a valid transport mode. Valid transport modes: %s') % (transport_mode, possible_
                                 file_line_error.append(err1)
 
                     line_number = values.get(x, [''])[0] and int(values.get(x, [''])[0]) or False
-                    ext_ref = values.get(x, ['', ''])[1] and str(values.get(x, ['', ''])[1])
+                    ext_ref = values.get(x, ['', ''])[1] and tools.ustr(values.get(x, ['', ''])[1])
 
                     if not line_number and not ext_ref:
                         not_ok = True
