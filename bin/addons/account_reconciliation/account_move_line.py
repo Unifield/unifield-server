@@ -416,6 +416,7 @@ class account_move_reconcile(osv.osv):
             sql_ji = """
                 UPDATE account_move_line
                 SET debit_currency=0.0, credit_currency=0.0, amount_currency=0.0, debit=0.0, credit=0.0,
+                unreconcile_txt=reconcile_txt, unreconcile_date=reconcile_date,
                 reconcile_id=NULL, reconcile_txt='', reconcile_date=NULL
                 WHERE id IN %s;
             """
