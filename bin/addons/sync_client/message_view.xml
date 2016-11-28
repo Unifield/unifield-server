@@ -69,6 +69,7 @@
           <field name="arguments"/>
           <field name="source"/>
           <field name="remote_call"/>
+          <field name="log"/>
           <newline/>
           <filter icon="terp-check" string="Not Run"
                   name="current" domain="[('run','=', False)]"/>

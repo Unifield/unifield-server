@@ -26,7 +26,7 @@ from tools.translate import _
 
 class account_move_compute_currency(osv.osv):
     _inherit = "account.move"
-    
+
     def _book_amount_compute(self, cr, uid, ids, name, args, context=None):
         """
         On the same model of the function defined in account>account.py,
@@ -41,7 +41,7 @@ class account_move_compute_currency(osv.osv):
         for id in ids:
             result.setdefault(id, 0.0)
         return result
-    
+
     def _get_currency(self, cr, uid, ids, fields, arg, context=None):
         """
         get booking currency: we look at the currency_id of the first line
@@ -115,7 +115,8 @@ class account_move_compute_currency(osv.osv):
     _columns = {
         'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False),
         'currency_id': fields.function(_get_currency, method=True, type="many2one", relation="res.currency", string='Book. Currency', help="The optional other currency if it is a multi-currency entry."),
-        'manual_currency_id': fields.many2one('res.currency', "Book. Currency"),
+        'manual_currency_id': fields.many2one('res.currency', "Book. Currency",
+                                              hide_default_menu=True),
         'book_amount': fields.function(_book_amount_compute, method=True, string='Book Amount', digits_compute=dp.get_precision('Account'), type='float'),
         'block_manual_currency_id': fields.boolean("Block manual currency field", help="Block manual currency field if journal have a currency."),
     }
@@ -166,9 +167,9 @@ class account_move_compute_currency(osv.osv):
             for line in sorted_line_ids:
                 amount += line.debit - line.credit
                 amount_currency += line.amount_currency
-            
+
             if move.period_id and not move.period_id.is_system \
-                and len(sorted_line_ids) > 2:
+                    and len(sorted_line_ids) > 2:
                 if abs(amount_currency) > 10 ** -4 and abs(amount) < 10 ** -4:
                     # The move is balanced, but there is a difference in the converted amounts;
                     # the second-biggest move line is modified accordingly
@@ -184,7 +185,7 @@ class account_move_compute_currency(osv.osv):
                     cr.execute('update account_move_line set amount_currency=%s, \
                                                              debit_currency=%s, \
                                                              credit_currency=%s where id=%s',
-                              (amount_currency, debit_currency, credit_currency, line_to_be_balanced.id))
+                               (amount_currency, debit_currency, credit_currency, line_to_be_balanced.id))
                     if line_to_be_balanced.reconcile_id:
                         reconcile[line_to_be_balanced.reconcile_id.id] = 1
                 elif abs(amount) > 10 ** -4 and abs(amount_currency) < 10 ** -4:
@@ -201,7 +202,7 @@ class account_move_compute_currency(osv.osv):
                     # write() is not called to avoid a loop and a refresh of the rates
                     cr.execute('update account_move_line set debit=%s, \
                                                              credit=%s where id=%s',
-                              (debit, credit, line_to_be_balanced.id))
+                               (debit, credit, line_to_be_balanced.id))
                     if line_to_be_balanced.reconcile_id:
                         reconcile[line_to_be_balanced.reconcile_id.id] = 1
         return reconcile.keys()

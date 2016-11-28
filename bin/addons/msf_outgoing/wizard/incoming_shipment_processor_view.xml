@@ -111,6 +111,7 @@
                     <!-- Visible fields -->
                     <field name="line_number" string="Line" />
                     <field name="product_id" string="Product" />
+                    <field name="comment" readonly="1" />
                     <field name="batch_location_ids" invisible="1" />
                     <button name="open_change_product_wizard"
                         type="object"

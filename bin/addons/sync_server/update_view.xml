@@ -20,14 +20,17 @@
       <field name="type">search</field>
       <field name="arch" type="xml">
         <search string="Synchronization Monitor">
+          <field name="source"/>
           <field name="create_date"/>
           <field name="sequence"/>
-          <filter icon="terp-gtk-stop" string="Not Validated"
-                  domain="[('sequence','=',False)]"/>
-          <newline/>
           <field name="rule_id"/>
           <field name="model"/>
+          <newline/>
           <field name="sdref"/>
+          <field name="values"/>
+          <field name="fancy_puller_ids"/>
+          <filter icon="terp-gtk-stop" string="Not Validated"
+                  domain="[('sequence','=',False)]"/>
         </search>
       </field>
     </record>
@@ -73,6 +76,7 @@
             <field name="rule_id"/>
             <field name="create_date"/>
             <field name="source"/>
+            <field name="owner"/>
             <group colspan="2" col="2">
               <field name="sequence"
                      attrs="{'invisible':[('sequence','=',False)]}"/>
@@ -117,7 +121,8 @@
     </record>
 
     <menuitem id="update_menu_id" name="Data Monitor"
-              parent="mon_menu" action="update_action"/>
+            groups="base.group_erp_manager"
+            parent="mon_menu" action="update_action"/>
 
 
     <record model="ir.ui.view" id="sync_server_monitor_email_tree_view">

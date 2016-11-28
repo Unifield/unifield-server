@@ -67,6 +67,7 @@
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Comment')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Quantity')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('UoM')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Kit')}</Data></Cell>
@@ -80,6 +81,7 @@
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.product_id.name or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.comment or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(move.product_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.composition_list_id.composition_reference or '')|x}</Data></Cell>

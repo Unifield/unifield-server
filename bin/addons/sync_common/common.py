@@ -1,10 +1,9 @@
 import re
 import sys
-import traceback
 import pprint
 import hashlib
 import json
-
+import traceback
 
 import tools
 from tools.translate import _
@@ -147,6 +146,9 @@ WHITE_LIST_MODEL = [
   'threshold.value.line',
 ]
 
+OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
+OC_LIST_TUPLE = zip([x.lower() for x in OC_LIST], OC_LIST)
+
 def xmlid_to_sdref(xmlid):
     if not xmlid: return None
     head, sep, tail = xmlid.partition('.')
@@ -157,11 +159,11 @@ def xmlid_to_sdref(xmlid):
         return head
 
 # TODO deprecated, should disappear
-def sync_log(obj, message=None, level='debug', ids=None, data=None, traceback=False):
+def sync_log(obj, message=None, level='debug', ids=None, data=None, tb=False):
     if not hasattr(obj, '_logger'):
         raise Exception("No _logger specified for object %s!" % obj._name)
     output = ""
-    if traceback:
+    if tb:
         output += traceback.format_exc()
     if message is None:
         previous_frame = sys._getframe(1)
@@ -194,9 +196,9 @@ def fancy_integer(self, cr, uid, ids, name, arg, context=None):
     target_field = re_match.group(1)
     res = self.read(cr, uid, ids, [target_field], context=context)
     return dict(zip(
-            (rec['id'] for rec in res),
-            (rec[target_field] or '' for rec in res),
-        ))
+        (rec['id'] for rec in res),
+        (rec[target_field] or '' for rec in res),
+    ))
 
 
 

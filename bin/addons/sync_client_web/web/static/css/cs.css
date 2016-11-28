@@ -21,3 +21,15 @@
     font-size: 10px;
     line-height: 12px;
 }
+
+#grid-data-column\/time {
+    width: 10%;
+}
+
+#grid-data-column\/instance {
+    width: 15%;
+}
+
+#grid-data-column\/kind {
+    width: 15%;
+}

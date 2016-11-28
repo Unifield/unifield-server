@@ -87,7 +87,7 @@
                     <!-- 
 					<field name="confirmed_delivery_date" attrs="{'readonly': ['|', ('po_partner_type_stored', 'in', ('internal', 'section', 'empty')), ('po_state_stored', 'not in', ('draft','confirmed'))]}" />
                     utp-392: the delivery confirmed date remains editables-->
-                    <field name="confirmed_delivery_date" attrs="{'readonly': [('po_state_stored', 'not in', ('draft','confirmed'))]}" />
+                    <field name="confirmed_delivery_date" attrs="{'readonly': [('po_state_stored', 'not in', ('draft', 'rfq_sent', 'rfq_updated'))]}"/>
                 </xpath>
                 
                 </data>

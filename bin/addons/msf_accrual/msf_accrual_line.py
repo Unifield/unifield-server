@@ -27,14 +27,14 @@ from dateutil.relativedelta import relativedelta
 class msf_accrual_line(osv.osv):
     _name = 'msf.accrual.line'
     _rec_name = 'date'
-    
+
     def onchange_period(self, cr, uid, ids, period_id, context=None):
         if period_id is False:
             return {'value': {'date': False}}
         else:
             period = self.pool.get('account.period').browse(cr, uid, period_id, context=context)
             return {'value': {'date': period.date_stop, 'document_date': period.date_stop}}
-    
+
     def _get_functional_amount(self, cr, uid, ids, field_name, arg, context=None):
         res = {}
         for accrual_line in self.browse(cr, uid, ids, context=context):
@@ -55,20 +55,20 @@ class msf_accrual_line(osv.osv):
         for rec in self.browse(cr, uid, ids, context=context):
             es = ''
             if rec.state != 'draft' and rec.analytic_distribution_id \
-                and rec.analytic_distribution_id.move_line_ids:
-                    # get the NOT REV entry
-                    # (same period as REV posting date is M+1)
-                    move_line_br = False
-                    for mv in rec.analytic_distribution_id.move_line_ids:
-                        if mv.period_id.id == rec.period_id.id:
-                            move_line_br = mv
-                            break
-                    if move_line_br:
-                        es = move_line_br.move_id \
-                             and move_line_br.move_id.name or ''
+                    and rec.analytic_distribution_id.move_line_ids:
+                # get the NOT REV entry
+                # (same period as REV posting date is M+1)
+                move_line_br = False
+                for mv in rec.analytic_distribution_id.move_line_ids:
+                    if mv.period_id.id == rec.period_id.id:
+                        move_line_br = mv
+                        break
+                if move_line_br:
+                    es = move_line_br.move_id \
+                        and move_line_br.move_id.name or ''
             res[rec.id] = es
         return res
-    
+
     _columns = {
         'date': fields.date("Date"),
         'document_date': fields.date("Document Date", required=True),
@@ -81,10 +81,10 @@ class msf_accrual_line(osv.osv):
         'currency_id': fields.many2one('res.currency', 'Currency', required=True),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True),
         'third_party_type': fields.selection([
-                ('', ''),
-                ('res.partner', 'Partner'),
-                ('hr.employee', 'Employee'),
-            ], 'Third Party', required=False),
+            ('', ''),
+            ('res.partner', 'Partner'),
+            ('hr.employee', 'Employee'),
+        ], 'Third Party', required=False),
         'partner_id': fields.many2one('res.partner', 'Third Party Partner', ondelete="restrict"),
         'employee_id': fields.many2one('hr.employee', 'Third Party Employee', ondelete="restrict"),
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
@@ -93,9 +93,9 @@ class msf_accrual_line(osv.osv):
         'move_line_id': fields.many2one('account.move.line', 'Account Move Line', readonly=True),
         'rev_move_id': fields.many2one('account.move', 'Rev Journal Entry', readonly=True),
         'accrual_type': fields.selection([
-                ('reversing_accrual', 'Reversing accrual'),
-                ('one_time_accrual', 'One Time accrual'),
-            ], 'Accrual type', required=True),
+            ('reversing_accrual', 'Reversing accrual'),
+            ('one_time_accrual', 'One Time accrual'),
+        ], 'Accrual type', required=True),
         'state': fields.selection([('draft', 'Draft'),
                                    ('posted', 'Posted'),
                                    ('partially_posted', 'Partially posted'),
@@ -103,9 +103,9 @@ class msf_accrual_line(osv.osv):
         # Field to store the third party's name for list view
         'third_party_name': fields.char('Third Party', size=64),
         'entry_sequence': fields.function(_get_entry_sequence, method=True,
-            store=False, string="Number", type="char", readonly="True"),
+                                          store=False, string="Number", type="char", readonly="True"),
     }
-    
+
     _defaults = {
         'third_party_type': 'res.partner',
         'journal_id': lambda self,cr,uid,c: self.pool.get('account.journal').search(cr, uid, [('type', '=', 'accrual'),
@@ -150,11 +150,10 @@ class msf_accrual_line(osv.osv):
                 raise osv.except_osv(_('Warning !'), _("The currency '%s' does not have any rate set for date '%s'!") % (currency_name, formatted_date))
 
         # US-672/2
-        if not context.get('sync_update_execution', False) \
-            and account_ids and (employee_id or partner_id):
+        if not context.get('sync_update_execution', False) and account_ids:
             self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
-                account_ids, employee_id=employee_id, partner_id=partner_id,
-                raise_it=True,  context=context)
+                                                                       account_ids, employee_id=employee_id, partner_id=partner_id,
+                                                                       raise_it=True,  context=context)
 
     def create(self, cr, uid, vals, context=None):
         if context is None:
@@ -165,10 +164,10 @@ class msf_accrual_line(osv.osv):
             # => read (as date readonly in form) to get posting date: 
             # is end of period
             posting_date = self.pool.get('account.period').read(cr, uid,
-                vals['period_id'], ['date_stop', ],
-                context=context)['date_stop']
+                                                                vals['period_id'], ['date_stop', ],
+                                                                context=context)['date_stop']
             self.pool.get('finance.tools').check_document_date(cr, uid,
-                vals['document_date'], posting_date, context=context)
+                                                               vals['document_date'], posting_date, context=context)
 
         self._create_write_set_vals(cr, uid, vals, context=context)
         return super(msf_accrual_line, self).create(cr, uid, vals, context=context)
@@ -188,7 +187,7 @@ class msf_accrual_line(osv.osv):
         self.pool.get('finance.tools').check_document_date(cr, uid, document_date, posting_date, context=context)
 
         return super(msf_accrual_line, self).write(cr, uid, ids, vals, context=context)
-    
+
     def button_cancel(self, cr, uid, ids, context=None):
         if context is None:
             context = {}
@@ -311,9 +310,9 @@ class msf_accrual_line(osv.osv):
             }
 
             accrual_move_line_id = move_line_obj.create(cr, uid, accrual_move_line_vals, context=context)
-            expense_move_line_id = move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
+            move_line_obj.create(cr, uid, expense_move_line_vals, context=context)
             reversal_accrual_move_line_id = move_line_obj.create(cr, uid, reversal_accrual_move_line_vals, context=context)
-            reversal_expense_move_line_id = move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
+            move_line_obj.create(cr, uid, reversal_expense_move_line_vals, context=context)
 
             # Post the moves
             move_obj.post(cr, uid, [move_id, reversal_move_id], context=context)
@@ -322,7 +321,7 @@ class msf_accrual_line(osv.osv):
             # validate the accrual line
             self.write(cr, uid, [accrual_line.id], {'state': 'cancel'}, context=context)
         return True
-    
+
     def button_duplicate(self, cr, uid, ids, context=None):
         """
         Copy given lines and delete all links
@@ -344,7 +343,7 @@ class msf_accrual_line(osv.osv):
                     default_vals.update({'analytic_distribution_id': new_distrib_id})
             self.copy(cr, uid, line.id, default_vals, context=context)
         return True
-    
+
     def button_analytic_distribution(self, cr, uid, ids, context=None):
         """
         Launch analytic distribution wizard on an invoice line
@@ -383,14 +382,14 @@ class msf_accrual_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_delete(self, cr, uid, ids, context=None):
@@ -402,9 +401,9 @@ class msf_accrual_line(osv.osv):
         for rec in self.browse(cr, uid, ids, context=context):
             if rec.state != 'draft':
                 raise osv.except_osv(_('Warning'),
-                    _('You can only delete draft accruals'))
+                                     _('You can only delete draft accruals'))
         return super(msf_accrual_line, self).unlink(cr, uid, ids,
-            context=context)
+                                                    context=context)
 
     def accrual_post(self, cr, uid, ids, context=None):
         """

@@ -55,10 +55,10 @@ class account_period_create(osv.osv_memory):
             fiscalyear_id = fiscalyear_obj.find(cr, uid, ds, exception=False, context=context)
             if not fiscalyear_id:
                 fiscalyear_id = fiscalyear_obj.create(cr,uid, {
-                                    'name': 'FY %d' % (start_date.year),
-                                    'code': 'FY%d' % (start_date.year),
-                                    'date_start': ds,
-                                    'date_stop': end_date})
+                    'name': 'FY %d' % (start_date.year),
+                    'code': 'FY%d' % (start_date.year),
+                    'date_start': ds,
+                    'date_stop': end_date})
 
             if not self.pool.get('account.period').name_search(cr, uid, ds.strftime('%b %Y'), [('fiscalyear_id', '=', fiscalyear_id)]):
                 self.pool.get('account.period').create(cr, uid, {
@@ -83,7 +83,10 @@ class account_period_create(osv.osv_memory):
                     'special': True,
                     'number': period_nb,
                 })
-        self.pool.get('account.year.end.closing').create_periods(cr, uid, fiscalyear_id, context=context)
+        periods_to_create=[16]
+        if fiscalyear_obj.search_exist(cr, uid, [('date_start', '<', start_date)], context=context):
+            periods_to_create.insert(0, 0)
+        self.pool.get('account.year.end.closing').create_periods(cr, uid, fiscalyear_id, periods_to_create=periods_to_create, context=context)
 
         return {'type': 'ir.actions.act_window_close'}
 

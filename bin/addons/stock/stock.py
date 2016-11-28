@@ -662,6 +662,7 @@ class stock_picking(osv.osv):
             ("none", "Not Applicable")], "Invoice Control",
             select=True, required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, select=True),
+        'claim': fields.boolean('Claim'),
     }
     _defaults = {
         'name': lambda self, cr, uid, context: '/',
