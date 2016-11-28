@@ -426,38 +426,39 @@ class res_partner(osv.osv):
 
     def check_partner_name_is_not_instance_name(self, cr, uid, ids, context=None):
         '''
-        verify that the name of the partner is not used by an msf.instance
-        Return False if any name already exists
+        verify that the name of the partner is not used by another partner
+        of partner_type ('section', 'intermission')
+        Except if the partner name is equal to the partner related to the
+        current instance.
+        Return False if the name already exists
         '''
         if context is None:
             context = {}
 
-        read_result = self.read(cr, uid, ids, ['name', 'partner_type'], context=context)
-        name_list = [x['name'] for x in read_result if x['name']]
+        # check if the current partner name is equal to the current instance name
+        user_obj = self.pool.get('res.users')
+        partner_id, partner_name = user_obj.get_current_company_partner_id(cr, uid)
 
-        # check the current name is not already used by another section or
-        # intermission partner
-        name_exists = self.search_exist(cr, uid, [
-            ('id', 'not in', ids),
-            ('name', 'in', name_list),
-            ('active', 'in', ('t', 'f')),
-            ('partner_type', 'in', ('section', 'intermission'))], context=context)
-        if name_exists:
-            return False
+        # remove partner which have same name than the current instance
+        read_result = self.read(cr, uid, ids, ['name'], context=context)
+        read_result = [(x['id'], x['name']) for x in read_result if x['name'] != partner_name]
 
-        # check that external partner don't use a name of existing instance
-        external_result = [x for x in read_result if x['partner_type'] == 'external']
-        if external_result:
-            instance_ojb = self.pool.get('msf.instance')
-            name_exists = instance_ojb.search_exist(cr, uid,
-                                                    [('name', 'in', [x['name'] for x in external_result])],
-                                                    context=context)
+        for partner_id, partner_name in read_result:
+            # check the current name is not already used by another section or
+            # intermission partner
+            name_exists = self.search_exist(cr, uid, [
+                ('id', '!=', partner_id),
+                ('name', '=', partner_name),
+                ('active', 'in', ('t', 'f')),
+                ('partner_type', 'in', ('section', 'intermission'))], context=context)
             if name_exists:
                 return False
         return True
 
     _constraints = [
-        (check_partner_name_is_not_instance_name, "You can't define a partner name with the name of a existing Intermission/Intersection or an external patner with name of existing instance.", ['name'])
+        (check_partner_name_is_not_instance_name,
+            "You can't define a partner name with the name of an existing Intermission/Intersection instance name.",
+            ['name'])
     ]
 
     def transporter_ticked(self, cr, uid, ids, transporter, context=None):

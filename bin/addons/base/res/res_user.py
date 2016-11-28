@@ -124,8 +124,21 @@ class users(osv.osv):
         """
         return self.WELCOME_MAIL_BODY
 
+    def get_current_company_partner_id(self, cr, uid):
+        company_id = self.get_current_company(cr, uid) and\
+            self.get_current_company(cr, uid)[0][0] or False
+        if company_id:
+            company_obj = self.pool.get('res.company')
+            read_result = company_obj.read(cr, uid, company_id,
+                                           ['partner_id'])
+            return read_result and read_result['partner_id'] or False
+        return False
+
     def get_current_company(self, cr, uid):
-        cr.execute('select company_id, res_company.name from res_users left join res_company on res_company.id = company_id where res_users.id=%s' %uid)
+        cr.execute('''SELECT company_id, res_company.name
+                FROM res_users
+                LEFT JOIN res_company ON res_company.id = company_id
+                WHERE res_users.id=%s''', (uid,))
         return cr.fetchall()
 
     def get_company_currency_id(self, cr, uid):
