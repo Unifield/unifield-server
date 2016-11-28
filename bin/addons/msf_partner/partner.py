@@ -434,28 +434,30 @@ class res_partner(osv.osv):
         if context is None:
             context = {}
 
-        ids_to_check = ids[:]
+        ids_not_to_check = []
 
-        # get current name of partners
-        read_result = self.read(cr, uid, ids, ['name', 'partner_type'], context=context)
-        name_list = [x['name'] for x in read_result if x['name']]
-
-        # US-2014 get the partner id linked to the current instance
+        # US-2014 get the partner name linked to the current instance
+        # all partner with this name should be editable
         user_obj = self.pool.get('res.users')
-        partner_id = user_obj.get_current_company_partner_id(cr, uid)
-        partner_id = partner_id and partner_id[0] or None
-        if partner_id and partner_id not in ids_to_check:
-            ids_to_check.append(partner_id)
+        partner_id, partner_name = user_obj.get_current_company_partner_id(cr, uid)
+        if partner_name:
+            ids_not_to_check = self.search(cr, uid, [('name', '=', partner_name),
+                ('active', 'in', ('t', 'f'))])
+
+        ids_to_check = list(set(ids).difference(ids_not_to_check))
 
         # check the current name is not already used by another section or
         # intermission partner
-        name_exists = self.search_exist(cr, uid, [
-            ('id', 'not in', ids),
-            ('name', 'in', name_list),
-            ('active', 'in', ('t', 'f')),
-            ('partner_type', 'in', ('section', 'intermission'))], context=context)
-        if name_exists:
-            return False
+        if ids_to_check:
+            name_exists = self.search_exist(cr, uid, [
+                ('id', 'in', ids_to_check),
+                ('active', 'in', ('t', 'f')),
+                ('partner_type', 'in', ('section', 'intermission'))], context=context)
+            if name_exists:
+                return False
+
+        # get current name of partners
+        read_result = self.read(cr, uid, ids_to_check, ['name', 'partner_type'], context=context)
 
         # check that external partner don't use a name of existing instance
         external_result = [x for x in read_result if x['partner_type'] == 'external']
