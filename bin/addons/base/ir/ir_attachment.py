@@ -130,7 +130,6 @@ class ir_attachment(osv.osv):
 
         store_data_in_db = self.store_data_in_db(cr, uid)
         if 'datas' in vals:
-            vals['size'] = self.get_size(vals['datas'])
             # do not write the data in DB but on the local file system
             datas = vals.pop('datas')
             if store_data_in_db:
@@ -141,6 +140,7 @@ class ir_attachment(osv.osv):
                                                        'res_id', 'datas_fname', 'path']):
                 # update the data read with the new ones
                 attachment.update(vals)
+                vals['size'] = self.get_size(vals['datas'])
                 if not store_data_in_db:
                     # delete the previous attachment on local file system if any
                     if attachment['path']:
