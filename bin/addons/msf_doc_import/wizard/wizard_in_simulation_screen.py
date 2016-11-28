@@ -726,7 +726,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
                     for file_line in file_lines:
                         nb_treated_lines += 1
-                        percent_completed = nb_treated_lines / nb_file_lines * 100
+                        percent_completed = round(nb_treated_lines / float(nb_file_lines) * 100)
                         self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
