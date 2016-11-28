@@ -207,8 +207,8 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                     context['log_sale_purchase'] = True
 
                     # generate a white list of models
-                    if self.pool.get('sync.client.rule') and
-                        self.pool.get('sync.client.message_rule'):
+                    if self.pool.get('sync.client.rule') and\
+                            self.pool.get('sync.client.message_rule'):
                         server_model_white_set = self.get_model_white_list(cr, uid)
                         # check all models are in the hardcoded white list
                         difference = server_model_white_set.difference(WHITE_LIST_MODEL)
@@ -538,7 +538,7 @@ class Entity(osv.osv):
             field_obj = None
             if field_name in model_obj._columns:
                 field_obj = model_obj._columns[field_name]
-            else field_name in model_obj._inherit_fields:
+            elif field_name in model_obj._inherit_fields:
                 field_obj = model_obj._inherit_fields[field_name][2]
             return field_obj
 
