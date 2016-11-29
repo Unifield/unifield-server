@@ -27,7 +27,7 @@ from psycopg2 import IntegrityError
 from datetime import datetime
 
 import logging
-from sync_common import MODELS_TO_IGNORE_DOMAIN, sync_log
+from sync_common import sync_log
 
 _field2type = {
     'text'      : 'str',
