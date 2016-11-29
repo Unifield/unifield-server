@@ -114,6 +114,8 @@ class patch_scripts(osv.osv):
                                 {'password': encrypted_password})
 
     def us_1610_set_oc_on_all_groups(self, cr, uid, *a, **b):
+        from sync_common import OC_LIST
+        lower_oc_list = [x.lower() for x in OC_LIST]
         logger = logging.getLogger('update')
         update_module = self.pool.get('sync.server.entity_group')
         if update_module:
@@ -125,7 +127,11 @@ class patch_scripts(osv.osv):
                 if 'oc' in group_name:
                     index = group_name.index('oc')
                     oc = group_name[index:index+3]
-                    update_module.write(cr, uid, group['id'], {'oc': oc})
+                    if oc in lower_oc_list:
+                        update_module.write(cr, uid, group['id'], {'oc': oc})
+                    else:
+                        logger.warn("""OC = %s from group '%s' is not in the OC_LIST, please fix
+                                mannualy""" % (oc, group['name']))
                 else:
                     logger.warn('sync.server.entity_group "%s" does not contain '\
                                 '"oc" or "OC" in its name. Please set up the '\
@@ -142,7 +148,11 @@ class patch_scripts(osv.osv):
                 if 'oc' in entity_name:
                     index = entity_name.index('oc')
                     oc = entity_name[index:index+3]
-                    sync_client_module.write(cr, uid, entity['id'], {'oc': oc})
+                    if oc in lower_oc_list:
+                        sync_client_module.write(cr, uid, entity['id'], {'oc': oc})
+                    else:
+                        logger.warn("""OC = %s from group '%s' is not in the OC_LIST, please fix
+                                mannualy""" % (oc, group['name']))
                 else:
                     logger.warn('sync.client.entity "%s" does not contain '\
                                 '"oc" or "OC" in its name. Please set up the '\
