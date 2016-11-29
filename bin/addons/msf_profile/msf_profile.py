@@ -46,6 +46,65 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def remove_not_synchronized_data(self, cr, uid, *a, **b):
+        '''
+        The list of model to synchronize was wrong. It is now build
+        automatically and is then more exact.
+        This patch will remove all the data from ir_model_data that are not
+        synchronized models.
+        '''
+        from sync_common import WHITE_LIST_MODEL
+        removed_obj = 0
+        # get the list of synchronized models
+        entity_obj = self.pool.get('sync.client.entity')
+
+        if self.pool.get('sync.client.rule') and\
+                self.pool.get('sync.client.message_rule'):
+            server_model_white_set = entity_obj.get_model_white_list(cr, uid)
+            # check all models are in the hardcoded white list
+            difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+            if difference:
+                err_msg = 'Warning: Some models used in the synchronization '\
+                'rule are not present in the WHITE_LIST_MODEL: %s'
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
+            else:
+                # get model list
+                cr.execute('SELECT DISTINCT(model) FROM ir_model_data')
+                model_list = [x and x[0] for x in cr.fetchall()]
+                model_to_remove = (set(model_list).difference(server_model_white_set))
+                puller_log_obj = self.pool.get('sync.server.puller_logs')
+                total_puller_deleted = 0
+                for model in model_to_remove:
+                    cr.execute("DELETE FROM ir_model_data where model='%s' RETURNING id" % model)
+                    current_count = cr.rowcount
+                    deleted_ids = [x and x[0] for x in cr.fetchall()]
+
+                    # if this script is executed on server side, also delete
+                    # related sync_server_entity_rel
+                    if puller_log_obj:
+                        total_ids = len(deleted_ids)
+                        start_chunk = 0
+                        chunk_size = 1000
+                        puller_deleted = 0
+                        while start_chunk < total_ids:
+                            ids_chunk = deleted_ids[start_chunk:start_chunk+chunk_size]
+                            cr.execute("""DELETE FROM sync_server_entity_rel
+                            WHERE update_id in %s""", (tuple(ids_chunk),))
+                            start_chunk += chunk_size
+                            puller_deleted += cr.rowcount
+                        self._logger.warn('sync_server_entity_rel, model=%s, %s objects deleted.' % (model, puller_deleted))
+                        total_puller_deleted += puller_deleted
+
+                    removed_obj += current_count
+                    self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
+                if puller_log_obj:
+                    self._logger.warn('sync_server_entity_rel, total of %s objects deleted.' % total_puller_deleted)
+                self._logger.warn('ir.model.data, total of %s objects deleted.' % removed_obj)
+
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
