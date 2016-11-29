@@ -950,6 +950,9 @@ class stock_mission_report_line(osv.osv):
                                      'stock.mission.report.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
                                  },
                                  write_relate=False),
+        'product_active': fields.boolean(string='Active'),
+        'state_ud': fields.char(size=128, string='UniData status'),
+        'international_status_code': fields.char(size=128, string='Product Creator'),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
         'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
         'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
@@ -978,6 +981,7 @@ class stock_mission_report_line(osv.osv):
             string='HQ Instance',
             required=True,
         ),
+
     }
 
     @tools.cache(skiparg=2)
@@ -1012,6 +1016,8 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_val': 0.00,
         'instance_id': _get_default_destination_instance_id,
         'product_state': '',
+        'state_ud': '',
+        'international_status_code': '',
     }
 
     def update_full_view_line(self, cr, uid, context=None):

@@ -1289,6 +1289,7 @@ class product_attributes(osv.osv):
             return True
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
+        int_stat_obj = self.pool.get('product.international.status')
 
         if context is None:
             context = {}
@@ -1329,6 +1330,34 @@ class product_attributes(osv.osv):
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             if local_smrl_ids:
                 smrl_obj.write(cr, uid, local_smrl_ids, {'product_state': prod_state}, context=context)
+
+        if 'international_status' in vals:
+            intstat_code = ''
+            if vals['international_status']:
+                intstat_id = vals['international_status']
+                if isinstance(intstat_id, (int,long)):
+                    intstat_id = [intstat_id]
+                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                    ('international_status_code', '!=', intstat_code),
+                    ('product_id', 'in', ids),
+                    ('full_view', '=', False),
+                    ('mission_report_id.local_report', '=', True)
+                ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, uid, local_smrl_ids, {'international_status_code': intstat_code}, context=context)
+
+        if 'state_ud' in vals:
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                    ('state_ud', '!=', vals['state_ud']),
+                    ('product_id', 'in', ids),
+                    ('full_view', '=', False),
+                    ('mission_report_id.local_report', '=', True)
+                ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, uid, local_smrl_ids, {'state_ud': vals['state_ud']}, context=context)
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1382,6 +1411,23 @@ class product_attributes(osv.osv):
 
         return res
 
+
+    def update_active_field_in_stock_mission(self, cr, uid, ids, context=None):
+        '''
+        method called when the state of the active field change in order to keep
+        the stock mission report line active value consistent
+        '''
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True)
+            ], context=context)
+        if local_smrl_ids:
+            active_value = self.read(cr, uid, ids, ['active'], context=context)[0]['active']
+            smrl_obj.write(cr, uid, local_smrl_ids, {'product_active': active_value}, context=context)
+
+
     def reactivate_product(self, cr, uid, ids, context=None):
         '''
         Re-activate product.
@@ -1391,6 +1437,7 @@ class product_attributes(osv.osv):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already active.') % (product.default_code, product.name))
 
         self.write(cr, uid, ids, {'active': True}, context=context)
+        self.update_active_field_in_stock_mission(cr, uid, ids, context=context)
 
         return True
 
@@ -1647,6 +1694,8 @@ class product_attributes(osv.osv):
                     #                    'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1],
                 }, context=context)
 
+                self.update_active_field_in_stock_mission(cr, uid, ids, context=context)
+
                 return {'type': 'ir.actions.act_window',
                         'res_model': 'product.deactivation.error',
                         'view_type': 'form',
@@ -1695,6 +1744,7 @@ class product_attributes(osv.osv):
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True
         self.write(cr, uid, ids, {'active': False}, context=context)
+        self.update_active_field_in_stock_mission(cr, uid, ids, context=context)
 
         return True
 
