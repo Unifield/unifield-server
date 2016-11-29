@@ -49,25 +49,31 @@ class patch_scripts(osv.osv):
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
-            # this script is exucuted on server side, update the first delete
+            # this script is exucuted on server side only
             return
 
         data_obj = self.pool.get('ir.model.data')
-        group_id = data_obj.get_object_reference(cr, uid, 'base',
-                                                 'group_erp_manager')[1]
+        group_id = None
+        try:
+            group_id = data_obj.get_object_reference(cr, 1, 'base',
+                    'group_erp_manager')[1]
+        except ValueError:
+            # If these groups does not exists anymore
+            pass
 
-        model_obj = self.pool.get('ir.model')
-        model_list_not_to_change = ['res.users', 'res.lang', 'res.widget',
-                                    'res.widget.user', 'res.log', 'publisher_warranty.contract',
-                                    'module.module']
-        model_ids = model_obj.search(cr, uid,
-                                     [('model', 'not like', "ir%"),
-                                      ('model', 'not in', model_list_not_to_change)])
+        if group_id:
+            model_obj = self.pool.get('ir.model')
+            model_list_not_to_change = ['res.users', 'res.lang', 'res.widget',
+                                        'res.widget.user', 'res.log', 'publisher_warranty.contract',
+                                        'module.module']
+            model_ids = model_obj.search(cr, uid,
+                                         [('model', 'not like', "ir%"),
+                                          ('model', 'not in', model_list_not_to_change)])
 
-        access_obj = self.pool.get('ir.model.access')
-        no_group_access = access_obj.search(cr, uid, [('group_id', '=', False),
-                                                      ('model_id', 'in', model_ids)])
-        access_obj.write(cr, uid, no_group_access, {'group_id': group_id})
+            access_obj = self.pool.get('ir.model.access')
+            no_group_access = access_obj.search(cr, uid, [('group_id', '=', False),
+                                                          ('model_id', 'in', model_ids)])
+            access_obj.write(cr, uid, no_group_access, {'group_id': group_id})
 
     def us_1482_fix_default_code_on_msf_lines(self, cr, uid, *a, **b):
         """
