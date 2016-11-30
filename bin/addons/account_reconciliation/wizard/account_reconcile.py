@@ -193,7 +193,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 fcredit += line.credit
                 fdebit += line.debit
         diff_in_booking = abs(debit - credit)
-        # (US-1847) If we reconcile together entries from at least 2 partial reconciliations:
+        # (US-1847) If we reconcile together entries from at least 2 different partial reconciliations:
         # - the reconciliation must be total
         # - all the legs of the partial reconciliations must be included
         if len(rec_partial_set) > 1:
