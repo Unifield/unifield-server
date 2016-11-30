@@ -1412,7 +1412,7 @@ class wizard_import_po_simulation_screen_line(osv.osv):
             if tools.ustr(uom_value) == line.in_uom.name:
                 write_vals['imp_uom'] = line.in_uom.id
             else:
-                uom_id = UOM_NAME_ID.get(str(uom_value))
+                uom_id = UOM_NAME_ID.get(tools.ustr(uom_value))
                 if not uom_id:
                     uom_ids = uom_obj.search(cr, uid, [('name', '=', tools.ustr(uom_value))], context=context)
                     if uom_ids:
