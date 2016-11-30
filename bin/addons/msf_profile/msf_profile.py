@@ -98,7 +98,7 @@ class patch_scripts(osv.osv):
         """
         from passlib.hash import bcrypt
         users_obj = self.pool.get('res.users')
-        user_ids = users_obj.search(cr, uid, [])
+        user_ids = users_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
         for user in users_obj.read(cr, uid, user_ids, ['password']):
             original_password = tools.ustr(user['password'])
             # check the password is not already encrypted
