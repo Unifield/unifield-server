@@ -145,7 +145,11 @@ class account_move_line_reconcile(osv.osv_memory):
             state = 'total_change'
         currency_id = False
         currency2_id = False
+        reconcile_partial_set = set()
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
+            # store the different partial reconciliation ids
+            if line.reconcile_partial_id:
+                reconcile_partial_set.add(line.reconcile_partial_id.id)
             # prepare some values
             account_id = line.account_id.id
             # some verifications
@@ -186,8 +190,12 @@ class account_move_line_reconcile(osv.osv_memory):
                 debit += line.debit_currency
                 fcredit += line.credit
                 fdebit += line.debit
+        diff_in_booking = abs(debit - credit)
+        if len(reconcile_partial_set) > 1 and diff_in_booking > 10**-3:
+            raise osv.except_osv(_('Error'), _('Only full reconciliation is allowed when entries from two (or more) '
+                                               'different partial reconciliations are included.'))
         # Adapt state value
-        if abs(debit - credit) <= 10**-3:
+        if diff_in_booking <= 10**-3:
             state = 'total'
         if transfer_with_change:
             debit = fdebit

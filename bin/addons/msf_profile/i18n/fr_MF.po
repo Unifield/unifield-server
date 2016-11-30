@@ -75713,3 +75713,8 @@ msgstr "Status du rapport"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé à afficher"
 
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/wizard/account_reconcile.py:195
+#, python-format
+msgid "Only full reconciliation is allowed when entries from two (or more) different partial reconciliations are included."
+msgstr "Seul un lettrage complet est autorisé lorsque des entrées de deux lettrages partiels différents (ou plus) sont inclues."
