@@ -145,11 +145,13 @@ class account_move_line_reconcile(osv.osv_memory):
             state = 'total_change'
         currency_id = False
         currency2_id = False
-        reconcile_partial_set = set()
+        rec_partial_set = set()
+        rec_partial_leg_nb = 0
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
-            # store the different partial reconciliation ids
+            # for partially reconciled lines: store the different partial reconciliation ids and the total nb of legs
             if line.reconcile_partial_id:
-                reconcile_partial_set.add(line.reconcile_partial_id.id)
+                rec_partial_leg_nb += 1
+                rec_partial_set.add(line.reconcile_partial_id.id)
             # prepare some values
             account_id = line.account_id.id
             # some verifications
@@ -191,9 +193,19 @@ class account_move_line_reconcile(osv.osv_memory):
                 fcredit += line.credit
                 fdebit += line.debit
         diff_in_booking = abs(debit - credit)
-        if len(reconcile_partial_set) > 1 and diff_in_booking > 10**-3:
-            raise osv.except_osv(_('Error'), _('Only full reconciliation is allowed when entries from two (or more) '
-                                               'different partial reconciliations are included.'))
+        # (US-1847) If we reconcile together entries from at least 2 partial reconciliations:
+        # - the reconciliation must be total
+        # - all the legs of the partial reconciliations must be included
+        if len(rec_partial_set) > 1:
+            if diff_in_booking > 10**-3:
+                raise osv.except_osv(_('Error'), _('Only full reconciliation is allowed when entries from two (or more)'
+                                                   ' different partial reconciliations are included.'))
+            elif rec_partial_leg_nb != account_move_line_obj.search(cr, uid,
+                                                                    [('reconcile_partial_id', 'in', list(rec_partial_set))],
+                                                                    count=True, order='NO_ORDER', context=context):
+                raise osv.except_osv(_('Error'),
+                                     _('When entries from different partial reconciliations are reconciled together, '
+                                       'all the legs of these partial reconciliations must be included.'))
         # Adapt state value
         if diff_in_booking <= 10**-3:
             state = 'total'
