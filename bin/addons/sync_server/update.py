@@ -85,7 +85,7 @@ class puller_ids_rel(osv.osv):
         'update_id' : fields.many2one('sync.server.update',
             required=True, string="Update", select=1),
         'entity_id' : fields.many2one('sync.server.entity',
-            required=True, string="Instance"),
+            required=True, string="Instance", select=1),
         'create_date' : fields.datetime('Pull Date'),
     }
 
@@ -144,14 +144,35 @@ class update(osv.osv):
     """
     _name = "sync.server.update"
     _rec_name = 'source'
-    
+
     _logger = logging.getLogger('sync.server')
 
+    def _get_puller_ids(self, cr, uid, ids, field_name, args, context=None):
+        return {}.fromkeys(ids, '')
+
+    def _src_puller_ids(self, cr, uid, obj, name, args, context=None):
+        res = []
+        server_entity_obj = self.pool.get('sync.server.entity')
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'fancy_puller_ids':
+                if ';' not in arg[2]:
+                    entity_id = server_entity_obj.search(cr, uid,
+                        [('name', '=', arg[2])]) or None
+                    if entity_id:
+                        res.append(('puller_ids', '=', entity_id))
+                else:
+                    list_of_pullers = arg[2].split(';')
+                    list_of_ids = server_entity_obj.search(cr, uid,
+                        [('name', 'in', tuple(list_of_pullers))])
+                    if list_of_ids:
+                        res.append(('puller_ids', 'in', list_of_ids))
+        return res
+
     _columns = {
-        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True), 
-        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True), 
-        'model': fields.char('Model', size=128, readonly=True),
-        'sdref': fields.char('SD ref', size=128, readonly=True),
+        'source': fields.many2one('sync.server.entity', string="Source Instance", select=True),
+        'owner': fields.many2one('sync.server.entity', string="Owner Instance", select=True),
+        'model': fields.char('Model', size=128, readonly=True, select=True),
+        'sdref': fields.char('SD ref', size=128, readonly=True, select=True),
         'session_id': fields.char('Session Id', size=128),
         'sequence': fields.integer('Sequence', select=True),
         'fancy_sequence' : fields.function(fancy_integer, method=True, string="Sequence", type='char', readonly=True),
@@ -160,14 +181,19 @@ class update(osv.osv):
         'rule_id': fields.many2one('sync_server.sync_rule','Generating Rule', readonly=True, ondelete='restrict', select=True),
         'fields': fields.text("Fields"),
         'values': fields.text("Values"),
-        'create_date': fields.datetime('Synchro Date/Time', readonly=True),
+        'create_date': fields.datetime('Synchro Date/Time', readonly=True,
+            select=True),
         'puller_ids': fields.one2many('sync.server.puller_logs', 'update_id', string="Pulled by"),
+        'fancy_puller_ids': fields.function(_get_puller_ids,
+            fnct_search=_src_puller_ids, method=True,
+            string="Pulled by", type='char', store=False, readonly=True,
+            internal=True),
         'is_deleted' : fields.boolean('Is deleted?', select=True),
         'force_recreation' : fields.boolean('Force record recreation'),
         'handle_priority': fields.boolean('Handle Priority'),
     }
 
-    _order = 'sequence, create_date desc'
+    _order = 'create_date desc, id desc'
 
     _sql_constraints = [
         ('detect_duplicated_updates','UNIQUE (session_id, rule_id, sdref, owner)','This update is duplicated and has been ignored!'),
@@ -187,14 +213,91 @@ class update(osv.osv):
         cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_sequence_id_index'")
         if not cr.fetchone():
             cr.execute("CREATE INDEX sync_server_update_sequence_id_index on sync_server_update (sequence, id)")
-
-#    def __init__(self, pool, cr):
-#        self._cache_pullers = SavePullerCache(self)
-#        super(update, self).__init__(pool, cr)
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_model_create_date_id_index'")
+        if not cr.fetchone():
+            cr.execute("CREATE INDEX sync_server_update_model_create_date_id_index ON sync_server_update(model, create_date, id)")
+        cr.execute("SELECT indexname FROM pg_indexes WHERE indexname = 'sync_server_update_create_date_id_index'")
+        if not cr.fetchone():
+            cr.execute("CREATE INDEX sync_server_update_create_date_id_index ON sync_server_update(create_date, id)")
 
     def _save_puller(self, cr, uid, context=None):
         return True
-#        return self._cache_pullers.merge(cr, uid, context)
+
+    def search_web(self, cr, uid, args=None, offset=0, limit=None, order=None,
+            context=None, count=False):
+        return self.exact_search_web(cr, uid, args, offset, limit,
+                order, context=context, count=count)
+
+    def search_with_puller_ids(self, cr, uid, args, puller_ids_arg, offset=0,
+            limit=None, order=None, count=False, context=None):
+        '''
+        in case some puller_ids are in the args, a special threament is
+        required to merge the requests in one. This id done inside this method
+        '''
+        where_clause = ''
+        query = self._where_calc(cr, uid, args, context=context)
+        from_clause, where_clause, where_clause_params = query.get_sql()
+        if where_clause:
+            where_clause = ''.join((' AND ', where_clause))
+
+        final_params = []
+        # DISTINCT is needed because we may enter puller_ids can contain
+        # mre than one id, and then an update could be more than one time
+        # in the results
+        if count:
+            final_query = "SELECT count(DISTINCT sync_server_update.id) "
+        else:
+            final_query = """SELECT DISTINCT sync_server_update.id """
+
+        order_by=''
+        if not count:
+            if order != 'NO_ORDER':
+                order = order or self._order
+                if order:
+                    order_by = ' ORDER BY %s.%s' % (self._table, order)
+            if order:
+                # because of the DISTINCT, to be able to order, table column to
+                # order is needed in the select
+                order_column = '%s.%s' % (self._table, order.split(' ')[0])
+                final_query = '%s, %s ' % (final_query, order_column)
+
+        final_query += """FROM sync_server_update INNER JOIN sync_server_entity_rel ON
+        sync_server_update.id=sync_server_entity_rel.update_id
+        WHERE sync_server_entity_rel.entity_id IN %s"""
+        final_params.extend([tuple(puller_ids_arg[0][2])])
+        final_params.extend(where_clause_params)
+        if not count:
+            final_query = final_query + where_clause + order_by + ' LIMIT %s OFFSET %s'
+            final_params += [limit,offset]
+        else:
+            final_query += where_clause
+
+        cr.execute(final_query, final_params)
+        if count:
+            result = cr.fetchone()
+            return result[0] or 0
+        return [x[0] for x in cr.fetchall()]
+
+    def search(self, cr, uid, args=None, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        if there is fancy_puller_ids search parameter, do corresponding special
+        treatmentwhere_params = []
+        if not, do normal search
+        '''
+        new_args = []
+        puller_ids_arg = False
+        if args:
+            for sub_domain in args:
+                if sub_domain[0] == 'fancy_puller_ids':
+                    puller_ids_arg = self._src_puller_ids(cr, uid, None, None, args)
+                else:
+                    new_args.append(sub_domain)
+        if puller_ids_arg and len(puller_ids_arg[0])>2:
+            return self.search_with_puller_ids(cr, uid, new_args,
+                    puller_ids_arg, offset, limit, order, count, context)
+
+        return super(update, self).search(cr, uid, new_args, offset, limit,
+                    order, context=context, count=count)
 
     def unfold_package(self, cr, uid, entity, packet, context=None):
         """
@@ -559,8 +662,6 @@ class update(osv.osv):
                     forced_values[k] = unicode(v)
         return fields, forced_values
 
-    _order = 'create_date desc'
-    
 update()
 puller_ids_rel()
 

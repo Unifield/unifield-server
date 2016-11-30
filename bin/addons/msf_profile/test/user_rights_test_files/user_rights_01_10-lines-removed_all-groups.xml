@@ -32,8 +32,7 @@
   </Style>
  </Styles>
  <Worksheet ss:Name="user_rights_01_original">
-  <Table ss:ExpandedColumnCount="22" ss:ExpandedRowCount="326" x:FullColumns="1"
-   x:FullRows="1" ss:DefaultColumnWidth="60" ss:DefaultRowHeight="15">
+  <Table ss:DefaultColumnWidth="60" ss:DefaultRowHeight="15">
    <Column ss:Width="162"/>
    <Column ss:Width="261"/>
    <Column ss:Width="31.5"/>

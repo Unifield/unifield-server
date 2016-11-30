@@ -52,6 +52,7 @@
                             string="Change Product"
                             attrs="{'invisible': [('type_check', '!=', 'in')]}"
                             />
+                    <field name="comment" readonly="1" />
                     <field name="asset_id"
                            domain="[('product_id', '=', product_id)]"
                            attrs="{'readonly': [('asset_check', '=', False)], 'required': [('location_supplier_customer_mem_out', '=', True), ('asset_check', '=', True)]}"

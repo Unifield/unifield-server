@@ -51,7 +51,7 @@
    <NumberFormat ss:Format="Short Date"/>
   </Style>
 </Styles>
-## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
+## ==================================== we loop over the purchase_order "objects" == tender  ====================================================
 % for o in objects:
 <ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
 

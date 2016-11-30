@@ -39,6 +39,5 @@
             <field name="model">hq.monitor</field>
             <field name="function">check_not_run</field>
         </record>
-
   </data>
 </openerp>

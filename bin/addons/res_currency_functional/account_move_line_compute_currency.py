@@ -160,21 +160,21 @@ class account_move_line_compute_currency(osv.osv):
 
             # search first opened period since latest posting date
             period_from = "%04d-%02d-%02d" % (base_date_dt.year,
-                base_date_dt.month, 1, )
+                                              base_date_dt.month, 1, )
             period_ids = period_obj.search(cr, uid, [
                 ('date_start', '>=', period_from),
                 ('state', '=', 'draft'),  # first opened period since 
             ], limit=1, order='date_start, name', context=context)
             if not period_ids:
                 raise osv.except_osv(_('Warning'),
-                    _('No open period found since this date: %s') % base_date)
+                                     _('No open period found since this date: %s') % base_date)
             period_id = period_ids[0]
             period_br = period_obj.browse(cr, uid, period_id, context=context)
 
             if current_date_dt.year == oldiest_date_dt.year \
-                and current_date_dt.month == oldiest_date_dt.month \
-                and current_date_dt.day > oldiest_date_dt.day \
-                and period_br.date_start <= current_date <= period_br.date_stop:
+                    and current_date_dt.month == oldiest_date_dt.month \
+                    and current_date_dt.day > oldiest_date_dt.day \
+                    and period_br.date_start <= current_date <= period_br.date_stop:
                 # current date in 'opened period found': use it as 'base date'
                 base_date = current_date
             elif period_br.date_start > base_date:
@@ -212,7 +212,7 @@ class account_move_line_compute_currency(osv.osv):
                     'source_date': base_date,
                     'destination_id': addendum_line_account_default_destination_id,
                 }
-                cc_id = self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
+                self.pool.get('cost.center.distribution.line').create(cr, uid, distrib_line_vals, context=context)
                 # add a funding pool line for analytic distribution
                 try:
                     fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
@@ -277,6 +277,7 @@ class account_move_line_compute_currency(osv.osv):
             ids = [ids]
         reconciled_obj = self.pool.get('account.move.reconcile')
         al_obj = self.pool.get('account.analytic.line')
+        res_users_obj = self.pool.get('res.users')
         # Search Miscellaneous Transactions journal
         j_obj = self.pool.get('account.journal')
         j_ids = j_obj.search(cr, uid, [('type', '=', 'cur_adj'),
@@ -349,11 +350,17 @@ class account_move_line_compute_currency(osv.osv):
                 reconciled_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconciled.id)], context=context)
                 if not reconciled_line_ids:
                     continue
+                if context.get('sync_update_execution'):
+                    # US-1997 If the reconciliation isn't balanced in booking, it means that not all legs of the
+                    # reconciliation have been received from the synchro yet: we don't create the FXA line at this step
+                    total_booking = self._accounting_booking_balance(cr, uid, reconciled_line_ids, context=context)[0]
+                    if abs(total_booking) > 10**-3:
+                        continue
                 total = self._accounting_balance(cr, uid, reconciled_line_ids, context=context)[0]
                 if abs(total) > 10**-3:
                     # UTP-752: Do not make FX Adjustement line (addendum line) if the reconciliation comes from a multi instance and that we are in synchronization
                     multi_instance = reconciled.is_multi_instance
-                    current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
+                    current_instance = res_users_obj.browse(cr, uid, uid).company_id.instance_id
                     current_instance_id = current_instance.id
                     current_instance_level = current_instance.level
                     # UF-2501: when proj + coor are reconciled from HQ adj line should be created at coordo only
@@ -384,10 +391,16 @@ class account_move_line_compute_currency(osv.osv):
                     if partner_line_id:
                         # Add it to reconciliation (same that other lines)
                         reconcile_txt = ''
-                        data = self.pool.get('account.move.reconcile').name_get(cr, uid, [reconciled.id])
+                        data = reconciled_obj.name_get(cr, uid, [reconciled.id])
                         if data and data[0] and data[0][1]:
                             reconcile_txt = data[0][1]
-                        cr.execute('update account_move_line set reconcile_id=%s, reconcile_txt=%s where id=%s',(reconciled.id, reconcile_txt or '', partner_line_id))
+                        # US-1878 Add the reconciliation date in the FX adjustment entry
+                        # (we can't use directly the creation date of the account_move_reconcile since if the reconciliation
+                        # is done in coordo and then synched to project, the date is different in the 2 instances)
+                        reconcile_date = self.browse(cr, uid, reconciled_line_ids[0], fields_to_fetch=['reconcile_date'],
+                                                     context=new_ctx).reconcile_date or None
+                        cr.execute('UPDATE account_move_line SET reconcile_id=%s, reconcile_txt=%s, reconcile_date=%s WHERE id=%s',
+                                   (reconciled.id, reconcile_txt or '', reconcile_date, partner_line_id))
         return True
 
     def update_amounts(self, cr, uid, ids):
@@ -418,31 +431,31 @@ class account_move_line_compute_currency(osv.osv):
                     # amount currency is not set; it is computed from the 2 other fields
                     amount_currency = move_line.debit_currency - move_line.credit_currency
                     debit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
-                        move_line.functional_currency_id.id, move_line.debit_currency, round=True, context=ctx)
+                                                     move_line.functional_currency_id.id, move_line.debit_currency, round=True, context=ctx)
                     credit_computed = cur_obj.compute(cr, uid, move_line.currency_id.id,
-                        move_line.functional_currency_id.id, move_line.credit_currency, round=True, context=ctx)
+                                                      move_line.functional_currency_id.id, move_line.credit_currency, round=True, context=ctx)
                     cr.execute('update account_move_line set debit=%s, \
                                                              credit=%s, \
                                                              amount_currency=%s where id=%s',
-                              (debit_computed, credit_computed, amount_currency, move_line.id))
+                               (debit_computed, credit_computed, amount_currency, move_line.id))
                 elif move_line.debit_currency == 0.0 and \
-                     move_line.credit_currency == 0.0 and \
-                     move_line.amount_currency == 0.0 and \
-                     (move_line.debit != 0.0 or move_line.debit != 0.0):
+                        move_line.credit_currency == 0.0 and \
+                        move_line.amount_currency == 0.0 and \
+                        (move_line.debit != 0.0 or move_line.debit != 0.0):
                     # only the debit/credit in functional currency are set;
                     # the amounts in booking currency are computed
                     debit_currency_computed = cur_obj.compute(cr, uid, move_line.functional_currency_id.id,
-                        move_line.currency_id.id, move_line.debit, round=True, context=ctx)
+                                                              move_line.currency_id.id, move_line.debit, round=True, context=ctx)
                     credit_currency_computed = cur_obj.compute(cr, uid, move_line.functional_currency_id.id,
-                        move_line.currency_id.id, move_line.credit, round=True, context=ctx)
+                                                               move_line.currency_id.id, move_line.credit, round=True, context=ctx)
                     amount_currency = debit_currency_computed - credit_currency_computed
                     cr.execute('update account_move_line set debit_currency=%s, \
                                                              credit_currency=%s, \
                                                              amount_currency=%s where id=%s',
-                              (debit_currency_computed, credit_currency_computed, amount_currency, move_line.id))
+                               (debit_currency_computed, credit_currency_computed, amount_currency, move_line.id))
                 elif move_line.debit_currency == 0.0 and \
-                     move_line.credit_currency == 0.0 and \
-                     move_line.amount_currency != 0.0:
+                        move_line.credit_currency == 0.0 and \
+                        move_line.amount_currency != 0.0:
                     # debit/credit currency are not set; it is computed from the amount currency
                     debit_currency = 0.0
                     credit_currency = 0.0
@@ -452,7 +465,7 @@ class account_move_line_compute_currency(osv.osv):
                         debit_currency = move_line.amount_currency
                     cr.execute('update account_move_line set debit_currency=%s, \
                                                              credit_currency=%s where id=%s',
-                              (debit_currency, credit_currency, move_line.id))
+                               (debit_currency, credit_currency, move_line.id))
                 # Refresh the associated analytic lines
                 analytic_line_ids = []
                 for analytic_line in move_line.analytic_lines:
@@ -543,7 +556,6 @@ class account_move_line_compute_currency(osv.osv):
             context = {}
 
         ctx = context.copy()
-        data = {}
         if 'journal_id' in vals:
             ctx['journal_id'] = vals['journal_id']
         if ('journal_id' not in ctx) and vals.get('move_id'):
@@ -652,12 +664,12 @@ class account_move_line_compute_currency(osv.osv):
         # Those fields are for UF-173: Accounting Journals.
         # Since they are used in the move line view, they are added in Multi-Currency.
         'account_type': fields.function(_get_line_account_type, type='char', size=64, method=True, string="Account Type",
-                store = {
-                    'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),
-                    'account.account': (_store_journal_account, ['user_type'], 10),
-                    'account.account.type': (_store_journal_account_type, ['name'], 10),
-                }
-            ),
+                                        store = {
+                                            'account.move.line': (lambda self, cr, uid, ids, c=None: ids, ['account_id'], 10),
+                                            'account.account': (_store_journal_account, ['user_type'], 10),
+                                            'account.account.type': (_store_journal_account_type, ['name'], 10),
+                                        }
+                                        ),
         'reconcile_total_partial_id': fields.function(_get_reconcile_total_partial_id, fnct_search=_search_reconcile_total_partial, type="many2one", relation="account.move.reconcile", method=True, string="Reconcile"),
     }
 

@@ -218,7 +218,7 @@ class stock_move(osv.osv):
             )
 
         return super(stock_move, self).unlink(cr, uid, ids, context=context,
-                force=force)
+                                              force=force)
 
     def allow_resequencing(self, cr, uid, ids, context=None):
         '''
@@ -307,7 +307,7 @@ class stock_move(osv.osv):
 
         res = {}
         for obj in self.browse(cr, uid, ids, context=context,
-                fields_to_fetch=['picking_id', 'purchase_line_id', 'id']):
+                               fields_to_fetch=['picking_id', 'purchase_line_id', 'id']):
             res[obj.id] = {'move_id': False, 'picking_id': False, 'picking_version': 0, 'quantity': 0, 'moves': []}
             if obj.picking_id and obj.picking_id.type == 'in':
                 # we are looking for corresponding OUT move from sale order line
@@ -523,10 +523,10 @@ class stock_picking(osv.osv):
         res = super(stock_picking, self)._stock_picking_action_process_hook(cr, uid, ids, context=context, *args, **kwargs)
         wizard_obj = self.pool.get('wizard')
         res = wizard_obj.open_wizard(cr, uid, ids, w_type='update', context=dict(context,
-                                                                               wizard_ids=[res['res_id']],
-                                                                               wizard_name=res['name'],
-                                                                               model=res['res_model'],
-                                                                               step='default'))
+                                                                                 wizard_ids=[res['res_id']],
+                                                                                 wizard_name=res['name'],
+                                                                                 model=res['res_model'],
+                                                                                 step='default'))
         return res
 
     def create(self, cr, uid, vals, context=None):
@@ -744,9 +744,9 @@ class stock_picking(osv.osv):
                 p_price = move.purchase_line_id.price_unit
                 pchanged = abs(p_price - line.cost) > 10**-3
             sptc_values = {
-                    'standard_price': new_std_price,
-                    'old_price': line.product_id.standard_price,
-                    'manually_changed': pchanged,
+                'standard_price': new_std_price,
+                'old_price': line.product_id.standard_price,
+                'manually_changed': pchanged,
             }
 
             # Record the values that were chosen in the wizard, so they can be
@@ -783,6 +783,7 @@ class stock_picking(osv.osv):
             'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
             'asset_id': line.asset_id and line.asset_id.id or False,
             'change_reason': line.change_reason,
+            'comment': line.comment or move.comment,
             # Values from incoming wizard
             'direct_incoming': line.wizard_id.direct_incoming,
             # Values for Direct Purchase Order
@@ -968,13 +969,13 @@ class stock_picking(osv.osv):
         picking_ids = []
 
         for wizard in inc_proc_obj.read(cr, uid, wizard_ids, ['picking_id',
-            'id'], context=context):
+                                                              'id'], context=context):
 
             picking_id = wizard['picking_id'][0]
             picking_dict = picking_obj.read(cr, uid, picking_id, ['move_lines',
-                'type',
-                'purchase_id',
-                'name'], context=context)
+                                                                  'type',
+                                                                  'purchase_id',
+                                                                  'name'], context=context)
 
             picking_ids.append(picking_id)
             backordered_moves = []  # Moves that need to be put in a backorder
@@ -983,7 +984,7 @@ class stock_picking(osv.osv):
             processed_out_moves = []
 
             picking_move_lines = move_obj.browse(cr, uid, picking_dict['move_lines'],
-                context=context)
+                                                 context=context)
 
             total_moves = len(picking_move_lines)
             move_done = 0
@@ -1009,7 +1010,7 @@ class stock_picking(osv.osv):
                 move_sptc_values = []
 
                 for line in move_proc_obj.browse(cr, uid, proc_ids,
-                        context=context):
+                                                 context=context):
                     values = self._get_values_from_line(cr, uid, move, line, db_data_dict, context=context)
                     if not values.get('product_qty', 0.00):
                         continue
@@ -1195,7 +1196,7 @@ class stock_picking(osv.osv):
                             # REF-59: move of partial in,
                             # adapt proc order's move qty (for correct virtual stock)
                             move_obj.write(cr, uid, [proc.move_id.id],
-                                {'product_qty': diff_qty}, context=context)
+                                           {'product_qty': diff_qty}, context=context)
                         else:
                             proc_obj.write(cr, uid, [proc.id], {'move_id': move.id}, context=context)
                             # note: do not close move until a diff qty is applied above
@@ -1212,7 +1213,7 @@ class stock_picking(osv.osv):
                 }, context=context)
                 initial_vals_copy = {
                     'name':sequence_obj.get(cr, uid, 'stock.picking.%s' %
-                        (picking_dict['type'])),
+                                            (picking_dict['type'])),
                     'move_lines':[],
                     'state':'draft',
                     'in_dpo': context.get('for_dpo', False),
@@ -1333,7 +1334,7 @@ class stock_picking(osv.osv):
                     wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_done', cr)
                     if picking_dict['purchase_id']:
                         so_ids =  self.pool.get('purchase.order').get_so_ids_from_po_ids(cr,
-                                uid, picking_dict['purchase_id'][0], context=context)
+                                                                                         uid, picking_dict['purchase_id'][0], context=context)
                         for so_id in so_ids:
                             wf_service.trg_write(uid, 'sale.order', so_id, cr)
                     if usb_entity == self.REMOTE_WAREHOUSE:
@@ -1375,9 +1376,13 @@ class stock_picking(osv.osv):
                 res_wiz = wiz_obj.do_create_picking(cr, uid, [wiz['res_id']], context=wiz_context)
                 if 'res_id' in res_wiz:
                     new_pick_id = res_wiz['res_id']
+                    if new_pick_id:
+                        self.write(cr, uid, new_pick_id, {'incoming_id': backorder_id or picking_dict['id']}, context=context)
                     if backorder_id and new_pick_id:
                         new_pick_name = self.read(cr, uid, new_pick_id, ['name'], context=context)['name']
-                        self.write(cr, uid, backorder_id, {'associate_pick_name': new_pick_name,}, context=context)
+                        self.write(cr, uid, backorder_id, {
+                            'associate_pick_name': new_pick_name,
+                        }, context=context)
 
             prog_id = self.update_processing_info(cr, uid, picking_id, prog_id, {
                 'prepare_pick': _('Done'),
@@ -1598,13 +1603,14 @@ class procurement_order(osv.osv):
         # give the purchase order line a link to corresponding procurement
         procurement = kwargs['procurement']
         line.update({'procurement_id': procurement.id, })
+
         # for Internal Request (IR) on make_to_order we update PO line data according to the data of the IR (=sale_order)
         sale_order_line_ids = sale_obj.search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         for sol in sale_obj.browse(cr, uid, sale_order_line_ids, context=context):
             if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
-                             'comment': sol.comment,
+                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment,
                              'product_qty': sol.product_uom_qty,
                              'price_unit': sol.price_unit,
                              'date_planned': sol.date_planned,
@@ -1619,6 +1625,10 @@ class procurement_order(osv.osv):
                              'nomen_sub_3': sol.nomen_sub_3.id or False,
                              'nomen_sub_4': sol.nomen_sub_4.id or False,
                              'nomen_sub_5': sol.nomen_sub_5.id or False})
+
+        if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id and procurement.tender_line_id.purchase_order_line_id.comment:
+            line['comment'] = procurement.tender_line_id.purchase_order_line_id.comment
+
         return line
 
 procurement_order()

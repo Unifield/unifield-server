@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+
+        <report
+            id="report_stopped_products_xls"
+            string="Stopped products"
+            model="export.report.stopped.products"
+            name="stopped.products.xls"
+            file="msf_tools/report/report_stopped_products_xls.mako"
+            report_type="webkit"
+            header="False"
+            auto="False"
+            menu="False"
+            />
+
+
+    </data>
+</openerp>

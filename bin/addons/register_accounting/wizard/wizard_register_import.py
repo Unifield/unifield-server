@@ -450,22 +450,18 @@ class wizard_register_import(osv.osv_memory):
                             absl = self.pool.get('account.bank.statement.line')
                             cheque_number_id = absl.search(cr, uid, [('cheque_number','=',r_cheque_number)],context=context)
                             if cheque_number_id:
-                               errors.append(_('Line %s. Cheque number %s has already been entered into the system.') % (current_line_num,r_cheque_number,))
+                                errors.append(_('Line %s. Cheque number %s has already been entered into the system.') % (current_line_num,r_cheque_number,))
                             cheque_numbers.append(r_cheque_number)
                         else:
                             errors.append(_('Line %s. Cheque number is missing') % (current_line_num,))
                     # Check that Third party exists (if not empty)
-                    tp_label = _('Partner')
                     partner_type = 'partner'
-                    third_party_journal_ids = None
                     if line[cols['third_party']]:
                         if type_for_register == 'advance':
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
-                            tp_label = _('Employee')
                             partner_type = 'employee'
                         elif type_for_register in ['transfer', 'transfer_same']:
                             tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
-                            tp_label = _('Journal')
                             partner_type = 'journal'
                             tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
                             if type_for_register == 'transfer':
@@ -480,7 +476,6 @@ class wizard_register_import(osv.osv_memory):
                         if not tp_ids:
                             # Search now if employee exists
                             tp_ids = self.pool.get('hr.employee').search(cr, uid, [('name', '=', line[cols['third_party']])])
-                            tp_label = _('Employee')
                             partner_type = 'employee'
                             # If really not, raise an error for this line
                             if not tp_ids:
@@ -488,16 +483,16 @@ class wizard_register_import(osv.osv_memory):
                                 continue
                         r_partner = tp_ids[0]
 
-                        # US-672 TP compat with account
-                        tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
-                            cr, uid, [r_account],
-                            employee_id=partner_type == 'employee' and r_partner or False,
-                            transfer_journal_id=partner_type == 'journal' and r_partner or False,
-                            partner_id=partner_type == 'partner' and r_partner or False,
-                            context=context)[r_account]
-                        if not tp_check_res:
-                            errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
-                            continue
+                    # US-672 TP compat with account
+                    tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
+                        cr, uid, [r_account],
+                        employee_id=partner_type == 'employee' and r_partner or False,
+                        transfer_journal_id=partner_type == 'journal' and r_partner or False,
+                        partner_id=partner_type == 'partner' and r_partner or False,
+                        context=context)[r_account]
+                    if not tp_check_res:
+                        errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
+                        continue
 
                     # free 1
                     if line[cols['free1']]:
@@ -638,13 +633,13 @@ class wizard_register_import(osv.osv_memory):
         self.write(cr, uid, ids, {'state': 'inprogress'}, context)
         # Return a dict to avoid problem of panel bar to the right
         return {
-         'type': 'ir.actions.act_window',
-         'res_model': 'wizard.register.import',
-         'view_type': 'form',
-         'view_mode': 'form',
-         'res_id': ids[0],
-         'context': context,
-         'target': 'new',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.register.import',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
         }
 
     def button_update(self, cr, uid, ids, context=None):

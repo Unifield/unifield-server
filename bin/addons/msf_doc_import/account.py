@@ -28,7 +28,6 @@ from time import strftime
 from tempfile import NamedTemporaryFile
 from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
-from csv import DictReader
 import threading
 import pooler
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
@@ -60,10 +59,6 @@ class msf_doc_import_accounting(osv.osv_memory):
         # Checks
         if not context:
             context = {}
-        try:
-            msf_fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except ValueError:
-            msf_fp_id = 0
         # Browse all wizards
         for w in self.browse(cr, uid, ids):
             # Search lines
@@ -84,7 +79,6 @@ class msf_doc_import_accounting(osv.osv_memory):
             self.write(cr, uid, ids, {'message': _('Writing a move for each currency…'), 'progression': 20.0})
             num = 1
             nb_currencies = float(len(available_currencies))
-            current_percent = 20.0
             remaining_percent = 80.0
             step = float(remaining_percent / nb_currencies)
             for c_id, p_id in available_currencies:
@@ -117,9 +111,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                             'destination_id': l.destination_id.id,
                         }
                         common_vals.update({'analytic_id': l.cost_center_id.id,})
-                        cc_res = self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
+                        self.pool.get('cost.center.distribution.line').create(cr, uid, common_vals)
                         common_vals.update({'analytic_id': l.funding_pool_id.id, 'cost_center_id': l.cost_center_id.id,})
-                        fp_res = self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
+                        self.pool.get('funding.pool.distribution.line').create(cr, uid, common_vals)
                     # Create move line
                     move_line_vals = {
                         'move_id': move_id,
@@ -240,7 +234,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                 # Check file's content
                 for num, r in enumerate(rows):
                     # Update wizard
-                    percent = (float(num+1) / float(nb_rows+1)) * 100.0
                     progression = ((float(num+1) * 94) / float(nb_rows)) + 6
                     self.write(cr, uid, [wiz.id], {'message': _('Checking file…'), 'progression': progression})
                     # Prepare some values
@@ -266,14 +259,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
                     # Bypass this line if NO debit AND NO credit
                     try:
-                        bd = line[cols['Booking Debit']]
-                    except IndexError, e:
-                        continue
-                    try:
-                        bc = line[cols['Booking Credit']]
-                    except IndexError, e:
-                        continue
-                    if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
+                        if not line[cols['Booking Debit']] and not line[cols['Booking Credit']]:
+                            continue
+                    except IndexError:
                         continue
                     processed += 1
                     # Check that currency is active
@@ -381,16 +369,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
 
                     # US-672 check Third party compat with account
-                    if r_employee or r_journal or r_partner:
-                        tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
-                            cr, uid, [r_account],
-                            employee_id=r_employee,
-                            transfer_journal_id=r_journal,
-                            partner_id=r_partner,
-                            context=context)[r_account]
-                        if not tp_check_res:
-                            errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
-                            continue
+                    tp_check_res = self.pool.get('account.account').is_allowed_for_thirdparty(
+                        cr, uid, [r_account],
+                        employee_id=r_employee or False,
+                        transfer_journal_id=r_journal or False,
+                        partner_id=r_partner or False,
+                        context=context)[r_account]
+                    if not tp_check_res:
+                        errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account.code, account.name, ))
+                        continue
 
                     # Check analytic axis only if G/L account is analytic-a-holic
                     if account.is_analytic_addicted:
@@ -438,7 +425,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         ], limit=1, context=context)
                     if not period_ids:
                         raise osv.except_osv(_('Warning'),
-                            _('The date chosen in the wizard is not in the same period as the imported entries.'))
+                                             _('The date chosen in the wizard is not in the same period as the imported entries.'))
                     period = period_obj.browse(
                         cr, uid, period_ids[0], context=context)
                     if period.state in ('created', 'done'):

@@ -54,8 +54,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     if data and data.get('context') and data.get('context').get('display_fp'):
         max = 21
 %>
-<Table ss:ExpandedColumnCount="${max}" x:FullColumns="1"
-x:FullRows="1">
+<Table>
 % for x in range(0,max):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor

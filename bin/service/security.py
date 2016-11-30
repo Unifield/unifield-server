@@ -67,7 +67,7 @@ def change_password(db_name, login, password, new_password, confirm_password):
     try:
         user_obj = pool.get('res.users')
         result = user_obj.change_password(db_name, login, password, new_password,
-                confirm_password)
+                                          confirm_password)
     finally:
         cr.close()
     return result
@@ -89,7 +89,7 @@ def login(db_name, login, password):
             to_update = updater.test_do_upgrade(cr)
         if nb or to_update:
             s = threading.Thread(target=pooler.get_pool, args=(db_name,),
-                    kwargs={'threaded': True})
+                                 kwargs={'threaded': True})
             s.start()
             raise Exception("ServerUpdate: Server is updating modules ...")
 
@@ -132,13 +132,13 @@ def check_password_validity(self, cr, uid, old_password, new_password, confirm_p
     # check it contains at least one digit
     if not re.search(r'\d', new_password):
         message = _('The new password is not strong enough. '\
-            'Password must contain at least one digit.')
+                    'Password must contain at least one digit.')
         raise osv.except_osv(_('Operation Canceled'), message)
 
     # check new_password lenght
     if len(new_password) < PASSWORD_MIN_LENGHT:
         message = _('The new password is not strong enough. '\
-            'Password must be at least %s characters long.' % PASSWORD_MIN_LENGHT)
+                    'Password must be at least %s characters long.' % PASSWORD_MIN_LENGHT)
         raise osv.except_osv(_('Operation Canceled'), message)
 
     # check login != new_password:
@@ -172,15 +172,15 @@ def check_password(password, hashed_password):
     password = tools.ustr(password)
 
     # check the password is a bcrypt encrypted one
-    if bcrypt.identify(hashed_password) and \
-            bcrypt.verify(password, hashed_password):
-        return True
+    if bcrypt.identify(hashed_password):
+        if bcrypt.verify(password, hashed_password):
+            return True
     elif password == hashed_password:
         # this is a not encrypted password (we want to keep compatibility with
         # old way password
         return True
-    else:
-        raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
+
+    raise ExceptionNoTb('AccessDenied: Invalid super administrator password.')
 
 def check_super_password_validity(password):
     check_password_validity(None, None, 1, None, password, password, 'admin')

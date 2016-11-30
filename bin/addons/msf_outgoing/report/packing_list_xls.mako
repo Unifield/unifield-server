@@ -441,7 +441,7 @@
        <Cell ss:StyleID="s134"><Data ss:Type="Number">${(m.line_number)|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.default_code)|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.product_id.name)|x}</Data></Cell>
-       <Cell ss:StyleID="s134" ss:MergeAcross="2"><Data ss:Type="String">${(m.sale_line_id and m.sale_line_id.notes or '')|x}</Data></Cell>
+       <Cell ss:StyleID="s134" ss:MergeAcross="2"><Data ss:Type="String">${(m.comment or '')|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(formatLang(m.product_qty or 0.00))|x} ${(m.product_uom.name)|x}</Data></Cell>
        <Cell ss:StyleID="s134"><Data ss:Type="String">${(m.prodlot_id.name or '')|x}</Data></Cell>
        % if m.prodlot_id.life_date and m.prodlot_id.life_date not in (False, 'False'):

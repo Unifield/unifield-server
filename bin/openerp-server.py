@@ -61,12 +61,35 @@ if os.name == 'posix':
 import netsvc
 logger = logging.getLogger('server')
 
+# Log an operations.event. In the contexts we are called, we don't
+# have a open cr. We need to look in pooler.pool_dic to find the
+# list of DBs that have already been opened and upgraded.
+# We ignore all errors because logging events is best
+# effort.
+def ops_event(what, dbname=None):
+    for db in pooler.pool_dic.keys():
+        if dbname is not None and db != dbname:
+            continue
+        try:
+            c, pool = pooler.get_db_and_pool(db, upgrade_modules=False)
+            cr = c.cursor()
+            oe = pool.get('operations.event')
+            oe.create(cr, 1, { 'kind': what })
+            cr.commit()
+        except:
+            pass
+        finally:
+            if cr is not None:
+                cr.close()
+                cr = None
+
 #-----------------------------------------------------------------------
 # import the tools module so that the commandline parameters are parsed
 #-----------------------------------------------------------------------
 import tools
 updater.update_path()
 logger.info("OpenERP version - %s", release.version)
+logger.info("sys.path %s", ' '.join(sys.path))
 for name, value in [('addons_path', tools.config['addons_path']),
                     ('database hostname', tools.config['db_host'] or 'localhost'),
                     ('database port', tools.config['db_port'] or '5432'),
@@ -92,17 +115,17 @@ import pooler
 
 #----------------------------------------------------------
 # import basic modules
+# (the asserts are to silence pyflakes warnings)
 #----------------------------------------------------------
-import osv
-import workflow
-import report
-import service
+import osv; assert osv
+import workflow; assert workflow
+import report; assert report
+import service; assert service
 
 #----------------------------------------------------------
 # import addons
 #----------------------------------------------------------
-
-import addons
+import addons; assert addons
 
 #----------------------------------------------------------
 # Load and update databases if requested
@@ -112,8 +135,8 @@ import service.http_server
 import updater
 
 if not ( tools.config["stop_after_init"] or \
-    tools.config["translate_in"] or \
-    tools.config["translate_out"] ):
+         tools.config["translate_in"] or \
+         tools.config["translate_out"] ):
     service.http_server.init_servers()
     service.http_server.init_xmlrpc()
     service.http_server.init_static_http()
@@ -123,12 +146,13 @@ if not ( tools.config["stop_after_init"] or \
 
 if tools.config['db_name']:
     for dbname in tools.config['db_name'].split(','):
+        ops_event('commandline-update', dbname)
         db,pool = pooler.get_db_and_pool(dbname, update_module=tools.config['init'] or tools.config['update'], pooljobs=False)
         cr = db.cursor()
         try:
             if tools.config["test_file"]:
                 logger.info('loading test file %s', tools.config["test_file"])
-                tools.convert_yaml_import(cr, 'base', file(tools.config["test_file"]), {}, 'test', True)
+                tools.convert_yaml_import(cr, 'base', open(tools.config["test_file"]), {}, 'test', True)
                 cr.rollback()
             pool.get('ir.cron')._poolJobs(db.dbname)
         finally:
@@ -138,8 +162,6 @@ if tools.config['db_name']:
 # translation stuff
 #----------------------------------------------------------
 if tools.config["translate_out"]:
-    import csv
-
     if tools.config["language"]:
         msg = "language %s" % (tools.config["language"],)
     else:
@@ -147,7 +169,7 @@ if tools.config["translate_out"]:
     logger.info('writing translation file for %s to %s', msg, tools.config["translate_out"])
 
     fileformat = os.path.splitext(tools.config["translate_out"])[-1][1:].lower()
-    buf = file(tools.config["translate_out"], "w")
+    buf = open(tools.config["translate_out"], "w")
     dbname = tools.config['db_name']
     cr = pooler.get_db(dbname).cursor()
     try:
@@ -233,6 +255,8 @@ def quit(restart=False, db_name=''):
     logger = logging.getLogger('shutdown')
     logger.info("Initiating OpenERP Server shutdown")
     logger.info("Hit CTRL-C again or send a second signal to immediately terminate the server...")
+
+    ops_event('shutdown')
     logging.shutdown()
 
     # manually join() all threads before calling sys.exit() to allow a second signal
@@ -282,11 +306,12 @@ if tools.config['pidfile']:
 
 netsvc.Server.startAll()
 
-logger.info('OpenERP server is running, waiting for connections...')
+updater.check_mako_xml()
 updater.reconnect_sync_server()
+logger.info('OpenERP server is running, waiting for connections...')
 
 while netsvc.quit_signals_received == 0 and not updater.restart_required:
-    mainthread_sleep(5)
+    mainthread_sleep(5),
 
 quit(restart=updater.restart_required)
 

@@ -83,7 +83,7 @@ class account_cash_statement(osv.osv):
                         if end[2]['pieces'] == dict_val['pieces']:
                             end[2]['number'] += dict_val['number']
             vals.update({
-#                'ending_details_ids': open_close['start'],
+                #                'ending_details_ids': open_close['start'],
                 'starting_details_ids': open_close['end'],
             })
         else:
@@ -134,23 +134,23 @@ class account_cash_statement(osv.osv):
                 # 'button_confirm_closing_bank_balance' button
                 to_write_id_list = []
                 for r in self.read(cr, uid, ids,
-                    [ 'closing_balance_frozen', 'journal_id', ],
-                    context=context):
+                                   [ 'closing_balance_frozen', 'journal_id', ],
+                                   context=context):
                     if not r['closing_balance_frozen']:
                         if r['journal_id']:
                             jtype = self.pool.get('account.journal').read(cr,
-                                uid, [r['journal_id'][0]], ['type'],
-                                context=context)[0]['type']
+                                                                          uid, [r['journal_id'][0]], ['type'],
+                                                                          context=context)[0]['type']
                             if jtype != 'cash':
                                 args = [('prev_reg_id', '=', r['id'])]
                                 search_ids = self.search(cr, uid, args,
-                                    context=context)
+                                                         context=context)
                                 if search_ids:
                                     to_write_id_list.extend(search_ids)
                 self.write(cr, uid, to_write_id_list, new_vals, context=context)
 
         return super(account_cash_statement, self).write(cr, uid, ids, vals,
-            context=context)
+                                                         context=context)
 
     def button_open_cash(self, cr, uid, ids, context=None):
         if context is None:
@@ -243,9 +243,9 @@ class account_cash_statement(osv.osv):
             'view_mode': 'form',
             'view_type': 'form',
             'context': {
-                    'active_id': ids[0],
-                    'active_ids': ids
-                }
+                'active_id': ids[0],
+                'active_ids': ids
+            }
         }
 
     def _end_balance(self, cr, uid, ids, field_name=None, arg=None, context=None):
@@ -307,21 +307,21 @@ class account_cash_statement(osv.osv):
         return res
 
     _columns = {
-            'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
-            'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')),
-                readonly="True", string='State'),
-            'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
-            'period_id': fields.many2one('account.period', 'Period', required=True),
-            'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
-                states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
-            'open_advance_amount': fields.float('Unrecorded Advances'),
-            'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
-            'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
-            'comments': fields.char('Comments', size=64, required=False, readonly=False),
-            'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance',
-                help="Opening balance + Cash Transaction"),
-            # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
-            'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
+        'balance_end': fields.function(_end_balance, method=True, store=False, string='Calculated Balance'),
+        'state': fields.selection((('draft', 'Draft'), ('open', 'Open'), ('partial_close', 'Partial Close'), ('confirm', 'Closed')),
+                                  readonly="True", string='State'),
+        'name': fields.char('Register Name', size=64, required=False, readonly=True, states={'draft': [('readonly', False)]}),
+        'period_id': fields.many2one('account.period', 'Period', required=True),
+        'line_ids': fields.one2many('account.bank.statement.line', 'statement_id', 'Statement lines',
+                                    states={'partial_close':[('readonly', True)], 'confirm':[('readonly', True)], 'draft':[('readonly', True)]}),
+        'open_advance_amount': fields.float('Unrecorded Advances'),
+        'unrecorded_expenses_amount': fields.float('Unrecorded expenses'),
+        'closing_gap': fields.function(_gap_compute, method=True, string='Gap'),
+        'comments': fields.char('Comments', size=64, required=False, readonly=False),
+        'msf_calculated_balance': fields.function(_msf_calculated_balance_compute, method=True, readonly=True, string='Calculated Balance',
+                                                  help="Opening balance + Cash Transaction"),
+        # Because of UTP-382, need to change store=True to FALSE for total_entry_encoding (which do not update fields at register line deletion/copy)
+        'total_entry_encoding': fields.function(_get_sum_entry_encoding, method=True, store=False, string="Cash Transaction", help="Total cash transactions"),
     }
 
     def button_wiz_temp_posting(self, cr, uid, ids, context=None):
@@ -393,7 +393,10 @@ class account_bank_statement_line(osv.osv):
 
     _columns = {
         # UTP-482 linked confirmed PO for an operational advance in cache register
-        'cash_register_op_advance_po_id': fields.many2one('purchase.order', 'OPE ADV - LINK TO PO', required=False, help='Operational advance purchase order'),
+        'cash_register_op_advance_po_id': fields.many2one('purchase.order',
+                                                          'OPE ADV - LINK TO PO', required=False,
+                                                          hide_default_menu=True,
+                                                          help='Operational advance purchase order'),
     }
 
     def check_is_cash_register_op_advance_po_available(self, cr, uid, ids, context=None):

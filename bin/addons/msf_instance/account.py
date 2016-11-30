@@ -19,12 +19,81 @@
 #
 ##############################################################################
 
-from osv import osv
+from osv import osv, fields
 from tools.translate import _
 
 class account_period(osv.osv):
     _name = 'account.period'
     _inherit = 'account.period'
+
+    def _get_child_mission_closed(self, cr, uid, ids, name, args, context=None):
+        """
+        Fake method / always returns False
+        """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        for id in ids:
+            res[id] = False
+        return res
+
+    def _search_child_mission_closed(self, cr, uid, obj, name, args, context=None):
+        '''
+        Returns a domain corresponding to mission-closed periods for the selected fiscal year
+        - if in HQ: the periods must be "mission-closed" in the selected coordo (the status in HQ doesn't matter)
+        - else: the periods must be "mission-closed" in the current instance
+        '''
+        res = []
+        period_ids = []
+        user_obj = self.pool.get('res.users')
+        if not len(args):
+            return res
+        if len(args) != 1:
+            msg = _("Domain %s not supported") % args
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][1] != '=':
+            msg = _("Operator %s not supported") % (args[0][1], )
+            raise osv.except_osv(_('Error'), msg)
+        if args[0][0] != 'child_mission_closed' or not args[0][2]:
+            return res
+        # if no fiscal year selected: don't display any periods
+        fy = args[0][2][1]
+        if not fy:
+            return [('id', 'in', [])]
+        # if the current instance is an HQ
+        instance_id = user_obj.browse(cr, uid, uid, context=context).company_id.instance_id
+        if instance_id and instance_id.level == 'section':
+            # if no proprietary instance selected: don't display any periods
+            prop_inst = args[0][2][0]
+            if not prop_inst:
+                return [('id', 'in', [])]
+            # else get the mission-closed periods
+            sql_get_periods = """
+                  SELECT ps.period_id
+                  FROM account_period_state ps
+                  INNER JOIN account_period p
+                  ON ps.period_id = p.id
+                  WHERE ps.state = 'mission-closed'
+                  AND ps.instance_id = %s
+                  AND p.fiscalyear_id = %s;"""
+            cr.execute(sql_get_periods, (prop_inst, fy))
+            for line in cr.fetchall():
+                period_ids.append(line[0])
+            res.append(('id', 'in', period_ids))
+        else:
+            # if not in HQ
+            res.extend([('state', '=', 'mission-closed'), ('fiscalyear_id', '=', fy)])
+        return res
+
+    _columns = {
+        'child_mission_closed': fields.function(_get_child_mission_closed, method=True, store=False,
+                                              string='Child Mission Closed',
+                                              help='In HQ, check the periods being mission-closed in the selected coordo',
+                                              type='boolean',
+                                              fnct_search=_search_child_mission_closed),
+    }
 
     def action_set_state(self, cr, uid, ids, context=None):
         """
