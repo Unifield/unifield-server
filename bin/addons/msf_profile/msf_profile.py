@@ -1042,7 +1042,32 @@ class patch_scripts(osv.osv):
         return True
 
 
+    def us_1167_status_inconsistencies(self, cr, uid, *a, **b):
+        '''
+        fill fields of stock.mission.report.line:
+            - state_ud
+            - product_active
+            - international_status_code
+        '''
+        prod_obj = self.pool.get('product.product')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        context = {}
+
+        prod_ids = prod_obj.search(cr, uid, [('active', 'in', ['t', 'f'])], context=context)
+        smrl_to_update = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids), ('mission_report_id.local_report', '=', True)], context=context)        
+
+        for smrl in smrl_obj.browse(cr, uid, smrl_to_update, context=context):
+            smrl_obj.write(cr, uid, smrl.id, {
+                'state_ud': smrl.product_id.state_ud,
+                'product_active': smrl.product_id.active,
+                'international_status_code': smrl.product_id.international_status.code if smrl.product_id.international_status else '',
+            }, context=context)
+
+        return True
+
+
 patch_scripts()
+
 
 
 class ir_model_data(osv.osv):

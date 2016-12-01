@@ -82,7 +82,7 @@ class export_report_inconsistencies(osv.osv):
             cr.commit()
             new_thread = threading.Thread(target=self.generate_report_bkg, args=(cr, uid, report.id, datas, context))
             new_thread.start()
-            new_thread.join(timeout=30.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
+            new_thread.join(timeout=25.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
 
             res = {
                 'type': 'ir.actions.act_window',
@@ -158,7 +158,6 @@ export_report_inconsistencies()
 
 
 
-
 class parser_report_inconsistencies_xls(report_sxw.rml_parse):
     '''
     To parse our mako template for inconsistencies
@@ -169,76 +168,92 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         # localcontext allows you to call methods inside mako file :
         self.localcontext.update({
             'time': time,
-            'get_uf_stopped_products': self.get_uf_stopped_products,
-            'get_stock_mission_report_lines': self.get_stock_mission_report_lines,
             'get_uf_status': self.get_uf_status,
+            'get_ud_status': self.get_ud_status,
+            'get_inconsistent_lines': self.get_inconsistent_lines,
+            'get_products_with_inconsistencies': self.get_products_with_inconsistencies,
+            'get_product_creator_name_from_code': self.get_product_creator_name_from_code,
         })
 
-        self.status_buffer = {}
+        # cached data
+        self.uf_status_cache = {}
+        self.prod_creator_cache = {}
+        self.inconsistent = []
 
 
-    def get_uf_stopped_products(self):
+    def get_inconsistent_lines(self, prod_id=None):
         '''
-        Return browse record list that contains stopped products
-        taking in account non-local/temp products stopped in the current instance,
-        and products in stock mission if they have qty in stock or in pipe
+        Return stock mission report lines that are inconsistent with HQ
+        Based on the fields: product_active, state_ud and international_status_code
+
+        prod_id: You can get only SMRL with product_id, if you don't give this information you
+        will get all inconsistents SMRL 
         '''
-        prod_obj = self.pool.get('product.product')
-        data_obj = self.pool.get('ir.model.data')
-        smrl_obj = self.pool.get('stock.mission.report.line')
+        if not self.inconsistent:
+            prod_obj = self.pool.get('product.product')
+            smrl_obj = self.pool.get('stock.mission.report.line')
 
-        stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
-        status_local_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_4')[1]
-        temporary_status_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'int_5')[1]
+            smrl_ids = smrl_obj.search(self.cr, self.uid, [('full_view', '=', False)], context=self.localcontext)
 
-        hq_stopped_ids = prod_obj.search(self.cr, self.uid, [
-            ('state', '=', stopped_state_id), 
-            ('international_status', '!=', status_local_id),
-            ('international_status', '!=', temporary_status_id)],
-            context=self.localcontext)
+            # check stock mission report line for inconsistencies with HQ (our instance):
+            self.inconsistent = []
+            for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext):
+                for prod in prod_obj.browse(self.cr, self.uid, [smrl.product_id.id], context=self.localcontext):
+                    # in product_product state is False when empty
+                    # in smrl product_state is '' when empty:
+                    if not prod.state and not smrl.product_state:
+                        pass
+                    elif not prod.state and smrl.product_state:
+                        self.inconsistent.append(smrl)
+                        continue
+                    elif prod.state and not smrl.product_state:
+                        self.inconsistent.append(smrl)
+                        continue
+                    elif prod.state.code != smrl.product_state:
+                        self.inconsistent.append(smrl)
+                        continue
 
-        smrl_ids = smrl_obj.search(self.cr, self.uid, [
-            ('full_view', '=', False),
-            ('product_state', '=', 'stopped'),
-            '|', ('internal_qty', '!=', 0),
-            ('in_pipe_qty', '!=', 0)
-        ], context=self.localcontext)
+                    if not prod.state_ud and not smrl.state_ud:
+                        pass
+                    elif prod.state_ud != smrl.state_ud:
+                        self.inconsistent.append(smrl)
+                        continue
 
-        sm_stopped_ids = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id'], context=self.localcontext)
-        sm_stopped_ids = [x.get('product_id')[0] for x in sm_stopped_ids]
+                    if prod.active != smrl.product_active: # if null in DB smrl.product_active = False ....
+                        self.inconsistent.append(smrl)
+                        continue
 
-        # build a list of stopped products with unique ids and sorted by default_code:
-        stopped_ids = list(set(hq_stopped_ids + sm_stopped_ids))
-        ls = []
-        for prod in prod_obj.browse(self.cr, self.uid, stopped_ids, context=self.localcontext):
-            ls.append( (prod.id, prod.default_code) )
-        sorted_stopped_ids = [x[0] for x in sorted(ls, key=lambda tup: tup[1])]
+            self.inconsistent.sort(key=lambda smrl: smrl.mission_report_id.instance_id.level)
 
-        return prod_obj.browse(self.cr, self.uid, sorted_stopped_ids, context=self.localcontext)
+        if prod_id:
+            return [smrl for smrl in self.inconsistent if smrl.product_id.id == prod_id]
+        else:
+            return self.inconsistent
 
 
-    def get_stock_mission_report_lines(self, product):
+    def get_products_with_inconsistencies(self):
         '''
-        Return browse record list of stock_mission_report_line with given product_id
+        return a browse record list of inconsistent product_product
         '''
-        data_obj = self.pool.get('ir.model.data')
-        smrl_obj = self.pool.get('stock.mission.report.line')
-        smrl_ids = smrl_obj.search(self.cr, self.uid, [('product_id', '=', product.id)], context=self.localcontext)
+        if not self.inconsistent:
+            self.inconsistent = self.get_inconsistent_lines()
 
-        stopped_state_id = data_obj.get_object_reference(self.cr, self.uid, 'product_attributes', 'status_3')[1]
+        prod_ids = set()
+        for smrl in self.inconsistent:
+            prod_ids.add(smrl.product_id.id)
 
-        res = [smrl for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext) if \
-               not smrl.full_view and (smrl.product_state == 'stopped' or product.state.id == stopped_state_id) and (smrl.internal_qty != 0 or smrl.in_pipe_qty != 0)]
+        prod_list = self.pool.get('product.product').browse(self.cr, self.uid, list(prod_ids), context=self.localcontext)
+        prod_list.sort(key=lambda prod: prod.default_code)
 
-        return res
+        return prod_list
 
 
     def get_uf_status(self, code):
         '''
         Return the name of the unifield status with the given code
         '''
-        if code in self.status_buffer:
-            return self.status_buffer[code]
+        if code in self.uf_status_cache:
+            return self.uf_status_cache[code]
 
         status_obj = self.pool.get('product.status')
         code_ids = status_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
@@ -246,9 +261,36 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         if code_ids:
             res = status_obj.read(self.cr, self.uid, code_ids, ['name'])[0]['name']
 
-        self.status_buffer[code] = res
+        self.uf_status_cache[code] = res
 
         return res
+
+
+    def get_ud_status(self, code):
+        '''
+        Return the name of the unidata status with the given code
+        '''
+        if not code or not isinstance(code, (str, unicode)):
+            return ''
+        return code.capitalize().replace('_', ' ')
+
+
+    def get_product_creator_name_from_code(self, code):
+        '''
+        return the name of the product creator with the given code
+        '''
+        if code in self.prod_creator_cache:
+            return self.prod_creator_cache[code]
+
+        prodstat_obj = self.pool.get('product.international.status')
+        prodstat_ids = prodstat_obj.search(self.cr, self.uid, [('code', '=', code)], context=self.localcontext)
+        if not prodstat_ids:
+            return code
+
+        name = prodstat_obj.read(self.cr, self.uid, prodstat_ids, ['name'], context=self.localcontext)[0]['name']
+        self.prod_creator_cache[code] = name
+
+        return name
 
 
 

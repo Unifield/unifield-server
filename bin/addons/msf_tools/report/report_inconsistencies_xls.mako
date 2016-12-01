@@ -58,58 +58,57 @@
 
   <Table x:FullColumns="1" x:FullRows="1">
 
-    <Columns ss:AutoFitWidth="1" ss:Width="90" /> # product code
+    <Columns ss:AutoFitWidth="1" ss:Width="90" /> # instance
+    <Columns ss:AutoFitWidth="1" ss:Width="90" /> # code
     <Columns ss:AutoFitWidth="1" ss:Width="200" /> # product description
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # product creator
-    <Columns ss:AutoFitWidth="1" ss:Width="90" /> # standardization level
+    <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unifield status
     <Columns ss:AutoFitWidth="1" ss:Width="90" /> # unidata status
+    <Columns ss:AutoFitWidth="1" ss:Width="90" /> # active
 
     ##### Table with all stopped products #####
 
-    <% stopped_products = get_uf_stopped_products() %>
-    % if not stopped_products:
+    % if not get_inconsistent_lines():
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">There is no stopped products to report</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">There is no inconsistencies to report</Data></Cell>
         </Row>
-    % endif
-    
-    % for line in stopped_products:
+    % else:
         <Row ss:AutoFitHeight="1">
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Instance</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Product Creator</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Standardization Level</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">UniField Status</Data></Cell>
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Unidata Status</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Active/Inactive</Data></Cell>
         </Row>
-
-        <% standard_level = 'Standard' if line.standard_ok == 'True' else 'Non-standard' %>
-        <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.default_code)|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.name_template)|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.international_status and line.international_status.name or '')|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(standard_level)|x}</Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(line.state_ud and getSel(line, 'state_ud') or '')|x}</Data></Cell>
-        </Row>
-
-        <% smrl_list = get_stock_mission_report_lines(line) %>
-        <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance/Mission</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Unifield Status</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Instance stock</Data></Cell>
-          <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">Pipeline Qty</Data></Cell>
-        </Row>
-        % for smrl in smrl_list:
+        % for prod in get_products_with_inconsistencies():
+            # HQ data:
             <Row ss:AutoFitHeight="1">
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.name)|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_uf_status(smrl.product_state))|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(smrl.internal_qty)|x}</Data></Cell>
-              <Cell ss:StyleID="tab_content"><Data ss:Type="Number">${(smrl.in_pipe_qty)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('HQ')|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.default_code)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.name_template)|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.international_status and prod.international_status.name or '')|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.state and prod.state.name or '')|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.state_ud and getSel(prod, 'state_ud') or '')|x}</Data></Cell>
+              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('Active' if prod.active else 'Inactive')|x}</Data></Cell>
             </Row>
+            % for smrl in get_inconsistent_lines(prod.id):
+                <Row ss:AutoFitHeight="1">
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.instance_id.name)|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.default_code)|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.product_id.name_template)|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_product_creator_name_from_code(smrl.international_status_code) or '')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_uf_status(smrl.product_state))|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_ud_status(smrl.state_ud) or '')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${('Active' if smrl.product_active else 'Inactive')|x}</Data></Cell>
+                </Row>
+            % endfor
         % endfor
-            <Row></Row>
-            <Row></Row>
-    % endfor
+    % endif
+
 
   </Table>
 

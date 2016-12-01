@@ -138,5 +138,9 @@
         <record id="us_1671_stopped_products" model="patch.scripts">
             <field name="method">us_1671_stopped_products</field>
         </record>
+        
+        <record id="us_1167_status_inconsistencies" model="patch.scripts">
+            <field name="method">us_1167_status_inconsistencies</field>
+        </record>
     </data>
 </openerp>
