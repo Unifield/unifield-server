@@ -75713,3 +75713,8 @@ msgstr "Status du rapport"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé à afficher"
 
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/wizard/account_reconcile.py:190
+#, python-format
+msgid "Both Debit and Credit lines are required for reconciliation."
+msgstr "Un lettrage requiert à la fois des lignes en débit et en crédit."

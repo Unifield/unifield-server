@@ -186,6 +186,8 @@ class account_move_line_reconcile(osv.osv_memory):
                 debit += line.debit_currency
                 fcredit += line.credit
                 fdebit += line.debit
+        if debit <= 10**-3 or credit <= 10**-3:
+            raise osv.except_osv(_('Error'), _('Both Debit and Credit lines are required for reconciliation.'))
         # Adapt state value
         if abs(debit - credit) <= 10**-3:
             state = 'total'
