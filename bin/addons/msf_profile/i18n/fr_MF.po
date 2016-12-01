@@ -75713,3 +75713,8 @@ msgstr "Status du rapport"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé à afficher"
 
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:491
+#, python-format
+msgid "Only manually reconciled entries can be unreconciled."
+msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
