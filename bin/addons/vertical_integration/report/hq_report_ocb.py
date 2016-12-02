@@ -116,13 +116,11 @@ class finance_archive(finance_export.finance_archive):
 
                 # If we get some ids, fetch the partner hash
                 if partner_id:
-                    if isinstance(partner_id, (int, long)):
-                        partner_id = [partner_id]
-                    if partner_id[0] in partner_hash_dict:
-                        partner_hash = partner_hash_dict[partner_id[0]]
+                    if partner_id in partner_hash_dict:
+                        partner_hash = partner_hash_dict[partner_id]
                     else:
-                        partner_hash = self.get_hash(cr, uid, partner_id[0], 'res.partner')
-                        partner_hash_dict[partner_id[0]] = partner_hash
+                        partner_hash = self.get_hash(cr, uid, [partner_id], 'res.partner')
+                        partner_hash_dict[partner_id] = partner_hash
 
                 if not partner_id and tmp_line[partner_name_cl]:
                     if partner_name not in employee_search_dict:
