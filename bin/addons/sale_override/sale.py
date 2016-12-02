@@ -1454,7 +1454,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                               'transport_type': so.transport_type,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
-                                                              'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
+                                                              'original_so_id_sale_order': so.id,
+                                                              'parent_order_name': so.parent_order_name,
+                                                              'fo_to_resource': True,
+                                                              }, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.') % (selec_name, fo_name))
                         self.infolog(cr, uid, "The %s split id:%s (%s) has been created." % (
@@ -1468,8 +1471,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
                 new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line'])
-                new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                               'original_line_id': line.id}, context=new_context)
+                new_line_id = line_obj.copy(cr, uid, line.id, {
+                    'order_id': split_fo_dic[fo_type],
+                    'original_line_id': line.id,
+                }, context=new_context)
                 created_line.append(new_line_id)
 
             line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
