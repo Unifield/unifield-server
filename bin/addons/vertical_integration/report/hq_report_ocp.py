@@ -171,7 +171,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         mi_obj = pool.get('msf.instance')
         m_obj = pool.get('account.move')
         ml_obj = pool.get('account.move.line')
-        excluded_journal_types = ['hq']  # journal types that should not be used to take lines
+        excluded_journal_types = ['hq', 'cur_adj']  # journal types that should not be used to take lines
         # Fetch data from wizard
         if not data.get('form', False):
             raise osv.except_osv(_('Error'), _('No data retrieved. Check that the wizard is filled in.'))
@@ -220,7 +220,7 @@ class hq_report_ocp(report_sxw.report_sxw):
         # - key: name of the SQL request
         # - value: the SQL request to use
         sqlrequests = {
-            # Pay attention to take analytic lines that are not on HQ and MIGRATION journals.
+            # Pay attention to take analytic lines that are not on HQ, MIGRATION and FXA journals.
             'rawdata': """
                 SELECT al.id, SUBSTR(i.code, 1, 3),
                        CASE WHEN j.code = 'OD' THEN j.code ELSE aj.code END AS journal,
@@ -265,7 +265,7 @@ class hq_report_ocp(report_sxw.report_sxw):
                 AND j.type not in %s
                 AND al.instance_id in %s;
                 """,
-            # Exclude lines that come from a HQ or MIGRATION journal
+            # Exclude lines that come from a HQ, MIGRATION or FXA journal
             # Take all lines that are on account that is "shrink_entries_for_hq" which will make a consolidation of them (with a second SQL request)
             # The subrequest enables to disallow lines that have analytic lines. This is to not retrieve expense/income accounts
             'bs_entries_consolidated': """
