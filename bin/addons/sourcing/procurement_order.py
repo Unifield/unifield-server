@@ -128,8 +128,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if procurement and procurement.tender_line_id:
                 if procurement.tender_line_id.comment:
                     line['comment'] = procurement.tender_line_id.comment
-                if procurement.tender_line_id.purchase_order_line_id and procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date:
-                    line.update({'confirmed_delivery_date': procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date})
+                # US-2065 - Do not push Delivery confirmed date on the RfQ to the PO
+                # if procurement.tender_line_id.purchase_order_line_id and procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date:
+                #     line.update({'confirmed_delivery_date': procurement.tender_line_id.purchase_order_line_id.confirmed_delivery_date})
 
         if not line.get('price_unit', False):
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
