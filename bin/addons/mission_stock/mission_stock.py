@@ -548,9 +548,9 @@ class stock_mission_report(osv.osv):
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             # Create one line by product
             cr.execute('''SELECT p.id, ps.code
-                          FROM product_product p, product_template pt, product_status ps
+                          FROM product_product p, product_template pt
+                              LEFT JOIN product_status ps ON pt.state = ps.id
                           WHERE p.product_tmpl_id = pt.id
-                          AND pt.state = ps.id
                           AND NOT EXISTS (
                             SELECT product_id
                             FROM
