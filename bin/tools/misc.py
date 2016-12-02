@@ -153,15 +153,31 @@ def pg_dump(db_name, outfile=False):
         _logger.info('Dump %s to %s' % (db_name, outfile or 'memory'))
         _set_env_pg()
         cmd = ['pg_dump', '--format=c', '--no-owner']
+        dump_string = 'postgres://%(user)s:%(pwd)s@%(host)s:%(port)s/%(dbname)s'
+        dump_dict = {
+            'user': 'openerp',
+            'pwd': '',
+            'host': 'localhost',
+            'port': '5432',
+            'dbname': db_name,
+        }
         if outfile:
             cmd += ['-f', outfile]
         if config['db_user']:
             cmd.append('--username=' + config['db_user'])
+            dump_dict['user'] = config['db_user']
         if config['db_host']:
             cmd.append('--host=' + config['db_host'])
+            dump_dict['host'] = config['db_host']
         if config['db_port']:
             cmd.append('--port=' + str(config['db_port']))
-        cmd.append(db_name)
+            dump_dict['port'] = config['db_port']
+        if config['db_password']:
+            dump_dict['pwd'] = config['db_password']
+            cmd.append(dump_string % dump_dict)
+        else:
+            cmd.append(db_name)
+
         if outfile:
             res = exec_pg_command(*tuple(cmd))
         else:
