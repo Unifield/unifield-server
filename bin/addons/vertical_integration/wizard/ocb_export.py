@@ -45,6 +45,12 @@ class ocb_export_wizard(osv.osv_memory):
         """
         Launch a report to generate the ZIP file.
         """
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         # Prepare some values
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
@@ -89,7 +95,20 @@ class ocb_export_wizard(osv.osv_memory):
             wizard.instance_id and wizard.instance_id.code or '',
             period_name)
 
-        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocb', 'datas': data}
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': data['target_filename'],
+            'report_name': 'hq.ocb',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+
+        data['context'] = context
+        return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'hq.ocb',
+                'datas': data,
+                'context': context,
+        }
 
 ocb_export_wizard()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
