@@ -561,7 +561,7 @@ class stock_mission_report(osv.osv):
                 line_obj.create(cr, uid, {
                     'product_id': product, 
                     'mission_report_id': report['id'],
-                    'product_state': prod_state,
+                    'product_state': prod_state or '',
                 }, context=context)
 
             # Don't update lines for full view or non local reports
