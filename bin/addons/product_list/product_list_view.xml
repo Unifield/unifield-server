@@ -118,6 +118,18 @@
                   sequence="2"
                   action="action_product_list"
                   parent="base.menu_product" />
+
+        <record id="product_list_line_list_view" model="ir.ui.view">
+            <field name="name">product.list.line.list.view</field>
+            <field name="model">product.list.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Products" noteditable="1">
+                    <field name="name" />
+                    <field name="comment" />
+                </tree>
+            </field>
+        </record>
                   
     </data>
 </openerp>
