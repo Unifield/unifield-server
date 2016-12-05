@@ -387,6 +387,12 @@ class product_product(osv.osv):
                 catalogue_list = [int(arg[2])]
             elif arg[0] == 'catalogue_ids' and arg[1] == 'in':
                 catalogue_list = arg[2]
+            elif arg[0] == 'catalogue_ids' and arg[1] == 'ilike':
+                name_search = arg[2]
+                catalogue_list = catalogue_obj.search(cr, uid, [('name', 'ilike', name_search)],
+                        context=context)
+                if not catalogue_list:
+                    return []
             else:
                 return []
 
