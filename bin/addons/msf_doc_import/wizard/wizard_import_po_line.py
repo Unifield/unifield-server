@@ -162,7 +162,7 @@ class wizard_import_po_line(osv.osv_memory):
                         'proc_type': 'make_to_order',
                         'default_code': False,
                         'confirmed_delivery_date': False,
-                        'line_number':'',
+                        'line_number': '',
                     }
 
                     col_count = len(row)
@@ -264,7 +264,6 @@ class wizard_import_po_line(osv.osv_memory):
                         to_write.update(
                             comment=c_value['comment'],
                             warning_list=c_value['warning_list'])
-
 
                         to_write.update(
                             to_correct_ok=any(to_write['error_list']),  # the lines with to_correct_ok=True will be red

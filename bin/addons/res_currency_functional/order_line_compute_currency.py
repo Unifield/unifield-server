@@ -120,7 +120,7 @@ class purchase_order_line_compute_currency(osv.osv):
     _columns = {
         'currency_id': fields.related('order_id', 'currency_id', type="many2one", relation="res.currency", string="Currency", store=False, readonly=True),
         'functional_subtotal': fields.function(_amount_currency_line, method=True, store=False, string='Functional Subtotal', digits_compute=dp.get_precision('Purchase Price')),
-        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True),
+        'functional_currency_id': fields.related('company_id', 'currency_id', type="many2one", relation="res.currency", string="Functional Currency", store=False, readonly=True, write_relate=False),
     }
     
     def default_get(self, cr, uid, fields, context=None):
