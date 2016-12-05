@@ -23,6 +23,10 @@ from osv import fields, osv
 
 
 class wizard_template(osv.osv):
+    '''
+    Used to store the values from a wizard in order to reload them later
+    '''
+
     _name = 'wizard.template'
     _description = 'Wizard Template'
 
@@ -32,6 +36,11 @@ class wizard_template(osv.osv):
         'wizard_name': fields.char('Wizard name', size=256, required=True),
         'values': fields.text('Values', help='Values from the wizard, stored as a dictionary'),
     }
+
+    _sql_constraints = [
+        ('name_user_id_wizard_name_uniq', 'UNIQUE(name, user_id, wizard_name)',
+         'This template name already exists for this wizard. Please choose another name.')
+    ]
 
 
 wizard_template()
