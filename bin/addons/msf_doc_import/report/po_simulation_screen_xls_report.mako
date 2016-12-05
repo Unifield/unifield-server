@@ -139,7 +139,7 @@
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif
-        % if o.imp_ready_to_ship_date != o.in_ready_to_ship_date:
+        % if o.imp_ready_to_ship_date not in ('False', False) and o.imp_ready_to_ship_date != o.in_ready_to_ship_date:
         <Cell ss:StyleID="line_change_short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
         % elif o.imp_ready_to_ship_date not in ('False', False):
         <Cell ss:StyleID="short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_ready_to_ship_date)|n}T00:00:00.000</Data></Cell>
@@ -155,7 +155,7 @@
         % else:
         <Cell ss:StyleID="line" ></Cell>
         % endif
-        % if o.imp_shipment_date != o.in_shipment_date:
+        % if o.imp_shipment_date not in ('False', False) and o.imp_shipment_date != o.in_shipment_date:
         <Cell ss:StyleID="line_change_short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
         % elif o.imp_shipment_date not in ('False', False):
         <Cell ss:StyleID="short_date" ss:MergeAcross="1" ><Data ss:Type="DateTime">${(o.imp_shipment_date)|n}T00:00:00.000</Data></Cell>
