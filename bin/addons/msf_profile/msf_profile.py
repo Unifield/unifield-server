@@ -46,6 +46,22 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
+        '''
+        A button "Activate Instance" as be removed from the user interface, but
+        this button had some related updates that are sent to new instance on
+        the first sync and genereate not run. Remove all of this updates on the
+        sync server.
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # this script is exucuted on server side only
+            update_to_delete_ids = update_module.search(cr, uid,
+                    [('sdref', 'in',
+                        ('sync_client_activate_wizard_action',
+                         'BAR_sync_clientactivate_entity_wizard_view_activate')])
+            update_module.unlink(cr, uid, update_to_delete_ids)
+
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
