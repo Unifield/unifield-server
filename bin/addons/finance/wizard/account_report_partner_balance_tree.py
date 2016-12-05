@@ -339,6 +339,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        'template_name': fields.char('Template name', size=128),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -435,6 +436,23 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'report_name': 'account.partner.balance.tree_xls',
             'datas': data,
         }
+
+    def save_template(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        # get a dictionary with all fields values
+        data = ids and self.read(cr, uid, ids[0], context=context)
+        if data:
+            if not data['template_name']:
+                raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
+            else:
+                # create a new wizard_template to store the values
+                vals = {'name': data['template_name'],
+                        'user_id': uid,
+                        'wizard_name': self._name,
+                        'values': data,
+                        }
+                self.pool.get('wizard.template').create(cr, uid, vals, context=context)
+        return True
 
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:

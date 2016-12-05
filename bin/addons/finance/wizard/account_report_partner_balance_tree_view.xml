@@ -116,6 +116,11 @@
                 <button icon="gtk-print" name="print_pdf" string="Print PDF" type="object" colspan="2" />
                 <button icon="gtk-print" name="print_xls" string="Print Excel" type="object" colspan="2" />
             </group>
+            <separator string="Wizard template" colspan="4"/>
+            <group col="4" colspan="4">
+                <field name="template_name" colspan="2" />
+                <button icon="gtk-floppy" name="save_template" string="Save current template" type="object" colspan="2" />
+            </group>
             </xpath>
             
             <xpath expr="//field[@name='journal_ids']" position="replace">
