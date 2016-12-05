@@ -59,7 +59,7 @@ class patch_scripts(osv.osv):
             update_to_delete_ids = update_module.search(cr, uid,
                     [('sdref', 'in',
                         ('sync_client_activate_wizard_action',
-                         'BAR_sync_clientactivate_entity_wizard_view_activate')])
+                         'BAR_sync_clientactivate_entity_wizard_view_activate'))])
             update_module.unlink(cr, uid, update_to_delete_ids)
 
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
