@@ -155,11 +155,11 @@ class hq_entries_split_lines(osv.osv_memory):
             vals['account_id'] = account.id
         # US-672/2
         hq_entry = self._get_original_line(cr, uid, context=context,
-            wizard_id=vals.get('wizard_id', False))
-        if hq_entry and hq_entry.partner_txt:
+                                           wizard_id=vals.get('wizard_id', False))
+        if hq_entry:
             self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
-                [vals['account_id']], partner_txt=hq_entry.partner_txt,
-                raise_it=True, context=context)
+                                                                       [vals['account_id']], partner_txt=hq_entry.partner_txt or False,
+                                                                       raise_it=True, context=context)
         res = super(hq_entries_split_lines, self).create(cr, uid, vals, context=context)
         # Check that amount is not superior to what expected
         if res:
@@ -204,10 +204,10 @@ class hq_entries_split_lines(osv.osv_memory):
         # US-672/2
         for line in self.browse(cr, uid, ids, context=context):
             hq_entry = line.wizard_id and line.wizard_id.original_id or False
-            if hq_entry and hq_entry.partner_txt:
+            if hq_entry:
                 self.pool.get('account.account').is_allowed_for_thirdparty(cr, uid,
-                    [vals['account_id']], partner_txt=hq_entry.partner_txt,
-                    raise_it=True, context=context)
+                                                                           [vals['account_id']], partner_txt=hq_entry.partner_txt or False,
+                                                                           raise_it=True, context=context)
 
         res = super(hq_entries_split_lines, self).write(cr, uid, ids, vals, context=context)
         for line in self.browse(cr, uid, ids, context=context):
@@ -239,9 +239,9 @@ class hq_entries_split(osv.osv_memory):
         if isinstance(line_ids, (int, long)):
             line_ids = [line_ids]
         self.pool.get('hq.entries').check_hq_entry_transaction(cr, uid,
-            line_ids, self._name, context=context)
+                                                               line_ids, self._name, context=context)
         return super(hq_entries_split, self).create(cr, uid, vals,
-            context=context)
+                                                    context=context)
 
     # UFTP-200: Add the correct funding pool domain to the split line based on the account_id and cost_center
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):

@@ -93,42 +93,51 @@ class wizard_import_po_line(osv.osv_memory):
 
         for wiz in self.browse(cr, uid, ids, context):
             if not wiz.po_id.pricelist_id \
-                or not wiz.po_id.pricelist_id.currency_id:
+                    or not wiz.po_id.pricelist_id.currency_id:
                 raise osv.except_osv(_("Error!"), _("Order currency not found!"))
 
-            ignore_lines, complete_lines, lines_to_correct = 0, 0, 0
+            ignore_lines, complete_lines, lines_to_correct, created_lines = 0, 0, 0, 0
             line_ignored_num, error_list = [], []
             error_log, message = '', ''
             header_index = context['header_index']
             template_col_count = len(header_index)
-            mandatory_col_count = 7
+            is_rfq = wiz.po_id.rfq_ok and wiz.po_id.state == 'rfq_sent'
+            mandatory_col_count = 8 if is_rfq else 7
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
 
             """
             1st path: check currency in lines in phasis with document
             REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
-            CCY COL INDEX: 6
+            CCY COL INDEX: 6 (PO) or 7 (RfQ)
             """
             order_currency_code = wiz.po_id.pricelist_id.currency_id.name
-            currency_index = 6
+            currency_index = 7 if is_rfq else 6
             row_iterator = file_obj.getRows()
 
             # don't use the original
             row_iterator, row_iterator_line_check = itertools.tee(row_iterator)
 
             row_iterator_line_check.next()  # skip header line
-            lines_to_correct = check_line.check_lines_currency(row_iterator_line_check,
-                currency_index, order_currency_code)
+            try:
+                lines_to_correct = check_line.check_lines_currency(row_iterator_line_check, currency_index, order_currency_code)
+            except Exception as e:
+                message = _("""An error occurs during the check of the currency: %s""") % e
+                categ_log = ''
+                line_num = 0
+                error_list.append(message)
+                logging.getLogger('import purchase order').error('Error %s' % e)
+
             if lines_to_correct > 0:
                 categ_log = ''
                 line_num = 0
                 msg = "You can not import this file because it contains" \
                     " line(s) with currency not of the order currency (%s)" % (
-                    order_currency_code, )
+                        order_currency_code, )
                 error_list.append(msg)
 
             if not error_list:
+                line_number_set = set()
                 to_write = {}
                 total_line_num = file_obj.getNbRows()
                 # ignore the header line
@@ -153,13 +162,14 @@ class wizard_import_po_line(osv.osv_memory):
                         'proc_type': 'make_to_order',
                         'default_code': False,
                         'confirmed_delivery_date': False,
+                        'line_number':'',
                     }
 
                     col_count = len(row)
                     if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
-                                line_num, template_col_count,
-                                ','.join(columns_for_po_line_import))
+                            line_num, template_col_count,
+                            ','.join(is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:]))
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
@@ -176,7 +186,16 @@ class wizard_import_po_line(osv.osv_memory):
                             total_line_num -= 1
                             continue
 
-                        # Cell 0: Product Code
+
+                        # Cell 0 : Line Number (RfQ)
+                        if is_rfq:
+                            ln_value = check_line.line_number_value(
+                                row=row, cell_nb=header_index[_('Line Number')], to_write=to_write, context=context)
+                            to_write.update(
+                                line_number=ln_value['line_number'],
+                                error_list=ln_value['error_list'])
+
+                        # Cell 1: Product Code
                         p_value = check_line.product_value(
                             cr, uid, obj_data=obj_data, cell_nb=header_index[_('Product Code')],
                             product_obj=product_obj, row=row, to_write=to_write, context=context)
@@ -211,7 +230,7 @@ class wizard_import_po_line(osv.osv_memory):
                                 to_write.update(product_qty=round_qty['value']['product_qty'])
                                 warn_list = to_write['warning_list']
                                 warn_list.append(round_qty['warning']['message'])
-                                #message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
+                            #message += _("Line %s in the Excel file: %s\n") % (line_num, round_qty['warning']['message'])
 
                         # Cell 4: Price
                         price_value = check_line.compute_price_value(
@@ -245,11 +264,14 @@ class wizard_import_po_line(osv.osv_memory):
                         to_write.update(
                             comment=c_value['comment'],
                             warning_list=c_value['warning_list'])
+
+
                         to_write.update(
                             to_correct_ok=any(to_write['error_list']),  # the lines with to_correct_ok=True will be red
                             show_msg_ok=any(to_write['warning_list']),  # the lines with show_msg_ok=True won't change color, it is just info
                             order_id=wiz.po_id.id,
                             text_error='\n'.join(to_write['error_list'] + to_write['warning_list']))
+
                         # we check consistency on the model of on_change functions to call for updating values
                         purchase_line_obj.check_line_consistency(
                             cr, uid, wiz.po_id.id, to_write=to_write, context=context)
@@ -264,16 +286,57 @@ class wizard_import_po_line(osv.osv_memory):
                             cr.rollback()
                             continue
 
-                        # write order line on PO
-                        purchase_line_obj.create(cr, uid, to_write, context=context)
+
+                        if is_rfq:
+                            rfq_line_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])
+                            to_write['rfq_ok'] = True
+
+                            # CASE 1: the line is not registered in the system, so CREATE it :
+                            if not rfq_line_ids:
+                                created_lines += 1
+                                if wiz.po_id.tender_id:
+                                    msg =  _('Warning! You are adding new lines which did not exist in the original tender!')
+                                    if msg not in message:
+                                        message += msg
+                                to_write.update({
+                                    'line_number': False,
+                                    'red_color': True,
+                                })
+                                purchase_line_obj.create(cr, uid, to_write, context=context)
+
+                            # CASE 2: the line is already in the system, so UPDATE it :
+                            for po_line in purchase_line_obj.browse(cr, uid, rfq_line_ids, context=context):
+                                # some checks :
+                                if to_write['line_number'] in line_number_set:
+                                    raise osv.except_osv(_('Error'), _("the same line number appears several times"))
+                                else:
+                                    line_number_set.add(to_write['line_number'])
+                                if p_value['product_code'] != po_line.product_id.default_code:
+                                    raise osv.except_osv(_('Error'), _("Product code from system and from import must be the same."))
+                                if not price_value['price_unit_defined']:
+                                    raise osv.except_osv(_('Error'), _("Price must be defined in the RfQ import file."))
+
+                                # in case of update we do not want to update qty and uom values :
+                                if to_write.has_key('product_qty'):
+                                    to_write.pop('product_qty')
+                                if to_write.has_key('product_uom'):
+                                    to_write.pop('product_uom')
+
+                                # update POL :
+                                purchase_line_obj.write(cr, uid, rfq_line_ids, to_write, context=context)
+
+                        else: # its not RfQ
+                            purchase_line_obj.create(cr, uid, to_write, context=context)
+
                         vals['order_line'].append((0, 0, to_write))
+
                         if to_write['error_list']:
                             lines_to_correct += 1
                         complete_lines += 1
 
                     except IndexError, e:
                         message += _("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-                                       ) % (line_num, template_col_count, e)
+                                     ) % (line_num, template_col_count, e)
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -327,13 +390,13 @@ class wizard_import_po_line(osv.osv_memory):
             final_message = _('''
 %s
 Importation completed in %s!
-# of imported lines : %s on %s lines
+# of imported lines : %s on %s lines (%s updated and %s created)
 # of ignored lines: %s
 # of lines to correct: %s
 %s
 
 %s
-''') % (categ_log, total_time, complete_lines, line_num, ignore_lines, lines_to_correct, error_log, message)
+''') % (categ_log, total_time, complete_lines, line_num, complete_lines-created_lines,created_lines, ignore_lines, lines_to_correct, error_log, message)
             wizard_vals['message'] = final_message
             if line_with_error:
                 file_to_export = wiz_common_import.export_file_with_error(
@@ -371,8 +434,10 @@ Importation completed in %s!
                 header_index = wiz_common_import.get_header_index(
                     cr, uid, ids, first_row, error_list=[], line_num=0, context=context)
                 context.update({'po_id': po_id, 'header_index': header_index})
+                rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
+                is_rfq = rfq['rfq_ok'] and rfq['state'] == 'rfq_sent'
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, columns_for_po_line_import,
+                    cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:],
                     origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
@@ -392,10 +457,10 @@ Importation completed in %s!
         else:
             self._import(cr, uid, ids, context)
         msg_to_return = _("Please note that %s is temporary not editable during the import to "
-            "avoid conflict accesses (you can see the loading on the PO note "
-            "tab check box). At the end of the load, POXX will be back in the "
-            "right state. You can refresh the screen if you need to follow "
-            "the upload progress") % (purchase_obj.browse(cr, uid, po_id).name)
+                          "avoid conflict accesses (you can see the loading on the PO note "
+                          "tab check box). At the end of the load, POXX will be back in the "
+                          "right state. You can refresh the screen if you need to follow "
+                          "the upload progress") % (purchase_obj.browse(cr, uid, po_id).name)
         return self.write(
             cr, uid, ids,
             {'message': msg_to_return, 'state': 'in_progress'},

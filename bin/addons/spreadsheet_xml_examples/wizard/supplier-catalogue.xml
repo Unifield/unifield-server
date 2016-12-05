@@ -49,8 +49,7 @@
   </Style>
  </Styles>
  <Worksheet ss:Name="Sheet1">
-  <Table ss:ExpandedColumnCount="7" ss:ExpandedRowCount="8" x:FullColumns="1"
-   x:FullRows="1">
+ <Table>
    <Column ss:AutoFitWidth="0" ss:Width="99"/>
    <Column ss:AutoFitWidth="0" ss:Width="64.5"/>
    <Column ss:AutoFitWidth="0" ss:Width="81"/>

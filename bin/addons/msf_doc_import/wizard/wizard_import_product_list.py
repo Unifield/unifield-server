@@ -66,7 +66,7 @@ class wizard_import_product_list(osv.osv):
         'import_error_ok': fields.function(get_bool_values, method=True, type="boolean", string="Show column errors", store=False),
         'percent_completed': fields.integer('% completed', readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done')],
-                                string="State", required=True, readonly=True),
+                                  string="State", required=True, readonly=True),
     }
 
     def _import(self, cr, uid, ids, context=None):
@@ -93,7 +93,6 @@ class wizard_import_product_list(osv.osv):
         wiz_common_import = self.pool.get('wiz.common.import')
 
         line_with_error = []
-        vals = {'product_id': []}
 
         for wiz_browse in self.browse(cr, uid, ids, context):
             list_browse = wiz_browse.list_id
@@ -103,6 +102,8 @@ class wizard_import_product_list(osv.osv):
             line_ignored_num, error_list = [], []
             error_log, message = '', ''
             header_index = context['header_index']
+
+            imp_product_ids = []
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz_browse.file))
             # iterator on rows
@@ -175,6 +176,33 @@ class wizard_import_product_list(osv.osv):
                             cr.rollback()
                             continue
 
+                    if to_write.get('product_id'):
+                        exist_line_ids = list_line_obj.search(cr, uid, [
+                            ('list_id', '=', list_browse.id),
+                            ('name', '=', to_write.get('product_id'))
+                        ], limit=1, context=context)
+                        in_list = to_write['product_id'] in imp_product_ids
+                        imp_product_ids.append(to_write['product_id'])
+                        if exist_line_ids or in_list:
+                            prod_brw = product_obj.browse(cr, uid, to_write['product_id'], context=context)
+                            to_write.setdefault('error_list', []).append(
+                                _('Product [%s] %s is already in the product list. Line not imported \n') % (
+                                    prod_brw.default_code,
+                                    prod_brw.name,
+                                )
+                            )
+                            error_log += _("Line %s in the Excel file was added to the file of the lines with errors."
+                                           "Details: Product already in the product list \n") % line_num
+                            line_with_error.append(wiz_common_import.get_line_values(cr, uid, ids, row, cell_nb=False,
+                                                                                     error_list=error_list,
+                                                                                     line_num=line_num,
+                                                                                     context=context))
+                            ignore_lines += 1
+                            line_ignored_num.append(line_num)
+                            percent_completed = float(line_num)/float(total_line_num-1)*100.00
+                            cr.rollback()
+                            continue
+
                     # Cell 2: Comment
                     to_write.update({'comment': row[2]})
 
@@ -213,8 +241,6 @@ class wizard_import_product_list(osv.osv):
                         cr.commit()
 
         error_log += '\n'.join(error_list)
-        if error_log:
-            error_og = _("Reported errors for ignored lines : \n") + error_log
         end_time = time.time()
         total_time = str(round(end_time-start_time)) + _(' second(s)')
         final_message = _('''

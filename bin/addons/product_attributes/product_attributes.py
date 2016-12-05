@@ -57,7 +57,7 @@ class product_status(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
-                [('state','in',ids)], limit=1, order='NO_ORDER')
+                                                        [('state','in',ids)], limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this status because it\'s used at least in one product'))
         return super(product_status, self).unlink(cr, uid, ids, context=context)
@@ -82,8 +82,8 @@ class product_international_status(osv.osv):
             ids = [ids]
         # Raise an error if the status is used in a product
         ids_p = self.pool.get('product.product').search(cr, uid,
-                [('international_status','in',ids)],
-                limit=1, order='NO_ORDER')
+                                                        [('international_status','in',ids)],
+                                                        limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this product creator because it\'s used at least in one product'))
 
@@ -163,7 +163,7 @@ class product_heat_sensitive(osv.osv):
             item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', 'heat_yes')
             if item_id:
                 ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
-                        access_rights_uid=uid)
+                                   access_rights_uid=uid)
                 return self.name_get(cr, uid, ids, context)
 
         return super(product_heat_sensitive, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
@@ -183,8 +183,8 @@ class product_cold_chain(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         ids_p = self.pool.get('product.product').search(cr, uid,
-                [('cold_chain','in',ids)],
-                limit=1, order='NO_ORDER')
+                                                        [('cold_chain','in',ids)],
+                                                        limit=1, order='NO_ORDER')
         if ids_p:
             raise osv.except_osv(_('Error'), _('You cannot delete this cold chain because it\'s used at least in one product'))
         return super(product_cold_chain, self).unlink(cr, uid, ids, context=context)
@@ -229,7 +229,7 @@ class product_cold_chain(osv.osv):
                 item_id = data_obj.get_object_reference(cr, uid, 'product_attributes', match_dict[name])
                 if item_id:
                     ids = self._search(cr, uid, [('id', '=', item_id[1])], limit=limit, context=context,
-                            access_rights_uid=uid)
+                                       access_rights_uid=uid)
                     return self.name_get(cr, uid, ids, context)
 
         return super(product_cold_chain, self).name_search(cr, uid, name, args, operator, context=context, limit=limit)
@@ -679,23 +679,23 @@ class product_attributes(osv.osv):
             required=True,
         ),
         'criticism': fields.selection([('',''),
-            ('exceptional','1-Exceptional'),
-            ('specific','2-Specific'),
-            ('important','3-Important'),
-            ('medium','4-Medium'),
-            ('common','5-Common'),
-            ('other','X-Other')], 'Criticality'),
+                                       ('exceptional','1-Exceptional'),
+                                       ('specific','2-Specific'),
+                                       ('important','3-Important'),
+                                       ('medium','4-Medium'),
+                                       ('common','5-Common'),
+                                       ('other','X-Other')], 'Criticality'),
         'narcotic': fields.boolean('Narcotic/Psychotropic'),
         'abc_class': fields.selection([('',''),
-            ('a','A'),
-            ('b','B'),
-            ('c','C')], 'ABC Class'),
+                                       ('a','A'),
+                                       ('b','B'),
+                                       ('c','C')], 'ABC Class'),
         'section_code_ids': fields.many2many('product.section.code','product_section_code_rel','product_id','section_code_id','Section Code'),
         'library': fields.selection([('',''),
-            ('l1','L1'),
-            ('l2','L2'),
-            ('l3','L3'),
-            ('l4','L4')], 'Library'),
+                                     ('l1','L1'),
+                                     ('l2','L2'),
+                                     ('l3','L3'),
+                                     ('l4','L4')], 'Library'),
 
         'supply_source_ids': fields.many2many('product.supply.source','product_supply_source_rel','product_id','supply_source_id','Supply Source'),
 
@@ -757,9 +757,9 @@ class product_attributes(osv.osv):
         ),
         'justification_code_id': fields.many2one('product.justification.code', 'Justification Code'),
         'med_device_class': fields.selection([('',''),
-            ('I','Class I (General controls)'),
-            ('II','Class II (General control with special controls)'),
-            ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
+                                              ('I','Class I (General controls)'),
+                                              ('II','Class II (General control with special controls)'),
+                                              ('III','Class III (General controls and premarket)')], 'Medical Device Class'),
         'manufacturer_txt': fields.text(
             string='Manufacturer',
         ),
@@ -828,16 +828,16 @@ class product_attributes(osv.osv):
         'gmdn_code' : fields.char('GMDN Code', size=5),
         'gmdn_description' : fields.char('GMDN Description', size=64),
         'life_time': fields.integer('Product Life Time',
-            help='The number of months before a production lot may become dangerous and should not be consumed.'),
+                                    help='The number of months before a production lot may become dangerous and should not be consumed.'),
         'use_time': fields.integer('Product Use Time',
-            help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
+                                   help='The number of months before a production lot starts deteriorating without becoming dangerous.'),
         'removal_time': fields.integer('Product Removal Time',
-            help='The number of months before a production lot should be removed.'),
+                                       help='The number of months before a production lot should be removed.'),
         'alert_time': fields.integer('Product Alert Time', help="The number of months after which an alert should be notified about the production lot."),
         'currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'field_currency_id': fields.many2one('res.currency', string='Currency', readonly=True),
         'nomen_ids': fields.function(_get_nomen, fnct_search=_search_nomen,
-                             type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
+                                     type='many2many', relation='product.nomenclature', method=True, string='Nomenclatures'),
         'controlled_substance': fields.selection(
             selection=[
                 ('!', '! - Requires national export license'),
@@ -899,7 +899,7 @@ class product_attributes(osv.osv):
                                              'product.status': (_get_product_status, ['no_storage'], 10),
                                              'product.international.status': (_get_international_status, ['no_storage'], 10),}),
         'available_for_restriction': fields.function(_get_dummy, fnct_search=_src_available_for_restriction, method=True, type='boolean',
-                                                 store=False, string='Available for the partner', readonly=True),
+                                                     store=False, string='Available for the partner', readonly=True),
         'form_value': fields.text(string='Form', translate=True),
         'fit_value': fields.text(string='Fit', translate=True),
         'function_value': fields.text(string='Function', translate=True),
@@ -1011,9 +1011,9 @@ class product_attributes(osv.osv):
                 # UFTP-15: parse 'available_for_restriction'
                 # to implement it directly in product 'not_restricted' filter
                 filter_domain = self._src_available_for_restriction(cr, uid,
-                    self, 'available_for_restriction',
-                    [('available_for_restriction','=', arg)],
-                    context=context)
+                                                                    self, 'available_for_restriction',
+                                                                    [('available_for_restriction','=', arg)],
+                                                                    context=context)
             else:
                 filter_domain = "[('available_for_restriction','=',%s)]" % arg
             new_filter = """<filter string="Only not forbidden" name="not_restricted" icon="terp-accessories-archiver-minus" domain="%s" />""" % filter_domain
@@ -1220,9 +1220,25 @@ class product_attributes(osv.osv):
         :return: The ID of the new product.template record
         """
         sptc_obj = self.pool.get('standard.price.track.changes')
+        trans_obj = self.pool.get('ir.translation')
+        data_obj = self.pool.get('ir.model.data')
 
         if context is None:
             context = {}
+
+        def update_existing_translations(model, res_id, xmlid):
+            # If we are in the creation of product by sync. engine, attach the already existing translations to this product
+            if context.get('sync_update_execution'):
+                trans_ids = trans_obj.search(cr, uid, [
+                    ('res_id', '=', 0),
+                    ('xml_id', '=', xmlid),
+                    ('type', '=', 'model'),
+                    ('name', '=like', '%s,%%' % model),
+                ], context=context)
+                if trans_ids:
+                    trans_obj.write(cr, uid, trans_ids, {
+                        'res_id': res_id,
+                    }, context=context)
 
         if 'default_code' in vals:
             vals['default_code'] = vals['default_code'].strip()
@@ -1257,6 +1273,17 @@ class product_attributes(osv.osv):
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
 
+        if context.get('sync_update_execution'):
+            # Update existing translations for product.product and product.template
+            product_tmpl_id = self.read(cr, uid, [res], ['product_tmpl_id'])[0]['product_tmpl_id'][0]
+            prd_data_ids = data_obj.search(cr, uid, [
+                ('res_id', '=', res),
+                ('model', '=', 'product.product'),
+            ], context=context)
+            for prd_data in data_obj.browse(cr, uid, prd_data_ids, context=context):
+                update_existing_translations('product.product', res, prd_data.name)
+                update_existing_translations('product.template', product_tmpl_id, prd_data.name)
+
         sptc_obj.track_change(cr, uid, res, _('Product creation'), vals,
                               context=context)
 
@@ -1265,7 +1292,8 @@ class product_attributes(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        data_obj = self.pool.get('ir.model.data')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        prod_status_obj = self.pool.get('product.status')
 
         if context is None:
             context = {}
@@ -1295,6 +1323,18 @@ class product_attributes(osv.osv):
                         _('White spaces are not allowed in product code'),
                     )
 
+        # update local stock mission report lines :
+        if 'state' in vals:
+            prod_state = ''
+            if vals['state']:
+                state_id = vals['state']
+                if isinstance(state_id, (int, long)):
+                    state_id = [state_id]
+                prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
+            local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, uid, local_smrl_ids, {'product_state': prod_state}, context=context)
+
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
             if isinstance(ids, (int, long)):
@@ -1313,19 +1353,19 @@ class product_attributes(osv.osv):
             vals.update(self.onchange_heat(cr, uid, ids, vals['heat_sensitive_item'], context=context).get('value', {}))
 
         if context.get('sync_update_execution') and not context.get('bypass_sync_update', False):
-#            stopped_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
-#            phase_out_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
+            #            stopped_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1]
+            #            phase_out_status = data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_2')[1]
             if vals.get('active', None) is False:
                 if self.deactivate_product(cr, uid, ids, context=context) is not True:
                     vals.update({
                         'active': True,
-#                        'state': stopped_status,
+                        #                        'state': stopped_status,
                     })
 #            elif vals.get('active', None) is True and vals.get('state') == stopped_status:
             elif vals.get('active', None) is True:
                 vals.update({
                     'active': True,
-#                    'state': phase_out_status,
+                    #                    'state': phase_out_status,
                 })
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
@@ -1372,7 +1412,6 @@ class product_attributes(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        data_obj = self.pool.get('ir.model.data')
         location_obj = self.pool.get('stock.location')
         po_line_obj = self.pool.get('purchase.order.line')
         tender_line_obj = self.pool.get('tender.line')
@@ -1435,14 +1474,14 @@ class product_attributes(osv.osv):
 
             # Check if the product is in an initial stock inventory
             has_initial_inv_line = in_inv_obj.search(cr, uid, [('product_id', '=', product.id),
-                                                          ('inventory_id', '!=', False),
-                                                          ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
+                                                               ('inventory_id', '!=', False),
+                                                               ('inventory_id.state', 'not in', ['draft', 'done', 'cancel'])], context=context)
 
             # Check if the product is in a real kit composition
             has_kit = kit_obj.search(cr, uid, [('item_product_id', '=', product.id),
                                                ('item_kit_id.composition_type', '=', 'real'),
                                                ('item_kit_id.state', '=', 'completed'),
-                                              ], context=context)
+                                               ], context=context)
             has_kit2 = self.pool.get('composition.kit').search(cr, uid, [('composition_product_id', '=', product.id),
                                                                          ('composition_type', '=', 'real'),
                                                                          ('state', '=', 'completed')], context=context)
@@ -1612,7 +1651,7 @@ class product_attributes(osv.osv):
                     context['bypass_sync_update'] = True
                 self.write(cr, uid, product.id, {
                     'active': True,
-#                    'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1],
+                    #                    'state': data_obj.get_object_reference(cr, uid, 'product_attributes', 'status_3')[1],
                 }, context=context)
 
                 return {'type': 'ir.actions.act_window',
@@ -1650,15 +1689,15 @@ class product_attributes(osv.osv):
 
         # Minimum stock rules
         orderpoint_line_ids = orderpoint_line_obj.search(cr, uid,
-            [('product_id', 'in', ids)], context=context)
+                                                         [('product_id', 'in', ids)], context=context)
         for orderpoint_line in orderpoint_line_obj.browse(cr, uid,
-            orderpoint_line_ids, context=context):
+                                                          orderpoint_line_ids, context=context):
             if len(orderpoint_line.supply_id.line_ids) == 1:
                 orderpoint_obj.unlink(cr, uid, [orderpoint_line.supply_id.id],
-                    context=context)
+                                      context=context)
             else:
                 orderpoint_line_obj.unlink(cr, uid, [orderpoint_line.id],
-                    context=context)
+                                           context=context)
 
         if context.get('sync_update_execution', False):
             context['bypass_sync_update'] = True
@@ -1958,7 +1997,7 @@ class product_uom(osv.osv):
 
         uom_data_id = [
             'uom_tbd',
-            ]
+        ]
 
         for data_id in uom_data_id:
             try:

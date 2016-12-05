@@ -51,6 +51,8 @@ class finance_archive(finance_export.finance_archive):
 
     def postprocess_add_db_id(self, cr, uid, data, model, column_deletion=False):
         """
+        ##### WARNING #####
+        ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
         Change first column for the DB ID composed of:
           - database name
           - model
@@ -98,9 +100,9 @@ class finance_archive(finance_export.finance_archive):
                         partner_name = partner_name.encode('utf-8')
                     if not partner_name in partner_search_dict:
                         partner_search_dict[partner_name] = partner_obj.search(cr, uid,
-                            [('name', '=ilike', partner_name),
-                             ('active', 'in', ['t', 'f'])],
-                             order='id')
+                                                                               [('name', '=ilike', partner_name),
+                                                                                ('active', 'in', ['t', 'f'])],
+                                                                               order='id')
                     partner_ids = partner_search_dict[partner_name]
                     if partner_ids:
                         partner_id = partner_ids[0]
@@ -137,6 +139,8 @@ class finance_archive(finance_export.finance_archive):
 
     def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
         """
+        ##### WARNING #####
+        ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
         Use current SQL result (data) to fetch IDs and mark lines as used.
         Then do another request.
         Finally mark lines as exported.
@@ -295,18 +299,18 @@ class hq_report_ocb(report_sxw.report_sxw):
             if period16_id:
                 # get potential PL RESULT entries of us-822 book_pl_results
                 func_ccy_name = pool.get('res.users').browse(cr, uid, [uid],
-                    context=context)[0].company_id.currency_id.name
+                                                             context=context)[0].company_id.currency_id.name
                 seqnums = [
                     ayec_obj._book_pl_results_seqnum_pattern % (year_num,
-                        instance_rec.code, func_ccy_name, ) \
+                                                                instance_rec.code, func_ccy_name, ) \
                     for instance_rec in mi_obj.browse(cr, uid, instance_ids,
-                        context=context) \
+                                                      context=context) \
                     if instance_rec.level == 'coordo'
                 ]
 
                 if seqnums:
                     je_ids = m_obj.search(cr, uid, [ ('name', 'in', seqnums) ],
-                        context=context)
+                                          context=context)
                     if je_ids:
                         plresult_ji_in_ids = ml_obj.search(cr, uid, [
                             ('move_id', 'in', je_ids)
@@ -583,14 +587,14 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'filename': instance_name + '_' + year + month + '_Partners.csv',
                 'key': 'partner',
                 'function': 'postprocess_partners',
-                },
+            },
             {
                 'headers': ['Name', 'Identification No', 'Active', 'Employee type'],
                 'filename': instance_name + '_' + year + month + '_Employees.csv',
                 'key': 'employee',
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('hr.employee', 'employee_type', 3)],
-                },
+            },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Journal type', 'Currency'],
                 'filename': instance_name + '_' + year + month + '_Journals.csv',
@@ -598,7 +602,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.journal', 'type', 3)],
-                },
+            },
             {
                 'headers': ['Name', 'Code', 'Type', 'Status'],
                 'filename': instance_name + '_' + year + month + '_Cost Centres.csv',
@@ -606,19 +610,19 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (last_day_of_period, last_day_of_period, tuple(instance_ids),last_day_of_period, last_day_of_period, tuple(instance_ids)),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('account.analytic.account', 'type', 2)],
-                },
+            },
             {
                 'headers': ['CCY name', 'CCY code', 'Rate', 'Month'],
                 'filename': instance_name + '_' + year + month + '_FX rates.csv',
                 'key': 'fxrate',
                 'query_params': (first_day_of_last_fy, last_day_of_period),
-                },
+            },
             {
                 'headers': ['Instance', 'Code', 'Name', 'Period', 'Opening balance', 'Calculated balance', 'Closing balance'],
                 'filename': instance_name + '_' + year + month + '_Liquidity Balances.csv',
                 'key': 'liquidity',
                 'query_params': (tuple([period_yyyymm]), first_day_of_period, period.id, last_day_of_period, tuple(instance_ids)),
-                },
+            },
             {
                 'headers': ['Name', 'Code', 'Donor code', 'Grant amount', 'Reporting CCY', 'State'],
                 'filename': instance_name + '_' + year + month + '_Financing contracts.csv',
@@ -626,7 +630,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'query_params': (tuple(instance_ids),),
                 'function': 'postprocess_selection_columns',
                 'fnct_params': [('financing.contract.contract', 'state', 5)],
-                },
+            },
             {
                 'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
@@ -637,14 +641,14 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.analytic.line',
-                },
+            },
             {
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries_consolidated',
                 'query_params': (period_id, tuple(excluded_journal_types), tuple(to_export), tuple(instance_ids)),
                 'function': 'postprocess_consolidated_entries',
                 'fnct_params': excluded_journal_types,
-                },
+            },
             {
                 'filename': instance_name + '_' + year + month + '_Monthly Export.csv',
                 'key': 'bs_entries',
@@ -654,7 +658,7 @@ class hq_report_ocb(report_sxw.report_sxw):
                 'delete_columns': [0],
                 'id': 0,
                 'object': 'account.move.line',
-                },
+            },
         ]
         if plresult_ji_in_ids:
             processrequests.append({

@@ -66,6 +66,7 @@
                            string="Product"
                            readonly="1"
                            />
+                    <field name="comment" readonly="1" />
                     <field name="asset_id" readonly="1" />
                     <field name="composition_list_id" readonly="1" />
                     <field name="quantity"

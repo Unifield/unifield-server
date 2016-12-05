@@ -27,7 +27,6 @@ from datetime import datetime
 from tools.translate import _
 from updater import get_server_version
 import release
-import re
 import time
 import logging
 
@@ -123,8 +122,8 @@ class BackupConfig(osv.osv):
                 # US-386: Check if file/path exists and raise exception, no need to prepare the backup, thus no pg_dump is executed
                 version = self.get_server_version(cr, uid, context=context)
                 outfile = os.path.join(bck.name, "%s-%s%s-%s.dump" %
-                        (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
-                            suffix, version))
+                                       (cr.dbname, datetime.now().strftime("%Y%m%d-%H%M%S"),
+                                        suffix, version))
                 version_instance_module = self.pool.get('sync.version.instance.monitor')
                 vals = {'version': version,
                         'backup_path': outfile}
@@ -191,6 +190,8 @@ class ir_cron(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if isinstance(ids, (int, long)):
+            ids = [ids]
         toret = super(ir_cron, self).write(cr, uid, ids, vals, context=context)
         crons = self.browse(cr, uid, ids, context=context)
         if crons and crons[0] and crons[0].model=='backup.config':

@@ -435,17 +435,19 @@ class tender_line(osv.osv):
         Create lines according to product in list
         '''
         p_obj = self.pool.get('product.product')
-        tender_obj = self.pool.get('tender')
 
         context = context is None and {} or context
         product_ids = isinstance(product_ids, (int, long)) and [product_ids] or product_ids
 
-        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty'], context=context):
-            values = {'tender_id': parent_id,
-                      'product_id': p_data['id'],
-                      'product_uom': p_data['uom_id'][0]}
+        for p_data in p_obj.read(cr, uid, product_ids, ['uom_id', 'import_product_qty', 'categ_id'], context=context):
+            values = {
+                'tender_id': parent_id,
+                'product_id': p_data['id'],
+                'product_uom': p_data['uom_id'][0],
+                'categ_id': p_data['categ_id'],
+            }
 
-            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], context=context).get('value', {}))
+            values.update(self.on_product_change(cr, uid, False, p_data['id'], p_data['uom_id'][0], p_data['import_product_qty'], p_data['categ_id'], context=context).get('value', {}))
 
             # Set the quantity to 0.00
             values.update({'qty': p_data['import_product_qty']})

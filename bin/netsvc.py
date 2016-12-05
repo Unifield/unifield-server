@@ -36,6 +36,35 @@ import release
 from pprint import pformat
 import warnings
 import heapq
+import pooler
+
+# Try to log the traceback in operations.event, but on a best-effort
+# basis: catch all errors and give up
+def ops_event(dbname, kind, dat, uid=1):
+    try:
+        cr = None
+        db, pool = pooler.get_db_and_pool(dbname, if_open=True)
+        cr = db.cursor()
+        oe = pool.get('operations.event')
+        oe.create(cr, uid, { 'kind': kind, 'data': dat })
+        cr.commit()
+    except:
+        pass
+    finally:
+        if cr is not None:
+            cr.close()
+
+def ops_count(dbname, cat, what):
+    # these will be logged by osv.py
+    if what == 'object.execute':
+        return
+
+    try:
+        db, pool = pooler.get_db_and_pool(dbname, if_open=True)
+        oc = pool.get('operations.count')
+        oc.increment(':'.join([cat, what]))
+    except:
+        pass
 
 class Service(object):
     """ Base class for *Local* services
@@ -73,7 +102,7 @@ class Service(object):
 
 class LocalService(object):
     """ Proxy for local services. 
-    
+
         Any instance of this class will behave like the single instance
         of Service(name)
     """
@@ -101,11 +130,11 @@ class ExportService(object):
     eservice.method(). Rather, the proxy should call 
     dispatch(method,auth,params)
     """
-    
+
     _services = {}
     _groups = {}
     _logger = logging.getLogger('web-services')
-    
+
     def __init__(self, name, audience=''):
         ExportService._services[name] = self
         self.__name = name
@@ -120,7 +149,7 @@ class ExportService(object):
 
     def dispatch(self, method, auth, params):
         raise Exception("stub dispatch at %s" % self.__name)
-        
+
     def new_dispatch(self,method,auth,params):
         raise Exception("stub dispatch at %s" % self.__name)
 
@@ -181,8 +210,29 @@ class ColoredFormatter(DBFormatter):
         record.levelname = COLOR_PATTERN % (30 + fg_color, 40 + bg_color, record.levelname)
         return DBFormatter.format(self, record)
 
+class OpsEventsHandler(logging.Handler):
+    def __init__(self, *kwargs):
+        logging.Handler.__init__(self, *kwargs)
+        self._logging = False
+
+    def emit(self, record):
+        if record.dbname == 'admin':
+            import pdb
+            pdb.set_trace()
+
+        if record.dbname == '?':
+            return
+
+        # During the call to emit, a lock is already held (see logging/__init__.py)
+        # so it is safe to use this flag.
+        if not self._logging:
+            self._logging = True
+            ops_event(record.dbname,
+                      logging.getLevelName(record.levelno).lower(),
+                      record.message)
+            self._logging = False
+
 def init_logger():
-    import os
     from tools.translate import resetlocale
     resetlocale()
 
@@ -196,7 +246,7 @@ def init_logger():
         else:
             handler = logging.handlers.SysLogHandler('/dev/log')
         format = '%s %s' % (release.description, release.version) \
-                + ':%(dbname)s:%(levelname)s:%(name)s:%(message)s'
+            + ':%(dbname)s:%(levelname)s:%(name)s:%(message)s'
 
     elif tools.config['logfile']:
         # LogFile Handler
@@ -227,6 +277,13 @@ def init_logger():
     # add the handler to the root logger
     logger = logging.getLogger()
     logger.addHandler(handler)
+
+    # add a handler to copy log messages into the operations.events table
+    oeh = OpsEventsHandler()
+    oeh.setFormatter(DBFormatter(format))
+    oeh.setLevel(logging.ERROR)
+    logger.addHandler(oeh)
+
     logger.setLevel(int(tools.config['log_level'] or '0'))
 
 
@@ -401,7 +458,7 @@ class Server:
 
     def start(self):
         self.__logger.debug("called stub Server.start")
-        
+
     def _late_start(self):
         self.start()
         for thr in Server.__starter_threads:
@@ -488,11 +545,17 @@ class OpenERPDispatcher:
             auth = getattr(self, 'auth_provider', None)
             result = ExportService.getService(service_name).dispatch(method, auth, params)
             self.log('result', result, channel=logging.DEBUG_RPC_ANSWER)
+            # For service 'db', param[0] is not a dbname, so just skip it.
+            if service_name != 'db':
+                ops_count(params[0], 'dispatch', '.'.join([service_name, method]))
             return result
         except Exception, e:
             self.log('exception', tools.exception_to_unicode(e))
             tb = getattr(e, 'traceback', sys.exc_info())
             tb_s = "".join(traceback.format_exception(*tb))
+            # For service 'db', param[0] is not a dbname, so just skip it.
+            if len(params) >= 1 and service_name != 'db':
+                ops_event(params[0], 'traceback', tb_s)
             if tools.config['debug_mode']:
                 import pdb
                 pdb.post_mortem(tb[2])
