@@ -28,7 +28,7 @@ class ratelimit():
     ''' A mix-in class to implement rate limiting. '''
     MAX = 10000
 
-    def _rate_limit(self, cr, uid, context):
+    def _rate_limit(self, cr, uid, context=None):
         """ If this returns False, then the current create should
         be aborted."""
         if self._rl == 0:
