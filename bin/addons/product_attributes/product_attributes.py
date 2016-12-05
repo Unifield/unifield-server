@@ -915,8 +915,8 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'uf_write_date': fields.datetime('Write date'),
-        'uf_create_date': fields.datetime('Create date'),
+        'uf_write_date': fields.datetime(_('Write date')),
+        'uf_create_date': fields.datetime(_('Creation date')),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
