@@ -371,36 +371,49 @@ class product_product(osv.osv):
             res[product.id] = list(catalogue_ids)
 
         return res
-                            
+
     def _search_catalogue_ids(self, cr, uid, obj, name, args, context=None):
         '''
         Filter the search according to the args parameter
         '''
-        # Objects
         catalogue_obj = self.pool.get('supplier.catalogue')
 
-        context = context is None and {} or context
-        ids = set()
+        if context is None:
+            context = {}
+        product_id_list = []
 
         for arg in args:
-            if arg[0] == 'catalogue_ids' and arg[1] == '=' and arg[2]:
-                catalogue = catalogue_obj.browse(cr, uid, int(arg[2]), context=context)
-                for line in catalogue.line_ids:
-                    ids.add(line.product_id.id)
-            elif arg[0] == 'catalogue_ids' and arg[1] == 'in' and arg[2]:
-                for catalogue in catalogue_obj.browse(cr, uid, arg[2], context=context):
-                    for line in catalogue.line_ids:
-                        ids.add(line.product_id.id)
+            if arg[0] == 'catalogue_ids' and arg[1] == '=':
+                catalogue_list = [int(arg[2])]
+            elif arg[0] == 'catalogue_ids' and arg[1] == 'in':
+                catalogue_list = arg[2]
             else:
                 return []
 
-        return [('id', 'in', list(ids))]
+            catalog_lines_result = catalogue_obj.read(cr, uid, catalogue_list,
+                    ['line_ids'], context)
+            catalog_line_ids_list = []
+            for catalog in catalog_lines_result:
+                catalog_line_ids_list.extend(catalog['line_ids'])
+
+            total_lines = len(catalog_line_ids_list)
+            start_chunk = 0
+            chunk_size = 500
+            while start_chunk < total_lines:
+                ids_chunk = catalog_line_ids_list[start_chunk:start_chunk+chunk_size]
+                cr.execute("""SELECT scl.product_id
+                FROM supplier_catalogue_line as scl
+                WHERE scl.id in %s""", (tuple(ids_chunk),))
+                current_res = [x[0] for x in cr.fetchall() if x]
+                product_id_list.extend(current_res)
+                start_chunk += chunk_size
+        return [('id', 'in', product_id_list)]
 
     _columns = {
         'catalogue_ids': fields.function(_get_catalogue_ids, fnct_search=_search_catalogue_ids,
                                             type='many2many', relation='supplier.catalogue', method=True, string='Catalogues'),
     }
-    
+
 product_product()
 
 
