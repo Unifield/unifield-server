@@ -354,7 +354,7 @@ class wizard_import_po_line(osv.osv_memory):
                         cr.rollback()
                         continue
                     except UnicodeEncodeError as e:
-                        message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
+                        message += _("""Line %s in the Excel file, uncaught error: %s\n""") % (line_num, e)
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
@@ -362,7 +362,7 @@ class wizard_import_po_line(osv.osv_memory):
                         cr.rollback()
                         continue
                     except Exception as e:
-                        message += _("""Line %s in the Excel file, uncaught error: %s""") % (line_num, e)
+                        message += _("""Line %s in the Excel file, uncaught error: %s\n""") % (line_num, e)
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False, error_list=error_list, line_num=line_num, context=context))
