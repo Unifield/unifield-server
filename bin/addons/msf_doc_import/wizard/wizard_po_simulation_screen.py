@@ -338,6 +338,9 @@ class wizard_import_po_simulation_screen(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if ids and self.browse(cr, uid, ids, context=context)[0].state == 'done':
+            return self.return_to_po(cr, uid, ids, context=context)
+
         return {'type': 'ir.actions.act_window',
                 'res_model': self._name,
                 'view_mode': 'form',
