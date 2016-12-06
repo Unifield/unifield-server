@@ -168,14 +168,12 @@ class wizard_template(osv.osv):
             context = {}
         # object corresponding to the current wizard
         wizard_obj = self.pool.get(wizard_name)
-        # we get the selected template
-        data = ids and wizard_obj.read(cr, uid, ids[0], [saved_templates_field], context=context)
-        selected_template_id = data and data[saved_templates_field]
-        if not selected_template_id:
-            raise osv.except_osv(_('Error !'), _('You have to choose a template to edit.'))
-        # get a dictionary with ALL fields values
+        # get a dictionary containing ALL fields values of the selected template
         data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
         if data:
+            selected_template_id = data[saved_templates_field]
+            if not selected_template_id:
+                raise osv.except_osv(_('Error !'), _('You have to choose a template to edit.'))
             # don't keep the id, and the values of the fields related to the wizard template itself
             if template_name_field in data:
                 del data[template_name_field]
