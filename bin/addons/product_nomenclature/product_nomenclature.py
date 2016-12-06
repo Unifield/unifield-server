@@ -21,9 +21,6 @@
 
 from osv import osv, fields
 from tools.translate import _
-import decimal_precision as dp
-import math
-import re
 import tools
 from os import path
 import logging
@@ -62,7 +59,7 @@ class product_nomenclature(osv.osv):
             context = {}
 
         if not context.get('sync_update_execution') and not context.get('sync_message_execution') and \
-            (not context.get('lang') or context.get('lang') == 'en_US'):
+                (not context.get('lang') or context.get('lang') == 'en_US'):
             # UF-1662: Set the correct lang of the user, otherwise the system will get by default the wrong en_US value
             lang_dict = self.pool.get('res.users').read(cr, uid, uid, ['context_lang'])
             if not context.get('yml_test', False):
@@ -153,7 +150,7 @@ class product_nomenclature(osv.osv):
                 result['warning'].update({
                     'title': _('Warning!'),
                     'message': _("You selected a nomenclature of the last mandatory level as parent, the new nomenclature's type must be 'optional'."),
-                    })
+                })
                 return result
 
         # selected parent ok
@@ -194,7 +191,7 @@ class product_nomenclature(osv.osv):
         '''
         self._nomenclatureCheck(vals)
         return super(product_nomenclature, self).create(cr, user, vals,
-                                                       context=context)
+                                                        context=context)
 
     def unlink(self, cr, uid, ids, context=None):
         """
@@ -257,8 +254,8 @@ class product_nomenclature(osv.osv):
             raise osv.except_osv(_('Error !'), _('Filter not implemented on %s') % (name,))
 
         parent_ids = None
-        for path in args[0][2].split('|'):
-            dom = [('name', '=ilike', path.strip())]
+        for path_s in args[0][2].split('|'):
+            dom = [('name', '=ilike', path_s.strip())]
             if parent_ids is None:
                 dom.append(('parent_id', '=', False))
             else:
@@ -381,8 +378,6 @@ class product_nomenclature(osv.osv):
 
         # nomenclature object
         nomenObj = self.pool.get('product.nomenclature')
-        # product object
-        prodObj = self.pool.get('product.product')
 
         if position == 2 and nomen_manda_2:
             for n in nomenObj.read(cr, uid, [nomen_manda_2], ['category_id'], context=context):
@@ -398,7 +393,6 @@ class product_nomenclature(osv.osv):
                     id = n['id']
                     name = n['name']
                     if shownum:
-                        number = n['number_of_products']
                         values[mandaName % (position + 1)].append((id, name))
                     else:
                         values[mandaName % (position + 1)].append((id, name))
@@ -521,11 +515,11 @@ class product_nomenclature(osv.osv):
         # first, and the link to parent got sync-ed afterward, which violates the uniqueness on name.
         # Currently we don't have any better solution for this, we will temporarily "disable" it
 
-#        if isinstance(ids, (int, long)):
-#            ids = [ids]
-#        for nomen in self.browse(cr, uid, ids, context=context):
-#            if self.search_count(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context)>1:
-#                return False
+        #        if isinstance(ids, (int, long)):
+        #            ids = [ids]
+        #        for nomen in self.browse(cr, uid, ids, context=context):
+        #            if self.search_count(cr, uid, [('complete_name', '=', nomen.complete_name)], context=context)>1:
+        #                return False
         return True
 
     _constraints = [
@@ -611,70 +605,70 @@ class product_template(osv.osv):
 
     # ## EXACT COPY-PASTE TO order_nomenclature
     _columns = {
-                # mandatory nomenclature levels
-                'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True, select=1),
-                'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True, select=1),
-                'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1),
-                'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1),
+        # mandatory nomenclature levels
+        'nomen_manda_0': fields.many2one('product.nomenclature', 'Main Type', required=True, select=1),
+        'nomen_manda_1': fields.many2one('product.nomenclature', 'Group', required=True, select=1),
+        'nomen_manda_2': fields.many2one('product.nomenclature', 'Family', required=True, select=1),
+        'nomen_manda_3': fields.many2one('product.nomenclature', 'Root', required=True, select=1),
 
-                # optional nomenclature levels
-                'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1', select=1),
-                'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2', select=1),
-                'nomen_sub_2': fields.many2one('product.nomenclature', 'Sub Class 3', select=1),
-                'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4', select=1),
-                'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5', select=1),
-                'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6', select=1),
-# for search view :(
-                'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
+        # optional nomenclature levels
+        'nomen_sub_0': fields.many2one('product.nomenclature', 'Sub Class 1', select=1),
+        'nomen_sub_1': fields.many2one('product.nomenclature', 'Sub Class 2', select=1),
+        'nomen_sub_2': fields.many2one('product.nomenclature', 'Sub Class 3', select=1),
+        'nomen_sub_3': fields.many2one('product.nomenclature', 'Sub Class 4', select=1),
+        'nomen_sub_4': fields.many2one('product.nomenclature', 'Sub Class 5', select=1),
+        'nomen_sub_5': fields.many2one('product.nomenclature', 'Sub Class 6', select=1),
+        # for search view :(
+        'nomen_manda_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Main Type', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Group', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Family', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_manda_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Root', fnct_search=_search_nomen_s, multi="nom_s"),
 
-                'nomen_sub_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_sub_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_sub_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
-                'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_0_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 1', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_1_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 2', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_2_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 3', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_3_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 4', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_4_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 5', fnct_search=_search_nomen_s, multi="nom_s"),
+        'nomen_sub_5_s': fields.function(_get_nomen_s, method=True, type='many2one', relation='product.nomenclature', string='Sub Class 6', fnct_search=_search_nomen_s, multi="nom_s"),
 
-                # concatenation of nomenclature in a visible way
-                'nomenclature_description': fields.char('Nomenclature', size=1024),
-                'property_account_income': fields.many2one('account.account',
-                                                           string='Income Account',
-                                                           help='This account will be used for invoices instead of the default one to value sales for \
+        # concatenation of nomenclature in a visible way
+        'nomenclature_description': fields.char('Nomenclature', size=1024),
+        'property_account_income': fields.many2one('account.account',
+                                                   string='Income Account',
+                                                   help='This account will be used for invoices instead of the default one to value sales for \
 the current product'),
-                'property_account_expense': fields.many2one('account.account',
-                                                            string='Expense Account',
-                                                            help='This account will be used for invoices instead of the default one to value expenses \
+        'property_account_expense': fields.many2one('account.account',
+                                                    string='Expense Account',
+                                                    help='This account will be used for invoices instead of the default one to value expenses \
 for the current product'),
-                'property_stock_procurement': fields.many2one('stock.location',
-                                                              string='Procurement Location',
-                                                              domain=[('usage', 'like', 'procurement')],
-                                                              # FIXME
-                                                              required=False,
-                                                              help='For the current product, this stock location will be used, instead of the default one, \
+        'property_stock_procurement': fields.many2one('stock.location',
+                                                      string='Procurement Location',
+                                                      domain=[('usage', 'like', 'procurement')],
+                                                      # FIXME
+                                                      required=False,
+                                                      help='For the current product, this stock location will be used, instead of the default one, \
 as the source location for stock moves generated by procurements'),
-                'property_stock_production': fields.many2one('stock.location',
-                                                             string='Production Location',
-                                                             domain=[('usage', 'like', 'production')],
-                                                             # FIXME
-                                                             required=False,
-                                                             help='For the current product, this stock location will be used, instead of the default one, \
+        'property_stock_production': fields.many2one('stock.location',
+                                                     string='Production Location',
+                                                     domain=[('usage', 'like', 'production')],
+                                                     # FIXME
+                                                     required=False,
+                                                     help='For the current product, this stock location will be used, instead of the default one, \
 as the source location for stock moves generated by production orders'),
-                'property_stock_inventory': fields.many2one('stock.location',
-                                                            string='Inventory Location',
-                                                            domain=[('usage', 'like', 'inventory')],
-                                                            # FIXME
-                                                            required=False,
-                                                            help='For the current product, this stock location will be used, instead of the default one, \
+        'property_stock_inventory': fields.many2one('stock.location',
+                                                    string='Inventory Location',
+                                                    domain=[('usage', 'like', 'inventory')],
+                                                    # FIXME
+                                                    required=False,
+                                                    help='For the current product, this stock location will be used, instead of the default one, \
 as the source location for stock moves generated when you do an inventory'),
-                'property_stock_account_input': fields.many2one('account.account',
-                                                                string='Stock Input Account',
-                                                                help='When doing real-time inventory valuation, counterpart Journal Items for all incoming \
+        'property_stock_account_input': fields.many2one('account.account',
+                                                        string='Stock Input Account',
+                                                        help='When doing real-time inventory valuation, counterpart Journal Items for all incoming \
 stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
-                'property_stock_account_output': fields.many2one('account.account',
-                                                                 string='Stock Output Account',
-                                                                 help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing \
+        'property_stock_account_output': fields.many2one('account.account',
+                                                         string='Stock Output Account',
+                                                         help='When doing real-time inventory valuation, counterpart Journal Items for all outgoing \
 stock moves will be posted in this account. If not set on the product, the one from the product category is used.'),
     }
     # ## END OF COPY
@@ -706,7 +700,7 @@ stock moves will be posted in this account. If not set on the product, the one f
 
         res = {}
         toget = [('nomen_manda_0', 'nomen_med'), ('nomen_manda_1', 'nomen_med_drugs'),
-            ('nomen_manda_2', 'nomen_med_drugs_infusions'), ('nomen_manda_3', 'nomen_med_drugs_infusions_dex')]
+                 ('nomen_manda_2', 'nomen_med_drugs_infusions'), ('nomen_manda_3', 'nomen_med_drugs_infusions_dex')]
 
         for field, xml_id in toget:
             nom = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'product_nomenclature', xml_id)
@@ -824,17 +818,8 @@ class product_product(osv.osv):
         to_overwrite = False
         # The first 2 cases: dup of default_code/xmlid_code not allow
         if context.get('from_import_menu') or context.get('sync_update_execution', False):
-            xmlid_code = vals.get('xmlid_code', False)
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
-            exist_dc = self.search(cr, uid, [('default_code', '=',
-                default_code)], limit=1, order='NO_ORDER', context=context)
-            exist_xc = self.search(cr, uid, [('xmlid_code', 'in', [default_code, xmlid_code])],
-                    limit=1, order='NO_ORDER', context=context)
-            if exist_dc:  # if any of the code exists, report error!,
-                raise Exception, "Problem creating product: Duplicate default_code found"
-            if exist_xc:  # if any of the code exists, report error!,
-                raise Exception, "Problem creating product: Duplicate xmlid_code found"
         elif default_code:  # cases 3, 4
             vals['xmlid_code'] = default_code
         else:
@@ -845,7 +830,7 @@ class product_product(osv.osv):
 
         res = super(product_product, self).create(cr, uid, vals, context=context)
 
-        prod_default_code = default_code or self.read(cr, uid, res, ['default_code'], context=context)
+        prod_default_code = default_code or self.read(cr, uid, res, ['default_code'], context=context)['default_code']
         if to_overwrite:
             self.write(cr, uid, res, {'xmlid_code': prod_default_code}, context=context)
 
@@ -868,7 +853,29 @@ class product_product(osv.osv):
         sale = self.pool.get('sale.order.line')
         sale._setNomenclatureInfo(cr, uid, vals, context)
 
-        return super(product_product, self).write(cr, uid, ids, vals, context)
+
+        default_code = vals.get('default_code', False)
+
+        if default_code:
+            read_result = self.read(cr, uid, ids, ['default_code'], context=context)
+
+        res = super(product_product, self).write(cr, uid, ids, vals, context)
+
+        # check if default_code change
+        if default_code:
+            all_msf_lines_to_upgrade = []
+            msf_line_obj = self.pool.get('stock.mission.report.line')
+            for product in read_result:
+                if product['default_code'] != default_code:
+                    # if the default_code change, update the corresponding MSR lines
+                    msf_lines_to_update = msf_line_obj.search(cr, uid,
+                                                              [('product_id', '=', product['id'])],
+                                                              context=context)
+                    all_msf_lines_to_upgrade.extend(msf_lines_to_update)
+            if all_msf_lines_to_upgrade:
+                msf_line_obj.write(cr, uid, all_msf_lines_to_upgrade,
+                                   {}, context=context)
+        return res
 
     def onChangeSearchNomenclature(self, cr, uid, id, position, type, nomen_manda_0, nomen_manda_1, nomen_manda_2, nomen_manda_3, num=True, context=None):
         '''
@@ -910,8 +917,6 @@ class product_product(osv.osv):
 
         # nomenclature object
         nomenObj = self.pool.get('product.nomenclature')
-        # product object
-        prodObj = self.pool.get('product.product')
 
         if position == 2 and nomen_manda_2:
             for n in nomenObj.read(cr, uid, [nomen_manda_2], ['category_id'], context=context):
@@ -1079,16 +1084,16 @@ class product_product(osv.osv):
             if  newType == 'mandatory':
                 if fieldNumber != newLevel:
                     result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).") % (newLevel, fieldNumber)
-                                          })
+                                              'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).") % (newLevel, fieldNumber)
+                                              })
                     newId = False
 
             elif newType == 'optional':
                 if fieldNumber != newSubLevel:
                     # ## NOTE adapt level to user level for warning message (+1)
                     result['warning'].update({'title': _('Error!'),
-                                          'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).") % (newSubLevel + 1, fieldNumber + 1)
-                                          })
+                                              'message': _("The selected nomenclature's level is '%s'. Must be '%s' (field's level).") % (newSubLevel + 1, fieldNumber + 1)
+                                              })
                     newId = False
 
         else:
@@ -1167,7 +1172,7 @@ class product_category(osv.osv):
     }
 
     _defaults = {
-                 'active': True,
+        'active': True,
     }
 
     _sql_constraints = [('check_msfid_unique', 'unique (msfid)', 'MSFID must be unique !')]
@@ -1208,7 +1213,7 @@ class act_window(osv.osv):
     _inherit = 'ir.actions.act_window'
     _columns = {
         'domain': fields.char('Domain Value', size=1024,
-            help="Optional domain filtering of the destination data, as a Python expression"),
+                              help="Optional domain filtering of the destination data, as a Python expression"),
     }
 
 act_window()
@@ -1222,7 +1227,7 @@ class product_uom_categ(osv.osv):
     }
 
     _defaults = {
-                 'active': True,
+        'active': True,
     }
 
     def unlink(self, cr, uid, ids, context=None):

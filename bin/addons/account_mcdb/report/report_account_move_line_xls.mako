@@ -49,8 +49,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="18" x:FullColumns="1"
-x:FullRows="1">
+<Table>
 % for x in range(0,18):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor

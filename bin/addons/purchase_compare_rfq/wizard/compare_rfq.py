@@ -24,9 +24,6 @@ from osv import fields
 from tools.translate import _
 from order_types import ORDER_PRIORITY, ORDER_CATEGORY
 
-import netsvc
-import decimal_precision as dp
-
 
 class wizard_compare_rfq(osv.osv_memory):
     _name = 'wizard.compare.rfq'
@@ -62,7 +59,7 @@ class wizard_compare_rfq(osv.osv_memory):
         return res
 
     def _write_all_supplier(
-        self, cr, uid, ids, field_name, values, args, context=None):
+            self, cr, uid, ids, field_name, values, args, context=None):
         """
         Write the selected supplier on the wizard
         """
@@ -316,7 +313,7 @@ class wizard_compare_rfq(osv.osv_memory):
         Remove the supplier from all lines
         """
         return self.add_supplier_all_lines(cr, uid, ids,
-                context=context, deselect=True)
+                                           context=context, deselect=True)
 
 
     def update_tender(self, cr, uid, ids, context=None):
@@ -343,6 +340,7 @@ class wizard_compare_rfq(osv.osv_memory):
                 pol_id = wl_brw.rfq_line_id and wl_brw.rfq_line_id.id or False
                 tl_obj.write(cr, uid, [wl_brw.tender_line_id.id], {
                     'purchase_order_line_id': pol_id,
+                    'comment': wl_brw.rfq_line_id.comment or '',
                 }, context=context)
 
             # UF-733: if all tender lines have been compared (have PO Line id),
@@ -416,7 +414,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
             type='char',
             size=256,
         ),
-   }
+    }
 
     def fields_get(self, cr, uid, fields=None, context=None):
         """
@@ -451,6 +449,12 @@ class wizard_compare_rfq_line(osv.osv_memory):
                     'type': 'float',
                     'digits': (16,2),
                     'string': _('Unit price'),
+                },
+                # Confirmed delivery date on the related RfQ line
+                'confirmed_delivery_date_%s' % sid: {
+                    'selectable': True,
+                    'type': 'date',
+                    'string': _('Confirmed delivery'),
                 },
                 # Comment of the related RfQ line
                 'comment_%s' % sid: {
@@ -517,13 +521,14 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 r.update({
                     'name_%s' % sid: sup.name,
                     'unit_price_%s' % sid: rfql and pu or 0.00,
+                    'confirmed_delivery_date_%s' % sid: rfql.confirmed_delivery_date,
                     'comment_%s' % sid: rfql and rfql.comment or '',
                 })
 
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form',
-            context=None, toolbar=False, submenu=False):
+                        context=None, toolbar=False, submenu=False):
         """
         Display the computed fields according to number of suppliers in the
         tender.
@@ -546,7 +551,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 <field name="quantity" readonly="1" />
                 <field name="uom_id" readonly="1" />
             """
-            fld_to_add = ['name', 'unit_price', 'comment']
+            fld_to_add = ['name', 'unit_price', 'comment', 'confirmed_delivery_date']
             t_id = context.get('tender_id', False)
             s_ids = []
             if t_id:

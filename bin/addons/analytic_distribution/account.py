@@ -85,11 +85,11 @@ class account_destination_link(osv.osv):
         'destination_id': fields.many2one('account.analytic.account', "Analytical Destination Account", required=True, domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]", readonly=True),
         'funding_pool_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_destinations', 'tuple_id', 'funding_pool_id', "Funding Pools"),
         'name': fields.function(_get_tuple_name, method=True, type='char', size=254, string="Name", readonly=True,
-            store={
-                'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id', 'destination_id'], 20),
-                'account.analytic.account': (_get_analytic_account_ids, ['code'], 10),
-                'account.account': (_get_account_ids, ['code'], 10),
-            }),
+                                store={
+                                    'account.destination.link': (lambda self, cr, uid, ids, c={}: ids, ['account_id', 'destination_id'], 20),
+                                    'account.analytic.account': (_get_analytic_account_ids, ['code'], 10),
+                                    'account.account': (_get_account_ids, ['code'], 10),
+                                }),
         'used': fields.function(_get_used, string='Used', method=True, type='boolean'),
     }
 
@@ -161,7 +161,7 @@ class account_destination_summary(osv.osv):
                     sum.funding_pool_id = d.funding_pool_id and
                     sum.id in %s
                 ''',(tuple(ids),)
-                )
+            )
             tmp_result = {}
             for x in cr.fetchall():
                 tmp_result.setdefault(x[0], []).append(x[1])
@@ -211,8 +211,9 @@ class account_account(osv.osv):
     _columns = {
         'user_type_code': fields.related('user_type', 'code', type="char", string="User Type Code", store=False),
         'user_type_report_type': fields.related('user_type', 'report_type', type="char", string="User Type Report Type", store=False),
+        'user_type_name': fields.related('user_type', 'name', type="char", string="User Type Name", store=False),
         'funding_pool_line_ids': fields.many2many('account.analytic.account', 'funding_pool_associated_accounts', 'account_id', 'funding_pool_id',
-            string='Funding Pools'),
+                                                  string='Funding Pools'),
         'default_destination_id': fields.many2one('account.analytic.account', 'Default Destination', domain="[('type', '!=', 'view'), ('category', '=', 'DEST')]"),
         'destination_ids': many2many_notlazy('account.analytic.account', 'account_destination_link', 'account_id', 'destination_id', 'Destinations', readonly=True),
     }
@@ -337,14 +338,14 @@ class account_move(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, button_uid, ids, context=None):

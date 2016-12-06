@@ -220,7 +220,7 @@ class analytic_line(osv.osv):
         'is_fp_compat_with': fields.function(_get_fake_is_fp_compat_with, fnct_search=_search_is_fp_compat_with, method=True, type="char", size=254, string="Is compatible with some FP?"),
         'move_state': fields.related('move_id', 'move_id', 'state', type='selection', size=64, relation="account.move.line", selection=[('draft', 'Unposted'), ('posted', 'Posted')], string='Journal Entry state', readonly=True, help="Indicates that this line come from an Unposted Journal Entry."),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", readonly=True, \
-            help="Indicates the Journal Type of the Analytic journal item"),
+                                       help="Indicates the Journal Type of the Analytic journal item"),
         'entry_sequence': fields.function(_get_entry_sequence, method=True, type='text', string="Entry Sequence", readonly=True, store=True),
         'period_id': fields.function(_get_period_id, fnct_search=_search_period_id, method=True, string="Period", readonly=True, type="many2one", relation="account.period", store=False),
         'from_commitment_line': fields.function(_get_from_commitment_line, method=True, type='boolean', string="Commitment?"),
@@ -341,8 +341,8 @@ class analytic_line(osv.osv):
                     # then create new lines
                     cor_name = self.pool.get('account.analytic.line').join_without_redundancy(aline.name, 'COR')
                     cor_ids = self.pool.get('account.analytic.line').copy(cr, uid, aline.id, {fieldname: account_id, 'date': date,
-                        'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id,
-                        'name': cor_name, 'ref': aline.entry_sequence}, context=context)
+                                                                                              'source_date': aline.source_date or aline.date, 'journal_id': correction_journal_id,
+                                                                                              'name': cor_name, 'ref': aline.entry_sequence, 'real_period_id': correction_period_ids[0]}, context=context)
                     self.pool.get('account.analytic.line').write(cr, uid, cor_ids, {'last_corrected_id': aline.id})
                     # finally flag analytic line as reallocated
                     self.pool.get('account.analytic.line').write(cr, uid, [aline.id], {'is_reallocated': True})
@@ -379,7 +379,7 @@ class analytic_line(osv.osv):
             return res
         try:
             msf_private_fund = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-            'analytic_account_msf_private_funds')[1]
+                                                                                   'analytic_account_msf_private_funds')[1]
         except ValueError:
             msf_private_fund = 0
         expired_date_ids = []
@@ -457,10 +457,10 @@ class analytic_line(osv.osv):
         return res
 
     def check_dest_cc_fp_compatibility(self, cr, uid, ids,
-        dest_id=False, cc_id=False, fp_id=False,
-        from_import=False, from_import_general_account_id=False,
-        from_import_posting_date=False,
-        context=None):
+                                       dest_id=False, cc_id=False, fp_id=False,
+                                       from_import=False, from_import_general_account_id=False,
+                                       from_import_posting_date=False,
+                                       context=None):
         """
         check compatibility of new dest/cc/fp to reallocate
         :return list of not compatible entries tuples
@@ -474,10 +474,10 @@ class analytic_line(osv.osv):
             return False
 
         def check_entry(id, entry_sequence,
-            general_account_br, posting_date,
-            new_dest_id, new_dest_br,
-            new_cc_id, new_cc_br,
-            new_fp_id, new_fp_br):
+                        general_account_br, posting_date,
+                        new_dest_id, new_dest_br,
+                        new_cc_id, new_cc_br,
+                        new_fp_id, new_fp_br):
             if not general_account_br.is_analytic_addicted:
                 res.append((id, entry_sequence, ''))
                 return False
@@ -501,8 +501,8 @@ class analytic_line(osv.osv):
                 # - destination / account
                 acc_dest = (general_account_br.id, new_dest_id)
                 if acc_dest not in [x.account_id and x.destination_id and \
-                    (x.account_id.id, x.destination_id.id) \
-                        for x in new_fp_br.tuple_destination_account_ids]:
+                                    (x.account_id.id, x.destination_id.id) \
+                                    for x in new_fp_br.tuple_destination_account_ids]:
                     # not compatible with dest/account
                     res.append((id, entry_sequence, 'account/dest'))
                     return False
@@ -515,7 +515,7 @@ class analytic_line(osv.osv):
                 res.append((id, entry_sequence, 'CC date'))
                 return False
             if new_fp_id != msf_pf_id and not \
-                check_date(new_fp_br, posting_date):
+                    check_date(new_fp_br, posting_date):
                 res.append((id, entry_sequence, 'FP date'))
                 return False
 
@@ -524,8 +524,8 @@ class analytic_line(osv.osv):
         res = []
         if from_import:
             if not dest_id or not cc_id or not fp_id or \
-                not from_import_general_account_id or \
-                not from_import_posting_date:
+                    not from_import_general_account_id or \
+                    not from_import_posting_date:
                 return [(False, '', '')]  # tripplet required at import
         elif not ids:
             return res
@@ -552,13 +552,13 @@ class analytic_line(osv.osv):
 
         # MSF Private Fund
         msf_pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-            'analytic_distribution', 'analytic_account_msf_private_funds')[1]
+                                                                        'analytic_distribution', 'analytic_account_msf_private_funds')[1]
 
         if from_import:
             account_br = self.pool.get('account.account').browse(cr, uid,
-                from_import_general_account_id, context=context)
+                                                                 from_import_general_account_id, context=context)
             check_entry(False, '', account_br, from_import_posting_date,
-                dest_id, dest_br, cc_id, cc_br, fp_id, fp_br)
+                        dest_id, dest_br, cc_id, cc_br, fp_id, fp_br)
         else:
             for self_br in self.browse(cr, uid, ids, context=context):
                 new_dest_id = dest_id or self_br.destination_id.id
@@ -569,10 +569,10 @@ class analytic_line(osv.osv):
                 new_fp_br = fp_br or self_br.account_id
 
                 check_entry(self_br.id, self_br.entry_sequence,
-                    self_br.general_account_id, self_br.date,
-                    new_dest_id, new_dest_br,
-                    new_cc_id, new_cc_br,
-                    new_fp_id, new_fp_br)
+                            self_br.general_account_id, self_br.date,
+                            new_dest_id, new_dest_br,
+                            new_cc_id, new_cc_br,
+                            new_fp_id, new_fp_br)
 
         return res
 

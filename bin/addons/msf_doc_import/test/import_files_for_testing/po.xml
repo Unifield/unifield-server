@@ -74,8 +74,7 @@
   </Style>
  </Styles>
  <Worksheet ss:Name="PO00009">
-  <Table ss:ExpandedColumnCount="8" ss:ExpandedRowCount="17" x:FullColumns="1"
-   x:FullRows="1" ss:DefaultColumnWidth="60" ss:DefaultRowHeight="15">
+  <Table ss:DefaultColumnWidth="60" ss:DefaultRowHeight="15">
    <Column ss:Width="120"/>
    <Column ss:Width="300"/>
    <Column ss:Index="8" ss:Width="249.75"/>

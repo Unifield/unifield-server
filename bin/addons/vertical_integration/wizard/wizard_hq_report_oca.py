@@ -41,7 +41,17 @@ class wizard_hq_report_oca(osv.osv_memory):
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c),
         'selection': lambda *a: 'unexported',
     }
-    
+
+    def onchange_instance_id(self, cr, uid, ids, context=None):
+        '''
+        (US-226) Reset the period field when another prop. instance is selected.
+        Cover the case when in HQ the user selects a period mission-closed in a coordo,
+        and then select another coordo in which the period previously selected is not mission-closed
+        '''
+        res = {}
+        res['value'] = {'period_id': False}
+        return res
+
     def button_create_report(self, cr, uid, ids, context=None):
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}

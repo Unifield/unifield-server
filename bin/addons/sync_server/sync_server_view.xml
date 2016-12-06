@@ -49,6 +49,9 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
+                    <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated,updated"/>
+                    <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated"/>
+                    <newline/>
                     <group colspan="2" col="2"> 
                         <separator string="Configuration" colspan="2"/>
                         <field name="name"/>
@@ -69,9 +72,6 @@
                     <field name="group_ids" colspan="4" nolabel="1"/>
                     <separator string="Children" colspan="4"/>
                     <field name="children_ids" colspan="4" nolabel="1"/>
-                    <newline/>
-                    <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated,updated"/>
-                    <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated"/>
                 </form>
             </field>
         </record>
@@ -86,6 +86,7 @@
                 <tree string="Instance Groups">
                     <field name="name"/>
                     <field name="type_id"/>
+                    <field name="oc"/>
                 </tree>
             </field>
         </record>
@@ -98,6 +99,7 @@
                 <form string="Instance Group">
                     <field name="name"/>
                     <field name="type_id"/>
+                    <field name="oc" />
                     <field name="entity_ids" nolabel="1" colspan="4"/>
                 </form>
             </field>
@@ -132,20 +134,29 @@
 
 
 
-        <menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration" sequence="0"/>
+        <menuitem id="sync_menu" name="Synchronization" parent="base.menu_administration"
+            groups="sync_common.sync_read_group"
+            sequence="0"/>
 
-        <menuitem id="mon_menu" name="Monitoring" parent="sync_menu" sequence="10"/>
+        <menuitem id="mon_menu" name="Monitoring" parent="sync_menu"
+            groups="base.group_erp_manager"
+            sequence="10"/>
 
-        <menuitem id="conf_menu" name="Configuration" parent="sync_menu" sequence="90"/>
+        <menuitem id="conf_menu" name="Configuration" parent="sync_menu"
+            groups="sync_common.sync_read_group"
+            sequence="90"/>
 
         <menuitem id="entity_menu" name="Instance" parent="conf_menu" sequence="10"
-                action="entity_action"/>
+            groups="sync_common.sync_read_group"
+            action="entity_action"/>
 
         <menuitem id="group_menu" name="Groups" parent="conf_menu" sequence="20"
-                action="group_action"/>
+            groups="base.group_erp_manager"
+            action="group_action"/>
 
         <menuitem id="group_type_menu" name="Type of Group" parent="conf_menu" sequence="30"
-                action="group_type_action"/>
+            groups="base.group_erp_manager"
+            action="group_type_action"/>
 
     </data>
 </openerp>
