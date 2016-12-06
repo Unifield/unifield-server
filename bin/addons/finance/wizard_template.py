@@ -43,11 +43,13 @@ class wizard_template(osv.osv):
          'This template name already exists for this wizard. Please choose another name.')
     ]
 
-    def save_template(self, cr, uid, ids, wizard_name, template_name_field='template_name', context=None):
+    def save_template(self, cr, uid, ids, wizard_name, template_name_field='template_name',
+                      saved_templates_field='saved_templates', context=None):
         '''
         Store all the fields values of the wizard in parameter.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
         :param template_name_field: String, name of the field in the wizard containing the chosen template name
+        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
         '''
         if context is None:
             context = {}
@@ -59,6 +61,13 @@ class wizard_template(osv.osv):
             template_name = data[template_name_field]
             if not template_name:
                 raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
+            # don't keep the values of the following fields:
+            # template name, id, template selected among the saved templates...
+            del data[template_name_field]
+            if 'id' in data:
+                del data['id']
+            if saved_templates_field in data:
+                del data[saved_templates_field]
             # create a new wizard_template to store the values
             vals = {'name': template_name,
                     'user_id': uid,
@@ -77,9 +86,9 @@ class wizard_template(osv.osv):
         if context is None:
             context = {}
         template_ids = self.search(cr, uid, [('wizard_name', '=', wizard_name), ('user_id', '=', uid)],
-                                               context=context, order='name') or []
+                                   context=context, order='name') or []
         templates = template_ids and self.browse(cr, uid, template_ids,
-                                                             fields_to_fetch=['name'], context=context) or []
+                                                 fields_to_fetch=['name'], context=context) or []
         names = [(t.id, t.name) for t in templates]
         return names
 
@@ -102,8 +111,8 @@ class wizard_template(osv.osv):
         vals = self.browse(cr, uid, selected_template_id, context=context).values
         try:
             vals = eval(vals)
-            if 'id' in vals:
-                del vals['id']
+            # we put the value of the selected template in the "Saved templates" selection field
+            vals.update({saved_templates_field: selected_template_id})
         except SyntaxError:
             vals = {}
         # we "format" the many2many fields values to make them look like [(6, 0, [1, 2])]
