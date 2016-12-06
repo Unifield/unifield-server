@@ -38,11 +38,17 @@ class ratelimit():
         if self._rl > 0:
             return True
 
+        # _rl has just gone to 0, so log the last message, which is the
+        # rate limit notification. Be careful to log this into operations.event,
+        # even if self is an operations.count. (US-2070)
+        assert self._rl == 0
+        oe = self.pool.get('operations.event')
         vals = { 'kind': 'rate-limit',
                  'data': 'No more %s will be logged until next purge.' % self._rl_name
                  }
         # Do not call self.create, because it calls us -> loop.
-        osv.osv.create(self, cr, uid, vals, context=context)
+        osv.osv.create(oe, cr, uid, vals, context=context)
+
         return False
 
     def create(self, cr, uid, vals, context=None):
@@ -75,7 +81,7 @@ class operations_event(osv.osv, ratelimit):
         self._rl = self._rl_max
         # SQL queries longer than this will be logged.
         self.SLOW_QUERY = 10 # seconds
-        self._reset_slow_queries()
+        self._slow_queries = {}
 
     def create(self, cr, uid, vals, context=None):
         """Override create in order to respect the rate limit."""
@@ -86,9 +92,6 @@ class operations_event(osv.osv, ratelimit):
         # many times, to calculate an average later.
         tot, ct = self._slow_queries.get(q, (0, 0))
         self._slow_queries[q] = (tot + delta, ct+1)
-
-    def _reset_slow_queries(self):
-        self._slow_queries = {}
 
     def _shorten(self, x):
         if not isinstance(x, basestring):
@@ -153,12 +156,16 @@ class operations_event(osv.osv, ratelimit):
 
         self._rl = self._rl_max
 
-        for q in self._slow_queries:
-            tot, n = self._slow_queries[q]
+        # Take a reference to it and reset it, so that any updates
+        # that come in the background do not cause the dict to change while
+        # iterating. (US-2059)
+        sq = self._slow_queries
+        self._slow_queries = {}
+        for q in sq:
+            tot, n = sq[q]
             x = { 'count': n, 'average-latency': float(tot)/n, 'sql': q }
             vals = { 'kind': 'slow-query', 'data': str(x) }
             self.create(cr, uid, vals)
-        self._reset_slow_queries()
 
 operations_event()
 
