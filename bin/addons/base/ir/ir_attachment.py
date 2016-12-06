@@ -442,12 +442,12 @@ class attachment_config(osv.osv):
 
     _columns = {
         'name': fields.char('Path to save the attachments to', size=256,
-                            help="The complet path to the local folder where Unifield will save attachment files.",
+                            help="The complete path to the local folder where Unifield will save attachment files.",
                             required=True),
         'next_migration' : fields.datetime('Next migration date',
-                                           help="Next planned execution of thei migration to move the old attachment to the path you defined"),
+                                           help="Next planned execution of the migration to move the old attachment to the path defined"),
         'migration_date': fields.datetime('Last migration execution date', readonly=True),
-        'migration_error': fields.text('Migration error', readonly=True),
+        'migration_error': fields.text('Migration errors', readonly=True),
         'is_migration_running': fields.function(_is_migration_running,
                                                 type='boolean', string='Moving files...', method=True,
                                                 readonly=True),
@@ -614,7 +614,7 @@ class attachment_config(osv.osv):
                 'numbercall': 1,
                 'active': True,
             }
-            cron_obj.write(cr, uid, default_migrate_attachment.id, values, context=context) 
+            cron_obj.write(cr, uid, default_migrate_attachment.id, values, context=context)
         return super(attachment_config, self).write(cr, uid, ids, vals, context=context)
 
 attachment_config()

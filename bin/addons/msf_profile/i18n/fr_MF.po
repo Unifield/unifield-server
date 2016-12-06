@@ -75286,15 +75286,60 @@ msgid "Path to save the attachments to"
 msgstr "Dossier d'enregistrement des pièces jointes"
 
 #. module: base
-#: help:attachment.config,name:0
-msgid "The complet path to the local folder where Unifield will save attachment files."
+#: field:attachment.config,next_migration:444
+msgid "Next migration date"
+msgstr "Date de la prochaine migration"
+
+#. module: base
+#: help:attachment.config,name:445
+msgid "The complete path to the local folder where Unifield will save attachment files."
 msgstr "Dossier dans lequel les pièces jointes seront stockées."
+
+#. module: base
+#: help:attachment.config,next_migration:448
+msgid "Next planned execution of the migration to move the old attachment to the path defined"
+msgstr "Prochaine execution planifiée de migration pour déplacer les anciènes pièces jointes vers le nouveau chemin défini."
+
+#. module: base
+#: field:attachment.config,migration_date:449
+msgid "Last migration execution date"
+msgstr "Date de la dernière migration"
+
+#. module: base
+#: field:attachment.config,migration_error:450
+msgid "Migration errors"
+msgstr "Erreurs de migration"
+
+#. module: base
+#: field:attachment.config,is_migration_running:452
+msgid "Moving files..."
+msgstr "Déplacement des fichiers..."
+
+#. module: base
+#: field:attachment.config,moving_rate:454
+msgid "Moving process"
+msgstr "Avancement du déplacement"
+
+#. module: base
+#: constraint:attachment.config:469
+msgid "You cannot have more than one Attachment configuration"
+msgstr "Vous ne pouvez pas avoir plus d'une configuration de pièces jointes"
 
 #. module: base
 #: view:attachment.config:0
 #: model:ir.model,name:base.model_attachment_config
 msgid "Attachment configuration"
 msgstr "Configuration des pièces jointes"
+
+#. module: base
+#: view:attachment.config:0
+msgid "Old attachments migration"
+msgstr "Migration des anciennes pièces jointes"
+
+#. module: base
+#: view:attachment.config:0
+msgid "Migrate old attachement to store them in local file system"
+msgstr "Migrer les anciennes pièces jointes pour les stocker sur le système de fichier local"
 
 #. module: board
 #: code:addons/board/queries_finance.py:11
