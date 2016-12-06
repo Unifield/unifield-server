@@ -23,6 +23,7 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from tools import ustr
 
 
 class mission_stock_wizard(osv.osv_memory):
@@ -50,7 +51,7 @@ class mission_stock_wizard(osv.osv_memory):
         if msr_ids:
             st_date = date_tools.get_date_formatted(cr, uid, d_type='datetime',
                                                     datetime=msr_in_progress.browse(cr, uid, msr_ids[0], context=context).start_date)
-            return state and 'progress' or _('In progress since %s') % st_date
+            return state and 'progress' or _('In progress since %s') % ustr(st_date)
 
         return state and 'done' or _('Done')
 
