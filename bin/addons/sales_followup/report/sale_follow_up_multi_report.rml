@@ -168,7 +168,7 @@
 
     <section>
             [[ repeatIn(getOrders(r, grouped=True, only_bo=r.only_bo), 'o', 'section') ]]
-        <blockTable colWidths="32.0,50.0,150.0,50.0,30.0,50.0,50.0,50.0,50.0,60.0,60.0,60.0,80.0" style="LinesTable" repeatRows="2">
+        <blockTable colWidths="32.0,50.0,150.0,70.0,30.0,50.0,30.0,50.0,50.0,60.0,60.0,60.0,80.0" style="LinesTable" repeatRows="2">
 	    	<tr>
 	    		<td colspan="2">
                     <para style="Lines">Order ref:</para>
@@ -180,10 +180,16 @@
                     <para style="Lines"></para>
                 </td>
                 <td>
-                    <para style="Lines">Received: [[ formatLang(o.date_order, date=True) ]]</para>
+                    <para style="Lines">Customer Ref: [[ o.client_order_ref or '' ]]</para>
                 </td>
                 <td>
                     <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines"></para>
+                </td>
+                <td>
+                    <para style="Lines">Received: [[ formatLang(o.date_order, date=True) ]]</para>
                 </td>
                 <td>
                     <para style="Lines"></para>
@@ -195,16 +201,10 @@
                     <para style="Lines"></para>
                 </td>
                 <td>
-                    <para style="Lines"></para>
-                </td>
-                <td>
                     <para style="Lines"># Items: [[ getProducts(o) ]]</para>
                 </td>
                 <td>
                     <para style="Lines">Estimated amount: [[ formatLang(o.amount_total or 0.00) ]] [[ o.pricelist_id.currency_id.name ]]</para>
-                </td>
-                <td>
-                    <para style="Lines"></para>
                 </td>
             </tr>
 	    	<tr>
