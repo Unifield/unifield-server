@@ -46,6 +46,21 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2075_partner_locally_created(self, cr, uid, *a, **b):
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            identifier = entity.get_entity(cr, uid).identifier
+            if identifier:
+                cr.execute("""update res_partner set locally_created='f' where id in (
+                    select res_id from ir_model_data d
+                    where d.module='sd'
+                        and d.model='res.partner'
+                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name not like '%s%%'
+                    ) """ % (identifier, ))
+                self._logger.warn('%s non local partners updated' % (cr.rowcount,))
+        return True
+
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:

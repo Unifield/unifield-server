@@ -138,5 +138,9 @@
         <record id="us_1671_stopped_products" model="patch.scripts">
             <field name="method">us_1671_stopped_products</field>
         </record>
+
+        <record id="us_2075_partner_locally_created" model="patch.scripts">
+            <field name="method">us_2075_partner_locally_created</field>
+        </record>
     </data>
 </openerp>
