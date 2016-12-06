@@ -102,17 +102,17 @@ class wizard_import_po_line(osv.osv_memory):
             header_index = context['header_index']
             template_col_count = len(header_index)
             is_rfq = wiz.po_id.rfq_ok and wiz.po_id.state == 'rfq_sent'
-            mandatory_col_count = 8 if is_rfq else 7
+            mandatory_col_count = 9 if is_rfq else 7
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
 
             """
             1st path: check currency in lines in phasis with document
             REF-94: BECAREFUL WHEN CHANGING THE ORDER OF CELLS IN THE IMPORT FILE!!!!!
-            CCY COL INDEX: 6 (PO) or 7 (RfQ)
+            CCY COL INDEX: 6 (PO) or 8 (RfQ)
             """
             order_currency_code = wiz.po_id.pricelist_id.currency_id.name
-            currency_index = 7 if is_rfq else 6
+            currency_index = 8 if is_rfq else 6
             row_iterator = file_obj.getRows()
 
             # don't use the original
@@ -169,7 +169,7 @@ class wizard_import_po_line(osv.osv_memory):
                     if col_count != template_col_count and col_count != mandatory_col_count:
                         message += _("Line %s: You should have exactly %s columns in this order: %s \n") % (
                             line_num, template_col_count,
-                            ','.join(is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:]))
+                            ','.join(is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] or columns_for_po_line_import[1:]))
                         line_with_error.append(
                             wiz_common_import.get_line_values(
                                 cr, uid, ids, row, cell_nb=False,
@@ -243,12 +243,21 @@ class wizard_import_po_line(osv.osv_memory):
 
                         # Cell 5: Delivery Request Date
                         # for Rfq 'Delivery requested date' tolerated (5th column)
-                        cell_nb = header_index[_('Delivery Request Date')] if _('Delivery Request Date') in header_index else 5
+                        cell_nb = header_index[_('Delivery Request Date')] if _('Delivery Request Date') in header_index else 6
                         date_value = check_line.compute_date_value(
                             cell_nb=cell_nb, row=row, to_write=to_write, context=context)
                         to_write.update(
                             date_planned=date_value['date_planned'],
                             error_list=date_value['error_list'])
+
+                        # Cell 7: Delivery confirmed date
+                        if is_rfq:
+                            cell_nb = header_index[_('Delivery confirmed date')] if _('Delivery confirmed date') in header_index else 7
+                            cdd_value = check_line.compute_confirmed_delivery_date_value(
+                                cell_nb=cell_nb, row=row, to_write=to_write, context=context)
+                            to_write.update(
+                                confirmed_delivery_date=cdd_value['confirmed_delivery_date'],
+                                error_list=cdd_value['error_list'])
 
                         # Cell 6: Currency
                         curr_value = check_line.compute_currency_value(
@@ -436,8 +445,8 @@ Importation completed in %s!
                 rfq = purchase_obj.read(cr, uid, po_id, ['state', 'rfq_ok'], context=context)
                 is_rfq = rfq['rfq_ok'] and rfq['state'] == 'rfq_sent'
                 res, res1 = wiz_common_import.check_header_values(
-                    cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import or columns_for_po_line_import[1:],
-                    origin='PO')
+                    cr, uid, ids, context, header_index, is_rfq and columns_for_po_line_import + [_('Delivery confirmed date')] \
+                    or columns_for_po_line_import[1:], origin='PO')
                 if not res:
                     return self.write(cr, uid, ids, res1, context)
             except osv.except_osv as osv_error:

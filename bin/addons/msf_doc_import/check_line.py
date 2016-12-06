@@ -460,13 +460,34 @@ def compute_date_value(**kwargs):
     cell_nb = kwargs.get('cell_nb', 5)
     try:
         if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
-            date_planned = row.cells[cell_nb].data
+            date_planned = row.cells[cell_nb].data.strftime('%Y-%m-%d')
         else:
             warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
         warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
+
+
+def compute_confirmed_delivery_date_value(**kwargs):
+    """
+    Retrieves Date from Excel file or take the one from the parent
+    """
+    row = kwargs['row']
+    confirmed_delivery_date = kwargs['to_write']['confirmed_delivery_date']
+    error_list = kwargs['to_write']['error_list']
+    # with warning_list: the line does not appear in red, it is just informative
+    warning_list = kwargs['to_write']['warning_list']
+    cell_nb = kwargs.get('cell_nb', 7)
+    try:
+        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
+            confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
+        else:
+            warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+    # if nothing is found at the line index (empty cell)
+    except IndexError:
+        warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+    return {'confirmed_delivery_date': confirmed_delivery_date, 'error_list': error_list, 'warning_list': warning_list}
 
 
 def compute_batch_expiry_value(cr, uid, **kwargs):
