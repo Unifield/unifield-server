@@ -46,23 +46,23 @@ class wizard_template(osv.osv):
     def save_template(self, cr, uid, ids, context, wizard_name, template_name_field='template_name'):
         '''
         Store all the fields values of the wizard in parameter.
-        :param wizard_model_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
+        :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
         :param template_name_field: String, name of the field in the wizard containing the chosen template name
         '''
         # get a dictionary with ALL fields values
         wizard_obj = self.pool.get(wizard_name)
         data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
         if data:
-            if not data[template_name_field]:
+            template_name = data[template_name_field]
+            if not template_name:
                 raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
-            else:
-                # create a new wizard_template to store the values
-                vals = {'name': data[template_name_field],
-                        'user_id': uid,
-                        'wizard_name': wizard_obj._name,
-                        'values': data,
-                        }
-                self.create(cr, uid, vals, context=context)
+            # create a new wizard_template to store the values
+            vals = {'name': template_name,
+                    'user_id': uid,
+                    'wizard_name': wizard_obj._name,
+                    'values': data,
+                    }
+            self.create(cr, uid, vals, context=context)
         return True
 
     def get_templates(self, cr, uid, context, wizard_name):
@@ -77,6 +77,49 @@ class wizard_template(osv.osv):
                                                              fields_to_fetch=['name'], context=context) or []
         names = [(t.id, t.name) for t in templates]
         return names
+
+    def load_template(self, cr, uid, ids, context, wizard_name, saved_templates_field='saved_templates'):
+        '''
+        Load the values in the fields of the wizard in parameter, according to the template selected.
+        :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
+        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
+        '''
+        wizard_obj = self.pool.get(wizard_name)
+        # we get the selected template
+        data = ids and wizard_obj.read(cr, uid, ids[0], [saved_templates_field], context=context)
+        selected_template_id = data and data[saved_templates_field]
+        if not selected_template_id:
+            raise osv.except_osv(_('Error !'), _('You have to choose a template to load.'))
+        # we get the values from the template as a String and convert them back to a dictionary
+        vals = self.browse(cr, uid, selected_template_id, context=context).values
+        try:
+            vals = eval(vals)
+            if 'id' in vals:
+                del vals['id']
+        except SyntaxError:
+            vals = {}
+        # we "format" the many2many fields values to make them look like [(6, 0, [1, 2])]
+        for i in vals:
+            if type(vals[i]) == list:
+                vals[i] = [(6, 0, vals[i])]
+        # we set the data in a new wizard and display it
+        new_id = wizard_obj.create(cr, uid, vals, context=context)
+        if context.get('active_model') == 'ir.ui.menu' and context.get('active_id'):
+            action = self.pool.get('ir.ui.menu').read(cr, uid, context.get('active_id'), ['action'], context=context)['action']
+            model, res_id = action.split(',')
+            ret = self.pool.get(model).read(cr, uid, [res_id],
+                ['type', 'res_model', 'view_id', 'search_view_id', 'view_mode', 'view_ids', 'name', 'views', 'view_type'],
+                context=context)[0]
+            ret.update({'context': context, 'res_id': new_id, 'target': 'new'})
+            return ret
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': wizard_name,
+            'view_type': 'form',
+            'context': context,
+            'res_id': new_id,
+            'target': 'new',
+        }
 
 
 wizard_template()
