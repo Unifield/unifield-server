@@ -32,7 +32,7 @@ class wizard_template(osv.osv):
     _description = 'Wizard Template'
 
     _columns = {
-        'name': fields.char('Template name', size=128, required=True),
+        'name': fields.char('Template name', size=128, required=True, select=1),
         'user_id': fields.many2one('res.users', string='User', ondelete='cascade', required=True),
         'wizard_name': fields.char('Wizard name', size=256, required=True),
         'values': fields.text('Values', help='Values from the wizard, stored as a dictionary'),
