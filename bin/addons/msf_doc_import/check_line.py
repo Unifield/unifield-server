@@ -460,13 +460,15 @@ def compute_date_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     cell_nb = kwargs.get('cell_nb', 5)
     try:
-        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
+        if not row.cells[cell_nb].data:
+            warning_list.append(_('Delivery requested date not found. The date from the header has been taken.'))
+        elif row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
             date_planned = row.cells[cell_nb].data.strftime('%Y-%m-%d')
         else:
-            warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+            warning_list.append(_('The delivery requested date format was not correct. The date from the header has been taken.'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
-        warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+        warning_list.append(_('The delivery requested date format was not correct. The date from the header has been taken.'))
     return {'date_planned': date_planned, 'error_list': error_list, 'warning_list': warning_list}
 
 
@@ -481,13 +483,15 @@ def compute_confirmed_delivery_date_value(**kwargs):
     warning_list = kwargs['to_write']['warning_list']
     cell_nb = kwargs.get('cell_nb', 7)
     try:
-        if row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
+        if not row.cells[cell_nb].data:
+            warning_list.append(_('Confirmed delivery date not found. The date from the header has been taken (if any)'))
+        elif row.cells[cell_nb] and row.cells[cell_nb].type == 'datetime':
             confirmed_delivery_date = row.cells[cell_nb].data.strftime('%Y-%m-%d')
         else:
-            warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+            warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
     # if nothing is found at the line index (empty cell)
     except IndexError:
-        warning_list.append(_('The date format was not correct. The date from the header has been taken.'))
+        warning_list.append(_('The confirmed delivery date format was not correct. The date from the header has been taken (if any)'))
     return {'confirmed_delivery_date': confirmed_delivery_date, 'error_list': error_list, 'warning_list': warning_list}
 
 

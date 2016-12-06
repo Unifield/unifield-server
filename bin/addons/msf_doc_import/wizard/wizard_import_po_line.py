@@ -296,6 +296,9 @@ class wizard_import_po_line(osv.osv_memory):
                             cr.rollback()
                             continue
 
+                        # write the warning list on the import result log textarea
+                        for warn in to_write['warning_list']:
+                            message += "Line %s WARNING : %s\n" % (line_num, warn)
 
                         if is_rfq:
                             rfq_line_ids = purchase_line_obj.search(cr, uid, [('order_id', '=', wiz.po_id.id), ('line_number', '=', to_write['line_number'])])

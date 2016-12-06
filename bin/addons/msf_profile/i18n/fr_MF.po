@@ -75732,3 +75732,29 @@ msgstr "Le numéro de ligne doit être un entier, le système en a généré un 
 #, python-format
 msgid "Product code not found in the import file"
 msgstr "Product code non trouvé dans le fichier d'import"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:464
+#, python-format
+msgid "Delivery requested date not found. The date from the header has been taken."
+msgstr "Date de livraison prévue non trouvée, le système a pris la date de l'en-tête"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:468
+#: code:addons/msf_doc_import/check_line.py:471
+#, python-format
+msgid "The delivery requested date format was not correct. The date from the header has been taken."
+msgstr "La date de livraison prévue est mal formatée, le système a pris la date de l'en-tête"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:491
+#: code:addons/msf_doc_import/check_line.py:494
+#, python-format
+msgid "The confirmed delivery date format was not correct. The date from the header has been taken (if any)"
+msgstr "Le format de la date de livraison confirmée est mauvais, le système a pris la date de l'en-tête"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:487
+#, python-format
+msgid "Confirmed delivery date not found. The date from the header has been taken (if any)"
+msgstr "Date de livraison confirmée non trouvée, le système a pris la date de l'en-tête"
