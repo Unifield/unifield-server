@@ -309,10 +309,12 @@ class res_partner(osv.osv):
             method=True,
             type='boolean',
             string='Is a coordination ?',
-        )
+        ),
+        'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
     }
 
     _defaults = {
+        'locally_created': lambda *a: True,
         'manufacturer': lambda *a: False,
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
@@ -666,6 +668,9 @@ class res_partner(osv.osv):
         for ftr in fields_to_reset:
             if ftr not in default:
                 to_del.append(ftr)
+        if 'locally_created' not in default:
+            default['locally_created'] = True
+
         res = super(res_partner, self).copy_data(cr, uid, id, default=default, context=context)
         for ftd in to_del:
             if ftd in res:
