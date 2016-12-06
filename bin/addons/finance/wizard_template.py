@@ -43,14 +43,17 @@ class wizard_template(osv.osv):
          'This template name already exists for this wizard. Please choose another name.')
     ]
 
-    def save_template(self, cr, uid, ids, context, wizard_name, template_name_field='template_name'):
+    def save_template(self, cr, uid, ids, wizard_name, template_name_field='template_name', context=None):
         '''
         Store all the fields values of the wizard in parameter.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
         :param template_name_field: String, name of the field in the wizard containing the chosen template name
         '''
-        # get a dictionary with ALL fields values
+        if context is None:
+            context = {}
+        # object corresponding to the current wizard
         wizard_obj = self.pool.get(wizard_name)
+        # get a dictionary with ALL fields values
         data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
         if data:
             template_name = data[template_name_field]
@@ -65,12 +68,14 @@ class wizard_template(osv.osv):
             self.create(cr, uid, vals, context=context)
         return True
 
-    def get_templates(self, cr, uid, context, wizard_name):
+    def get_templates(self, cr, uid, wizard_name, context=None):
         '''
         Return the recorded templates for the wizard in parameter and the current user,
         as a list of tuples with key (wizard template id) and value (template name), ordered by template name.
         Ex: [(4, 'a template'), (2, 'other template')]
         '''
+        if context is None:
+            context = {}
         template_ids = self.search(cr, uid, [('wizard_name', '=', wizard_name), ('user_id', '=', uid)],
                                                context=context, order='name') or []
         templates = template_ids and self.browse(cr, uid, template_ids,
@@ -78,12 +83,15 @@ class wizard_template(osv.osv):
         names = [(t.id, t.name) for t in templates]
         return names
 
-    def load_template(self, cr, uid, ids, context, wizard_name, saved_templates_field='saved_templates'):
+    def load_template(self, cr, uid, ids, wizard_name, saved_templates_field='saved_templates', context=None):
         '''
         Load the values in the fields of the wizard in parameter, according to the template selected.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
         :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
         '''
+        if context is None:
+            context = {}
+        # object corresponding to the current wizard
         wizard_obj = self.pool.get(wizard_name)
         # we get the selected template
         data = ids and wizard_obj.read(cr, uid, ids[0], [saved_templates_field], context=context)
