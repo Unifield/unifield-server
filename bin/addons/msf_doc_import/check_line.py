@@ -257,6 +257,7 @@ def product_value(cr, uid, **kwargs):
     # Tender does not have price_unit, it is False
     price_unit = kwargs['to_write'].get('price_unit', False)
     cost_price = kwargs['to_write'].get('cost_price', False)
+    product_code = kwargs['to_write'].get('product_code', False)
     error_list = kwargs['to_write']['error_list']
     default_code = kwargs['to_write']['default_code']
     # The tender line may have a default product if it is not found

@@ -204,6 +204,8 @@ class wizard_import_po_line(osv.osv_memory):
                             product_id=p_value['default_code'],
                             comment=p_value['comment'],
                             error_list=p_value['error_list'])
+                        if not p_value['product_code']:
+                            raise osv.except_osv(_('Error'), _("Product code not found in the import file"))
 
                         # Cell 2: Quantity
                         qty_value = check_line.quantity_value(

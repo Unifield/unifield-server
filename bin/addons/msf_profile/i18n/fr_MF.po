@@ -75726,3 +75726,9 @@ msgstr "Numéro de ligne non trouvé, le système en a généré un"
 #, python-format
 msgid "The line number must be an integer, system has generated a new one"
 msgstr "Le numéro de ligne doit être un entier, le système en a généré un nouveau"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:208
+#, python-format
+msgid "Product code not found in the import file"
+msgstr "Product code non trouvé dans le fichier d'import"
