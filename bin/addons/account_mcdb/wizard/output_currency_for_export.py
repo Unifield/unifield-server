@@ -168,22 +168,33 @@ class output_currency_for_export(osv.osv_memory):
 output_currency_for_export()
 
 class background_report(osv.osv_memory):
-        _name = 'memory.background.report'
-        _description = 'Report result'
+    _name = 'memory.background.report'
+    _description = 'Report result'
 
-        _columns = {
-            'file_name': fields.char('Filename', size=256),
-            'report_name': fields.char('Report Name', size=256),
-            'report_id': fields.integer('Report id'),
-            'percent': fields.float('Percent'),
-            'finished': fields.boolean('Finished'),
-        }
-        def update_percent(self, cr, uid, ids, percent, context=None):
-            if isinstance(ids, (int, long)):
-                ids = [ids]
-            if percent > 1.00:
-                percent = 1.00
-            self.write(cr, uid, ids, {'percent': percent})
+    _columns = {
+        'file_name': fields.char('Filename', size=256),
+        'report_name': fields.char('Report Name', size=256),
+        'report_id': fields.integer('Report id'),
+        'percent': fields.float('Percent'),
+        'finished': fields.boolean('Finished'),
+    }
+
+    _defaults = {
+        'file_name': lambda *a: '',
+        'report_name': lambda *a: '',
+        'report_id': lambda *a: '',
+        'percent': lambda *a: 0,
+        'finished': lambda *a: False,
+    }
+
+    def update_percent(self, cr, uid, ids, percent, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if percent > 1.00:
+            percent = 1.00
+        self.write(cr, uid, ids, {'percent': percent})
+
+
 
 
 background_report()

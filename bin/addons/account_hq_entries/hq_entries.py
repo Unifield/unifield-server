@@ -45,7 +45,7 @@ class hq_entries(osv.osv):
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-            'analytic_account_msf_private_funds')[1]
+                                                                        'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
         # Browse all given lines to check analytic distribution validity
@@ -169,7 +169,7 @@ class hq_entries(osv.osv):
         return res
 
     def _get_is_account_partner_compatible(self, cr, uid, ids, field_name, arg,
-        context=None):
+                                           context=None):
         if context is None:
             context = {}
         res = {}
@@ -177,10 +177,10 @@ class hq_entries(osv.osv):
 
         for r in self.browse(cr, uid, ids, context=context):
             res[r.id] = True
-            if r.account_id and r.partner_txt:
+            if r.account_id:
                 res[r.id] = account_obj.is_allowed_for_thirdparty(cr, uid,
-                    r.account_id.id, partner_txt=r.partner_txt,
-                    context=context)[r.account_id.id]
+                                                                  r.account_id.id, partner_txt=r.partner_txt or False,
+                                                                  context=context)[r.account_id.id]
         return res
 
     _columns = {
@@ -204,7 +204,7 @@ class hq_entries(osv.osv):
         'analytic_id_first_value': fields.many2one('account.analytic.account', "Funding Pool @import", required=True, readonly=True),
         'destination_id_first_value': fields.many2one('account.analytic.account', "Destination @import", required=True, readonly=True),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
+                                          selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state"),
         'is_original': fields.boolean("Is Original HQ Entry?", help="This line was split into other one.", readonly=True),
         'is_split': fields.boolean("Is split?", help="This line comes from a split.", readonly=True),
         'original_id': fields.many2one("hq.entries", "Original HQ Entry", readonly=True, help="The Original HQ Entry from which this line comes from."),
@@ -437,7 +437,7 @@ class hq_entries(osv.osv):
             # Search MSF Private Fund element, because it's valid with all accounts
             try:
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
+                                                                            'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
             # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
@@ -501,18 +501,18 @@ class hq_entries(osv.osv):
         if context is None:
             context = {}
         domain = [
-                ('number', 'in', range(12, 16)),
-                ('state', 'in', ['draft', 'field-closed', ]),
-            ]
+            ('number', 'in', range(12, 16)),
+            ('state', 'in', ['draft', 'field-closed', ]),
+        ]
         if self.pool.get('account.period').search(cr, uid, domain, context=context, count=True):
             return True
         return False
 
     def check_hq_entry_transaction(self, cr, uid, ids, wizard_model,
-        context=None):
+                                   context=None):
         if not ids:
             raise osv.except_osv(_("Warning"),
-                _("No HQ Entry selected for transaction"))
+                                 _("No HQ Entry selected for transaction"))
 
         # BKLG-77
         domain = [
@@ -521,24 +521,39 @@ class hq_entries(osv.osv):
         ]
         if self.search(cr, uid, domain, context=context, count=True):
             raise osv.except_osv(_("Warning"),
-                _("You can not perform this action on a validated HQ Entry" \
-                    " (please use the 'To Validate' filter in the HQ Entries list)"))
+                                 _("You can not perform this action on a validated HQ Entry" \
+                                   " (please use the 'To Validate' filter in the HQ Entries list)"))
 
         # US-306: forbid to validate mission closed or + entries
         # => at coordo level you can not validate entries since field closed
         # period; but they can come from HQ mission opened via SYNC)
         period_ids = list(set([ he.period_id.id \
-            for he in self.browse(cr, uid, ids, context=context) ]))
+                                for he in self.browse(cr, uid, ids, context=context) ]))
         # warning if an HQ Entry is in a non-opened period
         if period_ids:
             periods = self.pool.get("account.period").browse(cr, uid, period_ids, context)
             mission_closed_except = osv.except_osv(_("Warning"), _("You can not validate HQ Entry in a mission-closed" \
-                                                       " period"))
+                                                                   " period"))
             for p in periods:
                 if p.number != 12 and p.state in ['mission-closed', 'done', ]:
                     raise mission_closed_except
                 elif p.number == 12 and not self._is_dec_period_open(cr, uid, context):
                     raise mission_closed_except
+
+    def auto_import(self, cr, uid, file_to_import):
+        import base64
+        import os
+        processed = []
+        rejected = []
+        headers = []
+
+        import_obj = self.pool.get('hq.entries.import')
+        import_id = import_obj.create(cr, uid, {
+            'file': base64.encodestring(open(file_to_import, 'r').read()),
+            'filename': os.path.split(file_to_import)[1],
+        })
+        processed, rejected, headers = import_obj.button_validate(cr, uid, [import_id], auto_import=True)
+        return processed, rejected, headers
 
 hq_entries()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

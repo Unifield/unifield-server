@@ -395,6 +395,7 @@
             <field name="arch" type="xml">
                 <search string="Users">
                     <filter name="show_inactive" string="Show inactive" icon="gtk-ok" domain="[('active', '=', False)]" />
+                    <filter name="show_synchronized" string="Show synchronized" icon="gtk-ok" domain="[('synchronize', '=', True)]"/>
                     <field name="name" />
                     <field name="login" />
                     <field name="address_id" string="Address" />

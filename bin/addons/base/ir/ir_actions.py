@@ -94,11 +94,11 @@ class report_xml(osv.osv):
                 continue
             if r['report_rml'] or r['report_rml_content_data']:
                 report_sxw('report.'+r['report_name'], r['model'],
-                        opj('addons',r['report_rml'] or '/'), header=r['header'])
+                           opj('addons',r['report_rml'] or '/'), header=r['header'])
             if r['report_xsl']:
                 report_rml('report.'+r['report_name'], r['model'],
-                        opj('addons',r['report_xml']),
-                        r['report_xsl'] and opj('addons',r['report_xsl']))
+                           opj('addons',r['report_xml']),
+                           r['report_xsl'] and opj('addons',r['report_xsl']))
 
     _name = 'ir.actions.report.xml'
     _table = 'ir_act_report_xml'
@@ -161,10 +161,10 @@ class act_window(osv.osv):
     def _read_flat(self, cr, user, ids, fields_to_read, context=None, load='_classic_read'):
         return super(act_window, self)._read_flat(cr, user, ids, fields_to_read, context, load)
 
-    def _clean_cache(self):
-        super(act_window, self)._clean_cache()
+    def _clean_cache(self, dbname):
+        super(act_window, self)._clean_cache(dbname)
         # radical but this doesn't frequently happen
-        self._read_flat.clear_cache()
+        self._read_flat.clear_cache(dbname)
 
     def _check_model(self, cr, uid, ids, context=None):
         for action in self.browse(cr, uid, ids, context):
@@ -176,7 +176,7 @@ class act_window(osv.osv):
 
     def _invalid_model_msg(self, cr, uid, ids, context=None):
         return _('Invalid model name in the action definition.')
-    
+
     _constraints = [
         (_check_model, _invalid_model_msg, ['res_model','src_model'])
     ]
@@ -210,13 +210,13 @@ class act_window(osv.osv):
                 search_view_id = act.search_view_id.id
             else:
                 res_view = self.pool.get('ir.ui.view').search(cr, uid, 
-                        [('model','=',act.res_model),('type','=','search'),
-                        ('inherit_id','=',False)], context=context)
+                                                              [('model','=',act.res_model),('type','=','search'),
+                                                               ('inherit_id','=',False)], context=context)
                 if res_view:
                     search_view_id = res_view[0]
             if search_view_id:
                 field_get = self.pool.get(act.res_model).fields_view_get(cr, uid, search_view_id,
-                            'search', context)
+                                                                         'search', context)
                 fields_from_fields_get.update(field_get['fields'])
                 field_get['fields'] = fields_from_fields_get
                 res[act.id] = str(field_get)
@@ -279,36 +279,36 @@ class act_window(osv.osv):
         'type': fields.char('Action Type', size=32, required=True),
         'view_id': fields.many2one('ir.ui.view', 'View Ref.', ondelete='cascade'),
         'domain': fields.char('Domain Value', size=250,
-            help="Optional domain filtering of the destination data, as a Python expression"),
+                              help="Optional domain filtering of the destination data, as a Python expression"),
         'context': fields.char('Context Value', size=250, required=True,
-            help="Context dictionary as Python expression, empty by default (Default: {})"),
+                               help="Context dictionary as Python expression, empty by default (Default: {})"),
         'res_model': fields.char('Object', size=64, required=True,
-            help="Model name of the object to open in the view window"),
+                                 help="Model name of the object to open in the view window"),
         'src_model': fields.char('Source Object', size=64,
-            help="Optional model name of the objects on which this action should be visible"),
+                                 help="Optional model name of the objects on which this action should be visible"),
         'target': fields.selection([('current','Current Window'),('new','New Window')], 'Target Window'),
         'view_type': fields.selection((('tree','Tree'),('form','Form')), string='View Type', required=True,
-            help="View type: set to 'tree' for a hierarchical tree view, or 'form' for other views"),
+                                      help="View type: set to 'tree' for a hierarchical tree view, or 'form' for other views"),
         'view_mode': fields.char('View Mode', size=250, required=True,
-            help="Comma-separated list of allowed view modes, such as 'form', 'tree', 'calendar', etc. (Default: tree,form)"),
+                                 help="Comma-separated list of allowed view modes, such as 'form', 'tree', 'calendar', etc. (Default: tree,form)"),
         'usage': fields.char('Action Usage', size=32),
         'view_ids': fields.one2many('ir.actions.act_window.view', 'act_window_id', 'Views'),
         'views': fields.function(_views_get_fnc, method=True, type='binary', string='Views'),
         'limit': fields.integer('Limit', help='Default limit for the list view'),
         'auto_refresh': fields.integer('Auto-Refresh',
-            help='Add an auto-refresh on the view'),
+                                       help='Add an auto-refresh on the view'),
         'groups_id': fields.many2many('res.groups', 'ir_act_window_group_rel',
-            'act_id', 'gid', 'Groups'),
+                                      'act_id', 'gid', 'Groups'),
         'search_view_id': fields.many2one('ir.ui.view', 'Search View Ref.'),
         'filter': fields.boolean('Filter'),
         'auto_search':fields.boolean('Auto Search'),
         'search_view' : fields.function(_search_view, type='text', method=True, string='Search View'),
         'menus': fields.char('Menus', size=4096),
         'help': fields.text('Action description',
-            help='Optional help text for the users with a description of the target view, such as its usage and purpose.',
-            translate=True),
+                            help='Optional help text for the users with a description of the target view, such as its usage and purpose.',
+                            translate=True),
         'display_menu_tip':fields.function(_get_help_status, type='boolean', method=True, string='Display Menu Tips',
-            help='It gives the status if the tip has to be displayed or not when a user executes an action'),
+                                           help='It gives the status if the tip has to be displayed or not when a user executes an action'),
         'multi': fields.boolean('Action on Multiple Doc.', help="If set to true, the action will not be displayed on the right toolbar of a form view"),
         'empty_ids': fields.boolean('For action: is selection of records needed ?'),
         'groups_txt': fields.function(
@@ -364,7 +364,7 @@ class act_window_view(osv.osv):
             ('gantt', 'Gantt')), string='View Type', required=True),
         'act_window_id': fields.many2one('ir.actions.act_window', 'Action', ondelete='cascade'),
         'multi': fields.boolean('On Multiple Doc.',
-            help="If set to true, the action will not be displayed on the right toolbar of a form view."),
+                                help="If set to true, the action will not be displayed on the right toolbar of a form view."),
     }
     _defaults = {
         'multi': lambda *a: False,
@@ -598,9 +598,9 @@ class actions_server(osv.osv):
             exp = str(match.group()[2:-2]).strip()
             result = eval(exp,
                           {
-                            'object': obj,
-                            'context': dict(context), # copy context to prevent side-effects of eval
-                            'time': time,
+                              'object': obj,
+                              'context': dict(context), # copy context to prevent side-effects of eval
+                              'time': time,
                           })
             if result in (None, False):
                 return str("--------")
@@ -851,7 +851,7 @@ class ir_actions_todo(osv.osv):
         'restart': 'onskip',
     }
     _order="sequence,name,id"
-    
+
     def del_previous(self, cr, uid):
         ids = self.search(cr, uid, [])
         self.write(cr, uid, ids, {'previous': False})

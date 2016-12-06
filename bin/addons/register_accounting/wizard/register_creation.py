@@ -68,10 +68,10 @@ class register_creation_lines(osv.osv_memory):
         'journal_id': fields.many2one('account.journal', string="Journal", required=True, readonly=True),
         'register_type': fields.selection([('cash', 'Cash Register'), ('bank', 'Bank Statement'), ('cheque', 'Cheque Register')], string="Type", readonly=True),
         'prev_reg_id':  fields.function(_get_previous_register_id, method=True, type="many2one", relation="account.bank.statement",
-            required=False, readonly=True, string="Previous register", store=False),
+                                        required=False, readonly=True, string="Previous register", store=False),
         'wizard_id': fields.many2one("wizard.register.creation", string="Wizard"),
         'prev_instance_id': fields.function(_get_previous_register_instance_id, method=True, type="many2one", relation="msf.instance",
-            required=False, readonly=True, string="Instance", store=False),
+                                            required=False, readonly=True, string="Instance", store=False),
     }
 
 register_creation_lines()
@@ -85,7 +85,7 @@ class register_creation(osv.osv_memory):
         'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True, readonly=False),
         'new_register_ids': fields.one2many("wizard.register.creation.lines", 'wizard_id', string="", required=True, readonly=False),
         'state': fields.selection([('draft', 'Draft'), ('open', 'Open')], string="State",
-            help="Permits to display Create Register button and list of registers to be created when state is open.")
+                                  help="Permits to display Create Register button and list of registers to be created when state is open.")
     }
 
     _defaults = {
@@ -107,13 +107,13 @@ class register_creation(osv.osv_memory):
         self.write(cr, uid, ids, {'state': 'draft'}, context=context)
         # Refresh wizard to display changes
         return {
-         'type': 'ir.actions.act_window',
-         'res_model': 'wizard.register.creation',
-         'view_type': 'form',
-         'view_mode': 'form',
-         'res_id': ids[0],
-         'context': context,
-         'target': 'new',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.register.creation',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
         }
 
     def button_confirm_period(self, cr, uid, ids, context=None):
@@ -145,8 +145,8 @@ class register_creation(osv.osv_memory):
                     journal_id = register.journal_id and register.journal_id.id or False
                     # verify that this register is not present in our wizard
                     if not reg_to_create_obj.search(cr, uid, [('period_id', '=', period_id), ('journal_id', '=', journal_id),
-                        ('wizard_id', '=', wizard.id)], context=context) and not abs_obj.search(cr, uid, [('period_id', '=', period_id),
-                        ('journal_id', '=', journal_id)]):
+                                                              ('wizard_id', '=', wizard.id)], context=context) and not abs_obj.search(cr, uid, [('period_id', '=', period_id),
+                                                                                                                                                ('journal_id', '=', journal_id)]):
                         vals = {
                             'period_id': period_id,
                             'currency_id': currency_id,
@@ -172,13 +172,13 @@ class register_creation(osv.osv_memory):
             self.write(cr, uid, ids, {'state': 'open'}, context=context)
         # Refresh wizard to display changes
         return {
-         'type': 'ir.actions.act_window',
-         'res_model': 'wizard.register.creation',
-         'view_type': 'form',
-         'view_mode': 'form',
-         'res_id': ids[0],
-         'context': context,
-         'target': 'new',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.register.creation',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
         }
 
     def button_create_registers(self, cr, uid, ids, context=None):
@@ -212,7 +212,7 @@ class register_creation(osv.osv_memory):
                 # FIXME: search old caracteristics from previous register
 
                 # UF-1750: copy responsible
-                if prev_reg.journal_id and prev_reg.journal_id.type == 'cash' and prev_reg.responsible_ids:
+                if prev_reg.journal_id and prev_reg.responsible_ids:
                     reg_vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
 
             # Create the register

@@ -1,6 +1,26 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="setup_security_on_sync_server" model="patch.scripts">
+            <field name="method">setup_security_on_sync_server</field>
+        </record>
+
+        <record id="us_1482" model="patch.scripts">
+            <field name="method">us_1482_fix_default_code_on_msf_lines</field>
+        </record>
+
+        <record id="us_1381" model="patch.scripts">
+            <field name="method">us_1381_encrypt_passwords</field>
+        </record>
+
+        <record id="us_1610" model="patch.scripts">
+            <field name="method">us_1610_set_oc_on_all_groups</field>
+        </record>
+
+        <record id="us_1725" model="patch.scripts">
+            <field name="method">us_1725_force_sync_on_hr_employee</field>
+        </record>
+
         <record id="us_1388" model="patch.scripts">
             <field name="method">us_1388_change_sequence_implementation</field>
         </record>
@@ -109,6 +129,14 @@
 
         <record id="us_1766_fix_fxa_aji_curr" model="patch.scripts">
             <field name="method">us_1766_fix_fxa_aji_curr</field>
+        </record>
+
+        <record id="us_635_dest_partner_ids" model="patch.scripts">
+            <field name="method">us_635_dest_partner_ids</field>
+        </record>
+
+        <record id="us_1671_stopped_products" model="patch.scripts">
+            <field name="method">us_1671_stopped_products</field>
         </record>
     </data>
 </openerp>

@@ -23,7 +23,6 @@ from osv import fields, osv
 from tools.translate import _
 import time
 
-import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 
@@ -101,6 +100,18 @@ class create_picking_move_processor(osv.osv):
             },
             readonly=True,
             help="Expected product to receive",
+            multi='move_info',
+        ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'create.picking.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
             multi='move_info',
         ),
         'ordered_uom_id': fields.function(
@@ -297,7 +308,7 @@ class create_picking(osv.osv_memory):
         'product_moves_ppl' : fields.one2many('stock.move.memory.ppl', 'wizard_id', 'Moves'),
         'product_moves_families' : fields.one2many('stock.move.memory.families', 'wizard_id', 'Pack Families'),
         'product_moves_returnproducts': fields.one2many('stock.move.memory.returnproducts', 'wizard_id', 'Return Products')
-     }
+    }
 
     def copy_all(self, cr, uid, ids, context=None):
         create = self.browse(cr, uid, ids[0], context=context)
@@ -393,7 +404,7 @@ class create_picking(osv.osv_memory):
                 'move_id' : move.id,
                 # specific management rules
                 'expiry_date': move.expired_date,
-                }
+            }
             if step == 'ppl1':
                 move_memory['quantity'] = move.product_qty
 
@@ -414,7 +425,6 @@ class create_picking(osv.osv_memory):
         '''
         assert context, 'No context defined'
         assert 'step' in context, 'No step defined in context'
-        step = context['step']
         assert 'partial_datas_ppl1' in context, 'No partial data from step1'
         partial_datas_ppl1 = context['partial_datas_ppl1']
 
@@ -426,8 +436,8 @@ class create_picking(osv.osv_memory):
         for from_pack in from_packs:
             for to_pack in partial_datas_ppl1[pick.id][from_pack]:
                 family_memory = {
-                                 'from_pack': from_pack,
-                                 'to_pack': to_pack, }
+                    'from_pack': from_pack,
+                    'to_pack': to_pack, }
 
                 # append the created dict
                 result.append(family_memory)
@@ -487,8 +497,8 @@ class create_picking(osv.osv_memory):
 
         # add field related to picking type only
         _moves_fields.update({
-                            'product_moves_' + field: {'relation': 'stock.move.memory.' + field, 'type' : 'one2many', 'string' : 'Product Moves'},
-                            })
+            'product_moves_' + field: {'relation': 'stock.move.memory.' + field, 'type' : 'one2many', 'string' : 'Product Moves'},
+        })
 
         # specify the button according to the screen
         # picking, two wizard steps
@@ -645,12 +655,9 @@ class create_picking(osv.osv_memory):
         '''
         assert context, 'no context defined'
         assert 'partial_datas_ppl1' in context, 'partial_datas_ppl1 not in context'
-        pick_obj = self.pool.get('stock.picking')
         family_obj = self.pool.get('stock.move.memory.families')
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
-        # ppl families
-        memory_families_list = partial.product_moves_families
         # returned datas
         partial_datas_ppl1 = context['partial_datas_ppl1']
         # picking ids
@@ -781,9 +788,9 @@ class create_picking(osv.osv_memory):
                             if lot.stock_available < product_qty:
                                 uom = self.pool.get('product.uom').browse(cr, uid, list_data['product_uom']).name
                                 raise osv.except_osv(_('Processing Error'), \
-                                _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !')\
-                                % (list_data['product_qty'], uom, prod.name, \
-                                 lot.name, lot.stock_available))
+                                                     _('Processing quantity %d %s for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                                                     % (list_data['product_qty'], uom, prod.name, \
+                                                        lot.name, lot.stock_available))
 
                     # only mandatory at validation stage
                     elif validate:
@@ -804,9 +811,9 @@ class create_picking(osv.osv_memory):
                         prodlot_qty = tmp_prodlot.stock_available
                         if prodlot_qty < prodlot_integrity[prodlot][location]:
                             raise osv.except_osv(_('Processing Error'), \
-                            _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
-                            % (prodlot_integrity[prodlot][location], tmp_prodlot.product_id.name, tmp_prodlot.name, \
-                            prodlot_qty))
+                                                 _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
+                                                 % (prodlot_integrity[prodlot][location], tmp_prodlot.product_id.name, tmp_prodlot.name, \
+                                                    prodlot_qty))
 
         # if error, return False
         if missing_lot or lot_not_needed or wrong_lot_type:
@@ -840,7 +847,6 @@ class create_picking(osv.osv_memory):
         field_name = 'product_moves_picking'
 
         pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
         # partial datas
         partial_datas = {}
 
@@ -886,8 +892,6 @@ class create_picking(osv.osv_memory):
         we do the quick mode, the ppl step is performed automatically
         '''
         assert context, 'missing Context'
-
-        moves_ppl_obj = self.pool.get('stock.move.memory.ppl')
 
         # set the corresponding ppl object
         context['active_ids'] = [ppl.id]
@@ -937,7 +941,6 @@ class create_picking(osv.osv_memory):
         field_name = 'product_moves_picking'
 
         pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
 
         # partial datas
         partial_datas = {}
@@ -1025,7 +1028,6 @@ class create_picking(osv.osv_memory):
         assert 'active_ids' in context, 'No picking ids in context. Action call is wrong'
 
         pick_obj = self.pool.get('stock.picking')
-        move_obj = self.pool.get('stock.move')
         # partial data from wizard
         partial = self.browse(cr, uid, ids[0], context=context)
         partial_datas = {}

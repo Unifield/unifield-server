@@ -78,6 +78,7 @@ class tender_rfq_comparison(report_sxw.rml_parse):
                     'name_%s' % sid: sup.name,
                     'unit_price_%s' % sid: pu,
                     'comment_%s' % sid: rfql and rfql.comment or '',
+                    'confirmed_delivery_date_%s' % sid: rfql and rfql.confirmed_delivery_date or False,
                 })
 
             lines.append(line_vals)

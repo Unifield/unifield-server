@@ -2,6 +2,18 @@
 <openerp>
     <data>
 
+        <record id="auto_import_fnct_res_currencies" model="automated.import.function">
+            <field name="name">Import Currencies</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'res.currency')]" />
+            <field name="method_to_call">auto_import</field>
+        </record>
+
+        <record id="auto_import_fnct_hq_entries" model="automated.import.function">
+            <field name="name">Import HQ Entries</field>
+            <field name="model_id" model="ir.model" search="[('model', '=', 'hq.entries')]" />
+            <field name="method_to_call">auto_import</field>
+        </record>
+
         <record id="auto_import_fnct_res_partner" model="automated.import.function">
             <field name="name">Import Suppliers</field>
             <field name="model_id" model="ir.model" search="[('model', '=', 'res.partner')]" />

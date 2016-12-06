@@ -128,7 +128,7 @@ def init_db(cr):
         id = cr.fetchone()[0]
         cr.execute('INSERT INTO ir_model_data \
             (name,model,module, res_id, noupdate) VALUES (%s,%s,%s,%s,%s)', (
-                'module_meta_information', 'ir.module.module', i, id, True))
+            'module_meta_information', 'ir.module.module', i, id, True))
         dependencies = info.get('depends', [])
         for d in dependencies:
             cr.execute('INSERT INTO ir_module_module_dependency \
@@ -202,8 +202,8 @@ def exec_pg_command_pipe(name, *args):
     # on win32, passing close_fds=True is not compatible
     # with redirecting std[in/err/out]
     pop = subprocess.Popen((prog,) + args, bufsize= -1,
-          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-          close_fds=(os.name=="posix"))
+                           stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           close_fds=(os.name=="posix"))
     return (pop.stdin, pop.stdout)
 
 def exec_command_pipe(name, *args):
@@ -213,8 +213,8 @@ def exec_command_pipe(name, *args):
     # on win32, passing close_fds=True is not compatible
     # with redirecting std[in/err/out]
     pop = subprocess.Popen((prog,) + args, bufsize= -1,
-          stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-          close_fds=(os.name=="posix"))
+                           stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           close_fds=(os.name=="posix"))
     return (pop.stdin, pop.stdout)
 
 #----------------------------------------------------------
@@ -379,12 +379,12 @@ command_re = re.compile("^Set-([a-z]+) *: *(.+)$", re.I + re.UNICODE)
 reference_re = re.compile("<.*-openobject-(\\d+)@(.*)>", re.UNICODE)
 
 priorities = {
-        '1': '1 (Highest)',
-        '2': '2 (High)',
-        '3': '3 (Normal)',
-        '4': '4 (Low)',
-        '5': '5 (Lowest)',
-    }
+    '1': '1 (Highest)',
+    '2': '2 (High)',
+    '3': '3 (Normal)',
+    '4': '4 (Low)',
+    '5': '5 (Lowest)',
+}
 
 def html2plaintext(html, body_id=None, encoding='utf-8'):
     ## (c) Fry-IT, www.fry-it.com, 2007
@@ -814,13 +814,11 @@ class cache(object):
             if *args and **kwargs are both empty, clear all the keys related to this database
         """
         if not args and not kwargs:
-            keys_to_del = [key for key in self.cache.keys() if key[0][1] == dbname]
+            self.cache.del_map(lambda key: key[0][1] == dbname)
         else:
             kwargs2 = self._unify_args(*args, **kwargs)
-            keys_to_del = [key for key, _ in _generate_keys(self.multi, dbname, kwargs2) if key in self.cache.keys()]
-
-        for key in keys_to_del:
-            self.cache.pop(key)
+            generated_keys = [x for x, y in _generate_keys(self.multi, dbname, kwargs2)]
+            self.cache.del_map(lambda key: key in generated_keys)
 
     @classmethod
     def clean_caches_for_db(cls, dbname):
@@ -842,17 +840,16 @@ class cache(object):
             if time.time()-int(self.timeout) > self.lasttime:
                 self.lasttime = time.time()
                 t = time.time()-int(self.timeout)
-                old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
-                for key in old_keys:
-                    self.cache.pop(key)
+                self.cache.del_map(lambda key: self.cache[key][1] < t)
 
             kwargs2 = self._unify_args(*args, **kwargs)
 
             result = {}
             notincache = {}
             for key, id in _generate_keys(self.multi, cr.dbname, kwargs2):
-                if key in self.cache:
-                    result[id] = self.cache[key][0]
+                cache_value = self.cache.get(key)
+                if cache_value is not None:
+                    result[id] = cache_value[0]
                 else:
                     notincache[id] = key
 
@@ -905,12 +902,11 @@ class read_cache(object):
         kwargs2.update(dict(zip(self.fun_arg_names, args)))
         return kwargs2
 
-    def clear(self):
-        """clear the cache for all the databases (...)
+    def clear(self, dbname):
+
+        """clear the cache for database dbname
         """
-        keys_to_del = self.cache.keys()
-        for key in keys_to_del:
-            self.cache.pop(key)
+        self.cache.del_map(lambda key: key[0][1] == dbname)
 
     def split_order_by_clause(self, order_by):
         # we have to take into account the order whenever we fetch data
@@ -970,9 +966,7 @@ class read_cache(object):
             if time.time()-int(self.timeout) > self.lasttime:
                 self.lasttime = time.time()
                 t = time.time()-int(self.timeout)
-                old_keys = [key for key in self.cache.keys() if self.cache[key][1] < t]
-                for key in old_keys:
-                    self.cache.pop(key)
+                self.cache.del_map(lambda key: self.cache[key][1] < t)
 
             if self._sort is None:
                 order_by = self2._parent_order or self2._order
@@ -991,9 +985,9 @@ class read_cache(object):
 
             # if no field is required => we return all the fields
             fields_pre = [f for f in fields_to_read if
-                               f == self2.CONCURRENCY_CHECK_FIELD
-                            or (f in self2._columns and getattr(self2._columns[f], '_classic_write'))
-                         ] + self2._inherits.values()
+                          f == self2.CONCURRENCY_CHECK_FIELD
+                          or (f in self2._columns and getattr(self2._columns[f], '_classic_write'))
+                          ] + self2._inherits.values()
 
             include_sort = False
             fields_to_query = set(fields_to_read)
@@ -1029,18 +1023,16 @@ class read_cache(object):
             result = []
             notincache = {}
             for key, id in _generate_keys('ids', cr.dbname, kwargs2, ['fields_to_read']):
-                if key in self.cache:
+                cache_value = self.cache.get(key)
+                if cache_value is not None:
                     # we have to find if we have all the required fields in the cache
-                    values = self.cache[key][0]
-
-                    fields_already_in_the_cache = values.keys()
-
+                    fields_already_in_the_cache = cache_value[0].keys()
                     if set(fields_to_query).issubset(set(fields_already_in_the_cache)):
                         # all the values are already in the cache, we don't
                         #  have to ask the DB for more information
                         row = {'id': int(id)}
                         for field in fields_to_query:
-                            row[field] = values[field]
+                            row[field] = cache_value[0][field]
                         result.append(row)
                     else:
                         # we have to look for the new values
@@ -1061,8 +1053,9 @@ class read_cache(object):
                 # we have to add the new rows in the resultset
                 for id, value in map(lambda x : (x['id'], x), result2):
                     key = notincache[int(id)]
-                    if key in self.cache:
-                        value_in_cache, t = self.cache[key]
+                    cache_value = self.cache.get(key)
+                    if cache_value is not None:
+                        value_in_cache, t = cache_value
                     else:
                         value_in_cache, t = {}, time.time()
 
@@ -1394,7 +1387,7 @@ def debug(what):
 
     """
     warnings.warn("The tools.debug() method is deprecated, please use logging.",
-                      DeprecationWarning, stacklevel=2)
+                  DeprecationWarning, stacklevel=2)
     from inspect import stack
     from pprint import pformat
     st = stack()[1]
@@ -1407,42 +1400,42 @@ def debug(what):
 
 
 __icons_list = ['STOCK_ABOUT', 'STOCK_ADD', 'STOCK_APPLY', 'STOCK_BOLD',
-'STOCK_CANCEL', 'STOCK_CDROM', 'STOCK_CLEAR', 'STOCK_CLOSE', 'STOCK_COLOR_PICKER',
-'STOCK_CONNECT', 'STOCK_CONVERT', 'STOCK_COPY', 'STOCK_CUT', 'STOCK_DELETE',
-'STOCK_DIALOG_AUTHENTICATION', 'STOCK_DIALOG_ERROR', 'STOCK_DIALOG_INFO',
-'STOCK_DIALOG_QUESTION', 'STOCK_DIALOG_WARNING', 'STOCK_DIRECTORY', 'STOCK_DISCONNECT',
-'STOCK_DND', 'STOCK_DND_MULTIPLE', 'STOCK_EDIT', 'STOCK_EXECUTE', 'STOCK_FILE',
-'STOCK_FIND', 'STOCK_FIND_AND_REPLACE', 'STOCK_FLOPPY', 'STOCK_GOTO_BOTTOM',
-'STOCK_GOTO_FIRST', 'STOCK_GOTO_LAST', 'STOCK_GOTO_TOP', 'STOCK_GO_BACK',
-'STOCK_GO_DOWN', 'STOCK_GO_FORWARD', 'STOCK_GO_UP', 'STOCK_HARDDISK',
-'STOCK_HELP', 'STOCK_HOME', 'STOCK_INDENT', 'STOCK_INDEX', 'STOCK_ITALIC',
-'STOCK_JUMP_TO', 'STOCK_JUSTIFY_CENTER', 'STOCK_JUSTIFY_FILL',
-'STOCK_JUSTIFY_LEFT', 'STOCK_JUSTIFY_RIGHT', 'STOCK_MEDIA_FORWARD',
-'STOCK_MEDIA_NEXT', 'STOCK_MEDIA_PAUSE', 'STOCK_MEDIA_PLAY',
-'STOCK_MEDIA_PREVIOUS', 'STOCK_MEDIA_RECORD', 'STOCK_MEDIA_REWIND',
-'STOCK_MEDIA_STOP', 'STOCK_MISSING_IMAGE', 'STOCK_NETWORK', 'STOCK_NEW',
-'STOCK_NO', 'STOCK_OK', 'STOCK_OPEN', 'STOCK_PASTE', 'STOCK_PREFERENCES',
-'STOCK_PRINT', 'STOCK_PRINT_PREVIEW', 'STOCK_PROPERTIES', 'STOCK_QUIT',
-'STOCK_REDO', 'STOCK_REFRESH', 'STOCK_REMOVE', 'STOCK_REVERT_TO_SAVED',
-'STOCK_SAVE', 'STOCK_SAVE_AS', 'STOCK_SELECT_COLOR', 'STOCK_SELECT_FONT',
-'STOCK_SORT_ASCENDING', 'STOCK_SORT_DESCENDING', 'STOCK_SPELL_CHECK',
-'STOCK_STOP', 'STOCK_STRIKETHROUGH', 'STOCK_UNDELETE', 'STOCK_UNDERLINE',
-'STOCK_UNDO', 'STOCK_UNINDENT', 'STOCK_YES', 'STOCK_ZOOM_100',
-'STOCK_ZOOM_FIT', 'STOCK_ZOOM_IN', 'STOCK_ZOOM_OUT',
-'terp-account', 'terp-crm', 'terp-mrp', 'terp-product', 'terp-purchase',
-'terp-sale', 'terp-tools', 'terp-administration', 'terp-hr', 'terp-partner',
-'terp-project', 'terp-report', 'terp-stock', 'terp-calendar', 'terp-graph',
-'terp-check','terp-go-month','terp-go-year','terp-go-today','terp-document-new','terp-camera_test',
-'terp-emblem-important','terp-gtk-media-pause','terp-gtk-stop','terp-gnome-cpu-frequency-applet+',
-'terp-dialog-close','terp-gtk-jump-to-rtl','terp-gtk-jump-to-ltr','terp-accessories-archiver',
-'terp-stock_align_left_24','terp-stock_effects-object-colorize','terp-go-home','terp-gtk-go-back-rtl',
-'terp-gtk-go-back-ltr','terp-personal','terp-personal-','terp-personal+','terp-accessories-archiver-minus',
-'terp-accessories-archiver+','terp-stock_symbol-selection','terp-call-start','terp-dolar',
-'terp-face-plain','terp-folder-blue','terp-folder-green','terp-folder-orange','terp-folder-yellow',
-'terp-gdu-smart-failing','terp-go-week','terp-gtk-select-all','terp-locked','terp-mail-forward',
-'terp-mail-message-new','terp-mail-replied','terp-rating-rated','terp-stage','terp-stock_format-scientific',
-'terp-dolar_ok!','terp-idea','terp-stock_format-default','terp-mail-','terp-mail_delete'
-]
+                'STOCK_CANCEL', 'STOCK_CDROM', 'STOCK_CLEAR', 'STOCK_CLOSE', 'STOCK_COLOR_PICKER',
+                'STOCK_CONNECT', 'STOCK_CONVERT', 'STOCK_COPY', 'STOCK_CUT', 'STOCK_DELETE',
+                'STOCK_DIALOG_AUTHENTICATION', 'STOCK_DIALOG_ERROR', 'STOCK_DIALOG_INFO',
+                'STOCK_DIALOG_QUESTION', 'STOCK_DIALOG_WARNING', 'STOCK_DIRECTORY', 'STOCK_DISCONNECT',
+                'STOCK_DND', 'STOCK_DND_MULTIPLE', 'STOCK_EDIT', 'STOCK_EXECUTE', 'STOCK_FILE',
+                'STOCK_FIND', 'STOCK_FIND_AND_REPLACE', 'STOCK_FLOPPY', 'STOCK_GOTO_BOTTOM',
+                'STOCK_GOTO_FIRST', 'STOCK_GOTO_LAST', 'STOCK_GOTO_TOP', 'STOCK_GO_BACK',
+                'STOCK_GO_DOWN', 'STOCK_GO_FORWARD', 'STOCK_GO_UP', 'STOCK_HARDDISK',
+                'STOCK_HELP', 'STOCK_HOME', 'STOCK_INDENT', 'STOCK_INDEX', 'STOCK_ITALIC',
+                'STOCK_JUMP_TO', 'STOCK_JUSTIFY_CENTER', 'STOCK_JUSTIFY_FILL',
+                'STOCK_JUSTIFY_LEFT', 'STOCK_JUSTIFY_RIGHT', 'STOCK_MEDIA_FORWARD',
+                'STOCK_MEDIA_NEXT', 'STOCK_MEDIA_PAUSE', 'STOCK_MEDIA_PLAY',
+                'STOCK_MEDIA_PREVIOUS', 'STOCK_MEDIA_RECORD', 'STOCK_MEDIA_REWIND',
+                'STOCK_MEDIA_STOP', 'STOCK_MISSING_IMAGE', 'STOCK_NETWORK', 'STOCK_NEW',
+                'STOCK_NO', 'STOCK_OK', 'STOCK_OPEN', 'STOCK_PASTE', 'STOCK_PREFERENCES',
+                'STOCK_PRINT', 'STOCK_PRINT_PREVIEW', 'STOCK_PROPERTIES', 'STOCK_QUIT',
+                'STOCK_REDO', 'STOCK_REFRESH', 'STOCK_REMOVE', 'STOCK_REVERT_TO_SAVED',
+                'STOCK_SAVE', 'STOCK_SAVE_AS', 'STOCK_SELECT_COLOR', 'STOCK_SELECT_FONT',
+                'STOCK_SORT_ASCENDING', 'STOCK_SORT_DESCENDING', 'STOCK_SPELL_CHECK',
+                'STOCK_STOP', 'STOCK_STRIKETHROUGH', 'STOCK_UNDELETE', 'STOCK_UNDERLINE',
+                'STOCK_UNDO', 'STOCK_UNINDENT', 'STOCK_YES', 'STOCK_ZOOM_100',
+                'STOCK_ZOOM_FIT', 'STOCK_ZOOM_IN', 'STOCK_ZOOM_OUT',
+                'terp-account', 'terp-crm', 'terp-mrp', 'terp-product', 'terp-purchase',
+                'terp-sale', 'terp-tools', 'terp-administration', 'terp-hr', 'terp-partner',
+                'terp-project', 'terp-report', 'terp-stock', 'terp-calendar', 'terp-graph',
+                'terp-check','terp-go-month','terp-go-year','terp-go-today','terp-document-new','terp-camera_test',
+                'terp-emblem-important','terp-gtk-media-pause','terp-gtk-stop','terp-gnome-cpu-frequency-applet+',
+                'terp-dialog-close','terp-gtk-jump-to-rtl','terp-gtk-jump-to-ltr','terp-accessories-archiver',
+                'terp-stock_align_left_24','terp-stock_effects-object-colorize','terp-go-home','terp-gtk-go-back-rtl',
+                'terp-gtk-go-back-ltr','terp-personal','terp-personal-','terp-personal+','terp-accessories-archiver-minus',
+                'terp-accessories-archiver+','terp-stock_symbol-selection','terp-call-start','terp-dolar',
+                'terp-face-plain','terp-folder-blue','terp-folder-green','terp-folder-orange','terp-folder-yellow',
+                'terp-gdu-smart-failing','terp-go-week','terp-gtk-select-all','terp-locked','terp-mail-forward',
+                'terp-mail-message-new','terp-mail-replied','terp-rating-rated','terp-stage','terp-stock_format-scientific',
+                'terp-dolar_ok!','terp-idea','terp-stock_format-default','terp-mail-','terp-mail_delete'
+                ]
 
 def icons(*a, **kw):
     global __icons_list
@@ -1552,7 +1545,7 @@ def detect_server_timezone():
         import pytz
     except Exception:
         netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_WARNING,
-            "Python pytz module is not available. Timezone will be set to UTC by default.")
+                                      "Python pytz module is not available. Timezone will be set to UTC by default.")
         return 'UTC'
 
     # Option 1: the configuration option (did not exist before, so no backwards compatibility issue)
@@ -1586,14 +1579,14 @@ def detect_server_timezone():
             try:
                 tz = pytz.timezone(value)
                 netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_INFO,
-                    "Using timezone %s obtained from %s." % (tz.zone,source))
+                                              "Using timezone %s obtained from %s." % (tz.zone,source))
                 return value
             except pytz.UnknownTimeZoneError:
                 netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_WARNING,
-                    "The timezone specified in %s (%s) is invalid, ignoring it." % (source,value))
+                                              "The timezone specified in %s (%s) is invalid, ignoring it." % (source,value))
 
     netsvc.Logger().notifyChannel("detect_server_timezone", netsvc.LOG_WARNING,
-        "No valid timezone could be detected, using default UTC timezone. You can specify it explicitly with option 'timezone' in the server configuration.")
+                                  "No valid timezone could be detected, using default UTC timezone. You can specify it explicitly with option 'timezone' in the server configuration.")
     return 'UTC'
 
 def get_server_timezone():
@@ -1615,47 +1608,47 @@ DEFAULT_SERVER_DATETIME_FORMAT = "%s %s" % (
 # the C standard (1989 version), always available on platforms
 # with a C standard implementation.
 DATETIME_FORMATS_MAP = {
-        '%C': '', # century
-        '%D': '%m/%d/%Y', # modified %y->%Y
-        '%e': '%d',
-        '%E': '', # special modifier
-        '%F': '%Y-%m-%d',
-        '%g': '%Y', # modified %y->%Y
-        '%G': '%Y',
-        '%h': '%b',
-        '%k': '%H',
-        '%l': '%I',
-        '%n': '\n',
-        '%O': '', # special modifier
-        '%P': '%p',
-        '%R': '%H:%M',
-        '%r': '%I:%M:%S %p',
-        '%s': '', #num of seconds since epoch
-        '%T': '%H:%M:%S',
-        '%t': ' ', # tab
-        '%u': ' %w',
-        '%V': '%W',
-        '%y': '%Y', # Even if %y works, it's ambiguous, so we should use %Y
-        '%+': '%Y-%m-%d %H:%M:%S',
+    '%C': '', # century
+    '%D': '%m/%d/%Y', # modified %y->%Y
+    '%e': '%d',
+    '%E': '', # special modifier
+    '%F': '%Y-%m-%d',
+    '%g': '%Y', # modified %y->%Y
+    '%G': '%Y',
+    '%h': '%b',
+    '%k': '%H',
+    '%l': '%I',
+    '%n': '\n',
+    '%O': '', # special modifier
+    '%P': '%p',
+    '%R': '%H:%M',
+    '%r': '%I:%M:%S %p',
+    '%s': '', #num of seconds since epoch
+    '%T': '%H:%M:%S',
+    '%t': ' ', # tab
+    '%u': ' %w',
+    '%V': '%W',
+    '%y': '%Y', # Even if %y works, it's ambiguous, so we should use %Y
+    '%+': '%Y-%m-%d %H:%M:%S',
 
-        # %Z is a special case that causes 2 problems at least:
-        #  - the timezone names we use (in res_user.context_tz) come
-        #    from pytz, but not all these names are recognized by
-        #    strptime(), so we cannot convert in both directions
-        #    when such a timezone is selected and %Z is in the format
-        #  - %Z is replaced by an empty string in strftime() when
-        #    there is not tzinfo in a datetime value (e.g when the user
-        #    did not pick a context_tz). The resulting string does not
-        #    parse back if the format requires %Z.
-        # As a consequence, we strip it completely from format strings.
-        # The user can always have a look at the context_tz in
-        # preferences to check the timezone.
-        '%z': '',
-        '%Z': '',
+    # %Z is a special case that causes 2 problems at least:
+    #  - the timezone names we use (in res_user.context_tz) come
+    #    from pytz, but not all these names are recognized by
+    #    strptime(), so we cannot convert in both directions
+    #    when such a timezone is selected and %Z is in the format
+    #  - %Z is replaced by an empty string in strftime() when
+    #    there is not tzinfo in a datetime value (e.g when the user
+    #    did not pick a context_tz). The resulting string does not
+    #    parse back if the format requires %Z.
+    # As a consequence, we strip it completely from format strings.
+    # The user can always have a look at the context_tz in
+    # preferences to check the timezone.
+    '%z': '',
+    '%Z': '',
 }
 
 def server_to_local_timestamp(src_tstamp_str, src_format, dst_format, dst_tz_name,
-        tz_offset=True, ignore_unparsable_time=True):
+                              tz_offset=True, ignore_unparsable_time=True):
     """
     Convert a source timestamp string into a destination timestamp string, attempting to apply the
     correct offset if both the server and local timezone are recognized, or no

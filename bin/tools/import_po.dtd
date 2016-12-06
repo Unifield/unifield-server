@@ -1,0 +1,7 @@
+<!ELEMENT data (record+)>
+<!ELEMENT record (field+)>
+<!ELEMENT field ANY>
+<!ATTLIST record key CDATA #IMPLIED>
+<!ATTLIST record model CDATA #IMPLIED>
+<!ATTLIST field name CDATA #REQUIRED>
+<!ATTLIST field key CDATA #IMPLIED>
