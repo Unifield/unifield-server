@@ -333,18 +333,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     _description = 'Print Account Partner Balance View'
 
     def _get_templates(self, cr, uid, context):
-        '''
-        Return the recorded templates for the current wizard and user, as a list of tuples with key (wizard template id)
-        and value (template name), ordered by template name.
-        Ex: [(4, 'a template'), (2, 'other template')]
-        '''
-        wizard_templ_obj = self.pool.get('wizard.template')
-        template_ids = wizard_templ_obj.search(cr, uid, [('wizard_name', '=', self._name), ('user_id', '=', uid)],
-                                               context=context, order='name') or []
-        templates = template_ids and wizard_templ_obj.browse(cr, uid, template_ids,
-                                                             fields_to_fetch=['name'], context=context) or []
-        names = [(t.id, t.name) for t in templates]
-        return names
+        if context is None:
+            context = {}
+        return self.pool.get('wizard.template').get_templates(cr, uid, context, wizard_name=self._name)
 
     _columns = {
         'display_partner': fields.selection([('non-zero_balance',
@@ -455,20 +446,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
 
     def save_template(self, cr, buid, ids, context=None):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
-        # get a dictionary with all fields values
-        data = ids and self.read(cr, uid, ids[0], context=context)
-        if data:
-            if not data['template_name']:
-                raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
-            else:
-                # create a new wizard_template to store the values
-                vals = {'name': data['template_name'],
-                        'user_id': uid,
-                        'wizard_name': self._name,
-                        'values': data,
-                        }
-                self.pool.get('wizard.template').create(cr, uid, vals, context=context)
-        return True
+        if context is None:
+            context = {}
+        return self.pool.get('wizard.template').save_template(cr, uid, ids, context, wizard_name=self._name)
 
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:

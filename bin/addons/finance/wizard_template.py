@@ -20,6 +20,7 @@
 ##############################################################################
 
 from osv import fields, osv
+from tools.translate import _
 
 
 class wizard_template(osv.osv):
@@ -41,6 +42,41 @@ class wizard_template(osv.osv):
         ('name_user_id_wizard_name_uniq', 'UNIQUE(name, user_id, wizard_name)',
          'This template name already exists for this wizard. Please choose another name.')
     ]
+
+    def save_template(self, cr, uid, ids, context, wizard_name, template_name_field='template_name'):
+        '''
+        Store all the fields values of the wizard in parameter.
+        :param wizard_model_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
+        :param template_name_field: String, name of the field in the wizard containing the chosen template name
+        '''
+        # get a dictionary with ALL fields values
+        wizard_obj = self.pool.get(wizard_name)
+        data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
+        if data:
+            if not data[template_name_field]:
+                raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
+            else:
+                # create a new wizard_template to store the values
+                vals = {'name': data[template_name_field],
+                        'user_id': uid,
+                        'wizard_name': wizard_obj._name,
+                        'values': data,
+                        }
+                self.create(cr, uid, vals, context=context)
+        return True
+
+    def get_templates(self, cr, uid, context, wizard_name):
+        '''
+        Return the recorded templates for the wizard in parameter and the current user,
+        as a list of tuples with key (wizard template id) and value (template name), ordered by template name.
+        Ex: [(4, 'a template'), (2, 'other template')]
+        '''
+        template_ids = self.search(cr, uid, [('wizard_name', '=', wizard_name), ('user_id', '=', uid)],
+                                               context=context, order='name') or []
+        templates = template_ids and self.browse(cr, uid, template_ids,
+                                                             fields_to_fetch=['name'], context=context) or []
+        names = [(t.id, t.name) for t in templates]
+        return names
 
 
 wizard_template()
