@@ -272,6 +272,24 @@ class product_list_line(osv.osv):
                     lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
                 ),
             },
+            write_relate=False,
+        ),
+        'desc': fields.related(
+            'name',
+            'name',
+            string='Product Description',
+            readonly=True,
+            type='char',
+            size=64,
+            store={
+                'product.product': (
+                    _get_product, ['name'], 10,
+                ),
+                'product.list.line': (
+                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
+                ),
+            },
+            write_relate=False,
         ),
         'comment': fields.char(
             size=256,
