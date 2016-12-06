@@ -156,6 +156,37 @@ class wizard_template(osv.osv):
         # delete the template
         return self.unlink(cr, uid, selected_template_id, context=context)
 
+    def edit_template(self, cr, uid, ids, wizard_name, template_name_field='template_name',
+                      saved_templates_field='saved_templates', context=None):
+        '''
+        Edit the values of the fields stored in the selected template.
+        :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
+        :param template_name_field: String, name of the field in the wizard containing the chosen template name (for template creation)
+        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
+        '''
+        if context is None:
+            context = {}
+        # object corresponding to the current wizard
+        wizard_obj = self.pool.get(wizard_name)
+        # we get the selected template
+        data = ids and wizard_obj.read(cr, uid, ids[0], [saved_templates_field], context=context)
+        selected_template_id = data and data[saved_templates_field]
+        if not selected_template_id:
+            raise osv.except_osv(_('Error !'), _('You have to choose a template to edit.'))
+        # get a dictionary with ALL fields values
+        data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
+        if data:
+            # don't keep the id, and the values of the fields related to the wizard template itself
+            if template_name_field in data:
+                del data[template_name_field]
+            if 'id' in data:
+                del data['id']
+            del data[saved_templates_field]
+            # update the existing record with the new values
+            vals = {'values': data}
+            return self.write(cr, uid, selected_template_id, vals, context=context)
+        return True
+
 
 wizard_template()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

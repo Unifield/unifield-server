@@ -454,6 +454,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         return self.pool.get('wizard.template').delete_template(cr, uid, ids, wizard_name=self._name, context=context)
 
+    def edit_template(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        return self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
+
     def remove_journals(self, cr, uid, ids, context=None):
         if ids:
             self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },

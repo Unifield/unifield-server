@@ -117,12 +117,13 @@
                 <button icon="gtk-print" name="print_xls" string="Print Excel" type="object" colspan="2" />
             </group>
             <separator string="Wizard template" colspan="4"/>
-            <group col="4" colspan="4">
+            <group col="5" colspan="4">
                 <field name="saved_templates" />
                 <button name="load_template" string="Load" type="object" />
+                <button name="edit_template" string="Edit" type="object" />
                 <button name="delete_template" string="Delete" type="object" />
                 <field name="template_name" colspan="2" />
-                <button icon="gtk-floppy" name="save_template" string="Save current template" type="object" colspan="2" />
+                <button icon="gtk-floppy" name="save_template" string="Save current template" type="object" colspan="3" />
             </group>
             </xpath>
             
