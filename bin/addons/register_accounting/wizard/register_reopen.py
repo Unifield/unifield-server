@@ -32,7 +32,7 @@ class register_reopen(osv.osv_memory):
         # Deleted from selection since UTP-209:
         #('writeoff', 'Accept write-off and close register'),
         'choice' : fields.selection( [('reopen', 'Reopen Register')], \
-            string="Decision to make", required=True),
+            string="Decision to take", required=True),
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
