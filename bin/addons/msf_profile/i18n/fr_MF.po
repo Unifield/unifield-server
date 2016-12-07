@@ -75758,3 +75758,14 @@ msgstr "Le format de la date de livraison confirmée est mauvais, le système a 
 #, python-format
 msgid "Confirmed delivery date not found. The date from the header has been taken (if any)"
 msgstr "Date de livraison confirmée non trouvée, le système a pris la date de l'en-tête"
+
+#. module: msf_partner
+#: field:res.partner,locally_created:0
+msgid "Locally Created"
+msgstr "Créé localement"
+
+#. module: msf_partner
+#: help:res.partner,locally_created:0
+msgid "Partner Created on this instance"
+msgstr "Partenaire créé sur cette instance"
+
