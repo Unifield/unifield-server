@@ -343,8 +343,10 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        # columns related to the wizard template:
         'template_name': fields.char('Template name', size=128),
         'saved_templates': fields.selection(_get_templates, string='Saved templates'),
+        'display_load_button': fields.boolean(),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -357,6 +359,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'result_selection': 'supplier',
         'journal_ids': _get_journals,
         'tax': False,
+        'display_load_button': True,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -442,6 +445,15 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'datas': data,
         }
 
+    def remove_journals(self, cr, uid, ids, context=None):
+        if ids:
+            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
+                       context=context)
+        return {}
+
+    '''
+    Methods related to the wizard template:
+    '''
     def save_template(self, cr, buid, ids, context=None):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         return self.pool.get('wizard.template').save_template(cr, uid, ids, wizard_name=self._name, context=context)
@@ -458,11 +470,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         return self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
 
-    def remove_journals(self, cr, uid, ids, context=None):
-        if ids:
-            self.write(cr, uid, ids, { 'journal_ids': [(6, 0, [])] },
-                       context=context)
-        return {}
+    def onchange_saved_templates(self, cr, uid, ids, context=None):
+        return self.pool.get('wizard.template').onchange_saved_templates(cr, uid, ids, context=context)
 
 wizard_account_partner_balance_tree()
 
