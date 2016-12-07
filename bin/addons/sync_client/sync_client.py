@@ -1157,7 +1157,7 @@ class Connection(osv.osv):
         'xmlrpc_retry' : fields.integer("XmlRPC retry"),
         'automatic_patching' : fields.boolean('Silent Upgrade', help="Enable this if you want to automatically install patches during these hours."),
         'automatic_patching_hour_from': fields.float('Upgrade from', size=8, help="Enable upgrade from this time"),
-        'automatic_patching_hour_to': fields.float('Upgrade until', size=8, help="Enable upgrade unitl this time"),
+        'automatic_patching_hour_to': fields.float('Upgrade until', size=8, help="Enable upgrade until this time"),
     }
 
     _defaults = {
