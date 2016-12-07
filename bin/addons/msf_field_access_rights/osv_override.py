@@ -336,7 +336,6 @@ def write(self, cr, uid, ids, vals, context=None):
                     for field_name in no_write_access_fields:
                         if not _values_equate(columns[field_name]._type,
                                               old_values[field_name], vals[field_name]):
-                            print old_values[field_name], 'new val', vals[field_name], columns[field_name]._type
                             # throw access denied error
                             raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
 
