@@ -226,6 +226,10 @@ class wizard_template_form(osv.osv_memory):
         'display_load_button': fields.boolean(),
     }
 
+    _defaults = {
+        'display_load_button': True,
+    }
+
     def save_template(self, cr, buid, ids, context=None):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         return self.pool.get('wizard.template').save_template(cr, uid, ids, wizard_name=self._name, context=context)

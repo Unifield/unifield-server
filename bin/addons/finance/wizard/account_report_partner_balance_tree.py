@@ -328,7 +328,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     """
         This wizard will provide the partner balance report by periods, between any two dates.
     """
-    _inherit = ['account.common.partner.report', 'wizard.template.form']
+    _inherit = 'account.common.partner.report'
     _name = 'wizard.account.partner.balance.tree'
     _description = 'Print Account Partner Balance View'
 
@@ -352,7 +352,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'result_selection': 'supplier',
         'journal_ids': _get_journals,
         'tax': False,
-        'display_load_button': True,
     }
 
     def default_get(self, cr, uid, fields, context=None):

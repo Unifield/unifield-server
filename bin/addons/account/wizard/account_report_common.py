@@ -26,6 +26,7 @@ from osv import fields, osv
 from tools.translate import _
 
 class account_common_report(osv.osv_memory):
+    _inherit = "wizard.template.form"  # to be able to store the wizard values
     _name = "account.common.report"
     _description = "Account Common Report"
 
