@@ -75,21 +75,6 @@ class wizard_template(osv.osv):
             self.create(cr, uid, vals, context=context)
         return True
 
-    def get_templates(self, cr, uid, wizard_name, context=None):
-        '''
-        Return the recorded templates for the wizard in parameter and the current user,
-        as a list of tuples with key (wizard template id) and value (template name), ordered by template name.
-        Ex: [(4, 'a template'), (2, 'other template')]
-        '''
-        if context is None:
-            context = {}
-        template_ids = self.search(cr, uid, [('wizard_name', '=', wizard_name), ('user_id', '=', uid)],
-                                   context=context, order='name') or []
-        templates = template_ids and self.browse(cr, uid, template_ids,
-                                                 fields_to_fetch=['name'], context=context) or []
-        names = [(t.id, t.name) for t in templates]
-        return names
-
     def load_template(self, cr, uid, ids, wizard_name, context=None):
         '''
         Load the values in the fields of the wizard in parameter, according to the template selected.
@@ -138,15 +123,6 @@ class wizard_template(osv.osv):
             'res_id': new_id,
             'target': 'new',
         }
-
-    def onchange_saved_templates(self, cr, uid, ids, context=None):
-        '''
-        Whenever a new template is selected, display the "load" button
-        (and don't display the other options for the template, such as "delete"...)
-        '''
-        res = {}
-        res['value'] = {'display_load_button': True}
-        return res
 
     def delete_template(self, cr, uid, ids, wizard_name, context=None):
         '''
@@ -205,7 +181,20 @@ class wizard_template_form(osv.osv_memory):
     _description = 'Wizard Template Form'
 
     def _get_templates(self, cr, uid, context):
-        return self.pool.get('wizard.template').get_templates(cr, uid, wizard_name=self._name, context=context)
+        '''
+        Return the recorded templates for the wizard in parameter and the current user,
+        as a list of tuples with key (wizard template id) and value (template name), ordered by template name.
+        Ex: [(4, 'a template'), (2, 'other template')]
+        '''
+        if context is None:
+            context = {}
+        wizard_template_obj = self.pool.get('wizard.template')
+        template_ids = wizard_template_obj.search(cr, uid, [('wizard_name', '=', self._name), ('user_id', '=', uid)],
+                                                  context=context, order='name') or []
+        templates = template_ids and wizard_template_obj.browse(cr, uid, template_ids,
+                                                                fields_to_fetch=['name'], context=context) or []
+        names = [(t.id, t.name) for t in templates]
+        return names
 
     _columns = {
         'template_name': fields.char('Template name', size=128),
@@ -234,7 +223,13 @@ class wizard_template_form(osv.osv_memory):
         return self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
 
     def onchange_saved_templates(self, cr, uid, ids, context=None):
-        return self.pool.get('wizard.template').onchange_saved_templates(cr, uid, ids, context=context)
+        '''
+        Whenever a new template is selected, display the "load" button
+        (and don't display the other options for the template, such as "delete"...)
+        '''
+        res = {}
+        res['value'] = {'display_load_button': True}
+        return res
 
 wizard_template_form()
 
