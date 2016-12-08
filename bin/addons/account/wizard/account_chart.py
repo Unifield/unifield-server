@@ -25,6 +25,7 @@ class account_chart(osv.osv_memory):
     """
     For Chart of Accounts
     """
+    _inherit = "wizard.template.form"  # to be able to store the wizard values
     _name = "account.chart"
     _description = "Account chart"
     _columns = {

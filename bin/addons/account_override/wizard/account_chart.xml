@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE WIZARD [
+    <!ENTITY wizard_template SYSTEM "../../resource/wizard_template_view.xml">
+]>
+
 <openerp>
     <data>
     
@@ -46,6 +51,8 @@
                             <label string="" colspan="1"/>
                             <button icon="gtk-print" string="Export" name="button_export" type="object" colspan="1"/>
                         </group>
+                        <!-- to be able to store the wizard values -->
+                        &wizard_template;
                     </xpath>
                 </data>
             </field>
