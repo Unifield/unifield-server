@@ -24,9 +24,9 @@ from tools.translate import _
 
 
 class wizard_template(osv.osv):
-    '''
+    """
     Used to store the values from a wizard in order to reload them later
-    '''
+    """
 
     _name = 'wizard.template'
     _description = 'Wizard Template'
@@ -44,10 +44,10 @@ class wizard_template(osv.osv):
     ]
 
     def save_template(self, cr, uid, ids, wizard_name, context=None):
-        '''
+        """
         Store all the fields values of the wizard in parameter.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        '''
+        """
         if context is None:
             context = {}
         # object corresponding to the current wizard
@@ -76,10 +76,10 @@ class wizard_template(osv.osv):
         return True
 
     def load_template(self, cr, uid, ids, wizard_name, context=None):
-        '''
+        """
         Load the values in the fields of the wizard in parameter, according to the template selected.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        '''
+        """
         if context is None:
             context = {}
         # object corresponding to the current wizard
@@ -125,10 +125,10 @@ class wizard_template(osv.osv):
         }
 
     def delete_template(self, cr, uid, ids, wizard_name, context=None):
-        '''
+        """
         Delete the template selected in the "saved_templates_field" of the "wizard_name"
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        '''
+        """
         if context is None:
             context = {}
         # object corresponding to the current wizard
@@ -142,10 +142,10 @@ class wizard_template(osv.osv):
         return self.unlink(cr, uid, selected_template_id, context=context)
 
     def edit_template(self, cr, uid, ids, wizard_name, context=None):
-        '''
+        """
         Edit the values of the fields stored in the selected template.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        '''
+        """
         if context is None:
             context = {}
         # object corresponding to the current wizard
@@ -173,19 +173,19 @@ wizard_template()
 
 
 class wizard_template_form(osv.osv_memory):
-    '''
+    """
     Used to build the part of form that should be added to the wizards to use the "wizard template" functionality
-    '''
+    """
 
     _name = 'wizard.template.form'
     _description = 'Wizard Template Form'
 
     def _get_templates(self, cr, uid, context):
-        '''
+        """
         Return the recorded templates for the wizard in parameter and the current user,
         as a list of tuples with key (wizard template id) and value (template name), ordered by template name.
         Ex: [(4, 'a template'), (2, 'other template')]
-        '''
+        """
         if context is None:
             context = {}
         wizard_template_obj = self.pool.get('wizard.template')
@@ -223,10 +223,10 @@ class wizard_template_form(osv.osv_memory):
         return self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
 
     def onchange_saved_templates(self, cr, uid, ids, context=None):
-        '''
+        """
         Whenever a new template is selected, display the "load" button
         (and don't display the other options for the template, such as "delete"...)
-        '''
+        """
         res = {}
         res['value'] = {'display_load_button': True}
         return res
