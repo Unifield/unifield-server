@@ -43,14 +43,10 @@ class wizard_template(osv.osv):
          'This template name already exists for this wizard. Please choose another name.')
     ]
 
-    def save_template(self, cr, uid, ids, wizard_name, template_name_field='template_name',
-                      saved_templates_field='saved_templates', display_load_btn_field='display_load_button', context=None):
+    def save_template(self, cr, uid, ids, wizard_name, context=None):
         '''
         Store all the fields values of the wizard in parameter.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        :param template_name_field: String, name of the field in the wizard containing the chosen template name
-        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
-        :param display_load_btn_field: String, name of the invisible field in the wizard determining whether the load button should be displayed
         '''
         if context is None:
             context = {}
@@ -59,17 +55,17 @@ class wizard_template(osv.osv):
         # get a dictionary with ALL fields values
         data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
         if data:
-            template_name = data[template_name_field]
+            template_name = data['template_name']
             if not template_name:
                 raise osv.except_osv(_('Error !'), _('You have to choose a template name.'))
             # don't keep the id, and the values of the fields related to the wizard template itself
-            del data[template_name_field]
+            del data['template_name']
             if 'id' in data:
                 del data['id']
-            if saved_templates_field in data:
-                del data[saved_templates_field]
-            if display_load_btn_field in data:
-                del data[display_load_btn_field]
+            if 'saved_templates' in data:
+                del data['saved_templates']
+            if 'display_load_button' in data:
+                del data['display_load_button']
             # create a new wizard_template to store the values
             vals = {'name': template_name,
                     'user_id': uid,
@@ -94,21 +90,18 @@ class wizard_template(osv.osv):
         names = [(t.id, t.name) for t in templates]
         return names
 
-    def load_template(self, cr, uid, ids, wizard_name, saved_templates_field='saved_templates',
-                      display_load_btn_field='display_load_button', context=None):
+    def load_template(self, cr, uid, ids, wizard_name, context=None):
         '''
         Load the values in the fields of the wizard in parameter, according to the template selected.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
-        :param display_load_btn_field: String, name of the invisible field in the wizard determining whether the load button should be displayed
         '''
         if context is None:
             context = {}
         # object corresponding to the current wizard
         wizard_obj = self.pool.get(wizard_name)
         # we get the selected template
-        data = ids and wizard_obj.read(cr, uid, ids[0], [saved_templates_field], context=context)
-        selected_template_id = data and data[saved_templates_field]
+        data = ids and wizard_obj.read(cr, uid, ids[0], ['saved_templates'], context=context)
+        selected_template_id = data and data['saved_templates']
         if not selected_template_id:
             raise osv.except_osv(_('Error !'), _('You have to choose a template to load.'))
         # we get the values from the template as a String and convert them back to a dictionary
@@ -116,11 +109,11 @@ class wizard_template(osv.osv):
         try:
             vals = eval(vals)
             # we put the value of the selected template in the "Saved templates" selection field
-            vals.update({saved_templates_field: selected_template_id})
+            vals.update({'saved_templates': selected_template_id})
             # we put the "display_load_button" field to False,
             # so as to hide the load button and to show instead the options for the template loaded (delete...)
-            if display_load_btn_field:
-                vals.update({display_load_btn_field: False})
+            if 'display_load_button':
+                vals.update({'display_load_button': False})
         except SyntaxError:
             vals = {}
         # we "format" the many2many fields values to make them look like [(6, 0, [1, 2])]
@@ -146,42 +139,36 @@ class wizard_template(osv.osv):
             'target': 'new',
         }
 
-    def onchange_saved_templates(self, cr, uid, ids, display_load_btn_field='display_load_button', context=None):
+    def onchange_saved_templates(self, cr, uid, ids, context=None):
         '''
         Whenever a new template is selected, display the "load" button
         (and don't display the other options for the template, such as "delete"...)
-        :param display_load_btn_field: String, name of the invisible field in the wizard determining whether the load button should be displayed
         '''
         res = {}
-        res['value'] = {display_load_btn_field: True}
+        res['value'] = {'display_load_button': True}
         return res
 
-    def delete_template(self, cr, uid, ids, wizard_name, saved_templates_field='saved_templates', context=None):
+    def delete_template(self, cr, uid, ids, wizard_name, context=None):
         '''
         Delete the template selected in the "saved_templates_field" of the "wizard_name"
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
         '''
         if context is None:
             context = {}
         # object corresponding to the current wizard
         wizard_obj = self.pool.get(wizard_name)
         # get the selected template
-        data = ids and wizard_obj.read(cr, uid, ids[0], [saved_templates_field], context=context)
-        selected_template_id = data and data[saved_templates_field]
+        data = ids and wizard_obj.read(cr, uid, ids[0], ['saved_templates'], context=context)
+        selected_template_id = data and data['saved_templates']
         if not selected_template_id:
             raise osv.except_osv(_('Error !'), _('You have to choose a template to delete.'))
         # delete the template
         return self.unlink(cr, uid, selected_template_id, context=context)
 
-    def edit_template(self, cr, uid, ids, wizard_name, template_name_field='template_name',
-                      saved_templates_field='saved_templates', display_load_btn_field='display_load_button', context=None):
+    def edit_template(self, cr, uid, ids, wizard_name, context=None):
         '''
         Edit the values of the fields stored in the selected template.
         :param wizard_name: String, name of the wizard model (ex: 'wizard.account.partner.balance.tree')
-        :param template_name_field: String, name of the field in the wizard containing the chosen template name (for template creation)
-        :param saved_templates_field: String, name of the field in the wizard containing the selection of the saved templates
-        :param display_load_btn_field: String, name of the invisible field in the wizard determining whether the load button should be displayed
         '''
         if context is None:
             context = {}
@@ -190,17 +177,17 @@ class wizard_template(osv.osv):
         # get a dictionary containing ALL fields values of the selected template
         data = ids and wizard_obj.read(cr, uid, ids[0], context=context)
         if data:
-            selected_template_id = data[saved_templates_field]
+            selected_template_id = data['saved_templates']
             if not selected_template_id:
                 raise osv.except_osv(_('Error !'), _('You have to choose a template to edit.'))
             # don't keep the id, and the values of the fields related to the wizard template itself
-            if template_name_field in data:
-                del data[template_name_field]
+            if 'template_name' in data:
+                del data['template_name']
             if 'id' in data:
                 del data['id']
-            del data[saved_templates_field]
-            if display_load_btn_field in data:
-                del data[display_load_btn_field]
+            del data['saved_templates']
+            if 'display_load_button' in data:
+                del data['display_load_button']
             # update the existing record with the new values
             vals = {'values': data}
             return self.write(cr, uid, selected_template_id, vals, context=context)
