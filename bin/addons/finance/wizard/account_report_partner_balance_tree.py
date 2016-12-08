@@ -328,12 +328,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     """
         This wizard will provide the partner balance report by periods, between any two dates.
     """
-    _inherit = 'account.common.partner.report'
+    _inherit = ['account.common.partner.report', 'wizard.template.form']
     _name = 'wizard.account.partner.balance.tree'
     _description = 'Print Account Partner Balance View'
-
-    def _get_templates(self, cr, uid, context):
-        return self.pool.get('wizard.template').get_templates(cr, uid, wizard_name=self._name, context=context)
 
     _columns = {
         'display_partner': fields.selection([('non-zero_balance',
@@ -343,10 +340,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
-        # columns related to the wizard template:
-        'template_name': fields.char('Template name', size=128),
-        'saved_templates': fields.selection(_get_templates, string='Saved templates'),
-        'display_load_button': fields.boolean(),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -451,27 +444,6 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
                        context=context)
         return {}
 
-    '''
-    Methods related to the wizard template:
-    '''
-    def save_template(self, cr, buid, ids, context=None):
-        uid = hasattr(buid, 'realUid') and buid.realUid or buid
-        return self.pool.get('wizard.template').save_template(cr, uid, ids, wizard_name=self._name, context=context)
-
-    def load_template(self, cr, buid, ids, context=None):
-        uid = hasattr(buid, 'realUid') and buid.realUid or buid
-        return self.pool.get('wizard.template').load_template(cr, uid, ids, wizard_name=self._name, context=context)
-
-    def delete_template(self, cr, buid, ids, context=None):
-        uid = hasattr(buid, 'realUid') and buid.realUid or buid
-        return self.pool.get('wizard.template').delete_template(cr, uid, ids, wizard_name=self._name, context=context)
-
-    def edit_template(self, cr, buid, ids, context=None):
-        uid = hasattr(buid, 'realUid') and buid.realUid or buid
-        return self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
-
-    def onchange_saved_templates(self, cr, uid, ids, context=None):
-        return self.pool.get('wizard.template').onchange_saved_templates(cr, uid, ids, context=context)
 
 wizard_account_partner_balance_tree()
 

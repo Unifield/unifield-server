@@ -24,9 +24,9 @@ import account
 import invoice
 import account_voucher
 import purchase
+import wizard_template
 import report
 import wizard
 import account_drill
-import wizard_template
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

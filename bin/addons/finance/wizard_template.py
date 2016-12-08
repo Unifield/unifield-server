@@ -206,6 +206,45 @@ class wizard_template(osv.osv):
             return self.write(cr, uid, selected_template_id, vals, context=context)
         return True
 
-
 wizard_template()
+
+
+class wizard_template_form(osv.osv_memory):
+    '''
+    Used to build the part of form that should be added to the wizards to use the "wizard template" functionality
+    '''
+
+    _name = 'wizard.template.form'
+    _description = 'Wizard Template Form'
+
+    def _get_templates(self, cr, uid, context):
+        return self.pool.get('wizard.template').get_templates(cr, uid, wizard_name=self._name, context=context)
+
+    _columns = {
+        'template_name': fields.char('Template name', size=128),
+        'saved_templates': fields.selection(_get_templates, string='Saved templates'),
+        'display_load_button': fields.boolean(),
+    }
+
+    def save_template(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        return self.pool.get('wizard.template').save_template(cr, uid, ids, wizard_name=self._name, context=context)
+
+    def load_template(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        return self.pool.get('wizard.template').load_template(cr, uid, ids, wizard_name=self._name, context=context)
+
+    def delete_template(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        return self.pool.get('wizard.template').delete_template(cr, uid, ids, wizard_name=self._name, context=context)
+
+    def edit_template(self, cr, buid, ids, context=None):
+        uid = hasattr(buid, 'realUid') and buid.realUid or buid
+        return self.pool.get('wizard.template').edit_template(cr, uid, ids, wizard_name=self._name, context=context)
+
+    def onchange_saved_templates(self, cr, uid, ids, context=None):
+        return self.pool.get('wizard.template').onchange_saved_templates(cr, uid, ids, context=context)
+
+wizard_template_form()
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
