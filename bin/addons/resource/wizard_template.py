@@ -139,7 +139,9 @@ class wizard_template(osv.osv):
         if not selected_template_id:
             raise osv.except_osv(_('Error !'), _('You have to choose a template to delete.'))
         # delete the template
-        return self.unlink(cr, uid, selected_template_id, context=context)
+        self.unlink(cr, uid, selected_template_id, context=context)
+        # close the wizard
+        return {'type': 'ir.actions.act_window_close'}
 
     def edit_template(self, cr, uid, ids, wizard_name, context=None):
         """
