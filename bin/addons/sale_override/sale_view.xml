@@ -409,6 +409,13 @@
                   string="Save and Close"
                   type="object" 
                   icon="gtk-close" />
+                  <button
+                  name="ask_unlink"
+                  type="object"
+                  string="Delete"
+                  icon="gtk-cancel"
+                  invisible="True"
+                  confirm="This button shouldn't be use from form view. Please use the red cross on list view." />
               </form>
             </field>
         </record>
