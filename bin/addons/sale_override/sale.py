@@ -2939,7 +2939,7 @@ class sale_order_line(osv.osv):
             self.infolog(cr, uid, "The line id:%s (line number: %s) of the %s id:%s (%s) has been deleted." % ltl)
 
         if lines_to_check:
-            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context, update_lines=False)
+            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=True, context=context, update_lines=False)
 
         return res
 
