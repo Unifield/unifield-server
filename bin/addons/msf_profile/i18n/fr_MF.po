@@ -38599,8 +38599,31 @@ msgstr "Ceci indique le type de Journal lié à cette ligne d'écriture comptabl
 #: field:msf.instance,level:0
 #: field:product.nomenclature,level:0
 #: field:stock.reason.type,level:0
+#: field:res.users,level:0
 msgid "Level"
 msgstr "Niveau"
+
+#. module: base
+#: help:res.users,level:0
+msgid "Level selected and all higher ones will be able to use this group."
+msgstr "Le niveau selectionné et tous ceux plus élevés seront capable d'utiliser ce groupe."
+
+#. module: base
+#: code:addons/base/res/res_user.py:97
+#, python-format
+msgid "You cannot edit a group level higher than your instance level (%s is higher than %s)."
+msgstr "Vous ne pouvez pas editer un groupe d'un niveau supérieur à celui de votre instance (%s est supérieur à %s)"
+
+#. module: base
+#: code:addons/base/res/res_user.py:97
+#, python-format
+msgid "The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'."
+msgstr "Le mot-clé '%s' après le caractère '$' doit être l'un des suivants : %s. Veuillez vérifier le groupe de nom '%s'."
+
+#. module: base
+#: view:res.groups:0
+msgid "All Levels"
+msgstr "Tous les niveaux"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
