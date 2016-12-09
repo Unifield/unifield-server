@@ -94,7 +94,7 @@ class groups(osv.osv):
             group_level = level and _(selection_dict[level])
             instance_level = instance_level and _(selection_dict[instance_level])
             raise osv.except_osv(_('Error'),
-                                 _('You cannot set a group level higher than your instance level (%s is higher than %s).' % (group_level, instance_level)))
+                                 _('You cannot edit a group level higher than your instance level (%s is higher than %s).' % (group_level, instance_level)))
 
     def write(self, cr, uid, ids, vals, context=None):
         if context is None:
