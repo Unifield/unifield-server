@@ -28,6 +28,7 @@ from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 RESULT_MODELS_SELECTION = [('group', 'Group'), ('user', 'User'), ('menu', 'Menu')]
 RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated')]
 
+LEVEL_SELECTION = {'hq': 'hq', 'co': 'coordo', 'pr': 'project'}
 
 class user_access_configurator(osv.osv_memory):
     _name = 'user.access.configurator'
@@ -229,6 +230,8 @@ class user_access_configurator(osv.osv_memory):
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
                             if group_name not in menu_group_list:
+                                if '$' in group_name:
+                                    group_name = group_name.split('$')[0]
                                 menu_group_list.append(group_name)
 
             # all rows have been treated, the order of group_name_list is not important anymore, we can now exclude groups which are defined multiple times
@@ -289,13 +292,19 @@ class user_access_configurator(osv.osv_memory):
         group_ids = group_obj.search(cr, uid, [], context=context)
         group_names = group_obj.read(cr, uid, group_ids, ['name'], context=context)
         group_names = [x['name'] for x in group_names]
+        context['bypass_group_level'] = True
 
         # IGL groups are activated
         self._activate_immunity_groups(cr, uid, ids, context=context)
 
         for obj in self.browse(cr, uid, ids, context=context):
             # work copy of groups present in the file - will represent the missing groups to be created
-            missing_group_names = list(data_structure[obj.id]['group_name_list'])
+            missing_group_names_with_level = list(data_structure[obj.id]['group_name_list'])
+            # remove the $XX extension
+            missing_group_names = [group.split('$')[0] for group in
+                    missing_group_names_with_level if group]
+            data_structure[obj.id]['group_name_list'] = missing_group_names
+
             # all groups from file are activated (in case a new group in the file which was deactivated previously)
             self._set_active_group_name(cr, uid, ids, context=context, group_names=missing_group_names, active_value=True)
             # will represent the groups present in the database but not in the file, to be deactivated
@@ -303,6 +312,17 @@ class user_access_configurator(osv.osv_memory):
             # loop through groups in the database - pop from file list if already exist
             for group_name in group_names:
                 if group_name in missing_group_names:
+                    # check if the level should be modified
+                    if group_name not in missing_group_names_with_level:
+                        # that mean this group have a $XX extention, = a level
+                        for group_with_level in missing_group_names_with_level:
+                            if group_with_level.startswith('%s$' % group_name):
+                                group, level = group_with_level.split('$')
+                                # edit level on current group
+                                group_ids = group_obj.search(cr, uid,
+                                        [('name', '=', group)], context=context)
+                                group_obj.write(cr, uid, group_ids, {'level': LEVEL_SELECTION[level.lower()]}, context)
+                                break
                     # the group from file already exists
                     missing_group_names.remove(group_name)
                 elif not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name):
@@ -311,7 +331,21 @@ class user_access_configurator(osv.osv_memory):
 
             # create the new groups from the file
             for missing_group_name in missing_group_names:
-                group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
+                level = None
+                if missing_group_name not in missing_group_names_with_level:
+                    # that mean this group have a $XX extention, = a level
+                    for group_with_level in missing_group_names_with_level:
+                        if group_with_level.startswith('%s$' % missing_group_name):
+                            group, level = group_with_level.split('$')
+                            break
+                vals = {
+                        'name': missing_group_name,
+                        'from_file_import_res_groups': True
+                        }
+
+                if level:
+                    vals['level'] = LEVEL_SELECTION[level.lower()]
+                group_obj.create(cr, uid, vals, context=context)
                 # info logging - created groups
                 data_structure[obj.id]['group']['created'].append(missing_group_name)
 
@@ -382,7 +416,13 @@ class user_access_configurator(osv.osv_memory):
             # user ids - used to deactivate users for which group is not in the file
             # we do not want to deactivate admin user (even if not in the file)
             user_ids_list = [admin_ids[0]]
-            for group_name in data_structure[obj.id]['group_name_list']:
+            group_names_with_level = list(data_structure[obj.id]['group_name_list'])
+            # remove the $XX extension
+            group_names = [group.split('$')[0] for group in
+                    group_names_with_level if group]
+            data_structure[obj.id]['group_name_list'] = group_names
+
+            for group_name in group_names:
                 # login format from group_name
                 login_name = '_'.join(group_name.lower().split())
                 # check if a user already exist
@@ -490,7 +530,7 @@ class user_access_configurator(osv.osv_memory):
                     if access_not_in_file:
                         groups_to_write[group.id] += access_not_in_file
                 if group.name in data_structure[obj.id]['group_name_list'] and group.id not in groups_to_write:
-                     groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
+                    groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
 
             for gp_id in groups_to_write:
                 groups_obj.write(cr, uid, [gp_id], {'menu_access': [(6, 0, groups_to_write[gp_id])]}, context=context)
