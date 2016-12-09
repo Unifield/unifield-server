@@ -321,6 +321,9 @@ class user_access_configurator(osv.osv_memory):
                                 # edit level on current group
                                 group_ids = group_obj.search(cr, uid,
                                         [('name', '=', group)], context=context)
+                                if level.lower() not in LEVEL_SELECTION:
+                                    raise osv.except_osv(_('Error'),
+                                            _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), group_with_level))
                                 group_obj.write(cr, uid, group_ids, {'level': LEVEL_SELECTION[level.lower()]}, context)
                                 break
                     # the group from file already exists
@@ -344,6 +347,9 @@ class user_access_configurator(osv.osv_memory):
                         }
 
                 if level:
+                    if level.lower() not in LEVEL_SELECTION:
+                        raise osv.except_osv(_('Error'),
+                                _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), group_with_level))
                     vals['level'] = LEVEL_SELECTION[level.lower()]
                 group_obj.create(cr, uid, vals, context=context)
                 # info logging - created groups
