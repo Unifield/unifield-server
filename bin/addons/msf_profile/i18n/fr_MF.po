@@ -9118,7 +9118,7 @@ msgstr "Vous ne pouvez pas modifier la société de ce journal parce que l'enreg
 msgid "Process Components to Consume"
 msgstr "Traiter les composants à consommer"
 
-#. modules: account_override, delete_button, specific_rules
+#. modules: account_override, delete_button, specific_rules, account, analytic_distribution
 #: view:account.move:0
 #: view:purchase.order:0
 #: view:sale.order:0
@@ -9126,6 +9126,9 @@ msgstr "Traiter les composants à consommer"
 #: view:tender:0
 #: view:stock.production.lot:0
 #: view:real.average.consumption:0
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -35134,7 +35137,7 @@ msgstr "Bengladesh"
 msgid "Reference of the document that produced this picking."
 msgstr "Référence du document à l'origine de l'opération de Piquage."
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, register_accounting, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, account_activable, stock, product, reason_types_moves, account_payment, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, procurement_auto, sale, msf_config_locations, sourcing
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, register_accounting, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, account_activable, stock, product, reason_types_moves, account_payment, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, procurement_auto, sale, msf_config_locations, sourcing, resource
 #: code:addons/account/account.py:509
 #: code:addons/account/account.py:511
 #: code:addons/account/account.py:832
@@ -35241,6 +35244,7 @@ msgstr "Référence du document à l'origine de l'opération de Piquage."
 #: code:addons/tender_flow/tender_flow.py:349
 #: code:addons/tender_flow/tender_flow.py:481
 #: code:addons/tender_flow/tender_flow.py:914
+#: code:addons/resource/wizard_template.py:0
 #, python-format
 msgid "Error !"
 msgstr "Erreur !"
@@ -62786,8 +62790,11 @@ msgstr "Prix Indicatif"
 msgid "Tracking a move"
 msgstr "Suivi d'un mouvement"
 
-#. module: base
+#. modules: base, account_override, account, analytic_distribution
 #: view:base.language.install:0
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
 msgid "Load"
 msgstr "Charger"
 
@@ -75713,3 +75720,126 @@ msgstr "Status du rapport"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé à afficher"
 
+#. module: resource
+#: sql_constraint:wizard.template:0
+msgid "This template name already exists for this wizard. Please choose another name."
+msgstr "Ce nom de modèle existe déjà pour cet assistant. Veuillez choisir un autre nom."
+
+#. module: resource
+#: model:ir.model,name:resource.model_wizard_template_form
+msgid "Wizard Template Form"
+msgstr "Formulaire de Modèle d'Assistant"
+
+#. modules: resource, account_override, account, analytic_distribution
+#: model:ir.model,name:resource.model_wizard_template
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Wizard Template"
+msgstr "Modèle d'Assistant"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Save new template"
+msgstr "Enregistrer nouveau modèle"
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:60
+#, python-format
+msgid "You have to choose a template name."
+msgstr "Vous devez choisir un nom de modèle."
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:91
+#, python-format
+msgid "You have to choose a template to load."
+msgstr "Vous devez choisir un modèle à charger."
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:158
+#, python-format
+msgid "You have to choose a template to replace."
+msgstr "Vous devez choisir un modèle à remplacer."
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:140
+#, python-format
+msgid "You have to choose a template to delete."
+msgstr "Vous devez choisir un modèle à supprimer."
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Select an existing template"
+msgstr "Sélectionnez un modèle existant"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "or Choose a new template name"
+msgstr "ou Choisissez un nouveau nom de modèle"
+
+#. modules: account_override, account, finance, analytic_distribution
+#: field:account.aged.trial.balance,saved_templates:0
+#: field:account.balance.report,saved_templates:0
+#: field:account.bs.report,saved_templates:0
+#: field:account.central.journal,saved_templates:0
+#: field:account.common.account.report,saved_templates:0
+#: field:account.common.journal.report,saved_templates:0
+#: field:account.common.partner.report,saved_templates:0
+#: field:account.common.report,saved_templates:0
+#: field:account.general.journal,saved_templates:0
+#: field:account.partner.balance,saved_templates:0
+#: field:account.partner.ledger,saved_templates:0
+#: field:account.pl.report,saved_templates:0
+#: field:account.print.journal,saved_templates:0
+#: field:account.report.general.ledger,saved_templates:0
+#: field:account.vat.declaration,saved_templates:0
+#: field:account.chart,saved_templates:0
+#: field:account.analytic.chart,saved_templates:0
+#: field:wizard.account.partner.balance.tree,saved_templates:0
+#: field:wizard.template.form,saved_templates:0
+msgid "Saved templates"
+msgstr "Modèles enregistrés"
+
+#. modules: account_override, account, finance, analytic_distribution
+#: field:account.aged.trial.balance,template_name:0
+#: field:account.balance.report,template_name:0
+#: field:account.bs.report,template_name:0
+#: field:account.central.journal,template_name:0
+#: field:account.common.account.report,template_name:0
+#: field:account.common.journal.report,template_name:0
+#: field:account.common.partner.report,template_name:0
+#: field:account.common.report,template_name:0
+#: field:account.general.journal,template_name:0
+#: field:account.partner.balance,template_name:0
+#: field:account.partner.ledger,template_name:0
+#: field:account.pl.report,template_name:0
+#: field:account.print.journal,template_name:0
+#: field:account.report.general.ledger,template_name:0
+#: field:account.vat.declaration,template_name:0
+#: field:account.chart,template_name:0
+#: field:account.analytic.chart,template_name:0
+#: field:wizard.account.partner.balance.tree,template_name:0
+#: field:wizard.template,name:0
+#: field:wizard.template.form,template_name:0
+msgid "Template name"
+msgstr "Nom de modèle"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Replace"
+msgstr "Remplacer"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Do you really want to delete the selected template?"
+msgstr "Voulez-vous vraiment supprimer le modèle sélectionné ?"

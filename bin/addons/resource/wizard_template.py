@@ -155,7 +155,7 @@ class wizard_template(osv.osv):
         if data:
             selected_template_id = data['saved_templates']
             if not selected_template_id:
-                raise osv.except_osv(_('Error !'), _('You have to choose a template to edit.'))
+                raise osv.except_osv(_('Error !'), _('You have to choose a template to replace.'))
             # don't keep the id, and the values of the fields related to the wizard template itself
             if 'template_name' in data:
                 del data['template_name']
