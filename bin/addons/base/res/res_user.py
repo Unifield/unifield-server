@@ -110,10 +110,14 @@ class groups(osv.osv):
         if 'level' in vals and not bypass_level:
             self.check_level(cr, uid, vals['level'])
         elif 'level' in vals and bypass_level:
+            new_ids = ids[:]
+            if 1 in new_ids:
+                # do not remove admin from his groups
+                new_ids.remove(1)
             # in case of update received with higher group, disassociate the related users
             if vals['level'] and not self.is_able_to_use_this_group(cr, uid, vals['level']):
                 # remove all users from this groups
-                self.write(cr, uid, ids, {'users':[(6, 0, ())]})
+                self.write(cr, uid, new_ids, {'users':[(6, 0, ())]})
 
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
