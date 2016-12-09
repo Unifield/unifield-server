@@ -488,7 +488,8 @@ class sale_order_line(osv.osv):
         for n in subNomenclatures:
             description.append(n['name'])
 
-        values.update({'nomenclature_description': ':'.join(description)})
+        if not description:
+            values.update({'nomenclature_description': ':'.join(description)})
 
     def _productDomain(self, cr, uid, id, context=None):
         '''

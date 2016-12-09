@@ -3886,8 +3886,15 @@ class orm(orm_template):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        check_to_do = False
+        for fld in vals.copy():
+            if not (isinstance(fobj, fields.function) and fobj._fnct_inv):
+                check_to_do = True
+                break
+
         self._check_concurrency(cr, ids, context)
-        self.pool.get('ir.model.access').check(cr, user, self._name, 'write', context=context)
+        if check_to_do:
+            self.pool.get('ir.model.access').check(cr, user, self._name, 'write', context=context)
 
         #result = self._store_get_values(cr, user, ids, vals.keys(), context) or []
         result = []
