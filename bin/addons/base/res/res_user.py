@@ -106,10 +106,10 @@ class groups(osv.osv):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
 
-        update_execution = context.get('sync_update_execution', False)
-        if 'level' in vals and not update_execution:
+        bypass_level = context.get('sync_update_execution', False) or context.get('bypass_group_level', False)
+        if 'level' in vals and not bypass_level:
             self.check_level(cr, uid, vals['level'])
-        elif 'level' in vals and update_execution:
+        elif 'level' in vals and bypass_level:
             # in case of update received with higher group, disassociate the related users
             if vals['level'] and not self.is_able_to_use_this_group(cr, uid, vals['level']):
                 # remove all users from this groups
@@ -126,8 +126,8 @@ class groups(osv.osv):
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
-        update_execution = context.get('sync_update_execution', False)
-        if 'level' in vals and not update_execution:
+        bypass_level = context.get('sync_update_execution', False) or context.get('bypass_group_level', False)
+        if 'level' in vals and not bypass_level:
             self.check_level(cr, uid, vals['level'])
 
         gid = super(groups, self).create(cr, uid, vals, context=context)
@@ -152,7 +152,7 @@ class groups(osv.osv):
             new_args = []
             instance_level = _get_instance_level(self, cr, uid)
             if instance_level == 'project':
-                new_args = [('level', '=', 'project')]
+                new_args = [('level', 'in', ['project', False])]
             elif instance_level == 'coordo':
                 new_args = [('level', 'in', ['project', 'coordo', False])]
             for arg in args:
