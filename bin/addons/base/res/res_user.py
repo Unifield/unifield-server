@@ -31,44 +31,105 @@ from service import security
 import netsvc
 import logging
 from passlib.hash import bcrypt
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class groups(osv.osv):
     _name = "res.groups"
     _order = 'name'
     _description = "Access Groups"
+
     _columns = {
         'name': fields.char('Group Name', size=64, required=True),
         'model_access': fields.one2many('ir.model.access', 'group_id', 'Access Controls'),
         'rule_groups': fields.many2many('ir.rule', 'rule_group_rel',
                                         'group_id', 'rule_group_id', 'Rules', domain=[('global', '=', False)]),
         'menu_access': fields.many2many('ir.ui.menu', 'ir_ui_menu_group_rel', 'gid', 'menu_id', 'Access Menu'),
-        'comment' : fields.text('Comment',size=250),
+        'comment': fields.text('Comment',size=250),
+        'level': fields.selection([('hq', 'HQ'),
+                                   ('coordo', 'Coordination'),
+                                   ('project', 'Project')],
+                                   'Level',
+                                   help="Level selected and all higher ones will be able to use this group.",),
     }
+
+    _defaults = {
+            'level': lambda *a: False,
+    }
+
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The name of the group must be unique !')
     ]
+
+    def is_able_to_use_this_group(self, cr, uid, level, instance_level=None):
+        '''
+        return True if the current instance level is equal or higher than level
+        False otherwise
+        '''
+        if instance_level is None:
+            instance_level = _get_instance_level(self, cr, uid)
+        if not instance_level:
+            # SYNC_SERVER doesn't have instance level
+            return True
+        elif instance_level == 'hq':
+            return True
+        elif instance_level == 'coordo' and level in ('coordo', 'project'):
+            return True
+        elif instance_level == 'project' and level == 'project':
+            return True
+        return False
 
     def copy(self, cr, uid, id, default=None, context=None):
         group_name = self.read(cr, uid, [id], ['name'])[0]['name']
         default.update({'name': _('%s (copy)')%group_name})
         return super(groups, self).copy(cr, uid, id, default, context)
 
+    def check_level(self, cr, uid, level):
+        '''
+        Raise an error message if the group if the level is higher than instance level
+
+        '''
+        instance_level = _get_instance_level(self, cr, uid)
+        if level and instance_level and not self.is_able_to_use_this_group(cr, uid, level, instance_level=instance_level):
+            selection_dict = dict(self._columns['level'].selection)
+            group_level = level and _(selection_dict[level])
+            instance_level = instance_level and _(selection_dict[instance_level])
+            raise osv.except_osv(_('Error'),
+                                 _('You cannot set a group level higher than your instance level (%s is higher than %s).' % (group_level, instance_level)))
+
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
+
+        update_execution = context.get('sync_update_execution', False)
+        if 'level' in vals and not update_execution:
+            self.check_level(cr, uid, vals['level'])
+        elif 'level' in vals and update_execution:
+            # in case of update received with higher group, disassociate the related users
+            if vals['level'] and not self.is_able_to_use_this_group(cr, uid, vals['level']):
+                # remove all users from this groups
+                self.write(cr, uid, ids, {'users':[(6, 0, ())]})
+
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         return res
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
+        update_execution = context.get('sync_update_execution', False)
+        if 'level' in vals and not update_execution:
+            self.check_level(cr, uid, vals['level'])
+
         gid = super(groups, self).create(cr, uid, vals, context=context)
         if context and context.get('noadmin', False):
             pass
@@ -79,6 +140,28 @@ class groups(osv.osv):
             if aid:
                 aid.write({'groups_id': [(4, gid)]})
         return gid
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        An instance can only view groups of the same level or lower than its own
+        '''
+        if context is None:
+            context = {}
+
+        if 'show_all_level' in context and not context.get('show_all_level'):
+            new_args = []
+            instance_level = _get_instance_level(self, cr, uid)
+            if instance_level == 'project':
+                new_args = [('level', '=', 'project')]
+            elif instance_level == 'coordo':
+                new_args = [('level', 'in', ['project', 'coordo', False])]
+            for arg in args:
+                if arg[0] != 'show_all_level':
+                    new_args.append(arg)
+
+            args = new_args
+        return super(groups, self).search(cr, uid, args, offset=offset,
+                limit=limit, order=order, context=context, count=count)
 
     def get_extended_interface_group(self, cr, uid, context=None):
         data_obj = self.pool.get('ir.model.data')
