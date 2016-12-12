@@ -76,12 +76,15 @@ class Attachment(SecuredController):
                    default_res_model=params.model, default_res_id=params.id,
                    active_id=False, active_ids=[])
 
-        attachment_id = rpc.RPCProxy('ir.attachment').create({
-            'name': datas.filename,
-            'datas_fname': datas.filename,
-            'datas': base64.encodestring(datas.file.read()),
-        }, ctx)
-        return {'id': attachment_id, 'name': datas.filename}
+        try:
+            attachment_id = rpc.RPCProxy('ir.attachment').create({
+                'name': datas.filename,
+                'datas_fname': datas.filename,
+                'datas': base64.encodestring(datas.file.read()),
+            }, ctx)
+            return {'id': attachment_id, 'name': datas.filename}
+        except Exception, e:
+            return {'error': ustr(e)}
 
     @expose('json', methods=('POST',))
     def remove(self, id=False, **kw):

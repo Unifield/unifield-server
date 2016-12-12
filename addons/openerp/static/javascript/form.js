@@ -20,6 +20,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 var form_controller;
+var MAX_ATTACHMENT_SIZE = 10;
 
 function showBtnSdref(ev, btn_name, btn_model, btn_id, src)
 {
@@ -1295,6 +1296,7 @@ function removeAttachment() {
     return false;
 }
 
+
 /**
  * @event form submission
  *
@@ -1303,6 +1305,19 @@ function removeAttachment() {
  * Creates a new line in #attachments if the creation succeeds.
  */
 function createAttachment(){
+
+    // Check attachment size is not bigger than MAX_ATTACHMENT_SIZE
+    // refuse it if bigger.
+    var $file_size = this.children.datas.files[0].size;
+    var $mb_size = $file_size/1024/1024;
+    if ($mb_size > MAX_ATTACHMENT_SIZE) {
+        $mb_size = parseFloat($mb_size).toFixed( 2 );
+        var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)s MB');
+        msg = msg.replace('%(size)s', $mb_size);
+        msg = msg.replace('%(max_size)s', MAX_ATTACHMENT_SIZE);
+        return error_display(msg);
+    };
+
     var $form = jQuery(this);
     if(!jQuery(idSelector('_terp_id')).val() || jQuery(idSelector('_terp_id')).val() == 'False') {
         return error_display(_('No record selected ! You can only attach to existing record.'));
@@ -1316,6 +1331,10 @@ function createAttachment(){
         dataType: 'json',
         data: {'requested_with': 'XMLHttpRequest'},
         success: function(data){
+            if ('error' in data){
+                // display error message from server
+                return error_display(data['error']);
+            }
             var $attachment_line = jQuery('<li>', {
                 'id': 'attachment_item_' + data['id'],
                 'data-id': data['id']
@@ -1340,7 +1359,7 @@ function createAttachment(){
             if (typeof submit_callback !== "undefined") {
                 submit_callback($attachment_line);
             }
-        }
+        },
     });
     return false;
 }

@@ -71,24 +71,29 @@ function add_binary(src) {
 }
 
 function set_binary_filename(src, filename) {
-    
     var $src = jQuery(src);
-    
+
+    var $file_size = $src[0].files[0].size;
+    var $mb_size = $file_size/1024/1024;
+    if ($mb_size > 2) {
+        $mb_size = parseFloat($mb_size).toFixed( 2 );
+        var msg = _('You cannot upload files bigger than 2MB, current size is %(size)s MB');
+        msg = msg.replace('%(size)s', $mb_size);
+        return error_display(msg);
+    };
+
     var name = $src.attr('name');
-    
     var prefix = name.split('/'); prefix.pop();
     var prefix = prefix.join('/'); prefix = prefix ? prefix + '/' : '';
-    
     var target = getElement(prefix + filename);
     var fname = $src.val() || '';
-    
+
     if (/Windows NT/.test(window.navigator.userAgent)) {
         fname = fname.split('\\'); fname = fname.pop(); 
     }
     else {
         fname = fname.split('/'); fname = fname.pop();
     }
-    
     if (target) {
         target.value = fname;
     }
