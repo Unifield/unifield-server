@@ -247,7 +247,7 @@ class ir_attachment(osv.osv):
         data_size = len(datas)
         data_size_mb = data_size/1024/1204.
         if data_size_mb > MAX_ATTACHMENT_SIZE:
-            msg = _('You cannot upload files bigger than %sMB, current size is %s MB') % (MAX_ATTACHMENT_SIZE, round(data_size_mb, 2))
+            msg = _('You cannot upload files bigger than %sMB, current size is %sMB') % (MAX_ATTACHMENT_SIZE, round(data_size_mb, 2))
             raise osv.except_osv(_('Error'), msg)
 
     def create(self, cr, uid, values, context=None):
