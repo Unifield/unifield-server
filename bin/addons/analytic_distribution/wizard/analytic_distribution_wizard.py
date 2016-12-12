@@ -407,7 +407,7 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
             # Delete analytic_id if not valid with tuple "account_id/destination_id".
             # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and analytic_id != fp_id:
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and analytic_id != fp_id:
                 res = {'value': {'analytic_id': False}}
         # If no destination, do nothing
         elif not destination_id \

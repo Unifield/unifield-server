@@ -91,9 +91,19 @@ class account_destination_link(osv.osv):
                                     'account.account': (_get_account_ids, ['code'], 10),
                                 }),
         'used': fields.function(_get_used, string='Used', method=True, type='boolean'),
+        'disabled': fields.boolean('Disabled'),
     }
 
     _sql_constraints = [('unique_account_destination', 'unique(account_id, destination_id)', 'Couple account, destination must be unique!')]
+
+    _defaults = {
+        'disabled': lambda *a: False,
+    }
+
+    def unlink(self, cr, uid, ids, context=None):
+        # TODO can be deleted if not linked to any contract ?
+        self.write(cr, uid, ids, {'disabled': True}, context=context)
+        return True
 
 account_destination_link()
 

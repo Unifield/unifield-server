@@ -107,12 +107,12 @@ class hr_payroll(osv.osv):
             elif not line.funding_pool_id and line.destination_id: # CASE 3/
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                if line.destination_id.id not in [x.id for x in account.destination_ids if not x.disabled]:
                     res[line.id] = 'invalid'
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids] and line.funding_pool_id.id != fp_id:
+                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids if not x.disabled] and line.funding_pool_id.id != fp_id:
                     res[line.id] = 'invalid'
                     continue
                 # D Check, except B check
@@ -121,7 +121,7 @@ class hr_payroll(osv.osv):
                     continue
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids]:
+                if line.destination_id.id not in [x.id for x in account.destination_ids if not x.disabled]:
                     res[line.id] = 'invalid'
                     continue
         return res
@@ -283,7 +283,7 @@ class hr_payroll(osv.osv):
                 fp_id = 0
             # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
             # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and funding_pool_id != fp_id:
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and funding_pool_id != fp_id:
                 res = {'value': {'funding_pool_id': False}}
         # If no destination, do nothing
         elif not destination_id:
