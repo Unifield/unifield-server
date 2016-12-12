@@ -677,7 +677,7 @@ You cannot choose this supplier because some destination locations are not avail
             # if draft and shipment is in progress, we cannot cancel
             if pick_data['subtype'] == 'picking' and pick_data['state'] in ('draft',):
                 if self.has_picking_ticket_in_progress(cr, uid, [pick_data['id']], context=context)[pick_data['id']]:
-                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and      try to cancel again.'))
+                    raise osv.except_osv(_('Warning !'), _('Some Picking Tickets are in progress. Return products to stock from ppl and shipment and try to cancel again.'))
             # if not draft or qty does not match, the shipping is already in progress
             elif pick_data['subtype'] == 'picking' and pick_data['state'] in ('done',):
                 raise osv.except_osv(_('Warning !'), _('The shipment process is completed and cannot be canceled!'))
