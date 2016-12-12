@@ -1312,7 +1312,7 @@ function createAttachment(){
     var $mb_size = $file_size/1024/1024;
     if ($mb_size > MAX_ATTACHMENT_SIZE) {
         $mb_size = parseFloat($mb_size).toFixed( 2 );
-        var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)s MB');
+        var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)sMB');
         msg = msg.replace('%(size)s', $mb_size);
         msg = msg.replace('%(max_size)s', MAX_ATTACHMENT_SIZE);
         return error_display(msg);
