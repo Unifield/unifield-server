@@ -1559,7 +1559,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     },
                     'warning': {
                         'title': _('Warning'),
-                        'message': _('You cannot choose a source location which is the destination location of the Internal request'),
+                        'message': _('You cannot choose a source location which is the destination location of the Internal Request'),
                     },
                 }
 
