@@ -31,6 +31,8 @@ import re
 import threading
 import pooler
 
+MAX_ATTACHMENT_SIZE = 10 # size allowed in MB
+
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
     _logger = logging.getLogger('ir.attachment')
@@ -136,6 +138,7 @@ class ir_attachment(osv.osv):
                 vals['datas'] = datas
             else:
                 vals['datas'] = '' # erase the old value in DB if any
+            self.check_file_size(cr, uid, datas)
             for attachment in self.read(cr, uid, ids, ['res_model',
                                                        'res_id', 'datas_fname', 'path']):
                 # update the data read with the new ones
@@ -237,6 +240,16 @@ class ir_attachment(osv.osv):
         safe_file_name = ''.join([ch for ch in file_name if safe_char.match(ch)])
         return safe_file_name
 
+    def check_file_size(self, cr, uid, datas):
+        '''
+        limit the size of the files accepted as attachment to 10 MB
+        '''
+        data_size = len(datas)
+        data_size_mb = data_size/1024/1204.
+        if data_size_mb > MAX_ATTACHMENT_SIZE:
+            msg = _('You cannot upload files bigger than %sMB, current size is %s MB') % (MAX_ATTACHMENT_SIZE, round(data_size_mb, 2))
+            raise osv.except_osv(_('Error'), msg)
+
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
 
@@ -245,6 +258,8 @@ class ir_attachment(osv.osv):
             datas = values.pop('datas')
         else:
             datas = values['datas']
+
+        self.check_file_size(cr, uid, datas)
         attachment_id = super(ir_attachment, self).create(cr, uid, values,
                                                           context)
 
