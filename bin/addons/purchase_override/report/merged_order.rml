@@ -202,7 +202,7 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].company_id.partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].company_id.partner_id.office_name or objects[0].company_id.partner_id.name or '' ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
@@ -214,13 +214,13 @@
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].dest_address_id.partner_id.name or objects[0].partner_id.name ]]</para>
+                    <para style="TextInformation">[[ objects[0].dest_address_id.office_name or objects[0].dest_address_id.partner_id.name or objects[0].partner_id.name ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation"> </para>
                 </td>
                 <td>
-                    <para style="TextInformation">[[ objects[0].invoice_address_id.partner_id.name or objects[0].company_id.partner_id.name ]] </para>
+                    <para style="TextInformation">[[ objects[0].invoice_address_id.office_name or objects[0].invoice_address_id.partner_id.name or objects[0].company_id.partner_id.name ]] </para>
                 </td>
             </tr>
             <tr>
