@@ -111,11 +111,11 @@
                                                 attrs="{'invisible': [('is_quadruplet', '=', True)]}" />
                                         <field name="is_quadruplet" attrs="{'invisible': [('line_type', '=', 'view')]}"/>
                                         <field name="account_destination_ids" colspan="4" string="Account/Destination" nolabel="1"
-                                               context="context"
+                                               context="{'search_default_active': 1}"
                                                attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '=', True)]}">
                                         </field>
                                         <field name="account_quadruplet_ids" colspan="4" string="Account/Destination/Funding Pool/Cost Centre" nolabel="1"
-                                               context="context"
+                                               context="{'search_default_active': 1}"
                                                attrs="{'invisible': [('|'), ('line_type', '=', 'view'), ('is_quadruplet', '!=', True)]}"
                                                domain="[('can_be_used','=',True)]">
                                         </field>
@@ -207,7 +207,7 @@
                 <field name="type">search</field>
                 <field name="arch" type="xml">
                     <search string="Search Account/Destination/Funding Pool/Cost Centre">
-                            <field name="account_destination_name" string="Account"/>
+                            <filter icon="gtk-missing-image" name="active" string="Show Active" domain="[('disabled', '=', False)]" separator="1" />                            <field name="account_destination_name" string="Account"/>
                             <field name="funding_pool_id" domain="[('category', '=', 'FUNDING')]"/>
                             <field name="cost_center_id" domain="[('category', '=', 'OC')]"/>
                     </search>
