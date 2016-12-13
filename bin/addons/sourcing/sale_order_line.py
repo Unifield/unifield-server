@@ -1027,7 +1027,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                         _("You can't Source to an 'External' partner if you don't have product."),
                     )
 
-            if line.state not in ('draft', 'cancel') and line.product_id and line.supplier:
+            if line.state not in ('draft', 'cancel') and line.product_id and line.supplier and not context.get('bypass_product_constraints'):
                 # Check product constraints (no external supply, no storage...)
                 check_fnct = product_obj._get_restriction_error
                 self._check_product_constraints(cr, uid, line.type, line.po_cft, line.product_id.id, line.supplier.id, check_fnct, context=context)

@@ -327,6 +327,8 @@ class sale_order_line(osv.osv):
                     vals['to_correct_ok'] = False
                     vals['text_error'] = False
 
+        if vals.get('state') in ('done', 'cancel'):
+            context['bypass_product_constraints'] = True
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
