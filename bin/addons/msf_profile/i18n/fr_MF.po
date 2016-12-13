@@ -40235,7 +40235,7 @@ msgstr "Valeur de la traduction"
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
 msgid "Financial Responsible"
-msgstr "Responsable Fincancier"
+msgstr "Responsable Financier"
 
 #. module: product_asset
 #: report:product.asset:0
