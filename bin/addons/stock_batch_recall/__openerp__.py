@@ -20,7 +20,7 @@
 ##############################################################################
 
 {
-    "name": "Batch Recall",
+    "name": "Batch Location",
     "version": "1.0",
     "depends": ["base", "stock_move_tracking", "product_expiry", "specific_rules"],
     "author": "TeMPO Consulting, MSF",

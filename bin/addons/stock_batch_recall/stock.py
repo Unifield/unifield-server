@@ -29,7 +29,7 @@ from tools.sql import drop_view_if_exists
 
 class stock_batch_recall(osv.osv_memory):
     _name = 'stock.batch.recall'
-    _description = 'Batch Recall'
+    _description = 'Batch Location'
     
     _columns = {
         'product_id': fields.many2one('product.product', string='Product'),
@@ -87,7 +87,7 @@ stock_batch_recall()
 class report_batch_recall(osv.osv):
     _name = 'report.batch.recall'
     _rec_name = 'product_id'
-    _description = 'Batch Recall'
+    _description = 'Batch Location'
     _auto = False
     _columns = {
         'product_id':fields.many2one('product.product', 'Product', readonly=True),
