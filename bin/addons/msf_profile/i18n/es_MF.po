@@ -45369,8 +45369,8 @@ msgstr "Es el tiempo entre dos reabastecimientos"
 #: model:ir.ui.menu,name:stock_batch_recall.menu_batch_recall
 #: view:report.batch.recall:0
 #: view:stock.batch.recall:0
-msgid "Batch Recall"
-msgstr "Recuperación de lotes"
+msgid "Batch Location"
+msgstr "Ubicación de lotes"
 
 #. module: msf_cross_docking
 #: code:addons/msf_cross_docking/cross_docking.py:349
