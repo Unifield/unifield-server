@@ -638,7 +638,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
         for order in self.read(cr, uid, ids, ['procurement_request', 'name'], context=context):
             self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
-                order['procurement_request'] and  'Internal request' or 'Field order',
+                order['procurement_request'] and  _('Internal request') or _('Field order'),
                 order['id'], order['name'],
             ))
         return res
@@ -1518,9 +1518,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                  'fo_to_resource': True}, context=context)
 
 
-        order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
+        order_data = self.read(cr, uid, [order_id], ['name', 'procurement_request'], context=context)[0]
+        order_name = order_data['name']
+        order_type = order_data['procurement_request'] and _('Internal request') or _('Field order')
 
-        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
+        self.log(cr, uid, order_id, _('The %s %s has been created to re-source the canceled needs') % (
+            order_name,
+            order_type,
+        ), context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
 
@@ -2045,7 +2050,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             msg_type.get('out', {}).get(picking_data.get('subtype', ''), '') or \
                             msg_type.get(picking_data.get('type', ''), ''),
                             picking_id, picking_data.get('name', ''),
-                            order.procurement_request and 'Internal request' or 'Field order',
+                            order.procurement_request and _('Internal request') or _('Field order'),
                             order.id, order.name,
                         ))
 
@@ -3116,7 +3121,10 @@ class sale_order_line(osv.osv):
         form was opened with 'Enter a Reason for Incoming cancellation' name
         we just keep the view id (2 distincts ids for FO/IR)"""
         self.pool.get('sale.order').log(cr, uid, order_id,
-                                        _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name),
+                                        _('A line was added to the %s %s to re-source the canceled line.') % (
+                                            line.order_id and line.order_id.procurement_request and _('Internal Request') or _('Field Order'),
+                                            order_name
+                                        ),
                                         context={'view_id': context.get('view_id', False)})
 
         return line_id
