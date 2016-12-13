@@ -1,4 +1,4 @@
-<separator string="Wizard template" colspan="4"/>
+<separator string="Wizard Template" colspan="4"/>
 <group col="5" colspan="4">
     <field name="display_load_button" invisible="1" />
     <field name="saved_templates" on_change="onchange_saved_templates()" string="Select an existing template" />
