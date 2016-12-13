@@ -39,6 +39,7 @@ class Attachment(SecuredController):
 
         if id:
             ctx = dict(rpc.session.context)
+            ctx['from_web_interface'] = True
 
             action = dict(
                 rpc.RPCProxy('ir.attachment').action_get(ctx),
@@ -75,6 +76,7 @@ class Attachment(SecuredController):
         ctx = dict(rpc.session.context,
                    default_res_model=params.model, default_res_id=params.id,
                    active_id=False, active_ids=[])
+        ctx['from_web_interface'] = True
 
         try:
             attachment_id = rpc.RPCProxy('ir.attachment').create({

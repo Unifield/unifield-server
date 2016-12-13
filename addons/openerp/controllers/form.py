@@ -491,6 +491,7 @@ class Form(SecuredController):
                 params.count += 1
             else:
                 ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
+                ctx['from_web_interface'] = True
                 if params.button and params.button.name:
                     ctx.update({'button': params.button.name})
 
@@ -784,6 +785,7 @@ class Form(SecuredController):
 
         proxy = rpc.RPCProxy(params.model)
         ctx = utils.context_with_concurrency_info(params.context, params.concurrency_info)
+        ctx['from_web_interface'] = True
 
         if params.fname:
             proxy.write([params.id], {params.field: False, params.fname: False}, ctx)
@@ -855,6 +857,7 @@ class Form(SecuredController):
         params, data = TinyDict.split(kw)
         if params.get('_terp_save_current_id'):
             ctx = dict((params.context or {}), **rpc.session.context)
+            ctx['from_web_interface'] = True
             if params.id:
                 rpc.RPCProxy(params.model).write([params.id], data, ctx)
             else:

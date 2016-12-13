@@ -7,7 +7,7 @@
 #  Developed by OpenERP (http://openerp.com) and Axelor (http://axelor.com).
 #
 #  The OpenERP web client is distributed under the "OpenERP Public License".
-#  It's based on Mozilla Public License Version (MPL) 1.1 with following 
+#  It's based on Mozilla Public License Version (MPL) 1.1 with following
 #  restrictions:
 #
 #  -   All names, links and logos of OpenERP must be kept as in original
@@ -40,7 +40,8 @@ __all__ = ["Binary", "Image"]
 
 class Binary(TinyInputWidget):
     template = "/openerp/widgets/form/templates/binary.mako"
-    params = ["name", "text", "readonly", "filename", "bin_data", 'value_bin_size', 'ctx', 'accept']
+    params = ["name", "text", "readonly", "filename", "bin_data",
+            'value_bin_size', 'ctx', 'accept', 'max_attachment_size']
 
     text = None
     file_upload = True
@@ -53,6 +54,7 @@ class Binary(TinyInputWidget):
         # if bin_size was in context when reading the binary field, then the field's value is actually the binary
         # field's content size
         self.value_bin_size = getattr(self, 'context', {}).get('bin_size', False)
+        self.max_attachment_size = utils.get_max_attachment_size()
         self.ctx = getattr(self, 'context', {}).get('from', False)
         self.accept = attrs.get('accept')
 

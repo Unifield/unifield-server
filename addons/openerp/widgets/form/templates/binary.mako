@@ -16,6 +16,7 @@
             class="${css_class}"
             kind="${kind}"
             disabled="disabled"
+            max-size="${max_attachment_size}"
             id="${name}"
             name="${name}"/>
         % endif
