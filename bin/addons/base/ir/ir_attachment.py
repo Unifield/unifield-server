@@ -31,7 +31,7 @@ import re
 import threading
 import pooler
 
-MAX_ATTACHMENT_SIZE = 10 # size allowed in MB
+MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024 # = 10 MB
 
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
@@ -119,6 +119,9 @@ class ir_attachment(osv.osv):
             return len(ids)
         return ids
 
+    def get_attachment_max_size(self, cr, uid):
+        return MAX_ATTACHMENT_SIZE
+
     def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
         self.check(cr, uid, ids, 'read', context=context)
         return super(ir_attachment, self).read(cr, uid, ids, fields_to_read, context, load)
@@ -138,7 +141,7 @@ class ir_attachment(osv.osv):
                 vals['datas'] = datas
             else:
                 vals['datas'] = '' # erase the old value in DB if any
-            self.check_file_size(cr, uid, datas)
+            self.check_file_size(cr, uid, datas, context=context)
             for attachment in self.read(cr, uid, ids, ['res_model',
                                                        'res_id', 'datas_fname', 'path']):
                 # update the data read with the new ones
@@ -240,15 +243,21 @@ class ir_attachment(osv.osv):
         safe_file_name = ''.join([ch for ch in file_name if safe_char.match(ch)])
         return safe_file_name
 
-    def check_file_size(self, cr, uid, datas):
+    def check_file_size(self, cr, uid, datas, context):
         '''
-        limit the size of the files accepted as attachment to 10 MB
+        raise if the size of the len of datas is > MAX_ATTACHMENT_SIZE MB
+        Raise only in case of web interface (to make possible for the system
+        to create bigger attachments)
         '''
         data_size = len(datas)
-        data_size_mb = data_size/1024/1204.
-        if data_size_mb > MAX_ATTACHMENT_SIZE:
-            msg = _('You cannot upload files bigger than %sMB, current size is %sMB') % (MAX_ATTACHMENT_SIZE, round(data_size_mb, 2))
-            raise osv.except_osv(_('Error'), msg)
+        if data_size > MAX_ATTACHMENT_SIZE:
+            max_size_mb = round(MAX_ATTACHMENT_SIZE/1024/1024., 2)
+            data_size_mb = round(data_size/1024/1204., 2)
+            msg = _('You cannot upload files bigger than %sMB, current size is %sMB') % (max_size_mb, data_size_mb)
+            if context.get('from_web_interface', False):
+                raise osv.except_osv(_('Error'), msg)
+            else:
+                self._logger.warn('A file attached by the system is bigger than %sMB (%sMB)' % (max_size_mb, data_size_mb))
 
     def create(self, cr, uid, values, context=None):
         self.check(cr, uid, [], mode='create', context=context, values=values)
@@ -259,7 +268,7 @@ class ir_attachment(osv.osv):
         else:
             datas = values['datas']
 
-        self.check_file_size(cr, uid, datas)
+        self.check_file_size(cr, uid, datas, context=context)
         attachment_id = super(ir_attachment, self).create(cr, uid, values,
                                                           context)
 
