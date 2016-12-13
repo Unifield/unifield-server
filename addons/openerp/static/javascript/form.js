@@ -1309,8 +1309,8 @@ function createAttachment(){
     // refuse it if bigger.
     var $file_size = this.children.datas.files[0].size;
     var $mb_size = $file_size/1024/1024;
-    var $toto = jQuery(this.children.datas)
-    var $max_size = $toto.attr('max-size');
+    var $datas = jQuery(this.children.datas)
+    var $max_size = $datas.attr('max-size');
     var $mb_max_size = $max_size/1024/1024;
     $mb_max_size = parseFloat($mb_max_size).toFixed( 2 );
     if ($file_size > $max_size) {
