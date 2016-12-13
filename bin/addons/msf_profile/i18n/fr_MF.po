@@ -59471,7 +59471,7 @@ msgstr "Corrompu"
 #: code:addons/product/product.py:142
 #, python-format
 msgid "Conversion from Product UoM m to Default UoM PCE is not possible as they both belong to different Category!."
-msgstr "La conversion de l'UdM Produit vers l'UdM Pièce par défaut est impossible car elles ne sont pas de la même catégorie !"
+msgstr "La conversion de l'UdM Produit vers l'UdM PCE par défaut est impossible car elles ne sont pas de la même catégorie !"
 
 #. module: base
 #: selection:ir.model.fields,ttype:0
@@ -73604,7 +73604,7 @@ msgstr "Demande"
 #. module: product
 #: model:product.uom,name:product.product_uom_unit
 msgid "PCE"
-msgstr "Pièce"
+msgstr "PCE"
 
 #. module: stock_schedule
 #: code:addons/stock_schedule/schedule.py:411
