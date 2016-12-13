@@ -21,6 +21,7 @@
 
 from osv import fields, osv
 from analytic_distribution.destination_tools import many2many_sorted
+from tools import sql
 
 class financing_contract_account_quadruplet(osv.osv):
     _name = 'financing.contract.account.quadruplet'
@@ -33,7 +34,7 @@ class financing_contract_account_quadruplet(osv.osv):
         res = super(financing_contract_account_quadruplet, self)._auto_init(cr, context)
         # TODO The drop table can be eventually removed from this code, once the view changes have been propagated
         # across all codelines. The create view needs to remain here.
-        cr.execute("""drop view financing_contract_account_quadruplet""")
+        sql.drop_view_if_exists('financing_contract_account_quadruplet')
         cr.execute("""CREATE OR REPLACE VIEW financing_contract_account_quadruplet AS (
             SELECT abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
             lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled
