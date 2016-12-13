@@ -9,7 +9,16 @@
             value="${bin_data}"/>
     % endif
     <div id="${name}_binary_add" style="display: none;">
-        % if editable and not readonly:
+        % if editable and not readonly and model != 'ir.attachment':
+        <input ${py.attrs(attrs)}
+            accept="${accept}"
+            type="file"
+            class="${css_class}"
+            kind="${kind}"
+            disabled="disabled"
+            id="${name}"
+            name="${name}"/>
+        % elif editable and not readonly and model == 'ir.attachment':
         <input ${py.attrs(attrs)}
             accept="${accept}"
             type="file"
