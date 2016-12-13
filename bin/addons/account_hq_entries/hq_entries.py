@@ -111,7 +111,7 @@ class hq_entries(osv.osv):
             elif not line.analytic_id and line.destination_id: # CASE 3/
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids if not x.disabled]:
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue
@@ -128,7 +128,7 @@ class hq_entries(osv.osv):
                     continue
                 # E Check
                 account = self.pool.get('account.account').browse(cr, uid, line.account_id.id)
-                if line.destination_id.id not in [x.id for x in account.destination_ids if not x.disabled]:
+                if line.destination_id.id not in [x.id for x in account.destination_ids]:
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: DEST (%s) not compatible with account (%s)') % (line.id or '', line.destination_id.code or '', account.code or ''))
                     continue

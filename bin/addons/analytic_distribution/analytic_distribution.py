@@ -65,7 +65,7 @@ class analytic_distribution(osv.osv):
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue
-            if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
+            if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids if not x.disabled]:
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
                 return 'invalid'
@@ -104,7 +104,7 @@ class analytic_distribution(osv.osv):
             if cost_center_id not in [x.id for x in fp.cost_center_ids]:
                 return 'invalid', _('Cost Center not compatible with FP')
             # Check that tuple account/destination is compatible with FP (except if FP is MSF Private Fund):
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids]:
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp.tuple_destination_account_ids if not x.disabled]:
                 return 'invalid', _('account/destination tuple not compatible with given FP analytic account')
         return res, info
 

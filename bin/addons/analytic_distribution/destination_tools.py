@@ -46,6 +46,9 @@ class many2many_sorted(fields.many2many):
         if self._limit is not None:
             limit_str = ' LIMIT %d' % self._limit
 
+        if self._rel == 'account_destination_link' and not context.get('display_disabled'):
+# TODO: check sync
+            where_c = " %s AND disabled='f' " % (where_c, )
         query = 'SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s \
                    FROM %(rel)s, %(from_c)s \
                   WHERE %(rel)s.%(id1)s IN %%s \

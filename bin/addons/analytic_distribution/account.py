@@ -105,6 +105,7 @@ class account_destination_link(osv.osv):
         self.write(cr, uid, ids, {'disabled': True}, context=context)
         return True
 
+    # TODO: reactivation with create ?
 account_destination_link()
 
 class account_destination_summary(osv.osv):
@@ -166,6 +167,7 @@ class account_destination_summary(osv.osv):
                     account_destination_summary sum,
                     funding_pool_associated_destinations d
                 WHERE
+                    l.disabled = 'f' and
                     d.tuple_id = l.id and
                     sum.account_id = l.account_id and
                     sum.funding_pool_id = d.funding_pool_id and
@@ -206,7 +208,8 @@ class account_destination_summary(osv.osv):
                     account_destination_link l,
                     funding_pool_associated_destinations d
                 WHERE
-                    d.tuple_id = l.id
+                    d.tuple_id = l.id and
+                    l.disabled = 'f'
                 GROUP BY
                     l.account_id,d.funding_pool_id
             )
@@ -232,6 +235,7 @@ class account_account(osv.osv):
         """
         Add default destination to the list of destination_ids
         """
+# TODO: check default Dest if destination is disabled
         # Some checks
         if context is None:
             context = {}

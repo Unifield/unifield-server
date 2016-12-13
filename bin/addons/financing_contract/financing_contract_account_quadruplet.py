@@ -33,10 +33,10 @@ class financing_contract_account_quadruplet(osv.osv):
         res = super(financing_contract_account_quadruplet, self)._auto_init(cr, context)
         # TODO The drop table can be eventually removed from this code, once the view changes have been propagated
         # across all codelines. The create view needs to remain here.
-        #cr.execute("""drop table financing_contract_account_quadruplet cascade""")
+        cr.execute("""drop view financing_contract_account_quadruplet""")
         cr.execute("""CREATE OR REPLACE VIEW financing_contract_account_quadruplet AS (
             SELECT abs(('x'||substr(md5(fp.code || cc.code || lnk.name),1,16))::bit(32)::int) as id,
-            lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id
+            lnk.destination_id AS account_destination_id, cc.id AS cost_center_id, fp.id AS funding_pool_id, lnk.name AS account_destination_name, lnk.account_id, lnk.disabled
             FROM account_analytic_account fp,
                  account_analytic_account cc,
                  funding_pool_associated_cost_centers fpacc,
@@ -190,6 +190,7 @@ class financing_contract_account_quadruplet(osv.osv):
         'used_in_contract': fields.function(_get_used_in_contract, method=True, type='boolean', string='Used', fnct_search=_search_used_in_contract),
         'can_be_used': fields.function(_can_be_used_in_contract, method=True, type='boolean', string='Can', fnct_search=_search_can_be),
         'account_id': fields.many2one('account.destination.link', 'Account ID', relate=True, readonly=True),
+        'disabled': fields.boolean('Disabled'),
      }
 
     _order = 'account_destination_name asc, funding_pool_id asc, cost_center_id asc'

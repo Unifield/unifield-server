@@ -53,7 +53,7 @@ class analytic_line(osv.osv):
             if not arg[2]:
                 raise osv.except_osv(_('Warning'), _('Some search args are missing!'))
             analytic_account = self.pool.get('account.analytic.account').browse(cr, uid, arg[2])
-            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in analytic_account.tuple_destination_account_ids]
+            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in analytic_account.tuple_destination_account_ids if not x.disabled]
             cost_center_ids = [x and x.id for x in analytic_account.cost_center_ids]
             for cc in cost_center_ids:
                 for t in tuple_list:
@@ -423,7 +423,7 @@ class analytic_line(osv.osv):
             fp = self.pool.get('account.analytic.account').read(cr, uid, account_id, ['cost_center_ids', 'tuple_destination_account_ids'], context=context)
             cc_ids = fp and fp.get('cost_center_ids', []) or []
             tuple_destination_account_ids = fp and fp.get('tuple_destination_account_ids', []) or []
-            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids)]
+            tuple_list = [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in self.pool.get('account.destination.link').browse(cr, uid, tuple_destination_account_ids) if not x.disabled]
             # Browse all analytic line to verify them
             for aline in self.browse(cr, uid, ids):
                 # Verify that:
@@ -502,7 +502,7 @@ class analytic_line(osv.osv):
                 acc_dest = (general_account_br.id, new_dest_id)
                 if acc_dest not in [x.account_id and x.destination_id and \
                                     (x.account_id.id, x.destination_id.id) \
-                                    for x in new_fp_br.tuple_destination_account_ids]:
+                                    for x in new_fp_br.tuple_destination_account_ids if not x.disabled]:
                     # not compatible with dest/account
                     res.append((id, entry_sequence, 'account/dest'))
                     return False

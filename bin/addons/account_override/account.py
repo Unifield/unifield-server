@@ -634,6 +634,7 @@ class account_account(osv.osv):
         if not context or not context.get('destination_id'):
             raise osv.except_osv(_('Error'), _('Activate destination: missing account in context'))
 
+    # TODO issue in readonly view
         link = self.pool.get('account.destination.link')
         link_ids = link.search(cr, uid,
             [('account_id', 'in', ids), ('destination_id', '=', context.get('destination_id')), ('disabled', '=', True)],

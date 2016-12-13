@@ -19,11 +19,12 @@
             <field name="model">account.destination.link</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Account/Destination" colors="grey:used" notselectable="used" >
+                <tree string="Account/Destination" colors="grey:used;red:disabled" notselectable="used" >
                     <field name="name" invisible="1"/>
                     <field name="account_id"/>
                     <field name="destination_id"/>
                     <field name="used" invisible="1"/>
+                    <field name="disabled" invisible="1"/>
                 </tree>
             </field>
         </record>
