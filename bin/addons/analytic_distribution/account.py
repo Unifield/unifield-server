@@ -245,7 +245,6 @@ class account_account(osv.osv):
         """
         Add default destination to the list of destination_ids
         """
-# TODO: check default Dest if destination is disabled
         # Some checks
         if context is None:
             context = {}
@@ -273,6 +272,10 @@ class account_account(osv.osv):
                     all_ids = [x.id for x in a.destination_ids] or []
                     all_ids.append(dd_id)
                     super(account_account, self).write(cr, uid, [a.id], {'destination_ids': [(6, 0, all_ids)]})
+            link_obj = self.pool.get('account.destination.link')
+            link_ids = link_obj.search(cr, uid, [('account_id', 'in', ids), ('disabled', '=', True)], context=context)
+            if link_ids:
+                link_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
             return res
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
