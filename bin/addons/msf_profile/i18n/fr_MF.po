@@ -75841,6 +75841,12 @@ msgstr "Remplacer"
 #: view:account.common.report:0
 #: view:account.chart:0
 #: view:account.analytic.chart:0
+#: view:account.report.general.ledger:0
+#: view:account.balance.report:0
+#: view:account.pl.report:0
+#: view:account.bs.report:0
+#: view:account.partner.ledger:0
+#: view:wizard.account.partner.balance.tree:0
 msgid "Do you really want to delete the selected template?"
 msgstr "Voulez-vous vraiment supprimer le modèle sélectionné ?"
 
