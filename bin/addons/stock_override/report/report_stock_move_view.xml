@@ -120,7 +120,7 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Export Moves Analysis">
+                <tree string="Export Moves Analysis" noteditable="1">
                     <field name="name" />
                     <field name="date_from" />
                     <field name="date_to" />
@@ -147,7 +147,7 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Moves Analysis">
+                <form string="Export Moves Analysis" noteditable="1">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
