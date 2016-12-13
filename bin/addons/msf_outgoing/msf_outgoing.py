@@ -649,7 +649,7 @@ class shipment(osv.osv):
                     'backorder_id': picking.id,
                     'shipment_id': False,
                     'move_lines': [],
-                    'description_ppl': description_ppl, # US-803: added the description
+                    'description_ppl': description_ppl or picking.description_ppl, # US-803: added the description
                 }
                 # Update context for copy
                 context.update({
