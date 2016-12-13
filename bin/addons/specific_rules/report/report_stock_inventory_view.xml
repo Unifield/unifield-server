@@ -7,7 +7,7 @@
             <field name="model">export.report.stock.inventory</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Export Inventory Level">
+                <tree string="Export Inventory Level" noteditable="1">
                     <field name="name" />
                     <field name="location_id" />
                     <field name="state" />
@@ -33,7 +33,7 @@
             <field name="model">export.report.stock.inventory</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Inventory Level">
+                <form string="Export Inventory Level" noteditable="1">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
