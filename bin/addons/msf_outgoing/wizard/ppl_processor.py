@@ -48,6 +48,16 @@ class ppl_processor(osv.osv):
         ),
     }
 
+    def do_check_ppl(self, cr, uid, ids, context=None):
+        """
+        Run a check of the integrity of lines
+        """
+        if context is None:
+            context = {}
+
+        context['just_check_errors'] = True
+        return self.do_ppl_step1(cr, uid, ids, context=context)
+
     def do_ppl_step1(self, cr, uid, ids, context=None):
         """
         Make some integrity checks and call the do_ppl_step1 method of the stock.picking object
@@ -136,6 +146,11 @@ class ppl_processor(osv.osv):
                 'res_id': ids[0],
                 'context': context,
             }
+        elif context.get('just_check_errors'):
+            raise osv.excep_osv(
+                _('Error'),
+                _('No error found. You can continue the processing'),
+            )
 
         # Call stock_picking method which returns action call
         return picking_obj.do_ppl_step1(cr, uid, ids, context=context)
@@ -726,6 +741,18 @@ class ppl_move_processor(osv.osv):
             self.copy(cr, uid, line.id, cp_vals, context=context)
 
         return pick_wiz_id
+
+    # View methods
+    def from_to_pack_change(self, cr, uid, ids, from_pack, to_pack):
+        """
+        Remove the integrity status when from/to pack value is changed
+        """
+        if from_pack or to_pack:
+            return {
+                'value': {'integrity_status': 'empty',},
+            }
+
+        return {}
 
 ppl_move_processor()
 
