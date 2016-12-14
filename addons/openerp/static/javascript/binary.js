@@ -74,20 +74,7 @@ function add_binary(src) {
 function set_binary_filename(src, filename) {
     var $src = jQuery(src);
 
-    var $max_size = $src.attr('max-size');
-    if (typeof $max_size !== "undefined"){
-        var $file_size = $src[0].files[0].size;
-        var $mb_size = $file_size/1024/1024;
-        var $mb_max_size = $max_size/1024/1024;
-        $mb_max_size = parseFloat($mb_max_size).toFixed( 2 );
-        if ($file_size > $max_size) {
-            $mb_size = parseFloat($mb_size).toFixed( 2 );
-            var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)sMB');
-            msg = msg.replace('%(size)s', $mb_size);
-            msg = msg.replace('%(max_size)s', $mb_max_size);
-            return error_display(msg);
-        };
-    };
+    check_attachment_size(src);
 
     var name = $src.attr('name');
     var prefix = name.split('/'); prefix.pop();

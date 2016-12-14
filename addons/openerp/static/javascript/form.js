@@ -1295,6 +1295,25 @@ function removeAttachment() {
     return false;
 }
 
+function check_attachment_size(obj) {
+    var $datas = jQuery(obj);
+    var $max_size = $datas.attr('max-size');
+    if (typeof $max_size !== "undefined") {
+        var $file_size = obj.files[0].size;
+        if ($file_size > $max_size) {
+            var $mb_size = $file_size/1024/1024;
+            $mb_size = parseFloat($mb_size).toFixed( 2 );
+            var $mb_max_size = $max_size/1024/1024;
+            $mb_max_size = parseFloat($mb_max_size).toFixed( 2 );
+            var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)sMB');
+            msg = msg.replace('%(size)s', $mb_size);
+            msg = msg.replace('%(max_size)s', $mb_max_size);
+            return error_display(msg);
+        };
+    };
+    return true;
+}
+
 
 /**
  * @event form submission
@@ -1307,21 +1326,9 @@ function createAttachment(){
 
     // Check attachment size is not bigger than max attachment size
     // refuse it if bigger.
-    var $datas = jQuery(this.children.datas);
-    var $max_size = $datas.attr('max-size');
-    if (typeof $max_size !== "undefined") {
-        var $file_size = this.children.datas.files[0].size;
-        var $mb_size = $file_size/1024/1024;
-        var $mb_max_size = $max_size/1024/1024;
-        $mb_max_size = parseFloat($mb_max_size).toFixed( 2 );
-        if ($file_size > $max_size) {
-            $mb_size = parseFloat($mb_size).toFixed( 2 );
-            var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)sMB');
-            msg = msg.replace('%(size)s', $mb_size);
-            msg = msg.replace('%(max_size)s', $mb_max_size);
-            return error_display(msg);
-        };
-    };
+    if (check_attachment_size(this.children.datas) !== true) {
+        return false
+    }
 
     var $form = jQuery(this);
     if(!jQuery(idSelector('_terp_id')).val() || jQuery(idSelector('_terp_id')).val() == 'False') {
