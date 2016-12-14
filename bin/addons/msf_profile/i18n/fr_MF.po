@@ -62117,6 +62117,7 @@ msgstr "Processus de recrutement"
 
 #. module: tender_flow
 #: model:process.transition,note:tender_flow.process_transition_tender_rfq_po
+msgid "From rfq to po."
 msgstr "De demande de devis à commande de terrain"
 
 #. module: msf_button_access_rights
