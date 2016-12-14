@@ -141,12 +141,13 @@ class ir_attachment(osv.osv):
                 vals['datas'] = datas
             else:
                 vals['datas'] = '' # erase the old value in DB if any
-            self.check_file_size(cr, uid, datas, context=context)
+            decoded_datas = base64.decodestring(datas)
+            self.check_file_size(cr, uid, decoded_datas, context=context)
             for attachment in self.read(cr, uid, ids, ['res_model',
                                                        'res_id', 'datas_fname', 'path']):
                 # update the data read with the new ones
                 attachment.update(vals)
-                vals['size'] = self.get_size(vals['datas'])
+                vals['size'] = self.get_size(decoded_datas)
                 if not store_data_in_db:
                     # delete the previous attachment on local file system if any
                     if attachment['path']:
@@ -157,7 +158,7 @@ class ir_attachment(osv.osv):
                                                         attachment['id'])
                     vals['path'] = self.get_file_path(cr, uid, local_filename)
                     f = open(vals['path'], 'wb')
-                    f.write(base64.decodestring(datas))
+                    f.write(decoded_datas)
                     f.close()
                 return super(ir_attachment, self).write(cr, uid, attachment['id'], vals, context)
 
@@ -252,7 +253,7 @@ class ir_attachment(osv.osv):
         data_size = len(datas)
         if data_size > MAX_ATTACHMENT_SIZE:
             max_size_mb = round(MAX_ATTACHMENT_SIZE/1024/1024., 2)
-            data_size_mb = round(data_size/1024/1204., 2)
+            data_size_mb = round(data_size/1024/1024., 2)
             msg = _('You cannot upload files bigger than %sMB, current size is %sMB') % (max_size_mb, data_size_mb)
             if context.get('from_web_interface', False):
                 raise osv.except_osv(_('Error'), msg)
@@ -268,7 +269,8 @@ class ir_attachment(osv.osv):
         else:
             datas = values['datas']
 
-        self.check_file_size(cr, uid, datas, context=context)
+        decoded_datas = base64.decodestring(datas)
+        self.check_file_size(cr, uid, decoded_datas, context=context)
         attachment_id = super(ir_attachment, self).create(cr, uid, values,
                                                           context)
 
@@ -279,7 +281,7 @@ class ir_attachment(osv.osv):
         if not store_data_in_db:
             new_values['path'] = self.get_file_path(cr, uid, local_filename)
 
-        new_values['size'] = self.get_size(datas)
+        new_values['size'] = self.get_size(decoded_datas)
         new_values.pop('id')
         if 'datas' in new_values:
             new_values.pop('datas')
@@ -288,7 +290,7 @@ class ir_attachment(osv.osv):
         if not store_data_in_db:
             # create the file on the local file system
             f = open(new_values['path'], 'wb')
-            f.write(base64.decodestring(datas))
+            f.write(decoded_datas)
             f.close()
         return attachment_id
 
