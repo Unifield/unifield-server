@@ -1071,19 +1071,19 @@ class Entity(osv.osv):
 
     def get_status(self, cr, uid, context=None):
         if not self.pool.get('sync.client.sync_server_connection').is_connected:
-            return "Not Connected"
+            return _("Not Connected")
 
         if self.is_syncing():
             if self.aborting:
-                return "Aborting..."
-            return "Syncing..."
+                return _("Aborting...")
+            return _("Syncing...")
 
         monitor = self.pool.get("sync.monitor")
         last_log = monitor.last_status
         if last_log:
-            return "Last Sync: %s at %s, Not run upd: %s, Not run msg: %s" \
+            return _("Last Sync: %s at %s, Not run upd: %s, Not run msg: %s") \
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
-        return "Connected"
+        return _("Connected")
 
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
@@ -1122,7 +1122,7 @@ class Connection(osv.osv):
     is_connected = property(_is_connected)
 
     def _get_state(self, cr, uid, ids, name, arg, context=None):
-        return dict.fromkeys(ids, "Connected" if getattr(self, '_uid', False) else "Disconnected")
+        return dict.fromkeys(ids, _("Connected") if getattr(self, '_uid', False) else _("Disconnected"))
 
     def _get_password(self, cr, uid, ids, field, arg, context):
         return dict.fromkeys(ids, getattr(self, '_password', ''))
@@ -1227,7 +1227,7 @@ class Connection(osv.osv):
     def _get_connection_manager(self, cr, uid, context=None):
         ids = self.search(cr, uid, [], context=context)
         if not ids:
-            raise osv.except_osv('Connection Error', "Connection manager not set!")
+            raise osv.except_osv(_('Connection Error'), _("Connection manager not set!"))
         return self.browse(cr, uid, ids, context=context)[0]
 
     def connector_factory(self, con):
@@ -1244,7 +1244,7 @@ class Connection(osv.osv):
         elif con.protocol == 'netrpc_gzip':
             connector = rpc.GzipNetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)
         else:
-            raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
+            raise osv.except_osv(_('Connection Error'), _('Unknown protocol: %s') % con.protocol)
         return connector
 
     def connect(self, cr, uid, ids=None, password=None, context=None):
@@ -1272,7 +1272,7 @@ class Connection(osv.osv):
             if cnx.user_id:
                 self._uid = cnx.user_id
             else:
-                raise osv.except_osv('Not Connected', "Not connected to server. Please check password and connection status in the Connection Manager")
+                raise osv.except_osv(_('Not Connected'), _("Not connected to server. Please check password and connection status in the Connection Manager"))
         except socket.error, e:
             raise osv.except_osv(_("Error"), _(e.strerror))
         except osv.except_osv:
