@@ -234,7 +234,7 @@ class ir_attachment(osv.osv):
         '''
         resource_name = self._name_get_resname(cr, uid, [values['id']],
                                                None, None, None)[values['id']]
-        datas_fname = values.get('datas_fname', '')
+        datas_fname = tools.ustr(values.get('datas_fname', ''))
         file_name = '%s_%s_%s' % (resource_name or 'NOT_LINKED_ATTACHMENT',
                                   attachment_id, datas_fname)
 
