@@ -3500,7 +3500,7 @@ msgstr "Suivi des Modifications - Pix des produits"
 #. module: sync_client
 #: field:backup.config,afterautomaticsync:0
 msgid "Backup after automatic sync"
-msgstr "Sauvegarde après synchro automatique"
+msgstr "Sauvegarder après synchro automatique"
 
 #. module: msf_tools
 #: selection:automated.import,interval_unit:0
@@ -8866,7 +8866,7 @@ msgstr "Du module Entrepôt Distant"
 #: model:ir.actions.server,name:update_client.sync_client_debugger_open_wiz
 #: model:ir.ui.menu,name:update_client.debugger_menu
 msgid "Get log files"
-msgstr "Télécharger les fichiers journaux"
+msgstr "Fichiers journaux"
 
 #. modules: vertical_integration, account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:507
@@ -11660,7 +11660,7 @@ msgstr "Indique les différentes manières d'emballer le même produit. Cela n'a
 #. module: sync_client
 #: field:backup.config,scheduledbackup:0
 msgid "Scheduled backup"
-msgstr "Sauvegarde planifiée"
+msgstr "Sauvegarde automatique planifiée"
 
 #. module: base
 #: model:res.currency,currency_name:base.TOP
@@ -17390,7 +17390,7 @@ msgstr "Valeur en cours"
 #. module: sync_client
 #: field:backup.config,aftermanualsync:0
 msgid "Backup after manual sync"
-msgstr "Sauvegarde après synchro manuelle"
+msgstr "Sauvegarder après synchro manuelle"
 
 #. module: account
 #: selection:account.automatic.reconcile,power:0
@@ -23950,7 +23950,7 @@ msgstr "Fiscalyear"
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.sync_monitor_action
 msgid "Synchronisation Monitor"
-msgstr "Moniteur de synchronisation"
+msgstr "Moniteur de Synchronisation"
 
 #. module: account_mcdb
 #: selection:account.mcdb,reversed:0
@@ -32764,7 +32764,7 @@ msgstr "Montant Code de Base"
 #: code:addons/update_client/wizard.py:225
 #, python-format
 msgid "Your OpenERP version is up-to-date."
-msgstr "Your OpenERP version is up-to-date."
+msgstr "Votre version OpenERP est à jour."
 
 #. modules: msf_doc_import, msf_outgoing
 #: selection:purchase.import.xml.line,transport_type:0
@@ -38363,7 +38363,7 @@ msgstr "Instance parente"
 #: model:ir.actions.act_window,name:sync_client.update_to_send_action
 #: model:ir.ui.menu,name:sync_client.update_sent_menu
 msgid "Update Sent Monitor"
-msgstr "Mise à jour des Moniteurs Envoyés"
+msgstr "Mises à jour envoyées"
 
 #. module: account
 #: view:account.analytic.chart:0
@@ -40630,7 +40630,7 @@ msgstr "Valeur du champ affichée"
 #. module: sync_client
 #: model:ir.ui.menu,name:sync_client.message_sent_menu
 msgid "Messages Sent Monitor"
-msgstr "Surveillance Messages Envoyés"
+msgstr "Messages Envoyés"
 
 #. module: sale
 #: view:sale.report:0
@@ -40878,7 +40878,7 @@ msgstr "Zambia"
 msgid "A customer is an entity you do business with, like a company or an organization. A customer can have several contacts or addresses which are the people working for this company. You can use the history tab, to follow all transactions related to a customer: sales order, emails, opportunities, claims, etc. If you use the email gateway, the Outlook or the Thunderbird plugin, don't forget to register emails to each contact so that the gateway will automatically attach incoming emails to the right partner."
 msgstr "Un client est une entité avec laquelle vous êtes en relation commerciale, comme par exemple une société ou une organisation. Un client peut avoir plusieurs adresses ou plusieurs contacts, qui sont les employés de cette société. Vous pouvez utiliser l'onglet historique pour visualiser toutes les transactions relatives à un client : commandes client, courriels, opportunités, réclamations, etc. Si vous utilisez la passerelle de messagerie ou le greffon Outlook ou Thunderbird, n'oubliez pas d'enregistrer les adresses électroniques de chaque contact afin que la passerelle attache automatiquement les courriels entrants au bon partenaire."
 
-#. modules: sales_followup, register_accounting, import_data, sync_client, base, purchase_followup, msf_doc_import, stock
+#. modules: sales_followup, register_accounting, import_data, base, purchase_followup, msf_doc_import, stock
 #: view:base.module.update:0
 #: view:base.update.translations:0
 #: selection:import_data,import_mode:0
@@ -40903,7 +40903,6 @@ msgstr "Un client est une entité avec laquelle vous êtes en relation commercia
 #: view:sale.order.followup:0
 #: view:product.product:0
 #: model:ir.ui.menu,name:sync_client.update_menu
-#: view:sync.client.update_entity:0
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -41671,7 +41670,7 @@ msgstr "Code ISO"
 #. module: sync_client
 #: field:sync.client.sync_server_connection,login:0
 msgid "Login on synchro server"
-msgstr "Ouvrir une session sur le serveur de synchronisation"
+msgstr "Identifiant sur le serveur de synchro"
 
 #. modules: account, msf_instance
 #: help:account.journal,sequence_id:0
@@ -42733,7 +42732,7 @@ msgstr "Aucune Allocation faite!"
 #: model:ir.actions.act_window,name:sync_client.update_wizard_action
 #: model:ir.ui.menu,name:sync_client.update_wiz_menu
 msgid "Update Instance"
-msgstr "Mise à jour Instance"
+msgstr "Mettre à jour l'instance"
 
 #. module: analytic_distribution_supply
 #: code:addons/analytic_distribution_supply/invoice.py:77
@@ -53471,7 +53470,7 @@ msgstr "Erreur de contrainte lors de la Composition Kit."
 #: model:ir.actions.act_window,name:sync_client.message_received_action
 #: model:ir.ui.menu,name:sync_client.Message_received_menu
 msgid "Message Received Monitor"
-msgstr "Surveillance Message Reçu"
+msgstr "Messages Reçus"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -58672,7 +58671,7 @@ msgstr "wizard.hq.report.oca"
 #: model:ir.ui.menu,name:sync_client.log_sale_purchase_menu
 #: view:sync.client.log_sale_purchase:0
 msgid "PO/FO/Shipment Logs"
-msgstr "PO/FO/Shipment Logs"
+msgstr "Journaux BC/CT/Expédition"
 
 #. modules: account_override, vertical_integration
 #: report:addons/account_override/report/open_invoices_xls.mako:307
@@ -64842,7 +64841,7 @@ msgstr "De l'approvisionnement au bon de commande."
 #. module: sync_client
 #: model:ir.ui.menu,name:sync_client.sync_monitor_menu
 msgid "Synchronisation Processes Monitor"
-msgstr "Moniteur de procédés de Synchronisation"
+msgstr "Moniteur de Synchronisation"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -65756,7 +65755,7 @@ msgstr "Importer PCM"
 #. module: sync_client
 #: field:sync.client.sync_server_connection,xmlrpc_retry:0
 msgid "XmlRPC retry"
-msgstr "nouvel essai XmlRPC"
+msgstr "Essais XmlRPC"
 
 #. module: msf_config_locations
 #: code:addons/msf_config_locations/stock_configuration.py:463
@@ -69529,7 +69528,7 @@ msgstr "Structure des catégories"
 #. module: sync_client
 #: field:sync.client.sync_server_connection,automatic_patching_hour_from:0
 msgid "Upgrade from"
-msgstr "Mise à niveau à partir de"
+msgstr "Mettre à niveau à partir de"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:639
@@ -69986,7 +69985,7 @@ msgstr "Etc/GMT+12"
 #. module: sync_client
 #: field:backup.config,beforepatching:0
 msgid "Before patching"
-msgstr "Avant l'application d'un correctif"
+msgstr "Sauvegarder avant application d'un correctif"
 
 #. module: account
 #: view:account.fiscalyear.close.state:0
@@ -71773,7 +71772,7 @@ msgstr "Analytic Lines (Free 2)"
 #. module: sync_client
 #: field:sync.monitor,state:0
 msgid "Is Syncing"
-msgstr "Est en cours de Synchronisation"
+msgstr "État de Synchro"
 
 #. module: stock_override
 #: view:stock.analyze.view:0
@@ -77343,6 +77342,7 @@ msgstr "Lorsque la valorisation en temps réel de l'inventaire, ceci est le Jour
 #: view:export.report.stock.inventory:0
 #: view:export.report.stock.move:0
 #: selection:sync.client.logs,type:0
+#: view:sync.client.update_entity:0
 msgid "Update"
 msgstr "Mise à jour"
 
@@ -84644,7 +84644,7 @@ msgstr "Asia/Magadan"
 #: view:backup.config:0
 #: model:ir.ui.menu,name:sync_client.syncback_menu
 msgid "Backup"
-msgstr "Sauvegarder"
+msgstr "Sauvegarde"
 
 #. module: kit
 #: model:ir.actions.act_window,name:kit.kit_composition_theoretical_action
@@ -94014,7 +94014,7 @@ msgstr "Recurring Entries To Validate"
 #. module: sync_client
 #: view:sync.client.view_entity_id:0
 msgid "name"
-msgstr "nom"
+msgstr "name"
 
 #. module: msf_outgoing
 #: report:invoice:0
@@ -95342,7 +95342,7 @@ msgstr "Motif"
 #: model:ir.actions.act_window,name:sync_client.update_received_action
 #: model:ir.ui.menu,name:sync_client.update_received_menu
 msgid "Update Received Monitor"
-msgstr "Mise à jour des Moniteurs Recus"
+msgstr "Mises à jour reçues"
 
 #. module: msf_outgoing
 #: report:invoice:0
