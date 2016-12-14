@@ -75,7 +75,7 @@ function set_binary_filename(src, filename) {
     var $src = jQuery(src);
 
     var $max_size = $src.attr('max-size');
-    if ($max_size !== undefined){
+    if (typeof $max_size !== "undefined"){
         var $file_size = $src[0].files[0].size;
         var $mb_size = $file_size/1024/1024;
         var $mb_max_size = $max_size/1024/1024;

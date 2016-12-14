@@ -1307,11 +1307,11 @@ function createAttachment(){
 
     // Check attachment size is not bigger than max attachment size
     // refuse it if bigger.
+    var $datas = jQuery(this.children.datas);
     var $max_size = $datas.attr('max-size');
-    if ($max_size !== undefined){
+    if (typeof $max_size !== "undefined") {
         var $file_size = this.children.datas.files[0].size;
         var $mb_size = $file_size/1024/1024;
-        var $datas = jQuery(this.children.datas);
         var $mb_max_size = $max_size/1024/1024;
         $mb_max_size = parseFloat($mb_max_size).toFixed( 2 );
         if ($file_size > $max_size) {
@@ -1335,8 +1335,9 @@ function createAttachment(){
     $form.ajaxSubmit({
         dataType: 'json',
         data: {'requested_with': 'XMLHttpRequest'},
-        success: function(data){
-            if ('error' in data){
+        type: 'POST',
+        success: function(data) {
+            if ('error' in data) {
                 // display error message from server
                 return error_display(data['error']);
             }
@@ -1364,7 +1365,7 @@ function createAttachment(){
             if (typeof submit_callback !== "undefined") {
                 submit_callback($attachment_line);
             }
-        },
+        }
     });
     return false;
 }
