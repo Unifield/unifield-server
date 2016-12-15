@@ -127,6 +127,8 @@ class ir_attachment(osv.osv):
         return super(ir_attachment, self).read(cr, uid, ids, fields_to_read, context, load)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         if isinstance(ids, (int, long)):
@@ -250,6 +252,8 @@ class ir_attachment(osv.osv):
         Raise only in case of web interface (to make possible for the system
         to create bigger attachments)
         '''
+        if context is None:
+            context = {}
         data_size = len(datas)
         if data_size > MAX_ATTACHMENT_SIZE:
             max_size_mb = round(MAX_ATTACHMENT_SIZE/1024/1024., 2)
@@ -261,6 +265,8 @@ class ir_attachment(osv.osv):
                 self._logger.warn('A file attached by the system is bigger than %sMB (%sMB)' % (max_size_mb, data_size_mb))
 
     def create(self, cr, uid, values, context=None):
+        if context is None:
+            context = {}
         self.check(cr, uid, [], mode='create', context=context, values=values)
 
         store_data_in_db = self.store_data_in_db(cr, uid)
@@ -604,6 +610,8 @@ class attachment_config(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         if 'name' in vals:
