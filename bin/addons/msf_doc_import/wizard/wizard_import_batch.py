@@ -197,7 +197,7 @@ class wizard_import_batch(osv.osv_memory):
             # Make consistency checks
             name = get_cell(line_data, 'name').strip()
             life_date = get_cell(line_data, 'life_date')
-            if datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S,%f') < datetime(1900, 01, 01, 0, 0, 0):
+            if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S,%f') < datetime(1900, 01, 01, 0, 0, 0):
                 date_format = date_tools.get_date_format(cr, uid, context=context)
                 save_error(
                     _('You cannot create a batch number with an expiry date before %s') % (
