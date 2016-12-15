@@ -658,6 +658,15 @@ class ppl_move_processor(osv.osv):
 
         return super(ppl_move_processor, self).create(cr, uid, vals, context=context)
 
+    def write(self, cr, uid, ids, vals, context=None):
+        """
+        Remove the integrity status value if from_pack or to_pack is changed.
+        """
+        if vals.get('from_pack') or vals.get('to_pack'):
+            vals['integrity_status'] = False
+
+        return super(ppl_move_processor, self).write(cr, uid, vals, context=context)
+
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
         Just put the stock move product quantity into the ppl.move.processor
