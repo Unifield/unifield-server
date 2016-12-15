@@ -55,13 +55,11 @@ class ppl_processor(osv.osv):
         if context is None:
             context = {}
 
-        context['just_check_errors'] = True
-        res = self.do_ppl_step1(cr, uid, ids, context=context)
-        del context['just_check_errors']
+        res = self.do_ppl_step1(cr, uid, ids, context=context, just_check=True)
 
         return res
 
-    def do_ppl_step1(self, cr, uid, ids, context=None):
+    def do_ppl_step1(self, cr, uid, ids, context=None, just_check=False):
         """
         Make some integrity checks and call the do_ppl_step1 method of the stock.picking object
         """
@@ -157,7 +155,7 @@ class ppl_processor(osv.osv):
                 'res_id': ids[0],
                 'context': context,
             }
-        elif context.get('just_check_errors'):
+        elif just_check:
             raise osv.except_osv(
                 _('Error'),
                 _('No error found. You can continue the processing'),
