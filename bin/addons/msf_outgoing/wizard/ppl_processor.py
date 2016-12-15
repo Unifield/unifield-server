@@ -56,7 +56,10 @@ class ppl_processor(osv.osv):
             context = {}
 
         context['just_check_errors'] = True
-        return self.do_ppl_step1(cr, uid, ids, context=context)
+        res = self.do_ppl_step1(cr, uid, ids, context=context)
+        del context['just_check_errors']
+
+        return res
 
     def do_ppl_step1(self, cr, uid, ids, context=None):
         """
@@ -159,9 +162,6 @@ class ppl_processor(osv.osv):
                 _('Error'),
                 _('No error found. You can continue the processing'),
             )
-
-        if context.get('just_check_errors'):
-            context['just_check_errors'] = True
 
         # Call stock_picking method which returns action call
         return picking_obj.do_ppl_step1(cr, uid, ids, context=context)
