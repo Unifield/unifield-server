@@ -479,6 +479,10 @@ class stock_warehouse_order_cycle_line(osv.osv):
         'supplier_id': fields.function(_get_data, method=True, type='many2one', relation='res.partner', string='Supplier', multi='data', readonly=True),
         'required_date': fields.function(_get_data, method=True, type='date', string='Required by date', multi='data', readonly=True),
     }
+
+    _defaults = {
+        'safety_stock': 0.00,
+    }
     
     def _check_uniqueness(self, cr, uid, ids, context=None):
         '''
