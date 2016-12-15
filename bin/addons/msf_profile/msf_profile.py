@@ -46,6 +46,30 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2110_patch(self, cr, uid, *a, **b):
+        '''setup the size on all attachment'''
+        attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = attachment_obj.search(cr, uid, [])
+        deleted_count = 0
+        logger = logging.getLogger('update')
+        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            vals = {}
+            # check existance of the linked document, if the linked document
+            # don't exist anymore, delete the attachement
+            model_obj = self.pool.get(attachment.res_model)
+            if not model_obj or not model_obj.search(cr, uid,
+                                                     [('id', '=', attachment.res_id),]):
+                attachment_obj.unlink(cr, uid, attachment.id)
+                logger.warn('deleting attachment %s' % attachment.id)
+                deleted_count += 1
+                continue
+
+            if attachment.datas:
+                vals['size'] = attachment_obj.get_octet_size(attachment.datas)
+                attachment_obj.write(cr, uid, attachment.id, vals)
+        if deleted_count:
+            logger.warn('%s attachment(s) deleted.' % deleted_count)
+
     def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
         '''
         A button "Activate Instance" as be removed from the user interface, but
@@ -330,29 +354,6 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
-    def us_1454_patch(self, cr, uid, *a, **b):
-        '''setup the size on all attachment'''
-        attachment_obj = self.pool.get('ir.attachment')
-        attachment_ids = attachment_obj.search(cr, uid, [])
-        deleted_count = 0
-        logger = logging.getLogger('update')
-        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
-            vals = {}
-            # check existance of the linked document, if the linked document
-            # don't exist anymore, delete the attachement
-            model_obj = self.pool.get(attachment.res_model)
-            if not model_obj or not model_obj.search(cr, uid,
-                                                     [('id', '=', attachment.res_id),]):
-                attachment_obj.unlink(cr, uid, attachment.id)
-                logger.warn('deleting attachment %s' % attachment.id)
-                deleted_count += 1
-                continue
-
-            if not attachment.size and attachment.datas:
-                vals['size'] = attachment_obj.get_size(attachment.datas)
-                attachment_obj.write(cr, uid, attachment.id, vals)
-        if deleted_count:
-            logger.warn('%s attachment(s) deleted.' % deleted_count)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
