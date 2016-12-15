@@ -75769,3 +75769,7 @@ msgstr "Créé localement"
 msgid "Partner Created on this instance"
 msgstr "Partenaire créé sur cette instance"
 
+#. module: msf_outgoing
+#: view:ppl.processor:0
+msgid "Check integrity"
+msgstr "Vérifier les erreurs"
