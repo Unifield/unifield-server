@@ -24,7 +24,6 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-import time
 from collections import defaultdict
 
 class account_move_line_reconcile(osv.osv_memory):
@@ -33,8 +32,8 @@ class account_move_line_reconcile(osv.osv_memory):
 
     _columns = {
         'state': fields.selection([('total', 'Full Reconciliation'), ('partial', 'Partial Reconciliation'), 
-            ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
-            required=True, readonly=True),
+                                   ('total_change', 'Full Reconciliation with change'), ('partial_change', 'Partial Reconciliation with change')], string="State", 
+                                  required=True, readonly=True),
         'different_currencies': fields.boolean('Is this reconciliation in different currencies? (2 at most)'),
     }
 
@@ -145,7 +144,13 @@ class account_move_line_reconcile(osv.osv_memory):
             state = 'total_change'
         currency_id = False
         currency2_id = False
+        rec_partial_set = set()
+        rec_partial_leg_nb = 0
         for line in account_move_line_obj.browse(cr, uid, context['active_ids'], context=context):
+            # for partially reconciled lines: store the different partial reconciliation ids and the total nb of legs
+            if line.reconcile_partial_id:
+                rec_partial_leg_nb += 1
+                rec_partial_set.add(line.reconcile_partial_id.id)
             # prepare some values
             account_id = line.account_id.id
             # some verifications
@@ -166,9 +171,9 @@ class account_move_line_reconcile(osv.osv_memory):
             # UTP-1040: 3RD party is also desactivated in case of account that is "Disregard Third Party" as "type_for_register"
             if not transfer and not disregard_third_party:
                 third_party = {
-                        'partner_id': line.partner_id and line.partner_id.id or False, 
-                        'employee_id': line.employee_id and line.employee_id.id or False, 
-                        'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or False}
+                    'partner_id': line.partner_id and line.partner_id.id or False, 
+                    'employee_id': line.employee_id and line.employee_id.id or False, 
+                    'transfer_journal_id': line.transfer_journal_id and line.transfer_journal_id.id or False}
                 if not prev_third_party:
                     prev_third_party = third_party
                 if prev_third_party != third_party:
@@ -186,8 +191,22 @@ class account_move_line_reconcile(osv.osv_memory):
                 debit += line.debit_currency
                 fcredit += line.credit
                 fdebit += line.debit
+        diff_in_booking = abs(debit - credit)
+        # (US-1847) If we reconcile together entries from at least 2 different partial reconciliations:
+        # - the reconciliation must be total
+        # - all the legs of the partial reconciliations must be included
+        if len(rec_partial_set) > 1:
+            if diff_in_booking > 10**-3:
+                raise osv.except_osv(_('Error'), _('Only full reconciliation is allowed when entries from two (or more)'
+                                                   ' different partial reconciliations are included.'))
+            elif rec_partial_leg_nb != account_move_line_obj.search(cr, uid,
+                                                                    [('reconcile_partial_id', 'in', list(rec_partial_set))],
+                                                                    count=True, order='NO_ORDER', context=context):
+                raise osv.except_osv(_('Error'),
+                                     _('When entries from different partial reconciliations are reconciled together, '
+                                       'all the legs of these partial reconciliations must be included.'))
         # Adapt state value
-        if abs(debit - credit) <= 10**-3:
+        if diff_in_booking <= 10**-3:
             state = 'total'
         if transfer_with_change:
             debit = fdebit
