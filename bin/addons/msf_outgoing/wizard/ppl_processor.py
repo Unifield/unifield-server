@@ -665,7 +665,7 @@ class ppl_move_processor(osv.osv):
         if vals.get('from_pack') or vals.get('to_pack'):
             vals['integrity_status'] = False
 
-        return super(ppl_move_processor, self).write(cr, uid, vals, context=context)
+        return super(ppl_move_processor, self).write(cr, uid, ids, vals, context=context)
 
     def _get_line_data(self, cr, uid, wizard=False, move=False, context=None):
         """
