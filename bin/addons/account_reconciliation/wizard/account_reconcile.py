@@ -191,6 +191,7 @@ class account_move_line_reconcile(osv.osv_memory):
                 debit += line.debit_currency
                 fcredit += line.credit
                 fdebit += line.debit
+
         diff_in_booking = abs(debit - credit)
         # (US-1847) If we reconcile together entries from at least 2 different partial reconciliations:
         # - the reconciliation must be total
@@ -205,6 +206,10 @@ class account_move_line_reconcile(osv.osv_memory):
                 raise osv.except_osv(_('Error'),
                                      _('When entries from different partial reconciliations are reconciled together, '
                                        'all the legs of these partial reconciliations must be included.'))
+
+        if debit <= 10**-3 or credit <= 10**-3:
+            raise osv.except_osv(_('Error'), _('Both Debit and Credit lines are required for reconciliation.'))
+
         # Adapt state value
         if diff_in_booking <= 10**-3:
             state = 'total'
