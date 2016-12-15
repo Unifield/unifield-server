@@ -947,7 +947,7 @@ msgstr "Veuillez vérifier la Quantité de la(les)commande(s) d'approvisionnemen
 #: code:addons/update_client/wizard.py:200
 #, python-format
 msgid "The current revision is %s (%s at %s) and has been applied at %s."
-msgstr "La révision actuelle est %s (%s à %s) et à été appliquée à %s."
+msgstr "La révision actuelle est %s (%s à %s) et à été appliquée le %s."
 
 #. module: account_override
 #: field:account.invoice,is_inkind_donation:0
@@ -1797,7 +1797,7 @@ msgstr "en attente"
 #: field:sync.client.message_received,run:0
 #: field:sync.client.update_received,run:0
 msgid "Run"
-msgstr "Exécuter"
+msgstr "Exécuté"
 
 #. module: register_accounting
 #: field:wizard.account.invoice,register_posting_date:0
@@ -10060,7 +10060,7 @@ msgstr "Cohérence OK"
 #. module: sync_client
 #: field:sync.client.sync_server_connection,netrpc_retry:0
 msgid "NetRPC retry"
-msgstr "Réessayer NetRPC"
+msgstr "Nb d'essais NetRPC"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -13577,7 +13577,7 @@ msgstr "Le journal utilisé par l'assistant pour afficher les lignes à importer
 #. module: sync_client
 #: view:sync.monitor:0
 msgid "Msg Pull Ok"
-msgstr "Extraction Msg Ok"
+msgstr "Récupération Msg Ok"
 
 #. module: base
 #: view:res.widget.wizard:0
@@ -14708,7 +14708,7 @@ msgstr "total m³"
 #. module: product_expiry
 #: field:product.product,use_time:0
 msgid "Product Use Time"
-msgstr "Produit - Durée d'utilisation"
+msgstr "Durée d'utilisation du produit"
 
 #. module: sync_client
 #: field:sync.client.log_sale_purchase,is_product_price_modified:0
@@ -14993,7 +14993,7 @@ msgstr "La quantité indiquée n'est pas valide par rapport à l'unité de mesur
 #. module: sync_client
 #: view:sync.monitor:0
 msgid "receive"
-msgstr "recevoir"
+msgstr "reçu"
 
 #. module: register_accounting
 #: view:account.invoice:0
@@ -19196,7 +19196,7 @@ msgstr "res.config.users"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Category"
-msgstr "Requirements by Category"
+msgstr "Besoins par catégorie"
 
 #. module: stock
 #: model:ir.actions.act_window,name:stock.action_picking_tree_out
@@ -19854,7 +19854,7 @@ msgstr "Sous-Classe 2"
 #. module: sync_client
 #: field:sync.client.update_received,rule_sequence:0
 msgid "Rule Sequence"
-msgstr "Rule Sequence"
+msgstr "Séquence de règle"
 
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/msf_outgoing.py:4390
@@ -20299,7 +20299,7 @@ msgstr "Marges des commandes terrains"
 #: selection:product.price.type,field:0
 #: field:product.product,soq_quantity:0
 msgid "SoQ Quantity"
-msgstr "SoQ Quantity"
+msgstr "Quantité QcS"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -22708,7 +22708,7 @@ msgstr "Supplier catalogue lines (xls)"
 #: view:tender.line.cancel.wizard:0
 #, python-format
 msgid "Yes"
-msgstr "Yes"
+msgstr "Oui"
 
 #. module: base
 #: field:ir.values,res_id:0
@@ -25022,7 +25022,7 @@ msgstr "Numéro de lot"
 #. module: sync_client
 #: view:sync.client.sync_manager:0
 msgid "Resume Pulling Data"
-msgstr "Reprendre l'Extraction des Données"
+msgstr "Reprendre la récupération des Données"
 
 #. module: kit
 #: view:composition.kit:0
@@ -32252,7 +32252,7 @@ msgstr "En cours (%s/%s)"
 #: field:stock.picking.processor,contains_dg:0
 #: field:validate.picking.processor,contains_dg:0
 msgid "Contains Dangerous goods"
-msgstr "Contains Dangerous goods"
+msgstr "Contient des marchandises dangereuses"
 
 #. module: account
 #: selection:account.balance.report,display_account:0
@@ -32429,7 +32429,7 @@ msgstr "0 is not allowed as percentage value!"
 #. module: account
 #: field:res.partner,credit:0
 msgid "Total Receivable"
-msgstr "Total Montant à Recevoir"
+msgstr "Total montant à recevoir"
 
 #. module: sync_client
 #: model:ir.ui.menu,name:sync_client.ops_evt_menu2
@@ -33177,7 +33177,7 @@ msgstr "Imported invoices"
 #. module: sync_client
 #: view:sync.client.update_received:0
 msgid "Fetched on"
-msgstr "Récupéré sur"
+msgstr "Récupéré le"
 
 #. module: sourcing
 #: field:sale.order.line,display_confirm_button:0
@@ -35656,7 +35656,7 @@ msgstr "Have been reallocated?"
 #. module: product_attributes
 #: field:product.product,dangerous_goods:0
 msgid "Dangerous goods"
-msgstr "Dangerous goods"
+msgstr "Marchandises dangereuses"
 
 #. module: msf_budget
 #: report:msf.pdf.budget.monthly:0
@@ -37398,7 +37398,7 @@ msgstr "Réel"
 #. module: msf_partner
 #: field:res.partner,transporter:0
 msgid "Transporter"
-msgstr "Transporter"
+msgstr "Transporteur"
 
 #. module: kit
 #: code:addons/kit/wizard/substitute.py:306
@@ -40902,7 +40902,6 @@ msgstr "Un client est une entité avec laquelle vous êtes en relation commercia
 #: view:wizard.register.import:0
 #: view:sale.order.followup:0
 #: view:product.product:0
-#: model:ir.ui.menu,name:sync_client.update_menu
 msgid "Update"
 msgstr "Mettre à jour"
 
@@ -42714,7 +42713,7 @@ msgstr "En retard"
 #: field:stock.forecast,justification_code_id:0
 #: report:stock.forecast.report:0
 msgid "Justification Code"
-msgstr "Justification - Code"
+msgstr "Code de justification"
 
 #. module: msf_doc_import
 #: field:purchase.import.xml.line,invoice_address_id:0
@@ -42868,7 +42867,7 @@ msgstr "Engagement"
 #. module: product_attributes
 #: field:product.product,standard_ok:0
 msgid "Standardization Level"
-msgstr "Standardization Level"
+msgstr "Niveau de standardisation"
 
 #. modules: account, base
 #: field:wizard.multi.charts.accounts,bank_accounts_id:0
@@ -43529,7 +43528,7 @@ msgstr "Synchroniser la Traduction"
 msgid "The chosen company is not in the allowed companies for this user"
 msgstr "La société choisie ne fait pas partie des sociétés autorisées pour cet utilisateur."
 
-#. modules: account, resource, product, sync_client
+#. modules: account, resource, product
 #: report:account.account.balance:0
 #: field:account.aged.trial.balance,date_to:0
 #: field:account.balance.report,date_to:0
@@ -43556,9 +43555,14 @@ msgstr "La société choisie ne fait pas partie des sociétés autorisées pour 
 #: field:account.vat.declaration,date_to:0
 #: field:product.pricelist.version,date_end:0
 #: field:resource.calendar.leaves,date_to:0
-#: field:sync.monitor,end:0
 msgid "End Date"
 msgstr "Date de Clôture"
+
+#.module: sync_client
+#: field:sync.monitor,end:0
+msgid "End Date"
+msgstr "Date de Fin"
+
 
 #. module: res_currency_tables
 #: code:addons/res_currency_tables/wizard/import_currencies.py:140
@@ -45572,7 +45576,7 @@ msgstr "Enregistrer un Contrat"
 #. module: product
 #: view:product.product:0
 msgid "Exchangeable Unit of Measure"
-msgstr "UdM échangeable"
+msgstr "Unité de Mesure d'échange"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -45773,7 +45777,7 @@ msgstr "Account override"
 #: field:purchase.order.line,soq_updated:0
 #: field:sale.order.line,soq_updated:0
 msgid "SoQ updated"
-msgstr "SoQ updated"
+msgstr "QcS mis à jour"
 
 #. module: financing_contract
 #: field:financing.contract.account.quadruplet,cost_center_id:0
@@ -48085,7 +48089,7 @@ msgstr "Asia/Beirut"
 #: field:account.bank.statement.line,state:0
 #: field:sync.monitor,status:0
 msgid "Status"
-msgstr "Statut(s)"
+msgstr "Statut"
 
 #. module: hr
 #: help:hr.job,no_of_employee:0
@@ -51136,7 +51140,7 @@ msgstr "Cannot close this period at the mission level. All previous periods must
 #. module: sync_client
 #: view:sync.monitor:0
 msgid "Data Pull Ok"
-msgstr "Extraction des Données Ok"
+msgstr "Récupération des Données Ok"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,state_id:0
@@ -52484,7 +52488,7 @@ msgstr "La Zone est manquante.\n"
 #: selection:product.product,single_use:0
 #: selection:product.product,sterilized:0
 msgid "tbd"
-msgstr "tbd"
+msgstr "à définir"
 
 #. module: base
 #: model:res.currency,currency_name:base.TJS
@@ -53853,7 +53857,7 @@ msgstr "wizard.import.po.simulation.screen.line"
 #. module: product_attributes
 #: field:product.product,product_catalog_path:0
 msgid "Product Catalog Path"
-msgstr "Chemin à suivre Catalogue Produits"
+msgstr "Emplacement du catalogue Produits"
 
 #. module: stock_override
 #: model:ir.model,name:stock_override.model_export_report_stock_move
@@ -65755,7 +65759,7 @@ msgstr "Importer PCM"
 #. module: sync_client
 #: field:sync.client.sync_server_connection,xmlrpc_retry:0
 msgid "XmlRPC retry"
-msgstr "Essais XmlRPC"
+msgstr "Nb d'essais XmlRPC"
 
 #. module: msf_config_locations
 #: code:addons/msf_config_locations/stock_configuration.py:463
@@ -67149,7 +67153,7 @@ msgstr "Afficher Compte"
 #: field:pricelist.partnerinfo,rounding:0
 #, python-format
 msgid "SoQ Rounding"
-msgstr "SoQ Rounding"
+msgstr "QcS arrondi"
 
 #. modules: product_nomenclature, kit
 #: constraint:product.nomenclature:0
@@ -68470,7 +68474,7 @@ msgstr "Purchase Order Line"
 #: field:sync.client.register_entity,max_size:0
 #: field:sync.client.sync_server_connection,max_size:0
 msgid "Max Packet Size"
-msgstr "Taille Max. Colis"
+msgstr "Taille paquet max"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:395
@@ -75114,7 +75118,7 @@ msgstr "Ouvrir journal"
 #. module: product_attributes
 #: field:product.product,closed_article:0
 msgid "Closed Article"
-msgstr "Article Fermé"
+msgstr "Article fermé"
 
 #. module: sale
 #: report:msf.freight_manifest:0
@@ -77343,6 +77347,7 @@ msgstr "Lorsque la valorisation en temps réel de l'inventaire, ceci est le Jour
 #: view:export.report.stock.move:0
 #: selection:sync.client.logs,type:0
 #: view:sync.client.update_entity:0
+#: model:ir.ui.menu,name:sync_client.update_menu
 msgid "Update"
 msgstr "Mise à jour"
 
@@ -77748,7 +77753,7 @@ msgstr "Le numéro de lot doit être unique pour une liste de composition de Kit
 #. module: sync_client
 #: field:sync.monitor,msg_push:0
 msgid "Msg Push"
-msgstr "Env msg"
+msgstr "Msg. Poussés"
 
 #. module: register_accounting
 #: view:wizard.invoice.date:0
@@ -78360,7 +78365,7 @@ msgstr "Open CSV file"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Order"
-msgstr "Besoin par commande"
+msgstr "Besoins par commande"
 
 #. module: transport_mgmt
 #: model:ir.module.module,description:transport_mgmt.module_meta_information
@@ -78374,7 +78379,7 @@ msgstr "\n"
 #. module: sync_client
 #: field:sync.monitor,data_pull:0
 msgid "Data Pull"
-msgstr "Données Tirées"
+msgstr "Récupération Données"
 
 #. module: stock_batch_recall
 #: model:ir.actions.act_window,name:stock_batch_recall.action_batch_recall
@@ -78483,7 +78488,7 @@ msgstr "Ligne %s : Compte manquant."
 #: view:tender.line.cancel.wizard:0
 #, python-format
 msgid "No"
-msgstr "No"
+msgstr "Non"
 
 #. module: base_setup
 #: help:base.setup.installer,profile_tools:0
@@ -80706,7 +80711,7 @@ msgstr "Acomptes"
 #. module: sync_client
 #: field:sync.monitor,msg_pull:0
 msgid "Msg Pull"
-msgstr "Msg extrait"
+msgstr "Récupération Msg."
 
 #. module: stock_schedule
 #: selection:stock.frequence,name:0
@@ -84843,7 +84848,7 @@ msgstr "Fermer assistant"
 #. module: account
 #: field:res.partner,debit:0
 msgid "Total Payable"
-msgstr "Total Montant à Payer"
+msgstr "Total montant à payer"
 
 #. module: base
 #: field:ir.rule,perm_read:0
@@ -88008,7 +88013,7 @@ msgstr "Nombre de fois où la fonction est appelée,\n"
 #: field:sync.client.update_received,is_deleted:0
 #: field:sync.client.update_to_send,is_deleted:0
 msgid "Is deleted?"
-msgstr "Est supprimé?"
+msgstr "Suppression ?"
 
 #. module: msf_outgoing
 #: view:return.shipment.family.processor:0
@@ -88895,7 +88900,7 @@ msgstr "wizard.actual.export"
 #. module: msf_partner
 #: view:res.partner:0
 msgid "Transporters"
-msgstr "Transporters"
+msgstr "Transporteurs"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -90209,7 +90214,7 @@ msgstr "Ecart de Caisse"
 #. module: sync_client
 #: view:sync.monitor:0
 msgid "create"
-msgstr "créer"
+msgstr "création"
 
 #. module: base
 #: code:addons/base/module/module.py:346
@@ -90265,7 +90270,7 @@ msgstr "Cycle de commande"
 #. module: supplier_catalogue
 #: field:supplier.catalogue.line,rounding:0
 msgid "SoQ rounding"
-msgstr "SoQ rounding"
+msgstr "QcS arrondi"
 
 #. module: update_client
 #: selection:sync_client.upgrade,state:0
@@ -92980,7 +92985,7 @@ msgstr "Paiements"
 #: view:sale.order:0
 #: view:sale.order:0
 msgid "Round Qty to SoQ"
-msgstr "Round Qty to SoQ"
+msgstr "Arrondir à la quantié à la QcS"
 
 #. modules: base, base_setup, unifield_setup
 #: model:res.country,name:base.tk
@@ -95614,7 +95619,7 @@ msgstr "Parent Nomenclature \"%s\" not found"
 #. module: partner_modification
 #: selection:res.partner,po_by_project:0
 msgid "Requirements by Category and Project"
-msgstr "Requirements by Category and Project"
+msgstr "Besoins par catégorie et projet"
 
 #. module: sync_client
 #: field:sync.client.entity_group,type:0
@@ -96225,7 +96230,7 @@ msgstr "Specific Rules"
 #: selection:product.price.type,field:0
 #: field:product.product,soq_weight:0
 msgid "SoQ Weight"
-msgstr "SoQ Weight"
+msgstr "Poids QcS"
 
 #. module: base
 #: model:res.country,name:base.cy
