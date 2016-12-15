@@ -75792,3 +75792,8 @@ msgstr "Un lettrage requiert à la fois des lignes en débit et en crédit."
 #, python-format
 msgid "The incoming shipment has already been processed, you cannot save it as draft."
 msgstr "La livraison a déjà été traitée, vous ne pouvez pas la sauvegarder en brouillon."
+
+#. module: stock
+#: view:stock.picking:0
+msgid "Delivery orders which are in draft state"
+msgstr "Bons de livraison dans l'état brouillon"
