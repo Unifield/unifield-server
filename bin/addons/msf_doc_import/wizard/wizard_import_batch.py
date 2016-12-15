@@ -179,7 +179,7 @@ class wizard_import_batch(osv.osv_memory):
                 save_error(e)
 
             # Batch number type
-            batch_type = get_cell(line_data, 'type')
+            batch_type = get_cell(line_data, 'type').strip()
             if batch_type.upper() not in (_('Standard').upper(), _('Internal').upper()):
                 save_error(
                     _('The Type of the batch number should be \'Standard\' or \'Internal\''),
