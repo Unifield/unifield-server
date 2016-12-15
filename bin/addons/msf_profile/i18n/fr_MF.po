@@ -27847,6 +27847,16 @@ msgstr "Sync DB id of the PO origin line"
 msgid "From"
 msgstr "De"
 
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "From"
+msgstr "Du"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "to"
+msgstr "au"
+
 #. module: report_webkit_override
 #: model:ir.module.module,description:report_webkit_override.module_meta_information
 msgid "This module override the module webkit_report in order to have proper MSF data\n"
