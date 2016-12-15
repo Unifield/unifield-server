@@ -170,9 +170,6 @@ class wizard_import_batch(osv.osv_memory):
                 )
                 continue
 
-            import pdb
-            pdb.set_trace()
-
             # Product
             product_id = None
             try:
