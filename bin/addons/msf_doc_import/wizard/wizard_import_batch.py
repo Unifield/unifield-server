@@ -24,6 +24,8 @@ import time
 
 import pooler
 
+from datetime import datetime
+
 from osv import osv
 from tools.translate import _
 
@@ -128,6 +130,7 @@ class wizard_import_batch(osv.osv_memory):
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
         sequence_obj = self.pool.get('ir.sequence')
+        date_tools = self.pool.get('date.tools')
 
         if context is None:
             context = {}
@@ -170,7 +173,7 @@ class wizard_import_batch(osv.osv_memory):
             # Product
             product_id = None
             try:
-                product_id = self.get_product_by_default_code(cr, uid, get_cell(line_data, 'product_id'),
+                product_id = self.get_product_by_default_code(cr, uid, get_cell(line_data, 'product_id').strip(),
                                                               context=context)
             except UnifieldImportException as e:
                 save_error(e)
@@ -192,8 +195,17 @@ class wizard_import_batch(osv.osv_memory):
                 continue
 
             # Make consistency checks
-            name = get_cell(line_data, 'name')
+            name = get_cell(line_data, 'name').strip()
             life_date = get_cell(line_data, 'life_date')
+            if datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S,%f') < datetime(1900, 01, 01, 0, 0, 0):
+                date_format = date_tools.get_date_format(cr, uid, context=context)
+                save_error(
+                    _('You cannot create a batch number with an expiry date before %s') % (
+                        datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                    ),
+                )
+            continue
+
             product_brw = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'], context=context)
 
             if not product_brw['batch_management'] and not product_brw['perishable']:

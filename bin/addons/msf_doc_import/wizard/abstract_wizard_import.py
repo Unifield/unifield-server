@@ -363,7 +363,14 @@ class abstract_wizard_import(osv.osv_memory):
 
         file_obj.getNbRows()
         # iterator on rows
-        return file_obj.getRows(), file_obj.getNbRows()
+        try:
+            res = file_obj.getRows(), file_obj.getNbRows()
+            return res
+        except TypeError as e:
+            raise osv.except_osv(
+                _('Error'),
+                _('An error occurs during the reading of the file. Please contact an administrator and give him the import file and this error: %s') % e,
+            )
 
     def check_headers(self, headers_row, headers_title, context=None):
         """
