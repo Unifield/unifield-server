@@ -281,7 +281,8 @@ class binary(_column):
             # content if it's needed at some point.
             # TODO: after 6.0 we should consider returning a dict with size and content instead of
             #       having an implicit convention for the value
-            if val and context.get('bin_size_%s' % name, context.get('bin_size')):
+            if val and context.get('bin_size_%s' % name, context.get('bin_size')) and\
+                    isinstance(val, (int, long, float)):
                 res[i] = tools.human_size(long(val))
             else:
                 res[i] = val
