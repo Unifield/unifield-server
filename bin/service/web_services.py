@@ -848,7 +848,7 @@ class report_spool(netsvc.ExportService):
             data.append(tmp_data)
         return data
 
-    def exp_export(self, db_name, uid,  fields, domain, model, fields_name,
+    def exp_export(self, db_name, uid, fields, domain, model, fields_name,
                    group_by=None, export_format='csv', ids=None, context=None):
         res = {'result': None}
         db, pool = pooler.get_db_and_pool(db_name)
@@ -866,7 +866,7 @@ class report_spool(netsvc.ExportService):
             return res
         return background_id
 
-    def export(self, cr, pool, uid,  fields, domain, model, fields_name,
+    def export(self, cr, pool, uid, fields, domain, model, fields_name,
                bg_id, group_by=None, export_format='csv', ids=None, res=None,
                context=None):
 
