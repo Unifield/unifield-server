@@ -82,7 +82,8 @@ your support team and give us this message.
         d = False
         for dformat in date_format:
             try:
-                d = str(DateTime.strptime(date_value, dformat))
+                d = DateTime.strptime(date_value, dformat)
+                d = d.strftime('%Y-%m-%d %H:%M:%S')
             except ValueError:
                 continue
 
