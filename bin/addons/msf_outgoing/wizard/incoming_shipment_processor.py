@@ -325,7 +325,7 @@ class stock_incoming_processor(osv.osv):
                 incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
             else:
                 raise osv.except_osv(
-                    _('Error'), _('The incoming shipment as already been processed, you can not save it as draft.')
+                    _('Error'), _('The incoming shipment has already been processed, you cannot save it as draft.')
                 )
 
         return {}

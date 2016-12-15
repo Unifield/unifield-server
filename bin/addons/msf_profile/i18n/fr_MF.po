@@ -75786,3 +75786,9 @@ msgstr "Seul un lettrage complet est autorisé lorsque des entrées de deux lett
 #, python-format
 msgid "Both Debit and Credit lines are required for reconciliation."
 msgstr "Un lettrage requiert à la fois des lignes en débit et en crédit."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:328
+#, python-format
+msgid "The incoming shipment has already been processed, you cannot save it as draft."
+msgstr "La livraison a déjà été traitée, vous ne pouvez pas la sauvegarder en brouillon."
