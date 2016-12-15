@@ -143,7 +143,7 @@ class ppl_processor(osv.osv):
 
 
 
-        if missing_ids or to_smaller_ids or overlap_ids or gap_ids:
+        if missing_ids or to_smaller_ids or overlap_ids or gap_ids or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
             return {
                 'type': 'ir.actions.act_window',
@@ -155,11 +155,6 @@ class ppl_processor(osv.osv):
                 'res_id': ids[0],
                 'context': context,
             }
-        elif just_check:
-            raise osv.except_osv(
-                _('Error'),
-                _('No error found. You can continue the processing'),
-            )
 
         # Call stock_picking method which returns action call
         return picking_obj.do_ppl_step1(cr, uid, ids, context=context)
