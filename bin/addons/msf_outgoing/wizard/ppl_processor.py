@@ -115,19 +115,15 @@ class ppl_processor(osv.osv):
                     # Rule #2: if from[i] == from[i-1] -> to[i] == to[i-1]
                     if (seq[0] == seqb[0]) and not (seq[1] == seqb[1]):
                         overlap_ids.append(seq[2])
-                        ok_ids.remove(seq[2])
                     # Rule #3: if from[i] != from[i-1] -> from[i] == to[i-1]+1
                     if (seq[0] != seqb[0]) and not (seq[0] == seqb[1] + 1):
                         if seq[0] < seqb[1] + 1:
                             overlap_ids.append(seq[2])
-                            ok_ids.remove(seq[2])
                         if seq[0] > seqb[1] + 1:
                             gap_ids.append(seq[2])
-                            ok_ids.remove(seq[2])
                 # rule #4: to[i] >= from[i]
                 if not (seq[1] >= seq[0]):
                     to_smaller_ids.append(seq[2])
-                    ok_ids.remove(seq[2])
 
         if missing_ids:
             ppl_move_obj.write(cr, uid, missing_ids, {'integrity_status': 'missing_1'}, context=context)
@@ -141,7 +137,8 @@ class ppl_processor(osv.osv):
         if gap_ids:
             ppl_move_obj.write(cr, uid, gap_ids, {'integrity_status': 'gap'}, context=context)
 
-
+        if not (missing_ids or to_smaller_ids or overlap_ids or gap_ids) and just_check:
+            ppl_move_obj.write(cr, uid, ok_ids, {'integrity_status': 'empty'}, context=context)
 
         if missing_ids or to_smaller_ids or overlap_ids or gap_ids or just_check:
             view_id = data_obj.get_object_reference(cr, uid, 'msf_outgoing', 'ppl_processor_step1_form_view')[1]
