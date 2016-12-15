@@ -136,24 +136,23 @@ class ir_attachment(osv.osv):
                 vals['datas'] = datas
             else:
                 vals['datas'] = '' # erase the old value in DB if any
-            for attachment in self.read(cr, uid, ids, ['res_model',
-                                                       'res_id', 'datas_fname', 'path']):
-                # update the data read with the new ones
-                attachment.update(vals)
-                vals['size'] = self.get_size(vals['datas'])
-                if not store_data_in_db:
+            decoded_datas = base64.decodestring(datas)
+            vals['size'] = self.get_octet_size(decoded_datas)
+
+            if not store_data_in_db:
+                for attachment in self.read(cr, uid, ids, ['datas_fname', 'path']):
                     # delete the previous attachment on local file system if any
                     if attachment['path']:
                         if os.path.exists(attachment['path']):
                             os.remove(attachment['path'])
-
-                    local_filename = self.get_file_name(cr, uid, attachment,
-                                                        attachment['id'])
+                    local_filename = self.get_file_name(cr, uid, attachment['id'],
+                            datas_fname=attachment.get('datas_fname', ''))
                     vals['path'] = self.get_file_path(cr, uid, local_filename)
-                    f = open(vals['path'], 'wb')
-                    f.write(base64.decodestring(datas))
-                    f.close()
-                return super(ir_attachment, self).write(cr, uid, attachment['id'], vals, context)
+                    with open(vals['path'], 'wb') as f:
+                        f.write(decoded_datas)
+                    super(ir_attachment, self).write(cr, uid, attachment['id'], vals, context)
+                return True
+            return super(ir_attachment, self).write(cr, uid, ids, vals, context)
 
         return super(ir_attachment, self).write(cr, uid, ids, vals, context)
 
@@ -222,13 +221,12 @@ class ir_attachment(osv.osv):
             root_path = self.get_root_path(cr, uid)
         return os.path.join(root_path, file_name)
 
-    def get_file_name(self, cr, uid, values, attachment_id):
+    def get_file_name(self, cr, uid, attachment_id, datas_fname=None):
         '''
         generate a unique name for the attachment
         '''
-        resource_name = self._name_get_resname(cr, uid, [values['id']],
-                                               None, None, None)[values['id']]
-        datas_fname = values.get('datas_fname', '')
+        resource_name = self._name_get_resname(cr, uid, [attachment_id,],
+                                               None, None, None)[attachment_id]
         file_name = '%s_%s_%s' % (resource_name or 'NOT_LINKED_ATTACHMENT',
                                   attachment_id, datas_fname)
 
@@ -245,27 +243,20 @@ class ir_attachment(osv.osv):
             datas = values.pop('datas')
         else:
             datas = values['datas']
+
+        decoded_datas = base64.decodestring(datas)
+        values['size'] = self.get_octet_size(decoded_datas)
         attachment_id = super(ir_attachment, self).create(cr, uid, values,
                                                           context)
-
-        new_values = self._add_missing_default_values(cr, uid, values, context)
-        new_values['id'] = attachment_id
-        local_filename = self.get_file_name(cr, uid, new_values, attachment_id)
-
         if not store_data_in_db:
-            new_values['path'] = self.get_file_path(cr, uid, local_filename)
+            local_filename = self.get_file_name(cr, uid, attachment_id,
+                    datas_fname=values.get('datas_fname', ''))
+            new_path = self.get_file_path(cr, uid, local_filename)
+            self.write(cr, uid, attachment_id, {'path': new_path}, context=context)
 
-        new_values['size'] = self.get_size(datas)
-        new_values.pop('id')
-        if 'datas' in new_values:
-            new_values.pop('datas')
-        self.write(cr, uid, attachment_id, new_values, context=context)
-
-        if not store_data_in_db:
             # create the file on the local file system
-            f = open(new_values['path'], 'wb')
-            f.write(base64.decodestring(datas))
-            f.close()
+            with open(new_path, 'wb') as f:
+                f.write(decoded_datas)
         return attachment_id
 
     def action_get(self, cr, uid, context=None):
@@ -274,33 +265,53 @@ class ir_attachment(osv.osv):
 
     def _name_get_resname(self, cr, uid, ids, object, method, context):
         data = {}
-        for attachment in self.browse(cr, uid, ids, context=context):
-            model_object = attachment.res_model
-            res_id = attachment.res_id
+        for attachment in self.read(cr, uid, ids, ['res_model', 'res_id'], context=context):
+            model_object = attachment['res_model']
+            res_id = attachment['res_id']
             if model_object and res_id:
                 model_pool = self.pool.get(model_object)
-                res = model_pool.name_get(cr,uid,[res_id],context)
+                res = model_pool.name_get(cr, uid, [res_id], context)
                 res_name = res and res[0][1] or False
                 if res_name:
                     field = self._columns.get('res_name',False)
                     if field and len(res_name) > field.size:
                         res_name = res_name[:field.size-3] + '...'
-                data[attachment.id] = res_name
+                data[attachment['id']] = res_name
             else:
-                data[attachment.id] = False
+                data[attachment['id']] = False
         return data
 
-    def get_size(self, sz):
-        """
-        Return the size in a human readable format (in Kb)
-        """
-        if not sz:
-            return False
+    def get_octet_size(self, data):
+        return len(data)
 
-        if isinstance(sz, basestring):
-            sz = len(sz)
-        s = float(sz)/1024
-        return round(s)
+    def _get_readable_size(self, cr, uid, ids, field_name, args, context=None):
+        read_result = self.read(cr, uid, ids, ['size'], context=context)
+        result = {}.fromkeys(ids, '0 o')
+        for attachment in read_result:
+            result[attachment['id']] = self.get_readable_size(attachment['size'])
+        return result
+
+    def get_readable_size(self, data):
+        """
+        Return the size in a human readable format
+        """
+        if not data:
+            return '0 o'
+
+        units = ('o', 'Kio', 'Mio', 'Gio' 'Tio')
+        if isinstance(data, basestring):
+            size = float(len(data))
+        elif isinstance(data, (int, long)):
+            size = float(data)
+        elif isinstance(data, float):
+            size = data
+        else:
+            return '0 o'
+        unit_index = 0
+        while size >= 1024 and unit_index < len(units) - 1:
+            size = size / 1024
+            unit_index += 1
+        return "%0.2f %s" % (size, units[unit_index])
 
     _name = 'ir.attachment'
     _columns = {
@@ -323,7 +334,10 @@ class ir_attachment(osv.osv):
         'create_date': fields.datetime('Date Created', readonly=True),
         'create_uid':  fields.many2one('res.users', 'Owner', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', change_default=True),
-        'size': fields.float('Size of the file (in Kb)'),
+        'size': fields.float('Size of the file'),
+        'size_human_readable': fields.function(_get_readable_size, type='char',
+            size=128, string='Size of the file', method=True,
+            store={'ir.attachment': (lambda self, cr, uid, ids, c=None: ids, ['size'], 10),}),
     }
 
     _defaults = {
@@ -543,9 +557,10 @@ class attachment_config(osv.osv):
             counter = 0
             if attachment_id_to_move:
                 for attachment in attachment_obj.read(cr, uid, attachment_id_to_move,
-                                                      ['path', 'res_model', 'res_id', 'datas_fname'], context):
+                                                      ['datas_fname'], context):
                     old_path = attachment['path']
-                    file_name = attachment_obj.get_file_name(cr, uid, attachment, attachment['id'])
+                    file_name = attachment_obj.get_file_name(cr, uid, attachment['id'],
+                            datas_fname=attachment.get('datas_fname', ''))
                     new_path = attachment_obj.get_file_path(cr, uid, file_name,
                                                             root_path=new_root_path)
                     if new_path == old_path:
