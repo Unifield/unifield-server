@@ -197,7 +197,9 @@ class account_move_line(osv.osv):
                         anal_amount = distrib_line.percentage*amount/100
                         anal_amount_rounded = round(anal_amount, 2)
                         dl_total_amount_rounded += anal_amount_rounded
-                        if anal_amount_rounded > aji_greater_amount['amount']:
+                        # get the AJI with the biggest absolute value (it will be used for a potential adjustment
+                        # to ensure JI = AJI amounts)
+                        if abs(anal_amount_rounded) > abs(aji_greater_amount['amount']):
                             # US-119: breakdown by fp line or free 1, free2
                             # register the aji that will have the greatest amount
                             aji_greater_amount['amount'] = anal_amount_rounded
@@ -254,7 +256,7 @@ class account_move_line(osv.osv):
                         if aji_greater_amount['is']:
                             aji_greater_amount['id'] = aji_id
 
-                    if amount > 0. and dl_total_amount_rounded > 0.:
+                    if abs(amount) > 0. and abs(dl_total_amount_rounded) > 0.:
                         if abs(dl_total_amount_rounded - amount) > 0.001 and \
                             aji_greater_amount['id']:
                             # US-119 deduce the rounding gap and apply it
