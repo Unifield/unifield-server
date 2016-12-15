@@ -147,7 +147,7 @@ class ppl_processor(osv.osv):
                 'context': context,
             }
         elif context.get('just_check_errors'):
-            raise osv.excep_osv(
+            raise osv.except_osv(
                 _('Error'),
                 _('No error found. You can continue the processing'),
             )
