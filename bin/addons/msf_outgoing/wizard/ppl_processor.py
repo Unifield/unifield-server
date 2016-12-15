@@ -663,7 +663,7 @@ class ppl_move_processor(osv.osv):
         Remove the integrity status value if from_pack or to_pack is changed.
         """
         if vals.get('from_pack') or vals.get('to_pack'):
-            vals['integrity_status'] = False
+            vals['integrity_status'] = 'empty'
 
         return super(ppl_move_processor, self).write(cr, uid, ids, vals, context=context)
 
