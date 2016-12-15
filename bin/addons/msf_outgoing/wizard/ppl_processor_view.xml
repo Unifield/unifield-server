@@ -17,6 +17,7 @@
                         <separator string="Actions" colspan="6" />
                         <label colspan="4"> </label>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
+                        <button name="do_check_ppl" type="object" string="Check integrity" icon="gtk-camera-test" />
                         <button name="do_ppl_step1" type="object" string="Next" icon="gtk-go-forward" />
                     </group>
                 </form>
@@ -79,8 +80,8 @@
                            />
                     <field name="prodlot_id" readonly="1" />
                     <field name="qty_per_pack" />
-                    <field name="from_pack" onchange="from_to_pack_change(from_pack, to_pack)" />
-                    <field name="to_pack" onchange="from_to_pack_change(from_pack, to_pack)" />
+                    <field name="from_pack" on_change="from_to_pack_change(from_pack, to_pack)" />
+                    <field name="to_pack" on_change="from_to_pack_change(from_pack, to_pack)" />
                     <button name="open_split_wizard"
                             type="object"
                             icon="terp-stock_effects-object-colorize"
