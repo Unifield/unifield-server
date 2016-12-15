@@ -15,9 +15,9 @@
                            colspan="4" nolabel="1" />
                     <group colspan="4" col="6" name="actions">
                         <separator string="Actions" colspan="6" />
-                        <label colspan="4"> </label>
+                        <label colspan="3"> </label>
                         <button special="cancel" string="Cancel" icon="gtk-cancel" />
-                        <button name="do_check_ppl" type="object" string="Check integrity" icon="gtk-camera-test" />
+                        <button name="do_check_ppl" type="object" string="Check integrity" icon="gtk-info" />
                         <button name="do_ppl_step1" type="object" string="Next" icon="gtk-go-forward" />
                     </group>
                 </form>
