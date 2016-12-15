@@ -1450,11 +1450,15 @@ class orm_template(object):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
                 if trans:
                     node.set('sum', trans)
-            elif node.get('confirm'):
+            if node.get('confirm'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
                 if trans:
                     node.set('confirm', trans)
-            elif node.get('string'):
+            if node.get('help'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('help'))
+                if trans:
+                    node.set('help', trans)
+            if node.get('string'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
                     # If translation is same as source, perhaps we'd have more luck with the alternative model name
@@ -1462,7 +1466,7 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            elif node.tag == 'translate':
+            if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text
                 for child in node.getchildren():
