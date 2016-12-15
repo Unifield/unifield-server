@@ -484,7 +484,13 @@ class account_move_line(osv.osv):
             context = {}
         if context.get('from_web_menu', False):
             for ml in self.browse(cr, uid, ids):
-                if ml.move_id and ml.move_id.status == 'sys':
+                # US-1822 When unreconciling entries, to check if the write can be done use the reconciliation status
+                # (manual / auto) instead of the JI one
+                if 'unreconcile_date' in vals and vals['unreconcile_date']:
+                    reconciliation = ml.reconcile_id or ml.reconcile_partial_id or False
+                    if reconciliation and reconciliation.type == 'auto':
+                        raise osv.except_osv(_('Warning'), _('Only manually reconciled entries can be unreconciled.'))
+                elif ml.move_id and ml.move_id.status == 'sys':
                     raise osv.except_osv(_('Warning'), _('You cannot change Journal Items that comes from the system!'))
             # Check date validity with period
             self._check_date_validity(cr, uid, ids, vals)

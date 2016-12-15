@@ -75797,3 +75797,9 @@ msgstr "La livraison a déjà été traitée, vous ne pouvez pas la sauvegarder 
 #: view:stock.picking:0
 msgid "Delivery orders which are in draft state"
 msgstr "Bons de livraison dans l'état brouillon"
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:491
+#, python-format
+msgid "Only manually reconciled entries can be unreconciled."
+msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
