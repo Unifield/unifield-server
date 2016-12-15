@@ -75799,4 +75799,7 @@ msgstr "Partenaire créé sur cette instance"
 msgid "A line was added to the %s %s to re-source the canceled line."
 msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."
 
-
+#. module: msf_outgoing
+#: view:ppl.processor:0
+msgid "Check integrity"
+msgstr "Vérifier les erreurs"
