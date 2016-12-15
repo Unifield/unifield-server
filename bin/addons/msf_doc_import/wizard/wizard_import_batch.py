@@ -170,6 +170,9 @@ class wizard_import_batch(osv.osv_memory):
                 )
                 continue
 
+            import pdb
+            pdb.set_trace()
+
             # Product
             product_id = None
             try:
@@ -204,7 +207,7 @@ class wizard_import_batch(osv.osv_memory):
                         datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                     ),
                 )
-            continue
+                continue
 
             product_brw = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'], context=context)
 
