@@ -155,10 +155,6 @@ class stock_incoming_processor(osv.osv):
                       'return to IN form view and re-try.'),
                 )
 
-            self.write(cr, uid, [proc.id], {
-                'already_processed': True,
-            }, context=context)
-
             for line in proc.move_ids:
                 # If one line as an error, return to wizard
                 if line.integrity_status != 'empty':
@@ -171,6 +167,10 @@ class stock_incoming_processor(osv.osv):
                         'target': 'new',
                         'context': context,
                     }
+
+            self.write(cr, uid, [proc.id], {
+                'already_processed': True,
+            }, context=context)
 
             for line in proc.move_ids:
                 # if no quantity, don't process the move
@@ -318,7 +318,16 @@ class stock_incoming_processor(osv.osv):
                 _('Processing Error'),
                 _('No data to process !'),
             )
-        incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+
+        # make sure that the current incoming proc is not already processed :
+        for r in incoming_obj.read(cr, uid, ids, ['already_processed']):
+            if not r['already_processed']:
+                incoming_obj.write(cr, uid, ids, {'draft': True}, context=context)
+            else:
+                raise osv.except_osv(
+                    _('Error'), _('The incoming shipment has already been processed, you cannot save it as draft.')
+                )
+
         return {}
 
     def force_process(self, cr, uid, ids, context=None):
