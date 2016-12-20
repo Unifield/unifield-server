@@ -28112,8 +28112,9 @@ msgstr "Méthode"
 #. modules: procurement, procurement_report
 #: model:ir.ui.menu,name:procurement.menu_stock_proc_schedulers
 #: model:ir.actions.act_window,name:procurement_report.action_compute_schedulers_purchase
-msgid "Auto PO Creation"
-msgstr "Création Auto BCs"
+#: model:ir.actions.act_window,name:procurement.action_compute_schedulers
+msgid "Auto POs Creation"
+msgstr "Création Auto. BCs"
 
 #. module: stock_forecast
 #: model:ir.actions.server,name:stock_forecast.action_stock_forecast
@@ -75858,13 +75859,12 @@ msgstr "Créé localement"
 msgid "Partner Created on this instance"
 msgstr "Partenaire créé sur cette instance"
 
-<<<<<<< TREE
 #. module: sale_override
 #: code:addons/sale_override/sale.py:3119
 #, python-format
 msgid "A line was added to the %s %s to re-source the canceled line."
 msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."
-=======
+
 #. module: account_reconciliation
 #: code:addons/account_reconciliation/wizard/account_reconcile.py:207
 #, python-format
@@ -75882,14 +75882,13 @@ msgstr "Seul un lettrage complet est autorisé lorsque des entrées de deux lett
 #, python-format
 msgid "Both Debit and Credit lines are required for reconciliation."
 msgstr "Un lettrage requiert à la fois des lignes en débit et en crédit."
->>>>>>> MERGE-SOURCE
 
 #. module: msf_outgoing
-<<<<<<< TREE
 #: view:ppl.processor:0
 msgid "Check integrity"
 msgstr "Vérifier les erreurs"
-=======
+
+#. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:328
 #, python-format
 msgid "The incoming shipment has already been processed, you cannot save it as draft."
