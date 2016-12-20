@@ -325,11 +325,12 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         result = {}
 
         # UF-1411 : Compute the virtual stock on Stock + Input locations
+        # US-697 : Remove the Input locations to the computation stock quantities
         wh_location_ids = []
         wids = warehouse_obj.search(cr, uid, [], context=context)
         for w in warehouse_obj.browse(cr, uid, wids, context=context):
             wh_location_ids.append(w.lot_stock_id.id)
-            wh_location_ids.append(w.lot_input_id.id)
+            #wh_location_ids.append(w.lot_input_id.id)
 
         # For each sourcing line
         for sl in self.browse(cr, uid, ids, context):
@@ -672,7 +673,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             multi='stock_qty',
         ),
         'virtual_stock': fields.function(
-            _getVirtualStock, method=True,
+            _getVirtualStock,
+            method=True,
             type='float',
             string='Virtual Stock',
             digits_compute=dp.get_precision('Product UoM'),
