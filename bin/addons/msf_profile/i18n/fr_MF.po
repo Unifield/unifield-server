@@ -9866,10 +9866,15 @@ msgstr "Lors de la valorisation en temps réel de l'inventaire, des lignes d'éc
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
-#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
 #: report:sale.order.allocation.report:0
 msgid "Field Order"
 msgstr "Commande de Terrain"
+
+#. modules: tender_flow, purchase_compare_rfq
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
+#: field:wizard.compare.rfq,sale_order_id:0
+msgid "Field Order"
+msgstr "Document source"
 
 #. module: base
 #: field:res.config.users,action_id:0
@@ -45461,16 +45466,20 @@ msgstr "Conseil"
 msgid "Accounts Type Allowed (empty for no control)"
 msgstr "Type de Comptes Autorisés (vides pour non contrôle)"
 
-#. modules: return_claim, sourcing, documents_done, tender_flow, analytic_distribution, analytic_distribution_supply
+#. modules: return_claim, sourcing, documents_done, analytic_distribution, analytic_distribution_supply
 #: field:analytic.distribution.wizard,sale_order_id:0
 #: selection:documents.done.wizard,model:0
 #: field:return.claim,so_id_return_claim:0
 #: view:sourcing.line:0
-#: view:tender:0
-#: field:tender,sale_order_id:0
 #: field:account.invoice,order_ids:0
 msgid "Sale Order"
 msgstr "Commande de Terrain"
+
+#. module: tender_flow
+#: view:tender:0
+#: field:tender,sale_order_id:0
+msgid "Sale Order"
+msgstr "Document source"
 
 #. modules: purchase, account, base_setup, sale, stock
 #: model:ir.ui.menu,name:account.periodical_processing_invoicing
