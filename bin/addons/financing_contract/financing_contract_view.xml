@@ -159,11 +159,12 @@
                 <field name="priority" eval="250" />
                 <field name="type">tree</field>
                 <field name="arch" type="xml">
-                    <tree string="Account/Destination" colors="grey:used_in_contract" notselectable="used_in_contract">
+                    <tree string="Account/Destination" colors="grey:used_in_contract;red:disabled" notselectable="used_in_contract">
                         <field name="name" invisible="1"/>
                         <field name="account_id"/>
                         <field name="destination_id"/>
                         <field name="used_in_contract" invisible='1'/>
+                        <field name="disabled" invisible="1"/>
                         </tree>
                 </field>
             </record>
