@@ -163,6 +163,8 @@ class Search(Form):
             search_domain=params.search_domain or [],
         )
 
+        if params.previous_active_id:
+            ctx['previous_active_id'] = params.previous_active_id
         if params.active_id and not params.active_ids:
             ctx['active_ids'] = [params.active_id]
 
