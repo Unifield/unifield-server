@@ -48,12 +48,6 @@ class analytic_account(osv.osv):
         # Copy analytic distribution
         return super(analytic_account, self).copy_data(cr, uid, a_id, default, context)
 
-    def _get_record_id(self, cr, uid, ids, field_name, args, context=None):
-        res = {}
-        for id in ids:
-            res[id] = id
-        return res
-
     def _get_active(self, cr, uid, ids, field_name, args, context=None):
         '''
         If date out of date_start/date of given analytic account, then account is inactive.
@@ -123,7 +117,6 @@ class analytic_account(osv.osv):
         'destination_ids': many2many_notlazy('account.account', 'account_destination_link', 'destination_id', 'account_id', 'Accounts'),
         'tuple_destination_account_ids': many2many_sorted('account.destination.link', 'funding_pool_associated_destinations', 'funding_pool_id', 'tuple_id', "Account/Destination"),
         'hide_closed_fp': fields.function(_get_active, fnct_search=_search_closed_by_a_fp, type="boolean", method=True, store=False, string="Linked to a soft/hard closed contract?"),
-        'record_id': fields.function(_get_record_id, method=True, type='integer', string='Database ID'),
     }
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
