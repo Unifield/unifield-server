@@ -157,7 +157,10 @@ class account_invoice(osv.osv):
             src = []
             lines = []
             if invoice.move_id:
-                for m in invoice.move_id.line_id:
+                # US-1882 The payments should only concern the "header line" of the SI on the counterpart account.
+                # For example the import of a tax line shouldn't be considered as a payment (out or in).
+                for m in [ml for ml in invoice.move_id.line_id if ml.account_id == invoice.account_id
+                          and abs(abs(invoice.amount_total) - abs(ml.amount_currency)) <= 10**-3]:
                     temp_lines = []
                     if m.reconcile_id:
                         temp_lines = map(lambda x: x.id, m.reconcile_id.line_id)
