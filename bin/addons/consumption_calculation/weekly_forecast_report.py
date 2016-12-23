@@ -535,7 +535,7 @@ class weekly_forecast_report(osv.osv):
                     weekly_cons = cons
                     if report.interval_type == 'week':
                         weekly_cons = round(cons / 30 * 7, 2)
-                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value'].get('cons', weekly_cons)
+                        weekly_cons = uom_obj._change_round_up_qty(new_cr, uid, product['uom_id'][0], weekly_cons, 'cons', result={})['value'].get('cons', round(weekly_cons))
 
                     line_values += """<Row>
                           <Cell ss:StyleID=\"line\"><Data ss:Type=\"String\">%(product_code)s</Data></Cell>
