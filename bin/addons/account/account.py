@@ -1539,9 +1539,10 @@ class account_move(osv.osv):
             # When clicking on "Save" for a MANUAL Journal Entry:
             # IF there are JI, check that there are at least 2 lines
             # and that the entry is balanced using the booking amounts
+            aml_duplication = '__copy_data_seen' in context and 'account.move.line' in context['__copy_data_seen'] or False
             if context.get('from_web_menu', False) and move.line_id \
                     and context.get('journal_id', False) and not context.get('button', False) \
-                    and not context.get('copy'):
+                    and not context.get('copy') and not aml_duplication:
                 if len(move.line_id) < 2:
                     raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
                 elif abs(amount_currency) > 10 ** -4:
