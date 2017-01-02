@@ -424,6 +424,7 @@ def act_window_opener(action, data):
         action['target'] = 'popup'
         open_new_tab = True
 
+
     # search_view key in action is >8k added to the URL every time, which
     # breaks firefox (and probably Apache) as it's shoved into a header and
     # then used back as a URL
@@ -458,6 +459,8 @@ def act_window_opener(action, data):
 
     cherrypy.response.headers['X-Target'] = action['target']
     cherrypy.response.headers['Location'] = url
+    if action and action.get('keep_open'):
+        cherrypy.response.headers['keep-open'] = 1
     return """<script type="text/javascript">
         window.top.openAction('%s', '%s');
     </script>
@@ -594,6 +597,8 @@ def close_popup(reload=True, o2m_refresh=False):
 
 @tools.expose(template="/openerp/controllers/templates/report.mako")
 def report_link(report_name, **kw):
+    if kw.get('keep_open'):
+        cherrypy.response.headers['keep-open'] = 1
     cherrypy.response.headers['X-Target'] = 'download'
     cherrypy.response.headers['Location'] = tools.url(
         '/openerp/report', report_name=report_name, **kw)
