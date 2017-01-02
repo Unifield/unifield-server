@@ -75848,3 +75848,9 @@ msgstr "Bons de livraison dans l'état brouillon"
 #, python-format
 msgid "Only manually reconciled entries can be unreconciled."
 msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
+
+#. module: account_hq_entries
+#: code:addons/account_hq_entries/wizard/hq_entries_split.py:300
+#, python-format
+msgid "Wrong total: %.2f, instead of: %.2f"
+msgstr "Total erroné : %.2f, au lieu de : %.2f"
