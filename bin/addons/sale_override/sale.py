@@ -1520,7 +1520,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
 
-        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
+        self.log(cr, uid, order_id, _('The %s %s has been created to re-source the canceled needs') % 
+            (order.procurement_request and 'Internal Request' or 'Field order', order_name),
+            context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
 
@@ -1609,7 +1611,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         '''
         Hook the message displayed on sale order confirmation
         '''
-        return _('The Field order \'%s\' has been confirmed.') % (kwargs['order'].name,)
+        return _('The %s \'%s\' has been confirmed.') % (kwargs['order'].procurement_request and 'Internal Request' or 'Field order', kwargs['order'].name)
 
     def action_purchase_order_create(self, cr, uid, ids, context=None):
         '''
@@ -3097,7 +3099,8 @@ class sale_order_line(osv.osv):
 
         line_id = self.copy(cr, uid, line.id, values, context=context)
 
-        order_name = self.pool.get('sale.order').read(cr, uid, [order_id], ['name'], context=context)[0]['name']
+        order_read = order_obj.read(cr, uid, [order_id], ['name', 'procurement_request'], context=context)[0]
+        order_name, is_IR = order_read['name'], order_read['procurement_request']
 
         if line.order_id and line.order_id.procurement_request:
             view_id = data_obj.get_object_reference(cr, uid, 'procurement_request', 'procurement_request_form_view')[1]
@@ -3116,7 +3119,8 @@ class sale_order_line(osv.osv):
         form was opened with 'Enter a Reason for Incoming cancellation' name
         we just keep the view id (2 distincts ids for FO/IR)"""
         self.pool.get('sale.order').log(cr, uid, order_id,
-                                        _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name),
+                                        _('A line was added to the %s %s to re-source the canceled line.') %
+                                        (is_IR and 'Internal Request' or 'Field order', order_name),
                                         context={'view_id': context.get('view_id', False)})
 
         return line_id
