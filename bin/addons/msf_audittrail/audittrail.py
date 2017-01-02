@@ -26,6 +26,7 @@ from tools.translate import _
 from lxml import etree
 from datetime import datetime
 import ir
+import re
 import pooler
 import time
 import tools
@@ -850,6 +851,20 @@ class audittrail_log_line(osv.osv):
             # No translation
             if not res[line.id]:
                 res[line.id] = line.field_description
+
+            # In case of IR, we replace 'field order' string with 'Internal Request':
+            if line.object_id and line.res_id and line.object_id.model in ('sale.order.line', 'sale.order'):
+                so_id = [line.res_id] if isinstance(line.res_id, (int, long)) else line.res_id
+                if line.object_id.model == 'sale.order.line':
+                    sol = self.pool.get('sale.order.line').read(cr, uid, so_id, ['order_id'], context=context)[0]
+                    so_id = sol['order_id']
+                if isinstance(so_id, (int, long)):
+                    so_id = [so_id]
+                    
+                sale_order = self.pool.get('sale.order').read(cr, uid, so_id, ['procurement_request'], context=context)[0]
+                if sale_order['procurement_request']:
+                    insensitive_fo = re.compile(re.escape('field order'), re.IGNORECASE)
+                    res[line.id] = insensitive_fo.sub('Internal Request', res[line.id])
 
         return res
 
