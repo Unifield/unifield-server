@@ -259,6 +259,7 @@ class account_chart(osv.osv_memory):
            if not is_flat_view:
                 domain_tuples_str.insert(0, "('parent_id','=',False)")
            result['domain'] = "[%s]" % (', '.join(domain_tuples_str), )
+        result['keep_open'] = 1
         return result
 
     def button_export(self, cr, uid, ids, context=None):
@@ -320,6 +321,7 @@ class account_chart(osv.osv_memory):
             'currency': currency_name,
             'wiz_fields': wiz_fields,
             'target_filename': "Balance by account_%s_%s" % (instance_code, strftime('%Y%m%d')),
+            'keep_open': 1,
         } # context permit balance to be processed regarding context's elements
 # filename
         return {

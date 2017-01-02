@@ -165,6 +165,7 @@ class account_analytic_chart(osv.osv_memory):
             tree_view_id = tree_view_id and tree_view_id[1] or False
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
+        result['keep_open'] = 1
         return result
 
     def button_export(self, cr, uid, ids, context=None):
@@ -229,6 +230,7 @@ class account_analytic_chart(osv.osv_memory):
             'currency': currency_name,
             'wiz_fields': wiz_fields,
             'target_filename': "Balance by analytic account_%s_%s" % (instance_code, strftime('%Y%m%d')),
+            'keep_open': 1,
         } # context permit balance to be processed regarding context's elements
         return {
             'type': 'ir.actions.report.xml',

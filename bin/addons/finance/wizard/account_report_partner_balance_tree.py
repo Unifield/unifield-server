@@ -368,6 +368,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             context = {}
 
         data = {}
+        data['keep_open'] = 1
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
@@ -404,6 +405,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             'res_model': 'account.partner.balance.tree',
             'view_type': 'form',
             'view_mode': 'tree,form',
+            'keep_open': 1,
             'ref': 'view_account_partner_balance_tree',
             'domain': [
                 ('uid', '=', uid),
