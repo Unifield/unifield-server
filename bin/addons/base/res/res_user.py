@@ -72,6 +72,8 @@ class groups(osv.osv):
             if diff_users:
                 clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=ids)
                 map(clear, list(diff_users))
+        if 'menu_access' in vals or 'users' in vals:
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         return res
 
     def create(self, cr, uid, vals, context=None):
@@ -493,6 +495,7 @@ class users(osv.osv):
                any(self._is_erp_manager(cr, uid, ids, context=context).values()):
                 vals = {'synchronize': False}
                 res = super(users, self).write(cr, uid, ids, vals, context=context)
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
