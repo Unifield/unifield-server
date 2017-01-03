@@ -44,6 +44,8 @@ class analytic_distribution(osv.osv):
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
             return 'none'
         distrib = self.browse(cr, uid, distrib_id)
+        if not distrib.funding_pool_lines:
+            return 'none'
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',

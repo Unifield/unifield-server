@@ -844,6 +844,8 @@ class update_received(osv.osv):
                             m, sep, sdref = xmlid.partition('.')
                             if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
                                 return False
+                        if '/analytic_distribution/' in xmlid:
+                            return False
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
