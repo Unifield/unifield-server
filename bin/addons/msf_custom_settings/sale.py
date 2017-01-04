@@ -25,16 +25,42 @@
 from osv import osv
 from tools.translate import _
 
+from sale_override.sale import ORDER_TYPES_SELECTION
+
+
 class sale_order(osv.osv):
     _name = 'sale.order'
     _inherit = 'sale.order'
 
-    def onchange_order_type(self, cr, uid, id, order_type=None, partner_id=None, context=None):
+    def onchange_order_type(self, cr, uid, id, order_type=None, partner_id=None, source_type=None, context=None):
         """
         """
         res = {}
         if not order_type:
             return res
+
+        # Check the order_type is consistent with source_type
+        if source_type and source_type != order_type:
+            msg_data = {
+                'type': '',
+            }
+            for x in ORDER_TYPES_SELECTION:
+                if x[0] == source_type:
+                    msg_data['type'] = x[1]
+
+            msg = _('Only a \'%(type)s\' Field order must be used to source a \'%(type)s\' Purchase order') % (msg_data)
+            if id:
+                msg = '%s: %s' % (self.read(cr, uid, id, ['name'], context=context)[0]['name'], msg)
+            else:
+                msg = _('Current Field order: %s') % msg
+
+            return {
+                'warning': {
+                    'title': _('Error'),
+                    'message': msg,
+                }
+            }
+
         msg = _('Partner type is not compatible with given Order Type!')
         if order_type in ['regular', 'donation_st', 'loan', 'donation_exp']:
             # Check that partner correspond

@@ -65,6 +65,7 @@
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
                         <field name="order_type" />
+                        <field name="source_type" readonly="1" />
                         <field name="priority" />
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="2">

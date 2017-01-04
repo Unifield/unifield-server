@@ -39,6 +39,13 @@ from sale_override import SALE_ORDER_STATE_SELECTION
 from sale_override import SALE_ORDER_SPLIT_SELECTION
 from sale_override import SALE_ORDER_LINE_STATE_SELECTION
 
+ORDER_TYPES_SELECTION = [
+    ('regular', 'Regular'),
+    ('donation_exp', 'Donation before expiry'),
+    ('donation_st', 'Standard donation'),
+    ('loan', 'Loan'),
+]
+
 
 class sync_order_label(osv.osv):
     '''
@@ -596,6 +603,9 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         if 'loan_id' not in default:
             default.update({'loan_id': False})
 
+        if 'source_type' not in default:
+            default.update({'source_type': False})
+
         default.update({
             'order_policy': 'picking',
             'active': True,
@@ -873,9 +883,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         'client_order_ref': fields.char('Customer Reference', size=128),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'partner_id': fields.many2one('res.partner', 'Customer', readonly=True, states={'draft': [('readonly', False)]}, required=True, change_default=True, select=True),
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'), ],
-                                       string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
+        'order_type': fields.selection(ORDER_TYPES_SELECTION, string='Order Type', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'loan_id': fields.many2one('purchase.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -925,6 +933,11 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             string='FO/IR sourced',
         ),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'source_type': fields.selection(
+            string='Source Type',
+            selection=ORDER_TYPES_SELECTION,
+            readonly=True,
+        )
     }
 
     _defaults = {
@@ -961,8 +974,40 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
 
         return True
 
+    def _check_order_type(self, cr, uid, ids, context=None):
+        '''
+        Check the integrity of the order type and the source order type
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of sale.order to check
+        :param context: Context of the call
+        :return: True if the integrity is ok.
+        '''
+        err = []
+
+        for order_type in ORDER_TYPES_SELECTION:
+            order_ids = self.search(cr, uid, [
+                ('source_type', '=', order_type[0]),
+                ('order_type', '!=', order_type[0]),
+            ], context=context)
+            for ord in self.read(cr, uid, order_ids, ['name'], context=context):
+                err.append(_('%s: Only a \'%s\' Field order must be used to source a \'%s\' Purchase order') % (
+                    ord['name'],
+                    order_type[1],
+                    order_type[1],
+                ))
+
+        if err:
+            raise osv.except_osv(
+                _('Error'),
+                '\n'.join(x for x in err),
+            )
+
+        return True
+
     _constraints = [
         (_check_empty_line, 'All lines must have a quantity larger than 0.00', ['order_line']),
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source', ['source_type', 'order_type'])
     ]
 
     def _check_own_company(self, cr, uid, company_id, context=None):

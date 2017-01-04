@@ -18,7 +18,7 @@
                         <attribute name="invisible">1</attribute>
                     </xpath>
                     <xpath expr="/form/group/field[@name='order_type']" position="attributes">
-                        <attribute name="on_change">onchange_order_type(order_type, partner_id)</attribute>
+                        <attribute name="on_change">onchange_order_type(order_type, partner_id, source_type)</attribute>
                     </xpath>
                     <xpath expr="/form/notebook/page/group[2]" position="replace" >
                     </xpath>
