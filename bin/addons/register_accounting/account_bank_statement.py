@@ -1382,7 +1382,7 @@ class account_bank_statement_line(osv.osv):
                 amount = - amount_out
             else:
                 raise osv.except_osv(_('Error'), _('Please correct amount fields!'))
-        if amount:
+
             res.update({'amount': amount})
         return res
 
