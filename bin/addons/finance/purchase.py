@@ -52,11 +52,11 @@ class purchase_order(osv.osv):
             cr.execute("UPDATE purchase_order SET invoice_method = 'picking' WHERE id in %s", (tuple(ids),))
         return res
 
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False, source_type=False):
         """
         Change invoice method for in-kind donation
         """
-        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)
+        res = super(purchase_order, self).onchange_internal_type(cr, uid, ids, order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date, source_type)
         if order_type in ['in_kind']:
             v = res.get('value', {})
             v.update({'invoice_method': 'picking'})

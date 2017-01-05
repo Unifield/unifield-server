@@ -115,7 +115,8 @@
                     </xpath>
 
                     <xpath expr="/form/group/field[@name='company_id']" position="before">
-                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date)" />
+                        <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id, delivery_requested_date, source_type)" />
+                        <field name="source_type" />
                         <field name="priority" />
                         <newline />
                         <field name="categ" />

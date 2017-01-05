@@ -40,6 +40,24 @@ import decimal_precision as dp
 
 from purchase_override import PURCHASE_ORDER_STATE_SELECTION
 
+
+ORDER_TYPES_SELECTION = [
+    ('regular', _('Regular')),
+    ('donation_exp', _('Donation before expiry')),
+    ('donation_st', _('Standard donation')),
+    ('loan', _('Loan')),
+    ('in_kind', _('In Kind Donation')),
+    ('purchase_list', _('Purchase List')),
+    ('direct', _('Direct Purchase Order')),
+]
+
+SOURCE_TYPES = [
+    ('regular', ('regular', 'purchase_list'), (_('Regular'), _('Purchase List'))),
+    ('donation_exp', 'donation_exp', _('Donation before expiry')),
+    ('donation_st', 'donation_st', _('Standard donation')),
+    ('loan', 'loan', _('Loan')),
+]
+
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
     _rec_name = 'order_id'
@@ -432,10 +450,12 @@ class purchase_order(osv.osv):
 
 
     _columns = {
-        'order_type': fields.selection([('regular', 'Regular'), ('donation_exp', 'Donation before expiry'),
-                                        ('donation_st', 'Standard donation'), ('loan', 'Loan'),
-                                        ('in_kind', 'In Kind Donation'), ('purchase_list', 'Purchase List'),
-                                        ('direct', 'Direct Purchase Order')], string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'order_type': fields.selection(selection=ORDER_TYPES_SELECTION, string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
+        'source_type': fields.selection(
+            selection=ORDER_TYPES_SELECTION,
+            string='Source Type',
+            readonly=False,
+        ),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'categ': fields.selection(ORDER_CATEGORY, string='Order category', required=True, states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -559,8 +579,48 @@ class purchase_order(osv.osv):
                 return False
         return True
 
+    def _check_order_type(self, cr, uid, ids, context=None):
+        '''
+        Check the integrity of the order type and the source order type
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of sale.order to check
+        :param context: Context of the call
+        :return: True if the integrity is ok.
+        '''
+        err = []
+
+        for order_type in SOURCE_TYPES:
+            order_ids = self.search(cr, uid, [
+                ('source_type', '=', order_type[0]),
+                ('order_type', 'not in', hasattr(order_type[1], '__iter__') and order_type[1] or [order_type[1]]),
+            ], context=context)
+            for ord in self.read(cr, uid, order_ids, ['name'], context=context):
+                if hasattr(order_type[2], '__iter__'):
+                    order_types = ' / '.join('\'%s\'' % x for x in order_type[2])
+                else:
+                    order_types = '\'%s\'' % order_type[2]
+
+
+                err.append(_('%s: Only a %s Purchase order must be used to source a %s Internal request/Field order') % (
+                    ord['name'],
+                    order_types,
+                    order_types,
+                ))
+
+        if err:
+            raise osv.except_osv(
+                _('Error'),
+                '\n'.join(x for x in err),
+            )
+
+        return True
+
+
     _constraints = [
         (_check_po_from_fo, 'You cannot choose an internal supplier for this purchase order', []),
+        (_check_order_type, 'The order type of the order is not consistent with the order type of the source',
+         ['source_type', 'order_type'])
     ]
 
     def purchase_cancel(self, cr, uid, ids, context=None):
@@ -710,7 +770,7 @@ class purchase_order(osv.osv):
 
         return res
 
-    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False):
+    def onchange_internal_type(self, cr, uid, ids, order_type, partner_id, categ, dest_partner_id=False, warehouse_id=False, delivery_requested_date=False, source_type=False):
         '''
         Changes the invoice method of the purchase order according to
         the choosen order type
@@ -723,6 +783,36 @@ class purchase_order(osv.osv):
 #        d = {'partner_id': []}
         w = {}
         local_market = None
+
+        # Check the order_type is consistent with source_type
+        src_type = False
+        if source_type:
+            for stype in SOURCE_TYPES:
+                if stype[0] == source_type:
+                    src_type = stype
+                    break
+
+        if src_type:
+            if hasattr(src_type[2], '__iter__') and not isinstance(src_type[2], str):
+                msg_data = {'type': ' / '.join('\'%s\'' % x for x in src_type[2])}
+            else:
+                msg_data = {'type': '\'%s\'' % src_type}
+
+            msg = _('Only a %(type)s Purchase order must be used to source a %(type)s Internal request / Field order') % (msg_data)
+            if id:
+                msg = '%s: %s' % (self.read(cr, uid, ids, ['name'])[0]['name'], msg)
+            else:
+                msg = _('Current Field order: %s') % msg
+
+            return {
+                'warning': {
+                    'title': _('Error'),
+                    'message': msg,
+                },
+                'value': {
+                    'order_type': src_type[0],
+                }
+            }
 
         # check if the current PO was created from scratch :
         proc_obj = self.pool.get('procurement.order')
