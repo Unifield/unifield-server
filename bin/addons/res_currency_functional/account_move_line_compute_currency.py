@@ -503,7 +503,7 @@ class account_move_line_compute_currency(osv.osv):
             newvals['amount_currency'] = vals.get('debit_currency') or 0.0 - vals.get('credit_currency') or 0.0
             newvals['debit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('debit_currency') or 0.0, round=True, context=ctxcurr)
             newvals['credit'] = cur_obj.compute(cr, uid, currency_id, curr_fun, vals.get('credit_currency') or 0.0, round=True, context=ctxcurr)
-        elif (vals.get('debit') or vals.get('credit')) and not vals.get('amount_currency'):
+        elif (vals.get('debit') or vals.get('credit') or vals.get('debit') == vals.get('credit') == 0) and not vals.get('amount_currency'):
             newvals['credit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('credit') or 0.0, round=True, context=ctxcurr)
             newvals['debit_currency'] = cur_obj.compute(cr, uid, curr_fun, currency_id, vals.get('debit') or 0.0, round=True, context=ctxcurr)
             newvals['amount_currency'] = newvals['debit_currency'] - newvals['credit_currency']
