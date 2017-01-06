@@ -42,7 +42,6 @@
                    'view/sale_view.xml',
                    'view/tender_view.xml',
                    'view/product_view.xml',
-                   'view/shortcut_data.xml',
                    ],
     'demo_xml': [
     ],
