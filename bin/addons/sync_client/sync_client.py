@@ -328,24 +328,17 @@ def generate_new_hwid():
     logger = logging.getLogger('sync.client')
     mac_list = []
     if sys.platform == 'win32':
-        # generate a new hwid on windows
-        for line in os.popen("ipconfig /all"):
-            if line.lstrip().startswith('Physical Address'):
-                mac_list.append(line.split(':')[1].strip().replace('-',':'))
-
+        # generate a new hwid with uuid library
+        hw_hash = uuid.uuid1()
     else:
         for line in os.popen("/sbin/ifconfig"):
             if line.find('Ether') > -1:
                 mac_list.append(line.split()[4])
-
-    if not mac_list:
-        executable = sys.platform == 'win32' and 'ipconfig /all' or '/sbin/ifconfig'
-        raise Exception, '%s give no result, please check it is correctly installed' % executable
-
-    mac_list.sort()
-
-    logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
-    hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
+        if not mac_list:
+            raise Exception, '/sbin/ifconfig give no result, please check it is correctly installed'
+        mac_list.sort()
+        logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
+        hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
     logger.info('Hardware identifier: %s' % hw_hash)
     return hw_hash
 
