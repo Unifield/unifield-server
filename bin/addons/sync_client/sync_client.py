@@ -329,7 +329,7 @@ def generate_new_hwid():
     mac_list = []
     if sys.platform == 'win32':
         # generate a new hwid with uuid library
-        hw_hash = uuid.uuid1()
+        hw_hash = uuid.uuid1().hex
     else:
         for line in os.popen("/sbin/ifconfig"):
             if line.find('Ether') > -1:
