@@ -23,12 +23,12 @@
     "name": "MSF Delete Button",
     "version": "1.0",
     "depends": [
-                "stock",
-                "purchase",
-                "tender_flow",
-                "procurement_request",
-                "useability_dashboard_and_menu",
-                ],
+        "stock",
+        "purchase",
+        "tender_flow",
+        "procurement_request",
+        "useability_dashboard_and_menu",
+    ],
     "author": "MSF, TeMPO Consulting",
     "website": "",
     "category": "Specific Modules",
@@ -42,12 +42,11 @@
                    'view/sale_view.xml',
                    'view/tender_view.xml',
                    'view/product_view.xml',
-                   'view/shortcut_data.xml',
                    ],
     'demo_xml': [
     ],
     'test': [
-             ],
+    ],
     'installable': True,
     'active': False,
 }
