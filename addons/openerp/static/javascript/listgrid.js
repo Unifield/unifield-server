@@ -281,6 +281,7 @@ MochiKit.Base.update(ListView.prototype, {
 
 // pagination & reordering
 MochiKit.Base.update(ListView.prototype, {
+
     sort_by_order: function(column, field) {
         var $img = jQuery(field).find('img');
         if($img.length) {
@@ -289,15 +290,12 @@ MochiKit.Base.update(ListView.prototype, {
         }
         else this.sort_order = 'asc';
 
-        if (column == 'size_human_readable') {
-            this.sort_key = 'size';
-        }
-        else this.sort_key = column;
+        this.sort_key = column;
         if(this.ids.length) {
             this.reload();
         }
-        this.sort_key = column;
     },
+
 
     expand_all_group: function(pid) {
         if (!pid) {
