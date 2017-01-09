@@ -31,8 +31,6 @@ import os
 from os.path import join, isfile, basename
 import glob
 
-from pprint import pprint as pp
-
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 from distutils.sysconfig import get_python_lib
@@ -46,7 +44,7 @@ if os.name == 'nt':
     py2exe_keywords['console'] = [
         { "script": join("bin", "openerp-server.py"),
           "icon_resources": [(1, join("pixmaps","openerp-icon.ico"))]
-        }]
+          }]
     py2exe_keywords['options'] = {
         "py2exe": {
             "compressed": 0,
@@ -65,7 +63,7 @@ if os.name == 'nt':
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
-                "pylzma"
+                "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
             ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
@@ -140,7 +138,9 @@ def data_files():
     '''Build list of data files to be installed'''
     files = []
     if os.name == 'nt':
+        files.append(('.', [join('bin', 'histogram.py')]))
         files.append(('.', [join('bin', 'unifield-version.txt')]))
+        files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
@@ -257,5 +257,5 @@ setup(name             = name,
           'SSL' : ['pyopenssl'],
       },
       **py2exe_keywords
-)
+      )
 

@@ -78,7 +78,8 @@
     </record>
 
     <menuitem id="message_menu_id" name="Message Monitor"
-              parent="mon_menu" action="message_action"/>
+            groups="base.group_erp_manager"
+            parent="mon_menu" action="message_action"/>
 
   </data>
 </openerp>

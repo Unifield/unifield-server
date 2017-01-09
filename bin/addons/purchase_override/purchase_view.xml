@@ -36,7 +36,6 @@
                 </data>
             </field>
         </record>
-    
         <record id="purchase_order_type_form_view" model="ir.ui.view">
             <field name="name">purchase.order.type.form.view</field>
             <field name="model">purchase.order</field>
@@ -51,14 +50,15 @@
                             <html>
                                 <p id="view_order_requested_in_past"
                                     style="display:none; text-align:center; color:#f27d0c; font-weight:bold; font-size:1.2em">
-                                    WARNING: The requested date of this purchase order is in the past.
+                                    <translate>WARNING: The requested date of this purchase order is in the past.</translate>
+                                    <br />
                                 </p>
                                 <script language="javascript">
                                     var is_in_past = $('#requested_date_in_past').val();
                                     if (is_in_past == "1") {
                                         msg_dom = $('#view_order_requested_in_past');
                                         msg_dom.show();
-                                    } 
+                                    }
                                 </script>
                             </html>
                         </group>
@@ -146,6 +146,7 @@
                     </xpath>
 
                     <xpath expr="/form/notebook//tree//field[@name='price_subtotal']" position="after">
+                        <field name="red_color" invisible="1" />
                         <field name="rfq_ok" invisible="1" />
                         <field name="tender_line_id" invisible="1" />
                         <field name="fake_state" invisible="1" />
@@ -183,7 +184,9 @@
                       <field name="partner_id" string="Supplier" />
                       <field name="delivery_requested_date" />
                       <field name="origin" />
+                      <field name="customer_ref"/>
                       <field name="dest_partner_names" />
+                      <field name="line_count" />
                       <field name="shipped_rate" widget="progressbar" />
                       <field name="invoiced_rate" widget="progressbar" />
                       <field name="amount_total" />
@@ -365,10 +368,11 @@
                 <xpath expr="/form//label" position="replace">
                     <group colspan="4">
                         <html>
-                            <p>Please note that: </p>
-                            <p style="margin-left:10px">Orders will only be merged if: </p>
-                            <p style="margin-left:20px">* Purchase Orders are in draft</p>
-                            <p style="margin-left:20px">* Purchase Orders belong to the same supplier and the same currency</p>
+                            <p><translate>Please note that Orders will only be merged if: </translate></p>
+                            <ul>
+                                <li><translate>Purchase Orders are in draft</translate></li>
+                                <li><translate>Purchase Orders belong to the same supplier and the same currency</translate></li>
+                            </ul>
                         </html>
                     </group>
                     <separator colspan="4" />
@@ -377,16 +381,18 @@
                         <newline />
                         <field name="unmatched_categ" invisible="1" />
                         <html colspan="4">
-                            <p>All information of the PO template will be written in the new PO,</p>
-                            <p>except the Delivery Requested date which will be the earliest date of all POs.</p>
-                            <p>Any sourcing group will be lost.</p>
+                            <p>
+                                <translate>
+                                    All information of the PO template will be written in the new PO, <br />except the Delivery Requested date which will be the earliest date of all POs.<br />Any sourcing group will be lost.
+                                </translate>
+                            </p>
                         </html>
                         <newline />
                         <group colspan="4" col="4" attrs="{'invisible': [('unmatched_categ', '=', False)]}">
                             <html colspan="4">
                                 <p style="margin-top:10px;padding-left:5px;border-style:solid;border-width:1px;background-color:#F0EBA4;border-radius:5px;">
-                                    <span style="font-weight:bold">WARNING: </span>
-                                    <span>The category of the new PO  is not consistent with the category of the other POs being merged</span>
+                                    <span style="font-weight:bold"><translate>WARNING: </translate></span>
+                                    <span><translate>The category of the new PO is not consistent with the category of the other POs being merged</translate></span>
                                 </p>
                             </html>
                         </group>
@@ -438,14 +444,15 @@
                     <field name="only_exp" invisible="1" />
                     <group colspan="4" col="1" attrs="{'invisible': [('only_exp', '=', True)]}">
                         <html>
-                            <h4 style="text-align: center; margin: 10px; font-size: 1.2em">Would you re-source the needs sourced by this purchase order line ?</h4>
+                            <h4 style="text-align: center; margin: 10px; font-size: 1.2em"><translate>Would you re-source the needs sourced by this purchase order line ?</translate></h4>
                         </html>
                     </group>
                     <group colspan="6">
                         <html>
                             <p id="view_last_line_message"
                                 style="display:none; text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
-                                WARNING! You are about to cancel/delete a line. This action once done cannot be changed, and it will mean all other related POs will be confirmed. Therefore if you wish to add another product to this PO you should do this BEFORE deleting this line. To add another product click "Close window" .
+                                <translate>WARNING! You are about to cancel/delete a line. This action once done cannot be changed, and it will mean all other related POs will be confirmed. Therefore if you wish to add another product to this PO you should do this BEFORE deleting this line. To add another product click "Close window".</translate>
+                                <br />
                             </p>
                             <script language="javascript">
                                 var is_displayed = $('#last_line').val();
@@ -481,7 +488,7 @@
                     <field name="last_lines" invisible="1" />
                     <group colspan="4" col="1">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Purchase Order will be re-sourced.</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>If you click on 'Cancel &amp; Resource' button, all Field Order lines or Internal Request lines sourced by this Purchase Order will be re-sourced.</translate></h4>
                         </html>
                     </group>
                     <newline />
@@ -501,7 +508,7 @@
                 <form string="Cancel Purchase Order">
                     <group colspan="4" col="1">
                         <html>
-                            <h4 style="text-align: center; margin: 10px">You removed all lines of this purchase order, would you cancel it ?</h4>
+                            <h4 style="text-align: center; margin: 10px"><translate>You removed all lines of this purchase order, would you cancel it ?</translate></h4>
                         </html>
                     </group>
                     <newline />

@@ -103,14 +103,14 @@ class purchase_order(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
@@ -198,7 +198,7 @@ class purchase_order(osv.osv):
                 # Update this distribution not to have a link with purchase but with new commitment
                 if new_distrib_id:
                     self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id],
-                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                                                                 {'purchase_id': False, 'commitment_id': commit_id}, context=context)
                     # Create funding pool lines if needed
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
                     # Update commitment with new analytic distribution
@@ -326,9 +326,8 @@ class purchase_order_line(osv.osv):
         ana_dist_obj = self.pool.get('analytic.distribution')
         order_dict = {}
         order_obj = self.pool.get('purchase.order')
-        partner_obj = self.pool.get('res.partner')
         for line in self.read(cr, uid, ids,
-                ['order_id', 'analytic_distribution_id', 'account_4_distribution'], context=context):
+                              ['order_id', 'analytic_distribution_id', 'account_4_distribution'], context=context):
             order_id = line['order_id'] and line['order_id'][0] or False
             order = None
             if order_id:
@@ -415,10 +414,10 @@ class purchase_order_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
-            string="Commitment Voucher Lines", readonly=True),
+                                                string="Commitment Voucher Lines", readonly=True),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
@@ -455,7 +454,7 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
         elif not account_id:
             raise osv.except_osv(_('Error !'),
-                    _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
+                                 _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -479,14 +478,14 @@ class purchase_order_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def copy_data(self, cr, uid, l_id, default=None, context=None):
@@ -498,6 +497,7 @@ class purchase_order_line(osv.osv):
             context = {}
         if not default:
             default = {}
+
         # Update default
         default.update({'commitment_line_ids': [(6, 0, [])],})
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):

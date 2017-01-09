@@ -121,7 +121,8 @@
     </record>
 
     <menuitem id="update_menu_id" name="Data Monitor"
-              parent="mon_menu" action="update_action"/>
+            groups="base.group_erp_manager"
+            parent="mon_menu" action="update_action"/>
 
 
     <record model="ir.ui.view" id="sync_server_monitor_email_tree_view">

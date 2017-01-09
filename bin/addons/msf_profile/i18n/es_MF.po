@@ -23406,7 +23406,6 @@ msgstr "Mensajes"
 #: report:account.move.line_csv:0
 #: report:addons/account_mcdb/report/report_account_bank_statement_line_xls.mako:58
 #: report:addons/account_mcdb/report/report_account_move_line_xls.mako:58
-#: field:account.invoice,fake_account_id:0
 #: model:ir.model,name:account_override.model_account_account
 #: field:account.voucher,account_id:0
 #: field:account.voucher.line,account_id:0
@@ -23825,6 +23824,11 @@ msgstr "Crédito total"
 #: code:addons/sales_followup/sale_followup.py:387
 #, python-format
 msgid "In Progress"
+msgstr "En curso"
+
+#. module: procurement_request
+#: view:sale.order:0
+msgid "Confirmed"
 msgstr "En curso"
 
 #. module: account
