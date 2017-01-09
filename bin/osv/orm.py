@@ -3493,8 +3493,8 @@ class orm(orm_template):
                         return "COALESCE(%s.write_date, %s.create_date, now())::timestamp AS %s" % (self._table, self._table, f,)
                     return "now()::timestamp AS %s" % (f,)
                 if isinstance(self._columns[f], fields.binary) and context.get('bin_size', False):
-                    if 'size_human_readable' in self._columns:
-                        return 'size_human_readable as "%s"' % f
+                    if 'size' in self._columns:
+                        return 'size as "%s"' % f
                     return 'length(%s) as "%s"' % (f_qual, f)
                 return f_qual
 

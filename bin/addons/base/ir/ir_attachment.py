@@ -284,35 +284,6 @@ class ir_attachment(osv.osv):
     def get_octet_size(self, data):
         return len(data)
 
-    def _get_readable_size(self, cr, uid, ids, field_name, args, context=None):
-        read_result = self.read(cr, uid, ids, ['size'], context=context)
-        result = {}.fromkeys(ids, '0 o')
-        for attachment in read_result:
-            result[attachment['id']] = self.get_readable_size(attachment['size'])
-        return result
-
-    def get_readable_size(self, data):
-        """
-        Return the size in a human readable format
-        """
-        if not data:
-            return '0 o'
-
-        units = ('o', 'Kio', 'Mio', 'Gio' 'Tio')
-        if isinstance(data, basestring):
-            size = float(len(data))
-        elif isinstance(data, (int, long)):
-            size = float(data)
-        elif isinstance(data, float):
-            size = data
-        else:
-            return '0 o'
-        unit_index = 0
-        while size >= 1024 and unit_index < len(units) - 1:
-            size = size / 1024
-            unit_index += 1
-        return "%0.2f %s" % (size, units[unit_index])
-
     _name = 'ir.attachment'
     _columns = {
         'name': fields.char('Attachment Name',size=256, required=True),
@@ -335,9 +306,6 @@ class ir_attachment(osv.osv):
         'create_uid':  fields.many2one('res.users', 'Owner', readonly=True),
         'company_id': fields.many2one('res.company', 'Company', change_default=True),
         'size': fields.float('Size of the file'),
-        'size_human_readable': fields.function(_get_readable_size, type='char',
-            size=128, string='Size of the file', method=True,
-            store={'ir.attachment': (lambda self, cr, uid, ids, c=None: ids, ['size'], 10),}),
     }
 
     _defaults = {

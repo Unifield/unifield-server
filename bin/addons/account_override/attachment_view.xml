@@ -62,7 +62,7 @@
                     <field name="company_id" groups="base.group_multi_company"/>
                     <field name="create_uid"/>
                     <field name="create_date"/>
-                    <field name="size_human_readable"/>
+                    <field name="size" widget="human_size"/>
                 </tree>
             </field>
         </record>
