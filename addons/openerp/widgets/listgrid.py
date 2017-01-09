@@ -709,6 +709,11 @@ class NullBoolean(Char):
             self.val = self.value
             self.kind = 'text'
 
+class HumanSize(Char):
+
+    def get_text(self):
+        return utils.get_size(self.value or 0.0)
+
 class Button(TinyInputWidget):
 
     params = ['icon', 'id', 'parent_grid', 'btype', 'confirm', 'width', 'context']
@@ -802,4 +807,5 @@ CELLTYPES = {
         'null_boolean' : NullBoolean,
         'progressbar' : ProgressBar,
         'separator': Separator,
+        'human_size': HumanSize,
 }
