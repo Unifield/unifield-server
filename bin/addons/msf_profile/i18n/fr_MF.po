@@ -8783,8 +8783,8 @@ msgstr "Description générale"
 #. module: base
 #: code:addons/orm.py:1014
 #, python-format
-msgid "Error occurred while validating the field(s) %s: %s"
-msgstr "Une erreur est apparue lors de la validation du/des champ(s) %s: %s"
+msgid "Error at data validation: %s"
+msgstr "Une erreur est apparue lors de la validation des données: %s"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:1411
