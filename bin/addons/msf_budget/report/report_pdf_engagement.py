@@ -46,7 +46,8 @@ class report_pdf_engagement(report_sxw.rml_parse):
 
     def get_fiscal_year(self, purchase_order):
         pool = pooler.get_pool(self.cr.dbname)
-        po_date = str(purchase_order.delivery_confirmed_date) or str(purchase_order.delivery_requested_date)
+
+        po_date = purchase_order.delivery_confirmed_date.val or purchase_order.delivery_requested_date.val
         fiscalyear_id = pool.get('account.fiscalyear').find(self.cr, self.uid, po_date, False, context={})
         if fiscalyear_id:
             fiscalyear = pool.get('account.fiscalyear').browse(self.cr, self.uid, fiscalyear_id, context={})
@@ -152,7 +153,7 @@ class report_pdf_engagement(report_sxw.rml_parse):
 
             # PO data is filled, now to the temp_data
             # Get the corresponding fiscal year (delivery confirmed date or delivery requested date)
-            po_date = str(purchase_order.delivery_confirmed_date) or str(purchase_order.delivery_requested_date)
+            po_date = purchase_order.delivery_confirmed_date.val or purchase_order.delivery_requested_date.val
             fiscalyear_id = pool.get('account.fiscalyear').find(cr, uid, po_date, False, context=context)
             if fiscalyear_id:
                 fiscalyear = pool.get('account.fiscalyear').browse(cr, uid, fiscalyear_id, context=context)
