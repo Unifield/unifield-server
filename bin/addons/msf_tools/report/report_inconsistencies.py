@@ -189,10 +189,10 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         prod_id: You can get only SMRL with product_id, if you don't give this information you
         will get all inconsistents SMRL 
         '''
+        smrl_obj = self.pool.get('stock.mission.report.line')
         if not self.inconsistent:
             prod_obj = self.pool.get('product.product')
             prod_status_obj = self.pool.get('product.status')
-            smrl_obj = self.pool.get('stock.mission.report.line')
 
             smrl_ids = smrl_obj.search(self.cr, self.uid, [('full_view', '=', False)], order='NO_ORDER', context=self.localcontext)
 
