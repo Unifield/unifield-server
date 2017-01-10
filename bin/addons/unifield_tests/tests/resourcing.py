@@ -265,7 +265,7 @@ No split of FO found !""")
         while not_sourced:
             not_sourced = False
             for line in self.order_line_obj.browse(line_ids):
-               if line.procurement_id and line.procurement_id.state != 'running':
+                if line.procurement_id and line.procurement_id.state != 'running':
                     not_sourced = True
             if not_sourced:
                 time.sleep(1)
@@ -396,11 +396,13 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
         cc_line_obj = db.get('cost.center.distribution.line')
         fp_line_obj = db.get('funding.pool.distribution.line')
 
+        pf_id = self.get_record_id_from_xmlid(db, 'analytic_distribution', 'analytic_account_msf_private_funds')
+
         distrib_id = distrib_obj.create({
             'name': 'Distrib 2',
         })
 
-        cc_line1_id = cc_line_obj.create({
+        cc_line_obj.create({
             'name': 'CC Line 1',
             'amount': 0.0,
             'percentage': 75.0,
@@ -410,7 +412,7 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
             'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
         })
 
-        cc_line2_id = cc_line_obj.create({
+        cc_line_obj.create({
             'name': 'CC Line 2',
             'amount': 0.0,
             'percentage': 25.0,
@@ -420,23 +422,23 @@ The state of the generated PO is %s - Should be 'confirmed'""" % po_state)
             'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
         })
 
-        fp_line1_id = fp_line_obj.create({
+        fp_line_obj.create({
             'name': 'FP Line 1',
             'amount': 0.0,
             'percentage': 75.0,
             'currency_id': self.get_record(db, 'EUR', module='base'),
-            'analytic_id': self.get_record(db, 'analytic_cc1'),
+            'analytic_id': pf_id,
             'distribution_id': distrib_id,
             'cost_center_id': self.get_record(db, 'analytic_cc1'),
             'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),
         })
 
-        fp_line2_id = fp_line_obj.create({
+        fp_line_obj.create({
             'name': 'FP Line 2',
             'amount': 0.0,
             'percentage': 25.0,
             'currency_id': self.get_record(db, 'EUR', module='base'),
-            'analytic_id': self.get_record(db, 'analytic_cc2'),
+            'analytic_id': pf_id,
             'distribution_id': distrib_id,
             'cost_center_id': self.get_record(db, 'analytic_cc1'),
             'destination_id': self.get_record(db, 'analytic_account_destination_operation', module='analytic_distribution'),

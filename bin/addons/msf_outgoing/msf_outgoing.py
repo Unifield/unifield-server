@@ -419,10 +419,17 @@ class shipment(osv.osv):
         """
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
+        so_obj = self.pool.get('sale.order')
 
         if vals.get('partner_id2') and not context.get('create_shipment'):
-            consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
-            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+            if vals.get('sale_id'):
+                sale_brw = so_obj.browse(cr, uid, vals['sale_id'], context=context)
+                consignee_partner = sale_brw.partner_id
+                consignee_addr_id = sale_brw.partner_shipping_id.id
+            else:
+                consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
+                consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+
             consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id, context=context)
 
             addr = ''
@@ -2862,6 +2869,7 @@ class stock_picking(osv.osv):
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
                                   'shipment_actual_date': rts,
+                                  'sale_id': vals.get('sale_id', False),
                                   'transport_type': sale_id and sale_order_obj.read(cr, uid, sale_id, ['transport_type'], context=context)['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                                 'code':name,
