@@ -69,7 +69,7 @@
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="2">
                             <field name="fo_to_resource" invisible="1" />
-                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
+                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')], 'readonly': ['|', ('state', 'not in', ['draft', 'validated']), ('order_type', '!=', 'loan')]}" />
                             <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                         </group>
                         <field name="details" />
