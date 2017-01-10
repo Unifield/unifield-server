@@ -210,9 +210,6 @@ def get_size(data):
     """
     Return the size in a human readable format
     """
-    if not data:
-        return '0 Byte'
-
     units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
     if isinstance(data, basestring):
         size = float(len(data))
@@ -221,7 +218,7 @@ def get_size(data):
     elif isinstance(data, float):
         size = data
     else:
-        return '0 Byte'
+        return '0 Bytes'
     unit_index = 0
     while size >= 1024 and unit_index < len(units) - 1:
         size = size / 1024
