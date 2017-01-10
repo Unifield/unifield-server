@@ -191,39 +191,55 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         '''
         if not self.inconsistent:
             prod_obj = self.pool.get('product.product')
+            prod_status_obj = self.pool.get('product.status')
             smrl_obj = self.pool.get('stock.mission.report.line')
 
-            smrl_ids = smrl_obj.search(self.cr, self.uid, [('full_view', '=', False)], context=self.localcontext)
+            smrl_ids = smrl_obj.search(self.cr, self.uid, [('full_view', '=', False)], order='NO_ORDER', context=self.localcontext)
 
             # check stock mission report line for inconsistencies with HQ (our instance):
             self.inconsistent = []
-            for smrl in smrl_obj.browse(self.cr, self.uid, smrl_ids, context=self.localcontext):
-                for prod in prod_obj.browse(self.cr, self.uid, [smrl.product_id.id], context=self.localcontext):
-                    # in product_product state is False when empty
-                    # in smrl product_state is '' when empty:
-                    if not prod.state and not smrl.product_state:
-                        pass
-                    elif not prod.state and smrl.product_state:
-                        self.inconsistent.append(smrl)
-                        continue
-                    elif prod.state and not smrl.product_state:
-                        self.inconsistent.append(smrl)
-                        continue
-                    elif prod.state.code != smrl.product_state:
-                        self.inconsistent.append(smrl)
+            read_smrl_result = smrl_obj.read(self.cr, self.uid, smrl_ids, ['product_id', 'product_state', 'state_ud', 'product_active'], context=self.localcontext)
+            all_product_ids = [x['product_id'][0] for x in read_smrl_result if x]
+
+            # read all product informations
+            product_result = prod_obj.read(self.cr, self.uid, all_product_ids, ['state', 'state_ud', 'active'], context=self.localcontext)
+            product_dict = dict((x['id'], x) for x in product_result)
+
+            # get all product_status
+            prod_status_ids = prod_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
+            prod_status_result = prod_status_obj.read(self.cr, self.uid, prod_status_ids, ['code'], context=self.localcontext)
+            prod_status_dict = dict((x['id'], x['code']) for x in prod_status_result)
+
+            for smrl in read_smrl_result:
+                product = product_dict[smrl['product_id'][0]]
+                # in product_product state is False when empty
+                # in smrl product_state is '' when empty:
+                if not product['state'] and not smrl['product_state']:
+                    pass
+                elif not product['state'] and smrl['product_state']:
+                    self.inconsistent.append(smrl['id'])
+                    continue
+                elif product['state'] and not smrl['product_state']:
+                    self.inconsistent.append(smrl['id'])
+                    continue
+                elif product['state'] and product['state'] in prod_status_dict:
+                    state_code = prod_status_dict[product['state'][0]]
+                    if state_code != smrl['product_state']:
+                        self.inconsistent.append(smrl['id'])
                         continue
 
-                    if not prod.state_ud and not smrl.state_ud:
-                        pass
-                    elif prod.state_ud != smrl.state_ud:
-                        self.inconsistent.append(smrl)
-                        continue
+                if not product['state_ud'] and not smrl['state_ud']:
+                    pass
+                elif product['state_ud'] != smrl['state_ud']:
+                    self.inconsistent.append(smrl['id'])
+                    continue
 
-                    if prod.active != smrl.product_active: # if null in DB smrl.product_active = False ....
-                        self.inconsistent.append(smrl)
-                        continue
+                if product['active'] != smrl['product_active']: # if null in DB smrl.product_active = False ....
+                    self.inconsistent.append(smrl['id'])
+                    continue
 
-            self.inconsistent.sort(key=lambda smrl: smrl.mission_report_id.instance_id.level)
+        self.inconsistent = smrl_obj.browse(self.cr, self.uid, self.inconsistent, context=self.localcontext)
+        self.inconsistent.sort(key=lambda smrl: smrl.mission_report_id.instance_id.level)
 
         if prod_id:
             return [smrl for smrl in self.inconsistent if smrl.product_id.id == prod_id]
