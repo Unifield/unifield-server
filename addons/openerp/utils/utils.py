@@ -19,6 +19,8 @@
 #
 ###############################################################################
 from __future__ import with_statement
+from datetime import datetime
+
 import itertools
 import re
 
@@ -28,6 +30,26 @@ import openobject
 from openerp.utils import rpc
 
 crummy_pseudoliteral_matcher = re.compile('^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
+
+
+def format_datetime_value(value, bound):
+    dt_validator = _VALIDATORS.get('datetime', openobject.validators.DefaultValidator)()
+    d_validator = _VALIDATORS.get('date', openobject.validators.DefaultValidator)()
+    try:
+        dt_validator.to_python(value, None)
+    except formencode.api.Invalid:
+        try:
+            d_validator.to_python(value, None)
+            dt = datetime.strptime(value, d_validator.format)
+            if bound == 'from':
+                dt = datetime.combine(dt, datetime.min.time())
+            elif bound == 'to':
+                dt = datetime.combine(dt, datetime.max.time())
+            value = dt.strftime(dt_validator.format)
+        except formencode.api.Invalid:
+            pass
+    return value
+
 
 class noeval(object):
     """contextmanager that prevent TinyDict from doing evals"""
@@ -337,7 +359,9 @@ class TinyForm(object):
                         value = []
                 except:
                     pass
-
+            elif kind == 'datetime' and (name.endswith('/from') or name.endswith('/to')):
+                bound = name.split('/')[-1]
+                value = format_datetime_value(value, bound)
             elif kind not in _VALIDATORS:
                 kind = 'char'
 

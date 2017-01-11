@@ -19,7 +19,7 @@
 #
 ###############################################################################
 import simplejson
-from openerp.utils import rpc, expr_eval, TinyDict, TinyForm, TinyFormError
+from openerp.utils import rpc, expr_eval, TinyDict, TinyForm, TinyFormError, format_datetime_value
 
 import actions
 from form import Form
@@ -310,6 +310,10 @@ class Search(Form):
                 fld['type'] = res[fieldname].get('type')
                 if fld['type'] == 'many2many':
                     fld['type'] = 'char'
+
+                if fld['type'] == 'datetime' and bound:
+                    value = format_datetime_value(value, bound)
+
                 fld['value'] = value
                 data[field] = fld
 
