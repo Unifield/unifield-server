@@ -947,7 +947,7 @@ class product_attributes(osv.osv):
         'uf_write_date': fields.datetime(string='Write date'),
         'uf_create_date': fields.datetime(string='Creation date'),
         'uf_src_write_date': fields.function(
-            lambda *a: self, cr, uid, ids, c={}: {},
+            _get_dummy,
             fnct_search=_src_by_create_date,
             method=True,
             type='date',
@@ -955,7 +955,7 @@ class product_attributes(osv.osv):
             store=False,
          ),
         'uf_src_create_date': fields.function(
-            lambda *a: self, cr, uid, ids, c={}: {},
+            _get_dummy,
             fnct_search=_src_by_create_date,
             method=True,
             type='date',
