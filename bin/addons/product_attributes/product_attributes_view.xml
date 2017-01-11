@@ -455,7 +455,7 @@
                    <field name="name" string="Description"/>
                    <field name="list_ids" widget="many2one" context="{'list': self}" />
                    <field name="uf_create_date" string="Creation" widget="date" />
-                   <field name="uf_write_date" string="Modification" wwidget="date" />
+                   <field name="uf_write_date" string="Modification" widget="date" />
                    <newline/>
                    <filter string="Single Item" icon="terp-accessories-archiver" domain="[('subtype','=','single')]"/>
                    <filter string="Kit/Module" icon="terp-accessories-archiver" domain="[('subtype','=','kit')]"/>
