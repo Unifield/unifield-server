@@ -630,7 +630,7 @@ class product_attributes(osv.osv):
         """
         return True
 
-    def _src_by_write_date(self, cr, uid, obj, name, args, context=None):
+    def _src_by_create_date(self, cr, uid, obj, name, args, context=None):
         """
         Search products by write / create date without hours
         """
