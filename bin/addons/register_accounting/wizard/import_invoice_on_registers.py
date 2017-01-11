@@ -75,7 +75,8 @@ class wizard_import_invoice_lines(osv.osv_memory):
         for l in self.read(cr, uid, ids, ['amount_to_pay']):
             if vals['amount'] < 0:
                 msg = _('Negative amount are forbidden!')
-            elif vals['amount'] > abs(l['amount_to_pay']):
+            # if the amounts aren't equal (with a 0.001 tolerance) the paid amount shouldn't exceed the amount to pay
+            elif vals['amount'] - abs(l['amount_to_pay']) > 10**-3:
                 msg = _("Amount %.2f can't be greater than 'Amount to pay': %.2f") % (vals['amount'], abs(l['amount_to_pay']))
             if msg:
                 # reset wrong amount
