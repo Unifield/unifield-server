@@ -415,14 +415,29 @@ class account_move_line(osv.osv):
                 raise osv.except_osv(_('Warning'), _('Given date [%s] is outside defined period: %s') % (date, period and period.name or ''))
         return True
 
-    def _check_accounts_partner_compat(self, cr, uid, vals, context=None):
-        # US-672/2
-        if context and context.get('from_web_menu', False) and vals.get('account_id', False):
-            # US-1307 Check must be done also for "Empty" partner
-            partner_type = 'partner_type' in vals and vals['partner_type'] or False
-            self.pool.get('account.account').is_allowed_for_thirdparty(
-                cr, uid, vals['account_id'], partner_type=partner_type,
-                from_vals=True, raise_it=True, context=context)
+    def _check_accounts_partner_compat(self, cr, uid, aml_ids, context=None):
+        if context and context.get('from_web_menu', False):
+            if isinstance(aml_ids, (int, long)):
+                aml_ids = [aml_ids]
+            # get the values of the JI fields related to partner and account
+            fields_to_read = ['partner_type', 'partner_txt', 'employee_id', 'transfer_journal_id', 'partner_id', 'account_id']
+            for aml in self.read(cr, uid, aml_ids, fields_to_read, context=context):
+                partner_type = aml['partner_type'] and 'selection' in aml['partner_type'] \
+                    and aml['partner_type']['selection'] or False
+                if partner_type:  # format is 'model_name,id'
+                    pt_model, pt_id = tuple(partner_type.split(','))
+                    if not pt_id:
+                        partner_type = False
+                account_id = aml['account_id'] and aml['account_id'][0] or False
+                partner_txt = aml['partner_txt'] or False
+                employee_id = aml['employee_id'] and aml['employee_id'][0] or False
+                transfer_journal_id = aml['transfer_journal_id'] and aml['transfer_journal_id'][0] or False
+                partner_id = aml['partner_id'] and aml['partner_id'][0] or False
+                # US-672/2
+                self.pool.get('account.account').is_allowed_for_thirdparty(
+                    cr, uid, account_id, partner_type=partner_type, partner_txt=partner_txt, employee_id=employee_id,
+                    transfer_journal_id=transfer_journal_id, partner_id=partner_id, from_vals=True, raise_it=True,
+                    context=context)
 
     def create(self, cr, uid, vals, context=None, check=True):
         """
@@ -461,8 +476,8 @@ class account_move_line(osv.osv):
         # US-220: vals.ref must have 64 digits max
         if vals.get('ref'):
             vals['ref'] = vals['ref'][:64]
-        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
+        self._check_accounts_partner_compat(cr, uid, res, context=context)
         # UTP-317: Check partner (if active or not)
         if res and not (context.get('sync_update_execution', False) or context.get('addendum_line_creation', False)): #UF-2214: Not for the case of sync. # UTP-1022: Not for the case of addendum line creation
             aml = self.browse(cr, uid, [res], context)
@@ -498,8 +513,8 @@ class account_move_line(osv.osv):
                     context.update({'date': m.date})
         # Note that _check_document_date HAVE TO be BEFORE the super write. If not, some problems appears in ournal entries document/posting date changes at the same time!
         self._check_document_date(cr, uid, ids, vals, context=context)
-        self._check_accounts_partner_compat(cr, uid, vals, context=context)
         res = super(account_move_line, self).write(cr, uid, ids, vals, context=context, check=check, update_check=update_check)
+        self._check_accounts_partner_compat(cr, uid, ids, context=context)
         # UFTP-262: Check reference field for all lines. Optimisation: Do nothing if reference is in vals as it will be applied on all lines.
         if context.get('from_web_menu', False) and not vals.get('reference', False):
             for ml in self.browse(cr, uid, ids):

@@ -1914,10 +1914,9 @@ class account_bank_statement_line(osv.osv):
                     msg = _('This cheque number has already been used')
                     raise osv.except_osv(_('Info'), (msg))
 
-        self._check_account_partner_compat(cr, uid, values, context=context)
-
         # Then create a new bank statement line
         absl = super(account_bank_statement_line, self).create(cr, uid, values, context=context)
+        self._check_account_partner_compat(cr, uid, absl, context=context)
         return absl
 
     def write(self, cr, uid, ids, values, context=None):
@@ -1948,14 +1947,15 @@ class account_bank_statement_line(osv.osv):
             if values.get('partner_move_ids') or values == {'from_cash_return': True} or values.get('analytic_distribution_id', False) or \
                     (values.get('invoice_id', False) and len(values.keys()) == 2 and values.get('from_cash_return')) or \
                     'from_correction' in context or context.get('sync_update_execution', False):
-                return super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+                res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+                self._check_account_partner_compat(cr, uid, ids, context=context)
+                return res
             raise osv.except_osv(_('Warning'), _('You cannot write a hard posted entry.'))
         # First update amount
         values = self._update_amount(values=values)
         # Case where _update_amount return False ! => this imply there is a problem with amount columns
         if not values:
             return False
-        self._check_account_partner_compat(cr, uid, values, context=context)
 
         # Then update analytic distribution
         res = []
@@ -2004,6 +2004,7 @@ class account_bank_statement_line(osv.osv):
                     values = self.update_employee_analytic_distribution(cr, uid, values) # this should only be done at local instance
 
                 tmp = super(account_bank_statement_line, self).write(cr, uid, line.get('id'), values, context=context)
+                self._check_account_partner_compat(cr, uid, line.get('id'), context=context)
                 res.append(tmp)
 
                 new_distrib = values.get('analytic_distribution_id', False)
@@ -2041,6 +2042,7 @@ class account_bank_statement_line(osv.osv):
             return res
         # Update the bank statement lines with 'values'
         res = super(account_bank_statement_line, self).write(cr, uid, ids, values, context=context)
+        self._check_account_partner_compat(cr, uid, ids, context=context)
         # Amount verification regarding Down payments
         for line in self.read(cr, uid, ids, ['is_down_payment', 'down_payment_id']):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
@@ -2873,13 +2875,28 @@ class account_bank_statement_line(osv.osv):
         real_uid = hasattr(uid, 'realUid') and uid.realUid or uid
         return self.unlink(cr, real_uid, ids, context=context)
 
-    def _check_account_partner_compat(self, cr, uid, vals, context=None):
+    def _check_account_partner_compat(self, cr, uid, absl_ids, context=None):
         # US-672/2
-        if not context.get('sync_update_execution', False) and vals.get('account_id', False):
-            partner_type = 'partner_type' in vals and vals['partner_type'] or False
-            self.pool.get('account.account').is_allowed_for_thirdparty(
-                cr, uid, vals['account_id'], partner_type=partner_type,
-                from_vals=True, raise_it=True, context=context)
+        if not context.get('sync_update_execution', False):
+            if isinstance(absl_ids, (int, long)):
+                absl_ids = [absl_ids]
+            # get the values of the register line fields related to the partner and the account
+            fields_to_read = ['partner_type', 'employee_id', 'transfer_journal_id', 'partner_id', 'account_id']
+            for absl in self.read(cr, uid, absl_ids, fields_to_read, context=context):
+                partner_type = absl['partner_type'] and 'selection' in absl['partner_type'] \
+                    and absl['partner_type']['selection'] or False
+                if partner_type:  # format is 'model_name,id'
+                    pt_model, pt_id = tuple(partner_type.split(','))
+                    if not pt_id:
+                        partner_type = False
+                account_id = absl['account_id'] and absl['account_id'][0] or False
+                employee_id = absl['employee_id'] and absl['employee_id'][0] or False
+                transfer_journal_id = absl['transfer_journal_id'] and absl['transfer_journal_id'][0] or False
+                partner_id = absl['partner_id'] and absl['partner_id'][0] or False
+                self.pool.get('account.account').is_allowed_for_thirdparty(
+                    cr, uid, account_id, partner_type=partner_type, employee_id=employee_id,
+                    transfer_journal_id=transfer_journal_id, partner_id=partner_id, from_vals=True, raise_it=True,
+                    context=context)
 
 account_bank_statement_line()
 

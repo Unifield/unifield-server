@@ -602,6 +602,9 @@ class account_account(osv.osv):
                     res[r.id] = True  # allowed with no specific field
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
+        # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
+        if 'allowed_partner_field' in context:
+            del context['allowed_partner_field']
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
