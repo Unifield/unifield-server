@@ -630,35 +630,6 @@ class product_attributes(osv.osv):
         """
         return True
 
-    def _src_by_create_date(self, cr, uid, obj, name, args, context=None):
-        """
-        Search products by write / create date without hours
-        """
-        res = []
-
-        for arg in args:
-            fld = None
-            if arg[0] == 'uf_src_write_date':
-                fld = 'uf_write_date'
-            elif arg[0] == 'uf_src_create_date': 
-                fld = 'uf_create_date'
-
-            if fld:
-                if arg[1] in ('>', '>='):
-                    res.append((fld, arg[1], '%s 00:00:00' % arg[2]))
-                elif arg[1] in ('<', '<='):
-                    res.append((fld, arg[1], '%s 23:59:59' % arg[2]))
-                elif arg[1] == '=':
-                    res.append((fld, '>=', '%s 00:00:00' % arg[2]))
-                    res.append((fld, '<=', '%s 23:59:59' % arg[2]))
-                elif arg[1] in ('!=', '<>'):
-                    res.append((fld, '<=', '%s 00:00:00' % arg[2]))
-                    res.append((fld, '>=', '%s 23:59:59' % arg[2]))
-                else:
-                    res.append((fld, arg[1], arg[2])) 
-
-        return res
-
     _columns = {
         'duplicate_ok': fields.boolean('Is a duplicate'),
         'loc_indic': fields.char('Indicative Location', size=64),
@@ -944,24 +915,8 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
-        'uf_write_date': fields.datetime(string='Write date'),
-        'uf_create_date': fields.datetime(string='Creation date'),
-        'uf_src_write_date': fields.function(
-            _get_dummy,
-            fnct_search=_src_by_create_date,
-            method=True,
-            type='date',
-            string='Write Date',
-            store=False,
-         ),
-        'uf_src_create_date': fields.function(
-            _get_dummy,
-            fnct_search=_src_by_create_date,
-            method=True,
-            type='date',
-            string='Create Date',
-            store=False,
-         ),
+        'uf_write_date': fields.datetime(_('Write date')),
+        'uf_create_date': fields.datetime(_('Creation date')),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
