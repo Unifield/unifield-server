@@ -137,8 +137,8 @@
             <field name="type">search</field>
             <field name="arch" type="xml">
                 <search string="Products">
-                    <field name="desc" />
                     <field name="ref" />
+                    <field name="desc" />
                 </search>
             </field>
         </record>
