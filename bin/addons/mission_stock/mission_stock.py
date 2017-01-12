@@ -547,11 +547,11 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             # Create one line by product
-            cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
-                          FROM product_product p, product_template pt, product_status ps, product_international_status pis
+            cr.execute('''SELECT p.id, ps.code
+                          FROM product_product p, product_template pt
+                              LEFT JOIN product_status ps ON pt.state = ps.id
+                              LEFT JOIN product_international_status pis ON p.international_status = pis.id
                           WHERE p.product_tmpl_id = pt.id
-                          AND pt.state = ps.id
-                          AND p.international_status = pis.id
                           AND NOT EXISTS (
                             SELECT product_id
                             FROM
@@ -561,11 +561,13 @@ class stock_mission_report(osv.osv):
             for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
                 line_obj.create(cr, uid, {
                     'product_id': product, 
+                    'product_id': product,
                     'mission_report_id': report['id'],
                     'product_state': prod_state,
                     'product_active': prod_active,
                     'state_ud': prod_state_ud,
                     'international_status_code': prod_creator,
+                    'product_state': prod_state or '',
                 }, context=context)
 
             # Don't update lines for full view or non local reports

@@ -65,7 +65,5 @@
             groups="base.group_erp_manager"/>
         <menuitem id="sync_client.main_menu"
             groups="base.group_erp_manager"/>
-        <menuitem id="sync_client.hq_monitor_main_menu"
-            groups="base.group_erp_manager"/>
     </data>
 </openerp>

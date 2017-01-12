@@ -140,6 +140,7 @@ def data_files():
     if os.name == 'nt':
         files.append(('.', [join('bin', 'histogram.py')]))
         files.append(('.', [join('bin', 'unifield-version.txt')]))
+        files.append(('tools', [join('bin', 'tools', 'import_po.dtd')]))
         os.chdir('bin')
         for (dp, dn, names) in os.walk('addons'):
             files.append((dp, map(lambda x: join('bin', dp, x), names)))
