@@ -85,26 +85,26 @@
           <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Active/Inactive</Data></Cell>
         </Row>
         % for prod in get_products_with_inconsistencies():
-            # HQ data:
-            <Row ss:AutoFitHeight="1">
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('HQ')|x}</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.default_code)|x}</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.name_template)|x}</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.international_status and prod.international_status.name or '')|x}</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.state and prod.state.name or '')|x}</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod.state_ud and getSel(prod, 'state_ud') or '')|x}</Data></Cell>
-              <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('Active' if prod.active else 'Inactive')|x}</Data></Cell>
-            </Row>
-            % for smrl in get_inconsistent_lines(prod.id):
+                # HQ data:
                 <Row ss:AutoFitHeight="1">
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.mission_report_id.instance_id.name)|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.default_code)|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl.product_id.name_template)|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_product_creator_name_from_code(smrl.international_status_code) or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_uf_status(smrl.product_state))|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(get_ud_status(smrl.state_ud) or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_content"><Data ss:Type="String">${('Active' if smrl.product_active else 'Inactive')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('HQ')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_default_code'])|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_name_template'])|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_international_status'] or '')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_state'] or '')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_state_ud']  or '')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('Active' if prod['prod_active'] else 'Inactive')|x}</Data></Cell>
                 </Row>
+            % for smrl in prod['smrl_list']:
+                    <Row ss:AutoFitHeight="1">
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['instance_name'])|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['smrl_default_code'])|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['smrl_name_template'])|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['internationnal_status_code_name'] or '')|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['uf_status_code'])|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['ud_status_code'] or '')|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${('Active' if smrl['active'] else 'Inactive')|x}</Data></Cell>
+                    </Row>
             % endfor
         % endfor
     % endif
