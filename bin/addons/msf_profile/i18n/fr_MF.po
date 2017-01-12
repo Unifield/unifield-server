@@ -75854,3 +75854,81 @@ msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
 #, python-format
 msgid "Wrong total: %.2f, instead of: %.2f"
 msgstr "Total erroné : %.2f, au lieu de : %.2f"
+
+#. module: base
+#: model:ir.actions.act_window,help:base.action_res_users_white_list
+msgid "List of Users that will be synchronizable. To\n"
+"                synchronize a User, he should be marked as \"Synchronizable\"\n"
+"                (ie. be in this list) and have the checkbox \"Synchronize\"\n"
+"                checked from the user view. You can add new users to this list\n"
+"                using the right dropdown menu and click on action \"Add Users\"."
+msgstr "Liste des Utilisateurs qui seront synchronisables. Pour\n"
+"                synchroniser un Utilisateur, il doit être marqué comme \"Synchronisable\"\n"
+"                (donc être dans cette liste) et doit avoir la case à cocher \"Synchroniser\"\n"
+"                cochée depuis la vue de l'utilisateur. Vous pouvez ajouter des Utilisateurs à cette liste\n"
+"                en utilisant le menu déroulant de droite et en cliquant sur l'action \"Ajouter des Utilisateurs\"."
+
+#. module: base
+#: model:ir.actions.act_window,name:base.action_res_users_white_list
+#: model:ir.ui.menu,name:base.menu_action_res_users_whitelist
+msgid "Synchronization white-list"
+msgstr "Liste blanche de synchronisation"
+
+#. module: base
+#: view:wizard.add.users.synchronized:0
+msgid "Add Users to white list"
+msgstr "Ajouter des Utilisateurs à la liste blanche"
+
+#. module: base
+#: model:ir.actions.act_window,name:base.action_open_wizard_add_users_to_white_list
+msgid "Add Users"
+msgstr "Ajouter des Utilisateurs"
+
+#. module: base
+#: view:wizard.add.users.synchronized:0
+msgid "Please note that users can be added to the white list only if:"
+msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la liste blanche que si:"
+
+#. module: base
+#: view:wizard.add.users.synchronized:0
+msgid "It is done from the HQ"
+msgstr "Cela est fait depuis un HQ"
+
+#. module: base
+#: view:wizard.add.users.synchronized:0
+msgid "The user is not member of Administration / Access Rights"
+msgstr "L'Utilisateur n'est pas membre du groupe Administration / Access Rights"
+
+#. module: base
+#: view:wizard.add.users.synchronized:0
+msgid "The user is not member of Sync_Config"
+msgstr "L'Utilisateur n'est pas membre du groupe Sync_Config"
+
+#. module: base
+#: view:wizard.add.users.synchronized:0
+msgid "The user is not already marked as \"Synchronizable\""
+msgstr "L'Utilisateur n'est pas déjà marqué comme \"Synchronisable\""
+
+#. module: base
+#: field:res.config.users,is_synchronizable:0
+#: field:res.users,is_synchronizable:0
+msgid "Is Synchronizable?"
+msgstr "Est synchronisable ?"
+
+#. module: base
+#: help:res.config.users,is_synchronizable:0
+#: help:res.users,is_synchronizable:0
+msgid "Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."
+msgstr "Cet Utilisateur peut il être synchronisé ? Cette case à cocher n'est disponible que pour les utilisateur synchronisables."
+
+#. module: base
+#: field:res.config.users,synchronize:0
+#: field:res.users,synchronize:0
+msgid "Synchronize"
+msgstr "Synchroniser"
+
+#. module: base
+#: help:res.config.users,synchronize:0
+#: help:res.users,synchronize:0
+msgid "Synchronize down this user"
+msgstr "Synchroniser cet Utilisateur vers le bas"
