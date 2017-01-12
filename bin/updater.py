@@ -490,14 +490,24 @@ def check_mako_xml():
     """
     import tools
     logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
+    path_to_exclude = [os.path.join(tools.config['root_path'], 'backup'),]
     for file_path in find(tools.config['root_path']):
         full_path = os.path.join(tools.config['root_path'], file_path)
         if not os.path.isfile(full_path):
             continue
         if full_path.endswith('.xml') or full_path.endswith('.mako'):
+            excluded = False
+            for exclusion in path_to_exclude:
+                if exclusion in full_path:
+                    excluded = True
+                    break
+            if excluded:
+                continue
             with open(full_path, 'r') as file_to_check:
+                line_number = 0
                 for line in file_to_check:
+                    line_number += 1
                     if 'ExpandedColumnCount' in line:
-                        logger.error('ExpandedColumnCount is present in file %s.' % full_path)
+                        logger.error('ExpandedColumnCount is present in file %s line %s.' % (full_path, line_number))
     logger.info("Check mako and xml files finished.")
 
