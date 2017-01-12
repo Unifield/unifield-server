@@ -522,19 +522,11 @@ class users(osv.osv):
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # uncheck synchronize checkbox if the user is manager or sync config
-        rewrite = False
         if values.get('groups_id'):
             if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
                any(self._is_erp_manager(cr, uid, ids, context=context).values()):
                 values['synchronize'] = False
-                rewrite = True
-        if not values.get('is_synchronizable', False):
-            # a user which is not synchronizable should not be synchronized
-            values['synchronize'] = False
-            rewrite = True
-
-        if rewrite:
-            res = super(users, self).write(cr, uid, ids, values, context=context)
+                res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
