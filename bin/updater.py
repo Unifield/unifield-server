@@ -508,6 +508,6 @@ def check_mako_xml():
                 for line in file_to_check:
                     line_number += 1
                     if 'ExpandedColumnCount' in line:
-                        logger.error('ExpandedColumnCount is present in file %s line %s.' % (full_path, line_number))
+                        logger.warning('ExpandedColumnCount is present in file %s line %s.' % (full_path, line_number))
     logger.info("Check mako and xml files finished.")
 
