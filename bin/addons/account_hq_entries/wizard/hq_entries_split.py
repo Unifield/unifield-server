@@ -291,12 +291,13 @@ class hq_entries_split(osv.osv_memory):
                 raise osv.except_osv(_('Warning'), _('Make 2 lines at least.'))
             # Check total amount for this wizard
             total = 0.00
+            # US-1806 The difference between rounded amounts with 2 decimals mustn't exceed 0.001 so as not to tolerate
+            # the 1 ct differences but accept slight differences due to the way Python handles floats
+            original_amount = round(wiz.original_amount, 2)
             for line in wiz.line_ids:
-                total += line.amount
-            if abs(abs(wiz.original_amount) - abs(total)) > 0.000000000001:
-                # US-1361 tolerate minimal python rounding gap
-                raise osv.except_osv(_('Error'), _('Wrong total: %f, instead of: %.2f') % (total or 0.00, wiz.original_amount or 0.00,))
-
+                total += round(line.amount, 2)
+            if abs(abs(original_amount) - abs(total)) > 10**-3:
+                raise osv.except_osv(_('Error'), _('Wrong total: %.2f, instead of: %.2f') % (total or 0.00, original_amount or 0.00,))
             self.write(cr, uid, [wiz.id], {'running': True})
             # If all is OK, do process of lines
             # Mark original line as it is: an original one :-)

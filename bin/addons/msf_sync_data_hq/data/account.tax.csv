@@ -1,0 +1,3 @@
+name,price_include,description,type_tax_use,type,amount,account_collected_id,account_paid_id
+TAX 10% INCLUDED,True,10% INC,All,Percentage,0.1,12020,12020
+TAX 10% EXCLUDED,False,10% EXC,All,Percentage,0.1,12020,12020

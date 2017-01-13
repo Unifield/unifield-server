@@ -46,6 +46,37 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
+        '''
+        A button "Activate Instance" as be removed from the user interface, but
+        this button had some related updates that are sent to new instance on
+        the first sync and genereate not run. Remove all of this updates on the
+        sync server.
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # this script is exucuted on server side only
+            update_to_delete_ids = update_module.search(cr, uid,
+                                                        [('sdref', 'in',
+                                                          ('sync_client_activate_wizard_action',
+                                                           'BAR_sync_clientactivate_entity_wizard_view_activate'))])
+            update_module.unlink(cr, uid, update_to_delete_ids)
+
+    def us_2075_partner_locally_created(self, cr, uid, *a, **b):
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            identifier = entity.get_entity(cr, uid).identifier
+            if identifier:
+                cr.execute("""update res_partner set locally_created='f' where id in (
+                    select res_id from ir_model_data d
+                    where d.module='sd'
+                        and d.model='res.partner'
+                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name not like '%s%%'
+                    ) """ % (identifier, ))
+                self._logger.warn('%s non local partners updated' % (cr.rowcount,))
+        return True
+
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
@@ -98,7 +129,7 @@ class patch_scripts(osv.osv):
         """
         from passlib.hash import bcrypt
         users_obj = self.pool.get('res.users')
-        user_ids = users_obj.search(cr, uid, [])
+        user_ids = users_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
         for user in users_obj.read(cr, uid, user_ids, ['password']):
             original_password = tools.ustr(user['password'])
             # check the password is not already encrypted

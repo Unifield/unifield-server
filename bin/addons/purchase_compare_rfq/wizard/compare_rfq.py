@@ -521,7 +521,7 @@ class wizard_compare_rfq_line(osv.osv_memory):
                 r.update({
                     'name_%s' % sid: sup.name,
                     'unit_price_%s' % sid: rfql and pu or 0.00,
-                    'confirmed_delivery_date_%s' % sid: rfql.confirmed_delivery_date,
+                    'confirmed_delivery_date_%s' % sid: rfql and rfql.confirmed_delivery_date or False,
                     'comment_%s' % sid: rfql and rfql.comment or '',
                 })
 
