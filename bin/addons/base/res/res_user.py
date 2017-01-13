@@ -519,6 +519,11 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
+        if 'is_synchronizable' in values and not values.get('is_synchronizable',
+                False):
+            # desactivate synchronize if is_synchronizable is set to False
+            values['synchronize'] = False
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # uncheck synchronize checkbox if the user is manager or sync config
