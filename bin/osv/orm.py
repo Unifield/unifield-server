@@ -1450,11 +1450,11 @@ class orm_template(object):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
                 if trans:
                     node.set('sum', trans)
-            elif node.get('confirm'):
+            if node.get('confirm'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
                 if trans:
                     node.set('confirm', trans)
-            elif node.get('string'):
+            if node.get('string'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
                     # If translation is same as source, perhaps we'd have more luck with the alternative model name
@@ -1462,7 +1462,7 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            elif node.tag == 'translate':
+            if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text
                 for child in node.getchildren():
@@ -3206,7 +3206,7 @@ class orm(orm_template):
 
         cr.commit()     # start a new transaction
 
-        for (key, con, _) in self._sql_constraints:
+        for (key, con, null) in self._sql_constraints:
             conname = '%s_%s' % (self._table, key)
 
             cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
@@ -3306,7 +3306,7 @@ class orm(orm_template):
                     self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
                     self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
-        for (key, _, msg) in self._sql_constraints:
+        for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
 
         # Load manual fields
