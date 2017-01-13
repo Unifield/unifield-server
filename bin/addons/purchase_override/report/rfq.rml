@@ -96,7 +96,7 @@
         <blockTable colWidths="772.0" style="OrderInformations">
             <tr>
                 <td>
-                    <para style="TextInformationOrigin">Origin ref. : [[ encode_origin(objects[0].origin) ]]</para>
+                    <para style="TextInformationOrigin">Source Document : [[ encode_origin(objects[0].origin) ]]</para>
                 </td>
             </tr>
             <tr>
