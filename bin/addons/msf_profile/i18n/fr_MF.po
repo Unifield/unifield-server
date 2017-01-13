@@ -74852,6 +74852,8 @@ msgstr "# de lignes"
 
 #. module: purchase_override
 #: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
 msgid "Source Document :"
 msgstr "Document source :"
 
