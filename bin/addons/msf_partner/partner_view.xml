@@ -203,6 +203,7 @@
                                       <group colspan="2" col="4">
                                         <separator string="Postal Address" colspan="4" col="4" />
                                         <field name="type" string="Type" colspan="2"/>
+                                        <field name="office_name" colspan="2" />
                                         <field name="street" colspan="4"/>
                                         <field name="street2" colspan="4"/>
                                         <field name="zip"/>
