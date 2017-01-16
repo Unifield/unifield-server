@@ -134,7 +134,7 @@ class List(TinyWidget):
         try:
             self.hide_new_button = expr_eval(attrs.get('hide_new_button', False), {'context': context})
             self.show_add_button = expr_eval(attrs.get('show_add_button', False), {'context': context})
-            if self.o2m or self.m2m and self.show_add_button:
+            if (self.o2m or self.m2m) and self.show_add_button:
                 self.hide_new_button = False
             self.hide_delete_button = expr_eval(attrs.get('hide_delete_button', False), {'context': context})
             self.hide_edit_button = expr_eval(attrs.get('hide_edit_button', False), {'context': context})
