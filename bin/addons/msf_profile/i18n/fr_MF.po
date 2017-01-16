@@ -75906,6 +75906,12 @@ msgstr "Créé localement"
 msgid "Partner Created on this instance"
 msgstr "Partenaire créé sur cette instance"
 
+#. module: account_override
+#: code:addons/account_override/account.py:850
+#, python-format
+msgid "Period '%s' is not open! No Journal Entry is created"
+msgstr "La période '%s' n'est pas ouverte ! Pas d'écriture comptable créée."
+
 #. module: account
 #: code:addons/account/account.py:1547
 #, python-format
