@@ -58914,6 +58914,11 @@ msgstr "Mauritanie"
 msgid "Introduction"
 msgstr "Introduction"
 
+#. module: base
+#: model:ir.ui.menu,name:base.menu_base_partner
+msgid "Sales"
+msgstr "Commandes"
+
 #. modules: base, procurement_request
 #: model:ir.ui.menu,name:base.menu_base_partner
 #: field:sale.order,order_ids:0
