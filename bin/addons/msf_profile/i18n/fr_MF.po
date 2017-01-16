@@ -75871,3 +75871,18 @@ msgstr "Total erroné : %.2f, au lieu de : %.2f"
 #: field:res.partner.address,office_name:0
 msgid "Office name"
 msgstr "Nom du bureau"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:918
+#: field:product.product,uf_write_date:0
+#, python-format
+msgid "Write date"
+msgstr "Date de modification"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:919
+#: field:product.product,uf_create_date:0
+#, python-format
+msgid "Creation date"
+msgstr "Date de création"
+
