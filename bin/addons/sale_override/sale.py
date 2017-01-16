@@ -885,7 +885,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                     fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=False),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
         'company_id2': fields.many2one('res.company', 'Company', select=1),
@@ -2939,7 +2939,7 @@ class sale_order_line(osv.osv):
             self.infolog(cr, uid, "The line id:%s (line number: %s) of the %s id:%s (%s) has been deleted." % ltl)
 
         if lines_to_check:
-            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context, update_lines=False)
+            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=True, context=context, update_lines=False)
 
         return res
 
