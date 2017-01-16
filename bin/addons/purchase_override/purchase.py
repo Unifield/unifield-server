@@ -786,13 +786,18 @@ class purchase_order(osv.osv):
 
         # Check the order_type is consistent with source_type
         src_type = False
+        order_types_ok = []
         if source_type:
             for stype in SOURCE_TYPES:
                 if stype[0] == source_type:
                     src_type = stype
+                    if hasattr(stype[1], '__iter__') and not isinstance(stype[1], str):
+                        order_types_ok = [x for x in stype[1]]
+                    else:
+                        order_types_ok = [stype[1]]
                     break
 
-        if src_type:
+        if src_type and order_type not in order_types_ok:
             if hasattr(src_type[2], '__iter__') and not isinstance(src_type[2], str):
                 msg_data = {'type': ' / '.join('\'%s\'' % x for x in src_type[2])}
             else:
