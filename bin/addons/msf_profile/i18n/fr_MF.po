@@ -75905,3 +75905,9 @@ msgstr "Créé localement"
 #: help:res.partner,locally_created:0
 msgid "Partner Created on this instance"
 msgstr "Partenaire créé sur cette instance"
+
+#. module: account
+#: code:addons/account/account.py:1547
+#, python-format
+msgid "You can't save entries in a non-open period: %s"
+msgstr "Vous ne pouvez pas enregistrer des écritures dans une période non ouverte : %s"
