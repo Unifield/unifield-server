@@ -8,7 +8,7 @@
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form"/>
-            <field name="priority" eval="50"/>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='line_ids']/tree/field[@name='amount_out']" position="after">
                     <field name="currency_id" readonly="1" invisible="1"/>
@@ -25,7 +25,7 @@
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form2"/>
-            <field name="priority" eval="51"/>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='line_ids']/tree/field[@name='amount_out']" position="after">
                     <field name="currency_id" readonly="1" invisible="1"/>

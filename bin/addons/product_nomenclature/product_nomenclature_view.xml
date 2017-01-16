@@ -6,6 +6,7 @@
 			<field name="name">product.search.form</field>
 			<field name="model">product.product</field>
 			<field name="type">search</field>
+            <field name="priority">30</field>
 			<field name="inherit_id" ref="product.product_search_form_view" />
 			<field name="arch" type="xml">
 				<data>
@@ -49,6 +50,7 @@
 			<field name="name">product.normal.form</field>
 			<field name="model">product.product</field>
 			<field name="type">form</field>
+            <field name="priority">60</field>
 			<field name="inherit_id" ref="product.product_normal_form_view" />
 			<field name="arch" type="xml">
 				<data>
@@ -314,6 +316,7 @@
             <field name="name">product.category.family.form.view</field>
             <field name="model">product.category</field>
             <field name="type">form</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="product.product_category_form_view" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='type']" position="after">

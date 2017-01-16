@@ -37,6 +37,7 @@
         	<field name="name">stock.inventory.form.inactive.product</field>
         	<field name="model">stock.inventory</field>
         	<field name="type">form</field>
+            <field name="priority">20</field>
         	<field name="inherit_id" ref="stock.view_inventory_form" />
         	<field name="arch" type="xml">
         		<data>

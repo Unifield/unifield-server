@@ -7,6 +7,7 @@
             <field name="model">product.product</field>
             <field name="inherit_id" ref="product.product_product_tree_view" />
             <field name="type">tree</field>
+            <field name="priority">105</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="replace">
@@ -36,6 +37,7 @@
             <field name="model">product.product</field>
             <field name="inherit_id" ref="account.product_normal_form_view" />
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//page[@string='Accounting']//group[2]" position="replace" >
@@ -329,6 +331,7 @@
             <field name="name">product.supplierinfo.form.view.inherit</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
+            <field name="priority">45</field>
             <field name="inherit_id" ref="product.product_supplierinfo_form_view"/>
             <field name="arch" type="xml">
                 <data>
@@ -344,6 +347,7 @@
             <field name="name">product.supplierinfo.tree.view.inherit</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">tree</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="product.product_supplierinfo_tree_view"/>
             <field name="arch" type="xml">
                 <data>
@@ -383,6 +387,7 @@
             <field name="name">product.search.form</field>
             <field name="model">product.product</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="product.product_search_form_view" />
             <field name="arch" type="xml">
                <field name="default_code" position="after">
@@ -489,7 +494,7 @@
             <field name="model">product.product</field>
             <field name="type">search</field>
             <field name="inherit_id" ref="product.product_search_form_view"/>
-            <field name="priority" eval="45"/>
+            <field name="priority">40</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/search/group[@string='Extended Filters...']" position="replace">
@@ -502,8 +507,8 @@
             <field name="name">product.form.replace.ext</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
+            <field name="priority">110</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
-            <field name="priority" eval="45"/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Packaging']" position="replace">

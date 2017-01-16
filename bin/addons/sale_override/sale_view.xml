@@ -6,6 +6,7 @@
             <field name="name">sale.order.type.form.view</field>
             <field name="model">sale.order</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -173,6 +174,7 @@
             <field name="name">sale.order.type.search.view</field>
             <field name="model">sale.order</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="sale.view_sales_order_filter" />
             <field name="arch" type="xml">
                 <data>
