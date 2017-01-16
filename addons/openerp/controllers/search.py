@@ -19,7 +19,7 @@
 #
 ###############################################################################
 import simplejson
-from openerp.utils import rpc, expr_eval, TinyDict, TinyForm, TinyFormError
+from openerp.utils import rpc, expr_eval, TinyDict, TinyForm, TinyFormError, format_datetime_value
 
 import actions
 from form import Form
@@ -113,7 +113,7 @@ class Search(Form):
 
         if kw.get('return_to'):
             params['return_to'] = ast.literal_eval(kw['return_to'])
-            
+
         return self.create(params)
 
     @expose('json')
@@ -204,16 +204,11 @@ class Search(Form):
     def get(self, **kw):
 
         params, data = TinyDict.split(kw)
-
-        error = None
-        error_field = None
-
         model = params.model
 
         record = kw.get('record')
         record = eval(record)
         proxy = rpc.RPCProxy(model)
-        data = {}
         res = proxy.fields_get(False, rpc.session.context)
 
         all_values = {}
@@ -238,7 +233,7 @@ class Search(Form):
                         errors.append({field: ustr(e)})
 
                     datas['rec'] = field
-                    
+
                     datas['rec_val'] = fld['value']
 
                 datas['type'] = fld['type']
@@ -296,10 +291,10 @@ class Search(Form):
         res = proxy.fields_get(False, context)
         all_error = []
         fld = {}
-        
+
         if domains:
             for field, value in domains.iteritems():
-                
+
                 if '/' in field:
                     fieldname, bound = field.split('/')
                 else:
@@ -310,11 +305,15 @@ class Search(Form):
                 fld['type'] = res[fieldname].get('type')
                 if fld['type'] == 'many2many':
                     fld['type'] = 'char'
+
+                if fld['type'] == 'datetime' and bound:
+                    value = format_datetime_value(value, bound)
+
                 fld['value'] = value
                 data[field] = fld
 
                 try:
-                    frm = TinyForm(**data).to_python()
+                    TinyForm(**data).to_python()
                 except TinyFormError, e:
                     error_field = e.field
                     error = ustr(e)
@@ -371,7 +370,7 @@ class Search(Form):
                 # from switchView, data is sent as Python literals
                 # (with unicode strings and keys)
                 custom_domains = ast.literal_eval(custom_domains)
-        
+
         # conversion of the pseudo domain from the javascript to a valid domain
         ncustom_domain = []
         for i in xrange(max(len(custom_domains) - 1, 0)):
@@ -405,11 +404,11 @@ class Search(Form):
     @expose()
     def manage_filter(self, **kw):
         act={'name':'Manage Filters',
-                 'res_model':'ir.filters',
-                 'type':'ir.actions.act_window',
-                 'view_type':'form',
-                 'view_mode':'tree,form',
-                 'domain':'[(\'model_id\',\'=\',\''+kw.get('model')+'\'),(\'user_id\',\'=\','+str(rpc.session.uid)+')]'}
+             'res_model':'ir.filters',
+             'type':'ir.actions.act_window',
+             'view_type':'form',
+             'view_mode':'tree,form',
+             'domain':'[(\'model_id\',\'=\',\''+kw.get('model')+'\'),(\'user_id\',\'=\','+str(rpc.session.uid)+')]'}
 
         return actions.execute(act, context=rpc.session.context)
 
@@ -492,7 +491,7 @@ class Search(Form):
         context_own = dict(parent_context)
         for ctx in parent_context.items():
             if ctx[0].startswith('default_') or ctx[0] in ('set_editable','set_visible')\
-             or ctx[0] == 'group_by' or ctx[0].startswith('search_default_'):
+                    or ctx[0] == 'group_by' or ctx[0].startswith('search_default_'):
                 del context_own[ctx[0]]
 
         return context_own
