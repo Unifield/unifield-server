@@ -75891,3 +75891,7 @@ msgstr "Date de modification"
 msgid "Creation date"
 msgstr "Date de création"
 
+#. module: msf_outgoing
+#: view:ppl.processor:0
+msgid "Check integrity"
+msgstr "Vérifier les erreurs"
