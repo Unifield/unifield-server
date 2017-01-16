@@ -394,6 +394,18 @@ msgstr "Field Application Configuration"
 msgid "Sale Order"
 msgstr "Field Order"
 
+#. module: tender_flow
+#: view:tender:0
+#: field:tender,sale_order_id:0
+msgid "Sale Order"
+msgstr "Source Document"
+
+#. module: tender_flow, purchase_compare_rfq
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
+#: field:wizard.compare.rfq,sale_order_id:0
+msgid "Field Order"
+msgstr "Source Document"
+
 #. module: sales_followup
 #: model:ir.model,name:sales_followup.model_sale_order_followup_from_menu
 msgid "Sale order followup menu entry"
