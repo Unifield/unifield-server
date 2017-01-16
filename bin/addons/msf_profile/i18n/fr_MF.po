@@ -28080,8 +28080,9 @@ msgstr "Méthode"
 #. modules: procurement, procurement_report
 #: model:ir.ui.menu,name:procurement.menu_stock_proc_schedulers
 #: model:ir.actions.act_window,name:procurement_report.action_compute_schedulers_purchase
-msgid "POs Creation"
-msgstr "Création BCs"
+#: model:ir.actions.act_window,name:procurement.action_compute_schedulers
+msgid "Auto POs Creation"
+msgstr "Création Auto. BCs"
 
 #. module: stock_forecast
 #: model:ir.actions.server,name:stock_forecast.action_stock_forecast
