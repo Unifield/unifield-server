@@ -10548,8 +10548,12 @@ msgstr "Taxes"
 
 #. module: procurement
 #: model:ir.actions.act_window,name:procurement.action_compute_schedulers
-#: model:ir.ui.menu,name:procurement.menu_stock_sched
 msgid "POs Creation"
+msgstr "Création BCs"
+
+#. module: procurement
+#: model:ir.ui.menu,name:procurement.menu_stock_sched
+msgid "PO Creation"
 msgstr "Création BCs"
 
 #. module: base
