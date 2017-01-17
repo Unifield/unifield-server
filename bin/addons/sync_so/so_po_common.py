@@ -266,7 +266,7 @@ class so_po_common(osv.osv_memory):
             if ana_id:
                 return ana_id
             # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run 
-            raise Exception, "Sorry the given analytic distribution " + analytic_id + " is not available. Cannot proceed this message!"
+            raise Exception, "Sorry the given analytic distribution " + analytic_id['id'] + " is not available. Cannot proceed this message!"
         return False
 
     def create_sync_order_label(self, cr, uid, data_dict, context=None):
