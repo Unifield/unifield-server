@@ -382,16 +382,26 @@ class analytic_account(osv.osv):
                 vals['cost_center_ids'] = [(6, 0, [])]
         return vals
 
-    def _check_date(self, vals, context=None):
+    def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
+        aji_obj = self.pool.get('account.analytic.line')
         if 'date' in vals and vals['date'] is not False:
-            if vals['date'] <= date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
-                # validate the date (must be > today)
-                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'date_start' in vals and not vals['date_start'] < vals['date']:
+            if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+            # if the account already exists, check that there is no unposted AJI using it and
+            # having a posting date >= selected inactivation date
+            if not context.get('sync_update_execution', False) and account_ids is not None:
+                aji_ko = aji_obj.search_exist(cr, uid, ['&', '&', ('move_state', '=', 'draft'),
+                                                        ('date', '>=', vals['date']),
+                                                        '|', '|',
+                                                        ('account_id', 'in', account_ids),
+                                                        ('cost_center_id', 'in', account_ids),
+                                                        ('destination_id', 'in', account_ids)], context=context)
+                if aji_ko:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('There are unposted Analytic Journal Items having a posting date after the selected inactivation date.'))
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)
@@ -417,7 +427,7 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account creation
         """
-        self._check_date(vals, context=context)
+        self._check_date(cr, uid, vals, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
@@ -432,7 +442,7 @@ class analytic_account(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self._check_date(vals, context=context)
+        self._check_date(cr, uid, vals, account_ids=ids, context=context)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
 
