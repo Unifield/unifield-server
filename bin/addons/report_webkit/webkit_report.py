@@ -40,10 +40,12 @@ from mako.template import Template
 from mako import exceptions
 import netsvc
 import pooler
+import logging
 from report_helper import WebKitHelper
 from report.report_sxw import report_sxw, report_rml, _int_format, \
                               _float_format, _date_format, _dttime_format, browse_record_list, \
                               rml_parse
+from lxml import etree
 import addons
 import tools
 from tools.translate import _
@@ -394,7 +396,6 @@ class WebKitParser(report_sxw):
         report_xml_ids = ir_obj.search(cursor, uid,
                 [('report_name', '=', self.name[7:])], context=context)
         if report_xml_ids:
-            
             report_xml = ir_obj.browse(
                                         cursor, 
                                         uid, 
@@ -413,7 +414,43 @@ class WebKitParser(report_sxw):
         result = self.create_source_pdf(cursor, uid, ids, data, report_xml, context)
         if not result:
             return (False,False)
+        if result and isinstance(result[0], basestring) and\
+                result[0].startswith('<?xml'):
+            new_result = self.check_malformed_xml_spreadsheet(xml_string=result[0],
+                    report_name=report_xml.report_name)
+            if new_result:
+                # change the first element of the tuple
+                result = list(result)
+                result[0] = new_result
+                result = tuple(result)
+
         return result
+
+    def check_malformed_xml_spreadsheet(self, xml_string, report_name):
+        '''Check that the xml spreadsheet doesn't contain
+        node <Date ss:Type="DateTime"> with 'False' in the values
+        log an error if that is the case an remove the corresponding node.
+        '''
+        logger = logging.getLogger('mako_spreadsheet')
+        file_dom = etree.fromstring(xml_string)
+        namespaces = {
+            'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
+            'spreadsheet': 'urn:schemas-microsoft-com:office:spreadsheet'
+        }
+        data_time_elements = file_dom.xpath('//spreadsheet:Data[@ss:Type="DateTime"]',
+                namespaces=namespaces)
+        element_to_remove = []
+        for element in data_time_elements:
+            if 'False' in element.text:
+                error_message = 'Line %s of document %s is corrupted : %s' % (element.sourceline, report_name, element.text)
+                logger.error(error_message)
+                element_to_remove.append(element)
+        for element in element_to_remove:
+            element.getparent().remove(element)
+        if element_to_remove:
+            # if a malformed node exists, remove it from the dom tree
+            return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
+        return xml_string
 
 
 class XlsWebKitParser(WebKitParser):
