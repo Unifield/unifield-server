@@ -60,7 +60,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 % for o in objects:
 <Row>
-% if o.document_date and o.document_date != 'False':
+% if isDate(o.document_date):
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.document_date|n}T00:00:00</Data>
 </Cell>
@@ -69,7 +69,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
         <Data ss:Type="String"> </Data>
 </Cell>
 % endif
-% if o.date and o.date != 'False':
+% if isDate(o.date):
 <Cell ss:StyleID="ssBorderDate">
         <Data ss:Type="DateTime">${o.date|n}T00:00:00</Data>
 </Cell>

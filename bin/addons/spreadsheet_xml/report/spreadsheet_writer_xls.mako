@@ -62,7 +62,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Row>
   % for index, h in enumerate(headers):
     <% result=row[index] %>
-    % if h[1] == 'date' and result and result != 'False':
+    % if h[1] == 'date' and isDate(result):
         <Cell ss:StyleID="sShortDate">
             <Data ss:Type="DateTime">${result|n}T00:00:00.000</Data>
         </Cell>

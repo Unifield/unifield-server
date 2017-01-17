@@ -237,7 +237,7 @@ headers_list = [
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.line_uom_id and line.line_uom_id.name or ''|x}</Data></Cell>
 ## 6) purchase line confirmed date
 <% dt = parse_date_xls(line.line_confirmed_date) %>
-% if dt:
+% if isDate(dt):
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
@@ -258,7 +258,7 @@ headers_list = [
     <Cell ss:StyleID="line"><Data ss:Type="String">${line.move_uom_id and line.move_uom_id.name or ''|x}</Data></Cell>
 ## 12) move delivery date
 <% dt = parse_date_xls(line.move_delivery_date) %>
-% if dt:
+% if isDate(dt):
     <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>

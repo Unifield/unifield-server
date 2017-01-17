@@ -171,7 +171,7 @@ else:
 <Row>
     <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Creation date:')|x}</Data></Cell>
 <% dt = parse_date_xls(o.creation_date) %>
-% if dt:
+% if isDate(dt):
     <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String"></Data></Cell>
@@ -186,7 +186,7 @@ else:
 <Row>
     <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Requested date:')|x}</Data></Cell>
 <% dt = parse_date_xls(o.requested_date) %>
-% if dt:
+% if isDate(dt):
     <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String"></Data></Cell>
@@ -196,7 +196,7 @@ else:
 <Row>
     <Cell ss:StyleID="ssCellBold"><Data ss:Type="String">${_('Confirmed date:')|x}</Data></Cell>
 <% dt = parse_date_xls(o.confirmed_date) %>
-% if dt:
+% if isDate(dt):
     <Cell ss:StyleID="short_date"${merge_accross}><Data ss:Type="DateTime">${dt|n}</Data></Cell>
 % else:
     <Cell ss:StyleID="line"${merge_accross}><Data ss:Type="String"></Data></Cell>

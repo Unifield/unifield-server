@@ -519,7 +519,11 @@
     <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Creator')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.creator and o.creator.name or ''|x}</Data></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Creation Date')}:</Data></Cell>
+    % if isDate(o.creation_date):
     <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
+    % else:
+    <Cell ss:StyleID="sData"><Data ss:Type="String"></Data></Cell>
+    % endif
    </Row>
    <Row ss:StyleID="s63">
     <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Tender Reference')}:</Data></Cell>
@@ -527,7 +531,11 @@
     <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Field Order')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.sale_order_id and o.sale_order_id.name or ''|x}</Data></Cell>
     <Cell ss:MergeAcross="1" ss:StyleID="sTitle"><Data ss:Type="String">${_('Requested Date')}:</Data></Cell>
+    % if isDate(o.requested_date):
     <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
+    % else:
+    <Cell ss:StyleID="sData"><Data ss:Type="String"></Data></Cell>
+    % endif
    </Row>
    <Row ss:StyleID="s63">
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Location')}:</Data></Cell>
@@ -588,7 +596,7 @@
       %>
     <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
     <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
-    % if line.get(sup_confirmed_delivery_date, False):
+    % if isDate(line.get(sup_confirmed_delivery_date, False)):
         <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
     % else:
         <Cell ss:StyleID="s87"><Data ss:Type="String"></Data></Cell>

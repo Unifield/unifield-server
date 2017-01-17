@@ -127,7 +127,7 @@
     </Row>
     <Row ss:AutoFitHeight="1">
         <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">${_('Generated on')}</Data></Cell>
-        % if o.name not in ('False', False):
+        % if isDate(o.name):
             <Cell ss:MergeAcross="2" ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
         % else:
             <Cell ss:MergeAcross="2" ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -155,7 +155,7 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['product_name'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(prd['uom'])|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${(line['batch'])|x}</Data></Cell>
-            % if line['expiry_date'] not in ('False', False):
+            % if isDate(line['expiry_date']):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${(line['expiry_date'])|n}T00:00:00.000</Data></Cell>
             % else:
             <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
