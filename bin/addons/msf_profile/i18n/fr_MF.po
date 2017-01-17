@@ -9862,11 +9862,12 @@ msgstr "Sélectionner Bon de Commande"
 msgid "When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. If not set on the product, the one from the product category is used."
 msgstr "Lors de la valorisation en temps réel de l'inventaire, des lignes d'écritures du Journal de la contrepartie correspondantes à tous les mouvements d'entrée stock seront comptabilisées sous ce compte. Si la valorisation n'est pas établie sur le produit, alors celle de la catégorie du produit sera utilisée.  "
 
-#. modules: msf_doc_import, msf_partner, tender_flow, sale
+#. modules: msf_doc_import, msf_partner, tender_flow, sale, sale_override
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
 #: report:sale.order.allocation.report:0
+#: code:addons/sale_override/sale.py:3120
 msgid "Field Order"
 msgstr "Commande de Terrain"
 
@@ -9875,6 +9876,21 @@ msgstr "Commande de Terrain"
 #: field:wizard.compare.rfq,sale_order_id:0
 msgid "Field Order"
 msgstr "Document source"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:628
+#: code:addons/sale_override/sale.py:641
+#: code:addons/sale_override/sale.py:1523
+#: code:addons/sale_override/sale.py:2053
+#, python-format
+msgid "Field order"
+msgstr "Commande de terrain"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:1525
+#, python-format
+msgid "The %s %s has been created to re-source the canceled needs"
+msgstr "La %s %s a été créé pour 're-sourcer' les besoins annulés"
 
 #. module: base
 #: field:res.config.users,action_id:0
@@ -38913,6 +38929,14 @@ msgstr "Capital"
 #: field:sale.order.line,procurement_request:0
 msgid "Internal Request"
 msgstr "Demande Interne"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:641
+#: code:addons/sale_override/sale.py:1523
+#: code:addons/sale_override/sale.py:2053
+#, python-format
+msgid "Internal request"
+msgstr "Demande interne"
 
 #. module: base
 #: help:ir.ui.view,xml_id:0
@@ -75899,3 +75923,9 @@ msgstr "Date de création"
 #: view:ppl.processor:0
 msgid "Check integrity"
 msgstr "Vérifier les erreurs"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:3119
+#, python-format
+msgid "A line was added to the %s %s to re-source the canceled line."
+msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."
