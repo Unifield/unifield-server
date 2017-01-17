@@ -491,6 +491,9 @@ class sale_order_line(osv.osv):
         if description:
             values.update({'nomenclature_description': ':'.join(description)})
 
+        if 'nomenclature_description' in values and not values.get('nomenclature_description'):
+            del values['nomenclature_description']
+
     def _productDomain(self, cr, uid, id, context=None):
         '''
         product the dynamic product's domain
