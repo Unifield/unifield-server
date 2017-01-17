@@ -33,7 +33,7 @@ from msf_doc_import import check_line
 from msf_doc_import.wizard import PRODUCT_LIST_COLUMNS_FOR_IMPORT as columns_for_product_list_import
 
 
-class wizard_import_product_list(osv.osv):
+class wizard_import_product_list(osv.osv_memory):
     _name = 'wizard.import.product.list'
     _rec_name = 'list_id'
 
@@ -308,7 +308,7 @@ Importation completed in %s!
         context = context is None and {} or context
         list_obj = self.pool.get('product.list')
         for wiz_read in self.read(cr, uid, ids, ['list_id', 'state', 'file']):
-            list_id = wiz_read['list_id'][0]
+            list_id = wiz_read['list_id'] if isinstance(wiz_read['list_id'], (int, long)) else wiz_read['list_id'][0]
             list_name = list_obj.read(cr, uid, list_id, ['name'])['name']
             if wiz_read['state'] != 'done':
                 self.write(cr, uid, ids, {'message': _(' Import in progres... \n Please wait that the import is finished before editing %s.') % (list_name)})
@@ -320,7 +320,7 @@ Importation completed in %s!
         '''
         ids = isinstance(ids, (int, long)) and [ids] or ids
         for wiz_obj in self.read(cr, uid, ids, ['list_id']):
-            list_id = wiz_obj['list_id'][0]
+            list_id =  wiz_obj['list_id'] if isinstance(wiz_obj['list_id'], (int, long)) else wiz_obj['list_id'][0]
 
         return {'type': 'ir.actions.act_window',
                 'res_model': 'product.list',
