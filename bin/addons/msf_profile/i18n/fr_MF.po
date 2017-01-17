@@ -66785,7 +66785,7 @@ msgstr "Assistant réallocation HQ "
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
 msgid "Financial Responsible"
-msgstr "Responsable Fincancier"
+msgstr "Responsable Financier"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:179
