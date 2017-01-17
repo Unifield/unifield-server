@@ -54,7 +54,6 @@
         'product_report.xml',
         'product_view.xml',
         'pricelist_view.xml',
-        'partner_view.xml',
         'process/product_process.xml'
     ],
     'test':['test/product_report.yml'],
