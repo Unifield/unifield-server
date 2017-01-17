@@ -20,7 +20,7 @@
 ##############################################################################
 
 {
-    "name": "Batch Recall",
+    "name": "Batch Location",
     "version": "1.0",
     "depends": ["base", "stock_move_tracking", "product_expiry", "specific_rules"],
     "author": "TeMPO Consulting, MSF",
@@ -41,7 +41,7 @@
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

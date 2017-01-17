@@ -60278,8 +60278,8 @@ msgstr "Données Tirées"
 #: model:ir.ui.menu,name:stock_batch_recall.menu_batch_recall
 #: view:report.batch.recall:0
 #: view:stock.batch.recall:0
-msgid "Batch Recall"
-msgstr "Rappel de Lot"
+msgid "Batch Location"
+msgstr "Emplacements des Lots"
 
 #. module: stock
 #: code:addons/stock/wizard/stock_return_picking.py:92
