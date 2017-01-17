@@ -485,14 +485,12 @@ class sale_order_line(osv.osv):
         ids = map(lambda x: values['nomen_sub_%i'%x], ids)
         subNomenclatures = self.pool.get('product.nomenclature').read(cr, uid, ids, ['name'], context=context)
 
-        for n in subNomenclatures:
-            description.append(n['name'])
+        if subNomenclatures:
+            for n in subNomenclatures:
+                description.append(n['name'])
 
-        if description:
-            values.update({'nomenclature_description': ':'.join(description)})
-
-        if 'nomenclature_description' in values and not values.get('nomenclature_description'):
-            del values['nomenclature_description']
+            if description:
+                values.update({'nomenclature_description': ':'.join(description)})
 
     def _productDomain(self, cr, uid, id, context=None):
         '''
