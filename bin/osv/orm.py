@@ -3888,6 +3888,14 @@ class orm(orm_template):
 
         check_to_do = False
         for fld in vals.copy():
+            fobj = None
+            if field in self._columns:
+                fobj = self._columns[field]
+            elif field in self._inherit_fields:
+                fobj = self._inherit_fields[field][2]
+            if not fobj:
+                continue
+
             if not (isinstance(fobj, fields.function) and fobj._fnct_inv):
                 check_to_do = True
                 break
