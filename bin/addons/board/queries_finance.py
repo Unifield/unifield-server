@@ -51,34 +51,20 @@ account_period.name,
 account_move.name,
 account_account.code,
 avg(account_move_line.credit_currency-account_move_line.debit_currency) JI,
-sum(account_analytic_line.amount_currency) AJI,
-abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) difference
+sum(COALESCE(account_analytic_line.amount_currency, 0)) AJI,
+abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) difference
 FROM
-account_move,
-account_move_line,
-account_account,
-account_analytic_line,
-account_journal,
-account_period
+account_move_line
+JOIN account_move ON account_move.id = account_move_line.move_id
+JOIN account_account ON account_account.id = account_move_line.account_id
+JOIN account_journal ON account_journal.id = account_move.journal_id
+JOIN account_period ON account_move.period_id = account_period.id
+LEFT JOIN account_analytic_line on account_analytic_line.move_id = account_move_line.id
 WHERE
-account_analytic_line.move_id = account_move_line.id and
-account_move_line.move_id = account_move.id AND
-account_move_line.account_id = account_account.id AND
-account_journal.id = account_move.journal_id AND
-account_move.period_id = account_period.id AND
 account_journal.type not in ('system', 'revaluation', 'cur_adj') AND
-account_account.code in (
-SELECT
-account_account.code
-FROM
-account_account,
-account_account_type
-WHERE
-account_account.user_type = account_account_type.id and
-account_account_type.code in ('income', 'expense')
-)
+account_account.is_analytic_addicted = 't'
 GROUP BY account_period.name, account_move.name, account_move_line.id, account_period.date_start, account_account.code
-HAVING abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(account_analytic_line.amount_currency))) > 0.00001
+HAVING abs(abs(avg(account_move_line.debit_currency-account_move_line.credit_currency)) - abs(sum(COALESCE(account_analytic_line.amount_currency, 0)))) > 0.00001
 ORDER BY account_period.date_start, account_move.name"""
     },
     {
