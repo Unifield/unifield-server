@@ -446,9 +446,11 @@ class WebKitParser(report_sxw):
                 logger.error(error_message)
                 element_to_remove.append(element)
         for element in element_to_remove:
-            element.getparent().remove(element)
+            # if a malformed node exists, replace it with an empty String cell
+            element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
+            element.text = ''
         if element_to_remove:
-            # if a malformed node exists, remove it from the dom tree
+            # return modified xml
             return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
         return xml_string
 
