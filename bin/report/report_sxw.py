@@ -207,12 +207,14 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
-    def isDate(self, date):
+    def isDate(self, date, date_format=False):
         '''
         return False if the value stored in field is not a date, True else.
         '''
+        if not date_format:
+            date_format = '%Y-%m-%d'
         try:
-            datetime.strptime(date, '%Y-%m-%d')
+            datetime.strptime(date, date_format)
         except ValueError:
             return False
         return True

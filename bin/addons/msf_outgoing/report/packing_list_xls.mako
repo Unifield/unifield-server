@@ -348,7 +348,7 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299408"><Data ss:Type="String">Packing date:</Data></Cell>
-    % if isDate(p['ppl'].date):
+    % if isDate(p['ppl'].date[0:10]):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${p['ppl'].date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
@@ -363,7 +363,7 @@
    </Row>
    <Row ss:AutoFitHeight="0" ss:Height="12">
     <Cell ss:MergeAcross="1" ss:StyleID="m99299428"><Data ss:Type="String">RTS date:</Data></Cell>
-    % if isDate(objects[0].shipment_expected_date):
+    % if isDate(objects[0].shipment_expected_date[0:10]):
     <Cell ss:StyleID="s17_short_date"><Data ss:Type="DateTime">${objects[0].shipment_expected_date[0:10]|n}T00:00:00.000</Data></Cell>
     % else:
     <Cell ss:StyleID="s17"><Data ss:Type="String"></Data></Cell>
