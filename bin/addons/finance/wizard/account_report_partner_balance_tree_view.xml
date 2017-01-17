@@ -144,7 +144,7 @@
              <field name="res_model">wizard.account.partner.balance.tree</field>
              <field name="type">ir.actions.act_window</field>
              <field name="view_type">form</field>
-             <field name="view_mode">tree,form</field>
+             <field name="view_mode">form</field>
              <field name="view_id" ref="wizard_account_report_partner_balance_tree_view"/>
              <field name="context">{'record_id':active_id,'search_default_groupby_payable_receivable':'1'}</field>
              <field name="target">new</field>

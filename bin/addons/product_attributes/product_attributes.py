@@ -1437,7 +1437,7 @@ class product_attributes(osv.osv):
 
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
-            if not product.active:
+            if not product.active and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
 
             # Check if the product is in some purchase order lines or request for quotation lines
