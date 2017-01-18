@@ -458,19 +458,39 @@ class account_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
+    def _tax_line_on_account(self, account_invoice, account):
+        """
+        Return True if the account is used for one of the tax lines of the "account.invoice" document
+        (global tax or at line level)
+        """
+        for tax_line in account_invoice.tax_line:
+            if tax_line.account_id == account:
+                return True
+        return False
+
+    def _invoice_line_on_account(self, account_invoice, account):
+        """
+        Return True if the account is used for one of the "account.invoice" (SI, SR...) lines
+        """
+        for inv_line in account_invoice.invoice_line:
+            if inv_line.account_id == account:
+                return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
         ji_obj = self.pool.get('account.move.line')
+        inv_obj = self.pool.get('account.invoice')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-            # if the account already exists, check that there is no JI using it
-            # having a posting date >= selected inactivation date,
-            # and being unreconciled (for reconcilable accounts) or unposted (for non-reconcilable accounts)
             elif not context.get('sync_update_execution', False) and account_ids is not None:
                 for account in self.browse(cr, uid, account_ids, fields_to_fetch=['reconcile'], context=context):
+                    # if the account already exists, check that there is no JI using it
+                    # having a posting date >= selected inactivation date,
+                    # and being unreconciled (for reconcilable accounts) or unposted (for non-reconcilable accounts)
                     if account.reconcile:
                         ji_ko = ji_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
                                                               ('account_id', '=', account.id),
@@ -481,8 +501,20 @@ class account_account(osv.osv):
                                                               ('move_state', '=', 'draft')], context=context)
                     if ji_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('There are unposted or unreconciled Journal Items having a posting date '
-                                               'after the selected inactivation date.'))
+                                             _('Unposted or unreconciled Journal Items have a posting date '
+                                               'greater than or equal to the selected inactivation date.'))
+                    # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
+                    # a posting date >= selected inactivation date
+                    acc_inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['inactivation_date']),
+                                                           ('state', '=', 'draft')], order='NO_ORDER', context=context)
+                    acc_inv_ko = False
+                    for inv in inv_obj.browse(cr, uid, acc_inv_ids, fields_to_fetch=['account_id', 'invoice_line', 'tax_line'], context=context):
+                        if inv.account_id == account or self._invoice_line_on_account(inv, account) or self._tax_line_on_account(inv, account):
+                            acc_inv_ko = True
+                            break
+                    if acc_inv_ko:
+                        raise osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
+                                                               'greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
         '''

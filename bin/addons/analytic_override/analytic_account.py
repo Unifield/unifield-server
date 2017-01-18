@@ -382,17 +382,79 @@ class analytic_account(osv.osv):
                 vals['cost_center_ids'] = [(6, 0, [])]
         return vals
 
+    def _fp_line_on_account(self, cr, uid, distrib, account_ids, context=None):
+        """
+        Return True if one of the "funding.pool.distribution.line" related to the distribution in parameter uses
+        one of the accounts in parameter
+        """
+        if context is None:
+            context = {}
+        fp_line_obj = self.pool.get('funding.pool.distribution.line')
+        fp_line_ids = distrib and fp_line_obj.search(cr, uid, [('distribution_id', '=', distrib.id)], order='NO_ORDER',
+                                                     context=context)
+        for fp in fp_line_obj.browse(cr, uid, fp_line_ids, context=context,
+                                     fields_to_fetch=['destination_id', 'cost_center_id', 'analytic_id']):
+            if fp.destination_id.id in account_ids or fp.cost_center_id.id in account_ids or \
+                    (fp.analytic_id and fp.analytic_id.id in account_ids):
+                return True
+        return False
+
+    def _free1_line_on_account(self, cr, uid, distrib, account_ids, context=None):
+        """
+        Return True if one of the "free.1.distribution.line" related to the distribution in parameter uses
+        one of the accounts in parameter
+        """
+        if context is None:
+            context = {}
+        free1_obj = self.pool.get('free.1.distribution.line')
+        free1_line_ids = distrib and free1_obj.search(cr, uid, [('distribution_id', '=', distrib.id)], order='NO_ORDER',
+                                                      context=context)
+        for free1 in free1_obj.browse(cr, uid, free1_line_ids, context=context, fields_to_fetch=['analytic_id']):
+            if free1.analytic_id and free1.analytic_id.id in account_ids:
+                return True
+        return False
+
+    def _free2_line_on_account(self, cr, uid, distrib, account_ids, context=None):
+        """
+        Return True if one of the "free.2.distribution.line" related to the distribution in parameter uses
+        one of the accounts in parameter
+        """
+        if context is None:
+            context = {}
+        free2_obj = self.pool.get('free.2.distribution.line')
+        free2_line_ids = distrib and free2_obj.search(cr, uid, [('distribution_id', '=', distrib.id)], order='NO_ORDER',
+                                                      context=context)
+        for free2 in free2_obj.browse(cr, uid, free2_line_ids, context=context, fields_to_fetch=['analytic_id']):
+            if free2.analytic_id and free2.analytic_id.id in account_ids:
+                return True
+        return False
+
+    def _invoice_line_on_account(self, cr, uid, account_invoice, account_ids, context=None):
+        """
+        Return True if one of the analytic accounts is used for one of the "account.invoice" (SI, SR...) lines
+        """
+        if context is None:
+            context = {}
+        for inv_line in account_invoice.invoice_line:
+            distrib_line = inv_line.analytic_distribution_id or False
+            if distrib_line and (self._fp_line_on_account(cr, uid, distrib_line, account_ids, context) or
+                                 self._free1_line_on_account(cr, uid, distrib_line, account_ids, context) or
+                                 self._free2_line_on_account(cr, uid, distrib_line, account_ids, context)):
+                return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
         aji_obj = self.pool.get('account.analytic.line')
+        inv_obj = self.pool.get('account.invoice')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-            # if the account already exists, check that there is no unposted AJI using it and
-            # having a posting date >= selected inactivation date
             elif not context.get('sync_update_execution', False) and account_ids is not None:
+                # if the account already exists, check that there is no unposted AJI using it and
+                # having a posting date >= selected inactivation date
                 aji_ko = aji_obj.search_exist(cr, uid, ['&', '&', ('move_state', '=', 'draft'),
                                                         ('date', '>=', vals['date']),
                                                         '|', '|',
@@ -401,7 +463,28 @@ class analytic_account(osv.osv):
                                                         ('destination_id', 'in', account_ids)], context=context)
                 if aji_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('There are unposted Analytic Journal Items having a posting date after the selected inactivation date.'))
+                                         _('Unposted Analytic Journal Items have a posting date '
+                                           'greater than or equal to the selected inactivation date.'))
+                # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
+                # a posting date >= selected inactivation date
+                inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['date']),
+                                                   ('state', '=', 'draft')], order='NO_ORDER', context=context)
+                acc_inv_ko = False
+                for inv in inv_obj.browse(cr, uid, inv_ids, fields_to_fetch=['analytic_distribution_id', 'invoice_line'], context=context):
+                    distrib = inv.analytic_distribution_id or False
+                    # check that the analytic account is not used in the AD at header level
+                    if distrib and (self._fp_line_on_account(cr, uid, distrib, account_ids, context) or \
+                       self._free1_line_on_account(cr, uid, distrib, account_ids, context) or \
+                       self._free2_line_on_account(cr, uid, distrib, account_ids, context)):
+                        acc_inv_ko = True
+                        break
+                    # check that the analytic account is not used in the AD at line level
+                    if self._invoice_line_on_account(cr, uid, inv, account_ids, context):
+                        acc_inv_ko = True
+                        break
+                if acc_inv_ko:
+                    raise osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
+                                                           'greater than or equal to the selected inactivation date.'))
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)
