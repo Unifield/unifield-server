@@ -501,8 +501,8 @@ class account_account(osv.osv):
                                                               ('move_state', '=', 'draft')], context=context)
                     if ji_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('Unposted or unreconciled Journal Items have a posting date '
-                                               'greater than or equal to the selected inactivation date.'))
+                                             _('Unposted or unreconciled Journal Items using this account have a '
+                                               'posting date greater than or equal to the selected inactivation date.'))
                     # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
                     # a posting date >= selected inactivation date
                     acc_inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['inactivation_date']),

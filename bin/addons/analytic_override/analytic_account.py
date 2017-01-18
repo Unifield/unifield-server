@@ -463,7 +463,7 @@ class analytic_account(osv.osv):
                                                         ('destination_id', 'in', account_ids)], context=context)
                 if aji_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('Unposted Analytic Journal Items have a posting date '
+                                         _('Unposted Analytic Journal Items using this account have a posting date '
                                            'greater than or equal to the selected inactivation date.'))
                 # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
                 # a posting date >= selected inactivation date
