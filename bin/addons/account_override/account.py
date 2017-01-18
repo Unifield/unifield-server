@@ -458,17 +458,31 @@ class account_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
-    def _check_date(self, vals, context=None):
+    def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
-
+        ji_obj = self.pool.get('account.move.line')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
-            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
-                # validate the date (must be > today)
-                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+            if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+            # if the account already exists, check that there is no JI using it
+            # having a posting date >= selected inactivation date,
+            # and being unreconciled (for reconcilable accounts) or unposted (for non-reconcilable accounts)
+            elif not context.get('sync_update_execution', False) and account_ids is not None:
+                ji_ko = False
+                ji_ids = ji_obj.search(cr, uid, [('date', '>=', vals['inactivation_date']), ('account_id', 'in', account_ids)],
+                                       order='NO_ORDER', context=context)
+                for ji in ji_obj.browse(cr, uid, ji_ids, fields_to_fetch=['move_state', 'account_id', 'reconcile_id'], context=context):
+                    if ji_ko:
+                        break
+                    if ji.move_state == 'draft':
+                        ji_ko = True
+                    elif ji.account_id.reconcile and not ji.reconcile_id:
+                        ji_ko = True
+                if ji_ko:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('There are unposted or unreconciled Journal Items having a posting date after the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
         '''
@@ -486,14 +500,16 @@ class account_account(osv.osv):
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
     def create(self, cr, uid, vals, context=None):
-        self._check_date(vals, context=context)
+        self._check_date(cr, uid, vals, context=context)
         self._check_allowed_partner_type(vals)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        self._check_date(vals, context=context)
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        self._check_date(cr, uid, vals, account_ids=ids, context=context)
         self._check_allowed_partner_type(vals)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 

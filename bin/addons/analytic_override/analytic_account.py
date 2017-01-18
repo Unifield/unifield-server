@@ -392,7 +392,7 @@ class analytic_account(osv.osv):
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
             # if the account already exists, check that there is no unposted AJI using it and
             # having a posting date >= selected inactivation date
-            if not context.get('sync_update_execution', False) and account_ids is not None:
+            elif not context.get('sync_update_execution', False) and account_ids is not None:
                 aji_ko = aji_obj.search_exist(cr, uid, ['&', '&', ('move_state', '=', 'draft'),
                                                         ('date', '>=', vals['date']),
                                                         '|', '|',
