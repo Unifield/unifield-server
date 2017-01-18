@@ -6,6 +6,7 @@
 			<field name="name">product.supplierinfo.tree.view</field>
 			<field name="model">product.supplierinfo</field>
 			<field name="type">tree</field>
+            <field name="priority">30</field>
 			<field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_tree_view" />
 			<field name="arch" type="xml">
 				<xpath expr="//field[@name='min_qty']" position="replace">
@@ -18,6 +19,7 @@
 			<field name="name">product.supplierinfo.tree.view2</field>
 			<field name="model">product.supplierinfo</field>
 			<field name="type">tree</field>
+            <field name="priority">25</field>
 			<field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_tree_view" />
 			<field name="arch" type="xml">
 				<data>
@@ -39,6 +41,7 @@
 			<field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_form_view" />
             <field name="arch" type="xml">
             	<xpath expr="//field[@name='product_uom']" position="attributes">
@@ -73,6 +76,7 @@
 			<field name="name">product.supplierinfo.form.view</field>
             <field name="model">product.supplierinfo</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="msf_partner.manufacturer_supplierinfo_form_view"/>
             <field name="arch" type="xml">
             	<xpath expr="/form/field[@name='name']" position="attributes">
@@ -141,6 +145,7 @@
         	<field name="name">res.currency.add.checkboxes.form.view</field>
         	<field name="model">res.currency</field>
         	<field name="type">form</field>
+            <field name="priority">25</field>
         	<field name="inherit_id" ref="base.view_currency_form" />
         	<field name="arch" type="xml">
         		<data>
@@ -164,6 +169,7 @@
             <field name="name">catalogue.product.search.view</field>
             <field name="model">product.product</field>
             <field name="type">search</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="product.product_search_form_view" />
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='list_ids']" position="after">

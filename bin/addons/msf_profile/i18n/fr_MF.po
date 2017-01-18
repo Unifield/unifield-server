@@ -9118,7 +9118,7 @@ msgstr "Vous ne pouvez pas modifier la société de ce journal parce que l'enreg
 msgid "Process Components to Consume"
 msgstr "Traiter les composants à consommer"
 
-#. modules: account_override, delete_button, specific_rules
+#. modules: account_override, delete_button, specific_rules, account, analytic_distribution
 #: view:account.move:0
 #: view:purchase.order:0
 #: view:sale.order:0
@@ -9126,6 +9126,9 @@ msgstr "Traiter les composants à consommer"
 #: view:tender:0
 #: view:stock.production.lot:0
 #: view:real.average.consumption:0
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -9862,14 +9865,35 @@ msgstr "Sélectionner Bon de Commande"
 msgid "When doing real-time inventory valuation, counterpart Journal Items for all incoming stock moves will be posted in this account. If not set on the product, the one from the product category is used."
 msgstr "Lors de la valorisation en temps réel de l'inventaire, des lignes d'écritures du Journal de la contrepartie correspondantes à tous les mouvements d'entrée stock seront comptabilisées sous ce compte. Si la valorisation n'est pas établie sur le produit, alors celle de la catégorie du produit sera utilisée.  "
 
-#. modules: msf_doc_import, msf_partner, tender_flow, sale
+#. modules: msf_doc_import, msf_partner, tender_flow, sale, sale_override
 #: field:wizard.import.fo.line,fo_id:0
 #: field:wizard.import.ir.line,fo_id:0
 #: model:ir.actions.act_window,name:msf_partner.act_res_partner_2_sale_order
-#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
 #: report:sale.order.allocation.report:0
+#: code:addons/sale_override/sale.py:3120
 msgid "Field Order"
 msgstr "Commande de Terrain"
+
+#. modules: tender_flow, purchase_compare_rfq
+#: report:addons/tender_flow/report/tender_rfq_comparison_xls.mako:509
+#: field:wizard.compare.rfq,sale_order_id:0
+msgid "Field Order"
+msgstr "Document source"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:628
+#: code:addons/sale_override/sale.py:641
+#: code:addons/sale_override/sale.py:1523
+#: code:addons/sale_override/sale.py:2053
+#, python-format
+msgid "Field order"
+msgstr "Commande de terrain"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:1525
+#, python-format
+msgid "The %s %s has been created to re-source the canceled needs"
+msgstr "La %s %s a été créé pour 're-sourcer' les besoins annulés"
 
 #. module: base
 #: field:res.config.users,action_id:0
@@ -10543,8 +10567,12 @@ msgstr "Taxes"
 
 #. module: procurement
 #: model:ir.actions.act_window,name:procurement.action_compute_schedulers
-#: model:ir.ui.menu,name:procurement.menu_stock_sched
 msgid "POs Creation"
+msgstr "Création BCs"
+
+#. module: procurement
+#: model:ir.ui.menu,name:procurement.menu_stock_sched
+msgid "PO Creation"
 msgstr "Création BCs"
 
 #. module: base
@@ -27831,6 +27859,16 @@ msgstr "Sync DB id of the PO origin line"
 msgid "From"
 msgstr "De"
 
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "From"
+msgstr "Du"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "to"
+msgstr "au"
+
 #. module: report_webkit_override
 #: model:ir.module.module,description:report_webkit_override.module_meta_information
 msgid "This module override the module webkit_report in order to have proper MSF data\n"
@@ -28080,8 +28118,9 @@ msgstr "Méthode"
 #. modules: procurement, procurement_report
 #: model:ir.ui.menu,name:procurement.menu_stock_proc_schedulers
 #: model:ir.actions.act_window,name:procurement_report.action_compute_schedulers_purchase
-msgid "POs Creation"
-msgstr "Création BCs"
+#: model:ir.actions.act_window,name:procurement.action_compute_schedulers
+msgid "Auto POs Creation"
+msgstr "Création Auto. BCs"
 
 #. module: stock_forecast
 #: model:ir.actions.server,name:stock_forecast.action_stock_forecast
@@ -35134,7 +35173,7 @@ msgstr "Bengladesh"
 msgid "Reference of the document that produced this picking."
 msgstr "Référence du document à l'origine de l'opération de Piquage."
 
-#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, register_accounting, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, account_activable, stock, product, reason_types_moves, account_payment, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, procurement_auto, sale, msf_config_locations, sourcing
+#. modules: delivery_mechanism, tender_flow, analytic_distribution_supply, product_nomenclature, account_voucher, register_accounting, return_claim, sync_client, res_currency_tables, supplier_catalogue, import_data, stock_batch_recall, account_activable, stock, product, reason_types_moves, account_payment, consumption_calculation, purchase_override, specific_rules, kit, base, account_period_closing_level, account_subscription, msf_cross_docking, purchase, account, msf_outgoing, procurement_auto, sale, msf_config_locations, sourcing, resource
 #: code:addons/account/account.py:509
 #: code:addons/account/account.py:511
 #: code:addons/account/account.py:832
@@ -35241,6 +35280,7 @@ msgstr "Référence du document à l'origine de l'opération de Piquage."
 #: code:addons/tender_flow/tender_flow.py:349
 #: code:addons/tender_flow/tender_flow.py:481
 #: code:addons/tender_flow/tender_flow.py:914
+#: code:addons/resource/wizard_template.py:0
 #, python-format
 msgid "Error !"
 msgstr "Erreur !"
@@ -38903,6 +38943,14 @@ msgstr "Capital"
 #: field:sale.order.line,procurement_request:0
 msgid "Internal Request"
 msgstr "Demande Interne"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:641
+#: code:addons/sale_override/sale.py:1523
+#: code:addons/sale_override/sale.py:2053
+#, python-format
+msgid "Internal request"
+msgstr "Demande interne"
 
 #. module: base
 #: help:ir.ui.view,xml_id:0
@@ -45461,16 +45509,20 @@ msgstr "Conseil"
 msgid "Accounts Type Allowed (empty for no control)"
 msgstr "Type de Comptes Autorisés (vides pour non contrôle)"
 
-#. modules: return_claim, sourcing, documents_done, tender_flow, analytic_distribution, analytic_distribution_supply
+#. modules: return_claim, sourcing, documents_done, analytic_distribution, analytic_distribution_supply
 #: field:analytic.distribution.wizard,sale_order_id:0
 #: selection:documents.done.wizard,model:0
 #: field:return.claim,so_id_return_claim:0
 #: view:sourcing.line:0
-#: view:tender:0
-#: field:tender,sale_order_id:0
 #: field:account.invoice,order_ids:0
 msgid "Sale Order"
 msgstr "Commande de Terrain"
+
+#. module: tender_flow
+#: view:tender:0
+#: field:tender,sale_order_id:0
+msgid "Sale Order"
+msgstr "Document source"
 
 #. modules: purchase, account, base_setup, sale, stock
 #: model:ir.ui.menu,name:account.periodical_processing_invoicing
@@ -58904,6 +58956,11 @@ msgstr "Mauritanie"
 msgid "Introduction"
 msgstr "Introduction"
 
+#. module: base
+#: model:ir.ui.menu,name:base.menu_base_partner
+msgid "Sales"
+msgstr "Commandes"
+
 #. modules: base, procurement_request
 #: model:ir.ui.menu,name:base.menu_base_partner
 #: field:sale.order,order_ids:0
@@ -59471,7 +59528,7 @@ msgstr "Corrompu"
 #: code:addons/product/product.py:142
 #, python-format
 msgid "Conversion from Product UoM m to Default UoM PCE is not possible as they both belong to different Category!."
-msgstr "La conversion de l'UdM Produit vers l'UdM Pièce par défaut est impossible car elles ne sont pas de la même catégorie !"
+msgstr "La conversion de l'UdM Produit vers l'UdM PCE par défaut est impossible car elles ne sont pas de la même catégorie !"
 
 #. module: base
 #: selection:ir.model.fields,ttype:0
@@ -60235,8 +60292,8 @@ msgstr "Données Tirées"
 #: model:ir.ui.menu,name:stock_batch_recall.menu_batch_recall
 #: view:report.batch.recall:0
 #: view:stock.batch.recall:0
-msgid "Batch Recall"
-msgstr "Rappel de Lot"
+msgid "Batch Location"
+msgstr "Emplacements des Lots"
 
 #. module: stock
 #: code:addons/stock/wizard/stock_return_picking.py:92
@@ -62786,8 +62843,11 @@ msgstr "Prix Indicatif"
 msgid "Tracking a move"
 msgstr "Suivi d'un mouvement"
 
-#. module: base
+#. modules: base, account_override, account, analytic_distribution
 #: view:base.language.install:0
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
 msgid "Load"
 msgstr "Charger"
 
@@ -66742,7 +66802,7 @@ msgstr "Assistant réallocation HQ "
 #: report:purchase.order.merged:0
 #: report:msf.sale.order:0
 msgid "Financial Responsible"
-msgstr "Responsable Fincancier"
+msgstr "Responsable Financier"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:179
@@ -73604,7 +73664,7 @@ msgstr "Demande"
 #. module: product
 #: model:product.uom,name:product.product_uom_unit
 msgid "PCE"
-msgstr "Pièce"
+msgstr "PCE"
 
 #. module: stock_schedule
 #: code:addons/stock_schedule/schedule.py:411
@@ -74843,6 +74903,8 @@ msgstr "# de lignes"
 
 #. module: purchase_override
 #: report:msf.purchase.order:0
+#: report:msf.purchase.quotation:0
+#: report:purchase.order.merged:0
 msgid "Source Document :"
 msgstr "Document source :"
 
@@ -75758,6 +75820,136 @@ msgstr "Status du rapport"
 msgid "There is no stopped products to report"
 msgstr "Il n'y a aucun produit stoppé à afficher"
 
+#. module: resource
+#: sql_constraint:wizard.template:0
+msgid "This template name already exists for this wizard. Please choose another name."
+msgstr "Ce nom de modèle existe déjà pour cet assistant. Veuillez choisir un autre nom."
+
+#. module: resource
+#: model:ir.model,name:resource.model_wizard_template_form
+msgid "Wizard Template Form"
+msgstr "Formulaire de Modèle d'Assistant"
+
+#. modules: resource, account_override, account, analytic_distribution
+#: model:ir.model,name:resource.model_wizard_template
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Wizard Template"
+msgstr "Modèle d'Assistant"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Save new template"
+msgstr "Enregistrer nouveau modèle"
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:60
+#, python-format
+msgid "You have to choose a template name."
+msgstr "Vous devez choisir un nom de modèle."
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:91
+#, python-format
+msgid "You have to choose a template to load."
+msgstr "Vous devez choisir un modèle à charger."
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:158
+#, python-format
+msgid "You have to choose a template to replace."
+msgstr "Vous devez choisir un modèle à remplacer."
+
+#. module: resource
+#: code:addons/resource/wizard_template.py:140
+#, python-format
+msgid "You have to choose a template to delete."
+msgstr "Vous devez choisir un modèle à supprimer."
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Select an existing template"
+msgstr "Sélectionnez un modèle existant"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "or Choose a new template name"
+msgstr "ou Choisissez un nouveau nom de modèle"
+
+#. modules: account_override, account, finance, analytic_distribution
+#: field:account.aged.trial.balance,saved_templates:0
+#: field:account.balance.report,saved_templates:0
+#: field:account.bs.report,saved_templates:0
+#: field:account.central.journal,saved_templates:0
+#: field:account.common.account.report,saved_templates:0
+#: field:account.common.journal.report,saved_templates:0
+#: field:account.common.partner.report,saved_templates:0
+#: field:account.common.report,saved_templates:0
+#: field:account.general.journal,saved_templates:0
+#: field:account.partner.balance,saved_templates:0
+#: field:account.partner.ledger,saved_templates:0
+#: field:account.pl.report,saved_templates:0
+#: field:account.print.journal,saved_templates:0
+#: field:account.report.general.ledger,saved_templates:0
+#: field:account.vat.declaration,saved_templates:0
+#: field:account.chart,saved_templates:0
+#: field:account.analytic.chart,saved_templates:0
+#: field:wizard.account.partner.balance.tree,saved_templates:0
+#: field:wizard.template.form,saved_templates:0
+msgid "Saved templates"
+msgstr "Modèles enregistrés"
+
+#. modules: account_override, account, finance, analytic_distribution
+#: field:account.aged.trial.balance,template_name:0
+#: field:account.balance.report,template_name:0
+#: field:account.bs.report,template_name:0
+#: field:account.central.journal,template_name:0
+#: field:account.common.account.report,template_name:0
+#: field:account.common.journal.report,template_name:0
+#: field:account.common.partner.report,template_name:0
+#: field:account.common.report,template_name:0
+#: field:account.general.journal,template_name:0
+#: field:account.partner.balance,template_name:0
+#: field:account.partner.ledger,template_name:0
+#: field:account.pl.report,template_name:0
+#: field:account.print.journal,template_name:0
+#: field:account.report.general.ledger,template_name:0
+#: field:account.vat.declaration,template_name:0
+#: field:account.chart,template_name:0
+#: field:account.analytic.chart,template_name:0
+#: field:wizard.account.partner.balance.tree,template_name:0
+#: field:wizard.template,name:0
+#: field:wizard.template.form,template_name:0
+msgid "Template name"
+msgstr "Nom de modèle"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+msgid "Replace"
+msgstr "Remplacer"
+
+#. modules: account_override, account, analytic_distribution
+#: view:account.common.report:0
+#: view:account.chart:0
+#: view:account.analytic.chart:0
+#: view:account.report.general.ledger:0
+#: view:account.balance.report:0
+#: view:account.pl.report:0
+#: view:account.bs.report:0
+#: view:account.partner.ledger:0
+#: view:wizard.account.partner.balance.tree:0
+msgid "Do you really want to delete the selected template?"
+msgstr "Voulez-vous vraiment supprimer le modèle sélectionné ?"
+
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:626
 #: code:addons/msf_doc_import/check_line.py:628
@@ -75854,3 +76046,33 @@ msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
 #, python-format
 msgid "Wrong total: %.2f, instead of: %.2f"
 msgstr "Total erroné : %.2f, au lieu de : %.2f"
+
+#. module: msf_partner
+#: field:res.partner.address,office_name:0
+msgid "Office name"
+msgstr "Nom du bureau"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:918
+#: field:product.product,uf_write_date:0
+#, python-format
+msgid "Write date"
+msgstr "Date de modification"
+
+#. module: product_attributes
+#: code:addons/product_attributes/product_attributes.py:919
+#: field:product.product,uf_create_date:0
+#, python-format
+msgid "Creation date"
+msgstr "Date de création"
+
+#. module: msf_outgoing
+#: view:ppl.processor:0
+msgid "Check integrity"
+msgstr "Vérifier les erreurs"
+
+#. module: sale_override
+#: code:addons/sale_override/sale.py:3119
+#, python-format
+msgid "A line was added to the %s %s to re-source the canceled line."
+msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."

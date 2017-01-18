@@ -7,7 +7,7 @@
             <field name="name">purchase.cross.docking.form.view2</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
-            <field name="priority">16</field>
+            <field name="priority">45</field>
             <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
             <field name="arch" type="xml">
                 <data>
@@ -22,7 +22,7 @@
             <field name="name">purchase.cross.docking.form.view</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
-            <field name="priority">16</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -51,7 +51,7 @@
             <field name="name">stock.picking.in.form.cross.docking</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
-            <field name="priority">16</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_picking_in_form" />
             <field name="arch" type="xml">
                 <data>
@@ -67,7 +67,7 @@
             <field name="name">view.picking.out.cross.docking</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
-            <field name="priority">16</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_picking_out_form" />
             <field name="arch" type="xml">
                 <data>
@@ -100,7 +100,7 @@
             <field name="name">picking.ticket.cross.docking</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
-            <field name="priority">16</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
             <field name="arch" type="xml">
                 <data>
@@ -134,7 +134,7 @@
             <field name="name">ppl.cross.docking</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
-            <field name="priority">16</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="msf_outgoing.view_ppl_form" />
             <field name="arch" type="xml">
                 <data>
@@ -167,6 +167,7 @@
             <field name="name">stock.location.form</field>
             <field name="model">stock.location</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_location_form" />
             <field name="arch" type="xml">
                 <data>

@@ -5,6 +5,7 @@
             <field name="name">stock.picking.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_picking_form"/>
             <field name="arch" type="xml">
                 <field name="auto_picking" position="after">
@@ -17,6 +18,7 @@
             <field name="name">stock.move.form</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
+            <field name="priority">50</field>
             <field name="inherit_id" ref="stock.view_move_form"/>
             <field name="arch" type="xml">
                  <xpath expr="/form/group/field[@name='tracking_id']"  position="before">
@@ -55,6 +57,7 @@
             <field name="name">Outgoing picking Inherited</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_picking_out_form"/>
             <field name="arch" type="xml">
                 <field name="move_type" position="after">

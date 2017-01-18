@@ -9,9 +9,8 @@
       <field name="name">res.partner.stock.property.form.inherit</field>
       <field name="model">res.partner</field>
       <field name="type">form</field>
-      <field name="priority" eval="15"/>
+      <field name="priority">30</field>
       <field name="inherit_id" ref="base.view_partner_form"/>
-      <field name="priority" eval="15" />
       <field name="arch" type="xml">
         <page string="Sales &amp; Purchases" position="inside">
           <group colspan="2" col="2" groups="base.group_extended">

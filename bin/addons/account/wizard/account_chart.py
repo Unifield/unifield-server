@@ -25,17 +25,18 @@ class account_chart(osv.osv_memory):
     """
     For Chart of Accounts
     """
+    _inherit = "wizard.template.form"  # to be able to store the wizard values
     _name = "account.chart"
     _description = "Account chart"
     _columns = {
         'fiscalyear': fields.many2one('account.fiscalyear', \
-                                    'Fiscal year',  \
-                                    help = 'Keep empty for all open fiscal years'),
+                                      'Fiscal year',  \
+                                      help = 'Keep empty for all open fiscal years'),
         'period_from': fields.many2one('account.period', 'Start period'),
         'period_to': fields.many2one('account.period', 'End period'),
         'target_move': fields.selection([('posted', 'All Posted Entries'),
                                          ('all', 'All Entries'),
-                                        ], 'Target Moves', required = True),
+                                         ], 'Target Moves', required = True),
     }
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
@@ -93,8 +94,8 @@ class account_chart(osv.osv_memory):
         if data['period_from'] and data['period_to']:
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
         result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods'], \
-                                    'target_filename_prefix': 'Chart of Accounts',
-                                    'state': data['target_move']})
+                                 'target_filename_prefix': 'Chart of Accounts',
+                                 'state': data['target_move']})
         if data['fiscalyear']:
             result['name'] += ':' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
         return result

@@ -6,6 +6,7 @@
             <field name="name">order.type.stock.move.tree2</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.stock_move_tree2" />
             <field name="arch" type="xml">
                 <data>
@@ -22,6 +23,7 @@
             <field name="name">order.type.view.move.tree</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="stock.view_move_tree" />
             <field name="arch" type="xml">
                 <data>
@@ -38,6 +40,7 @@
             <field name="name">order.type.view.move.form</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="stock.view_move_form" />
             <field name="arch" type="xml">
                 <data>
@@ -57,6 +60,7 @@
             <field name="name">order.type.view.move.search</field>
             <field name="model">stock.move</field>
             <field name="type">search</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_move_search" />
             <field name="arch" type="xml">
                 <xpath expr="/search//field[@name='prodlot_id']" position="before">
@@ -71,6 +75,7 @@
             <field name="name">order.type.view.move.tree.reception.picking</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
             <field name="arch" type="xml">
                 <data>
@@ -101,6 +106,7 @@
             <field name="name">order.type.view.move.tree.reception.picking.board</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_move_tree_reception_picking_board" />
             <field name="arch" type="xml">
                 <data>
@@ -117,6 +123,7 @@
             <field name="name">order.type.view.move.form.reception.picking</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
+            <field name="priority">45</field>
             <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
             <field name="arch" type="xml">
                 <data>
@@ -136,6 +143,7 @@
             <field name="name">order.type.view.move.search.reception.incoming.picking</field>
             <field name="model">stock.move</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_move_search_reception_incoming_picking" />
             <field name="arch" type="xml">
                 <data>
@@ -159,6 +167,7 @@
             <field name="name">order.type.view.move.search.reception.outcoming.picking</field>
             <field name="model">stock.move</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_move_search_reception_outcoming_picking" />
             <field name="arch" type="xml">
                 <data>

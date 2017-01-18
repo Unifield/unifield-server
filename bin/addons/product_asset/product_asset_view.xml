@@ -7,6 +7,7 @@
 			<field name="name">product.normal.form</field>
 			<field name="model">product.product</field>
 			<field name="type">form</field>
+            <field name="priority">55</field>
 			<field name="inherit_id" ref="product.product_normal_form_view" />
 			<field name="arch" type="xml">
 				<data>
