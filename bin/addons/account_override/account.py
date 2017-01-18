@@ -477,16 +477,28 @@ class account_account(osv.osv):
                 return True
         return False
 
+    def _commitment_voucher_line_on_account(self, comm_voucher, account):
+        """
+        Return True if the account is used for one of the Account Commitment Voucher lines
+        """
+        for comm_voucher_line in comm_voucher.line_ids:
+            if comm_voucher_line.account_id == account:
+                return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
         ji_obj = self.pool.get('account.move.line')
         inv_obj = self.pool.get('account.invoice')
+        comm_voucher_obj = self.pool.get('account.commitment')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
             elif not context.get('sync_update_execution', False) and account_ids is not None:
+                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
+                                                 'greater than or equal to the selected inactivation date.'))
                 for account in self.browse(cr, uid, account_ids, fields_to_fetch=['reconcile'], context=context):
                     # if the account already exists, check that there is no JI using it
                     # having a posting date >= selected inactivation date,
@@ -513,8 +525,18 @@ class account_account(osv.osv):
                             acc_inv_ko = True
                             break
                     if acc_inv_ko:
-                        raise osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
-                                                               'greater than or equal to the selected inactivation date.'))
+                        raise doc_error
+                    # check that there is no draft "Account Commitment Voucher" having a line using the account and
+                    # having a date >= selected inactivation date
+                    comm_voucher_ids = comm_voucher_obj.search(cr, uid, [('date', '>=', vals['inactivation_date']), ('state', '=', 'draft')],
+                                                               order='NO_ORDER', context=context)
+                    comm_voucher_ko = False
+                    for comm_voucher in comm_voucher_obj.browse(cr, uid, comm_voucher_ids, fields_to_fetch=['line_ids'], context=context):
+                        if self._commitment_voucher_line_on_account(comm_voucher, account):
+                            comm_voucher_ko = True
+                            break
+                    if comm_voucher_ko:
+                        raise doc_error
 
     def _check_allowed_partner_type(self, vals):
         '''
