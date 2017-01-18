@@ -470,19 +470,19 @@ class account_account(osv.osv):
             # having a posting date >= selected inactivation date,
             # and being unreconciled (for reconcilable accounts) or unposted (for non-reconcilable accounts)
             elif not context.get('sync_update_execution', False) and account_ids is not None:
-                ji_ko = False
-                ji_ids = ji_obj.search(cr, uid, [('date', '>=', vals['inactivation_date']), ('account_id', 'in', account_ids)],
-                                       order='NO_ORDER', context=context)
-                for ji in ji_obj.browse(cr, uid, ji_ids, fields_to_fetch=['move_state', 'account_id', 'reconcile_id'], context=context):
+                for account in self.browse(cr, uid, account_ids, fields_to_fetch=['reconcile'], context=context):
+                    if account.reconcile:
+                        ji_ko = ji_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
+                                                              ('account_id', '=', account.id),
+                                                              ('reconcile_id', '=', False)], context=context)
+                    else:
+                        ji_ko = ji_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
+                                                              ('account_id', '=', account.id),
+                                                              ('move_state', '=', 'draft')], context=context)
                     if ji_ko:
-                        break
-                    if ji.move_state == 'draft':
-                        ji_ko = True
-                    elif ji.account_id.reconcile and not ji.reconcile_id:
-                        ji_ko = True
-                if ji_ko:
-                    raise osv.except_osv(_('Warning !'),
-                                         _('There are unposted or unreconciled Journal Items having a posting date after the selected inactivation date.'))
+                        raise osv.except_osv(_('Warning !'),
+                                             _('There are unposted or unreconciled Journal Items having a posting date '
+                                               'after the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
         '''
