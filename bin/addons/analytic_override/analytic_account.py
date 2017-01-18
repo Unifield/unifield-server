@@ -443,11 +443,24 @@ class analytic_account(osv.osv):
                 return True
         return False
 
+    def _commitment_voucher_line_on_account(self, cr, uid, comm_voucher, account_ids, context=None):
+        """
+        Return True if one of the analytic accounts is used for one of the Account Commitment Voucher lines
+        """
+        if context is None:
+            context = {}
+        for comm_voucher_line in comm_voucher.line_ids:
+            distrib_line = comm_voucher_line.analytic_distribution_id or False
+            if distrib_line and self._fp_line_on_account(cr, uid, distrib_line, account_ids, context):
+                return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
         aji_obj = self.pool.get('account.analytic.line')
         inv_obj = self.pool.get('account.invoice')
+        comm_voucher_obj = self.pool.get('account.commitment')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
@@ -467,24 +480,43 @@ class analytic_account(osv.osv):
                                            'greater than or equal to the selected inactivation date.'))
                 # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
                 # a posting date >= selected inactivation date
+                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
+                                                             'greater than or equal to the selected inactivation date.'))
                 inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['date']),
                                                    ('state', '=', 'draft')], order='NO_ORDER', context=context)
                 acc_inv_ko = False
                 for inv in inv_obj.browse(cr, uid, inv_ids, fields_to_fetch=['analytic_distribution_id', 'invoice_line'], context=context):
                     distrib = inv.analytic_distribution_id or False
-                    # check that the analytic account is not used in the AD at header level
+                    # check that the analytic account is not used in the AD at account.invoice header level
                     if distrib and (self._fp_line_on_account(cr, uid, distrib, account_ids, context) or \
                        self._free1_line_on_account(cr, uid, distrib, account_ids, context) or \
                        self._free2_line_on_account(cr, uid, distrib, account_ids, context)):
                         acc_inv_ko = True
                         break
-                    # check that the analytic account is not used in the AD at line level
+                    # check that the analytic account is not used in the AD at account.invoice Line level
                     if self._invoice_line_on_account(cr, uid, inv, account_ids, context):
                         acc_inv_ko = True
                         break
                 if acc_inv_ko:
-                    raise osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
-                                                           'greater than or equal to the selected inactivation date.'))
+                    raise doc_error
+                # check that there is no draft "Account Commitment Voucher" using the account and having
+                # a date >= selected inactivation date
+                comm_voucher_ids = comm_voucher_obj.search(cr, uid, [('date', '>=', vals['date']), ('state', '=', 'draft')],
+                                                           order='NO_ORDER', context=context)
+                comm_voucher_ko = False
+                for comm_voucher in comm_voucher_obj.browse(cr, uid, comm_voucher_ids, context=context,
+                                                            fields_to_fetch=['analytic_distribution_id', 'line_ids']):
+                    comm_voucher_distrib = comm_voucher.analytic_distribution_id or False
+                    # check that the analytic account is not used in the AD at Commitment Voucher header level
+                    if comm_voucher_distrib and self._fp_line_on_account(cr, uid, comm_voucher_distrib, account_ids, context):
+                        comm_voucher_ko = True
+                        break
+                    # check that the analytic account is not used in the AD at Commitment Voucher Line level
+                    if self._commitment_voucher_line_on_account(cr, uid, comm_voucher, account_ids, context):
+                        comm_voucher_ko = True
+                        break
+                if comm_voucher_ko:
+                    raise doc_error
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)
