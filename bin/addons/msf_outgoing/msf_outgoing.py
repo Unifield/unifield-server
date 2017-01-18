@@ -4819,7 +4819,7 @@ class stock_move(osv.osv):
                         continue
 
                     # If the line will be sourced in another way, do not cancel the OUT move
-                    if solc_obj.search(cr, uid, [('sync_order_line_db_id', '=', sol.sync_order_line_db_id)],
+                        if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
                                        limit=1, order='NO_ORDER', context=context):
                         continue
 
