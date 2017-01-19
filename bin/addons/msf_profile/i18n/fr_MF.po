@@ -75917,3 +75917,9 @@ msgstr "La période '%s' n'est pas ouverte ! Pas d'écriture comptable créée."
 #, python-format
 msgid "You can't save entries in a non-open period: %s"
 msgstr "Vous ne pouvez pas enregistrer des écritures dans une période non ouverte : %s"
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:491
+#, python-format
+msgid "Only manually reconciled entries can be unreconciled."
+msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
