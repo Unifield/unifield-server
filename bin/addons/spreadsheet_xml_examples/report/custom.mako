@@ -82,8 +82,7 @@
   </Style>
  </Styles>
  <Worksheet ss:Name="Sheet1">
-  <Table ss:ExpandedColumnCount="4" x:FullColumns="1"
-   x:FullRows="1">
+ <Table>
    <Column ss:AutoFitWidth="0" ss:Width="84.75"/>
    <Column ss:AutoFitWidth="0" ss:Width="72"/>
    <Column ss:AutoFitWidth="0" ss:Width="93.75"/>

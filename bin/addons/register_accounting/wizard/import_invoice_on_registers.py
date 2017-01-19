@@ -63,6 +63,8 @@ class wizard_import_invoice_lines(osv.osv_memory):
           - should not be negative
           - should be superior to amount to pay (but absolute value)
         """
+        if not ids:
+            return True
         if isinstance(ids, (long, int)):
             ids = [ids]
         if context is None:
@@ -73,7 +75,8 @@ class wizard_import_invoice_lines(osv.osv_memory):
         for l in self.read(cr, uid, ids, ['amount_to_pay']):
             if vals['amount'] < 0:
                 msg = _('Negative amount are forbidden!')
-            elif vals['amount'] > abs(l['amount_to_pay']):
+            # if the amounts aren't equal (with a 0.001 tolerance) the paid amount shouldn't exceed the amount to pay
+            elif vals['amount'] - abs(l['amount_to_pay']) > 10**-3:
                 msg = _("Amount %.2f can't be greater than 'Amount to pay': %.2f") % (vals['amount'], abs(l['amount_to_pay']))
             if msg:
                 # reset wrong amount
@@ -187,7 +190,7 @@ class wizard_import_invoice(osv.osv_memory):
             new_lines.append({
                 'line_ids': [(6, 0, [x.id for x in ordered_lines[key]])],
                 'partner_id': ordered_lines[key][0].partner_id.id or None,
-                'ref': ' / '.join([x.ref and x.ref for x in ordered_lines[key]])[:size],
+                'ref': ' / '.join([x.ref and x.ref or '' for x in ordered_lines[key]])[:size] or False,
                 'account_id': ordered_lines[key][0].account_id.id or None,
                 'date': wizard.date or time.strftime('%Y-%m-%d'),
                 'document_date': wizard.date or time.strftime('%Y-%m-%d'),
@@ -198,13 +201,13 @@ class wizard_import_invoice(osv.osv_memory):
             })
         self.write(cr, uid, [wizard.id], {'state': 'open', 'line_ids': [(6, 0, [])], 'invoice_lines_ids': [(0, 0, x) for x in new_lines]}, context=context)
         return {
-         'type': 'ir.actions.act_window',
-         'res_model': 'wizard.import.invoice',
-         'view_type': 'form',
-         'view_mode': 'form',
-         'res_id': ids[0],
-         'context': context,
-         'target': 'new',
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.import.invoice',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'context': context,
+            'target': 'new',
         }
 
     def action_confirm(self, cr, uid, ids, context=None):

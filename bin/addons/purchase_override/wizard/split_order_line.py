@@ -112,8 +112,8 @@ class split_purchase_order_line_wizard(osv.osv_memory):
             elif split.new_line_qty != rounding(split.new_line_qty, split.purchase_line_id.product_uom.rounding):
                 raise osv.except_osv(_('Error'), _('The new quantity must be a multiple of %s !') % split.purchase_line_id.product_uom.rounding)
             else:
-                self.infolog(cr, uid, "The PO line id:%s has been split" % (
-                    split.purchase_line_id.id,
+                self.infolog(cr, uid, "The PO line id:%s (line number: %s) has been split" % (
+                    split.purchase_line_id.id, split.purchase_line_id.line_number,
                 ))
 
                 # Change the qty of the old line

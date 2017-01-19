@@ -87,7 +87,7 @@ class workflow_service(netsvc.Service):
     
     # change the subflow of workitems attached to the 'main_ids' of 'main_type' object
     # by the subflow of the new resource defined by the 'res_type' object and the 'res_ids' ids 
-    def trg_change_subflow(self, uid, main_type, main_ids, res_type, res_ids, new_rid, cr):
+    def trg_change_subflow(self, uid, main_type, main_ids, res_type, res_ids, new_rid, cr, force=False):
         # get ids of wkf instances for the old resource (res_id)
 #CHECKME: shouldn't we get only active instances?
         if not res_ids or not main_ids:
@@ -99,14 +99,18 @@ class workflow_service(netsvc.Service):
             cr.execute(
                 'SELECT id '\
                 'FROM wkf_instance '\
-                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s', 
+                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s '\
+                'LIMIT 1',
                 (new_rid, res_type, wkf_id, 'active'))
             new_id = cr.fetchone()
             if new_id:
                 cr.execute('select id from wkf_instance where res_type=%s and res_id in %s', (main_type, tuple(main_ids)))
                 for (inst_id,) in cr.fetchall():
                     # select all workitems which "wait" for the old instance
-                    cr.execute('select id from wkf_workitem where subflow_id=%s and inst_id = %s', (old_inst_id, inst_id))
+                    if force:
+                        cr.execute('select id from wkf_workitem where inst_id = %s', (inst_id,))
+                    else:
+                        cr.execute('select id from wkf_workitem where subflow_id=%s and inst_id = %s', (old_inst_id, inst_id))
                     for (item_id,) in cr.fetchall():
                         # redirect all those workitems to the wkf instance of the new resource
                         cr.execute('update wkf_workitem set subflow_id=%s where id=%s', (new_id[0], item_id))
@@ -123,7 +127,8 @@ class workflow_service(netsvc.Service):
             cr.execute(
                 'SELECT id '\
                 'FROM wkf_instance '\
-                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s', 
+                'WHERE res_id=%s AND res_type=%s AND wkf_id=%s AND state=%s '\
+                'LIMIT 1',
                 (new_rid, res_type, wkf_id, 'active'))
             new_id = cr.fetchone()
             if new_id:

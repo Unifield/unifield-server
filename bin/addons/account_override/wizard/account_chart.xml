@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE WIZARD [
+    <!ENTITY wizard_template SYSTEM "../../resource/wizard_template_view.xml">
+]>
+
 <openerp>
     <data>
     
@@ -6,19 +11,31 @@
             <field name="name">account.chart_activable.form</field>
             <field name="model">account.chart</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_account_chart"/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//field[@name='target_move']" position="before">
                         <newline/>
                     </xpath>
+                    <xpath expr="/form//field[@name='target_move']" position="after">
+                        <newline/>
+                        <field name="is_initial_balance_available" invisible="1" />
+                        <field name="initial_balance" attrs="{'readonly':[('is_initial_balance_available', '=', False)]}" />
+                    </xpath>
+                    <xpath expr="/form//field[@name='fiscalyear']" position="replace">
+                        <field name="fiscalyear" on_change="onchange_fiscalyear(fiscalyear)"/>
+                    </xpath>
                     <xpath expr="/form//field[@name='period_from']" position="replace">
-                        <field name="period_from"/>
+                        <field name="period_from" on_change="on_change_period(period_from, fiscalyear)"/>
                         <newline/>
                     </xpath>
                     <xpath expr="/form/group[2]" position="before">
-                        <separator string="Inactive accounts" colspan="4"/>
+                        <separator string="Accounts" colspan="4"/>
                         <field name="show_inactive"/>
+                        <newline/>
+                        <field name="account_type"/>
+                        <field name="granularity"/>
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>
@@ -35,6 +52,8 @@
                             <label string="" colspan="1"/>
                             <button icon="gtk-print" string="Export" name="button_export" type="object" colspan="1"/>
                         </group>
+                        <!-- to be able to store the wizard values -->
+                        &wizard_template;
                     </xpath>
                 </data>
             </field>
@@ -48,7 +67,7 @@
           <field name="name">Balance by account</field>
           <field name="res_model">account.chart</field>
           <field name="view_type">form</field>
-          <field name="view_mode">tree,form</field>
+          <field name="view_mode">form</field>
           <field name="view_id" ref="view_account_chart_activable"/>
           <field name="target">new</field>
           <field name="help">Display your company chart of accounts per fiscal year and filter by period. Have a complete tree view of all journal items per account code by clicking on an account.</field>

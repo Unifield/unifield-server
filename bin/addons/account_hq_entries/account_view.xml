@@ -185,7 +185,7 @@
             <field name='model'>account.account</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_account_form'/>
-            <field name="priority" eval="20"/>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">
                     <field name="is_not_hq_correctible"/>

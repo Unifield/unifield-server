@@ -40,7 +40,7 @@
             <field name="model">purchase.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="purchase.purchase_order_form"/>
-            <field name="priority" eval="50"/>
+            <field name="priority">60</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook/page[@string='Purchase Order']/field[@name='order_line']/tree/field[@name='price_subtotal']" position="after">
@@ -69,7 +69,7 @@
             <field name="name">purchase.order.line.form</field>
             <field name="model">purchase.order.line</field>
             <field name="type">form</field>
-            <field name="priority" eval="100" />
+            <field name="priority">60</field>
             <field name="inherit_id" ref="purchase_msf.purchase_order_line_form" />
             <field name="arch" type="xml">
                 <data>
@@ -83,8 +83,9 @@
                         <field name="from_fo" invisible="1" />
                         <field name="tender_id" invisible="1" />
                         <group colspan="2" col="3">
-                            <field name="origin" on_change="on_change_origin(origin, procurement_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" />
+                            <field name="origin" on_change="on_change_origin(origin, procurement_id, parent.partner_type)" attrs="{'required': [('from_fo', '=', True)], 'readonly': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" string="Source Document" />
                             <field name="select_fo" on_change="on_change_select_fo(select_fo)" nolabel="1" domain="[('state', 'in', ['sourced', 'progress']), '|', ('split_type_sale_order', '=', parent.partner_type == 'esc' and 'esc_split_sale_order' or 'local_purchase_split_sale_order'), ('procurement_request', '=', True)]" attrs="{'invisible': ['|', ('tender_id', '!=', False), ('tender_line_id', '!=', False)]}" />
+                            <field name="customer_ref" string="Customer ref" widget="char" />
                             <field name="display_sync_ref" invisible="1" />
                             <field name="instance_sync_order_ref" attrs="{'required': [('display_sync_ref', '=', True)], 'invisible': [('display_sync_ref', '=', False)]}" domain="[('order_id.name', '=', origin)]" />
                         </group>

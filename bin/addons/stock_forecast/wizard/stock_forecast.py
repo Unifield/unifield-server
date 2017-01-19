@@ -88,7 +88,7 @@ class stock_forecast_line(osv.osv_memory):
         'first': lambda *a: 'z',
     }
 
-    _order = 'date asc, first asc'
+    _order = 'date asc, first asc, id asc'
 
 stock_forecast_line()
 
@@ -376,7 +376,8 @@ class stock_forecast(osv.osv_memory):
         move_obj = self.pool.get('stock.move')
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-
+        data_obj = self.pool.get('ir.model.data')
+ 
         # clear existing lines
         line_ids = line_obj.search(cr, uid, [('wizard_id', 'in', ids)], context=context)
         line_obj.unlink(cr, uid, line_ids, context=context)
@@ -408,10 +409,19 @@ class stock_forecast(osv.osv_memory):
             # qty of all products
             c = context.copy()
             # if you remove the coma after done, it will no longer work properly
+            cross_docking_id = data_obj.get_object_reference(cr, uid, 'msf_cross_docking', 'stock_location_cross_docking')[1]
+            location_ids = [cross_docking_id]
+            if wizard.warehouse_id:
+                location_ids.append(wizard.warehouse_id.lot_stock_id.id)
+            else:
+                wids = self.pool.get('stock.warehouse').search(cr, uid, [], context=context)
+                for w in self.pool.get('stock.warehouse').browse(cr, uid, wids, context=context):
+                    location_ids.append(w.lot_stock_id.id)
+
             c.update({'states': ('done',),
                       'what': ('in', 'out'),
                       'to_date': time.strftime('%Y-%m-%d %H:%M:%S'),
-                      'warehouse': warehouse_id,
+                      'location': location_ids,
                       'uom': product_uom_id})
             qty = product_obj.get_product_available(cr, uid, product_list, context=c)
             overall_qty = sum(qty.values())
@@ -425,7 +435,7 @@ class stock_forecast(osv.osv_memory):
                 # SALE ORDERS - negative
                 # list all sale order lines corresponding to selected product
                 #so_list = so_obj.search(cr, uid, [()], context=context)
-                sol_list = sol_obj.search(cr, uid, [('state', 'in', ('procurement', 'progress', 'draft')),
+                sol_list = sol_obj.search(cr, uid, [('state', 'in', ('procurement', 'progress', 'draft', 'sourced')),
                                                     ('product_id', '=', product.id)], order='date_planned', context=context)
 
                 for sol in sol_obj.browse(cr, uid, sol_list, context=context):
@@ -440,7 +450,7 @@ class stock_forecast(osv.osv_memory):
                               'stock_situation': False,
                               'wizard_id': wizard.id,}
                     if sol.procurement_request:
-                        values.update(doc='ISR')
+                        values.update(doc='IR')
 
                     line_to_create.append(values)
 

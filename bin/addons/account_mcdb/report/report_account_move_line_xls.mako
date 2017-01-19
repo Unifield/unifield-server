@@ -49,8 +49,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Style>
 </Styles>
 <Worksheet ss:Name="Sheet">
-<Table ss:ExpandedColumnCount="18" x:FullColumns="1"
-x:FullRows="1">
+<Table>
 % for x in range(0,18):
 <Column ss:AutoFitWidth="1" ss:Width="70" />
 % endfor
@@ -122,7 +121,7 @@ x:FullRows="1">
         <Data ss:Type="String">${(o.output_currency and o.output_currency.name or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
-        <Data ss:Type="String">${(o.reconcile_total_partial_id and reconcile_name(o.reconcile_total_partial_id.id) or '')|x}</Data>
+        <Data ss:Type="String">${(o.reconcile_txt or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssBorder">
         <Data ss:Type="String">${(o.move_state and getSel(o,'move_state') or '')|x}</Data>

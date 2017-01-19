@@ -19,17 +19,16 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 
 import time
 import tools
-import inspect
 
 from tools.translate import _
-from dateutil.relativedelta import relativedelta
 from datetime import datetime
 from datetime import date
 from decimal import Decimal, ROUND_UP
+import math
 
 import netsvc
 
@@ -136,12 +135,12 @@ class date_tools(osv.osv):
 
         if d_type == 'date':
             d_format = self.get_date_format(cr, uid)
-            date = time.strptime(datetime, '%Y-%m-%d')
-            return time.strftime(d_format, date)
+            date_to_format = time.strptime(datetime, '%Y-%m-%d')
+            return time.strftime(d_format, date_to_format)
         elif d_type == 'datetime':
             d_format = self.get_datetime_format(cr, uid)
-            date = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
-            return time.strftime(d_format, date)
+            date_to_format = time.strptime(datetime, '%Y-%m-%d %H:%M:%S')
+            return time.strftime(d_format, date_to_format)
 
     def orm2date(self, dt):
         if isinstance(dt, basestring):
@@ -224,6 +223,35 @@ class fields_tools(osv.osv):
             # drop existing constraint
             tpl_drop_const = "alter table %s drop constraint %s" % sql_params
             cr.execute(tpl_drop_const)
+
+    def domain_get_field_index(self, domain, field_name):
+        """
+        get field tuple index in domain
+        :return: index or < 0 if not found
+        :rtype: int
+        """
+        index = 0
+        if domain:
+            for t in domain:
+                if t[0] == field_name:
+                    return index
+                index += 1
+        return -1
+
+    def domain_remove_field(self, domain, field_names):
+        """
+        remove field(s) tuple(s) in domain
+        :param field_names: field(s) to remove
+        :type field_names: str/list/tuple
+        :return: new domain
+        """
+        if not isinstance(field_names, (list, tuple, )):
+            field_names = [ field_names, ]
+        res = []
+        for t in domain:
+            if t[0] not in field_names:
+                res.append(t)
+        return res
 
 fields_tools()
 
@@ -322,7 +350,6 @@ class sequence_tools(osv.osv):
         # objects
         base_obj = self.pool.get(base_object)
         dest_obj = self.pool.get(dest_object)
-        seq_obj = self.pool.get('ir.sequence')
 
         for foreign_id in foreign_ids:
             # will be ordered by default according to db id, it's what we want according to user sequence
@@ -364,7 +391,9 @@ class sequence_tools(osv.osv):
         # objects
         base_obj = self.pool.get(base_object)
         dest_obj = self.pool.get(dest_object)
-        seq_obj = self.pool.get('ir.sequence')
+        audit_obj = self.pool.get('audittrail.rule')
+
+        to_trace = dest_obj.check_audit(cr, uid, 'write')
 
         # find the corresponding base ids
         base_ids = [x[foreign_field][0] for x in dest_obj.read(cr, uid, ids, [foreign_field], context=context) if x[foreign_field]]
@@ -390,6 +419,11 @@ class sequence_tools(osv.osv):
                     # numbering value
                     start_num = start_num+1
                     if item_data[i][seq_field] != start_num:
+                        # Create the audittrail log line if the object is traceable
+                        if to_trace:
+                            previous_values = dest_obj.read(cr, uid, [item_data[i]['id']], [seq_field], context=context)
+                            audit_obj.audit_log(cr, uid, to_trace, dest_obj, [item_data[i]['id']], 'write', previous_values, {item_data[i]['id']: {seq_field: start_num}}, context=context)
+
                         cr.execute("update "+dest_obj._table+" set "+seq_field+"=%s where id=%s", (start_num, item_data[i]['id']))
                         #dest_obj.write(cr, uid, [item_data[i]['id']], {seq_field: start_num}, context=context)
 
@@ -608,8 +642,8 @@ class ir_translation(osv.osv):
                 # product.template xml_id is not create, so we search the product.product xml_id
                 if "product.template" in model_name:
                     target_ids = self.pool.get('product.product')\
-                            .search(cr, uid, [('product_tmpl_id', '=', target_ids),
-                                ('active', 'in', ('t', 'f'))], context=context)
+                        .search(cr, uid, [('product_tmpl_id', '=', target_ids),
+                                          ('active', 'in', ('t', 'f'))], context=context)
                     model_name = 'product.product'
 
                 if isinstance(target_ids, (int, long)):
@@ -645,6 +679,8 @@ class ir_translation(osv.osv):
             domain.append('&')
             domain.append('&')
 
+            if vals.get('type') != 'model' and vals.get('src'):
+                domain.append(('src', '=', vals['src']))
             if vals.get('lang'):
                 domain.append(('lang', '=', vals['lang']))
             if vals.get('name'):
@@ -763,15 +799,15 @@ class product_uom(osv.osv):
 
         return float(Decimal(str(qty)).quantize(rounding_value, rounding=ROUND_UP))
 
-    def _change_round_up_qty(self, cr, uid, uom_id, qty, fields=[], result=None, context=None):
+    def _change_round_up_qty(self, cr, uid, uom_id, qty, fields_q=[], result=None, context=None):
         '''
         Returns the error message and the rounded value
         '''
         if not result:
             result = {'value': {}, 'warning': {}}
 
-        if isinstance(fields, str):
-            fields = [fields]
+        if isinstance(fields_q, str):
+            fields_q = [fields_q]
 
         message = {'title': _('Bad rounding'),
                    'message': _('The quantity entered is not valid according to the rounding value of the UoM. The product quantity has been rounded to the highest good value.')}
@@ -779,7 +815,7 @@ class product_uom(osv.osv):
         if uom_id and qty:
             new_qty = self._compute_round_up_qty(cr, uid, uom_id, qty, context=context)
             if qty != new_qty:
-                for f in fields:
+                for f in fields_q:
                     result.setdefault('value', {}).update({f: new_qty})
                 result.setdefault('warning', {}).update(message)
 
@@ -804,7 +840,7 @@ class finance_tools(osv.osv):
         return "%04d-%02d-%02d" % (year or datetime.now().year, month, day, )
 
     def check_document_date(self, cr, uid, document_date, posting_date,
-        show_date=False, custom_msg=False, context=None):
+                            show_date=False, custom_msg=False, context=None):
         """
         US-192 document date check rules
         http://jira.unifield.org/browse/US-192?focusedCommentId=38911&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38911
@@ -832,7 +868,7 @@ class finance_tools(osv.osv):
             else:
                 if show_date:
                     msg = _('Posting date (%s) should be later than' \
-                        ' Document Date (%s).') % (posting_date, document_date,)
+                            ' Document Date (%s).') % (posting_date, document_date,)
                 else:
                     msg = _(
                         'Posting date should be later than Document Date.')
@@ -850,6 +886,10 @@ class finance_tools(osv.osv):
             else:
                 msg = _('Document date should be in posting date FY')
             raise osv.except_osv(_('Error'), msg)
+
+    def truncate_amount(self, amount, digits):
+        stepper = pow(10.0, digits)
+        return math.trunc(stepper * amount) / stepper
 
 finance_tools()
 

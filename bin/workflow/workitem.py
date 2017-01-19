@@ -36,8 +36,7 @@ def create(cr, act_datas, inst_id, ident, stack):
         cr.execute("select nextval('wkf_workitem_id_seq')")
         id_new = cr.fetchone()[0]
         cr.execute("insert into wkf_workitem (id,act_id,inst_id,state) values (%s,%s,%s,'active')", (id_new, act['id'], inst_id))
-        cr.execute('select * from wkf_workitem where id=%s',(id_new,))
-        res = cr.dictfetchone()
+        res = dict(id=id_new, act_id=act['id'], inst_id=inst_id, state='active', subflow_id=False)
         wkf_logs.log(cr,ident,act['id'],'active')
         process(cr, res, ident, stack=stack)
         ids.append(id_new)
@@ -57,23 +56,22 @@ def process(cr, workitem, ident, signal=None, force_running=False, stack=None):
         if not result:
             return False
 
-    if workitem['state']=='running':
-        pass
+    #if workitem['state']=='running':
+    #    pass
 
     if workitem['state']=='complete' or force_running:
         ok = _split_test(cr, workitem, activity['split_mode'], ident, signal, stack)
         triggers = triggers and not ok
 
     if triggers:
-        cr.execute('select * from wkf_transition where act_from=%s', (workitem['act_id'],))
+        cr.execute("select * from wkf_transition where act_from=%s and coalesce(trigger_model,'') != ''", (workitem['act_id'],))
         alltrans = cr.dictfetchall()
         for trans in alltrans:
-            if trans['trigger_model']:
-                ids = wkf_expr._eval_expr(cr,ident,workitem,trans['trigger_expr_id'])
-                for res_id in ids:
-                    cr.execute('select nextval(\'wkf_triggers_id_seq\')')
-                    id =cr.fetchone()[0]
-                    cr.execute('insert into wkf_triggers (model,res_id,instance_id,workitem_id,id) values (%s,%s,%s,%s,%s)', (trans['trigger_model'],res_id,workitem['inst_id'], workitem['id'], id))
+            ids = wkf_expr._eval_expr(cr, ident, workitem,trans['trigger_expr_id'])
+            for res_id in ids:
+                cr.execute('select nextval(\'wkf_triggers_id_seq\')')
+                id = cr.fetchone()[0]
+                cr.execute('insert into wkf_triggers (model,res_id,instance_id,workitem_id,id) values (%s,%s,%s,%s,%s)', (trans['trigger_model'],res_id,workitem['inst_id'], workitem['id'], id))
 
     return result
 

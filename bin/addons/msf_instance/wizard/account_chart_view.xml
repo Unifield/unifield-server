@@ -5,6 +5,7 @@
             <field name="name">account.chart.inherit</field>
             <field name="model">account.chart</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="account.view_account_chart"/>
             <field name="arch" type="xml">
                 <data>

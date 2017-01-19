@@ -11,7 +11,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_bank_statement_form' />
-            <field name="priority" eval="20"/>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
                     <form string="Bank Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
@@ -144,6 +144,9 @@
                                     </form>
                                 </field>
                             </page>
+                            <page string="Responsible">
+                                <field name="responsible_ids" nolabel="1" />
+                            </page>
                         </notebook>
                         <separator string="Comments"/>
                         <field name="notes" nolabel="1"/>
@@ -170,7 +173,7 @@
             <field name='model'>account.bank.statement</field>
             <field name="type">form</field>
             <field name='inherit_id' ref='account.view_bank_statement_form2' />
-            <field name="priority" eval="21"/>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <xpath expr="/form" position="replace">
                     <form string="Statement" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
@@ -810,6 +813,9 @@
                                 </form>
                             </field>
                         </page>
+                        <page string="Responsible">
+                            <field name="responsible_ids" nolabel="1" />
+                        </page>
                     </notebook>
                     <group col="8" colspan="4">
                         <field name="state" readonly="1"/>
@@ -892,6 +898,7 @@
             <field name='name'>inherit.view.account.form</field>
             <field name='model'>account.account</field>
             <field name="type">form</field>
+            <field name="priority">45</field>
             <field name='inherit_id' ref='account.view_account_form' />
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">

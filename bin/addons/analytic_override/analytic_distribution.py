@@ -123,7 +123,7 @@ class analytic_distribution1(osv.osv):
                 # Search MSF Private Fund
                 try:
                     pf_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-                    'analytic_account_msf_private_funds')[1]
+                                                                                'analytic_account_msf_private_funds')[1]
                 except ValueError:
                     pf_id = 0
                 if pf_id:
@@ -149,7 +149,7 @@ class analytic_distribution1(osv.osv):
         return res
 
     def create_analytic_lines(self, cr, uid, ids, name, date, amount, journal_id, currency_id, document_date=False, ref=False, source_date=False, general_account_id=False, \
-        move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
+                              move_id=False, invoice_line_id=False, commitment_line_id=False, context=None):
         """
         Create analytic lines from given elements:
          - date
@@ -201,8 +201,8 @@ class analytic_distribution1(osv.osv):
                     anal_amount = (distrib_line.percentage * amount) / 100
                     vals.update({
                         'amount': -1 * self.pool.get('res.currency').compute(cr, uid, currency_id, company_currency,
-                            anal_amount, round=False, context=context),
-                        'amount_currency': -1 * anal_amount,
+                                                                             anal_amount, round=False, context=context),
+                        'amount_currency': round(-1 * anal_amount, 2),
                         'account_id': distrib_line.analytic_id.id,
                         'cost_center_id': False,
                         'destination_id': False,
@@ -211,7 +211,7 @@ class analytic_distribution1(osv.osv):
                     # Update values if we come from a funding pool
                     if distrib_line._name == 'funding.pool.distribution.line':
                         vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,
-                            'destination_id': distrib_line.destination_id and distrib_line.destination_id.id or False,})
+                                     'destination_id': distrib_line.destination_id and distrib_line.destination_id.id or False,})
                     # create analytic line
                     al_id = self.pool.get('account.analytic.line').create(cr, uid, vals, context=context)
                     res.append(al_id)
@@ -224,7 +224,7 @@ class distribution_line(osv.osv):
 
     _columns = {
         'name': fields.char('Name', size=64),
-        "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade', select="1"), # select is for optimisation purposes. Example: 3 seconds on 1 invoice creation+validation
+        "distribution_id": fields.many2one('analytic.distribution', 'Associated Analytic Distribution', ondelete='cascade', select="1"),
         "analytic_id": fields.many2one('account.analytic.account', 'Analytical Account'),
         "amount": fields.float('Amount', digits_compute=dp.get_precision('Account')),
         "percentage": fields.float('Percentage', digits=(16,4)),
@@ -267,9 +267,16 @@ class distribution_line(osv.osv):
         instance_id = company.instance_id.id
 
         for line in self.browse(cr, uid, ids):
-            amount_cur = (move_line.credit_currency - move_line.debit_currency) * line.percentage / 100
+            amount_cur = round((move_line.credit_currency - move_line.debit_currency) * line.percentage / 100, 2)
             ctx = {'date': source_date or date}
             amount = self.pool.get('res.currency').compute(cr, uid, move_line.currency_id.id, company_currency_id, amount_cur, round=False, context=ctx)
+
+            # US-945: deduce real period id from date
+            # TO NOTE that, in correction wizard:
+            # in December we are well in December, never in 13, 14, 15, 16
+            period_ids = self.pool.get('account.period').get_period_from_date(
+                cr, uid, date=date, context=context)
+
             vals = {
                 'instance_id': instance_id,
                 'account_id': line.analytic_id.id,
@@ -289,6 +296,7 @@ class distribution_line(osv.osv):
                 'distribution_id': line.distribution_id.id,
                 'distrib_line_id': '%s,%s'%(self._name, line.id),
                 'ref': ref or move_line.move_id.name or False,
+                'real_period_id':  period_ids and period_ids[0] or False,  # US-945
             }
             if self._name == 'funding.pool.distribution.line':
                 vals.update({

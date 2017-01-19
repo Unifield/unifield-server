@@ -70,7 +70,7 @@ class account_period(osv.osv):
         curr_rate_obj = self.pool.get('res.currency.rate')
 
         # previous state of the period
-        ap_dict = self.read(cr, uid, ids)[0]
+        ap_dict = self.read(cr, uid, ids, ['state'])[0]
         previous_state = ap_dict['state']
 
 
@@ -98,6 +98,9 @@ class account_period(osv.osv):
                     self.write(cr, uid, ids, {'state_sync_flag': context['state']})
 
             if level == 'coordo':
+                #US-1433: If the FY is already mission-closed, do not allow this to be done!
+                self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
+                
                 if previous_state == 'created' and context['state'] == 'draft':
                     self.write(cr, uid, ids, {'state_sync_flag': 'none'})
                 if previous_state == 'draft' and context['state'] == 'field-closed':
@@ -112,7 +115,9 @@ class account_period(osv.osv):
                     self.write(cr, uid, ids, {'state_sync_flag': context['state']})
 
             if level == 'project':
-                    self.write(cr, uid, ids, {'state_sync_flag': 'none'})
+                # US-1499: block also the possibility to reopen the period at project if the FY is already in Mission Closed
+                self.check_reopen_period_with_fy(cr, uid, ids, context['state'], context)
+                self.write(cr, uid, ids, {'state_sync_flag': 'none'})
 
         # Do verifications for draft periods
         for period in self.browse(cr, uid, ids, context=context):
@@ -325,7 +330,20 @@ class account_period(osv.osv):
                                                            context=context)
         return res
 
+    #US-1433: If the FY is already mission-closed, do not allow this to be done!
+    def check_reopen_period_with_fy(self, cr, uid, ids, new_state, context):
+        ap_dict = self.read(cr, uid, ids)[0]
+        previous_state = ap_dict['state']
+    
+        # If the state is currently in mission-closed and the fiscal year is also in mission closed, then do not allow to reopen the period
+        if previous_state == 'mission-closed' and new_state in ['field-closed', 'draft']:
+            for period in self.browse(cr, uid, ids, context=context):
+                if period.fiscalyear_id.state == 'mission-closed':
+                    raise osv.except_osv(_('Warning'), _("Cannot reopen this period because its Fiscal Year is already in Mission-Closed."))
+
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if not context:
             context = {}
         # control conditional push-down of state from HQ. Ticket UTP-913
@@ -333,6 +351,8 @@ class account_period(osv.osv):
             if vals['state_sync_flag'] != 'none':
                 vals['state'] = vals['state_sync_flag']
                 vals['state_sync_flag'] = 'none'
+                #US-1433: If the FY is already mission-closed, do not allow this to be done!
+                self.check_reopen_period_with_fy(cr, uid, ids, vals['state'], context)
             else:
                 vals['state_sync_flag'] = 'none'
 
@@ -498,7 +518,9 @@ class account_period(osv.osv):
 
     # Intermission voucher OUT
     def button_intermission_out(self, cr, uid, ids, context=None):
-        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)], context={'type':'out_invoice', 'journal_type': 'intermission'})
+        domain_ivo = [('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False), ('is_intermission', '=', True)]
+        context_ivo = {'type':'out_invoice', 'journal_type': 'intermission', 'is_intermission': True, 'intermission_type': 'out'}
+        return self.invoice_view(cr, uid, ids, _('Intermission Voucher OUT'), domain=domain_ivo, context=context_ivo)
 
     def button_supplier_refunds(self, cr, uid, ids, context=None):
         """
@@ -639,6 +661,10 @@ class account_period(osv.osv):
             'period_ids': [(6, 0, ids)]
         }
         res_id = self.pool.get('account.mcdb').create(cr, uid, vals, context=context)
+        module = 'account_mcdb'
+        view_name = 'account_mcdb_form'
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
         return {
             'name': _('G/L Selector'),
             'type': 'ir.actions.act_window',
@@ -647,6 +673,7 @@ class account_period(osv.osv):
             'target': 'current',
             'view_mode': 'form,tree',
             'view_type': 'form',
+            'view_id': [view_id],
             'context': context,
         }
 
@@ -669,6 +696,54 @@ class account_period(osv.osv):
             'view_type': 'form',
             'context': context,
             'domain': [('state', 'in', ['draft', 'open']), ('period_id', 'in', ids)]
+        }
+
+    def button_revaluation(self, cr, uid, ids, context=None):
+        """
+        Open Revaluation menu (by default Month End Revaluation for the period to be closed)
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        period = self.browse(cr, uid, ids, context=context)[0]
+        vals = {
+            'revaluation_method': 'liquidity_month',
+            'period_id': period.id,
+            'fiscalyear_id': period.fiscalyear_id.id,
+            'result_period_id': period.id,
+            'posting_date': period.date_stop,
+        }
+        res_id = self.pool.get('wizard.currency.revaluation').create(cr, uid, vals, context=context)
+        return {
+            'name': _('Revaluation'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'wizard.currency.revaluation',
+            'res_id': res_id,
+            'target': 'new',
+            'view_mode': 'form',
+            'view_type': 'form',
+            'context': context,
+        }
+
+    def button_accrual_reversal(self, cr, uid, ids, context=None):
+        """
+        Open Accruals Management menu with activated filter "Partially Posted"
+        """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        context.update({'search_default_partially_posted': 1,
+                        'search_default_draft': 0})
+        return {
+            'name': _('Accruals Management'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'msf.accrual.line',
+            'target': 'current',
+            'view_mode': 'tree,form',
+            'view_type': 'form',
+            'context': context,
         }
 
 account_period()

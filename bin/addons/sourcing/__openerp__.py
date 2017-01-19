@@ -50,6 +50,7 @@
         ],
     'update_xml': [
         'sourcing_view.xml',
+        'related_sourcing_view.xml',
         'wizard/multiple_sourcing_view.xml',
     ],
     'installable': True,

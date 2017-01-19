@@ -31,6 +31,8 @@ from report import report_sxw
 class finance_archive(finance_export.finance_archive):
     def postprocess_reconciliable(self, cr, uid, data, model, column_deletion=False):
         """
+        ##### WARNING #####
+        ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
         Replace 15th column by its reconcile name.
         Note: as we begin to 0, the python column is 14.
         """
@@ -69,7 +71,6 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         if context is None:
             context = {}
         # Prepare some values
-        pool = pooler.get_pool(cr.dbname)
         excluded_journal_types = ['hq']
         # Fetch data from wizard
         if not data.get('form', False):
@@ -96,7 +97,6 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 AND aml.journal_id = j.id
                 AND p.id = aml.period_id
                 AND a.reconcile = 't'
-                AND a.type != 'liquidity'
                 AND j.type not in %s
                 AND p.number not in (0, 16)
                 AND aml.instance_id in %s;
@@ -104,7 +104,6 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         }
 
         # Create part of filename (search 3 first code digits)
-        instance = pool.get('msf.instance').browse(cr, uid, instance_id)
         instance_name = 'OCB'  # since US-949
         processrequests = [
             {
@@ -114,7 +113,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
                 'query_params': (tuple(excluded_journal_types), tuple(instance_ids),),
                 'function': 'postprocess_reconciliable',
                 'fnct_params': 'account.move.line',
-                },
+            },
         ]
         # Launch finance archive object
         fe = finance_archive(sqlrequests, processrequests)

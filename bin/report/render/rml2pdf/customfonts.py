@@ -102,6 +102,8 @@ def FindCustomFonts():
 
     if config.get('fonts_search_path'):
         searchpath += map(str.strip, config.get('fonts_search_path').split(','))
+    elif config.get('root_path'):
+        searchpath += '%s/fonts' % config.get('root_path').strip()
 
     local_platform = platform.system()
     if local_platform in TTFSearchPathMap:

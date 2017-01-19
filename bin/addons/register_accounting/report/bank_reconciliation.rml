@@ -60,7 +60,8 @@
             <para>Responsible: [[ o.user_id and o.user_id.name or '' ]]</para>
           </td>
           <td>
-            <para>Journal code: <b>[[ o.journal_id and o.journal_id.code or '' ]]</b></para>
+            <para>Bank journal code: <b>[[ o.journal_id and o.journal_id.code or '' ]]</b></para>
+            <para>Cheque journal code: <b>[[ o.journal_id.cheque_journal_id and o.journal_id.cheque_journal_id[0].code or '-' ]]</b></para>
             <para>Journal name: <b>[[ o.journal_id and o.journal_id.name or '' ]]</b></para>
           </td>
         </tr>
@@ -74,6 +75,9 @@
             </para>
             <para>
               Total amount of pending cheque: <b>[[ formatLang(get_amount_pending_cheque(o), digits=2, grouping=True) ]]</b> [[ o.currency and o.currency.name or '' ]]
+            </para>
+            <para>
+              Calculated Balance - Pending cheque: <b>[[ formatLang( (o.balance_end or 0.0) - get_amount_pending_cheque(o), digits=2, grouping=True) ]]</b> [[ o.currency and o.currency.name or '' ]]
             </para>
           </td>
           <td>

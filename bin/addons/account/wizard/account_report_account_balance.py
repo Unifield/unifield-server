@@ -39,6 +39,14 @@ class account_balance_report(osv.osv_memory):
             ('bl','Balance Sheet'),
         ], 'B/S / P&L account', required=True),
 
+        'reconciled': fields.selection([
+            ('empty', ''),
+            ('yes', 'Yes'),
+            ('no', 'No'),
+        ], "Reconciled",
+        help="filter will apply only on the B/S accounts except for the non reconciliable account like 10100 and 10200 which will never be displayed per details"),
+        'reconcile_date': fields.date("At"),
+
         'account_ids': fields.many2many('account.account',
             'account_report_general_ledger_account_account_rel',
             'report_id', 'account_id', 'Accounts'),
@@ -58,7 +66,9 @@ class account_balance_report(osv.osv_memory):
         'initial_balance': False,
         'export_format': 'pdf',
         'account_type': 'all',
+        'reconciled': 'empty',
         'journal_ids': _get_journals,
+        'display_account': 'bal_movement',  # by default only result with JIs
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -85,7 +95,7 @@ class account_balance_report(osv.osv_memory):
 
         data['form']['initial_balance'] = False
         form_fields = [ 'initial_balance', 'instance_ids', 'export_format',
-            'account_type', 'account_ids', ]
+            'account_type', 'account_ids', 'reconciled', 'reconcile_date', ]
         data['form'].update(self.read(cr, uid, ids, form_fields)[0])
 
         if not data['form']['fiscalyear_id']:# GTK client problem onchange does not consider in save record

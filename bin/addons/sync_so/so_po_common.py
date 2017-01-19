@@ -19,7 +19,7 @@
 #
 ##############################################################################
 
-from osv import osv, fields
+from osv import osv
 from sync_common import xmlid_to_sdref
 from lxml import etree
 
@@ -37,7 +37,6 @@ class so_po_common(osv.osv_memory):
             root = etree.fromstring(res['arch'])
             root.set('hide_new_button', 'True')
             root.set('hide_delete_button', 'True')
-            root.set('noteditable', 'True')
             root.set('hide_duplicate_button', 'True')
             res['arch'] = etree.tostring(root)
         return res
@@ -189,6 +188,8 @@ class so_po_common(osv.osv_memory):
             header_result['notes'] = header_info.get('note')
             header_result['note'] = header_info.get('note')
 
+        if 'origin' in header_info:
+            header_result['origin'] = header_info.get('origin')
         if 'order_type' in header_info:
             header_result['order_type'] = header_info.get('order_type')
         if 'priority' in header_info:
@@ -265,7 +266,7 @@ class so_po_common(osv.osv_memory):
             if ana_id:
                 return ana_id
             # UTP-1177: If the AD is given but not valid, stop the process of the message and set the message not run 
-            raise Exception, "Sorry the given analytic distribution " + analytic_id + " is not available. Cannot proceed this message!"
+            raise Exception, "Sorry the given analytic distribution " + analytic_id['id'] + " is not available. Cannot proceed this message!"
         return False
 
     def create_sync_order_label(self, cr, uid, data_dict, context=None):
@@ -331,6 +332,39 @@ class so_po_common(osv.osv_memory):
 
         return header_result
 
+    def get_product_id(self, cr, uid, data, context):
+        # us-1586: use msfid to search product in intersection flow, else use sdref
+        prod_obj = self.pool.get('product.product')
+        msfid = False
+        pid = False
+
+        # ouch data could be an object or a dict
+        # if msfid is in data this is an intersection message, 1st use msfid
+        if hasattr(data, 'msfid') and data.msfid:
+            msfid = data.msfid
+        elif isinstance(data, dict) and data.get('msfid'):
+            msfid = data['msfid']
+        if msfid:
+            # msfid has no uniq constraint if only 1 active product: ok, elif more than 1 product found raise
+            prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', 'in', ['t', 'f'])], limit=2, order='NO_ORDER', context=context)
+            if len(prod_ids) == 1:
+                return prod_ids[0]
+            elif len(prod_ids) > 1:
+                prod_ids = prod_obj.search(cr, uid, [('msfid', '=', msfid), ('active', '=', 't')], limit=2, order='NO_ORDER', context=context)
+                if len(prod_ids) == 1:
+                    return prod_ids[0]
+                raise Exception("Duplicate product for msfid %s" % msfid)
+
+        if hasattr(data, 'id') and data.id:
+            pid = data.id
+        elif isinstance(data, dict) and data.get('id'):
+            pid = data['id']
+
+        if pid:
+            return prod_obj.find_sd_ref(cr, uid, xmlid_to_sdref(pid), context=context)
+
+        return False
+
     def get_lines(self, cr, uid, source, line_values, po_id, so_id, for_update, so_called, context):
         line_result = []
         update_lines = []
@@ -339,6 +373,7 @@ class so_po_common(osv.osv_memory):
         split_cancel_line = {}
         split_bypass_lines = {}
         update_lines_sync_order_ids = []
+        msg_err_not_found = "" # prod received by sync but not in our DB
         line_vals_dict = line_values.to_dict()
         if 'order_line' not in line_vals_dict:
             return []
@@ -393,7 +428,7 @@ class so_po_common(osv.osv_memory):
                 values['cost_price'] = line.cost_price
 
             if line_dict.get('product_id'):
-                rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
+                rec_id = self.get_product_id(cr, uid, line.product_id, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
@@ -422,6 +457,11 @@ class so_po_common(osv.osv_memory):
                 if rec_id:
                     values['nomen_manda_0'] = rec_id
 
+            if not values.get('nomen_manda_0') and not values.get('product_id'):
+                if not msg_err_not_found:
+                    msg_err_not_found += "Order could not be created as product not recognised, not existing in current database?\n"
+                msg_err_not_found += "Product '%s' (line %s) with code %s not recognised.\n" % (line.name, line.line_number, line.default_code)
+
             if line_dict.get('nomen_manda_1'):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_1.id), context=context)
                 if rec_id:
@@ -436,7 +476,7 @@ class so_po_common(osv.osv_memory):
                 rec_id = self.pool.get('product.nomenclature').find_sd_ref(cr, uid, xmlid_to_sdref(line.nomen_manda_3.id), context=context)
                 if rec_id:
                     values['nomen_manda_3'] = rec_id
-    
+
             if line_dict.get('sync_sourced_origin'):
                 values['origin'] = line_dict.get('sync_sourced_origin')
                 so_ids = self.pool.get('sale.order').search(cr, uid, [('name', '=', values['origin']), ('state', 'in', ('sourced', 'progress', 'manual')), ('procurement_request', 'in', ('t', 'f'))], context=context)
@@ -468,7 +508,7 @@ class so_po_common(osv.osv_memory):
                 line_ids = self.pool.get('purchase.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', po_id)], context=context)
                 lines_to_split = self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id), ('splitted', '=', False)], context=context)
                 if lines_to_split and not line_ids:
-#                if self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id)], context=context):
+                    #                if self.pool.get('purchase.order.line.to.split').search(cr, uid, [('new_sync_order_line_db_id', '=', sync_order_line_db_id)], context=context):
                     split_bypass_lines.setdefault(sync_order_line_db_id, [])
                     split_bypass_lines[sync_order_line_db_id].append((lines_to_split, values))
                     continue
@@ -508,7 +548,7 @@ class so_po_common(osv.osv_memory):
             elif so_id:
                 # look for the correct PO line for updating the value - corresponding to the SO line
                 line_ids = self.pool.get('sale.order.line').search(cr, uid, [('sync_order_line_db_id', '=', sync_order_line_db_id), ('order_id', '=', so_id)], context=context)
-            
+
             if line_ids and line_ids[0]:
                 if for_update: # add this value to the list of update, then remove
                     update_lines.append(line_ids[0])
@@ -518,6 +558,9 @@ class so_po_common(osv.osv_memory):
             else:
                 update_lines_sync_order_ids.append(values['sync_order_line_db_id'])
                 line_result.append((0, 0, values))
+
+        if msg_err_not_found:
+            raise Exception(msg_err_not_found.strip())
 
         for sync_order_line_db_id, line_values in split_bypass_lines.iteritems():
             for line_vals in line_values:
@@ -548,7 +591,7 @@ class so_po_common(osv.osv_memory):
                             context.update({'deleted_line_so_id': so_id})
                         else:
                             line_result.append((2, existing_line))
-        
+
         return line_result 
 
 
@@ -564,7 +607,6 @@ class so_po_common(osv.osv_memory):
 
     def get_stock_move_lines(self, cr, uid, line_values, context):
         line_result = []
-        update_lines = []
 
         line_vals_dict = line_values.to_dict()
         if 'move_lines' not in line_vals_dict:
@@ -593,7 +635,7 @@ class so_po_common(osv.osv_memory):
                 values['date_expected'] = line.date_expected
 
             if line_dict.get('product_id'):
-                rec_id = self.pool.get('product.product').find_sd_ref(cr, uid, xmlid_to_sdref(line.product_id.id), context=context)
+                rec_id = self.get_product_id(cr, uid, line.product_id, context=context)
                 if rec_id:
                     values['product_id'] = rec_id
                     values['name'] = line.product_id.name
@@ -638,7 +680,7 @@ class so_po_common(osv.osv_memory):
             raise Exception, "No valid warehouse location found for the PO! The PO cannot be created."
         return warehouse_obj.read(cr, uid, warehouse_ids, ['lot_input_id'])[0]['lot_input_id'][0]
 
-    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner_name,context,usb=False):
+    def create_message_with_object_and_partner(self, cr, uid, rule_sequence, object_id, partner, context,usb=False):
 
         ##############################################################################
         # This method creates a message and put into the sendbox, but the message is created for a given object, AND for a given partner
@@ -651,34 +693,35 @@ class so_po_common(osv.osv_memory):
         if not rule or not object_id:
             return
 
+        partner_name = partner.name
         model_obj = self.pool.get(rule.model)
         if usb:
             msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
         else:
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
 
-        arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, context=context)
+        arguments = model_obj.get_message_arguments(cr, uid, object_id, rule, destination=partner, context=context)
 
         identifiers = msg_to_send_obj._generate_message_uuid(cr, uid, rule.model, [object_id], rule.server_id, context=context)
-        
+
         if not identifiers:
             return
 
         xml_id = identifiers[object_id]
         existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
-            '=', xml_id), ('destination_name', '=', partner_name)],
-            limit=1, order='NO_ORDER', context=context)
+                                                                '=', xml_id), ('destination_name', '=', partner_name)],
+                                                     limit=1, order='NO_ORDER', context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
         # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
         data = {
-                'identifier' : xml_id,
-                'remote_call': rule.remote_call,
-                'arguments': arguments,
-                'destination_name': partner_name,
-                'sent' : False,
-                'generate_message' : True,
+            'identifier' : xml_id,
+            'remote_call': rule.remote_call,
+            'arguments': arguments,
+            'destination_name': partner_name,
+            'sent' : False,
+            'generate_message' : True,
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 
@@ -691,19 +734,19 @@ class so_po_common(osv.osv_memory):
 
         xml_id = cr.dbname + "_recovery_" + partner_name + "_object_" + name
         existing_message_id = msg_to_send_obj.search(cr, uid, [('identifier',
-            '=', xml_id), ('destination_name', '=', partner_name)],
-            limit=1, order='NO_ORDER', context=context)
+                                                                '=', xml_id), ('destination_name', '=', partner_name)],
+                                                     limit=1, order='NO_ORDER', context=context)
         if existing_message_id: # if similar message does not exist in the system, then do nothing
             return
 
         # if not then create a new one --- FOR THE GIVEN Batch number AND Destination
         data = {
-                'identifier' : xml_id,
-                'remote_call': rule.remote_call,
-                'arguments': [{'name': name}],
-                'destination_name': partner_name,
-                'sent' : False,
-                'generate_message' : True,
+            'identifier' : xml_id,
+            'remote_call': rule.remote_call,
+            'arguments': [{'name': name}],
+            'destination_name': partner_name,
+            'sent' : False,
+            'generate_message' : True,
         }
         return msg_to_send_obj.create(cr, uid, data, context=context)
 

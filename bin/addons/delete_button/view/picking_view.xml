@@ -7,7 +7,7 @@
             <field name="model">stock.picking</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_picking_in_form" />
-            <field eval="300" name="priority"/>
+            <field name="priority">40</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form" position="attributes">
@@ -43,7 +43,7 @@
             <field name="model">stock.picking</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="stock.view_picking_form" />
-            <field eval="300" name="priority"/>
+            <field name="priority">40</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form" position="attributes">
@@ -58,7 +58,7 @@
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
             <field name="inherit_id" ref="stock.vpicktree" />
-            <field eval="300" name="priority"/>
+            <field name="priority">30</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="attributes">
@@ -78,6 +78,7 @@
             <field name="name">stock.picking.out.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">45</field>
             <field name="inherit_id" ref="stock.view_picking_out_form" />
             <field name="arch" type="xml">
                 <data>
@@ -92,6 +93,7 @@
             <field name="name">stock.picking.out.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
+            <field name="priority">45</field>
             <field name="inherit_id" ref="stock.view_picking_out_tree" />
             <field name="arch" type="xml">
                 <data>
@@ -112,6 +114,7 @@
             <field name="name">picking.ticket.form</field>
             <field name="model">stock.picking</field>
             <field name="type">form</field>
+            <field name="priority">40</field>
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_form" />
             <field name="arch" type="xml">
                 <data>
@@ -127,15 +130,12 @@
             <field name="name">picking.ticket.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="msf_outgoing.view_picking_ticket_tree" />
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/tree" position="attributes">
                         <attribute name='hide_delete_button'>1</attribute>
-                    </xpath>
-                    <xpath expr="/tree/button[@name='validate_picking']" position="after">
-                        <button name="delete_button" type="object" icon="gtk-del" string="Delete" 
-                        states='draft' confirm='Do you really want to delete selected record(s) ?'/>
                     </xpath>
                 </data>
             </field>

@@ -729,6 +729,12 @@ class account_year_end_closing(osv.osv):
         for account_id, account_code, ccy_id, ccy_code, \
             balance_currency, balance in cr.fetchall():
             balance_currency = float(balance_currency)
+            if balance is None and balance_currency == 0.:
+                # US-1471 FUNC balance is empty AND booking balance is ZERO
+                # => consider FUNC balance as ZERO
+                # But in other cases leave the actual behaviour,
+                # wiser to raise issue if FUNC BAL empty and BOOKING NOT ZERO
+                balance = '0.0'  # US-1471
             balance = float(balance)
 
             # CCY JE

@@ -102,6 +102,8 @@ class financing_contract_funding_pool_line(osv.osv):
         """
         Check that no previous funding pool account is used yet.
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -315,7 +317,8 @@ class financing_contract_contract(osv.osv):
         'currency_table_id': fields.many2one('res.currency.table', 'Currency Table'),
         'instance_id': fields.many2one('msf.instance','Proprietary Instance', required=True),
         # Define for _inherits
-        'format_id': fields.many2one('financing.contract.format', 'Format', ondelete="cascade"),
+        'format_id': fields.many2one('financing.contract.format', 'Format',
+            ondelete="cascade", required=True),
         'fp_added_flag': fields.boolean('Flag when new FP is added'),
         'instance_level': fields.function(_get_instance_level, method=True, string="Current instance level", type="char", readonly=True),  # UFTP-343
     }
@@ -623,6 +626,8 @@ class financing_contract_contract(osv.osv):
 
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
             for contract in self.browse(cr, uid, ids, context=context):

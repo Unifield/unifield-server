@@ -176,6 +176,8 @@ class ir_rule(osv.osv):
         return res
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(ir_rule, self).write(cr, uid, ids, vals, context=context)
         # Restart the cache on the _compute_domain method
         self._compute_domain.clear_cache(cr.dbname)

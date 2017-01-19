@@ -105,26 +105,26 @@ class account_move_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'display_analytic_button': fields.function(_display_analytic_button, method=True, string='Display analytic button?', type='boolean', readonly=True,
-            help="This informs system that we can display or not an analytic button", store=False),
+                                                   help="This informs system that we can display or not an analytic button", store=False),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
-         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
-            string='Header Distrib.?'),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+        'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
+                                                                  string='Header Distrib.?'),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30,
-            string="Distribution",
-            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
-  }
+                                                             string="Distribution",
+                                                             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+    }
 
     def create_analytic_lines(self, cr, uid, ids, context=None):
         """
         Create analytic lines on analytic-a-holic accounts that have an analytical distribution.
         """
-        # Some verifications
         if context is None:
             context = {}
         acc_ana_line_obj = self.pool.get('account.analytic.line')
         company_currency = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
+
         obj_fields = [
             'debit_currency',
             'credit_currency',
@@ -141,10 +141,17 @@ class account_move_line(osv.osv):
             'corrected_line_id',
             'is_write_off',
             'account_id',
+            'period_id',
+            'is_revaluated_ok',
+            'debit',
+            'credit',
+            'is_addendum_line',
         ]
+
         for obj_line in self.read(cr, uid, ids, obj_fields, context=context):
             # Prepare some values
             amount = obj_line.get('debit_currency', 0.0) - obj_line.get('credit_currency', 0.0)
+            amount_ji_fctal = obj_line.get('debit', 0.0) - obj_line.get('credit', 0.0)
             journal = self.pool.get('account.journal').read(cr, uid, obj_line.get('journal_id', [False])[0], ['analytic_journal_id', 'name'], context=context)
             move = self.pool.get('account.move').read(cr, uid, obj_line.get('move_id', [False])[0], ['analytic_distribution_id', 'status', 'line_id'], context=context)
             account = self.pool.get('account.account').read(cr, uid, obj_line.get('account_id', [False])[0], ['is_analytic_addicted'], context=context)
@@ -174,42 +181,70 @@ class account_move_line(osv.osv):
                         'amount': 0.,
                         'is': False,
                         'id': False,
+                        'iso': 0.,
                     }
+
+                    # US-1463/2: are all lines eguals by amount ?
+                    if distrib_lines:
+                        amounts = list(set([ dl.percentage*amount/100 for dl in distrib_lines ]))
+                        if len(amounts) == 1:
+                            aji_greater_amount['iso'] = round(amounts[0], 2)
+
                     dl_total_amount_rounded = 0.
                     for distrib_line in distrib_lines:
                         context.update({'date': obj_line.get('source_date', False) or obj_line.get('date', False)})
                         anal_amount = distrib_line.percentage*amount/100
-                        dl_total_amount_rounded += round(anal_amount, 2)
-                        if anal_amount > aji_greater_amount['amount']:
+                        anal_amount_rounded = round(anal_amount, 2)
+                        dl_total_amount_rounded += anal_amount_rounded
+                        # get the AJI with the biggest absolute value (it will be used for a potential adjustment
+                        # to ensure JI = AJI amounts)
+                        if abs(anal_amount_rounded) > abs(aji_greater_amount['amount']):
                             # US-119: breakdown by fp line or free 1, free2
                             # register the aji that will have the greatest amount
-                            aji_greater_amount['amount'] = anal_amount
+                            aji_greater_amount['amount'] = anal_amount_rounded
                             aji_greater_amount['is'] = True
                         else:
                             aji_greater_amount['is'] = False
+                        analytic_currency_id = obj_line.get('currency_id', [False])[0]
+                        amount_aji_book = -1 * anal_amount_rounded
+                        # functional amount
+                        if obj_line.get('is_revaluated_ok'):
+                            # (US-1682) if it's a revaluation line get the functional amount directly from the JI
+                            # to avoid slight differences between JI and AJI amounts caused by computation
+                            amount_aji_fctal = -1 * distrib_line.percentage * amount_ji_fctal / 100
+                        elif obj_line.get('is_addendum_line'):
+                            # US-1766: AJIs linked to FXA entry should have fct amount = booking amount
+                            # and book currency = fct currency
+                            analytic_currency_id = company_currency
+                            amount_aji_fctal = -1 * distrib_line.percentage * amount_ji_fctal / 100
+                            amount_aji_book = -1 * distrib_line.percentage * amount_ji_fctal / 100
+                        else:
+                            amount_aji_fctal = -1 * self.pool.get('res.currency').compute(
+                                cr, uid, obj_line.get('currency_id', [False])[0], company_currency, anal_amount,
+                                round=False, context=context)
                         line_vals = {
-                                     'name': obj_line.get('name', ''),
-                                     'date': obj_line.get('date', False),
-                                     'ref': obj_line.get('ref', False),
-                                     'journal_id': journal.get('analytic_journal_id', [False])[0],
-                                     'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
-                                        anal_amount, round=False, context=context),
-                                     'amount_currency': -1 * anal_amount,
-                                     'account_id': distrib_line.analytic_id.id,
-                                     'general_account_id': account.get('id'),
-                                     'move_id': obj_line.get('id'),
-                                     'distribution_id': distrib_obj.id,
-                                     'user_id': uid,
-                                     'currency_id': obj_line.get('currency_id', [False])[0],
-                                     'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
-                                     'document_date': obj_line.get('document_date', False),
-                                     'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                            'name': obj_line.get('name', ''),
+                            'date': obj_line.get('date', False),
+                            'ref': obj_line.get('ref', False),
+                            'journal_id': journal.get('analytic_journal_id', [False])[0],
+                            'amount': amount_aji_fctal,
+                            'amount_currency': amount_aji_book,  # booking amount
+                            'account_id': distrib_line.analytic_id.id,
+                            'general_account_id': account.get('id'),
+                            'move_id': obj_line.get('id'),
+                            'distribution_id': distrib_obj.id,
+                            'user_id': uid,
+                            'currency_id': analytic_currency_id,
+                            'distrib_line_id': '%s,%s'%(distrib_line._name, distrib_line.id),
+                            'document_date': obj_line.get('document_date', False),
+                            'source_date': obj_line.get('source_date', False) or obj_line.get('date', False),  # UFTP-361 source_date from date if not any (posting date)
+                            'real_period_id': obj_line['period_id'] and obj_line['period_id'][0] or False,  # US-945/2
                         }
                         # Update values if we come from a funding pool
                         if distrib_line._name == 'funding.pool.distribution.line':
                             destination_id = distrib_line.destination_id and distrib_line.destination_id.id or False
                             line_vals.update({'cost_center_id': distrib_line.cost_center_id and distrib_line.cost_center_id.id or False,
-                                'destination_id': destination_id,})
+                                              'destination_id': destination_id,})
                         # Update value if we come from a write-off
                         if obj_line.get('is_write_off', False):
                             line_vals.update({'from_write_off': True,})
@@ -220,20 +255,38 @@ class account_move_line(osv.osv):
                         if aji_greater_amount['is']:
                             aji_greater_amount['id'] = aji_id
 
-                    if amount > 0. and dl_total_amount_rounded > 0.:
+                    if abs(amount) > 0. and abs(dl_total_amount_rounded) > 0.:
                         if abs(dl_total_amount_rounded - amount) > 0.001 and \
-                            aji_greater_amount['id']:
+                                aji_greater_amount['id']:
                             # US-119 deduce the rounding gap and apply it
                             # to the AJI of greater amount
                             # http://jira.unifield.org/browse/US-119?focusedCommentId=38217&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-38217
-                            fixed_amount = aji_greater_amount['amount'] - (dl_total_amount_rounded - amount)
+                            # and US-1463
+                            fixed_amount = aji_greater_amount['amount'] - (round(dl_total_amount_rounded, 2) - amount)
+                            func_amount = None
+
+                            if aji_greater_amount['iso'] > 0:
+                                # US-1463/2
+                                # AD lines with same ratio/amount
+                                # and 50/50 breakdown
+                                if len(distrib_lines) == 2:
+                                    diff = round(dl_total_amount_rounded - amount, 2)
+                                    #print 'difff', diff, 'rounded', dl_total_amount_rounded, 'amount', amount
+                                    if (abs(diff)) < 0.001:
+                                        diff = 0.  # non significative gap
+                                    fixed_amount = round(aji_greater_amount['iso'] - diff, 2)
+                                    #print 'fixed_amount', fixed_amount, 'aji_greater_amount', aji_greater_amount['iso']
+                            else:
+                                # US-1463/1
+                                func_amount = -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency, fixed_amount, round=False, context=context)
+                                func_amount = round(func_amount, 2)
                             fixed_amount_vals = {
-                                'amount': -1 * self.pool.get('res.currency').compute(cr, uid, obj_line.get('currency_id', [False])[0], company_currency,
-                                        fixed_amount, round=False, context=context),
                                 'amount_currency': -1 * fixed_amount,
                             }
+                            if func_amount is not None:
+                                fixed_amount_vals['amount'] = func_amount
                             aal_obj.write(cr, uid, [aji_greater_amount['id']],
-                                fixed_amount_vals, context=context)
+                                          fixed_amount_vals, context=context)
 
         return True
 
@@ -310,14 +363,14 @@ class account_move_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def _check_employee_analytic_distribution(self, cr, uid, ids, context=None):
@@ -386,6 +439,8 @@ class account_move_line(osv.osv):
         """
         Check line if we come from web (from_web_menu)
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):

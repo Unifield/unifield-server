@@ -162,24 +162,24 @@ strong = o.get('level1', False) and o['level1'] < 4 and 'Strong' or ''
 %>
 <Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('code1', False) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('name1', False) or '')|x}</Data></Cell>
-<Cell ss:StyleID="ssAccountLineNumber${strong}"><Data ss:Type="Number">${(abs(o.get('balance1', False)) or 0.0)}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumber${strong}"><Data ss:Type="Number">${(o.get('balance1', False) or 0.0)}</Data></Cell>
 ## liabilities
 <%
 strong = o.get('level', False) and o['level'] < 4 and 'Strong' or ''
 %>
 <Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('code', False) or '')|x}</Data></Cell>
 <Cell ss:StyleID="ssAccountLine${strong}"><Data ss:Type="String">${(o.get('name', False) or '')|x}</Data></Cell>
-<Cell ss:StyleID="ssAccountLineNumber${strong}"><Data ss:Type="Number">${(abs(o.get('balance', False)) or 0.0)}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumber${strong}"><Data ss:Type="Number">${(o.get('balance', False) or 0.0)}</Data></Cell>
 </Row>
 % endfor
 
 <Row>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String">Balance ${company.currency_id.symbol or ''|x}</Data></Cell>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${abs(sum_cr())}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${sum_cr()}</Data></Cell>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String">Balance ${company.currency_id.symbol or ''|x}</Data></Cell>
 <Cell ss:StyleID="ssAccountLineStrong"><Data ss:Type="String"></Data></Cell>
-<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${abs(sum_dr())}</Data></Cell>
+<Cell ss:StyleID="ssAccountLineNumberStrong"><Data ss:Type="Number">${sum_dr()}</Data></Cell>
 </Row>
 
 </Table>

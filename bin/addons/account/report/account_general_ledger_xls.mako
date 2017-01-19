@@ -187,21 +187,15 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     display_account = (data['form']['display_account']=='bal_all' and 'All') or (data['form']['display_account']=='bal_movement' and 'With movements') or 'With balance is not equal to 0'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="120" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-% if get_show_move_lines():
-<Column ss:AutoFitWidth="1" ss:Width="300" />
-% endif
-% if not get_show_move_lines():
-<Column ss:AutoFitWidth="1" ss:Width="150" />
-% endif
 <Column ss:AutoFitWidth="1" ss:Width="50" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
-<Column ss:AutoFitWidth="1" ss:Width="64" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="55" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
+<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:Width="90" />
+<Column ss:Width="90" />
+<Column ss:Width="90" />
+<Column ss:Width="90" />
 <Row>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">${header_company_or_chart_of_account}</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Fiscal Year</Data></Cell>
@@ -233,7 +227,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Data ss:Type="String">${(get_target_move(data) or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader" ss:MergeAcross="1">
-    <Data ss:Type="String">${(get_prop_instances(data) or '')|x}</Data>
+    <Data ss:Type="String">${(get_prop_instances() or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">${get_output_currency_code(data)}</Data>
@@ -246,13 +240,14 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Row>
 <Row>
 % if get_show_move_lines():
-<Cell ss:StyleID="ssH" ss:MergeAcross="1"><Data ss:Type="String">Entry Seq</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Entry Seq</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Posting Date</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Description</Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
 % if not get_show_move_lines():
-<Cell ss:StyleID="ssH"><Data ss:Type="String">Account / CCY</Data></Cell>
+<Cell ss:StyleID="ssH"><Data ss:Type="String">Account</Data></Cell>
 <Cell ss:StyleID="ssH" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>
 <Cell ss:StyleID="ssH"><Data ss:Type="String">Currency</Data></Cell>
 % endif
@@ -301,7 +296,10 @@ ccy_sub_total_style_right_suffix = 'Right'
 
 % for line in lines(o, initial_balance_mode=True):
 <Row>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
+    <Data ss:Type="String">${(o.code or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
     <Data ss:Type="String">${(line['move'] or '' or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
@@ -333,7 +331,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(formatLang(line['ldate'],date=True)) or ''}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNoWrap">
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${(line['lname'] or '')|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine">
@@ -354,10 +352,15 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Row>
 % endfor
 
+% if o.displayed:
 % for ccy in o.get_currencies():
+## subtotals line
 <Row>
-<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="3">
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}">
     <Data ss:Type="String">${(o.code or '')|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssBorder${ccy_sub_total_style_suffix}${ccy_sub_total_style_right_suffix}" ss:MergeAcross="2">
+    <Data ss:Type="String">Sub Total</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLine${ccy_sub_total_style_suffix}">
     <Data ss:Type="String">${(ccy or '')|x}</Data>
@@ -376,6 +379,7 @@ ccy_sub_total_style_right_suffix = 'Right'
 </Cell>
 </Row>
 % endfor
+% endif
 
 % endfor
 % endfor
@@ -383,7 +387,12 @@ ccy_sub_total_style_right_suffix = 'Right'
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
    <PageSetup>
     <Layout x:Orientation="Landscape"/>
-    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14General Ledger"/>
+% if get_show_move_lines():
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14General Ledger"/>0
+% endif
+% if not get_show_move_lines():
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Trial Balance"/>0
+% endif
     <Footer x:Data="Page &amp;P of &amp;N"/>
    </PageSetup>
    <Print>

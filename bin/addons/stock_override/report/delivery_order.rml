@@ -177,7 +177,7 @@
 
 
         <section>
-        <blockTable colWidths="25.0,70.0,120.0,60.0,45.0,40.0,70.0,70.0,70.0,80.0,80.0,80.0" style="LineHeader" repeatRows="1">
+        <blockTable colWidths="20.0,70.0,120.0,50.0,60.0,45.0,40.0,70.0,70.0,70.0,65.0,65.0,65.0" style="LineHeader" repeatRows="1">
             <tr>
                 <td>
                     <para style="LHeader">Line</para>
@@ -187,6 +187,9 @@
                 </td>
                 <td>
                     <para style="LHeader">Product Name</para>
+                </td>
+                <td>
+                    <para style="LHeader">CommentS</para>
                 </td>
                 <td>
                     <para style="LHeader">Kit</para>
@@ -217,7 +220,8 @@
                 </td>
             </tr>
             <tr>
-            [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
+                [[ repeatIn(picking.move_lines, 'line', 'tr') ]]
+                [[  line.state == 'cancel' and removeParentNode('tr') ]]
                 <td>
                     <para style="Line">[[ line.line_number ]]</para>
                 </td>
@@ -226,6 +230,9 @@
                 </td>
                 <td>
                     <para style="Line">[[ line.product_id.name ]]</para>
+                </td>
+                <td>
+                    <para style="Line">[[ line.comment ]]</para>
                 </td>
                 <td>
                     <para style="Line">[[ line.composition_list_id.name ]]</para>
@@ -252,7 +259,7 @@
                     <para style="Line">[[ line.location_dest_id.name ]]</para>
                 </td>
                 <td>
-                    <para style="Line">[[ formatLang(line.date, date_time=True) ]]</para>
+                    <para style="Line">[[ formatLang(line.date[:10], date=True) ]]</para>
                 </td>
             </tr>
         </blockTable>

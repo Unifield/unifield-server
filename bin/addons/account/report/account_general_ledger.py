@@ -66,6 +66,18 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 'show_period_0': 1,
                 'state_agnostic': 1,
             })
+            # US-1197/4: IB entries for yearly closing always in 1th Jan
+            # => get rid of regular period/dates filters for _query_get
+            # => if self.init_balance is True, note that filtering is OK
+            # validated at wizard report level
+            ib_local_context.update({
+                'date_from': False,
+                'date_to': False,
+                'date_fromto_docdate': False,
+                'period_from': False,
+                'period_to': False,
+                'periods': False,
+            })
             self.init_query = obj_move._query_get(self.cr, self.uid, obj='l',
                 context=ib_local_context)
         else:
@@ -95,11 +107,33 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 self.title = _('Trial Balance')
 
         self.account_ids = self._get_data_form(data, 'account_ids') or []
-        # unreconciled: not reconciled or partial reconciled
-        # (partial: reconcile_partia_id set vs reconcile_id)
-        self.unreconciled_filter = \
-            self._get_data_form(data, 'unreconciled', False) \
-            and " AND reconcile_id is null AND a.reconcile='t'" or ''
+
+        # US-533 reconciled filter:
+        # decision matrix
+        # http://jira.unifield.org/browse/US-533?focusedCommentId=50246&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-50246
+        reconcile_date = self._get_data_form(data, 'reconcile_date', False)
+        reconciled = self._get_data_form(data, 'reconciled', 'empty')
+        self.reconciled_filter = ''
+        if reconciled == 'empty':
+            # no reconcile criteria: get rid of reconcile date filter
+            if reconcile_date:
+                del data['form']['reconcile_date']
+                reconcile_date = False
+        elif reconciled == 'no':
+            # reconcile 'No' filter: become reconciled since (day+1)
+            # or not reconciled (cases 6/9 of Jira comment matrix)
+            not_reconciled = "l.reconcile_id is null AND a.reconcile='t'"
+            if reconcile_date:
+                self.reconciled_filter = \
+                    " AND (l.reconcile_date > '%s' or (%s))" % (
+                        reconcile_date, not_reconciled, )
+            else:
+                self.reconciled_filter = " AND %s" % (not_reconciled, )
+        elif reconciled == 'yes':
+            self.reconciled_filter = " AND l.reconcile_id is not null"
+            if reconcile_date:
+                self.reconciled_filter += " AND l.reconcile_date <= '%s'" % (
+                    reconcile_date, )
 
         self.context['state'] = data['form']['target_move']
 
@@ -108,7 +142,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if (data['model'] == 'ir.ui.menu'):
             new_ids = [data['form']['chart_account_id']]
             objects = self.pool.get('account.account').browse(self.cr, self.uid, new_ids, context=self.context)
-        
+
         # output currency
         self.output_currency_id = 'output_currency' in data['form'] \
             and data['form']['output_currency']
@@ -120,11 +154,11 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                                             ['name'])
             if ouput_cur_r and ouput_cur_r[0] and ouput_cur_r[0]['name']:
                 self.output_currency_code = ouput_cur_r[0]['name']
-                
+
         # proprietary instances filter
-        self.instance_ids = data['form']['instance_ids'] 
+        self.instance_ids = data['form']['instance_ids']
         if self.instance_ids:
-            # we add instance filter in clauses 'self.query/self.init_query' 
+            # we add instance filter in clauses 'self.query/self.init_query'
             instance_ids_in = "l.instance_id in(%s)" % (",".join(map(str, self.instance_ids)))
             if not self.query:
                 self.query = instance_ids_in
@@ -135,18 +169,22 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                     self.init_query = instance_ids_in
                 else:
                     self.init_query += ' AND ' + instance_ids_in
+        # selected instance ids display / filtering in journal:
+        # - mission if no instance selected (<=> no instance filter in query)
+        # - user selected instances
+        self.selected_instance_ids = self.instance_ids or \
+            self._get_instances(get_code=False, mission_filter=True) or []
 
         res = super(general_ledger, self).set_context(objects, data, new_ids, report_type=report_type)
         common_report_header._set_context(self, data)
-
         if self.account_ids:
             # add parent(s) of filtered accounts
             self.account_ids += self.pool.get('account.account')._get_parent_of(
                     self.cr, self.uid, self.account_ids)
 
         query = self.query
-        if self.unreconciled_filter:
-            query += self.unreconciled_filter
+        if self.reconciled_filter:
+            query += self.reconciled_filter
 
         move_states = [ 'posted', ] if self.target_move == 'posted' \
             else [ 'draft', 'posted', ]
@@ -155,7 +193,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             include_accounts=self.account_ids,
             account_report_types=self.account_report_types,
             with_balance_only=self.display_account == 'bal_solde',
-            reconcile_filter=self.unreconciled_filter,
+            reconcile_filter=self.reconciled_filter,
             context=used_context)
 
         return res
@@ -189,7 +227,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_line_credit': self._get_line_credit,
             'get_line_balance': self._get_line_balance,
             'currency_conv': self._currency_conv,
-            'get_prop_instances': self._get_prop_instances,
+            'get_prop_instances': self._get_prop_instances_str,
             'get_display_info': self._get_display_info,
             'get_show_move_lines': self.get_show_move_lines,
             'get_ccy_label': self.get_ccy_label,
@@ -198,7 +236,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             'get_tree_nodes': self._get_tree_nodes,
             'show_node_in_report': self._show_node_in_report,
         })
-        
+
         # company currency
         self.uid = uid
         self.currency_id = False
@@ -225,33 +263,40 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         return res
 
     def _show_node_in_report(self, node):
-        res = True
-        if self.account_ids or self.unreconciled_filter:
-            # hide if zero bal and any by account or unreconciled filter on
-            bal = node.data.get('*', {}).get('debit', 0.) \
-                - node.data.get('*', {}).get('credit', 0.)
-            if bal == 0.:
-                res = False
-        return res
+        node.displayed = True
+        if node.parent is None:
+            return node.displayed  # always show root account MSF
 
-    def _get_journals_str(self, data):
-        if 'all_journals' in data['form']:
-            return _('All Journals')
-        return ', '.join(self._get_journal(data))
+        if node.is_zero \
+                and (self.account_ids
+                    or self.account_report_types
+                    or self.reconciled_filter
+                    or self.display_account == 'bal_movement'):
+            # hide zero amounts for above filters on
+            # no movements <=> no amount
+            node.displayed = False
+
+        if node.displayed \
+            and node.is_zero_bal and self.display_account == 'bal_solde':
+            # to filter zero balance
+            node.displayed = False
+
+        return node.displayed
 
     def lines(self, node, initial_balance_mode=False):
+        """ display final account node entries (JIs)"""
         res = []
-        if not node.is_move_level:
-            return res
+        #if not node.is_move_level:
+        #    return res
 
         if not self.show_move_lines and not initial_balance_mode:
             # trial balance: do not show lines except initial_balance_mode ones
             return res
-        if self.display_account in ('bal_solde', 'bal_movement') \
-            and node.zero_bal:
-            # - do not display JIs of a zero balance account if no zero bal
-            #   filter is active (note: debit/credit is not aggregated too)
-            # - do not display with no movement too (so bal 0)
+        if self.display_account == 'bal_solde' and node.is_zero_bal:
+            # balance filter: do not display JIs of a zero balance account
+            return res
+        if self.display_account == 'bal_movement' and node.is_zero:
+            # - do not display with no movement
             return res
         account = node.obj
 
@@ -309,7 +354,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 JOIN account_account a on (a.id=l.account_id)
                 WHERE %s AND m.state IN %s AND l.account_id = %%s{{reconcile}} ORDER by %s
             """ %(self.query, move_state_in, sql_sort)
-            sql = sql.replace('{{reconcile}}', self.unreconciled_filter)
+            sql = sql.replace('{{reconcile}}', self.reconciled_filter)
             self.cr.execute(sql, (account.id, ))
             res = self.cr.dictfetchall()
         else:
@@ -368,10 +413,10 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         elif self.sortby == 'sort_journal_partner':
             return 'Journal & Partner'
         return 'Date'
-        
+
     def _get_output_currency_code(self, data):
         return self.output_currency_code or self.currency_name
-        
+
     def _get_filter_info(self, data):
         """ get filter info
         _get_filter, _get_start_date, _get_end_date,
@@ -393,14 +438,23 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
                 line = self.get_start_period(data) + ' - ' + self.get_end_period(data)
             if line:
                 infos.append(line)
+
+        # reconcile / reconcile date
+        reconciled = self._get_data_form(data, 'reconciled')
+        if reconciled and reconciled != 'empty':
+            dt = self._get_data_form(data, 'reconcile_date')
+            if dt:
+                dt = ' ' + self.formatLang(dt, date=True)
+            infos.append(_("Reconcile %s%s") % (reconciled.title(), dt or '', ))
+
         return infos and ", \n".join(infos) or _('No Filter')
-        
+
     def _get_line_debit(self, line, booking=False):
         return self.__get_line_amount(line, 'debit', booking=booking)
-        
+
     def _get_line_credit(self, line, booking=False):
         return self.__get_line_amount(line, 'credit', booking=booking)
-        
+
     def _get_line_balance(self, line, booking=False):
         return self._currency_conv(
             self.__get_line_amount(line, 'debit', booking=booking, conv=False) \
@@ -411,7 +465,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if booking:
             key += '_currency'
         return (self._currency_conv(line[key]) if conv else line[key]) or 0.
-        
+
     def _is_company_currency(self):
         if not self.output_currency_id or not self.currency_id \
            or self.output_currency_id == self.currency_id:
@@ -420,7 +474,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         else:
             # is other currency
             return False
-        
+
     def _currency_conv(self, amount):
         if not amount or amount == 0.:
             return 0.
@@ -430,17 +484,17 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
         if not amount or abs(amount) < 0.001:
             amount = 0.
         return amount
-        
-    def _get_prop_instances(self, data):
-        instances = []
-        if data.get('form', False):
-            if data['form'].get('instance_ids', False):
-                self.cr.execute('select code from msf_instance where id IN %s',
-                    (tuple(data['form']['instance_ids']),))
-            else:
-                self.cr.execute('select code from msf_instance')
-            instances = [x for x, in self.cr.fetchall()]
-        return ', '.join(instances)
+
+    def _get_prop_instances_str(self):
+        return ', '.join([ i.code \
+            for i in self.pool.get('msf.instance').browse(self.cr, self.uid, self.selected_instance_ids) \
+            if i.code ])
+
+    def _get_journals_str(self, data):
+        if 'all_journals' in data['form']:
+            return _('All Journals')
+        return ', '.join(list(set(self._get_journal(data,
+            instance_ids=self.selected_instance_ids))))
 
     # internal filter functions
     def _get_data_form(self, data, key, default=False):
@@ -465,7 +519,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
         # reconciled account
         info_data.append((_('Unreconciled'),
-            self.unreconciled_filter and yes_str or no_str, ))
+            self.reconciled_filter and yes_str or no_str, ))
 
         display_account = all_str
         if 'display_account' in data['form']:
@@ -476,6 +530,15 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
             else:
                 display_account = _('With balance is not equal to 0')
         info_data.append((_('Accounts'), display_account, ))
+
+        account_ids = list(set(self._get_data_form(data, 'account_ids')))
+        if account_ids:
+            # US-1197/2: display filtered accounts
+            account_obj = self.pool.get('account.account')
+            info_data.append((_('Selected Accounts'), ', '.join(
+                    [ a.code for a in account_obj.browse(
+                        self.cr, self.uid, account_ids) \
+                        if a.type != 'view' ], )))
 
         res = [ "%s: %s" % (label, val, ) for label, val in info_data ]
         return ', \n'.join(res)
@@ -493,7 +556,7 @@ class general_ledger(report_sxw.rml_parse, common_report_header):
 
     def _get_initial_balance(self):
         return self.init_balance
-                                            
+
 #report_sxw.report_sxw('report.account.general.ledger', 'account.account', 'addons/account/report/account_general_ledger.rml', parser=general_ledger, header='internal')
 report_sxw.report_sxw('report.account.general.ledger_landscape', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')
 report_sxw.report_sxw('report.account.general.ledger_landscape_tb', 'account.account', 'addons/account/report/account_general_ledger_landscape.rml', parser=general_ledger, header='internal landscape')

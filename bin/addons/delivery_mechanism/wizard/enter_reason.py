@@ -90,6 +90,10 @@ class enter_reason(osv.osv_memory):
                 wf_service.trg_validate(uid, 'purchase.order', obj.purchase_id.id, 'picking_ok', cr)
                 purchase_obj.log(cr, uid, obj.purchase_id.id, _('The Purchase Order %s is %s%% received')%(obj.purchase_id.name, round(obj.purchase_id.shipped_rate,2)))
 
+            self.infolog(cr, uid, "The Incoming shipment id:%s (%s) has been canceled%s." % (
+                obj.id, obj.name, cancel_type != 'update_out' and ' and resourced' or '',
+            ))
+
         return {'type': 'ir.actions.act_window_close'}
     
 enter_reason()

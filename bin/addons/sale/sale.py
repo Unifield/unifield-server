@@ -170,15 +170,15 @@ class sale_order(osv.osv):
                     no_invoiced = True
 
         cursor.execute('SELECT rel.order_id ' \
-                'FROM sale_order_invoice_rel AS rel, account_invoice AS inv '+ sale_clause + \
-                'WHERE rel.invoice_id = inv.id ' + clause)
+                       'FROM sale_order_invoice_rel AS rel, account_invoice AS inv '+ sale_clause + \
+                       'WHERE rel.invoice_id = inv.id ' + clause)
         res = cursor.fetchall()
         if no_invoiced:
             cursor.execute('SELECT sale.id ' \
-                    'FROM sale_order AS sale ' \
-                    'WHERE sale.id NOT IN ' \
-                        '(SELECT rel.order_id ' \
-                        'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\'')
+                           'FROM sale_order AS sale ' \
+                           'WHERE sale.id NOT IN ' \
+                           '(SELECT rel.order_id ' \
+                           'FROM sale_order_invoice_rel AS rel) and sale.state != \'cancel\'')
             res.extend(cursor.fetchall())
         if not res:
             return [('id', '=', 0)]
@@ -192,7 +192,7 @@ class sale_order(osv.osv):
 
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True,
-            readonly=True, states={'draft': [('readonly', False)]}, select=True),
+                            readonly=True, states={'draft': [('readonly', False)]}, select=True),
         'shop_id': fields.many2one('sale.shop', 'Shop', required=True, readonly=True, states={'draft': [('readonly', False)]}),
         'origin': fields.char('Source Document', size=512, help="Reference of the document that generated this sales order request."),
         'client_order_ref': fields.char('Customer Reference', size=64),
@@ -205,7 +205,7 @@ class sale_order(osv.osv):
             ('invoice_except', 'Invoice Exception'),
             ('done', 'Done'),
             ('cancel', 'Cancelled')
-            ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
+        ], 'Order State', readonly=True, help="Gives the state of the quotation or sales order. \nThe exception state is automatically set when a cancel operation occurs in the invoice validation (Invoice Exception) or in the picking list process (Shipping Exception). \nThe 'Waiting Schedule' state is set when the invoice is confirmed but waiting for the scheduler to run on the date 'Ordered Date'.", select=True),
         'date_order': fields.date('Ordered Date', required=True, readonly=True, select=True, states={'draft': [('readonly', False)]}),
         'create_date': fields.date('Creation Date', readonly=True, select=True, help="Date on which sales order is created."),
         'date_confirm': fields.date('Confirmation Date', readonly=True, select=True, help="Date on which sales order is confirmed."),
@@ -217,14 +217,14 @@ class sale_order(osv.osv):
 
         'incoterm': fields.many2one('stock.incoterms', 'Incoterm', help="Incoterm which stands for 'International Commercial terms' implies its a series of sales terms which are used in the commercial transaction."),
         'picking_policy': fields.selection([('direct', 'Partial Delivery'), ('one', 'Complete Delivery')],
-            'Picking Policy', required=True, readonly=True, states={'draft': [('readonly', False)]}, help="""If you don't have enough stock available to deliver all at once, do you accept partial shipments or not?"""),
+                                           'Picking Policy', required=True, readonly=True, states={'draft': [('readonly', False)]}, help="""If you don't have enough stock available to deliver all at once, do you accept partial shipments or not?"""),
         'order_policy': fields.selection([
             ('prepaid', 'Payment Before Delivery'),
             ('manual', 'Shipping & Manual Invoice'),
             ('postpaid', 'Invoice On Order After Delivery'),
             ('picking', 'Invoice From The Picking'),
         ], 'Shipping Policy', required=True, readonly=True, states={'draft': [('readonly', False)]},
-                    help="""The Shipping Policy is used to synchronise invoice and delivery operations.
+            help="""The Shipping Policy is used to synchronise invoice and delivery operations.
   - The 'Pay Before delivery' choice will first generate the invoice and then generate the picking order after the payment of this invoice.
   - The 'Shipping & Manual Invoice' will create the picking order directly and wait for the user to manually click on the 'Invoice' button to generate the draft invoice.
   - The 'Invoice On Order After Delivery' choice will generate the draft invoice based on sales order after all picking lists have been finished.
@@ -239,26 +239,26 @@ class sale_order(osv.osv):
         'picked_rate': fields.function(_picked_rate, method=True, string='Picked', type='float'),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'invoiced': fields.function(_invoiced, method=True, string='Paid',
-            fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
+                                    fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'note': fields.text('Notes'),
 
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Untaxed Amount',
-            store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-            },
+                                          store = {
+            'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+        },
             multi='sums', help="The amount without tax."),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Taxes',
-            store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-            },
+                                      store = {
+            'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+        },
             multi='sums', help="The tax amount."),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Sale Price'), string='Total',
-            store = {
-                'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
-                'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
-            },
+                                        store = {
+            'sale.order': (lambda self, cr, uid, ids, c={}: ids, ['order_line'], 10),
+            'sale.order.line': (_get_order, ['price_unit', 'tax_id', 'discount', 'product_uom_qty'], 10),
+        },
             multi='sums', help="The total amount."),
 
         'invoice_quantity': fields.selection([('order', 'Ordered Quantities'), ('procurement', 'Shipped Quantities')], 'Invoice on', help="The sale order will automatically create the invoice proposition (draft invoice). Ordered and delivered quantities may not be the same. You have to choose if you want your invoice based on ordered or shipped quantities. If the product is a service, shipped quantities means hours spent on the associated tasks.", required=True, readonly=True, states={'draft': [('readonly', False)]}),
@@ -316,7 +316,7 @@ class sale_order(osv.osv):
             # Deleting the existing instance of workflow for SO
             wf_service.trg_delete(uid, 'sale.order', inv_id, cr)
             wf_service.trg_create(uid, 'sale.order', inv_id, cr)
-        for sale in self.browse(cr, uid, ids, context=context):
+        for sale in self.browse(cr, uid, ids):
             sale_order_label = _('IR') if sale.procurement_request else _('FO')  # UFTP-93
             message = _("The %s '%s' has been set in draft state.") % (sale_order_label, sale.name,)
             self.log(cr, uid, sale.id, message)
@@ -355,6 +355,8 @@ class sale_order(osv.osv):
         return {'value': {'invoice_quantity': inv_qty}}
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if vals.get('order_policy', False):
             if vals['order_policy'] == 'prepaid':
                 vals.update({'invoice_quantity': 'order'})
@@ -390,7 +392,7 @@ class sale_order(osv.osv):
         journal_ids = journal_obj.search(cr, uid, [('type', '=', 'sale'), ('company_id', '=', order.company_id.id)], limit=1)
         if not journal_ids:
             raise osv.except_osv(_('Error !'),
-                _('There is no sales journal defined for this company: "%s" (id:%d)') % (order.company_id.name, order.company_id.id))
+                                 _('There is no sales journal defined for this company: "%s" (id:%d)') % (order.company_id.name, order.company_id.id))
         a = order.partner_id.property_account_receivable.id
         pay_term = order.payment_term and order.payment_term.id or False
         invoiced_sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('order_id', '=', order.id), ('invoiced', '=', True)], context=context)
@@ -592,13 +594,13 @@ class sale_order(osv.osv):
                 for inv in r['invoice_ids']:
                     wf_service.trg_validate(uid, 'account.invoice', inv, 'invoice_cancel', cr)
             sale_order_line_obj.write(cr, uid, [l.id for l in  sale.order_line],
-                    {'state': 'cancel'}, context=context)
+                                      {'state': 'cancel'}, context=context)
             sale_order_label = _('IR') if sale.procurement_request else _('FO')  # UFTP-93
             message = _("The %s '%s' has been cancelled.") % (sale_order_label, sale.name,)
             self.log(cr, uid, sale.id, message)
         self.write(cr, uid, ids, {'state': 'cancel'})
         return True
-    
+
     def _hook_message_action_wait(self, cr, uid, *args, **kwargs):
         '''
         Hook the message displayed on sale order confirmation
@@ -611,10 +613,13 @@ class sale_order(osv.osv):
                 self.write(cr, uid, [o.id], {'state': 'manual', 'date_confirm': time.strftime('%Y-%m-%d')})
             else:
                 self.write(cr, uid, [o.id], {'state': 'progress', 'date_confirm': time.strftime('%Y-%m-%d')})
-            self.pool.get('sale.order.line').button_confirm(cr, uid, [x.id for x in o.order_line])
+            self.pool.get('sale.order.line').button_confirm(cr, uid, [x.id for x in o.order_line if x.product_id])
             message = _("The quotation '%s' has been converted to a sales order.") % (o.name,)
             message = self._hook_message_action_wait(cr, uid, order=o, message=message)
             self.log(cr, uid, o.id, message)
+            self.infolog(cr, uid, "The Field Order id:%s (%s) has been confirmed." % (
+                o.id, o.name,
+            ))
         return True
 
     def procurement_lines_get(self, cr, uid, ids, *args):
@@ -665,12 +670,12 @@ class sale_order(osv.osv):
             if notcanceled:
                 return False
             return canceled
-    
+
     def _hook_ship_create_stock_move(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to modify the data for stock move creation
         '''
         move_data = kwargs['move_data']
@@ -680,46 +685,46 @@ class sale_order(osv.osv):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to modify the data for procurement order creation
         '''
         proc_data = kwargs['proc_data']
         return proc_data
-    
+
     def _hook_ship_create_stock_picking(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to modify the data for stock picking creation
         '''
         picking_data = kwargs['picking_data']
         return picking_data
-    
+
     def _hook_ship_create_execute_picking_workflow(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to avoid the stock picking workflow execution
         '''
         picking_id = kwargs['picking_id']
         return picking_id
-    
+
     def _hook_ship_create_execute_specific_code_01(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to execute specific code at position 01
         '''
         pass
-    
+
     def _hook_ship_create_execute_specific_code_02(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to execute specific code at position 02
         '''
         pass
@@ -728,16 +733,16 @@ class sale_order(osv.osv):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-            
+
         - allow to customize the execution condition
         '''
         return True
-    
+
     def _hook_ship_create_line_condition(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to customize the execution condition
         '''
         line = kwargs['line']
@@ -748,16 +753,16 @@ class sale_order(osv.osv):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to modifiy product especially for internal request which type is "make_to_order"
         '''
         pass
-    
+
     def _hook_ship_create_uom_id(self, cr, uid, ids, context=None,  *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the action_ship_create method from sale>sale.py
-        
+
         - allow to  modifiy uom especially for internal request which type is "make_to_order"
         '''
         pass
@@ -809,7 +814,7 @@ class sale_order(osv.osv):
                                         }
                         picking_data = self._hook_ship_create_stock_picking(cr, uid, ids, context=context, picking_data=picking_data, order=order,)
                         picking_id = self.pool.get('stock.picking').create(cr, uid, picking_data, context=context)
-                        
+
                     move_data = {'name': line.name[:64],
                                  'picking_id': picking_id,
                                  'product_id': line.product_id.id,
@@ -831,7 +836,7 @@ class sale_order(osv.osv):
                                  'note': line.notes,
                                  'company_id': order.company_id.id,
                                  }
-                    
+
                     # hook for stock move data modification
                     move_data = self._hook_ship_create_stock_move(cr, uid, ids, context=context, move_data=move_data, line=line, order=order)
                     # defer overall_qty computation at the end of this method
@@ -845,7 +850,7 @@ class sale_order(osv.osv):
                 # the hook _hook_ship_create_product_id is useful when we make an IR with the type "make_to_order" => we take a 'ghost' product because it is required in procurement and we do not have product
                 product_id = self._hook_ship_create_product_id(cr, uid, ids, context=context, line=line)
                 if product_id \
-                and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order) :
+                        and self._hook_procurement_create_line_condition(cr, uid, ids, context=context, line=line, order=order) :
                     # the hook _hook_ship_create_uom_id is useful when we make an IR with the type "make_to_order"
                     product_uom = self._hook_ship_create_uom_id(cr, uid, ids, context=context, line=line)
                     proc_data = {'name': line.name,
@@ -877,7 +882,7 @@ class sale_order(osv.osv):
                                         for mov in move_obj.browse(cr, uid, mov_ids):
                                             move_obj.write(cr, uid, [move_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
                                             proc_obj.write(cr, uid, [proc_id], {'product_qty': mov.product_qty, 'product_uos_qty': mov.product_uos_qty})
-            
+
             # compute overall_qty
             if move_ids:
                 compute_store = self.pool.get('stock.move')._store_get_values(cr, uid, move_ids, None, context)
@@ -1021,7 +1026,7 @@ class sale_order_line(osv.osv):
         'notes': fields.text('Notes'),
         'th_weight': fields.float('Weight', readonly=True, states={'draft': [('readonly', False)]}),
         'state': fields.selection([('draft', 'Draft'),('confirmed', 'Confirmed'),('done', 'Done'),('cancel', 'Cancelled'),('exception', 'Exception')], 'State', required=True, readonly=True,
-                help='* The \'Draft\' state is set when the related sales order in draft state. \
+                                  help='* The \'Draft\' state is set when the related sales order in draft state. \
                     \n* The \'Confirmed\' state is set when the related sales order is confirmed. \
                     \n* The \'Exception\' state is set when the related sales order is set as exception. \
                     \n* The \'Done\' state is set when the sales order line has been picked. \
@@ -1055,7 +1060,7 @@ class sale_order_line(osv.osv):
                 return line.product_uom_qty
             else:
                 return self.pool.get('procurement.order').quantity_get(cr, uid,
-                        line.procurement_id.id, context=context)
+                                                                       line.procurement_id.id, context=context)
 
         def _get_line_uom(line):
             if (line.order_id.invoice_quantity=='order') or not line.procurement_id:
@@ -1064,7 +1069,7 @@ class sale_order_line(osv.osv):
                 return line.product_uom.id
             else:
                 return self.pool.get('procurement.order').uom_get(cr, uid,
-                        line.procurement_id.id, context=context)
+                                                                  line.procurement_id.id, context=context)
 
         create_ids = []
         sales = {}
@@ -1076,25 +1081,25 @@ class sale_order_line(osv.osv):
                         a = line.product_id.categ_id.property_account_income_categ.id
                     if not a:
                         raise osv.except_osv(_('Error !'),
-                                _('There is no income account defined ' \
-                                        'for this product: "%s" (id:%d)') % \
-                                        (line.product_id.name, line.product_id.id,))
+                                             _('There is no income account defined ' \
+                                               'for this product: "%s" (id:%d)') % \
+                                             (line.product_id.name, line.product_id.id,))
                 else:
                     prop = self.pool.get('ir.property').get(cr, uid,
-                            'property_account_income_categ', 'product.category',
-                            context=context)
+                                                            'property_account_income_categ', 'product.category',
+                                                            context=context)
                     a = prop and prop.id or False
                 uosqty = _get_line_qty(line)
                 uos_id = _get_line_uom(line)
                 pu = 0.0
                 if uosqty:
                     pu = round(line.price_unit * line.product_uom_qty / uosqty,
-                            self.pool.get('decimal.precision').precision_get(cr, uid, 'Sale Price'))
+                               self.pool.get('decimal.precision').precision_get(cr, uid, 'Sale Price'))
                 fpos = line.order_id.fiscal_position or False
                 a = self.pool.get('account.fiscal.position').map_account(cr, uid, fpos, a)
                 if not a:
                     raise osv.except_osv(_('Error !'),
-                                _('There is no income category account defined in default Properties for Product Category or Fiscal Position is not defined !'))
+                                         _('There is no income category account defined in default Properties for Product Category or Fiscal Position is not defined !'))
                 inv_id = self.pool.get('account.invoice.line').create(cr, uid, {
                     'name': line.name,
                     'origin': line.order_id.name,
@@ -1125,8 +1130,8 @@ class sale_order_line(osv.osv):
             for move_line in line.move_ids:
                 if move_line.state != 'cancel':
                     raise osv.except_osv(
-                            _('Could not cancel sales order line!'),
-                            _('You must first cancel stock moves attached to this sales order line.'))
+                        _('Could not cancel sales order line!'),
+                        _('You must first cancel stock moves attached to this sales order line.'))
         return self.write(cr, uid, ids, {'state': 'cancel'})
 
     def button_confirm(self, cr, uid, ids, context=None):
@@ -1143,7 +1148,7 @@ class sale_order_line(osv.osv):
         product_obj = self.pool.get('product.product')
         if not product_id:
             return {'value': {'product_uom': product_uos,
-                'product_uom_qty': product_uos_qty}, 'domain': {}}
+                              'product_uom_qty': product_uos_qty}, 'domain': {}}
 
         product = product_obj.browse(cr, uid, product_id)
         value = {
@@ -1158,7 +1163,7 @@ class sale_order_line(osv.osv):
         except ZeroDivisionError:
             pass
         return {'value': value}
-    
+
     def copy_data(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -1166,8 +1171,8 @@ class sale_order_line(osv.osv):
         return super(sale_order_line, self).copy_data(cr, uid, id, default, context=context)
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty=0,
-            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
+                          uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                          lang=False, update_tax=True, date_order=False, packaging=False, fiscal_position=False, flag=False):
         if not  partner_id:
             raise osv.except_osv(_('No Customer Defined !'), _('You have to select a customer in the sales form !\nPlease set one customer before choosing a product.'))
         warning = {}
@@ -1180,8 +1185,8 @@ class sale_order_line(osv.osv):
 
         if not product:
             return {'value': {'th_weight': 0, 'product_packaging': False,
-                'product_uos_qty': qty}, 'domain': {'product_uom': [],
-                   'product_uos': []}}
+                              'product_uos_qty': qty}, 'domain': {'product_uom': [],
+                                                                  'product_uos': []}}
         if not date_order:
             date_order = time.strftime('%Y-%m-%d')
 
@@ -1201,14 +1206,14 @@ class sale_order_line(osv.osv):
                 qty_pack = pack.qty
                 type_ul = pack.ul
                 warn_msg = _("You selected a quantity of %d Units.\n"
-                            "But it's not compatible with the selected packaging.\n"
-                            "Here is a proposition of quantities according to the packaging:\n\n"
-                            "EAN: %s Quantity: %s Type of ul: %s") % \
-                                (qty, ean, qty_pack, type_ul.name)
+                             "But it's not compatible with the selected packaging.\n"
+                             "Here is a proposition of quantities according to the packaging:\n\n"
+                             "EAN: %s Quantity: %s Type of ul: %s") % \
+                    (qty, ean, qty_pack, type_ul.name)
                 warning = {
                     'title': _('Picking Information !'),
                     'message': warn_msg
-                    }
+                }
             result['product_uom_qty'] = qty
 
         uom2 = False
@@ -1246,9 +1251,9 @@ class sale_order_line(osv.osv):
                 uos_category_id = False
             result['th_weight'] = qty * product_obj.weight
             domain = {'product_uom':
-                        [('category_id', '=', product_obj.uom_id.category_id.id)],
-                        'product_uos':
-                        [('category_id', '=', uos_category_id)]}
+                      [('category_id', '=', product_obj.uom_id.category_id.id)],
+                      'product_uos':
+                      [('category_id', '=', uos_category_id)]}
 
         elif uos and not uom: # only happens if uom is False
             result['product_uom'] = product_obj.uom_id and product_obj.uom_id.id
@@ -1267,47 +1272,37 @@ class sale_order_line(osv.osv):
 
         if not uom2:
             uom2 = product_obj.uom_id
-        if (product_obj.type=='product') and (product_obj.virtual_available * uom2.factor < qty * product_obj.uom_id.factor) \
-          and (product_obj.procure_method=='make_to_stock'):
-            warning = {
-                'title': _('Not enough stock !'),
-                'message': _('You plan to sell %.2f %s but you only have %.2f %s available !\nThe real stock is %.2f %s. (without reservations)') %
-                    (qty, uom2 and uom2.name or product_obj.uom_id.name,
-                     max(0,product_obj.virtual_available), product_obj.uom_id.name,
-                     max(0,product_obj.qty_available), product_obj.uom_id.name)
-            }
-        # get unit price
         if not pricelist:
             warning = {
                 'title': 'No Pricelist !',
                 'message':
                     'You have to select a pricelist or a customer in the sales form !\n'
                     'Please set one before choosing a product.'
-                }
+            }
         else:
             price = self.pool.get('product.pricelist').price_get(cr, uid, [pricelist],
-                    product, qty or 1.0, partner_id, {
-                        'uom': uom,
-                        'date': date_order,
-                        })[pricelist]
+                                                                 product, qty or 1.0, partner_id, {
+                'uom': uom,
+                'date': date_order,
+            })[pricelist]
             if price is False:
                 warning = {
                     'title': 'No valid pricelist line found !',
                     'message':
                         "Couldn't find a pricelist line matching this product and quantity.\n"
                         "You have to change either the product, the quantity or the pricelist."
-                    }
+                }
             else:
                 result.update({'price_unit': price})
         return {'value': result, 'domain': domain, 'warning': warning}
 
     def product_uom_change(self, cursor, user, ids, pricelist, product, qty=0,
-            uom=False, qty_uos=0, uos=False, name='', partner_id=False,
-            lang=False, update_tax=True, date_order=False):
+                           uom=False, qty_uos=0, uos=False, name='', partner_id=False,
+                           lang=False, update_tax=True, date_order=False):
         res = self.product_id_change(cursor, user, ids, pricelist, product,
-                qty=qty, uom=uom, qty_uos=qty_uos, uos=uos, name=name,
-                partner_id=partner_id, lang=lang, update_tax=update_tax,
-                date_order=date_order)
+                                     qty=qty, uom=uom, qty_uos=qty_uos, uos=uos, name=name,
+                                     partner_id=partner_id, lang=lang, update_tax=update_tax,
+                                     date_order=date_order)
         if 'product_uom' in res['value']:
             del res['value']['product_uom']
         if not uom:

@@ -103,14 +103,14 @@ class purchase_order(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
@@ -198,7 +198,7 @@ class purchase_order(osv.osv):
                 # Update this distribution not to have a link with purchase but with new commitment
                 if new_distrib_id:
                     self.pool.get('analytic.distribution').write(cr, uid, [new_distrib_id],
-                        {'purchase_id': False, 'commitment_id': commit_id}, context=context)
+                                                                 {'purchase_id': False, 'commitment_id': commit_id}, context=context)
                     # Create funding pool lines if needed
                     self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id], context=context)
                     # Update commitment with new analytic distribution
@@ -297,17 +297,6 @@ class purchase_order_line(osv.osv):
     _name = 'purchase.order.line'
     _inherit = 'purchase.order.line'
 
-    def write(self, cr, uid, ids, vals, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-
-        if ids:
-            line = self.browse(cr, uid, ids, context=context)[0]
-            if 'price_unit' in vals and vals['price_unit'] == 0.00 and self.pool.get('purchase.order').browse(cr, uid, vals.get('order_id', line.order_id.id), context=context).from_yml_test:
-                vals['price_unit'] = 1.00
-
-        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
-
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -334,36 +323,29 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
-#         try:
-#             intermission_cc = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-#                                     'analytic_account_project_intermission')[1]
-#         except ValueError:
-#             intermission_cc = 0
         ana_dist_obj = self.pool.get('analytic.distribution')
-        # Browse all given lines
-        for line in self.browse(cr, uid, ids, context=context):
-#             is_intermission = False
-#             if line.order_id and line.order_id.partner_id and line.order_id.partner_id.partner_type == 'intermission':
-#                 is_intermission = True
-            if line.order_id and line.order_id.from_yml_test:
-                res[line.id] = 'valid'
-            elif line.order_id and not line.order_id.analytic_distribution_id and not line.analytic_distribution_id:
-                res[line.id] = 'none'
+        order_dict = {}
+        order_obj = self.pool.get('purchase.order')
+        for line in self.read(cr, uid, ids,
+                              ['order_id', 'analytic_distribution_id', 'account_4_distribution'], context=context):
+            order_id = line['order_id'] and line['order_id'][0] or False
+            order = None
+            if order_id:
+                if order_id in order_dict:
+                    order = order_dict[order_id]
+                else:
+                    order = order_obj.read(cr, uid, order_id, ['analytic_distribution_id'], context=context)
+                    order_dict[order_id] = order
+            if order and not order['analytic_distribution_id'] and not line['analytic_distribution_id']:
+                res[line['id']] = 'none'
             else:
-                po_distrib_id = line.order_id and line.order_id.analytic_distribution_id and line.order_id.analytic_distribution_id.id or False
-                distrib_id = line.analytic_distribution_id and line.analytic_distribution_id.id or False
-                account_id = line.account_4_distribution and line.account_4_distribution.id or False
+                po_distrib_id = order_id and order['analytic_distribution_id'] and order['analytic_distribution_id'][0] or False
+                distrib_id = line['analytic_distribution_id'] and line['analytic_distribution_id'][0] or False
+                account_id = line['account_4_distribution'] and line['account_4_distribution'][0] or False
                 if not account_id:
-                    res[line.id] = 'invalid'
+                    res[line['id']] = 'invalid'
                     continue
-                res[line.id] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
-
-                # UTP-953: For intersection, the cc_intermission can also be used for all partner types, so the block below is removed
-#                if res[line.id] == 'valid' and not is_intermission:
-#                    cr.execute('SELECT id FROM cost_center_distribution_line WHERE distribution_id=%s AND analytic_id=%s', (po_distrib_id or distrib_id, intermission_cc))
-#                    if cr.rowcount > 0:
-#                        res[line.id] = 'invalid'
-
+                res[line['id']] = ana_dist_obj._get_distribution_state(cr, uid, distrib_id, po_distrib_id, account_id)
         return res
 
     def _get_distribution_state_recap(self, cr, uid, ids, name, arg, context=None):
@@ -388,6 +370,8 @@ class purchase_order_line(osv.osv):
             ids = [ids]
         # Prepare some values
         res = {}
+        product_tmpl_dict = {}
+        categ_dict = {}
         for line in self.browse(cr, uid, ids):
             # Prepare some values
             res[line.id] = False
@@ -406,9 +390,17 @@ class purchase_order_line(osv.osv):
                 if not a:
                     a = line.product_id.categ_id.donation_expense_account and line.product_id.categ_id.donation_expense_account.id or False
             elif line.product_id:
-                a = line.product_id.product_tmpl_id.property_account_expense.id or False
+                if line.product_id.product_tmpl_id in product_tmpl_dict:
+                    a = product_tmpl_dict[line.product_id.product_tmpl_id]
+                else:
+                    a = line.product_id.product_tmpl_id.property_account_expense.id or False
+                    product_tmpl_dict[line.product_id.product_tmpl_id] = a
                 if not a:
-                    a = line.product_id.categ_id.property_account_expense_categ.id or False
+                    if line.product_id.categ_id in categ_dict:
+                        a = categ_dict[line.product_id.categ_id]
+                    else:
+                        a = line.product_id.categ_id.property_account_expense_categ.id or False
+                        categ_dict[line.product_id.categ_id] = a
 ##### Line delete because we decided that nomenclature is possible in Inkind donations
 #            elif is_inkind:
 #                a = False # Should be raise an error, but this block view display. So nothing happens.
@@ -422,10 +414,10 @@ class purchase_order_line(osv.osv):
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution'),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean', string='Header Distrib.?'),
         'commitment_line_ids': fields.many2many('account.commitment.line', 'purchase_line_commitment_rel', 'purchase_id', 'commitment_id',
-            string="Commitment Voucher Lines", readonly=True),
+                                                string="Commitment Voucher Lines", readonly=True),
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30, string="Distribution"),
         'account_4_distribution': fields.function(_get_distribution_account, method=True, type='many2one', relation="account.account", string="Account for analytical distribution", readonly=True),
     }
@@ -443,12 +435,6 @@ class purchase_order_line(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-
-        if not context.get('partner_type'):
-            raise osv.except_osv(
-                _('Error'),
-                _('You need to select a partner before add the analytic distribution'),
-            )
 
         # Prepare some values
         purchase_line = self.browse(cr, uid, ids[0], context=context)
@@ -468,7 +454,7 @@ class purchase_order_line(osv.osv):
             raise osv.except_osv(_('Error'), _('No donation account found for this line: %s. (product: %s)') % (purchase_line.name, purchase_line.product_id and purchase_line.product_id.name or ''))
         elif not account_id:
             raise osv.except_osv(_('Error !'),
-                    _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
+                                 _('There is no expense account defined for this product: "%s" (id:%d)') % (purchase_line.product_id.name, purchase_line.product_id.id))
         # Prepare values for wizard
         vals = {
             'total_amount': amount,
@@ -492,14 +478,14 @@ class purchase_order_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def copy_data(self, cr, uid, l_id, default=None, context=None):
@@ -511,6 +497,7 @@ class purchase_order_line(osv.osv):
             context = {}
         if not default:
             default = {}
+
         # Update default
         default.update({'commitment_line_ids': [(6, 0, [])],})
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):

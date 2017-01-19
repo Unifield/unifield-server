@@ -99,7 +99,7 @@ class account_account(osv.osv):
         }
         #get all the necessary accounts
         children_and_consolidated = self._get_children_and_consol(cr, uid, ids,
-                context=context)
+                                                                  context=context)
         #compute for each account the balance/debit/credit from the move lines
         accounts = {}
         sums = {}
@@ -154,7 +154,7 @@ class account_account(osv.osv):
                        ', '.join(map(mapping.__getitem__, field_names)) +
                        " FROM account_move_line l, account_move m" +\
                        " WHERE l.account_id IN %s " \
-                            + prefilters + filters +
+                       + prefilters + filters +
                        " GROUP BY l.account_id")
             params = [tuple(children_and_consolidated)]
             if query_params:
@@ -232,6 +232,36 @@ class account_account(osv.osv):
                 arg.append(x)
             else:
                 raise osv.except_osv(_('Error'), _('Operation not implemented!'))
+
+        context_ivo = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'out'
+        context_ivi = context.get('type', False) == 'in_invoice' and context.get('journal_type', False) == 'intermission' and \
+            context.get('is_intermission', False) and context.get('intermission_type', False) == 'in'
+        context_stv = context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' and \
+            not context.get('is_debit_note', False)
+
+        if args == [('restricted_area', '=', 'invoice_lines')]:
+            # LINES of Intermission Vouchers OUT or Stock Transfer Vouchers:
+            # restrict to Expense/Income/Receivable accounts
+            if context_ivo or context_stv:
+                arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
+            # LINES of Intermission Vouchers IN:
+            # restrict to Expense accounts only
+            if context_ivi:
+                arg.append(('user_type_code', '=', 'expense'))
+        elif args == [('restricted_area', '=', 'intermission_header')]:
+            if context_ivo:
+                # HEADER of Intermission Voucher OUT:
+                # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Receivable/Receivables
+                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                       '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable')]
+            elif context_ivi:
+                # HEADER of Intermission Voucher IN:
+                # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
+                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                       '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
+                       '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
         return arg
 
     def _get_fake_cash_domain(self, cr, uid, ids, field_name, arg, context=None):
@@ -292,13 +322,10 @@ class account_account(osv.osv):
         # Prepare some values
         arg = []
         account = False
-        fieldname = False
         if field_names == 'is_intermission_counterpart':
             account = self.pool.get('res.users').browse(cr, uid, uid).company_id.intermission_default_counterpart
-            fieldname = 'intermission_default_counterpart'
         elif field_names == 'is_intersection_counterpart':
             account = self.pool.get('res.users').browse(cr, uid, uid).company_id.import_invoice_default_account
-            fieldname = 'import_invoice_default_account'
         specific_account_id = account and account.id or False
 
         for x in args:
@@ -320,8 +347,8 @@ class account_account(osv.osv):
         'inactivation_date': fields.date('Inactive from'),
         'note': fields.char('Note', size=160),
         'type_for_register': fields.selection([('none', 'None'), ('transfer', 'Internal Transfer'), ('transfer_same','Internal Transfer (same currency)'),
-            ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation'), ('disregard_rec', 'Reconciliation - Disregard 3rd party')], string="Type for specific treatment", required=True,
-            help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
+                                               ('advance', 'Operational Advance'), ('payroll', 'Third party required - Payroll'), ('down_payment', 'Down payment'), ('donation', 'Donation'), ('disregard_rec', 'Reconciliation - Disregard 3rd party')], string="Type for specific treatment", required=True,
+                                              help="""This permit to give a type to this account that impact registers. In fact this will link an account with a type of element
             that could be attached. For an example make the account to be a transfer type will display only registers to the user in the Cash Register
             when he add a new register line.
             You can also make an account to accept reconciliation even if the 3RD party is not the same.
@@ -336,10 +363,10 @@ class account_account(osv.osv):
         'is_intermission_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intermission counterpart account?'),
         'is_intersection_counterpart': fields.function(_get_is_specific_counterpart, fnct_search=_search_is_specific_counterpart, method=True, type='boolean', string='Is the intersection counterpart account?'),
         'display_in_reports': fields.boolean("Display in P&L and B/S reports",
-            help="Uncheck this attribute if you want an account not to appear"
-            " in the 'Profit And Loss' and 'Balance Sheet' reports. This is "
-            "feasible only on level 1 accounts. When an account is "
-            "check/unchecked the behaviour will apply for all his children."),
+                                             help="Uncheck this attribute if you want an account not to appear"
+                                             " in the 'Profit And Loss' and 'Balance Sheet' reports. This is "
+                                             "feasible only on level 1 accounts. When an account is "
+                                             "check/unchecked the behaviour will apply for all his children."),
         # US-672/1
         'has_partner_type_internal': fields.boolean('Internal'),
         'has_partner_type_section': fields.boolean('Inter-section'),
@@ -349,6 +376,7 @@ class account_account(osv.osv):
         'has_partner_type_local': fields.boolean('Employee Local'),  # NAT employee
         'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
         'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
+        'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
     }
 
     _defaults = {
@@ -366,6 +394,7 @@ class account_account(osv.osv):
         'has_partner_type_local': True,
         'has_partner_type_ex': True,
         'has_partner_type_book': True,
+        'has_partner_type_empty': True,
     }
 
     # UTP-493: Add a dash between code and account name
@@ -441,12 +470,31 @@ class account_account(osv.osv):
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
+    def _check_allowed_partner_type(self, vals):
+        '''
+        Check that at least one partner type has been allowed. If not, raise a warning.
+        '''
+        if 'has_partner_type_internal' in vals and not vals['has_partner_type_internal'] and \
+                'has_partner_type_external' in vals and not vals['has_partner_type_external'] and \
+                'has_partner_type_esc' in vals and not vals['has_partner_type_esc'] and \
+                'has_partner_type_local' in vals and not vals['has_partner_type_local'] and \
+                'has_partner_type_ex' in vals and not vals['has_partner_type_ex'] and \
+                'has_partner_type_empty' in vals and not vals['has_partner_type_empty'] and \
+                'has_partner_type_book' in vals and not vals['has_partner_type_book'] and \
+                'has_partner_type_intermission' in vals and not vals['has_partner_type_intermission'] and \
+                'has_partner_type_section' in vals and not vals['has_partner_type_section']:
+            raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
+
     def create(self, cr, uid, vals, context=None):
         self._check_date(vals, context=context)
+        self._check_allowed_partner_type(vals)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         self._check_date(vals, context=context)
+        self._check_allowed_partner_type(vals)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -462,13 +510,65 @@ class account_account(osv.osv):
             args_append(('inactivation_date', '>', datetime.date.today().strftime('%Y-%m-%d')))
             args_append(('inactivation_date', '=', False))
         return super(account_account, self).search(cr, uid, args, offset,
-                limit, order, context=context, count=count)
+                                                   limit, order, context=context, count=count)
 
-    def is_allowed_for_thirdparty(self, cr, uid, ids,
-        partner_type=False, partner_txt=False,
-        employee_id=False, transfer_journal_id=False, partner_id=False,
-        from_vals=False, raise_it=False,
-        context=None):
+    def _get_allowed_partner_field(self, cr, uid, partner_type=False, partner_txt=False, employee_id=False,
+                                   transfer_journal_id=False, partner_id=False, from_vals=False, context=None):
+        '''
+        Get the "Allowed Partner type" field to check (for the model account.account)
+        :return: a String containing the field to check (for instance "has_partner_type_intermission"), or False
+        '''
+        if 'allowed_partner_field' in context:
+            allowed_partner_field = context['allowed_partner_field']
+        else:
+            allowed_partner_field = False
+            should_have_field_suffix = False
+            if not partner_type and not partner_txt and not employee_id and not transfer_journal_id and not partner_id:
+                # empty partner
+                should_have_field_suffix = 'empty'
+            else:
+                # existing partner
+                emp_obj = self.pool.get('hr.employee')
+                partner_obj = self.pool.get('res.partner')
+                if partner_type:
+                    pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
+                        else (partner_type._name, partner_type.id, )
+                    if from_vals:
+                        pt_id = int(pt_id)
+                    employee_id = transfer_journal_id = partner_id = False
+                    if pt_model == 'hr.employee':
+                        employee_id = pt_id
+                    elif pt_model == 'account.journal':
+                        transfer_journal_id = pt_id
+                    elif pt_model == 'res.partner':
+                        partner_id = pt_id
+                elif partner_txt:
+                    employee_ids = emp_obj.search(cr, uid, [('name', '=', partner_txt)],
+                                                  order='NO_ORDER', limit=1, context=context)
+                    if employee_ids:
+                        employee_id = employee_ids[0]
+                    else:
+                        partner_ids = partner_obj.search(cr, uid, [('name', '=', partner_txt)],
+                                                         order='NO_ORDER', limit=1, context=context)
+                        if partner_ids:
+                            partner_id = partner_ids[0]
+                if employee_id:
+                    tp_rec = emp_obj.browse(cr, uid, employee_id, fields_to_fetch=['employee_type'], context=context)
+                    # note: allowed for employees with no type
+                    should_have_field_suffix = tp_rec.employee_type or False
+                elif transfer_journal_id:
+                    should_have_field_suffix = 'book'
+                elif partner_id:
+                    tp_rec = partner_obj.browse(cr, uid, partner_id, fields_to_fetch=['partner_type'], context=context)
+                    should_have_field_suffix = tp_rec.partner_type or False
+            if should_have_field_suffix:
+                allowed_partner_field = 'has_partner_type_%s' % (should_have_field_suffix,)
+            # store the returned value in context in order not to do the same check several times
+            context.update({'allowed_partner_field': allowed_partner_field})
+        return allowed_partner_field
+
+    def is_allowed_for_thirdparty(self, cr, uid, ids, partner_type=False, partner_txt=False, employee_id=False,
+                                  transfer_journal_id=False, partner_id=False, from_vals=False, raise_it=False, context=None):
         """
         US-672/2 is allowed regarding to thirdparty
         partner_type then partner_txt fields prevails on
@@ -483,67 +583,36 @@ class account_account(osv.osv):
         """
         if isinstance(ids, (int, long)):
             ids = [ids]
-
+        if context is None:
+            context = {}
         res = {}
-        for id in ids:
-            res[id] = True  # allowed by default
-        if not partner_type and not partner_txt \
-            and not employee_id and not transfer_journal_id and not partner_id:
-            return res
-
-        emp_obj = self.pool.get('hr.employee')
-        partner_obj = self.pool.get('res.partner')
-
-        if partner_type:
-            pt_model, pt_id = tuple(partner_type.split(',')) if from_vals \
-                else (partner_type._name, partner_type.id, )
-            if from_vals:
-                pt_id = int(pt_id)
-            employee_id = transfer_journal_id = partner_id = False
-            if pt_model == 'hr.employee':
-                employee_id = pt_id
-            elif pt_model == 'account.journal':
-                transfer_journal_id = pt_id
-            elif pt_model == 'res.partner':
-                partner_id = pt_id
-        elif partner_txt:
-            employee_ids = emp_obj.search(cr, uid,
-                [('name', '=', partner_txt)], context=context)
-            if employee_ids:
-                employee_id = employee_ids[0]
+        fields_to_fetch = ['type_for_register', 'has_partner_type_internal', 'has_partner_type_external', 'has_partner_type_esc',
+                           'has_partner_type_local', 'has_partner_type_ex', 'has_partner_type_empty', 'has_partner_type_book',
+                           'has_partner_type_intermission', 'has_partner_type_section']
+        # browse the accounts and check if the third party is compatible
+        for r in self.browse(cr, uid, ids, fields_to_fetch=fields_to_fetch, context=context):
+            # US-1307 If the account has a "Type for specific Treatment": bypass the check on "Allowed Partner type"
+            type_for_specific_treatment = hasattr(r, 'type_for_register') and getattr(r, 'type_for_register') != 'none' or False
+            if type_for_specific_treatment:
+                res[r.id] = True
             else:
-                partner_ids = partner_obj.search(cr, uid,
-                    [('name', '=', partner_txt)], context=context)
-                if partner_ids:
-                    partner_id = partner_ids[0]
-
-        should_have_field_suffix = False
-        if employee_id:
-            tp_rec = emp_obj.browse(cr, uid, employee_id, context=context)
-            # note: allowed for employees with no type
-            should_have_field_suffix = tp_rec.employee_type or False
-        elif transfer_journal_id:
-            should_have_field_suffix = 'book'
-        elif partner_id:
-            tp_rec = partner_obj.browse(cr, uid, partner_id, context=context)
-            should_have_field_suffix = tp_rec.partner_type or False
-        if not should_have_field_suffix:
-            return res  # allowed with no specific field suffix
-
-        field = 'has_partner_type_%s' % (should_have_field_suffix, )
-        for r in self.browse(cr, uid, ids, context=context):
-            res[r.id] = hasattr(r, field) and getattr(r, field) or False
-
+                allowed_partner_field = self._get_allowed_partner_field(cr, uid, partner_type, partner_txt, employee_id,
+                                                                        transfer_journal_id, partner_id, from_vals, context)
+                if not allowed_partner_field:
+                    res[r.id] = True  # allowed with no specific field
+                else:
+                    res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
+        # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
+        if 'allowed_partner_field' in context:
+            del context['allowed_partner_field']
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
-                errors = [ _('following accounts are not compatible with' \
-                    ' partner:') ]
-                for r in self.pool.get('account.account').browse(cr, uid,
-                    not_compatible_ids, context=context):
+                errors = [_('following accounts are not compatible with partner:')]
+                for r in self.pool.get('account.account').browse(cr, uid, not_compatible_ids,
+                                                                 fields_to_fetch=['code', 'name'], context=context):
                     errors.append(_('%s - %s') % (r.code, r.name))
                 raise osv.except_osv(_('Error'), "\n- ".join(errors))
-
         return res
 
 account_account()
@@ -594,13 +663,13 @@ class account_journal(osv.osv):
         if not args:
             return res
         if len(args) != 1 or len(args[0]) != 3 or \
-            args[0][0] != 'instance_filter' or args[0][1] != '=':
+                args[0][0] != 'instance_filter' or args[0][1] != '=':
             raise osv.except_osv(_('Error'), 'invalid arguments')
 
         is_manual_view = context and context.get('from_manual_entry', False)
         if is_manual_view:
             self_instance = self.pool.get('res.users').browse(cr, uid, [uid],
-                context=context)[0].company_id.instance_id
+                                                              context=context)[0].company_id.instance_id
             if self_instance:
                 forbid_levels = []
                 if self_instance.level:
@@ -616,7 +685,7 @@ class account_journal(osv.osv):
                 if forbid_levels:
                     msf_instance_obj = self.pool.get('msf.instance')
                     forbid_instance_ids = msf_instance_obj.search(cr, uid, 
-                        [('level', 'in', forbid_levels)], context=context)
+                                                                  [('level', 'in', forbid_levels)], context=context)
                     if forbid_instance_ids:
                         res = [('instance_id', 'not in', forbid_instance_ids)]
         return res
@@ -643,18 +712,24 @@ class account_move(osv.osv):
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
-            string="Statement lines", help="This field give all statement lines linked to this move."),
+                                               string="Statement lines", help="This field give all statement lines linked to this move."),
         'ref': fields.char('Reference', size=64, readonly=True, states={'draft':[('readonly',False)]}),
         'status': fields.selection([('sys', 'system'), ('manu', 'manual')], string="Status", required=True),
-        'period_id': fields.many2one('account.period', 'Period', required=True, states={'posted':[('readonly',True)]}, domain="[('state', '=', 'draft')]"),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, states={'posted':[('readonly',True)]}, domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system']), ('instance_filter', '=', True)]"),
+        'period_id': fields.many2one('account.period', 'Period', required=True,
+                                     states={'posted':[('readonly',True)]},
+                                     domain="[('state', '=', 'draft')]", hide_default_menu=True),
+        'journal_id': fields.many2one('account.journal', 'Journal',
+                                      required=True, states={'posted':[('readonly',True)]},
+                                      domain="[('type', 'not in', ['accrual', 'hq', 'inkind', 'cur_adj', 'system']), ('instance_filter', '=', True)]",
+                                      hide_default_menu=True),
         'document_date': fields.date('Document Date', size=255, required=True, help="Used for manual journal entries"),
         'journal_type': fields.related('journal_id', 'type', type='selection', selection=_journal_type_get, string="Journal Type", \
-            help="This indicates which Journal Type is attached to this Journal Entry"),
+                                       help="This indicates which Journal Type is attached to this Journal Entry"),
         'sequence_id': fields.many2one('ir.sequence', string='Lines Sequence', ondelete='cascade',
-            help="This field contains the information related to the numbering of the lines of this journal entry."),
+                                       help="This field contains the information related to the numbering of the lines of this journal entry."),
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
+        'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
     }
 
     _defaults = {
@@ -664,7 +739,7 @@ class account_move(osv.osv):
         'period_id': lambda *a: '',
         'manual_name': lambda *a: '',
         'imported': lambda *a: False,
-   }
+    }
 
     def _check_document_date(self, cr, uid, ids, context=None):
         """
@@ -677,7 +752,7 @@ class account_move(osv.osv):
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 self.pool.get('finance.tools').check_document_date(cr, uid,
-                    m.document_date, m.date, context=context)
+                                                                   m.document_date, m.date, context=context)
         return True
 
     def _check_date_in_period(self, cr, uid, ids, context=None):
@@ -797,8 +872,61 @@ class account_move(osv.osv):
         """
         Check that we can write on this if we come from web menu or synchronisation.
         """
-        if not context:
+        if not ids:
+            return True
+        def check_update_sequence(rec, new_journal_id, new_period_id):
+            """
+            returns new sequence move vals (sequence_id, name) or None
+            :rtype : dict/None
+            """
+            if m.state != 'draft':
+                return None
+
+            period_obj = self.pool.get('account.period')
+            period_rec = False
+            do_update = False
+
+            # journal or FY has changed ?
+            if new_journal_id and m.journal_id.id != new_journal_id:
+                do_update = True
+            if new_period_id and m.period_id.id != new_period_id:
+                period_rec = period_obj.browse(cr, uid, new_period_id)
+                do_update = do_update or period_rec.fiscalyear_id.id \
+                    != m.period_id.fiscalyear_id.id  # FY changed
+            if not do_update:
+                return None
+
+            # get instance and journal/period
+            instance_rec = self.pool.get('res.users').browse(cr, uid, uid,
+                                                             context).company_id.instance_id
+            if not instance_rec.move_prefix:
+                raise osv.except_osv(_('Warning'),
+                                     _('No move prefix found for this instance!' \
+                                       ' Please configure it on Company view.'))
+            journal_rec = self.pool.get('account.journal').browse(cr, uid,
+                                                                  new_journal_id or m.journal_id.id)
+            period_rec = period_rec or m.period_id
+            if period_rec.state == 'created':
+                raise osv.except_osv(_('Error !'),
+                                     _("Period '%s' is not open!' \
+                     ' No Journal Entry is updated") % (period_rec.name, ))
+
+            # get new sequence number and return related vals
+            sequence_number = self.pool.get('ir.sequence').get_id(
+                cr, uid, journal_rec.sequence_id.id,
+                context={ 'fiscalyear_id': period_rec.fiscalyear_id.id })
+            if instance_rec and journal_rec and sequence_number:
+                return {
+                    'sequence_id': journal_rec.sequence_id.id,
+                    'name': "%s-%s-%s" % (instance_rec.move_prefix,
+                                          journal_rec.code, sequence_number, ),
+                }
+            return None
+
+        if context is None:
             context = {}
+        new_sequence_vals_by_move_id = {}
+
         if context.get('from_web_menu', False) or context.get('sync_update_execution', False):
             # by default, from synchro, we just need to update period_id and journal_id
             fields = ['journal_id', 'period_id']
@@ -811,6 +939,20 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))
                     if m.journal_id.type == 'system':
                         raise osv.except_osv(_('Warning'), _('You can not edit a Journal Entry on a system journal'))
+
+                if context.get('from_web_menu', False) \
+                        and not context.get('sync_update_execution', False):
+                    # US-932: journal or FY changed ?
+                    # typical UC: manual JE from UI: journal/period changed
+                    # after a duplicate.
+                    # check sequence and update it if needed. (we do not update
+                    # it during on_change() to prevent sequence jumps)
+                    new_seq = check_update_sequence(m,
+                                                    vals.get('journal_id', False),
+                                                    vals.get('period_id', False))
+                    if new_seq:
+                        new_sequence_vals_by_move_id[m.id] = new_seq
+
                 # Update context in order journal item could retrieve this @creation
                 # Also update some other fields
                 ml_vals = {}
@@ -818,15 +960,24 @@ class account_move(osv.osv):
                     if el in vals:
                         context[el] = vals.get(el)
                         ml_vals.update({el: vals.get(el)})
+
                 # UFTP-262: For manual_name (description on account.move), update "name" on account.move.line
                 if 'manual_name' in vals:
                     ml_vals.update({'name': vals.get('manual_name', '')})
+
                 # Update document date AND date at the same time
                 if ml_vals:
                     ml_id_list  = [ml.id for ml in m.line_id]
                     self.pool.get('account.move.line').write(cr, uid,
-                            ml_id_list, ml_vals, context, False, False)
-        res = super(account_move, self).write(cr, uid, ids, vals, context=context)
+                                                             ml_id_list, ml_vals, context, False, False)
+
+        res = super(account_move, self).write(cr, uid, ids, vals,
+                                              context=context)
+        if new_sequence_vals_by_move_id:
+            for id in new_sequence_vals_by_move_id:
+                osv.osv.write(self, cr, uid, id,
+                              new_sequence_vals_by_move_id[id], context=context)  # US-932
+
         self._check_document_date(cr, uid, ids, context)
         self._check_date_in_period(cr, uid, ids, context)
         return res
@@ -847,16 +998,19 @@ class account_move(osv.osv):
         res = super(account_move, self).post(cr, uid, ids, context)
         return res
 
-    def button_validate(self, cr, uid, ids, context=None):
+    def button_validate(self, cr, button_uid, ids, context=None):
         """
         Check that user can approve the move by searching 'from_web_menu' in context. If present and set to True and move is manually created, so User have right to do this.
         """
         if not context:
             context = {}
+        uid = hasattr(button_uid, 'realUid') and button_uid.realUid or button_uid
         for i in ids:
             ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', '=', i)])
             if not ml_ids:
                 raise osv.except_osv(_('Warning'), _('No line found. Please add some lines before Journal Entry validation!'))
+            elif len(ml_ids) < 2:
+                raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
         if context.get('from_web_menu', False):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'sys':
@@ -888,7 +1042,7 @@ class account_move(osv.osv):
             'state': 'draft',
             'document_date': je.document_date,
             'date': je.date,
-            'name': ''
+            'name': '',
         }
         res = super(account_move, self).copy(cr, uid, a_id, vals, context=context)
         for line in je.line_id:
@@ -902,7 +1056,7 @@ class account_move(osv.osv):
                 'reconcile_txt': False,
             }
             self.pool.get('account.move.line').copy(cr, uid, line.id,
-                line_default, context)
+                                                    line_default, context)
         self.validate(cr, uid, [res], context=context)
         return res
 
@@ -939,18 +1093,29 @@ class account_move(osv.osv):
             for m in self.browse(cr, uid, ids):
                 if m.status == 'manu' and m.state == 'draft':
                     to_delete.append(m.id)
+        user_id = hasattr(uid, 'realUid') and uid.realUid or uid
         # First delete move lines to avoid "check=True" problem on account_move_line item
         if to_delete:
-            ml_ids = self.pool.get('account.move.line').search(cr, uid, [('move_id', 'in', to_delete)])
+            ml_ids = self.pool.get('account.move.line').search(cr, user_id, [('move_id', 'in', to_delete)])
             if ml_ids:
                 if isinstance(ml_ids, (int, long)):
                     ml_ids = [ml_ids]
-                self.pool.get('account.move.line').unlink(cr, uid, ml_ids, context, check=False)
-        self.unlink(cr, uid, to_delete, context, check=False)
+                self.pool.get('account.move.line').unlink(cr, user_id, ml_ids, context, check=False)
+        self.unlink(cr, user_id, to_delete, context, check=False)
         return True
 
     def get_valid_but_unbalanced(self, cr, uid, context=None):
-        cr.execute("select move_id, sum(debit-credit) from account_move_line where state='valid' group by move_id having abs(sum(debit-credit)) > 0.00001")
+        cr.execute("""select l.move_id, sum(l.debit-l.credit) from account_move_line l,
+            account_move m,
+            account_journal j
+            where
+                l.move_id = m.id and
+                l.state='valid' and
+                m.journal_id = j.id and
+                j.type != 'system'
+            group by l.move_id
+            having abs(sum(l.debit-l.credit)) > 0.00001
+        """)
         return [x[0] for x in cr.fetchall()]
 
 
@@ -970,7 +1135,7 @@ class account_move_reconcile(osv.osv):
     _columns = {
         'name': fields.char('Entry Sequence', size=64, required=True),
         'statement_line_ids': fields.many2many('account.bank.statement.line', 'account_bank_statement_line_move_rel', 'statement_id', 'move_id',
-            string="Statement lines", help="This field give all statement lines linked to this move."),
+                                               string="Statement lines", help="This field give all statement lines linked to this move."),
     }
     _defaults = {
         'name': lambda self,cr,uid,ctx={}: self.get_name(cr, uid, ctx),

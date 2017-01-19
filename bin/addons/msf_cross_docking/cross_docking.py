@@ -213,6 +213,8 @@ class purchase_order(osv.osv):
         return {'value': value, 'warning': message}
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         stock_loc_obj = self.pool.get('stock.location')
@@ -357,6 +359,8 @@ class stock_picking(osv.osv):
         """
         Here we check if all stock move are in stock or in cross docking
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
         if isinstance(ids, (int, long)):
@@ -403,7 +407,9 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 self.write(cr, uid, ids, {'cross_docking_ok': True}, context=context)
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to CROSS DOCKING'))
-            self.infolog(cr, uid, "The source location of the stock moves of the picking id:%s has been changed to cross-docking location" % (pick.id))
+            self.infolog(cr, uid, "The source location of the stock moves of the picking id:%s (%s) has been changed to cross-docking location" % (
+                pick.id, pick.name,
+            ))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
         self.action_assign(cr, uid, ids, context)
@@ -447,7 +453,9 @@ locations when the Allocated stocks configuration is set to \'Unallocated\'.""")
                 self.write(cr, uid, ids, {'cross_docking_ok': False}, context=context)
             else:
                 raise osv.except_osv(_('Warning !'), _('Please, enter some stock moves before changing the source location to STOCK'))
-            self.infolog(cr, uid, "The source location of the stock moves of the picking id:%s has been changed to stock location" % (pick.id))
+            self.infolog(cr, uid, "The source location of the stock moves of the picking id:%s (%s) has been changed to stock location" % (
+                pick.id, pick.name,
+            ))
         # we check availability : cancel then check
         self.cancel_assign(cr, uid, ids)
         self.action_assign(cr, uid, ids, context)

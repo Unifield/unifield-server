@@ -31,7 +31,9 @@ from tools.translate import _
 
 from report import report_sxw
 
+
 ZERO_CELL_CONTENT = "0.0"
+
 
 class hq_report_oca(report_sxw.report_sxw):
 
@@ -144,6 +146,7 @@ class hq_report_oca(report_sxw.report_sxw):
         account_lines = []
         account_lines_debit = {}
         account_lines_functional_debit = {}
+        rate_req = "SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1"
         # US-118: func debit with no FXA currency adjustement entries
         account_lines_functional_debit_no_ccy_adj = {}
         journal_exclude_subtotal_ids = pool.get('account.journal').search(cr,
@@ -176,13 +179,22 @@ class hq_report_oca(report_sxw.report_sxw):
         else:
             raise osv.except_osv(_('Error'), _('Wrong value for selection: %s.') % (selection,))
 
+        last_processed_journal = False
         move_line_ids = pool.get('account.move.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
                                                                        ('journal_id.type', 'not in', ['hq', 'migration']),
                                                                        ('exported', 'in', to_export)], context=context)
+        # US-274/2: remove 'Inkind', 'OD-Extra Accounting' entries from both
+        # in Upbalances and Upexpenses files
+        exclude_jn_type_for_balance_and_expense_report = (
+            'inkind',
+            'extra',
+        )
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
+            if journal:
+                last_processed_journal = journal
             account = move_line.account_id
             currency = move_line.currency_id
             func_currency = move_line.functional_currency_id
@@ -202,21 +214,17 @@ class hq_report_oca(report_sxw.report_sxw):
                     and move_line.journal_id.type == 'accrual' \
                     and move_line.document_date or move_line.date
 
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(move_line.functional_currency_id.id, move_line_date))
+                if move_line.journal_id.type == 'correction' and move_line.source_date:
+                    # US-1525 For the Correction entries display the rate of the entry period corrected
+                    move_line_date = move_line.source_date
+                cr.execute(rate_req, (move_line.functional_currency_id.id, move_line_date))
                 if cr.rowcount:
                     func_rate = cr.fetchall()[0][0]
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, move_line_date))
+                cr.execute(rate_req, (currency.id, move_line_date))
                 if cr.rowcount:
                     curr_rate = cr.fetchall()[0][0]
                 if func_rate != 0.00:
                     rate = round(1 / (curr_rate / func_rate), 8)
-
-            # US-274/2: remove 'Inkind', 'OD-Extra Accounting' entries from both
-            # in Upbalances and Upexpenses files
-            exclude_jn_type_for_balance_and_expense_report = (
-                'inkind',
-                'extra',
-            )
 
             # For first report: as it
             formatted_data = [move_line.instance_id and move_line.instance_id.code or "",
@@ -268,7 +276,7 @@ class hq_report_oca(report_sxw.report_sxw):
                     if is_cur_adj_entry or is_rev_entry:
                         output_debit = move_line.debit
                         output_credit = move_line.credit
-                        output_rate = 1
+                        output_rate = 1.
                         output_curr = func_currency and func_currency.name or "0"
                     else:
                         output_debit = move_line.debit_currency
@@ -314,13 +322,16 @@ class hq_report_oca(report_sxw.report_sxw):
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         # US-817: search period from JI (VI from HQ so AJI always with its JI)
         # (AJI period_id is a field function always deduced from date since UTP-943)
-        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('move_id.period_id', '=', data['form']['period_id']),
+        analytic_line_ids = pool.get('account.analytic.line').search(cr, uid, [('period_id', '=', data['form']['period_id']),
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
                                                                                ('account_id.category', 'not in', ['FREE1', 'FREE2']),
                                                                                ('exported', 'in', to_export)], context=context)
+
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
-            journal = analytic_line.move_id and analytic_line.move_id.journal_id
+            journal = analytic_line.move_id and analytic_line.move_id.journal_id or False
+            if journal:
+                last_processed_journal = journal
             account = analytic_line.general_account_id
             currency = analytic_line.currency_id
             func_currency = analytic_line.move_id.functional_currency_id
@@ -340,7 +351,10 @@ class hq_report_oca(report_sxw.report_sxw):
                 ldate = analytic_line.document_date or analytic_line.date
 
             if func_currency:
-                cr.execute("SELECT rate FROM res_currency_rate WHERE currency_id = %s AND name <= %s ORDER BY name desc LIMIT 1" ,(currency.id, ldate))
+                if analytic_line.journal_id.type == 'correction' and analytic_line.source_date:
+                    # US-1525 For the Correction entries display the rate of the entry period corrected
+                    ldate = analytic_line.source_date
+                cr.execute(rate_req, (currency.id, ldate))
                 if cr.rowcount:
                     rate = round(1 / cr.fetchall()[0][0], 8)
 
@@ -348,9 +362,9 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type == 'cur_adj' or False
             is_analytic_rev_entry = analytic_line.journal_id \
                 and analytic_line.journal_id.type == 'revaluation' or False
-            # US-817: display period from JI (VI from HQ so AJI always with its JI)
-            # (AJI period_id is a field function always deduced from date since UTP-943)
-            aji_period_id = analytic_line.move_id and analytic_line.move_id.period_id or analytic_line.period_id
+
+            # US-1375: cancel US-817
+            aji_period_id = analytic_line and analytic_line.period_id or False
 
             # For first report: as is
             formatted_data = [analytic_line.instance_id and analytic_line.instance_id.code or "",
@@ -387,17 +401,18 @@ class hq_report_oca(report_sxw.report_sxw):
                 and analytic_line.journal_id.type not in (
                     exclude_jn_type_for_balance_and_expense_report):  # US-274/2
                 # Add to second report (expenses only)
-                custom_rate = False
-                if period.number in (12, 13, 14, 15, 1, ) \
-                    and 'Revaluation - FY' in analytic_line.name:
-                        # US-953 Yearly revaluation entries are build with
-                        # an external ccy table: compute back rate instead of
-                        # using exported period rate
-                        if currency == func_currency:
-                            custom_rate = 1.
-                        elif analytic_line.amount_currency != 0.:
-                            custom_rate = round(1 / (abs(analytic_line.amount_currency) \
-                                / abs(analytic_line.amount)), 8)
+                up_exp_ccy = currency
+                up_exp_rate = rate
+                up_exp_amount = analytic_line.amount_currency
+
+                if is_analytic_rev_entry:
+                    # US-1008 for up_expenses (file 2), match REV AJIs to JIs:
+                    # display AJIs booked on REV journal in func ccy and rate 1
+                    # as already done here for JIs of up_balances (file 3)
+                    up_exp_ccy = func_currency
+                    up_exp_rate = 1.
+                    up_exp_amount = analytic_line.amount
+
                 other_formatted_data = [integration_ref ,
                                         analytic_line.document_date and datetime.datetime.strptime(analytic_line.document_date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         "0",
@@ -405,10 +420,10 @@ class hq_report_oca(report_sxw.report_sxw):
                                         analytic_line.cost_center_id and analytic_line.cost_center_id.code or "0",
                                         "1",
                                         account and account.code + " " + account.name or "0",
-                                        currency and currency.name or "0",
-                                        analytic_line.amount_currency and round(-analytic_line.amount_currency, 2) or ZERO_CELL_CONTENT,
+                                        up_exp_ccy and up_exp_ccy.name or "0",
+                                        up_exp_amount and round(-up_exp_amount, 2) or ZERO_CELL_CONTENT,
                                         "0",
-                                        custom_rate or rate,
+                                        up_exp_rate,
                                         analytic_line.date and datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "0",
                                         analytic_line.entry_sequence or "0",
                                         "0",
@@ -429,7 +444,7 @@ class hq_report_oca(report_sxw.report_sxw):
             third_report.append(line)
             third_report.append(self.create_counterpart(cr, uid, line))
 
-        if journal and journal.type not in (
+        if last_processed_journal and last_processed_journal.type not in (
                 exclude_jn_type_for_balance_and_expense_report):  # US-274/2
             for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
                 # create the sequence number for those lines

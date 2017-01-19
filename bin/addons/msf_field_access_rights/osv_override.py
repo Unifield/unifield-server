@@ -27,7 +27,7 @@ import logging
 import copy
 from datetime import datetime
 import netsvc
-
+from tools import misc
 
 def _get_instance_level(self, cr, uid):
     """
@@ -58,11 +58,11 @@ def _record_matches_domain(self, cr, record_id, domain):
     # convert domain from string to list
     if isinstance(domain, (str, unicode)):
         domain = eval(domain)
-        
+
     # if domain is True or False or empty list, no domain specified, therefore record matches all domains
     if isinstance(domain, bool) or not domain:
         return True
-    
+
     # add id = record_id to domain 
     domain.insert(0, ('id', '=', record_id))
     domain.insert(0, '&')
@@ -84,31 +84,32 @@ def create(self, cr, uid, vals, context=None):
 
     # is the create coming from a sync or import? If yes, apply rules from msf_access_right module
     if context.get('sync_update_execution'):
-        
+
         # create the record. we will sanitize it later based on domain search check
         create_result = super_create(self, cr, uid, vals, context)
 
         if create_result:
+            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+            if not access_line_obj.search(cr, uid, [('value_not_synchronized_on_create', '=', True)]):
+                return create_result
             instance_level = _get_instance_level(self, cr, uid)
 
             if instance_level:
 
                 # get rules for this model, instance and user
                 model_name = self._name
-                user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-                groups = [x.id for x in user.groups_id]
+                groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
 
                 rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
                 if not rules_pool:
                     return create_result
-                    
+
                 rules_search = rules_pool.search(cr, 1, ['&', ('model_name', '=', model_name), ('instance_level', '=', instance_level), '|', ('group_ids', 'in', groups), ('group_ids', '=', False)])
-                
+
 
                 # do we have rules that apply to this user and model?
                 if rules_search:
                     field_changed = False
-                    access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
                     line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_create', '=', True)])
                     if not line_ids:
                         return create_result
@@ -123,7 +124,7 @@ def create(self, cr, uid, vals, context=None):
 
                         if rule.domain_text:
                             is_match = _record_matches_domain(self, cr, create_result, rule.domain_text)
-                        
+
                         if is_match:
                             # record matches the domain so modify values based on rule lines
                             for line in rule.field_access_rule_line_ids:
@@ -152,10 +153,17 @@ orm.orm.create = create
 def infolog(self, cr, uid, message):
     logger = netsvc.Logger()
     logger.notifyChannel(
-       'INFOLOG: Model: %s :: User: %s :: ' % (self._name, uid),
+        'INFOLOG: Model: %s :: User: %s :: ' % (self._name, uid),
         netsvc.LOG_INFO,
         message,
     )
+    try:
+        oe = self.pool.get('operations.event')
+        if oe:
+            oe.create(cr, uid, { 'kind': 'infolog', 'data': message })
+    except:
+        # best effort event logging: do not log errors while logging
+        pass
 
 orm.orm.infolog = infolog
 orm.orm_memory.infolog = infolog
@@ -165,25 +173,27 @@ def _values_equate(field_type, current_value, new_value):
     """
     discern if two values differ or not, for each file type that is different in the database read() value and the web write vals data value (boring)  
     """
-    
+
     # directly test against each other
     if current_value == new_value:
         return True
-    
+
     # if both evaluate to False, they equate
     if bool(current_value) == False and bool(new_value) == False:
         return True
-    
+
     # if one evals to False and the other does not, they are different
-    if field_type != 'many2many' and ((not new_value and current_value) or (new_value and not current_value)):
+    if field_type not in ('many2many', 'one2many') and ((not new_value and current_value) or (new_value and not current_value)):
         return False
-    
+
     # type specifics...
     if field_type == 'one2many':
-       if isinstance(new_value, (list, tuple)):
-           if new_value:
-               if isinstance(new_value[0], (list, tuple)):
-                   return False 
+        if isinstance(new_value, (list, tuple)):
+            if new_value:
+                if isinstance(new_value[0], (list, tuple)):
+                    return False
+            else:
+                return True
     if field_type == 'date':
         if current_value and new_value:
             try:
@@ -191,7 +201,7 @@ def _values_equate(field_type, current_value, new_value):
                 current_date = datetime.strptime(current_value, '%Y-%m-%d')
                 if new_date == current_date:
                     return True
-            except ValueError as e:
+            except ValueError:
                 logging.getLogger().warn('Could not parse either %s or %s for a date field when checking differences for Field Access Rules' % (current_value, new_value))
     if field_type == 'reference':
         if isinstance(new_value, (list, tuple)):
@@ -232,7 +242,7 @@ def _get_family(obj, family):
                     family_append(key)
                 if key != obj._name:
                     _get_family(obj.pool.get(key), family)
-            
+
     if hasattr(obj, '_inherit'):
         if obj._inherit:
             if obj._inherit not in family:
@@ -258,9 +268,11 @@ def write(self, cr, uid, ids, vals, context=None):
     Check if user has write_access for each field in target record with applicable Field Access Rules. If not, throw exception.
     Also if syncing, check if field value should be synced on write, based on Field Access Rules.
     """
-    
+    if not ids:
+        return True
+
     context = context or {}
-    
+
     if not isinstance(ids, list):
         ids = [ids]
 
@@ -270,71 +282,74 @@ def write(self, cr, uid, ids, vals, context=None):
         return super_write(self, cr, uid, ids, vals, context=context)
 
     # get rules for this model
-    model_name = self._name
-    user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-    groups = [x.id for x in user.groups_id]
-
     rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
     if not rules_pool:
         return super_write(self, cr, uid, ids, vals, context=context)
-    
+    access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+
+    update_execution = context.get('sync_update_execution')
+    # do not do unecessary work : return in some condition
+    if uid == 1 or update_execution and \
+       not access_line_obj.search(cr, uid, [('value_not_synchronized_on_write', '=', True)]):
+        return super_write(self, cr, uid, ids, vals, context=context)
+
+    groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
     rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
 
     # if have rules
     if rules_search:
-
-        # get rules for this object, the current records values, the names of all parent classes (recursively) and columns for the whole family
-        rules = rules_pool.browse(cr, 1, rules_search, context=context)
-        current_records = self.read(cr, 1, ids, context=context)
+        old_values_list = self.read(cr, 1, ids, vals.keys(), context=context)
         family = _get_family_names(self, cr, rules_pool, instance_level, groups)
         columns = reduce(lambda x, y: dict(x.items() + y.items()), [self.pool.get(model)._columns for model in family])
-        
         fields_blacklist = [
-            'nomenclature_description'
+            'nomenclature_description',
         ]
 
-        # check for denied write_access. Loop through current_records and check it against each rule's domain, then search for access denied fields. throw exception if found
-        if uid != 1:
-            for record in current_records:
-                for rule in rules:
-                    if _record_matches_domain(self, cr, record['id'], rule.domain_text):
-    
-                        # rule applies for this record so throw exception if we are trying to edit a field without write_access
-                        # for each rule
-                        for line in rule.field_access_rule_line_ids:
-                            # that has write_access denied
-                            if not line.write_access:
-                                # check field name blacklist
-                                if line.field.name not in fields_blacklist:
-                                
-                                    # and whose field name is in the new values list
-                                    if line.field.name in vals:
-                                        
-                                        # (accommodate bug where a disabled reference field in web returns a list instead of a comma separated string:)
-                                        if line.field.name in columns and columns[line.field.name]._type == 'reference':
-                                            if isinstance(vals[line.field.name], (list, tuple)):
-                                                if vals[line.field.name][0]:
-                                                    vals[line.field.name] = vals[line.field.name][1] + ',' + vals[line.field.name][0]
-                                                else:
-                                                    vals[line.field.name] = ''
-                                            elif vals[line.field.name] and ',' not in vals[line.field.name]:
-                                                vals[line.field.name] = record[line.field.name]
-                                        
-                                        # and whose current value is different from the new value in the new values list
-                                        if not _values_equate(columns[line.field.name]._type, record[line.field.name], vals[line.field.name]):
-                                            # throw access denied error
-                                            raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % line.field.name)
+        rules_data = dict(
+            (x['id'], x['domain_text']) for x in
+            self.pool.get('msf_field_access_rights.field_access_rule').read(cr, uid, rules_search, ['domain_text'], context=context)
+        )
+        for old_values in old_values_list:
+            # keep only the property that changes between old an new values
+            dict_diff = dict([(key, value) for key, value in vals.items() if old_values[key] != value])
+            diff_properties = dict_diff.keys()
+
+            # remove the blacklisted fields
+            diff_properties = list(set(diff_properties).difference(fields_blacklist))
+
+            if diff_properties:
+                rule_to_check = []
+                for rule_id in rules_search:
+                    if _record_matches_domain(self, cr, old_values['id'], rules_data[rule_id]):
+                        rule_to_check.append(rule_id)
+
+                if rule_to_check:
+                    # get the fields with write_access=False
+                    cr.execute("""SELECT DISTINCT field_name
+                                  FROM msf_field_access_rights_field_access_rule_line
+                                  WHERE write_access='f' AND
+                                  field_access_rule in %s AND
+                                  field_name in %s
+                            """, (tuple(rule_to_check), tuple(diff_properties)))
+                    no_write_access_fields = [x[0] for x in cr.fetchall()]
+
+                    for field_name in no_write_access_fields:
+                        if not _values_equate(columns[field_name]._type,
+                                              old_values[field_name], vals[field_name]):
+                            # throw access denied error
+                            raise osv.except_osv('Access Denied', 'You do not have access to the field (%s). If you did not edit this field, please let an OpenERP administrator know about this error message, and the field name.' % field_name)
 
         # if syncing, sanitize editted rows that don't have sync_on_write permission
-        if context.get('sync_update_execution'):
-            access_line_obj = self.pool.get('msf_field_access_rights.field_access_rule_line')
+        if update_execution:
             line_ids = access_line_obj.search(cr, uid, [('field_access_rule', 'in', rules_search), ('value_not_synchronized_on_write', '=', True)])
             if not line_ids:
                 return super_write(self, cr, uid, ids, vals, context=context)
+
+            # FIXME this following code is not used yet as there is no value_not_synchronized_on_write
             rule_ids = rules_pool.search(cr, 1, [('field_access_rule_line_ids', 'in', line_ids)])
             rules = rules_pool.browse(cr, 1, rule_ids)
-            # iterate over current records 
-            for record in current_records:
+            # iterate over current records
+            for record in old_values_list:
                 new_values = copy.deepcopy(vals)
 
                 # iterate over rules and see if they match the current record
@@ -381,16 +396,14 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
             return fields_view
 
         # get rules for this model
-        model_name = self._name
-        user = self.pool.get('res.users').browse(cr, 1, uid, context=context)
-        groups = [x.id for x in user.groups_id]
+        groups = self.pool.get('res.users').read(cr, 1, uid, ['groups_id'], context=context)['groups_id']
 
         rules_pool = self.pool.get('msf_field_access_rights.field_access_rule')
         if not rules_pool:
             return fields_view
-        
+
         rules_search = _get_rules_for_family(self, cr, rules_pool, instance_level, groups)
-    
+
         # if have rules
         if rules_search:
             rules = rules_pool.browse(cr, 1, rules_search, context=context)
@@ -433,7 +446,7 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
                             # applicable to all so set readonly
                             if domain_value == True:
                                 field.set('readonly', '1')
-                                
+
                                 # remove attrs if present
                                 if 'attrs' in field.attrib:
                                     attrs_text = field.attrib['attrs']
@@ -464,12 +477,12 @@ def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None,
 
                         # add 'hidden by field access rules' flag
                         if field_name in self._columns:
-                            field.attrib['help'] = '[Field Disabled by Field Access Rights] ' + self._columns[field_name].help
-                
+                            field.attrib['help'] = '[Field Disabled by Field Access Rights] %s' % (misc.ustr(self._columns[field_name].help))
+
                 # get the modified xml string and return it
                 fields_view['arch'] = etree.tostring(view_xml)
                 return fields_view
-            
+
             else:
                 # no domains
                 return fields_view

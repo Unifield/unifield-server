@@ -24,7 +24,6 @@ from osv import fields
 import logging
 import tools
 import time
-from mx.DateTime import *
 from os import path
 from tools.translate import _
 import base64
@@ -32,11 +31,7 @@ from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
 from msf_doc_import.wizard import PO_COLUMNS_HEADER_FOR_IMPORT as columns_header_for_po_line_import
 from msf_doc_import.wizard import PO_LINE_COLUMNS_FOR_IMPORT as columns_for_po_line_import
 from msf_doc_import import GENERIC_MESSAGE
-from check_line import *
-from msf_doc_import import MAX_LINES_NB
-from msf_doc_import.wizard import PO_COLUMNS_FOR_INTEGRATION as columns_for_po_integration, PO_COLUMNS_HEADER_FOR_INTEGRATION, NEW_COLUMNS_HEADER
 
-from lxml import etree
 import datetime
 
 
@@ -150,16 +145,15 @@ class purchase_order(osv.osv):
             context = {}
 
         context.update({'active_id': ids[0]})
-        columns_header = NEW_COLUMNS_HEADER
-        default_template = SpreadsheetCreator('Template of import', columns_header, [])
         export_ids = export_obj.search(cr, uid, [('order_id', '=', ids[0])], context=context)
         export_obj.unlink(cr, uid, export_ids, context=context)
         export_id = export_obj.create(cr, uid, {
-                                                'order_id': ids[0]}, context)
+            'order_id': ids[0]}, context)
 
         for l in self.pool.get('purchase.order').browse(cr, uid, ids[0], context=context).order_line:
             export_line_obj.create(cr, uid, {'po_line_id': l.id,
                                              'in_line_number': l.line_number,
+                                             'in_ext_ref': l.external_ref,
                                              'simu_id': export_id}, context=context)
 
         return {'type': 'ir.actions.act_window',
@@ -205,8 +199,8 @@ class purchase_order(osv.osv):
             return False
         dt_now = datetime.datetime.now()
         po_name = "%s_%s_%d_%02d_%02d" % (prefix,
-            po_r['name'].replace('/', '_'),
-            dt_now.year, dt_now.month, dt_now.day)
+                                          po_r['name'].replace('/', '_'),
+                                          dt_now.year, dt_now.month, dt_now.day)
         return po_name
 
     def export_xml_po_integration(self, cr, uid, ids, context=None):
@@ -219,20 +213,22 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        datas = {}
-        datas['ids'] = ids
+        datas = {
+            'ids': ids,
+            'need_ad': context.get('need_ad', True),
+        }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
-            context=context)
+                                              context=context)
         if file_name:
             datas['target_filename'] = file_name
         report_name = 'validated.purchase.order_xml'
 
         return {
-                'type': 'ir.actions.report.xml',
-                'report_name': report_name,
-                'datas': datas,
-                'context': context,
-               }
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': datas,
+            'context': context,
+        }
 
     def export_excel_po_integration(self, cr, uid, ids, context=None):
         '''
@@ -244,20 +240,22 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        datas = {}
-        datas['ids'] = ids
+        datas = {
+            'ids': ids,
+            'need_ad': context.get('need_ad', True),
+        }
         file_name = self.export_get_file_name(cr, uid, ids, prefix='POV',
-            context=context)
+                                              context=context)
         if file_name:
             datas['target_filename'] = file_name
         report_name = 'validated.purchase.order_xls'
 
         return {
-                'type': 'ir.actions.report.xml',
-                'report_name': report_name,
-                'datas': datas,
-                'context': context,
-               }
+            'type': 'ir.actions.report.xml',
+            'report_name': report_name,
+            'datas': datas,
+            'context': context,
+        }
 
     def wizard_import_po_line(self, cr, uid, ids, context=None):
         '''
@@ -268,6 +266,13 @@ class purchase_order(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         context.update({'active_id': ids[0]})
+
+        # Check if we are in the case of update of sent RfQ
+        po = self.browse(cr, uid, [ids[0]], context=context)[0]
+        columns = columns_for_po_line_import
+        if not po.rfq_ok or po.state != 'rfq_sent':
+            columns = columns_for_po_line_import[1:]
+
         columns_header = [(_(f[0]), f[1]) for f in columns_header_for_po_line_import]
         default_template = SpreadsheetCreator('Template of import', columns_header, [])
         file = base64.encodestring(default_template.get_xml(default_filters=['decode.utf8']))
@@ -275,9 +280,9 @@ class purchase_order(osv.osv):
                                                                             'filename_template': 'template.xls',
                                                                             'filename': 'Lines_Not_Imported.xls',
                                                                             'po_id': ids[0],
-                                                                            'message': """%s %s""" % (GENERIC_MESSAGE, ', '.join([_(f) for f in columns_for_po_line_import]),),
+                                                                            'message': """%s %s""" % (_(GENERIC_MESSAGE), ', '.join([_(f) for f in columns]),),
                                                                             'state': 'draft', },
-                                                                   context)
+                                                                  context)
         return {'type': 'ir.actions.act_window',
                 'res_model': 'wizard.import.po.line',
                 'res_id': export_id,
@@ -300,7 +305,7 @@ class purchase_order(osv.osv):
         for var in self.browse(cr, uid, ids, context=context):
             # we check the supplier and the address
             if var.partner_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'supplier_tbd')[1] \
-            or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
+                    or var.partner_address_id.id == obj_data.get_object_reference(cr, uid, 'msf_doc_import', 'address_tbd')[1]:
                 raise osv.except_osv(_('Warning !'), _("\n You can't have a supplier or an address 'To Be Defined', please select a consistent supplier."))
             # we check the lines that need to be fixed
             if var.order_line:
@@ -395,9 +400,9 @@ class purchase_order_line(osv.osv):
                 if product and qty and not price_unit_defined:
                     try:
                         res = self.product_id_on_change(cr, uid, False, pricelist, product, qty, uom,
-                                                    partner_id, date_order, fiscal_position, date_planned=False,
-                                                    name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
-                                                    nomen_manda_0=False, comment=False, context=context)
+                                                        partner_id, date_order, fiscal_position, date_planned=False,
+                                                        name=False, price_unit=price_unit, notes=False, state=state, old_price_unit=False,
+                                                        nomen_manda_0=False, comment=False, context=context)
                         if not context.get('po_integration'):
                             price_unit = res.get('value', {}).get('price_unit', False)
                             text_error += _('\n We use the price mechanism to compute the Price Unit.')
@@ -452,6 +457,8 @@ class purchase_order_line(osv.osv):
                                     'price_unit': 0.0, })
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if isinstance(ids, (int, long)):
             ids = [ids]
         if context is None:
@@ -491,8 +498,20 @@ class wizard_export_po_validated(osv.osv_memory):
 
     _columns = {
         'order_id': fields.many2one('purchase.order', string='Purchase Order', required=True),
+        'need_ad': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='Export AD',
+            required=True,
+        ),
         'file_type': fields.selection([('excel', 'Excel file'),
                                        ('xml', 'XML file')], string='File type', required=True),
+    }
+
+    _defaults = {
+        'need_ad': 'yes',
     }
 
     def export_file(self, cr, uid, ids, context=None):
@@ -501,10 +520,15 @@ class wizard_export_po_validated(osv.osv_memory):
         '''
         order_obj = self.pool.get('purchase.order')
 
+        if context is None:
+            context = {}
+
         if isinstance(ids, (int, long)):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0], context=context)
+
+        context['need_ad'] = wiz.need_ad == 'yes'
 
         if wiz.file_type == 'xml':
             return order_obj.export_xml_po_integration(cr, uid, wiz.order_id.id, context=context)

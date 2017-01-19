@@ -20,7 +20,6 @@
 ##############################################################################
 
 from osv import osv
-import netsvc
 from tools.translate import _
 
 class analytic_distribution(osv.osv):
@@ -34,7 +33,6 @@ class analytic_distribution(osv.osv):
         if context is None:
             context = {}
         # Have an analytic distribution on another account than analytic-a-holic account make no sense. So their analytic distribution is valid
-        logger = netsvc.Logger()
         if account_id:
             account =  self.pool.get('account.account').read(cr, uid, account_id, ['is_analytic_addicted'])
             if account and not account.get('is_analytic_addicted', False):
@@ -42,20 +40,20 @@ class analytic_distribution(osv.osv):
         if not distrib_id:
             if parent_id:
                 return self._get_distribution_state(cr, uid, parent_id, False, account_id, context)
-            logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: NONE!") % (distrib_id or ''))
             return 'none'
         distrib = self.browse(cr, uid, distrib_id)
+        if not distrib.funding_pool_lines:
+            return 'none'
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-            'analytic_account_msf_private_funds')[1]
+                                                                        'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
         account = self.pool.get('account.account').read(cr, uid, account_id, ['destination_ids'])
         # Check Cost Center lines with destination/account link
         for cc_line in distrib.cost_center_lines:
             if cc_line.destination_id.id not in account.get('destination_ids', []):
-                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, destination not compatible with G/L account in CC lines") % (distrib_id or ''))
                 return 'invalid'
         # Check Funding pool lines regarding:
         # - destination / account
@@ -63,16 +61,13 @@ class analytic_distribution(osv.osv):
         # - Cost center and funding pool compatibility
         for fp_line in distrib.funding_pool_lines:
             if fp_line.destination_id.id not in account.get('destination_ids', []):
-                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, destination not compatible with G/L account for FP lines") % (distrib_id or ''))
                 return 'invalid'
             # If fp_line is MSF Private Fund, all is ok
             if fp_line.analytic_id.id == fp_id:
                 continue
             if (account_id, fp_line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.analytic_id.tuple_destination_account_ids]:
-                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, account/destination tuple not compatible with given FP analytic account") % (distrib_id or ''))
                 return 'invalid'
             if fp_line.cost_center_id.id not in [x.id for x in fp_line.analytic_id.cost_center_ids]:
-                logger.notifyChannel("analytic distribution", netsvc.LOG_WARNING, _("%s: Error, CC is not compatible with given FP analytic account") % (distrib_id or ''))
                 return 'invalid'
         return 'valid'
 

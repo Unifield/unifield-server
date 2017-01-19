@@ -327,6 +327,7 @@ class mass_reallocation_wizard(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             to_process = [x.id for x in wiz.line_ids] or []
             account_id = wiz.account_id.id
+
             date = wiz.date or strftime('%Y-%m-%d')
             # Don't process lines:
             # - that have same account (or cost_center_id)
@@ -366,7 +367,7 @@ class mass_reallocation_wizard(osv.osv_memory):
             # Delete non_supported element from to_process and write them to tmp_process_ids
             tmp_to_process = [x for x in to_process if x not in non_supported_ids]
             if tmp_to_process:
-                valid_ids = self.pool.get('account.analytic.line').check_analytic_account(cr, uid, tmp_to_process, account_id, context=context)
+                valid_ids = self.pool.get('account.analytic.line').check_analytic_account(cr, uid, tmp_to_process, account_id, date, context=context)
                 process_ids.extend(valid_ids)
                 error_ids.extend([x for x in tmp_to_process if x not in valid_ids])
         vals = {'account_id': account_id, 'date': date,}

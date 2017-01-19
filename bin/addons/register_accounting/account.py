@@ -65,6 +65,8 @@ class hr_employee(osv.osv):
     _inherit = 'hr.employee'
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 
@@ -91,6 +93,8 @@ class res_partner(osv.osv):
     _inherit = 'res.partner'
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if context is None:
             context = {}
 

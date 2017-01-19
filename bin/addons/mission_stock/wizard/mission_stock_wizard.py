@@ -23,10 +23,37 @@ from osv import osv
 from osv import fields
 
 from tools.translate import _
+from tools import ustr
 
 
 class mission_stock_wizard(osv.osv_memory):
     _name = 'mission.stock.wizard'
+
+    def _get_processed_value(self, cr, uid, report_id, context=None, state=False):
+        """
+        Returns the progression of the update
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param report_id: ID of mission.stock.report to compute
+        :param context: Context of the call
+        :return: The percentage of processed lines
+        """
+        msr_in_progress = self.pool.get('msr_in_progress')
+        date_tools = self.pool.get('date.tools')
+
+        if context is None:
+            context = {}
+
+        if msr_in_progress._already_processed(cr, 1, report_id, context=context):
+            return state and 'done' or _('Done')
+
+        msr_ids = msr_in_progress.search(cr, 1, [('report_id', '=', report_id)], context=context)
+        if msr_ids:
+            st_date = date_tools.get_date_formatted(cr, uid, d_type='datetime',
+                                                    datetime=msr_in_progress.browse(cr, uid, msr_ids[0], context=context).start_date)
+            return state and 'progress' or _('In progress since %s') % ustr(st_date)
+
+        return state and 'done' or _('Done')
 
     _columns = {
         'report_id': fields.many2one(
@@ -56,12 +83,18 @@ class mission_stock_wizard(osv.osv_memory):
             string='Filename',
             size=256,
         ),
+        'processed_value': fields.char(
+            string='Processing',
+            size=128,
+            readonly=True,
+        ),
     }
 
     _defaults = {
-        'with_valuation': lambda *a: 'false',
-        'split_stock': lambda *a: 'false',
+        'with_valuation': lambda *a: 'true',
+        'split_stock': lambda *a: 'true',
         'fname': lambda *a: 'Mission stock report',
+        'processed_value': lambda *a: _('Not started'),
     }
 
     def default_get(self, cr, uid, fields_list, context=None):
@@ -79,7 +112,8 @@ class mission_stock_wizard(osv.osv_memory):
             res['report_id'] = local_id[0]
             report = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context)
             res['last_update'] = report.last_update
-            res['export_ok'] = report.export_ok
+            res['export_ok'] = report.export_ok and self._get_processed_value(cr, uid, local_id[0], context=context, state=True) == 'done'
+            res['processed_value'] = self._get_processed_value(cr, uid, local_id[0], context=context)
 
         return res
 
@@ -90,9 +124,13 @@ class mission_stock_wizard(osv.osv_memory):
         v = {}
         if report_id:
             report = self.pool.get('stock.mission.report').browse(cr, uid, report_id, context=context)
-            v.update({'last_update': report.last_update, 'export_ok': report.export_ok})
+            v.update({
+                'last_update': report.last_update,
+                'export_ok': report.export_ok and self._get_processed_value(cr, uid, report_id, context=context, state=True) == 'done',
+                'processed_value': self._get_processed_value(cr, uid, report_id, context=context)
+            })
         else:
-            v.update({'last_update': False, 'export_ok': False})
+            v.update({'last_update': False, 'export_ok': False, 'processed_value': _('No report selected')})
 
         return {'value': v}
 
@@ -156,13 +194,19 @@ class mission_stock_wizard(osv.osv_memory):
                 _('Error'),
                 _("""The generation of this report is in progress. You could open this
 report when the last update field will be filled. Thank you for your comprehension."""),
-                )
+            )
 
         return wiz_id
 
-    def open_xml_file(self, cr, uid, ids, context=None):
+    def open_xls_file(self, cr, uid, ids, context=None):
+        return self.open_file(cr, uid, ids, file_format='xls', context=context)
+
+    def open_csv_file(self, cr, uid, ids, context=None):
+        return self.open_file(cr, uid, ids, file_format='csv', context=context)
+
+    def open_file(self, cr, uid, ids, file_format='xls', context=None):
         '''
-        Open the XML file
+        Open the file
         '''
         if isinstance(ids, list):
             ids = ids[0]
@@ -173,6 +217,26 @@ report when the last update field will be filled. Thank you for your comprehensi
         self._check_status(cr, uid, ids, context=context)
 
         datas = {'ids': ids}
+
+        # add the requested field name and report_id to the datas
+        # to be used later on in the stock_mission_report_xls_parser
+        res = self.read(cr, uid, ids, ['with_valuation', 'split_stock',
+                                       'report_id'], context=context)
+
+        field_name = None
+        if res['split_stock'] == 'false' and res['with_valuation'] == 'false':
+            field_name = 'ns_nv_vals'
+        elif res['split_stock'] == 'true' and res['with_valuation'] == 'true':
+            field_name = 's_v_vals'
+        elif res['split_stock'] == 'false' and res['with_valuation'] == 'true':
+            field_name = 'ns_v_vals'
+        elif res['split_stock'] == 'true' and res['with_valuation'] == 'false':
+            field_name = 's_nv_vals'
+
+        datas['field_name'] = field_name
+        datas['report_id'] = res['report_id']
+        datas['file_format'] = file_format
+
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'stock.mission.report_xls',
@@ -182,7 +246,8 @@ report when the last update field will be filled. Thank you for your comprehensi
         }
 
     def update(self, cr, uid, ids, context=None):
-        ids = self.pool.get('stock.mission.report').search(cr, uid, [], context=context)
-        return self.pool.get('stock.mission.report').background_update(cr, uid, ids)
+        msr_obj = self.pool.get('stock.mission.report')
+        ids = msr_obj.search(cr, uid, [], context=context)
+        return msr_obj.background_update(cr, uid, ids)
 
 mission_stock_wizard()

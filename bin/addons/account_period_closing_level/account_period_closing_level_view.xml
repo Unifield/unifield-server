@@ -130,6 +130,18 @@
                                 <button string="Commitments" name="button_commitments" type="object" icon="terp-go-month"/>
                             </group>
 
+                            <!-- Month End Revaluation -->
+                            <group col="4" colspan="4">
+                                <label string="Did you validate the Month End Revaluation (ONLY FOR OCA COORDO)?" colspan="2" align="0.0"/>
+                                <button string="Revaluation" name="button_revaluation" type="object" icon="terp-go-year"/>
+                            </group>
+
+                            <!-- Accrual Reversal -->
+                            <group col="4" colspan="4">
+                                <label string="Did you post Accrual Reversal entries?" colspan="2" align="0.0"/>
+                                <button string="Accrual reversal entries" name="button_accrual_reversal" type="object" icon="terp-document-new"/>
+                            </group>
+
                             <!-- Other questions -->
                             <separator string="" colspan="4"/>
                             <label string="Did you produce all the reports required in the monthly closing procedure?" colspan="4" align="0.0"/>

@@ -23,6 +23,7 @@
 from osv import osv
 from osv import fields
 from msf_partner import PARTNER_TYPE
+from msf_field_access_rights.osv_override import _get_instance_level
 import time
 from tools.translate import _
 from lxml import etree
@@ -57,7 +58,7 @@ class res_partner(osv.osv):
                 if arg[2]:
                     res = sup_in
             else:
-                    res = sup_obj.search(cr, uid, [('id', 'not in', sup_in)])
+                res = sup_obj.search(cr, uid, [('id', 'not in', sup_in)])
 
         if not res:
             return [('id', '=', 0)]
@@ -171,7 +172,7 @@ class res_partner(osv.osv):
 
         partner_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0]
+                                                 context=context)[0]
         if user and user.company_id and user.company_id.partner_id:
             partner_id = user.company_id.partner_id.id
 
@@ -180,31 +181,92 @@ class res_partner(osv.osv):
         return res
 
     def _get_is_instance_search(self, cr, uid, ids, field_name, args,
-        context=None):
+                                context=None):
         """ search the instance's partner id """
         partner_id = False
         user = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0]
+                                                 context=context)[0]
         if user and user.company_id and user.company_id.partner_id:
             partner_id = user.company_id.partner_id.id
         return partner_id and [('id', '=', partner_id)] or []
 
+    def _get_is_coordo(self, cr, uid, ids, field_name, args, context=None):
+        """ return True if the instance's level is coordo """
+        res = {}
+        if not ids:
+            return res
+        if isinstance(ids, (int, long,)):
+            ids = [ids]
+
+        for id in ids:
+            res[id] = False
+
+        inst_level = _get_instance_level(self, cr, uid)
+        if inst_level != 'coordo':
+            return res
+
+        inst_partner_id = self.search(cr, uid, [('is_instance', '=', True)], context=context)
+        if inst_partner_id and inst_partner_id[0] in ids:
+            res[inst_partner_id[0]] = True
+
+        return res
+
+    def _get_is_coordo_search(self, cr, uid, ids, field_name, args,
+                              context=None):
+        """ return partner which are coordination and current company partner """
+        a = args[0]
+        if _get_instance_level(self, cr, uid) != 'coordo':
+            if a[1] in ('=', 'in'):
+                if a[2] in ('True', 'true', True, 1, 't'):
+                    return [('id', 'in', [])]
+                elif a[2] in ('False', 'false', False, 0, 'f'):
+                    return []
+            elif a[1] in ('<>', '!=', 'not in'):
+                if a[2] in ('True', 'true', True, 1, 't'):
+                    return []
+                elif a[2] in ('False', 'false', False, 0, 'f'):
+                    return [('id', 'in', [])]
+            else:
+                return []
+
+        if a[1] in ('=', 'in'):
+            if a[2] in ('True', 'true', True, 1, 't'):
+                operator = 'in'
+            elif a[2] in ('False', 'false', False, 0, 'f'):
+                operator = 'not in'
+        elif a[1] in ('<>', '!=', 'not in'):
+            if a[2] in ('True', 'true', True, 1, 't'):
+                operator = 'not in'
+            elif a[2] in ('False', 'false', False, 0, 'f'):
+                operator = 'in'
+        else:
+            return []
+
+        return [('id', operator, self.search(cr, uid, [('is_instance', '=', True)], context=context))]
+
     _columns = {
         'manufacturer': fields.boolean(string='Manufacturer', help='Check this box if the partner is a manufacturer'),
         'partner_type': fields.selection(PARTNER_TYPE, string='Partner type', required=True),
+        'split_po': fields.selection(
+            selection=[
+                ('yes', 'Yes'),
+                ('no', 'No'),
+            ],
+            string='Split PO ?',
+        ),
         'in_product': fields.function(_set_in_product, fnct_search=search_in_product, string='In product', type="boolean", readonly=True, method=True, multi='in_product'),
         'min_qty': fields.function(_set_in_product, string='Min. Qty', type='char', readonly=True, method=True, multi='in_product'),
         'delay': fields.function(_set_in_product, string='Delivery Lead time', type='char', readonly=True, method=True, multi='in_product'),
         'property_product_pricelist_purchase': fields.property(
-          'product.pricelist',
-          type='many2one',
-          relation='product.pricelist',
-          domain=[('type','=','purchase')],
-          string="Purchase default currency",
-          method=True,
-          view_load=True,
-          required=True,
-          help="This currency will be used, instead of the default one, for purchases from the current partner"),
+            'product.pricelist',
+            type='many2one',
+            relation='product.pricelist',
+            domain=[('type','=','purchase')],
+            string="Purchase default currency",
+            method=True,
+            view_load=True,
+            required=True,
+            help="This currency will be used, instead of the default one, for purchases from the current partner"),
         'property_product_pricelist': fields.property(
             'product.pricelist',
             type='many2one',
@@ -241,12 +303,22 @@ class res_partner(osv.osv):
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'is_instance': fields.function(_get_is_instance, fnct_search=_get_is_instance_search, method=True, type='boolean', string='Is current instance partner id'),
         'transporter': fields.boolean(string='Transporter'),
+        'is_coordo': fields.function(
+            _get_is_coordo,
+            fnct_search=_get_is_coordo_search,
+            method=True,
+            type='boolean',
+            string='Is a coordination ?',
+        ),
+        'locally_created': fields.boolean('Locally Created', help='Partner Created on this instance', readonly=1),
     }
 
     _defaults = {
+        'locally_created': lambda *a: True,
         'manufacturer': lambda *a: False,
         'transporter': lambda *a: False,
         'partner_type': lambda *a: 'external',
+        'split_po': lambda *a: False,
         'vat_ok': lambda obj, cr, uid, c: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
     }
 
@@ -303,7 +375,19 @@ class res_partner(osv.osv):
             except ValueError:
                 pass
 
-        return super(res_partner, self).unlink(cr, uid, ids, context=context)
+
+        #US-1344: treat deletion of partner
+        address_obj = self.pool.get('res.partner.address')
+        address_ids = address_obj.search(cr, uid, [('partner_id', 'in', ids)])
+
+        res = super(res_partner, self).unlink(cr, uid, ids, context=context)
+        ir_model_data_obj = self.pool.get('ir.model.data')
+
+        address_obj.unlink(cr, uid, address_ids, context)
+
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def _check_main_partner(self, cr, uid, ids, vals, context=None):
         if context is None:
@@ -342,7 +426,41 @@ class res_partner(osv.osv):
 
         return True
 
+    def check_partner_name_is_not_instance_name(self, cr, uid, ids, context=None):
+        '''
+        verify that the name of the partner is not used by another partner
+        of partner_type ('section', 'intermission')
+        Except if the partner name is equal to the partner related to the
+        current instance.
+        Return False if the name already exists
+        '''
+        if context is None:
+            context = {}
+
+        # check if the current partner name is equal to the current instance name
+        user_obj = self.pool.get('res.users')
+        partner_id, partner_name = user_obj.get_current_company_partner_id(cr, uid)
+
+        # remove partner which have same name than the current instance
+        read_result = self.read(cr, uid, ids, ['name'], context=context)
+        read_result = [(x['id'], x['name']) for x in read_result if x['name'] != partner_name]
+
+        for partner_id, partner_name in read_result:
+            # check the current name is not already used by another section or
+            # intermission partner
+            name_exists = self.search_exist(cr, uid, [
+                ('id', '!=', partner_id),
+                ('name', '=', partner_name),
+                ('active', 'in', ('t', 'f')),
+                ('partner_type', 'in', ('section', 'intermission'))], context=context)
+            if name_exists:
+                return False
+        return True
+
     _constraints = [
+        (check_partner_name_is_not_instance_name,
+            "You can't define a partner name with the name of an existing Intermission/Intersection instance name.",
+            ['name'])
     ]
 
     def transporter_ticked(self, cr, uid, ids, transporter, context=None):
@@ -377,75 +495,75 @@ class res_partner(osv.osv):
 
         # ids list (the domain are the same as the one used for the action window of the menus)
         purchase_ids = purchase_obj.search(cr, uid,
-            [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
-            context=context.update({'purchase_order': True}))
+                                           [('rfq_ok', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                           context=context.update({'purchase_order': True}))
         rfq_ids = purchase_obj.search(cr, uid,
-            [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
-            context=context.update({'request_for_quotation': True}))
+                                      [('rfq_ok', '=', True), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                      context=context.update({'request_for_quotation': True}))
         sale_ids = sale_obj.search(cr, uid,
-            [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
-            context=context)
+                                   [('procurement_request', '=', False), ('partner_id', '=', ids[0]), ('state', 'not in', ['done', 'cancel'])],
+                                   context=context)
         intermission_vouch_in_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'in_invoice', 'journal_type': 'intermission'}))
+            ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'in_invoice', 'journal_type': 'intermission'}))
 
         intermission_vouch_out_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'out_invoice', 'journal_type': 'intermission'}))
+            ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', True), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'out_invoice', 'journal_type': 'intermission'}))
 
         donation_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True),
-                ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'in_invoice', 'journal_type': 'inkind'}))
+            ('type','=','in_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', True),
+            ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'in_invoice', 'journal_type': 'inkind'}))
         supp_invoice_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', False), ('is_debit_note', "=", False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
+            ('type','=','in_invoice'), ('register_line_ids', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', False), ('is_debit_note', "=", False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'in_invoice', 'journal_type': 'purchase'}))
 
         cust_refunds_ids = account_invoice_obj.search(cr, uid,
-            [('type','=','out_refund'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])],
-            context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
+                                                      [('type','=','out_refund'), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])],
+                                                      context = context.update({'type':'out_refund', 'journal_type': 'sale_refund'}))
 
         debit_note_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False),
-                ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}))
+            ('type','=','out_invoice'), ('is_debit_note', '!=', False), ('is_inkind_donation', '=', False),
+            ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale', 'is_debit_note': True}))
 
         stock_transfer_vouch_ids = account_invoice_obj.search(cr, uid, [
-                ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
-                ('is_intermission', '=', False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
-            ], context = context.update({'type':'out_invoice', 'journal_type': 'sale'}))
+            ('type','=','out_invoice'), ('is_debit_note', '=', False), ('is_inkind_donation', '=', False),
+            ('is_intermission', '=', False), ('partner_id', '=', ids[0]), ('state', 'in', ['draft'])
+        ], context = context.update({'type':'out_invoice', 'journal_type': 'sale'}))
         incoming_ship_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('subtype', '=', 'standard'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context = context.update({
-                'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'in'), ('subtype', '=', 'standard'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context = context.update({
+            'contact_display': 'partner_address', 'subtype': 'in', 'picking_type': 'incoming_shipment', 'search_default_available':1
+        }))
         out_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context = context.update({
-                'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'standard'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context = context.update({
+            'contact_display': 'partner_address', 'search_default_available': 1,'picking_type': 'delivery_order', 'subtype': 'standard'
+        }))
         pick_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'picking'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context = context.update({
-                'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'picking'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context = context.update({
+            'picking_screen':True, 'picking_type': 'picking_ticket', 'test':True, 'search_default_not_empty':1
+        }))
         ppl_ids = pick_obj.search(cr, uid, [
-                ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'ppl'),
-                '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
-            ], context=context.update({
-                'contact_display': 'partner_address', 'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1
-            }))
+            ('state', 'not in', ['done', 'cancel']), ('type', '=', 'out'), ('subtype', '=', 'ppl'),
+            '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])
+        ], context=context.update({
+            'contact_display': 'partner_address', 'ppl_screen':True, 'picking_type': 'picking_ticket', 'search_default_available':1
+        }))
         tender_ids = [tend for tend in tender_obj.search(cr, uid, [('state', '=', 'comparison')]) if ids[0] in tender_obj.read(cr, uid, tend, ['supplier_ids'])['supplier_ids']]
         com_vouch_ids = com_vouch_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('state', '!=', 'done')], context=context)
         ship_ids = ship_obj.search(cr, uid,
-            [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
-            context=context)
+                                   [('state', 'not in', ['done', 'delivered']), '|', ('partner_id', '=', ids[0]), ('partner_id2', '=', ids[0])],
+                                   context=context)
         absl_ids = absl_obj.search(cr, uid, [('state', 'in', ['draft', 'temp']), ('partner_id', '=', ids[0])], context=context)
         aml_ids = aml_obj.search(cr, uid, [('partner_id', '=', ids[0]), ('reconcile_id', '=', False), ('account_id.reconcile', '=', True)])
 
@@ -472,6 +590,8 @@ class res_partner(osv.osv):
         )
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         if isinstance(ids, (int, long)):
             ids = [ids]
@@ -502,6 +622,7 @@ class res_partner(osv.osv):
                     raise osv.except_osv(_('Warning'),
                                          _("""The following documents linked to the partner need to be closed before deactivating the partner: %s"""
                                            ) % (objects_linked_to_partner))
+
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
@@ -527,6 +648,9 @@ class res_partner(osv.osv):
         if not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
+        if vals.get('name'):
+            vals['name'] = vals['name'].strip()
+
         return super(res_partner, self).create(cr, uid, vals, context=context)
 
 
@@ -544,6 +668,9 @@ class res_partner(osv.osv):
         for ftr in fields_to_reset:
             if ftr not in default:
                 to_del.append(ftr)
+        if 'locally_created' not in default:
+            default['locally_created'] = True
+
         res = super(res_partner, self).copy_data(cr, uid, id, default=default, context=context)
         for ftd in to_del:
             if ftd in res:
@@ -569,7 +696,7 @@ class res_partner(osv.osv):
                 return {'value': {'active': True},
                         'warning': {'title': _('Error'),
                                     'message': _("Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
-                                                ) % (objects_linked_to_partner,)}}
+                                                 ) % (objects_linked_to_partner,)}}
         else:
             # US-49 check that activated partner is not using a not active CCY
             check_pricelist_ids = []
@@ -579,22 +706,22 @@ class res_partner(osv.osv):
             ]
             check_ccy_ids = []
             for r in self.read(cr, uid, ids, fields_pricelist,
-                context=context):
+                               context=context):
                 for f in fields_pricelist:
                     if r[f] and r[f][0] not in check_pricelist_ids:
                         check_pricelist_ids.append(r[f][0])
             if check_pricelist_ids:
                 for cpl_r in self.pool.get('product.pricelist').read(cr,
-                    uid, check_pricelist_ids, ['currency_id'],
-                    context=context):
+                                                                     uid, check_pricelist_ids, ['currency_id'],
+                                                                     context=context):
                     if cpl_r['currency_id'] and \
-                        cpl_r['currency_id'][0] not in check_ccy_ids:
+                            cpl_r['currency_id'][0] not in check_ccy_ids:
                         check_ccy_ids.append(cpl_r['currency_id'][0])
                 if check_ccy_ids:
                     count = self.pool.get('res.currency').search(cr, uid, [
-                            ('active', '!=', True),
-                            ('id', 'in', check_ccy_ids),
-                        ], count=True, context=context)
+                        ('active', '!=', True),
+                        ('id', 'in', check_ccy_ids),
+                    ], count=True, context=context)
                     if count:
                         return {
                             'value': {'active': False},
@@ -610,8 +737,6 @@ class res_partner(osv.osv):
         Change the procurement method according to the partner type
         '''
         price_obj = self.pool.get('product.pricelist')
-        cur_obj = self.pool.get('res.currency')
-        user_obj = self.pool.get('res.users')
 
         r = {'po_by_project': 'project'}
 
@@ -658,14 +783,14 @@ class res_partner(osv.osv):
 
         # Get all supplier
         tmp_res = super(res_partner, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                                                  order, context=context, count=count)
         if not context.get('product_id', False) or 'choose_supplier' not in context or count:
             return tmp_res
         else:
             # Get all supplier in product form
             args.append(('in_product', '=', True))
             res_in_prod = super(res_partner, self).search(cr, uid, args,
-                    offset, limit, order, context=context, count=count)
+                                                          offset, limit, order, context=context, count=count)
             new_res = []
 
             # Sort suppliers by sequence in product form
@@ -707,6 +832,13 @@ res_partner()
 class res_partner_address(osv.osv):
     _inherit = 'res.partner.address'
 
+    _columns = {
+        'office_name': fields.char(
+            string='Office name',
+            size=128,
+        ),
+    }
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Check if the deleted address is not a system one
@@ -729,8 +861,13 @@ class res_partner_address(osv.osv):
                     )
             except ValueError:
                 pass
+        res = super(res_partner_address, self).unlink(cr, uid, ids, context=context)
 
-        return super(res_partner_address, self).unlink(cr, uid, ids, context=context)
+        #US-1344: treat deletion of partner
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        mdids = ir_model_data_obj.search(cr, 1, [('model', '=', 'res.partner.address'), ('res_id', 'in', ids)])
+        ir_model_data_obj.unlink(cr, uid, mdids, context)
+        return res
 
     def create(self, cr, uid, vals, context=None):
         '''

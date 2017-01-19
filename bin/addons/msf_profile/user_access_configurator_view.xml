@@ -253,6 +253,7 @@
             <field name="name">res.users.form</field>
             <field name="model">res.users</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="base.view_users_form" />
             <field name="arch" type="xml">
             	<data>
@@ -325,6 +326,7 @@
             <field name="name">act.report.xml.view</field>
             <field name="model">ir.actions.report.xml</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="base.act_report_xml_view" />
             <field name="arch" type="xml">
                 <data>
@@ -395,6 +397,7 @@
             <field name="arch" type="xml">
                 <search string="Users">
                     <filter name="show_inactive" string="Show inactive" icon="gtk-ok" domain="[('active', '=', False)]" />
+                    <filter name="show_synchronized" string="Show synchronized" icon="gtk-ok" domain="[('synchronize', '=', True)]"/>
                     <field name="name" />
                     <field name="login" />
                     <field name="address_id" string="Address" />

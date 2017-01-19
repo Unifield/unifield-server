@@ -41,6 +41,8 @@ class SpreadsheetCell(SpreadsheetTools):
                     self.type = 'datetime'
                 elif dtype == 'String':
                     self.type = 'str'
+                    if self.data:
+                        self.data = self.data.replace('&#10;', "\n")
 
     def __str__(self):
         return "%s"%(self.data, )
@@ -129,6 +131,9 @@ class SpreadsheetXML(SpreadsheetTools):
         for wb in self.xmlobj.xpath('//ss:Worksheet', **self.xa):
             ret.append(self.get(wb, 'Name'))
         return ret
+
+    def getNbRows(self,worksheet=1):
+        return len(self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]/ss:Row' % (worksheet,), **self.xa))
 
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)

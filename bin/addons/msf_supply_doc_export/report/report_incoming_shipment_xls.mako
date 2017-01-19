@@ -98,7 +98,8 @@
     </Row>
     
     <Row>
-        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number*')}</Data></Cell>    
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Line number')}</Data></Cell>    
+        <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Ext. Reference')}</Data></Cell>    
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Code*')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Description')}</Data></Cell>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Product Qty*')}</Data></Cell>
@@ -114,6 +115,7 @@
     % for line in o.move_lines:
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.line_number or '')|x}</Data></Cell>
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.purchase_line_id and line.purchase_line_id.external_ref or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.default_code or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_id and line.product_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>

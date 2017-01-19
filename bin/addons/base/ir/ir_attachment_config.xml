@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openerp>
+  <data>
+    <record model="ir.ui.view" id="attachment_config_tree_view">
+      <field name="name">attachment.config.tree</field>
+      <field name="model">attachment.config</field>
+      <field name="type">tree</field>
+      <field name="arch" type="xml">
+        <tree string="Attachment Tree" hide_new_button="1" hide_delete_button="1" >
+          <field name="name"/>
+        </tree>
+      </field>
+    </record>
+
+    <record model="ir.ui.view" id="attachment_config_form_view">
+      <field name="name">attachment.config.form</field>
+      <field name="model">attachment.config</field>
+      <field name="type">form</field>
+      <field name="arch" type="xml">
+        <form string="Attachment configuration" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+            <group col="4" colspan="4">
+                <field name="name" colspan="2"/>
+                <separator string="Old attachments migration"/>
+                <field name="next_migration" colspan="2"
+                    attrs="{'invisible':[('migration_error','=', False), ('migration_date', '!=', False)]}"/>
+                <field name="migration_date" attrs="{'invisible':[('migration_date', '=', False)]}"/>
+                <newline />
+                <field name="is_migration_running" colspan="4" invisible="1"/>
+                <field name="moving_rate" widget="progressbar" colspan="4" attrs="{'invisible':[('is_migration_running','=', False)]}"/>
+                <field name="migration_error" colspan="4" attrs="{'invisible':[('migration_error','=', False)]}"/>
+            </group>
+        </form>
+      </field>
+    </record>
+
+        <record id="ir_actions_server_attachmentconfig" model="ir.actions.server">
+            <field name="code">
+res = obj.pool.get('ir.model.data').get_object_reference(cr, uid, 'base_setup', 'attachment_config_default')
+action = {
+'res_model' : 'attachment.config',
+'view_type' : 'form',
+'view_mode' : 'form,tree',
+'type': 'ir.actions.act_window',
+'res_id' : res[1],
+}</field>
+            <field eval="5" name="sequence"/>
+            <field name="state">code</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_attachment_config"/>
+            <field name="condition">True</field>
+            <field name="name">Open Attachment config</field>
+        </record>
+
+
+        <record id="ir_ui_menu_attachmentconfig" model="ir.ui.menu">
+            <field name="name">Attachment config</field>
+            <field name="parent_id" ref="menu_config"/>
+            <field name="sequence">110</field>
+        </record>
+
+        <record id="ir_values_menuitem_attachmentconfig" model="ir.values">
+            <field name="name">Menuitem attachment config</field>
+            <field name="key2">tree_but_open</field>
+            <field eval="1" name="object"/>
+            <field name="value" eval="'ir.actions.server,%s' % ref('base.ir_actions_server_attachmentconfig')" />
+            <field name="key">action</field>
+            <field name="model">ir.ui.menu</field>
+            <field eval="ref('ir_ui_menu_attachmentconfig')" name="res_id"/>
+        </record>
+
+        <record forcecreate="True" id="ir_cron_migrate_attachment" model="ir.cron">
+            <field name="name">Migrate old attachement to store them in local
+                file system</field>
+            <field eval="False" name="active"/>
+            <field name="user_id" ref="base.user_root"/>
+            <field name="interval_number">24</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">1</field>
+            <field eval="False" name="doall"/>
+            <field name="model">ir.attachment</field>
+            <field name="function">migrate_attachment_from_db_to_file_system</field>
+        </record>
+    </data>
+</openerp>

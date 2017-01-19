@@ -39,7 +39,7 @@ class account_analytic_journal(osv.osv):
 
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True, translate=True),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
 
@@ -97,7 +97,7 @@ class account_journal(osv.osv):
 
     _columns = {
         'name': fields.char('Journal Name', size=64, required=True, translate=True),
-        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance'),
+        'instance_id': fields.many2one('msf.instance', 'Proprietary Instance', required=True),
         'is_current_instance': fields.function(_get_current_instance, type='boolean', method=True, readonly=True, store=True, string="Current Instance", help="Is this journal from my instance?")
     }
 
@@ -135,6 +135,8 @@ class account_journal(osv.osv):
         return super(account_journal, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         analytic_obj = self.pool.get('account.analytic.journal')
         if vals.get('type') and vals.get('type') not in ['situation', 'stock'] and vals.get('analytic_journal_id'):
             analytic_journal = analytic_obj.browse(cr, uid, vals['analytic_journal_id'], context=context)
@@ -203,7 +205,7 @@ class account_journal_fake(osv.osv):
         return ret
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None,
-        count=False):
+               count=False):
         if args is None:
             args = []
         if context:
@@ -213,8 +215,8 @@ class account_journal_fake(osv.osv):
                     exclude_journals = [exclude_journals]
             args.append(('code', 'not in', exclude_journals))
         res = super(account_journal_fake, self).search(cr, uid, args,
-            offset=offset, limit=limit, order=order, context=context,
-            count=count)
+                                                       offset=offset, limit=limit, order=order, context=context,
+                                                       count=count)
         return res
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -254,20 +256,32 @@ class account_analytic_line(osv.osv):
         if instance_id:
             dom = [('instance_id', '=', instance_id)]
             if journal_id and not self.pool.get('account.analytic.journal').search(cr, uid, [('id', '=', journal_id), ('instance_id', '=', instance_id)]):
-                    value['journal_id_fake'] = False
+                value['journal_id_fake'] = False
 
         return {'domain': {'journal_id_fake': dom}, 'value': value}
 
     def create(self, cr, uid, vals, context=None):
         if 'journal_id' in vals:
-            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
+            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id', 'type'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+            # US-1766: in pipe FXA sync update: force currency
+            if journal['type'] == 'cur_adj':
+                currency = self.pool.get('res.users').get_company_currency_id(cr, uid)
+                if currency:
+                    vals['currency_id'] = currency
         return super(account_analytic_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'journal_id' in vals:
-            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
+            journal = self.pool.get('account.analytic.journal').read(cr, uid, vals['journal_id'], ['instance_id', 'type'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+            # US-1766: in pipe FXA sync update: force currency
+            if journal['type'] == 'cur_adj':
+                currency = self.pool.get('res.users').get_company_currency_id(cr, uid)
+                if currency:
+                    vals['currency_id'] = currency
         return super(account_analytic_line, self).write(cr, uid, ids, vals, context=context)
 
     def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
@@ -282,7 +296,7 @@ class account_analytic_line(osv.osv):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
         return super(account_analytic_line, self).search(cr, uid, args, offset,
-                limit, order, context=context, count=count)
+                                                         limit, order, context=context, count=count)
 
 account_analytic_line()
 
@@ -301,7 +315,7 @@ class account_move(osv.osv):
         if instance_id:
             dom = [('instance_id', '=', instance_id)]
             if journal_id and not self.pool.get('account.journal').search(cr, uid, [('id', '=', journal_id), ('instance_id', '=', instance_id)]):
-                    value['journal_id_fake'] = False
+                value['journal_id_fake'] = False
 
         return {'domain': {'journal_id_fake': dom}, 'value': value}
 
@@ -312,6 +326,8 @@ class account_move(osv.osv):
         return super(account_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id', [False])[0]
@@ -348,9 +364,15 @@ class account_move_line(osv.osv):
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
+        elif 'move_id' in vals:
+            move = self.pool.get('account.move').read(cr, uid, vals['move_id'], ['instance_id'], context=context)
+            if move['instance_id']:
+                vals['instance_id'] = move['instance_id'][0]
         return super(account_move_line, self).create(cr, uid, vals, context=context, check=check)
 
     def write(self, cr, uid, ids, vals, context=None, check=True, update_check=True):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
@@ -368,7 +390,7 @@ class account_move_line(osv.osv):
                 instance_ids = [instance_ids]
             args.append(('instance_id', 'in', instance_ids))
         return super(account_move_line, self).search(cr, uid, args, offset,
-                limit, order, context=context, count=count)
+                                                     limit, order, context=context, count=count)
 
 account_move_line()
 
@@ -401,6 +423,8 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'journal_id' in vals:
             journal = self.pool.get('account.journal').read(cr, uid, vals['journal_id'], ['instance_id'], context=context)
             vals['instance_id'] = journal.get('instance_id')[0]
@@ -423,6 +447,8 @@ class account_bank_statement_line(osv.osv):
         return super(account_bank_statement_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'statement_id' in vals:
             register = self.pool.get('account.bank.statement').read(cr, uid, vals['statement_id'], ['instance_id'], context=context)
             vals['instance_id'] = register.get('instance_id')[0]
@@ -463,6 +489,8 @@ class account_cashbox_line(osv.osv):
         return super(account_cashbox_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         if 'starting_id' in vals:
             register = self.pool.get('account.bank.statement').read(cr, uid, vals['starting_id'], ['instance_id'], context=context)
             vals['instance_id'] = register.get('instance_id')[0]
@@ -546,6 +574,8 @@ class account_analytic_account(osv.osv):
         """
         Check FPs
         """
+        if not ids:
+            return True
         if context is None:
             context = {}
 

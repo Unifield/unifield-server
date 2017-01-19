@@ -37,6 +37,8 @@ class account_bank_statement(osv.osv):
         return super(account_bank_statement, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if not ids:
+            return True
         res = super(account_bank_statement, self).write(cr, uid, ids, vals, context=context)
         account_bank_statement_line_obj = self.pool.get('account.bank.statement.line')
         for statement in self.browse(cr, uid, ids, context):
@@ -71,7 +73,7 @@ class account_bank_statement(osv.osv):
         res = {}
 
         company_currency_id = res_users_obj.browse(cursor, user, user,
-                context=context).company_id.currency_id.id
+                                                   context=context).company_id.currency_id.id
 
         statements = self.browse(cursor, user, ids, context=context)
         for statement in statements:
@@ -82,14 +84,14 @@ class account_bank_statement(osv.osv):
                     if line.account_id.id == \
                             statement.journal_id.default_debit_account_id.id:
                         res[statement.id] += res_currency_obj.compute(cursor,
-                                user, company_currency_id, currency_id,
-                                line.debit, context=context)
+                                                                      user, company_currency_id, currency_id,
+                                                                      line.debit, context=context)
                 else:
                     if line.account_id.id == \
                             statement.journal_id.default_credit_account_id.id:
                         res[statement.id] -= res_currency_obj.compute(cursor,
-                                user, company_currency_id, currency_id,
-                                line.credit, context=context)
+                                                                      user, company_currency_id, currency_id,
+                                                                      line.credit, context=context)
             if statement.state == 'draft':
                 for line in statement.line_ids:
                     res[statement.id] += line.amount
@@ -108,7 +110,7 @@ class account_bank_statement(osv.osv):
         res_currency_obj = self.pool.get('res.currency')
         res_users_obj = self.pool.get('res.users')
         default_currency = res_users_obj.browse(cursor, user,
-                user, context=context).company_id.currency_id
+                                                user, context=context).company_id.currency_id
         for statement in self.browse(cursor, user, ids, context=context):
             currency = statement.journal_id.currency
             if not currency:
@@ -116,7 +118,7 @@ class account_bank_statement(osv.osv):
             res[statement.id] = currency.id
         currency_names = {}
         for currency_id, currency_name in res_currency_obj.name_get(cursor,
-                user, [x for x in res.values()], context=context):
+                                                                    user, [x for x in res.values()], context=context):
             currency_names[currency_id] = currency_name
         for statement_id in res.keys():
             currency_id = res[statement_id]
@@ -130,27 +132,28 @@ class account_bank_statement(osv.osv):
         'name': fields.char('Name', size=64, required=True, help='if you give the Name other then /, its created Accounting Entries Move will be with same name as statement name. This allows the statement entries to have the same references than the statement itself', states={'confirm': [('readonly', True)]}),
         'date': fields.date('Date', required=True, states={'confirm': [('readonly', True)]}),
         'journal_id': fields.many2one('account.journal', 'Journal', required=True,
-            readonly=True, states={'draft':[('readonly',False)]}),
+                                      readonly=True, states={'draft':[('readonly',False)]}),
         'period_id': fields.many2one('account.period', 'Period', required=True,
-            states={'confirm':[('readonly', True)]}),
+                                     states={'confirm':[('readonly', True)]}),
         'balance_start': fields.float('Starting Balance', digits_compute=dp.get_precision('Account'),
-            states={'confirm':[('readonly',True)]}),
+                                      states={'confirm':[('readonly',True)]}),
         'balance_end_real': fields.float('Ending Balance', digits_compute=dp.get_precision('Account'),
-            states={'confirm':[('readonly', True)]}),
+                                         states={'confirm':[('readonly', True)]}),
         'balance_end': fields.function(_end_balance, method=True, string='Balance'),
         'company_id': fields.related('journal_id', 'company_id', type='many2one', relation='res.company', string='Company', store=True, readonly=True),
         'line_ids': fields.one2many('account.bank.statement.line',
-            'statement_id', 'Statement lines',
-            states={'confirm':[('readonly', True)]}),
+                                    'statement_id', 'Statement lines',
+                                    states={'confirm':[('readonly', True)]}),
+        'deleted_line_ids': fields.one2many('account.bank.statement.line.deleted', 'statement_id', 'Statement lines'),
         'move_line_ids': fields.one2many('account.move.line', 'statement_id',
-            'Entry lines', states={'confirm':[('readonly',True)]}),
+                                         'Entry lines', states={'confirm':[('readonly',True)]}),
         'state': fields.selection([('draft', 'Draft'),('confirm', 'Confirmed')],
-            'State', required=True,
-            states={'confirm': [('readonly', True)]}, readonly="1",
-            help='When new statement is created the state will be \'Draft\'. \
+                                  'State', required=True,
+                                  states={'confirm': [('readonly', True)]}, readonly="1",
+                                  help='When new statement is created the state will be \'Draft\'. \
             \n* And after getting confirmation from the bank it will be in \'Confirmed\' state.'),
         'currency': fields.function(_currency, method=True, string='Currency',
-            type='many2one', relation='res.currency'),
+                                    type='many2one', relation='res.currency'),
         'account_id': fields.related('journal_id', 'default_debit_account_id', type='many2one', relation='account.account', string='Account used in this journal', readonly=True, help='used in statement reconciliation domain, but shouldn\'t be used elswhere.'),
     }
 
@@ -226,10 +229,10 @@ class account_bank_statement(osv.osv):
 
         acc_cur = ((st_line.amount<=0) and st.journal_id.default_debit_account_id) or st_line.account_id
         context.update({
-                'res.currency.compute.account': acc_cur,
-            })
+            'res.currency.compute.account': acc_cur,
+        })
         amount = res_currency_obj.compute(cr, uid, st.currency.id,
-                company_currency_id, st_line.amount, context=context)
+                                          company_currency_id, st_line.amount, context=context)
 
         val = {
             'name': st_line.name,
@@ -249,13 +252,13 @@ class account_bank_statement(osv.osv):
 
         if st.currency.id <> company_currency_id:
             amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-                        st.currency.id, amount, context=context)
+                                                  st.currency.id, amount, context=context)
             val['amount_currency'] = -amount_cur
 
         if st_line.account_id and st_line.account_id.currency_id and st_line.account_id.currency_id.id <> company_currency_id:
             val['currency_id'] = st_line.account_id.currency_id.id
             amount_cur = res_currency_obj.compute(cr, uid, company_currency_id,
-                    st_line.account_id.currency_id.id, amount, context=context)
+                                                  st_line.account_id.currency_id.id, amount, context=context)
             val['amount_currency'] = -amount_cur
 
         move_line_id = account_move_line_obj.create(cr, uid, val, context=context)
@@ -282,15 +285,15 @@ class account_bank_statement(osv.osv):
             'period_id': st.period_id.id,
             'amount_currency': amount_currency,
             'currency_id': currency_id,
-            }, context=context)
+        }, context=context)
 
         for line in account_move_line_obj.browse(cr, uid, [x.id for x in
-                account_move_obj.browse(cr, uid, move_id,
-                    context=context).line_id],
-                context=context):
+                                                           account_move_obj.browse(cr, uid, move_id,
+                                                                                   context=context).line_id],
+                                                 context=context):
             if line.state <> 'valid':
                 raise osv.except_osv(_('Error !'),
-                        _('Journal Item "%s" is not valid') % line.name)
+                                     _('Journal Item "%s" is not valid') % line.name)
 
         # Bank statements will not consider boolean on journal entry_posted
         account_move_obj.post(cr, uid, [move_id], context=context)
@@ -303,8 +306,8 @@ class account_bank_statement(osv.osv):
         st = self.browse(cr, uid, st_id, context=context)
         if not (abs((st.balance_end or 0.0) - st.balance_end_real) < 0.0001):
             raise osv.except_osv(_('Error !'),
-                    _('The statement balance is incorrect !\n') +
-                    _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
+                                 _('The statement balance is incorrect !\n') +
+                                 _('The expected balance (%.2f) is different than the computed one. (%.2f)') % (st.balance_end_real, st.balance_end))
         return True
 
     def statement_close(self, cr, uid, ids, journal_type='bank', context=None):
@@ -329,7 +332,7 @@ class account_bank_statement(osv.osv):
             if (not st.journal_id.default_credit_account_id) \
                     or (not st.journal_id.default_debit_account_id):
                 raise osv.except_osv(_('Configuration Error !'),
-                        _('Please verify that an account is defined in the journal.'))
+                                     _('Please verify that an account is defined in the journal.'))
 
             if not st.name == '/':
                 st_number = st.name
@@ -343,7 +346,7 @@ class account_bank_statement(osv.osv):
             for line in st.move_line_ids:
                 if line.state <> 'valid':
                     raise osv.except_osv(_('Error !'),
-                            _('The account entries lines are not in valid state.'))
+                                         _('The account entries lines are not in valid state.'))
             for st_line in st.line_ids:
                 if st_line.analytic_account_id:
                     if not st.journal_id.analytic_journal_id:
@@ -455,16 +458,16 @@ class account_bank_statement_line(osv.osv):
             ('supplier','Supplier'),
             ('customer','Customer'),
             ('general','General')
-            ], 'Type', required=True),
+        ], 'Type', required=True),
         'partner_id': fields.many2one('res.partner', 'Partner'),
         'account_id': fields.many2one('account.account','Account',
-            required=True),
+                                      required=True, hide_default_menu=True),
         'statement_id': fields.many2one('account.bank.statement', 'Statement',
-            select=True, required=True, ondelete='cascade'),
+                                        select=True, required=True, ondelete='cascade'),
         'analytic_account_id': fields.many2one('account.analytic.account', 'Analytic Account'),
         'move_ids': fields.many2many('account.move',
-            'account_bank_statement_line_move_rel', 'move_id','statement_id',
-            'Moves'),
+                                     'account_bank_statement_line_move_rel', 'move_id','statement_id',
+                                     'Moves'),
         'ref': fields.char('Reference', size=32),
         'note': fields.text('Notes'),
         'sequence': fields.integer('Sequence', help="Gives the sequence order when displaying a list of bank statement lines."),
@@ -477,5 +480,21 @@ class account_bank_statement_line(osv.osv):
     }
 
 account_bank_statement_line()
+
+
+class account_bank_statement_line_deleted(osv.osv):
+    '''
+    Used to keep track of the sequence number for the deleted register lines
+    '''
+
+    _order = "statement_id desc, sequence"
+    _name = "account.bank.statement.line.deleted"
+    _description = "Deleted Bank Statement Line"
+    _columns = {
+        'statement_id': fields.many2one('account.bank.statement', 'Statement', required=True, select=1),
+        'sequence': fields.char('Sequence', size=64, required=True, help='Gives the old sequence of the deleted line.'),
+    }
+
+account_bank_statement_line_deleted()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

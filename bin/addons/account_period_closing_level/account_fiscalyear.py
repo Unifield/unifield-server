@@ -21,7 +21,6 @@
 ##############################################################################
 
 from osv import fields, osv
-from tools.translate import _
 import datetime
 from dateutil.relativedelta import relativedelta
 from account_period_closing_level import ACCOUNT_FY_STATE_SELECTION
@@ -39,7 +38,7 @@ class account_fiscalyear(osv.osv):
             ids = [ids]
 
         level = self.pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.instance_id.level
+                                                  context=context)[0].company_id.instance_id.level
         ayec_obj = self.pool.get('account.year.end.closing')
 
         # check matching of:
@@ -53,7 +52,7 @@ class account_fiscalyear(osv.osv):
             hq = False
 
             prev_fy_id = ayec_obj._get_next_fy_id(cr, uid, fy,
-                get_previous=True, context=context)
+                                                  get_previous=True, context=context)
             if prev_fy_id:
                 prev_fy = self.browse(cr, uid, prev_fy_id, context=context)
                 prev_fy_ok = False
@@ -67,33 +66,33 @@ class account_fiscalyear(osv.osv):
             if prev_fy_ok:
                 mission = level == 'coordo' and fy.state == 'draft' \
                     and all([ p.state in ('mission-closed', 'done') \
-                        for p in fy.period_ids if 0 < p.number < 16 ]) \
+                              for p in fy.period_ids if 0 < p.number < 16 ]) \
                     or False
                 hq = level == 'section' and fy.state in ('draft', 'mission-closed') \
                     and all([ p.state == 'done' \
-                        for p in fy.period_ids if 0 < p.number < 16 ]) \
+                              for p in fy.period_ids if 0 < p.number < 16 ]) \
                     or False
 
             res[fy.id] = {
                 'is_mission_closable': mission,
                 'is_hq_closable': hq,
                 'can_reopen_mission': level == 'coordo' \
-                    and fy.state == 'mission-closed' or False,
+                and fy.state == 'mission-closed' or False,
             }
         return res
 
     _columns = {
         'state': fields.selection(ACCOUNT_FY_STATE_SELECTION, 'State',
-            readonly=True),
+                                  readonly=True),
         'is_mission_closable': fields.function(_get_is_closable, type='boolean',
-            method=True, multi="closable",
-            string='Mission Closable ? (all periods Mission closed)'),
+                                               method=True, multi="closable",
+                                               string='Mission Closable ? (all periods Mission closed)'),
         'is_hq_closable': fields.function(_get_is_closable, type='boolean',
-            method=True, multi="closable",
-            string='HQ Closable ? (all periods HQ closed)'),
+                                          method=True, multi="closable",
+                                          string='HQ Closable ? (all periods HQ closed)'),
         'can_reopen_mission': fields.function(_get_is_closable, type='boolean',
-            method=True, multi="closable",
-            string='Mission reopen available ?'),
+                                              method=True, multi="closable",
+                                              string='Mission reopen available ?'),
     }
 
     _defaults = {
@@ -135,6 +134,8 @@ class account_fiscalyear(osv.osv):
                     'special': True,
                     'number': period_nb,
                 })
+        # create extra period 16
+        self.pool.get('account.year.end.closing').create_periods(cr, uid, fy.id, periods_to_create=[16], context=context)
         return True
 
     def create(self, cr, uid, vals, context=None):
@@ -149,7 +150,7 @@ class account_fiscalyear(osv.osv):
 
         # update fiscalyear state
         self.pool.get('account.fiscalyear.state').update_state(cr, uid, [res],
-            context=context)
+                                                               context=context)
 
         # Prepare some values
         current_instance_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.instance_id.id
@@ -169,11 +170,11 @@ class account_fiscalyear(osv.osv):
             context = {}
 
         res = super(account_fiscalyear, self).write(cr, uid, ids, vals,
-            context=context)
+                                                    context=context)
 
         # update fiscalyear state
         self.pool.get('account.fiscalyear.state').update_state(cr, uid, ids,
-            context=context)
+                                                               context=context)
 
         return res
 
@@ -188,8 +189,8 @@ class account_fiscalyear(osv.osv):
         # open year end wizard
         context['fy_id'] = fy_id
         view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid,
-            'account_period_closing_level',
-            'wizard_view_account_year_end_closing')[1]
+                                                                      'account_period_closing_level',
+                                                                      'wizard_view_account_year_end_closing')[1]
         return {
             'name': 'Close the fiscal year',
             'type': 'ir.actions.act_window',

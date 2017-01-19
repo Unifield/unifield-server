@@ -77,13 +77,13 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         return res
 
     def sum_dr(self):
-        if self.res_bl['type'] == _('Net Profit'):
-            self.result_sum_dr += self.res_bl['balance']*-1
+        if self.res_bl['type'] == _('Net Loss'):
+            self.result_sum_dr += self.res_bl['balance']
         return self.result_sum_dr
 
     def sum_cr(self):
-        if self.res_bl['type'] == _('Net Loss'):
-            self.result_sum_cr += self.res_bl['balance']
+        if self.res_bl['type'] == _('Net Profit'):
+            self.result_sum_dr += self.res_bl['balance']
         return self.result_sum_cr
 
     def get_pl_balance(self):
@@ -117,6 +117,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
         ctx['state'] = data['form'].get('target_move', 'all')
         if 'instance_ids' in data['form']:
             ctx['instance_ids'] = data['form']['instance_ids']
+        ctx['period0'] = True  # US-1296: include IB entries in this report
 
         cal_list = {}
         pl_dict = {}
@@ -137,7 +138,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             'code': self.res_bl['type'],
             'name': self.res_bl['type'],
             'level': False,
-            'balance':self.res_bl['balance'],
+            'balance': self.res_bl['balance'],
         }
         for typ in types:
             accounts_temp = []
@@ -183,6 +184,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                                 'cash',
                                 'asset',
                                 'stock',
+                                'receivables',  # added US-1318
                                 )) or False
                 elif  typ == 'liability':
                     # US-227/1, breakdown in liability:
@@ -194,6 +196,7 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                             and account.user_type.code in (
                                 'debt',
                                 'equity',
+                                'payables',  # added US-1318
                                 )) or False
                 if register_account:
                     account_dict = {
@@ -329,9 +332,11 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
             if data['form'].get('instance_ids', False):
                 self.cr.execute('select code from msf_instance where id IN %s',
                     (tuple(data['form']['instance_ids']),))
+                instances = [x for x, in self.cr.fetchall()]
             else:
-                self.cr.execute('select code from msf_instance')
-            instances = [x for x, in self.cr.fetchall()]
+                # US-1166: mission only instances if none provided
+                instances = self._get_instances(get_code=True,
+                    mission_filter=True)
         return ', '.join(instances)
 
 report_sxw.report_sxw('report.account.balancesheet.horizontal', 'account.account',

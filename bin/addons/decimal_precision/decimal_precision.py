@@ -65,6 +65,8 @@ class decimal_precision(osv.osv):
         return res
 
     def write(self, cr, uid, ids, data, *args, **argv):
+        if not ids:
+            return True
         res = super(decimal_precision, self).write(cr, uid, ids, data, *args, **argv)
         self.precision_get.clear_cache(cr.dbname)
         self.computation_get.clear_cache(cr.dbname)

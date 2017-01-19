@@ -63,6 +63,7 @@
 			<field name="name">view.picking.out.search</field>
 			<field name="model">stock.picking</field>
 			<field name="type">search</field>
+            <field name="priority">20</field>
 			<field name="inherit_id" ref="stock.view_picking_out_search" />
 			<field name="arch" type="xml">
 				<data>
@@ -76,6 +77,7 @@
 			<field name="name">stock.picking.out.tree</field>
 			<field name="model">stock.picking</field>
 			<field name="type">tree</field>
+            <field name="priority">20</field>
 			<field name="inherit_id" ref="stock.view_picking_out_tree" />
 			<field name="arch" type="xml">
 				<data>
@@ -101,6 +103,7 @@
 			<field name="name">stock.warehouse</field>
 			<field name="model">stock.warehouse</field>
 			<field name="type">form</field>
+            <field name="priority">25</field>
 			<field name="inherit_id" ref="stock.view_warehouse" />
 			<field name="arch" type="xml">
 				<data>
@@ -152,6 +155,7 @@
 					<field name="sale_id" invisible="True" />
 					<field name="reason_type_id" />
 					<field name="origin"/>
+					<field name="incoming_id" />
 					<field name="overall_qty" invisible="True" />
 					<field name="date"/>
 					<field name="min_date" string="Expected Pick Date" />
@@ -189,7 +193,7 @@
 			<!-- but then other form view also use it... -->
 			<!-- <field eval="11" name="priority"/> -->
 			<field name="arch" type="xml">
-				<form string="Picking Ticket">
+				<form string="Picking Ticket" noteditable="not __id">
 					<group col="6" colspan="4">
 						<group colspan="4" col="4">
 							<field name="name" readonly="1"/>
@@ -202,6 +206,7 @@
 								   attrs="{'required': [('subtype', 'in', ('picking', 'ppl'))], 'readonly': [('partner_id2', '=', False)]}" />
 							<field name="backorder_id" readonly="1" />
 							<field name="reason_type_id" widget="selection" domain="[('outgoing_ok', '=', True)]" attrs="{'readonly': [('from_wkf', '=', True)]}"/>
+							<field name="incoming_id" readonly="True" />
 						</group>
 						<group colspan="2" col="2">
 							<field name="date" readonly="1"/>
@@ -227,6 +232,7 @@
 								<tree string="Stock Moves" noteditable="fake_state in ('assigned', 'cancel')" hide_new_button="context.get('from_wkf')" hide_delete_button="True"
 								colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}"/>
+                                    <field name="comment" />
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
@@ -279,6 +285,7 @@
 											domain="[('uom_by_product', '=', product_id)]"
 											 />
 										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
+										<field name="comment" colspan="4" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -612,6 +619,7 @@
 							<field colspan="4" name="move_lines" nolabel="1" widget="one2many_list" default_get="{'move_line':move_lines and [move_lines[-1]] or [], 'address_out_id': address_id}"  attrs="{'readonly': [ ('from_wkf', '=', True),('state','in',['draft','confirmed','assigned']) ]}" >
 								<tree string="Stock Moves" hide_new_button="True" colors="red: inactive_product==True">
                                     <field name="product_id" context="{'available_for_restriction': 'picking', 'search_default_not_restricted': 1}" />
+                                    <field name="comment" />
 									<field name="composition_list_id" />
 									<field name="product_qty" string="Qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)"/>
 									<field name="product_uom" string="UoM"/>
@@ -649,9 +657,10 @@
                                         <field name="composition_list_id" invisible="True" />
 										<field name="product_qty" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" />
 										<field name="product_uom" string="Unit Of Measure" colspan="2" domain="[('uom_by_product', '=', product_id)]"/>
-										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" colspan="4" />
-										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="4" />
+										<field name="product_uos_qty" on_change="onchange_uos_quantity(product_id, product_uos_qty, product_uos, product_uom)" />
+										<field name="product_uos" on_change="onchange_quantity(product_id, product_qty, product_uom, product_uos)" colspan="2" />
 										<field name="product_packaging"  domain="[('product_id','=',product_id)]" colspan="4" invisible="1" />
+										<field name="comment" colspan="4" />
 									</group>
 									<group colspan="2" col="2">
 										<separator string="Locations" colspan="2" />
@@ -1267,6 +1276,7 @@
 									<field name="location_id" />
 									<field name="location_dest_id" />
 									<field name="state" />
+									<field name="comment" />
 									<field name="move_lines" nolabel="True" colspan="4" mode="tree" readonly="True">
 										<tree colors="red: inactive_product==True">
 											<field name="name" />

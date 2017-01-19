@@ -42,17 +42,18 @@ class stock_fill_inventory(osv.osv_memory):
         if context is None:
             context = {}
         super(stock_fill_inventory, self).view_init(cr, uid, fields_list, context=context)
-        
+
         if len(context.get('active_ids',[])) > 1:
             raise osv.except_osv(_('Error!'), _('You cannot perform this operation on more than one Stock Inventories.'))
-        
+
         if context.get('active_id', False):
-            stock = self.pool.get('stock.inventory').browse(cr, uid, context.get('active_id', False))
-            
-            if stock.state == 'done':
+            stock = self.pool.get('stock.inventory').read(cr, uid,
+                    context.get('active_id', False), ['state'])
+
+            if stock['state'] == 'done':
                 raise osv.except_osv(_('Warning!'), _('Stock Inventory is already Validated.'))
         return True
-    
+
     def _hook_fill_datas(self, cr, uid, *args, **kwargs):
         '''
         Hook to add data values in fill inventory line data
@@ -76,12 +77,10 @@ class stock_fill_inventory(osv.osv_memory):
 
         inventory_line_obj = self.pool.get('stock.inventory.line')
         location_obj = self.pool.get('stock.location')
-        product_obj = self.pool.get('product.product')
         move_obj = self.pool.get('stock.move')
         
         fill_inventory = self.browse(cr, uid, ids[0], context=context)
         res = {}
-        res_location = {}
         
         if fill_inventory.recursive:
             location_ids = location_obj.search(cr, uid, [('location_id',

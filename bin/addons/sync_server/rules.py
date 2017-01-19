@@ -27,7 +27,7 @@ from psycopg2 import IntegrityError
 from datetime import datetime
 
 import logging
-from sync_common import *
+from sync_common import MODELS_TO_IGNORE_DOMAIN, sync_log
 
 _field2type = {
     'text'      : 'str',
@@ -55,7 +55,7 @@ class ir_model_field(osv.osv):
     def search(self, cr, uid, args, offset=0, limit=80, order='', context=None, count=False):
         args = self._modify_search_args(args)
         return super(ir_model_field, self).search(cr, uid, args, offset, limit,
-                order, context, count)
+                                                  order, context, count)
 
 ir_model_field()
 
@@ -80,6 +80,7 @@ class sync_rule(osv.osv):
 
     _name = "sync_server.sync_rule"
     _description = "Synchronization Rule"
+    _trace = True
 
     _logger = logging.getLogger('sync.server')
 
@@ -115,11 +116,11 @@ class sync_rule(osv.osv):
         'type_id': fields.many2one('sync.server.group_type','Group Type', select=True),
         'type_name': fields.related('type_id', 'name', type='char', string='Group Name'),
         'direction': fields.selection([
-                    ('up', 'Up'),
-                    ('down', 'Down'),
-                    ('bidirectional', 'Bidirectional'),
-                    ('bi-private', 'Bidirectional-Private'),
-                    ], 'Directionality', required = True,),
+            ('up', 'Up'),
+            ('down', 'Down'),
+            ('bidirectional', 'Bidirectional'),
+            ('bi-private', 'Bidirectional-Private'),
+        ], 'Directionality', required = True,),
         'domain':fields.text('Domain', required = False),
         'owner_field':fields.char('Owner Field', size = 64, required = False),
         'sequence_number': fields.integer('Sequence', required = True, group_operator="count"),
@@ -167,6 +168,10 @@ class sync_rule(osv.osv):
         return self.get_groups(cr, uid, children_list, context=context)
 
     def _get_rules_per_group(self, cr, uid, entity, context=None):
+        if not entity.group_ids:
+            raise osv.except_osv(_("Warning"), "Your instace does not belong "
+                                 "to any group. Instance must be member of at least one "
+                                 "group to be able to synchronize.")
         cr.execute("""SELECT g.id, array_agg(r.id)
                       FROM sync_server_entity_group g
                            JOIN sync_server_group_type t ON (g.type_id=t.id or t.name = 'USB')
@@ -237,13 +242,13 @@ class sync_rule(osv.osv):
         if ids:
             rules_serialization_mapping = dict(
                 sum((c._rules_serialization_mapping.items()
-                         for c in reversed(self.__class__.mro())
-                         if hasattr(c, '_rules_serialization_mapping')), [])
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
             )
             for rule in self.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                        in rules_serialization_mapping.items()
+                    in rules_serialization_mapping.items()
                 ))
         return rules_data
 
@@ -331,6 +336,9 @@ class sync_rule(osv.osv):
             if model_ids:
                 values['model_ref'] = model_ids[0]
 
+        if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
+            values['included_fields'] = self._compute_included_field(cr, uid,
+                                                                     [], values['included_fields_sel'][0][2], context)
         new_id = super(sync_rule, self).create(cr, uid, values, context=context)
         check = self.validate_rules(cr, uid, [new_id], context=context)
         if check['state'] != 'valid':
@@ -339,6 +347,8 @@ class sync_rule(osv.osv):
         return new_id
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if 'included_fields_sel' in values and values.get('included_fields_sel')[0][2]:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
 
@@ -390,8 +400,8 @@ class sync_rule(osv.osv):
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
                 if not self.pool.get('ir.model.fields').search(cr, uid,
-                    [('model_id','in', model_ids),('name','=',base_field)],
-                    limit=1, order='NO_ORDER', context=context): raise KeyError
+                                                               [('model_id','in', model_ids),('name','=',base_field)],
+                                                               limit=1, order='NO_ORDER', context=context): raise KeyError
         except TypeError:
             message += "failed (Fields list should be a list of string)!\n"
             error = True
@@ -509,8 +519,8 @@ class sync_rule(osv.osv):
 
             message.append("* Sequence is unique... ")
             if self.search(cr, uid,
-                    [('sequence_number','=',rec.sequence_number)],
-                    order='NO_ORDER', context=context, count=True) > 1:
+                           [('sequence_number','=',rec.sequence_number)],
+                           order='NO_ORDER', context=context, count=True) > 1:
                 message.append("failed!\n")
                 error = True
             else:
@@ -536,7 +546,7 @@ class sync_rule(osv.osv):
             'type': 'ir.actions.act_window',
             'context' : context,
             'target' : 'new',
-            }
+        }
 
 sync_rule()
 
@@ -547,6 +557,7 @@ class message_rule(osv.osv):
 
     _name = "sync_server.message_rule"
     _description = "Message Rule"
+    _trace = True
 
     _logger = logging.getLogger('sync.server')
 
@@ -600,9 +611,9 @@ class message_rule(osv.osv):
         rules_ids = []
         for group in entity.group_ids:
             domain = ['|', '|',
-                    '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
-                    '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True),
-                    ('type_name', '=', 'USB')]
+                      '&', ('group_id', '=', group.id), ('applies_to_type', '=', False),
+                      '&', ('type_id', '=', group.type_id.id), ('applies_to_type', '=', True),
+                      ('type_name', '=', 'USB')]
             ids = self.search(cr, uid, domain, context=context)
             if ids:
                 rules_ids.extend(ids)
@@ -629,13 +640,13 @@ class message_rule(osv.osv):
         if ids:
             rules_serialization_mapping = dict(
                 sum((c._rules_serialization_mapping.items()
-                         for c in reversed(self.__class__.mro())
-                         if hasattr(c, '_rules_serialization_mapping')), [])
+                     for c in reversed(self.__class__.mro())
+                     if hasattr(c, '_rules_serialization_mapping')), [])
             )
             for rule in self.browse(cr, uid, ids, context=context):
                 rules_data.append(dict(
                     (data, rule[column]) for column, data
-                        in rules_serialization_mapping.items()
+                    in rules_serialization_mapping.items()
                 ))
         return rules_data
 
@@ -654,6 +665,8 @@ class message_rule(osv.osv):
         return new_id
 
     def write(self, cr, uid, ids, values, context=None):
+        if not ids:
+            return True
         if 'included_fields_sel' in values:
             values['included_fields'] = self._compute_included_field(cr, uid, ids, values['included_fields_sel'][0][2], context)
 
@@ -691,8 +704,8 @@ class message_rule(osv.osv):
                 if not isinstance(field, str): raise TypeError
                 model_ids = self.pool.get(rec.model_id).get_model_ids(cr, uid, context=context)
                 if not self.pool.get('ir.model.fields').search(cr, uid,
-                    [('model_id','in', model_ids),('name','=',base_field)],
-                    limit=1, order='NO_ORDER', context=context):
+                                                               [('model_id','in', model_ids),('name','=',base_field)],
+                                                               limit=1, order='NO_ORDER', context=context):
                     field_error = field
                     raise KeyError
         except TypeError:
@@ -720,8 +733,8 @@ class message_rule(osv.osv):
             message.append(_("* Destination Name... "))
             try:
                 field_ids = self.pool.get('ir.model.fields').search(cr, uid,
-                        [('model','=',rec.model_id),('name','=',rec.destination_name)],
-                        limit=1, order='NO_ORDER', context=context)
+                                                                    [('model','=',rec.model_id),('name','=',rec.destination_name)],
+                                                                    limit=1, order='NO_ORDER', context=context)
                 if not field_ids: raise StandardError
             except Exception, e:
                 sync_log(self, e, 'error')
@@ -769,8 +782,8 @@ class message_rule(osv.osv):
             # Sequence is unique
             message.append("* Sequence is unique... ")
             if self.search(cr, uid,
-                    [('sequence_number','=',rec.sequence_number)],
-                    order='NO_ORDER', context=context, count=True) > 1:
+                           [('sequence_number','=',rec.sequence_number)],
+                           order='NO_ORDER', context=context, count=True) > 1:
                 message.append("failed!\n")
                 error = True
             else:
@@ -796,7 +809,7 @@ class message_rule(osv.osv):
             'type': 'ir.actions.act_window',
             'context' : context,
             'target' : 'new',
-            }
+        }
 
 message_rule()
 
@@ -835,10 +848,10 @@ class validation_message(osv.osv):
     _rec_name = 'state'
 
     _columns = {
-                'message' : fields.text('Message'),
-                'sync_rule' : fields.many2one('sync_server.sync_rule', 'Sync Rule'),
-                'message_rule' : fields.many2one('sync_server.message_rule', 'Mesage Rule'),
-                'state' : fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
+        'message' : fields.text('Message'),
+        'sync_rule' : fields.many2one('sync_server.sync_rule', 'Sync Rule'),
+        'message_rule' : fields.many2one('sync_server.message_rule', 'Mesage Rule'),
+        'state' : fields.selection([('valid','Valid'),('invalid','Invalid'),], 'Status', required = True, readonly = True),
     }
 
     def validate(self, cr, uid, ids, context=None):

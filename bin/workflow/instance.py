@@ -58,8 +58,6 @@ def update(cr, inst_id, ident):
     return _update_end(cr, inst_id, ident)
 
 def _update_end(cr, inst_id, ident):
-    cr.execute('select wkf_id from wkf_instance where id=%s', (inst_id,))
-    wkf_id = cr.fetchone()[0]
     cr.execute('select state,flow_stop from wkf_workitem w left join wkf_activity a on (a.id=w.act_id) where w.inst_id=%s', (inst_id,))
     ok=True
     for r in cr.fetchall():

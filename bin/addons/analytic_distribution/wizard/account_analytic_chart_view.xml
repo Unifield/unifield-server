@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE WIZARD [
+    <!ENTITY wizard_template SYSTEM "../../resource/wizard_template_view.xml">
+]>
+
 <openerp>
     <data>
     
@@ -6,6 +11,7 @@
             <field name="name">account.chart.form</field>
             <field name="model">account.analytic.chart</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.account_analytic_chart_view"/>
             <field name="arch" type="xml">
                 <data>
@@ -22,8 +28,9 @@
                         <separator string="Periods"/>
                     </xpath>
                     <xpath expr="//label[@string='(Keep empty to open the current situation)']" position="replace">
-                        <separator string="Inactive accounts" colspan="4"/>
+                        <separator string="Accounts" colspan="4"/>
                         <field name="show_inactive"/>
+                         <field name="granularity"/>
                         <newline/>
                         <separator string="Currency" colspan="4"/>
                         <field name="currency_id"/>
@@ -41,6 +48,8 @@
                             <label string="" colspan="1"/>
                             <button icon="gtk-print" string="Export" name="button_export" type="object" colspan="1"/>
                         </group>
+                        <!-- to be able to store the wizard values -->
+                        &wizard_template;
                     </xpath>
                 </data>
             </field>

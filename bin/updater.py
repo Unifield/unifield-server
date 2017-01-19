@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Unifield module to upgrade the instance to a next version of Unifield
 Beware that we expect to be in the bin/ directory to proceed!!
@@ -11,12 +12,11 @@ from datetime import datetime
 from base64 import b64decode
 from StringIO import StringIO
 import logging
-import time
 
 if sys.version_info >= (2, 6, 6):
-    from zipfile import ZipFile, ZipInfo
+    from zipfile import ZipFile
 else:
-    from zipfile266 import ZipFile, ZipInfo
+    from zipfile266 import ZipFile
 
 __all__ = ('isset_lock', 'server_version', 'base_version', 'do_prepare', 'base_module_upgrade', 'restart_server')
 
@@ -60,8 +60,8 @@ def unset_lock(file=None):
     global exec_path
     if file is None: file = lock_file
     with open(file, "r") as f:
-         data = eval(f.read().strip())
-         exec_path = data['path']
+        data = eval(f.read().strip())
+        exec_path = data['path']
     os.unlink(file)
 
 def parse_version_file(filepath):
@@ -80,7 +80,7 @@ def parse_version_file(filepath):
                 versions.append({'md5sum': md5sum,
                                  'date': date,
                                  'name': version_name,
-                                })
+                                 })
             except AttributeError:
                 raise Exception("Unable to parse version from file `%s': %s" % (filepath, line))
     return versions
@@ -276,8 +276,8 @@ def do_update():
             if webupdated and os.name == "nt":
                 try:
                     import subprocess
-                    retcode = subprocess.call('net stop "OpenERP Web 6.0"')
-                    retcode = subprocess.call('net start "OpenERP Web 6.0"')
+                    subprocess.call('net stop "OpenERP Web 6.0"')
+                    subprocess.call('net start "OpenERP Web 6.0"')
                 except OSError, e:
                     warn("Exception in Web server restart :")
                     warn(unicode(e))
@@ -402,14 +402,6 @@ def do_prepare(cr, revision_ids):
     logger.info("Server update prepared. Need to restart to complete the upgrade.")
     return ('success', 'Restart required', {})
 
-def dump_db(cr, pool):
-    bck_obj = pool.get('backup.config')
-    if bck_obj:
-        # test if column exists
-        cr.execute("SELECT attr.attname FROM pg_attribute attr, pg_class class WHERE attr.attrelid = class.oid AND class.relname = 'backup_config' AND attr.attname='beforepatching'")
-        if cr.fetchall():
-            bck_obj.exp_dump_for_state(cr, 1, 'beforepatching')
-
 def test_do_upgrade(cr):
     cr.execute("select count(1) from pg_class where relkind='r' and relname='sync_client_version'")
     if not cr.fetchone()[0]:
@@ -438,10 +430,6 @@ def do_upgrade(cr, pool):
         revision_ids = versions.search(cr, 1, [('sum','in',list(server_lack_versions))], order='date asc')
         res = do_prepare(cr, revision_ids)
         if res[0] == 'success':
-            try:
-                dump_db(cr, pool)
-            except Exception, e:
-                logger.error('Can\'t create backup before patching: %s' % (unicode(e),))
             import tools
             os.chdir( tools.config['root_path'] )
             restart_server()
@@ -449,11 +437,77 @@ def do_upgrade(cr, pool):
             return False
 
     elif db_lack_versions:
-        try:
-            dump_db(cr, pool)
-        except Exception, e:
-            logger.error('Can\'t create backup before patching: %s' % (unicode(e),))
         base_module_upgrade(cr, pool, upgrade_now=True)
         # Note: There is no need to update the db versions, the `def init()' of the object do that for us
 
     return True
+
+def reconnect_sync_server():
+    """Reconnect the connection manager to the SYNC_SERVER if password file
+    exists
+    """
+    import tools
+    credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
+    if os.path.isfile(credential_filepath):
+        import base64
+        import pooler
+        f = open(credential_filepath, 'r')
+        lines = f.readlines()
+        f.close()
+        if lines:
+            try:
+                dbname = base64.decodestring(lines[0])
+                password = base64.decodestring(lines[1])
+                logger.info('dbname = %s' % dbname)
+                db, pool = pooler.get_db_and_pool(dbname)
+                db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
+                # strange behaviour with the connection on web interface
+
+                # do not execute this code on server side
+                if not pool.get("sync.server.entity"):
+                    cr = db.cursor()
+                    # delete the credential file
+                    os.remove(credential_filepath)
+                    # reconnect to SYNC_SERVER
+                    connection_module = pool.get("sync.client.sync_server_connection")
+                    connection_module.connect(cr, 1, password=password)
+
+                    # in caes of automatic patching, relaunch the sync
+                    # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
+                    if connection_module.is_automatic_patching_allowed(cr, 1):
+                        pool.get('sync.client.entity').sync_withbackup(cr, 1)
+                    cr.close()
+            except Exception as e:
+                message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
+                logger.error(message % (unicode(e)))
+
+
+def check_mako_xml():
+    """
+    read all xml and mako files to check that the tag ExpandedColumnCount is
+    not present in it. This tag is useless and can lead to regression if the
+    count change.
+    """
+    import tools
+    logger.info("Check mako and xml files don't contain ExpandedColumnCount tag...")
+    path_to_exclude = [os.path.join(tools.config['root_path'], 'backup')]
+    for file_path in find(tools.config['root_path']):
+        full_path = os.path.join(tools.config['root_path'], file_path)
+        if not os.path.isfile(full_path):
+            continue
+        if full_path.endswith('.xml') or full_path.endswith('.mako'):
+            excluded = False
+            for exclusion in path_to_exclude:
+                if exclusion in full_path:
+                    excluded = True
+                    break
+            if excluded:
+                continue
+            with open(full_path, 'r') as file_to_check:
+                line_number = 0
+                for line in file_to_check:
+                    line_number += 1
+                    if 'ExpandedColumnCount' in line:
+                        logger.warning('ExpandedColumnCount is present in file %s line %s.' % (full_path, line_number))
+    logger.info("Check mako and xml files finished.")
+

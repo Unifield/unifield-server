@@ -5,6 +5,7 @@
             <field name="name">product.normal.form.inherit</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="product.product_normal_form_view"/>
             <field name="arch" type="xml">
                 <notebook position="inside">
@@ -12,8 +13,16 @@
                     <group name="properties" groups="base.group_extended">
                         <separator string="Sales Properties" colspan="2"/>
                         <separator string="Purchase Properties" colspan="2"/>
-                        <field name="property_account_income" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" attrs="{'readonly':[('sale_ok','=',0)]}"  groups="base.group_extended"/>
-                        <field name="property_account_expense" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]" attrs="{'readonly':[('purchase_ok','=',0)]}"  groups="base.group_extended"/>
+                        <field name="property_account_income"
+                               domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                                        ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                                        ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"
+                               attrs="{'readonly':[('sale_ok','=',0)]}" groups="base.group_extended"/>
+                        <field name="property_account_expense"
+                               domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                                        ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                                        ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"
+                               attrs="{'readonly':[('purchase_ok','=',0)]}" groups="base.group_extended"/>
 					</group>
 					<newline/>
 					<group colspan="2">
@@ -31,6 +40,7 @@
             <field name="name">product.template.product.form.inherit</field>
             <field name="model">product.template</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="product.product_template_form_view"/>
             <field name="arch" type="xml">
                 <notebook position="inside">
@@ -52,13 +62,20 @@
             <field name="name">product.category.property.form.inherit</field>
             <field name="model">product.category</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="product.product_category_form_view"/>
             <field name="arch" type="xml">
                 <form position="inside">
                     <group col="2" colspan="2">
                         <separator string="Accounting Properties" colspan="2"/>
-                        <field name="property_account_income_categ" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
-                        <field name="property_account_expense_categ" domain="[('type','&lt;&gt;','view'),('type','&lt;&gt;','consolidation')]"/>
+                        <field name="property_account_income_categ"
+                               domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                                        ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                                        ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
+                        <field name="property_account_expense_categ"
+                               domain="[('type','&lt;&gt;','view'), ('type','&lt;&gt;','consolidation'),
+                                        ('user_type_code', 'in', ['expense', 'income', 'asset']),
+                                        ('user_type_name', '&lt;&gt;', 'Extra-accounting expenses')]"/>
                     </group>
                 </form>
             </field>

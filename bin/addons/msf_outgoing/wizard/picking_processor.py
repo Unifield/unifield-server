@@ -84,7 +84,7 @@ class stock_picking_processor(osv.osv):
             select=True,
             ondelete='cascade',
             help="Picking (incoming, internal, outgoing, picking ticket, packing...) to process",
-            ),
+        ),
         'move_ids': fields.one2many(
             'stock.move.processor',
             'wizard_id',
@@ -238,7 +238,7 @@ class stock_move_processor(osv.osv):
 
         for line in self.browse(cr, uid, ids, context=context):
             # Return an error if the move has no product defined
-            if not line.move_id.product_id:
+            if not line.move_id or not line.move_id.product_id:
                 raise osv.except_osv(
                     _('Data Error'),
                     _('The move you are trying to process has no product defined - Please set a product on it before process it.')
@@ -268,6 +268,7 @@ class stock_move_processor(osv.osv):
                 'location_id': location_id,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
+                'comment': line.move_id.comment,
             }
 
         return res
@@ -284,30 +285,51 @@ class stock_move_processor(osv.osv):
 
         res = {}
 
-        for line in self.browse(cr, uid, ids, context=context):
-            res[line.id] = {
-                'lot_check': False,
-                'exp_check': False,
-                'asset_check': False,
-                'kit_check': False,
-                'kc_check': '',
-                'ssl_check': '',
-                'dg_check': '',
-                'np_check': '',
-            }
+        move_dict = dict([(x['id'], x['product_id'][0]) for x in self.read(cr, uid, ids,
+                                                                           ['id',
+                                                                            'product_id'],
+                                                                           context=context)])
+        product_module = self.pool.get('product.product')
+        product_list_dict = product_module.read(cr, uid,
+                                                move_dict.values(),
+                                                ['batch_management',
+                                                 'perishable',
+                                                 'type',
+                                                 'subtype',
+                                                 'kc_txt',
+                                                 'ssl_txt',
+                                                 'dg_txt',
+                                                 'cs_txt',],
+                                                context=context)
+        procuct_dict = dict([(x['id'], x) for x in product_list_dict])
 
-            if line.product_id:
-                res[line.id] = {
-                    'lot_check': line.product_id.batch_management,
-                    'exp_check': line.product_id.perishable,
-                    'asset_check': line.product_id.type == 'product' and line.product_id.subtype == 'asset',
-                    'kit_check': line.product_id.type == 'product' and line.product_id.subtype == 'kit' and not line.product_id.perishable,
-                    'kc_check': line.product_id.kc_txt,
-                    'ssl_check': line.product_id.ssl_txt,
-                    'dg_check': line.product_id.dg_txt,
-                    'np_check': line.product_id.cs_txt,
+        for move_id, product_id in move_dict.items():
+            if product_id in procuct_dict.keys():
+                product = procuct_dict[product_id]
+                res[move_id] = {
+                    'lot_check': product['batch_management'],
+                    'exp_check': product['perishable'],
+                    'asset_check': product['type'] == 'product' and
+                    product['subtype'] == 'asset',
+                    'kit_check': product['type'] == 'product' and
+                    product['subtype'] == 'kit' and not
+                    product['perishable'],
+                    'kc_check': product['kc_txt'],
+                    'ssl_check': product['ssl_txt'],
+                    'dg_check': product['dg_txt'],
+                    'np_check': product['cs_txt'],
                 }
-
+            else:
+                res[move_id] = {
+                    'lot_check': False,
+                    'exp_check': False,
+                    'asset_check': False,
+                    'kit_check': False,
+                    'kc_check': '',
+                    'ssl_check': '',
+                    'dg_check': '',
+                    'np_check': '',
+                }
         return res
 
     def _batch_integrity(self, line, res='empty'):
@@ -429,6 +451,18 @@ class stock_move_processor(osv.osv):
             },
             readonly=True,
             help="Expected product to receive",
+            multi='move_info',
+        ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'stock.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
             multi='move_info',
         ),
         'quantity': fields.float(
@@ -719,6 +753,8 @@ class stock_move_processor(osv.osv):
         If a batch number is specified and the expiry date is empty, fill the expiry date
         with the expiry date of the batch
         """
+        if not ids:
+            return True
         vals = self._fill_expiry_date(cr, uid, vals.get('prodlot_id', False), vals.get('expiry_date', False), vals=vals, context=context)
         return super(stock_move_processor, self).write(cr, uid, ids, vals, context=context)
 
@@ -923,7 +959,7 @@ class stock_move_processor(osv.osv):
                 ('life_date', '=', expiry_date),
                 ('type', '=', 'internal'),
                 ('product_id', '=', product_id),
-                ], context=context)
+            ], context=context)
             if not lot_ids:
                 if type_check == 'in':
                     # The corresponding production lot will be created afterwards

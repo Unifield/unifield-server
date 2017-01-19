@@ -30,7 +30,12 @@ class account_invoice(osv.osv):
         '''
         Check if the Purchase order contains a line with an inactive products
         '''
-        inactive_lines = self.pool.get('account.invoice.line').search(cr, uid, [
+        if self._name and self._name == 'wizard.account.invoice':
+            invoice_line = self.pool.get('wizard.account.invoice.line')
+        else:
+            invoice_line = self.pool.get('account.invoice.line')
+
+        inactive_lines = invoice_line.search(cr, uid, [
             ('product_id.active', '=', False),
             ('invoice_id', 'in', ids),
             ('invoice_id.state', 'not in', ['draft', 'cancel', 'done'])
@@ -202,14 +207,14 @@ class account_invoice(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Global analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Global analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
     def button_reset_distribution(self, cr, uid, ids, context=None):
@@ -251,20 +256,17 @@ class account_invoice_line(osv.osv):
         res = {}
         # Browse all given lines
         for line in self.browse(cr, uid, ids, context=context):
-            if line.from_yml_test:
-                res[line.id] = 'valid'
-            else:
-                # UF-2115: test for elements
-                line_distribution_id = False
-                invoice_distribution_id = False
-                line_account_id = False
-                if line.analytic_distribution_id:
-                    line_distribution_id = line.analytic_distribution_id.id
-                if line.invoice_id and line.invoice_id.analytic_distribution_id:
-                    invoice_distribution_id = line.invoice_id.analytic_distribution_id.id
-                if line.account_id:
-                    line_account_id = line.account_id.id
-                res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
+            # UF-2115: test for elements
+            line_distribution_id = False
+            invoice_distribution_id = False
+            line_account_id = False
+            if line.analytic_distribution_id:
+                line_distribution_id = line.analytic_distribution_id.id
+            if line.invoice_id and line.invoice_id.analytic_distribution_id:
+                invoice_distribution_id = line.invoice_id.analytic_distribution_id.id
+            if line.account_id:
+                line_account_id = line.account_id.id
+            res[line.id] = self.pool.get('analytic.distribution')._get_distribution_state(cr, uid, line_distribution_id, invoice_distribution_id, line_account_id)
         return res
 
     def _have_analytic_distribution_from_header(self, cr, uid, ids, name, arg, context=None):
@@ -346,15 +348,15 @@ class account_invoice_line(osv.osv):
     _columns = {
         'analytic_distribution_id': fields.many2one('analytic.distribution', 'Analytic Distribution', select="1"), # select is for optimisation purposes
         'analytic_distribution_state': fields.function(_get_distribution_state, method=True, type='selection',
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
-            string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
+                                                       selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')],
+                                                       string="Distribution state", help="Informs from distribution state among 'none', 'valid', 'invalid."),
         'have_analytic_distribution_from_header': fields.function(_have_analytic_distribution_from_header, method=True, type='boolean',
-            string='Header Distrib.?'),
+                                                                  string='Header Distrib.?'),
         'newline': fields.boolean('New line'),
         'is_allocatable': fields.function(_get_is_allocatable, method=True, type='boolean', string="Is allocatable?", readonly=True, store=False),
         'analytic_distribution_state_recap': fields.function(_get_distribution_state_recap, method=True, type='char', size=30,
-            string="Distribution",
-            help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
+                                                             string="Distribution",
+                                                             help="Informs you about analaytic distribution state among 'none', 'valid', 'invalid', from header or not, or no analytic distribution"),
         'inactive_product': fields.function(_get_inactive_product, method=True, type='boolean', string='Product is inactive', store=False, multi='inactive'),
         'inactive_error': fields.function(_get_inactive_product, method=True, type='char', string='Comment', store=False, multi='inactive'),
         'analytic_lines': fields.function(_get_analytic_lines, method=True, type='one2many', relation='account.analytic.line', store=False, string='Analytic lines', help='Give all analytic lines linked to this invoice line. With correction ones.'),
@@ -462,14 +464,14 @@ class account_invoice_line(osv.osv):
         })
         # Open it!
         return {
-                'name': _('Analytic distribution'),
-                'type': 'ir.actions.act_window',
-                'res_model': 'analytic.distribution.wizard',
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': [wiz_id],
-                'context': context,
+            'name': _('Analytic distribution'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'analytic.distribution.wizard',
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': [wiz_id],
+            'context': context,
         }
 
 account_invoice_line()

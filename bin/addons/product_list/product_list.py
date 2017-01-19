@@ -23,7 +23,6 @@ from osv import osv, fields
 from tools.translate import _
 
 import time
-import logging
 
 
 class product_list(osv.osv):
@@ -45,6 +44,8 @@ class product_list(osv.osv):
         '''
         Adds update date and user information
         '''
+        if not ids:
+            return True
         vals.update({
             'reviewer_id': uid,
             'last_update_date': time.strftime('%Y-%m-%d'),
@@ -270,6 +271,24 @@ class product_list_line(osv.osv):
                     lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
                 ),
             },
+            write_relate=False,
+        ),
+        'desc': fields.related(
+            'name',
+            'name',
+            string='Product Description',
+            readonly=True,
+            type='char',
+            size=64,
+            store={
+                'product.product': (
+                    _get_product, ['name'], 10,
+                ),
+                'product.list.line': (
+                    lambda self, cr, uid, ids, c=None: ids, ['name'], 20,
+                ),
+            },
+            write_relate=False,
         ),
         'comment': fields.char(
             size=256,
@@ -434,6 +453,7 @@ product and can't be deleted"""),
         ),
         'msfid': fields.integer(
             string='Hidden field for UniData',
+            select=1
         ),  # US-45: Added this field but hidden, for UniData to be able to import the Id
         'xmlid_code': fields.char(
             'Hidden xmlid code',
@@ -483,9 +503,11 @@ product and can't be deleted"""),
                     return []
 
         return super(product_product, self).search(cr, uid, args, offset,
-                limit, order, context, count)
+                                                   limit, order, context, count)
 
     def write(self, cr, uid, ids, value, context=None):
+        if not ids:
+            return True
         single = False
         if isinstance(ids, (long, int)):
             ids = [ids]

@@ -24,7 +24,6 @@ from osv import osv
 
 from tools.translate import _
 
-import decimal_precision as dp
 from msf_outgoing import INTEGRITY_STATUS_SELECTION
 
 
@@ -151,7 +150,7 @@ class validate_picking_processor(osv.osv):
                         _('Processing Error'), \
                         _('Processing quantity %d for %s is larger than the available quantity in Batch Number %s (%d) !')\
                         % (lot_integrity[lot][location], tmp_lot.product_id.name, tmp_lot.name, lot_qty
-                    ))
+                           ))
 
         return True
 
@@ -195,6 +194,18 @@ class validate_move_processor(osv.osv):
             },
             readonly=True,
             help="Expected product to receive",
+            multi='move_info',
+        ),
+        'comment': fields.function(
+            _get_move_info,
+            method=True,
+            string='Comment',
+            type='text',
+            store={
+                'validate.move.processor': (lambda self, cr, uid, ids, c=None: ids, ['move_id'], 20),
+            },
+            readonly=True,
+            help="Comment of the move",
             multi='move_info',
         ),
         'ordered_uom_id': fields.function(

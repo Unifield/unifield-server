@@ -68,6 +68,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
     _columns = {
         'supplier': fields.many2one('res.partner', 'Supplier'),
         'po_cft': fields.selection(_SELECTION_PO_CFT, string="PO/CFT"),
+        'related_sourcing_id': fields.many2one(
+            'related.sourcing',
+            string='Group',
+        ),
         'unique_rule_type': fields.char(
             size=128,
             string='Unique Replenishment rule type',
@@ -86,6 +90,9 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         if not default_values.get('from_splitted_po_line'):
             default_values['from_splitted_po_line'] = False
 
+        if not default_values.get('related_sourcing_id'):
+            default_values['related_sourcing_id'] = False
+
         return super(procurement_order, self).copy_data(cr, uid, copy_id, default_values, context=context)
 
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
@@ -98,12 +105,13 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         if not context:
             context = {}
         line = super(procurement_order, self).po_line_values_hook(cr, uid, ids, context=context, *args, **kwargs)
+
         origin_line = False
         if 'procurement' in kwargs:
             order_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', kwargs['procurement'].id)])
             if order_line_ids:
                 origin_line = self.pool.get('sale.order.line').browse(cr, uid, order_line_ids[0])
-                line.update({'origin': origin_line.order_id.name, 'product_uom': origin_line.product_uom.id, 'product_qty': origin_line.product_uom_qty})
+                line.update({'origin': origin_line.order_id.name})
             else:
                 # Update the link to the original FO to create new line on it at PO confirmation
                 procurement = kwargs['procurement']
@@ -116,6 +124,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             procurement = kwargs['procurement']
             if procurement.po_cft in ('cft', 'rfq') and procurement.price_unit:
                 line.update({'price_unit': procurement.price_unit})
+
+            if procurement and procurement.tender_line_id:
+                if procurement.tender_line_id.comment:
+                    line['comment'] = procurement.tender_line_id.comment
 
         if not line.get('price_unit', False):
             cur_id = self.pool.get('res.users').browse(cr, uid, uid, context=context).company_id.currency_id.id
@@ -206,15 +218,24 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         else:
             purchase_domain.append(('order_type', '!=', 'direct'))
 
+        if procurement.related_sourcing_id:
+            purchase_domain.append(('related_sourcing_id', '=', procurement.related_sourcing_id.id))
+            values['related_sourcing_id'] = procurement.related_sourcing_id.id
+        else:
+            purchase_domain.append(('related_sourcing_id', '=', False))
+            values['related_sourcing_id'] = False
+
         if procurement.tender_line_id and procurement.tender_line_id.purchase_order_line_id:
             purchase_domain.append(('pricelist_id', '=', procurement.tender_line_id.purchase_order_line_id.order_id.pricelist_id.id))
         elif procurement.rfq_id:
             purchase_domain.append(('pricelist_id', '=', procurement.rfq_id.pricelist_id.id))
 
         line = None
+        order_customer_id = None
         sale_line_ids = self.pool.get('sale.order.line').search(cr, uid, [('procurement_id', '=', procurement.id)], context=context)
         if sale_line_ids:
             line = self.pool.get('sale.order.line').browse(cr, uid, sale_line_ids[0], context=context)
+            order_customer_id = line.order_partner_id.id
             if line.product_id.type in ('service', 'service_recep') and not line.order_id.procurement_request:
                 if ('order_type', '!=', 'direct') in purchase_domain:
                     purchase_domain.remove(('order_type', '!=', 'direct'))
@@ -320,6 +341,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
             if values.get('priority') and values['priority'] in priority_sorted.keys() and values['priority'] != po.priority:
                 if priority_sorted[values['priority']] < priority_sorted[po.priority]:
                     write_values['priority'] = values['priority']
+            if order_customer_id:
+                write_values['dest_partner_ids'] = [(4, order_customer_id)]
 
             self.pool.get('purchase.order').write(cr, uid, purchase_ids[0], write_values, context=dict(context, import_in_progress=True))
 
@@ -348,7 +371,11 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     }, context=context)
 
             if line:
-                self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to the PO line id:%s of the PO id:%s" % (line.id, pol_id, purchase_ids[0]))
+                self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been sourced on order to the PO line id:%s (line number: %s) of the PO id:%s (%s)" % (
+                    line.id, line.line_number,
+                    pol_id, self.pool.get('purchase.order.line').read(cr, uid, pol_id, ['line_number'], context=context)['line_number'],
+                    purchase_ids[0], self.pool.get('purchase.order').read(cr, uid, purchase_ids[0], ['name'], context=context)['name'],
+                ))
 
             return purchase_ids[0]
         else:
@@ -369,6 +396,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     values.update({'location_id': input_id, })
             if categ:
                 values.update({'categ': categ})
+            if order_customer_id:
+                values['dest_partner_ids'] = [(4, order_customer_id)]
             purchase_id = super(procurement_order, self).create_po_hook(cr, uid, ids, context=context, *args, **kwargs)
 
             if ir_to_link:
@@ -382,8 +411,10 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                     }, context=context)
 
             if line:
-                self.infolog(cr, uid, "The FO/IR line id:%s has been sourced on order to the PO id:%s" % (
-                    line.id, purchase_id))
+                self.infolog(cr, uid, "The FO/IR line id:%s (line number: %s) has been sourced on order to the PO id:%s (%s)" % (
+                    line.id, line.line_number,
+                    purchase_id, self.pool.get('purchase.order').read(cr, uid, purchase_id, ['name'], context=context)['name'],
+                ))
 
             return purchase_id
 
@@ -391,6 +422,8 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
         '''
         override for workflow modification
         '''
+        if not ids:
+            return True
         return super(procurement_order, self).write(cr, uid, ids, vals, context)
 
     def get_delay_qty(self, product, partner):
@@ -652,15 +685,15 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 'taxes_id': [(6, 0, taxes)]
             })
             values = {
-                      'origin': procurement.origin,
-                      'partner_id': partner.id,
-                      'partner_address_id': address_id,
-                      'location_id': procurement.location_id.id,
-                      'pricelist_id': pricelist_id.id,
-                      'order_line': [(0, 0, line)],
-                      'company_id': procurement.company_id.id,
-                      'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
-                      }
+                'origin': procurement.origin,
+                'partner_id': partner.id,
+                'partner_address_id': address_id,
+                'location_id': procurement.location_id.id,
+                'pricelist_id': pricelist_id.id,
+                'order_line': [(0, 0, line)],
+                'company_id': procurement.company_id.id,
+                'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
+            }
             # values modification from hook
             values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement, line=line,)
             # purchase creation from hook

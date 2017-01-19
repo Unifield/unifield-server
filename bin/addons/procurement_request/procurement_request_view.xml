@@ -38,6 +38,13 @@
             <field name="priority" eval="250" />
             <field name="arch" type="xml">
                 <form string="Internal Request">
+                    <group colspan="6" attrs="{'invisible': [('state', '!=', 'validated')]}">
+                        <html>
+                            <p style="text-align:center; color: red; font-weight: bold; font-size: 1.2em;">
+                               WARNING: This document has already been validated, are you sure you wish to modify after validation?
+                            </p>
+                        </html>
+                    </group>
                     <group col="6" colspan="4" name="header">
                         <field name="name" />
                         <field name="date_order" attrs="{'readonly': [('state', 'not in', ['draft', 'validated'])]}" />
@@ -79,7 +86,10 @@
                                     <field name="product_uom_qty" on_change="onchange_uom(product_id, product_uom, product_uom_qty)" />
                                     <field name="cost_price" string="Cost Price (FC)" />
                                     <field name="notes" />
-                                    <field name="type" on_change="requested_type_change(product_id, type)"/>
+                                    <field name="display_confirm_button" invisible="1" />
+                                    <field name="type" on_change="requested_type_change(product_id, type)"
+                                           attrs="{'readonly': [('fake_state', 'not in', ['draft', 'validated']), ('display_confirm_button', '=', False)]}"
+                                    />
                                     <field name="my_company_id" invisible="1" />
                                     <!-- utp-357: the supplier will be selected in the sourcing tool -->
                                     <field name="supplier" invisible="1"
@@ -161,7 +171,7 @@
                     <group string="Filters" expand="1">
                         <filter name="state_proc" string="Draft" icon="terp-document-new" domain="[('state', '=', 'draft')]" />
                         <filter name="state_valid" string="Validated" icon="terp-camera_test" domain="[('state', '=', 'validated')]" />
-                        <filter name="state_proc_progress" string="In Progress" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
+                        <filter name="state_proc_progress" string="Confirmed" icon="terp-stage" domain="[('state', 'in', ('progress', 'manual_progress'))]" />
                         <filter name="state_done" string="Closed" icon="terp-dialog-close" domain="[('state', '=', 'done')]" />
                         <separator orientation="vertical" />
                         <field name="name" />

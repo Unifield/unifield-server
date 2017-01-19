@@ -25,17 +25,18 @@ class account_chart(osv.osv_memory):
     """
     For Chart of Accounts
     """
+    _inherit = "wizard.template.form"  # to be able to store the wizard values
     _name = "account.chart"
     _description = "Account chart"
     _columns = {
         'fiscalyear': fields.many2one('account.fiscalyear', \
-                                    'Fiscal year',  \
-                                    help = 'Keep empty for all open fiscal years'),
+                                      'Fiscal year',  \
+                                      help = 'Keep empty for all open fiscal years'),
         'period_from': fields.many2one('account.period', 'Start period'),
         'period_to': fields.many2one('account.period', 'End period'),
         'target_move': fields.selection([('posted', 'All Posted Entries'),
                                          ('all', 'All Entries'),
-                                        ], 'Target Moves', required = True),
+                                         ], 'Target Moves', required = True),
     }
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id=False, context=None):
@@ -47,14 +48,14 @@ class account_chart(osv.osv_memory):
                 SELECT * FROM (SELECT p.id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s
+                               WHERE f.id = %s and number != 0
                                ORDER BY p.date_start ASC
                                LIMIT 1) AS period_start
                 UNION
                 SELECT * FROM (SELECT p.id
                                FROM account_period p
                                LEFT JOIN account_fiscalyear f ON (p.fiscalyear_id = f.id)
-                               WHERE f.id = %s
+                               WHERE f.id = %s and number != 0
                                AND p.date_start < NOW()
                                ORDER BY p.date_stop DESC
                                LIMIT 1) AS period_stop''', (fiscalyear_id, fiscalyear_id))
@@ -63,6 +64,12 @@ class account_chart(osv.osv_memory):
                 start_period = periods[0]
                 end_period = periods[1]
             res['value'] = {'period_from': start_period, 'period_to': end_period}
+
+        # US-1179
+        res['value']['is_initial_balance_available'] = fiscalyear_id or False
+        if not res['value']['is_initial_balance_available']:
+            res['value']['initial_balance'] = False
+
         return res
 
     def account_chart_open_window(self, cr, uid, ids, context=None):
@@ -87,8 +94,8 @@ class account_chart(osv.osv_memory):
         if data['period_from'] and data['period_to']:
             result['periods'] = period_obj.build_ctx_periods(cr, uid, data['period_from'], data['period_to'])
         result['context'] = str({'fiscalyear': data['fiscalyear'], 'periods': result['periods'], \
-                                    'target_filename_prefix': 'Chart of Accounts',
-                                    'state': data['target_move']})
+                                 'target_filename_prefix': 'Chart of Accounts',
+                                 'state': data['target_move']})
         if data['fiscalyear']:
             result['name'] += ':' + fy_obj.read(cr, uid, [data['fiscalyear']], context=context)[0]['code']
         return result

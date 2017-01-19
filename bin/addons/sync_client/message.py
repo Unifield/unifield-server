@@ -130,9 +130,9 @@ class local_message_rule(osv.osv):
                 return
 
             msg_to_send_obj = self.pool.get("sync.client.message_to_send")
-            partner_name = model_obj.browse(cr, uid, res_id)[rule.destination_name].name
-
-            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+            partner = model_obj.browse(cr, uid, res_id)[rule.destination_name]
+            partner_name = partner.name
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=partner, context=context)
             sale_name = ''
             if 'name' in arguments[0]:
                 sale_name = arguments[0]['name']
@@ -176,7 +176,7 @@ class local_message_rule(osv.osv):
             model_obj = self.pool.get(model_name)
             msg_to_send_obj = self.pool.get("sync_remote_warehouse.message_to_send")
     
-            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, context=context)
+            arguments = model_obj.get_message_arguments(cr, uid, res_id, rule, destination=False, context=context)
             temp = arguments[0] 
             temp['picking'] = return_info
             arguments = [temp]
@@ -224,6 +224,7 @@ class message_to_send(osv.osv):
         'generate_message' : True,
     }
 
+    _logger = logging.getLogger('sync.client.message_to_send')
 
     """
         Creation from rule
@@ -261,6 +262,12 @@ class message_to_send(osv.osv):
                 args[obj_id] = "Initial RW Sync - Ignore"
 
         for id in obj_ids:
+            # US-1467: Check if this fo has any line, if not just ignore it and show a warning message in log file!
+            if 'normal_fo_create_po' in rule.remote_call and args[id] and args[id][0]:
+                if len(args[id][0].get('order_line')) == 0:
+                    self._logger.warn("::::WARNING: The FO %s (state: %s) has no line! Cannot be synced!" % (args[id][0].get('name'), args[id][0].get('state')))
+                    continue
+
             for destination in (dest[id] if hasattr(dest[id], '__iter__') else [dest[id]]):
                 # UF-2531: allow this when creating usb msg for the INT from scratch from RW to CP
                 if destination is False:
@@ -397,7 +404,7 @@ class message_received(osv.osv):
             changes={},
             sync_message_execution=True,
             sale_purchase_logger={})
-
+        context['lang'] = 'en_US'
         # get all ids if not specified
         if ids is None:
             ids = self.search(cr, uid, [('run','=',False)], order='id asc', context=context)

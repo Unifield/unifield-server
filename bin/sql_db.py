@@ -31,7 +31,7 @@ from psycopg2.pool import PoolError
 import psycopg2.extensions
 import warnings
 import pooler
-from tools import SKIPPED_ELEMENT_TYPES, cache
+from tools import cache
 import time
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
@@ -91,11 +91,16 @@ class Cursor(object):
 
         self.sql_log_count = 0
         self.__closed = True    # avoid the call of close() (by __del__) if an exception
-                                # is raised by any of the following initialisations
+        # is raised by any of the following initialisations
         self._pool = pool
         self.dbname = dbname
         self._serialized = serialized
         self._cnx = pool.borrow(dsn(dbname))
+        self._oc = None
+        p = pooler.pool_dic.get(self.dbname, None)
+        if p is not None:
+            self._oc = p.get('operations.count')
+            self._oe = p.get('operations.event')
         self._obj = self._cnx.cursor(cursor_factory=psycopg1cursor)
         self.__closed = False   # real initialisation value
         self.autocommit(False)
@@ -150,7 +155,14 @@ class Cursor(object):
         try:
             params = params or None
             params = self.recursiveCastUid(params)
+            before = time.time()
             res = self._obj.execute(query, params)
+            after = time.time()
+            if self._oc:
+                delta = after-before
+                self._oc.histogram['sql'].add(delta)
+                if self._oe and delta > self._oe.SLOW_QUERY:
+                    self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:
                 self.__logger.error("Programming error: %s, in query %s", pe, query)
@@ -172,7 +184,7 @@ class Cursor(object):
             if 'account_analytic_account_parent_id_fkey' in ie[0]:
                 cache.clean_caches_for_db(self.dbname)
             raise
-        except Exception, e:
+        except Exception:
             if log_exceptions:
                 self.__logger.exception("bad query: %s", self._obj.query or query)
             raise
@@ -217,12 +229,12 @@ class Cursor(object):
                 for r in sqllogitems:
                     delay = timedelta(microseconds=r[1][1])
                     self.__logger.log(logging.DEBUG_SQL, "table: %s: %s/%s",
-                                        r[0], delay, r[1][0])
+                                      r[0], delay, r[1][0])
                     sum+= r[1][1]
                 sqllogs[type].clear()
             sum = timedelta(microseconds=sum)
             self.__logger.log(logging.DEBUG_SQL, "SUM %s:%s/%d [%d]",
-                                type, sum, self.sql_log_count, sql_counter)
+                              type, sum, self.sql_log_count, sql_counter)
             sqllogs[type].clear()
         process('from')
         process('into')
@@ -327,7 +339,7 @@ class ConnectionPool(object):
                     try:
                         cnx = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
                         t = time.time()
-                    except psycopg2.Error, e:
+                    except psycopg2.Error:
                         self.__logger.exception('Connection to the database failed')
                         raise
                 self._connections.append((cnx, True, t))
@@ -350,7 +362,7 @@ class ConnectionPool(object):
 
         try:
             result = psycopg2.connect(dsn=dsn, connection_factory=PsycoConnection)
-        except psycopg2.Error, e:
+        except psycopg2.Error:
             self.__logger.exception('Connection to the database failed')
             raise
         self._connections.append((result, True, time.time()))
@@ -401,7 +413,7 @@ class Connection(object):
         """Check if connection is possible"""
         try:
             warnings.warn("You use an expensive function to test a connection.",
-                      DeprecationWarning, stacklevel=1)
+                          DeprecationWarning, stacklevel=1)
             cr = self.cursor()
             cr.close()
             return True
@@ -429,7 +441,8 @@ def dsn_are_equals(first, second):
 _Pool = ConnectionPool(int(tools.config['db_maxconn']))
 
 def db_connect(db_name):
-    currentThread().dbname = db_name
+    if db_name not in ('template1', 'template0', 'postgres'):
+        currentThread().dbname = db_name
     return Connection(_Pool, db_name)
 
 def close_db(db_name):
