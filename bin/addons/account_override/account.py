@@ -532,6 +532,7 @@ class account_account(osv.osv):
         comm_voucher_obj = self.pool.get('account.commitment')
         po_obj = self.pool.get('purchase.order')
         fo_obj = self.pool.get('sale.order')
+        regline_obj = self.pool.get('account.bank.statement.line')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
@@ -599,6 +600,15 @@ class account_account(osv.osv):
                             break
                     if fo_ko:
                         raise doc_error
+                    # check that there is no register line using the account, being draft or temp posted, and having a
+                    # posting date >= selected inactivation date
+                    regline_ko = regline_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
+                                                                    ('account_id', '=', account.id),
+                                                                    ('state', 'in', ('draft', 'temp'))], context=context)
+                    if regline_ko:
+                        raise osv.except_osv(_('Warning !'),
+                                             _('Draft or temp posted register lines using this account have a '
+                                               'posting date greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
         '''
