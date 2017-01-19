@@ -497,8 +497,8 @@ class account_account(osv.osv):
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
             elif not context.get('sync_update_execution', False) and account_ids is not None:
-                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
-                                                 'greater than or equal to the selected inactivation date.'))
+                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a date '
+                                                             'greater than or equal to the selected inactivation date.'))
                 for account in self.browse(cr, uid, account_ids, fields_to_fetch=['reconcile'], context=context):
                     # if the account already exists, check that there is no JI using it
                     # having a posting date >= selected inactivation date,

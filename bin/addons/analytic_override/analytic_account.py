@@ -455,12 +455,25 @@ class analytic_account(osv.osv):
                 return True
         return False
 
+    def _po_line_on_account(self, cr, uid, po, account_ids, context=None):
+        """
+        Return True if one of the analytic accounts is used for one of the PO lines
+        """
+        if context is None:
+            context = {}
+        for po_line in po.order_line:
+            distrib_line = po_line.analytic_distribution_id or False
+            if distrib_line and self._fp_line_on_account(cr, uid, distrib_line, account_ids, context):
+                return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
         aji_obj = self.pool.get('account.analytic.line')
         inv_obj = self.pool.get('account.invoice')
         comm_voucher_obj = self.pool.get('account.commitment')
+        po_obj = self.pool.get('purchase.order')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
@@ -480,7 +493,7 @@ class analytic_account(osv.osv):
                                            'greater than or equal to the selected inactivation date.'))
                 # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
                 # a posting date >= selected inactivation date
-                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a posting date '
+                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a date '
                                                              'greater than or equal to the selected inactivation date.'))
                 inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['date']),
                                                    ('state', '=', 'draft')], order='NO_ORDER', context=context)
@@ -517,6 +530,21 @@ class analytic_account(osv.osv):
                         break
                 if comm_voucher_ko:
                     raise doc_error
+                # check that there is no draft PO using the account and having a delivery requested date >= selected inactivation date
+                po_ids = po_obj.search(cr, uid, [('delivery_requested_date', '>=', vals['date']), ('state', '=', 'draft')],
+                                                  order='NO_ORDER', context=context)
+                po_ko = False
+                for po in po_obj.browse(cr, uid, po_ids, context=context,
+                                        fields_to_fetch=['analytic_distribution_id', 'order_line']):
+                    po_distrib = po.analytic_distribution_id or False
+                    # check that the analytic account is not used in the AD at PO header level
+                    if po_distrib and self._fp_line_on_account(cr, uid, po_distrib, account_ids,  context):
+                        po_ko = True
+                        break
+                    # check that the analytic account is not used in the AD at PO Line level
+                    if self._po_line_on_account(cr, uid, po, account_ids, context):
+                        po_ko = True
+                        break
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)
