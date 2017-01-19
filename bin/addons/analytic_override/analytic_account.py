@@ -516,6 +516,7 @@ class analytic_account(osv.osv):
         regline_obj = self.pool.get('account.bank.statement.line')
         accrual_line_obj = self.pool.get('msf.accrual.line')
         hq_entry_obj = self.pool.get('hq.entries')
+        payroll_obj = self.pool.get('hr.payroll.msf')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
@@ -646,6 +647,19 @@ class analytic_account(osv.osv):
                 if hq_entry_ko:
                     raise osv.except_osv(_('Warning !'),
                                          _('HQ entries (not validated) using this account have a posting date '
+                                           'greater than or equal to the selected inactivation date.'))
+                # check that there is no draft payroll entry using the account and having a date >= selected inactivation date
+                payroll_ko = payroll_obj.search_exist(cr, uid, ['&', '&', ('state', '=', 'draft'),
+                                                                ('date', '>=', vals['date']),
+                                                                '|', '|', '|', '|',
+                                                                ('funding_pool_id', 'in', account_ids),
+                                                                ('cost_center_id', 'in', account_ids),
+                                                                ('destination_id', 'in', account_ids),
+                                                                ('free1_id', 'in', account_ids),
+                                                                ('free2_id', 'in', account_ids)], context=context)
+                if payroll_ko:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('Draft payroll entries using this account have a date '
                                            'greater than or equal to the selected inactivation date.'))
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
