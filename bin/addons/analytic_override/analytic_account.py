@@ -532,11 +532,11 @@ class analytic_account(osv.osv):
                                                         ('destination_id', 'in', account_ids)], context=context)
                 if aji_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('Unposted Analytic Journal Items using this account have a posting date '
+                                         _('At least one unposted Analytic Journal Item using this account has a posting date '
                                            'greater than or equal to the selected inactivation date.'))
                 # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
                 # a posting date >= selected inactivation date
-                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a date '
+                doc_error = osv.except_osv(_('Warning !'), _('At least one document in draft state using this account has a date '
                                                              'greater than or equal to the selected inactivation date.'))
                 inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['date']),
                                                    ('state', '=', 'draft')], order='NO_ORDER', context=context)
@@ -618,7 +618,7 @@ class analytic_account(osv.osv):
                         break
                 if regline_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('Draft or temp posted register lines using this account have a '
+                                         _('At least one draft or temp posted register line using this account has a '
                                            'posting date greater than or equal to the selected inactivation date.'))
                 # check that there is no accrual line using the account, being draft or partially posted, and having a
                 # posting date >= selected inactivation date
@@ -632,8 +632,8 @@ class analytic_account(osv.osv):
                         break
                 if acc_line_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('Draft or partially posted accrual lines using this account have a date '
-                                           'greater than or equal to the selected inactivation date.'))
+                                         _('At least one draft or partially posted accrual line using this account has '
+                                           'a date greater than or equal to the selected inactivation date.'))
                 # check that there is no HQ entry using the account, not being validated, and having a
                 # posting date >= selected inactivation date
                 hq_entry_ko = hq_entry_obj.search_exist(cr, uid, ['&', '&', ('user_validated', '=', False),
@@ -646,8 +646,8 @@ class analytic_account(osv.osv):
                                                         ('free_2_id', 'in', account_ids)], context=context)
                 if hq_entry_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('HQ entries (not validated) using this account have a posting date '
-                                           'greater than or equal to the selected inactivation date.'))
+                                         _('At least one HQ entry (not validated) using this account has a posting '
+                                           'date greater than or equal to the selected inactivation date.'))
                 # check that there is no draft payroll entry using the account and having a date >= selected inactivation date
                 payroll_ko = payroll_obj.search_exist(cr, uid, ['&', '&', ('state', '=', 'draft'),
                                                                 ('date', '>=', vals['date']),
@@ -659,7 +659,7 @@ class analytic_account(osv.osv):
                                                                 ('free2_id', 'in', account_ids)], context=context)
                 if payroll_ko:
                     raise osv.except_osv(_('Warning !'),
-                                         _('Draft payroll entries using this account have a date '
+                                         _('At least one draft payroll entry using this account has a date '
                                            'greater than or equal to the selected inactivation date.'))
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):

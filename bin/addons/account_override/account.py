@@ -541,7 +541,7 @@ class account_account(osv.osv):
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
             elif not context.get('sync_update_execution', False) and account_ids is not None:
-                doc_error = osv.except_osv(_('Warning !'), _('Documents in draft state using this account have a date '
+                doc_error = osv.except_osv(_('Warning !'), _('At least one document in draft state using this account has a date '
                                                              'greater than or equal to the selected inactivation date.'))
                 for account in self.browse(cr, uid, account_ids, fields_to_fetch=['reconcile'], context=context):
                     # if the account already exists, check that there is no JI using it
@@ -557,7 +557,7 @@ class account_account(osv.osv):
                                                               ('move_state', '=', 'draft')], context=context)
                     if ji_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('Unposted or unreconciled Journal Items using this account have a '
+                                             _('At least one unposted or unreconciled Journal Item using this account has a '
                                                'posting date greater than or equal to the selected inactivation date.'))
                     # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
                     # a posting date >= selected inactivation date
@@ -610,7 +610,7 @@ class account_account(osv.osv):
                                                                     ('state', 'in', ('draft', 'temp'))], context=context)
                     if regline_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('Draft or temp posted register lines using this account have a '
+                                             _('At least one draft or temp posted register line using this account has a '
                                                'posting date greater than or equal to the selected inactivation date.'))
                     # check that there is no accrual line using the account, being draft or partially posted, and having
                     # a posting date >= selected inactivation date
@@ -623,8 +623,8 @@ class account_account(osv.osv):
                                                                     context=context)
                     if accrual_line_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('Draft or partially posted accrual lines using this account have a date '
-                                               'greater than or equal to the selected inactivation date.'))
+                                             _('At least one draft or partially posted accrual line using this account '
+                                               'has a date greater than or equal to the selected inactivation date.'))
                     # check that there is no HQ entry using the account, not being validated, and having
                     # a posting date >= selected inactivation date
                     hq_entry_ko = hq_entry_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
@@ -632,15 +632,15 @@ class account_account(osv.osv):
                                                                       ('user_validated', '=', False)], context=context)
                     if hq_entry_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('HQ entries (not validated) using this account have a posting date '
-                                               'greater than or equal to the selected inactivation date.'))
+                                             _('At least one HQ entry (not validated) using this account has a '
+                                               'posting date greater than or equal to the selected inactivation date.'))
                     # check that there is no draft payroll entry using the account and having a date >= selected inactivation date
                     payroll_ko = payroll_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
                                                                     ('account_id', '=', account.id),
                                                                     ('state', '=', 'draft')], context=context)
                     if payroll_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('Draft payroll entries using this account have a date '
+                                             _('At least one draft payroll entry using this account has a date '
                                                'greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
