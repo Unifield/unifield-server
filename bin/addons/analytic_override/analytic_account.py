@@ -545,6 +545,8 @@ class analytic_account(osv.osv):
                     if self._po_line_on_account(cr, uid, po, account_ids, context):
                         po_ko = True
                         break
+                if po_ko:
+                    raise doc_error
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)
