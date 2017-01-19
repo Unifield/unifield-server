@@ -533,6 +533,7 @@ class account_account(osv.osv):
         po_obj = self.pool.get('purchase.order')
         fo_obj = self.pool.get('sale.order')
         regline_obj = self.pool.get('account.bank.statement.line')
+        accrual_line_obj = self.pool.get('msf.accrual.line')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
@@ -608,6 +609,19 @@ class account_account(osv.osv):
                     if regline_ko:
                         raise osv.except_osv(_('Warning !'),
                                              _('Draft or temp posted register lines using this account have a '
+                                               'posting date greater than or equal to the selected inactivation date.'))
+                    # check that there is no accrual line using the account, being draft or partially posted, and having a
+                    # posting date >= selected inactivation date
+                    accrual_line_ko = accrual_line_obj.search_exist(cr, uid, ['&', '&',
+                                                                              ('date', '>=', vals['inactivation_date']),
+                                                                              ('state', 'in', ('draft', 'partially_posted')),
+                                                                              '|',
+                                                                              ('accrual_account_id', '=', account.id),
+                                                                              ('expense_account_id', '=', account.id)],
+                                                                    context=context)
+                    if accrual_line_ko:
+                        raise osv.except_osv(_('Warning !'),
+                                             _('Draft or partially posted accrual lines using this account have a '
                                                'posting date greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
