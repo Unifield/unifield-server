@@ -778,7 +778,7 @@ class audittrail_log_line(osv.osv):
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
-    _order = 'timestamp desc'
+    _order = 'timestamp desc, log desc'
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
