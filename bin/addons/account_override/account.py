@@ -628,10 +628,10 @@ class account_account(osv.osv):
                     # a posting date >= selected inactivation date
                     hq_entry_ko = hq_entry_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
                                                                       ('account_id', '=', account.id),
-                                                                      ('user_validated', '=', 'f')], context=context)
+                                                                      ('user_validated', '=', False)], context=context)
                     if hq_entry_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('HQ entries (not validated) using this account have a date '
+                                             _('HQ entries (not validated) using this account have a posting date '
                                                'greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
