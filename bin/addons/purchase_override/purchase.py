@@ -51,12 +51,12 @@ ORDER_TYPES_SELECTION = [
     ('direct', _('Direct Purchase Order')),
 ]
 
-SOURCE_TYPES = [
-    ('regular', ('regular', 'purchase_list'), (_('Regular'), _('Purchase List'))),
-    ('donation_exp', 'donation_exp', _('Donation before expiry')),
-    ('donation_st', 'donation_st', _('Standard donation')),
-    ('loan', 'loan', _('Loan')),
-]
+SOURCE_TYPES = {
+    'regular': [('regular', _('Regular')), ('purchase_list', _('Purchase List'))],
+    'donation_exp': [('donation_exp', _('Donation before expiry'))],
+    'donation_st': [('donation_st', _('Standard Donation'))],
+    'loan': [('loan', _('Loan'))],
+}
 
 class purchase_order_confirm_wizard(osv.osv):
     _name = 'purchase.order.confirm.wizard'
@@ -454,7 +454,7 @@ class purchase_order(osv.osv):
         'source_type': fields.selection(
             selection=ORDER_TYPES_SELECTION,
             string='Source Type',
-            readonly=False,
+            readonly=True,
         ),
         'loan_id': fields.many2one('sale.order', string='Linked loan', readonly=True),
         'priority': fields.selection(ORDER_PRIORITY, string='Priority', states={'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -590,17 +590,13 @@ class purchase_order(osv.osv):
         '''
         err = []
 
-        for order_type in SOURCE_TYPES:
+        for order_type, available_types in SOURCE_TYPES.iteritems():
             order_ids = self.search(cr, uid, [
-                ('source_type', '=', order_type[0]),
-                ('order_type', 'not in', hasattr(order_type[1], '__iter__') and order_type[1] or [order_type[1]]),
+                ('source_type', '=', order_type),
+                ('order_type', 'not in', [x[0] for x in available_types]),
             ], context=context)
             for ord in self.read(cr, uid, order_ids, ['name'], context=context):
-                if hasattr(order_type[2], '__iter__'):
-                    order_types = ' / '.join('\'%s\'' % x for x in order_type[2])
-                else:
-                    order_types = '\'%s\'' % order_type[2]
-
+                order_types = ' / '.join(x[1] for x in available_types)
 
                 err.append(_('%s: Only a %s Purchase order must be used to source a %s Internal request/Field order') % (
                     ord['name'],
@@ -788,20 +784,14 @@ class purchase_order(osv.osv):
         src_type = False
         order_types_ok = []
         if source_type:
-            for stype in SOURCE_TYPES:
-                if stype[0] == source_type:
+            for stype, atype in SOURCE_TYPES.iteritems():
+                if stype == source_type:
                     src_type = stype
-                    if hasattr(stype[1], '__iter__') and not isinstance(stype[1], str):
-                        order_types_ok = [x for x in stype[1]]
-                    else:
-                        order_types_ok = [stype[1]]
+                    order_types_ok = [x[0] for x in atype]
                     break
 
         if src_type and order_type not in order_types_ok:
-            if hasattr(src_type[2], '__iter__') and not isinstance(src_type[2], str):
-                msg_data = {'type': ' / '.join('\'%s\'' % x for x in src_type[2])}
-            else:
-                msg_data = {'type': '\'%s\'' % src_type}
+            msg_data = {'type': ' / '.join(x[1] for x in SOURCE_TYPES.get(src_type))}
 
             msg = _('Only a %(type)s Purchase order must be used to source a %(type)s Internal request / Field order') % (msg_data)
             if id:
@@ -815,7 +805,7 @@ class purchase_order(osv.osv):
                     'message': msg,
                 },
                 'value': {
-                    'order_type': src_type[0],
+                    'order_type': src_type,
                 }
             }
 

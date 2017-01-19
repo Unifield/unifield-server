@@ -58,6 +58,9 @@ class sale_order(osv.osv):
                 'warning': {
                     'title': _('Error'),
                     'message': msg,
+                },
+                'value': {
+                    'order_type': source_type,
                 }
             }
 

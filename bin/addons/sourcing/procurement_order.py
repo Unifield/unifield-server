@@ -26,6 +26,7 @@ from workflow.wkf_expr import _eval_expr
 from tools.translate import _
 
 from sourcing.sale_order_line import _SELECTION_PO_CFT
+from purchase_override.purchase import SOURCE_TYPES
 
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -240,6 +241,13 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 if ('order_type', '!=', 'direct') in purchase_domain:
                     purchase_domain.remove(('order_type', '!=', 'direct'))
                 purchase_domain.append(('order_type', '=', 'direct'))
+            if line.order_id.procurement_request:
+                values['source_type'] = 'regular'
+            else:
+                values['source_type'] = line.order_id.order_type
+
+            if procurement.po_cft != 'dpo':
+                purchase_domain.append(('order_type', 'in', [x[0] for x in SOURCE_TYPES.get(line.order_id.order_type)]))
 
         if partner.po_by_project in ('project', 'category_project') or (procurement.po_cft == 'dpo' and partner.po_by_project == 'all'):
             if line:

@@ -209,6 +209,8 @@ class so_po_common(osv.osv_memory):
             header_result['transport_type'] = header_info.get('transport_type')
         if 'ready_to_ship_date' in header_info:
             header_result['ready_to_ship_date'] = header_info.get('ready_to_ship_date')
+        if 'order_type' in header_info or 'source_type' in header_info:
+            header_result['source_type'] = header_info.get('order_type', header_info.get('source_type'))
 
         # US-830: If the PO is intermission/intersection, don't take the AD from the sync. message
         partner_type = self.get_partner_type(cr, uid, source, context)
@@ -287,6 +289,7 @@ class so_po_common(osv.osv_memory):
 
         if 'order_type' in header_info:
             header_result['order_type'] = header_info.get('order_type')
+            header_result['source_type'] = header_info.get('order_type')
         if 'priority' in header_info:
             header_result['priority'] = header_info.get('priority')
         if 'categ' in header_info:
