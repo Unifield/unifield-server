@@ -102,6 +102,7 @@ class users(osv.osv):
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
+    _trace = True
 
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
@@ -771,6 +772,43 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
     _columns = {
         'users': fields.many2many('res.users', 'res_groups_users_rel', 'gid', 'uid', 'Users'),
     }
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        In case user have been added or deleted, a new audit line should be created on the related users
+        '''
+        previous_values = None
+        current_values = None
+        user_obj = self.pool.get('res.users')
+        audit_obj = self.pool.get('audittrail.rule')
+        all_user_ids = [] # previous user ids + current
+
+        if 'users' in vals:
+            if vals['users'] and len(vals['users'][0]) > 2:
+                new_user_ids = vals['users'][0][2]
+            previous_user_ids = []
+            for record in self.read(cr, uid, ids, ['users'], context=context):
+                if record['users']:
+                    previous_user_ids.extend(record['users'])
+            all_user_ids = set(new_user_ids).union(previous_user_ids)
+            previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
+
+        res = super(groups, self).write(cr, uid, ids, vals, context=context)
+
+        if 'users' in vals:
+            if vals['users'] and len(vals['users'][0]) > 2:
+                users_deleted = list(set(previous_user_ids).difference(vals['users'][0][2]))
+                users_added = list(set(vals['users'][0][2]).difference(previous_user_ids))
+                audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
+                if users_deleted:
+                    previous_values = [x for x in previous_values if x['id'] in users_deleted]
+                    current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_deleted, ['groups_id'], context=context))
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_deleted, 'write', previous_values, current_values, context=context)
+                if users_added:
+                    previous_values = [x for x in previous_values if x['id'] in users_added]
+                    current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_added, ['groups_id'], context=context))
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_added, 'write', previous_values, current_values, context=context)
+        return res
 
     def unlink(self, cr, uid, ids, context=None):
         group_users = []
