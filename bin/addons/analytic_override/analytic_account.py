@@ -492,6 +492,19 @@ class analytic_account(osv.osv):
             return True
         return False
 
+    def _accrual_line_on_account(self, cr, uid, acc_line, account_ids, context=None):
+        """
+        Return True if one of the analytic accounts is used in the accrual line
+        """
+        if context is None:
+            context = {}
+        distrib_line = acc_line.analytic_distribution_id or False
+        if distrib_line and (self._fp_line_on_account(cr, uid, distrib_line, account_ids, context) or
+                             self._free1_line_on_account(cr, uid, distrib_line, account_ids, context) or
+                             self._free2_line_on_account(cr, uid, distrib_line, account_ids, context)):
+            return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
@@ -501,6 +514,7 @@ class analytic_account(osv.osv):
         po_obj = self.pool.get('purchase.order')
         fo_obj = self.pool.get('sale.order')
         regline_obj = self.pool.get('account.bank.statement.line')
+        accrual_line_obj = self.pool.get('msf.accrual.line')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
@@ -604,6 +618,20 @@ class analytic_account(osv.osv):
                     raise osv.except_osv(_('Warning !'),
                                          _('Draft or temp posted register lines using this account have a '
                                            'posting date greater than or equal to the selected inactivation date.'))
+                # check that there is no accrual line using the account, being draft or partially posted, and having a
+                # posting date >= selected inactivation date
+                acc_line_ids = accrual_line_obj.search(cr, uid,
+                                                       [('date', '>=', vals['date']), ('state', 'in', ('draft', 'partially_posted'))],
+                                                       order='NO_ORDER', context=context)
+                acc_line_ko = False
+                for acc_line in accrual_line_obj.browse(cr, uid, acc_line_ids, fields_to_fetch=['analytic_distribution_id'], context=context):
+                    if self._accrual_line_on_account(cr, uid, acc_line, account_ids, context):
+                        acc_line_ko = True
+                        break
+                if acc_line_ko:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('Draft or partially posted accrual lines using this account have a date '
+                                           'greater than or equal to the selected inactivation date.'))
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)

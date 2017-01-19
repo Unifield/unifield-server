@@ -621,8 +621,8 @@ class account_account(osv.osv):
                                                                     context=context)
                     if accrual_line_ko:
                         raise osv.except_osv(_('Warning !'),
-                                             _('Draft or partially posted accrual lines using this account have a '
-                                               'posting date greater than or equal to the selected inactivation date.'))
+                                             _('Draft or partially posted accrual lines using this account have a date '
+                                               'greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
         '''
