@@ -458,7 +458,7 @@ class account_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
-    def _tax_line_on_account(self, account_invoice, account):
+    def _invoice_tax_line_on_account(self, account_invoice, account):
         """
         Return True if the account is used for one of the tax lines of the "account.invoice" document
         (global tax or at line level)
@@ -486,12 +486,32 @@ class account_account(osv.osv):
                 return True
         return False
 
+    def _po_line_on_account(self, po, account):
+        """
+        Return True if the account is used for one of the PO lines
+        """
+        for po_line in po.order_line:
+            if po_line.account_4_distribution == account:
+                return True
+        return False
+
+    def _po_tax_line_on_account(self, po, account):
+        """
+        Return True if the account is used for one of the tax in the PO lines
+        """
+        for po_line in po.order_line:
+            for tax in po_line.taxes_id:
+                if tax.account_collected_id == account or tax.account_paid_id == account:
+                    return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
         ji_obj = self.pool.get('account.move.line')
         inv_obj = self.pool.get('account.invoice')
         comm_voucher_obj = self.pool.get('account.commitment')
+        po_obj = self.pool.get('purchase.order')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
@@ -521,7 +541,7 @@ class account_account(osv.osv):
                                                            ('state', '=', 'draft')], order='NO_ORDER', context=context)
                     acc_inv_ko = False
                     for inv in inv_obj.browse(cr, uid, acc_inv_ids, fields_to_fetch=['account_id', 'invoice_line', 'tax_line'], context=context):
-                        if inv.account_id == account or self._invoice_line_on_account(inv, account) or self._tax_line_on_account(inv, account):
+                        if inv.account_id == account or self._invoice_line_on_account(inv, account) or self._invoice_tax_line_on_account(inv, account):
                             acc_inv_ko = True
                             break
                     if acc_inv_ko:
@@ -536,6 +556,17 @@ class account_account(osv.osv):
                             comm_voucher_ko = True
                             break
                     if comm_voucher_ko:
+                        raise doc_error
+                    # check that there is no draft "PO" having a line or a tax line using the account
+                    # and having a date >= selected inactivation date
+                    po_ids = po_obj.search(cr, uid, [('delivery_requested_date', '>=', vals['inactivation_date']), ('state', '=', 'draft')],
+                                           order='NO_ORDER', context=context)
+                    po_ko = False
+                    for po in po_obj.browse(cr, uid, po_ids, fields_to_fetch=['order_line'], context=context):
+                        if self._po_line_on_account(po, account) or self._po_tax_line_on_account(po, account):
+                            po_ko = True
+                            break
+                    if po_ko:
                         raise doc_error
 
     def _check_allowed_partner_type(self, vals):
