@@ -534,6 +534,7 @@ class account_account(osv.osv):
         fo_obj = self.pool.get('sale.order')
         regline_obj = self.pool.get('account.bank.statement.line')
         accrual_line_obj = self.pool.get('msf.accrual.line')
+        hq_entry_obj= self.pool.get('hq.entries')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
@@ -610,8 +611,8 @@ class account_account(osv.osv):
                         raise osv.except_osv(_('Warning !'),
                                              _('Draft or temp posted register lines using this account have a '
                                                'posting date greater than or equal to the selected inactivation date.'))
-                    # check that there is no accrual line using the account, being draft or partially posted, and having a
-                    # posting date >= selected inactivation date
+                    # check that there is no accrual line using the account, being draft or partially posted, and having
+                    # a posting date >= selected inactivation date
                     accrual_line_ko = accrual_line_obj.search_exist(cr, uid, ['&', '&',
                                                                               ('date', '>=', vals['inactivation_date']),
                                                                               ('state', 'in', ('draft', 'partially_posted')),
@@ -622,6 +623,15 @@ class account_account(osv.osv):
                     if accrual_line_ko:
                         raise osv.except_osv(_('Warning !'),
                                              _('Draft or partially posted accrual lines using this account have a date '
+                                               'greater than or equal to the selected inactivation date.'))
+                    # check that there is no HQ entry using the account, not being validated, and having
+                    # a posting date >= selected inactivation date
+                    hq_entry_ko = hq_entry_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
+                                                                      ('account_id', '=', account.id),
+                                                                      ('user_validated', '=', 'f')], context=context)
+                    if hq_entry_ko:
+                        raise osv.except_osv(_('Warning !'),
+                                             _('HQ entries (not validated) using this account have a date '
                                                'greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
