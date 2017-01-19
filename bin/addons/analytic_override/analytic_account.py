@@ -479,6 +479,19 @@ class analytic_account(osv.osv):
                 return True
         return False
 
+    def _regline_on_account(self, cr, uid, regline, account_ids, context=None):
+        """
+        Return True if one of the analytic accounts is used in the register line
+        """
+        if context is None:
+            context = {}
+        distrib_line = regline.analytic_distribution_id or False
+        if distrib_line and (self._fp_line_on_account(cr, uid, distrib_line, account_ids, context) or
+                             self._free1_line_on_account(cr, uid, distrib_line, account_ids, context) or
+                             self._free2_line_on_account(cr, uid, distrib_line, account_ids, context)):
+            return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
@@ -487,6 +500,7 @@ class analytic_account(osv.osv):
         comm_voucher_obj = self.pool.get('account.commitment')
         po_obj = self.pool.get('purchase.order')
         fo_obj = self.pool.get('sale.order')
+        regline_obj = self.pool.get('account.bank.statement.line')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
@@ -577,6 +591,19 @@ class analytic_account(osv.osv):
                         break
                 if fo_ko:
                     raise doc_error
+                # check that there is no register line using the account, being draft or temp posted, and having a
+                # posting date >= selected inactivation date
+                regline_ids = regline_obj.search(cr, uid, [('date', '>=', vals['date']), ('state', 'in', ('draft', 'temp'))],
+                                                 order='NO_ORDER', context=context)
+                regline_ko = False
+                for regline in regline_obj.browse(cr, uid, regline_ids, fields_to_fetch=['analytic_distribution_id'], context=context):
+                    if self._regline_on_account(cr, uid, regline, account_ids, context):
+                        regline_ko = True
+                        break
+                if regline_ko:
+                    raise osv.except_osv(_('Warning !'),
+                                         _('Draft or temp posted register lines using this account have a '
+                                           'posting date greater than or equal to the selected inactivation date.'))
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
         account = self.browse(cr, uid, a_id, context=context)
