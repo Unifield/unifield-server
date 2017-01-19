@@ -534,7 +534,8 @@ class account_account(osv.osv):
         fo_obj = self.pool.get('sale.order')
         regline_obj = self.pool.get('account.bank.statement.line')
         accrual_line_obj = self.pool.get('msf.accrual.line')
-        hq_entry_obj= self.pool.get('hq.entries')
+        hq_entry_obj = self.pool.get('hq.entries')
+        payroll_obj = self.pool.get('hr.payroll.msf')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
@@ -632,6 +633,14 @@ class account_account(osv.osv):
                     if hq_entry_ko:
                         raise osv.except_osv(_('Warning !'),
                                              _('HQ entries (not validated) using this account have a posting date '
+                                               'greater than or equal to the selected inactivation date.'))
+                    # check that there is no draft payroll entry using the account and having a date >= selected inactivation date
+                    payroll_ko = payroll_obj.search_exist(cr, uid, [('date', '>=', vals['inactivation_date']),
+                                                                    ('account_id', '=', account.id),
+                                                                    ('state', '=', 'draft')], context=context)
+                    if payroll_ko:
+                        raise osv.except_osv(_('Warning !'),
+                                             _('Draft payroll entries using this account have a date '
                                                'greater than or equal to the selected inactivation date.'))
 
     def _check_allowed_partner_type(self, vals):
