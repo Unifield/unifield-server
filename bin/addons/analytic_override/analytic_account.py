@@ -505,159 +505,237 @@ class analytic_account(osv.osv):
             return True
         return False
 
+    def _aal_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one unposted AJI using the account and
+        having a posting date >= inactivation date
+        """
+        aji_obj = self.pool.get('account.analytic.line')
+        aji_ko = aji_obj.search_exist(cr, uid, ['&', '&', ('move_state', '=', 'draft'),
+                                                ('date', '>=', inactivation_date),
+                                                '|', '|',
+                                                ('account_id', 'in', account_ids),
+                                                ('cost_center_id', 'in', account_ids),
+                                                ('destination_id', 'in', account_ids)], context=context)
+        if aji_ko:
+            return True
+        return False
+
+    def _account_invoice_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one draft "account.invoice" doc (SI, SR...) using the account and having
+        a posting date >= inactivation date
+        """
+        inv_obj = self.pool.get('account.invoice')
+        inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', inactivation_date),
+                                           ('state', '=', 'draft')], order='NO_ORDER', context=context)
+        acc_inv_ko = False
+        for inv in inv_obj.browse(cr, uid, inv_ids, fields_to_fetch=['analytic_distribution_id', 'invoice_line'],
+                                  context=context):
+            distrib = inv.analytic_distribution_id or False
+            # check that the analytic account is not used in the AD at account.invoice header level
+            if distrib and (self._fp_line_on_account(cr, uid, distrib, account_ids, context) or \
+                                    self._free1_line_on_account(cr, uid, distrib, account_ids, context) or \
+                                    self._free2_line_on_account(cr, uid, distrib, account_ids, context)):
+                acc_inv_ko = True
+                break
+            # check that the analytic account is not used in the AD at account.invoice Line level
+            if self._invoice_line_on_account(cr, uid, inv, account_ids, context):
+                acc_inv_ko = True
+                break
+        if acc_inv_ko:
+            return True
+        return False
+
+    def _commitment_voucher_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one draft "Account Commitment Voucher" using the account and having
+        a date >= inactivation date
+        """
+        comm_voucher_obj = self.pool.get('account.commitment')
+        comm_voucher_ids = comm_voucher_obj.search(cr, uid, [('date', '>=', inactivation_date), ('state', '=', 'draft')],
+                                                   order='NO_ORDER', context=context)
+        comm_voucher_ko = False
+        for comm_voucher in comm_voucher_obj.browse(cr, uid, comm_voucher_ids, context=context,
+                                                    fields_to_fetch=['analytic_distribution_id', 'line_ids']):
+            comm_voucher_distrib = comm_voucher.analytic_distribution_id or False
+            # check that the analytic account is not used in the AD at Commitment Voucher header level
+            if comm_voucher_distrib and self._fp_line_on_account(cr, uid, comm_voucher_distrib, account_ids, context):
+                comm_voucher_ko = True
+                break
+            # check that the analytic account is not used in the AD at Commitment Voucher Line level
+            if self._commitment_voucher_line_on_account(cr, uid, comm_voucher, account_ids, context):
+                comm_voucher_ko = True
+                break
+        if comm_voucher_ko:
+            return True
+        return False
+
+    def _po_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one draft PO using the account and having a delivery requested date >= inactivation date
+        """
+        po_obj = self.pool.get('purchase.order')
+        po_ids = po_obj.search(cr, uid, [('delivery_requested_date', '>=', inactivation_date), ('state', '=', 'draft')],
+                               order='NO_ORDER', context=context)
+        po_ko = False
+        for po in po_obj.browse(cr, uid, po_ids, context=context,
+                                fields_to_fetch=['analytic_distribution_id', 'order_line']):
+            po_distrib = po.analytic_distribution_id or False
+            # check that the analytic account is not used in the AD at PO header level
+            if po_distrib and self._fp_line_on_account(cr, uid, po_distrib, account_ids, context):
+                po_ko = True
+                break
+            # check that the analytic account is not used in the AD at PO Line level
+            if self._po_line_on_account(cr, uid, po, account_ids, context):
+                po_ko = True
+                break
+        if po_ko:
+            return True
+        return False
+
+    def _fo_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one draft FO using the account and having a delivery requested date >= inactivation date
+        """
+        fo_obj = self.pool.get('sale.order')
+        fo_ids = fo_obj.search(cr, uid, [('delivery_requested_date', '>=', inactivation_date), ('state', '=', 'draft')],
+                               order='NO_ORDER', context=context)
+        fo_ko = False
+        for fo in fo_obj.browse(cr, uid, fo_ids, context=context,
+                                fields_to_fetch=['analytic_distribution_id', 'order_line']):
+            fo_distrib = fo.analytic_distribution_id or False
+            # check that the analytic account is not used in the AD at FO header level
+            if fo_distrib and self._fp_line_on_account(cr, uid, fo_distrib, account_ids, context):
+                fo_ko = True
+                break
+            # check that the analytic account is not used in the AD at FO Line level
+            if self._fo_line_on_account(cr, uid, fo, account_ids, context):
+                fo_ko = True
+                break
+        if fo_ko:
+            return True
+        return False
+
+    def _regline_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one register line using the account, being draft or temp posted, and having a
+        posting date >= inactivation date
+        """
+        regline_obj = self.pool.get('account.bank.statement.line')
+        regline_ids = regline_obj.search(cr, uid, [('date', '>=', inactivation_date), ('state', 'in', ('draft', 'temp'))],
+                                         order='NO_ORDER', context=context)
+        regline_ko = False
+        for regline in regline_obj.browse(cr, uid, regline_ids, fields_to_fetch=['analytic_distribution_id'],
+                                          context=context):
+            if self._regline_on_account(cr, uid, regline, account_ids, context):
+                regline_ko = True
+                break
+        if regline_ko:
+            return True
+        return False
+
+    def _accrual_line_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one accrual line using the account, being draft or partially posted, and
+        having a posting date >= inactivation date
+        """
+        accrual_line_obj = self.pool.get('msf.accrual.line')
+        acc_line_ids = accrual_line_obj.search(cr, uid,
+                                               [('date', '>=', inactivation_date),
+                                                ('state', 'in', ('draft', 'partially_posted'))],
+                                               order='NO_ORDER', context=context)
+        acc_line_ko = False
+        for acc_line in accrual_line_obj.browse(cr, uid, acc_line_ids, fields_to_fetch=['analytic_distribution_id'],
+                                                context=context):
+            if self._accrual_line_on_account(cr, uid, acc_line, account_ids, context):
+                acc_line_ko = True
+                break
+        if acc_line_ko:
+            return True
+        return False
+
+    def _hq_entry_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one HQ entry using the account, not being validated, and having
+        a posting date >= inactivation date
+        """
+        hq_entry_obj = self.pool.get('hq.entries')
+        hq_entry_ko = hq_entry_obj.search_exist(cr, uid, ['&', '&', ('user_validated', '=', False),
+                                                          ('date', '>=', inactivation_date),
+                                                          '|', '|', '|', '|',
+                                                          ('analytic_id', 'in', account_ids),
+                                                          ('cost_center_id', 'in', account_ids),
+                                                          ('destination_id', 'in', account_ids),
+                                                          ('free_1_id', 'in', account_ids),
+                                                          ('free_2_id', 'in', account_ids)], context=context)
+        if hq_entry_ko:
+            return True
+        return False
+
+    def _payroll_entry_using_account_after_date(self, cr, uid, account_ids, inactivation_date, context):
+        """
+        Return True if there is at least one draft payroll entry using the account and having a date >= inactivation date
+        """
+        payroll_obj = self.pool.get('hr.payroll.msf')
+        payroll_ko = payroll_obj.search_exist(cr, uid, ['&', '&', ('state', '=', 'draft'),
+                                                        ('date', '>=', inactivation_date),
+                                                        '|', '|', '|', '|',
+                                                        ('funding_pool_id', 'in', account_ids),
+                                                        ('cost_center_id', 'in', account_ids),
+                                                        ('destination_id', 'in', account_ids),
+                                                        ('free1_id', 'in', account_ids),
+                                                        ('free2_id', 'in', account_ids)], context=context)
+        if payroll_ko:
+            return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
-        aji_obj = self.pool.get('account.analytic.line')
-        inv_obj = self.pool.get('account.invoice')
-        comm_voucher_obj = self.pool.get('account.commitment')
-        po_obj = self.pool.get('purchase.order')
-        fo_obj = self.pool.get('sale.order')
-        regline_obj = self.pool.get('account.bank.statement.line')
-        accrual_line_obj = self.pool.get('msf.accrual.line')
-        hq_entry_obj = self.pool.get('hq.entries')
-        payroll_obj = self.pool.get('hr.payroll.msf')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
             elif not context.get('sync_update_execution', False) and account_ids is not None:
-                # if the account already exists, check that there is no unposted AJI using it and
-                # having a posting date >= selected inactivation date
-                aji_ko = aji_obj.search_exist(cr, uid, ['&', '&', ('move_state', '=', 'draft'),
-                                                        ('date', '>=', vals['date']),
-                                                        '|', '|',
-                                                        ('account_id', 'in', account_ids),
-                                                        ('cost_center_id', 'in', account_ids),
-                                                        ('destination_id', 'in', account_ids)], context=context)
-                if aji_ko:
+                # if the account already exists, do the necessary checks on the following elements:
+                # Analytic Journal Items
+                if self._aal_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise osv.except_osv(_('Warning !'),
                                          _('At least one unposted Analytic Journal Item using this account has a posting date '
                                            'greater than or equal to the selected inactivation date.'))
-                # check that there is no draft "account.invoice" doc (SI, SR...) using the account and having
-                # a posting date >= selected inactivation date
-                doc_error = osv.except_osv(_('Warning !'), _('At least one document in draft state using this account has a date '
-                                                             'greater than or equal to the selected inactivation date.'))
-                inv_ids = inv_obj.search(cr, uid, [('date_invoice', '>=', vals['date']),
-                                                   ('state', '=', 'draft')], order='NO_ORDER', context=context)
-                acc_inv_ko = False
-                for inv in inv_obj.browse(cr, uid, inv_ids, fields_to_fetch=['analytic_distribution_id', 'invoice_line'], context=context):
-                    distrib = inv.analytic_distribution_id or False
-                    # check that the analytic account is not used in the AD at account.invoice header level
-                    if distrib and (self._fp_line_on_account(cr, uid, distrib, account_ids, context) or \
-                       self._free1_line_on_account(cr, uid, distrib, account_ids, context) or \
-                       self._free2_line_on_account(cr, uid, distrib, account_ids, context)):
-                        acc_inv_ko = True
-                        break
-                    # check that the analytic account is not used in the AD at account.invoice Line level
-                    if self._invoice_line_on_account(cr, uid, inv, account_ids, context):
-                        acc_inv_ko = True
-                        break
-                if acc_inv_ko:
+                # account.invoice docs
+                doc_error = osv.except_osv(_('Warning !'),
+                                           _('At least one document in draft state using this account has a date '
+                                             'greater than or equal to the selected inactivation date.'))
+                if self._account_invoice_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise doc_error
-                # check that there is no draft "Account Commitment Voucher" using the account and having
-                # a date >= selected inactivation date
-                comm_voucher_ids = comm_voucher_obj.search(cr, uid, [('date', '>=', vals['date']), ('state', '=', 'draft')],
-                                                           order='NO_ORDER', context=context)
-                comm_voucher_ko = False
-                for comm_voucher in comm_voucher_obj.browse(cr, uid, comm_voucher_ids, context=context,
-                                                            fields_to_fetch=['analytic_distribution_id', 'line_ids']):
-                    comm_voucher_distrib = comm_voucher.analytic_distribution_id or False
-                    # check that the analytic account is not used in the AD at Commitment Voucher header level
-                    if comm_voucher_distrib and self._fp_line_on_account(cr, uid, comm_voucher_distrib, account_ids, context):
-                        comm_voucher_ko = True
-                        break
-                    # check that the analytic account is not used in the AD at Commitment Voucher Line level
-                    if self._commitment_voucher_line_on_account(cr, uid, comm_voucher, account_ids, context):
-                        comm_voucher_ko = True
-                        break
-                if comm_voucher_ko:
+                # Commitment vouchers
+                if self._commitment_voucher_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise doc_error
-                # check that there is no draft PO using the account and having a delivery requested date >= selected inactivation date
-                po_ids = po_obj.search(cr, uid, [('delivery_requested_date', '>=', vals['date']), ('state', '=', 'draft')],
-                                                  order='NO_ORDER', context=context)
-                po_ko = False
-                for po in po_obj.browse(cr, uid, po_ids, context=context,
-                                        fields_to_fetch=['analytic_distribution_id', 'order_line']):
-                    po_distrib = po.analytic_distribution_id or False
-                    # check that the analytic account is not used in the AD at PO header level
-                    if po_distrib and self._fp_line_on_account(cr, uid, po_distrib, account_ids,  context):
-                        po_ko = True
-                        break
-                    # check that the analytic account is not used in the AD at PO Line level
-                    if self._po_line_on_account(cr, uid, po, account_ids, context):
-                        po_ko = True
-                        break
-                if po_ko:
+                # Purchase orders
+                if self._po_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise doc_error
-                # check that there is no draft FO using the account and having a delivery requested date >= selected inactivation date
-                fo_ids = fo_obj.search(cr, uid, [('delivery_requested_date', '>=', vals['date']), ('state', '=', 'draft')],
-                                       order='NO_ORDER', context=context)
-                fo_ko = False
-                for fo in fo_obj.browse(cr, uid, fo_ids, context=context,
-                                        fields_to_fetch=['analytic_distribution_id', 'order_line']):
-                    fo_distrib = fo.analytic_distribution_id or False
-                    # check that the analytic account is not used in the AD at FO header level
-                    if fo_distrib and self._fp_line_on_account(cr, uid, fo_distrib, account_ids, context):
-                        fo_ko = True
-                        break
-                    # check that the analytic account is not used in the AD at FO Line level
-                    if self._fo_line_on_account(cr, uid, fo, account_ids, context):
-                        fo_ko = True
-                        break
-                if fo_ko:
+                # Field orders
+                if self._fo_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise doc_error
-                # check that there is no register line using the account, being draft or temp posted, and having a
-                # posting date >= selected inactivation date
-                regline_ids = regline_obj.search(cr, uid, [('date', '>=', vals['date']), ('state', 'in', ('draft', 'temp'))],
-                                                 order='NO_ORDER', context=context)
-                regline_ko = False
-                for regline in regline_obj.browse(cr, uid, regline_ids, fields_to_fetch=['analytic_distribution_id'], context=context):
-                    if self._regline_on_account(cr, uid, regline, account_ids, context):
-                        regline_ko = True
-                        break
-                if regline_ko:
+                # Register lines
+                if self._regline_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise osv.except_osv(_('Warning !'),
                                          _('At least one draft or temp posted register line using this account has a '
                                            'posting date greater than or equal to the selected inactivation date.'))
-                # check that there is no accrual line using the account, being draft or partially posted, and having a
-                # posting date >= selected inactivation date
-                acc_line_ids = accrual_line_obj.search(cr, uid,
-                                                       [('date', '>=', vals['date']), ('state', 'in', ('draft', 'partially_posted'))],
-                                                       order='NO_ORDER', context=context)
-                acc_line_ko = False
-                for acc_line in accrual_line_obj.browse(cr, uid, acc_line_ids, fields_to_fetch=['analytic_distribution_id'], context=context):
-                    if self._accrual_line_on_account(cr, uid, acc_line, account_ids, context):
-                        acc_line_ko = True
-                        break
-                if acc_line_ko:
+                # Accrual lines
+                if self._accrual_line_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise osv.except_osv(_('Warning !'),
-                                         _('At least one draft or partially posted accrual line using this account has '
-                                           'a date greater than or equal to the selected inactivation date.'))
-                # check that there is no HQ entry using the account, not being validated, and having a
-                # posting date >= selected inactivation date
-                hq_entry_ko = hq_entry_obj.search_exist(cr, uid, ['&', '&', ('user_validated', '=', False),
-                                                        ('date', '>=', vals['date']),
-                                                        '|', '|', '|', '|',
-                                                        ('analytic_id', 'in', account_ids),
-                                                        ('cost_center_id', 'in', account_ids),
-                                                        ('destination_id', 'in', account_ids),
-                                                        ('free_1_id', 'in', account_ids),
-                                                        ('free_2_id', 'in', account_ids)], context=context)
-                if hq_entry_ko:
+                                 _('At least one draft or partially posted accrual line using this account has '
+                                   'a date greater than or equal to the selected inactivation date.'))
+                # HQ entries
+                if self._hq_entry_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise osv.except_osv(_('Warning !'),
                                          _('At least one HQ entry (not validated) using this account has a posting '
                                            'date greater than or equal to the selected inactivation date.'))
-                # check that there is no draft payroll entry using the account and having a date >= selected inactivation date
-                payroll_ko = payroll_obj.search_exist(cr, uid, ['&', '&', ('state', '=', 'draft'),
-                                                                ('date', '>=', vals['date']),
-                                                                '|', '|', '|', '|',
-                                                                ('funding_pool_id', 'in', account_ids),
-                                                                ('cost_center_id', 'in', account_ids),
-                                                                ('destination_id', 'in', account_ids),
-                                                                ('free1_id', 'in', account_ids),
-                                                                ('free2_id', 'in', account_ids)], context=context)
-                if payroll_ko:
+                # Payroll entries
+                if self._payroll_entry_using_account_after_date(cr, uid, account_ids, vals['date'], context):
                     raise osv.except_osv(_('Warning !'),
                                          _('At least one draft payroll entry using this account has a date '
                                            'greater than or equal to the selected inactivation date.'))
