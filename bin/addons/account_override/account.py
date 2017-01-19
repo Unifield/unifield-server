@@ -505,6 +505,25 @@ class account_account(osv.osv):
                     return True
         return False
 
+    def _fo_line_on_account(self, fo, account):
+        """
+        Return True if the account is used for one of the FO lines
+        """
+        for fo_line in fo.order_line:
+            if fo_line.account_4_distribution == account:
+                return True
+        return False
+
+    def _fo_tax_line_on_account(self, fo, account):
+        """
+        Return True if the account is used for one of the tax in the FO lines
+        """
+        for fo_line in fo.order_line:
+            for tax in fo_line.tax_id:
+                if tax.account_collected_id == account or tax.account_paid_id == account:
+                    return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
@@ -512,6 +531,7 @@ class account_account(osv.osv):
         inv_obj = self.pool.get('account.invoice')
         comm_voucher_obj = self.pool.get('account.commitment')
         po_obj = self.pool.get('purchase.order')
+        fo_obj = self.pool.get('sale.order')
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
@@ -567,6 +587,17 @@ class account_account(osv.osv):
                             po_ko = True
                             break
                     if po_ko:
+                        raise doc_error
+                    # check that there is no draft "FO" having a line or a tax line using the account
+                    # and having a date >= selected inactivation date
+                    fo_ids = fo_obj.search(cr, uid, [('delivery_requested_date', '>=', vals['inactivation_date']), ('state', '=', 'draft')],
+                                           order='NO_ORDER', context=context)
+                    fo_ko = False
+                    for fo in fo_obj.browse(cr, uid, fo_ids, fields_to_fetch=['order_line'], context=context):
+                        if self._fo_line_on_account(fo, account) or self._fo_tax_line_on_account(fo, account):
+                            fo_ko = True
+                            break
+                    if fo_ko:
                         raise doc_error
 
     def _check_allowed_partner_type(self, vals):
