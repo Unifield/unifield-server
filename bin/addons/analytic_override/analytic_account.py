@@ -467,6 +467,18 @@ class analytic_account(osv.osv):
                 return True
         return False
 
+    def _fo_line_on_account(self, cr, uid, fo, account_ids, context=None):
+        """
+        Return True if one of the analytic accounts is used for one of the FO lines
+        """
+        if context is None:
+            context = {}
+        for fo_line in fo.order_line:
+            distrib_line = fo_line.analytic_distribution_id or False
+            if distrib_line and self._fp_line_on_account(cr, uid, distrib_line, account_ids, context):
+                return True
+        return False
+
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
         if context is None:
             context = {}
@@ -474,6 +486,7 @@ class analytic_account(osv.osv):
         inv_obj = self.pool.get('account.invoice')
         comm_voucher_obj = self.pool.get('account.commitment')
         po_obj = self.pool.get('purchase.order')
+        fo_obj = self.pool.get('sale.order')
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
@@ -546,6 +559,23 @@ class analytic_account(osv.osv):
                         po_ko = True
                         break
                 if po_ko:
+                    raise doc_error
+                # check that there is no draft FO using the account and having a delivery requested date >= selected inactivation date
+                fo_ids = fo_obj.search(cr, uid, [('delivery_requested_date', '>=', vals['date']), ('state', '=', 'draft')],
+                                       order='NO_ORDER', context=context)
+                fo_ko = False
+                for fo in fo_obj.browse(cr, uid, fo_ids, context=context,
+                                        fields_to_fetch=['analytic_distribution_id', 'order_line']):
+                    fo_distrib = fo.analytic_distribution_id or False
+                    # check that the analytic account is not used in the AD at FO header level
+                    if fo_distrib and self._fp_line_on_account(cr, uid, fo_distrib, account_ids, context):
+                        fo_ko = True
+                        break
+                    # check that the analytic account is not used in the AD at FO Line level
+                    if self._fo_line_on_account(cr, uid, fo, account_ids, context):
+                        fo_ko = True
+                        break
+                if fo_ko:
                     raise doc_error
 
     def copy(self, cr, uid, a_id, default=None, context=None, done_list=[], local=False):
