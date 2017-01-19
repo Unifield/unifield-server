@@ -4819,9 +4819,9 @@ class stock_move(osv.osv):
                         continue
 
                     # If the line will be sourced in another way, do not cancel the OUT move
-                        if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
-                            limit=1, order='NO_ORDER', context=context):
-                            continue
+                    if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
+                        limit=1, order='NO_ORDER', context=context):
+                        continue
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
