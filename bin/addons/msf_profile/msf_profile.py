@@ -253,10 +253,10 @@ class patch_scripts(osv.osv):
     # XXX do not remove this patch !!! XXX
     def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
         '''
-        create pricelist corresponding to currency that don't have yet
+        Find currencies without associated pricelist and create this price list
         '''
         currency_module = self.pool.get('res.currency')
-        # Check if currencies has no associated pricelists
+        # Find currencies without associated pricelist
         cr.execute("""SELECT id FROM res_currency
                    WHERE id NOT IN (SELECT currency_id FROM product_pricelist)
                    AND currency_table_id IS NULL""")
