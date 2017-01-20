@@ -76076,3 +76076,9 @@ msgstr "Vérifier les erreurs"
 #, python-format
 msgid "A line was added to the %s %s to re-source the canceled line."
 msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:478
+#, python-format
+msgid "Line %s. A Third Party is mandatory for the given account: %s."
+msgstr "Ligne %s. Un Tiers est obligatoire pour le compte donné : %s."

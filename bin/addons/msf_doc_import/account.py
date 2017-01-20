@@ -464,6 +464,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     # Check result
                     partner_options = partner_needs['value']['partner_type']['options']
+                    partner_type_mandatory = 'partner_type_mandatory' in partner_needs['value'] and \
+                                             partner_needs['value']['partner_type_mandatory'] or False
                     if r_partner and ('res.partner', 'Partner') not in partner_options:
                         errors.append(_('Line %s. You cannot use a partner for the given account: %s.') % (current_line_num, account.code))
                         continue
@@ -472,6 +474,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         continue
                     if r_journal and ('account.journal', 'Journal') not in partner_options:
                         errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
+                    if partner_type_mandatory and not r_partner and not r_employee and not r_journal:
+                        errors.append(_('Line %s. A Third Party is mandatory for the given account: %s.') % (current_line_num, account.code))
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
                         errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
