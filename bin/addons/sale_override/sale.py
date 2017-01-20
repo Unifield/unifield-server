@@ -2997,12 +2997,13 @@ class sale_order_line(osv.osv):
                 if move['picking_id']:
                     picking_ids.add(move['picking_id'][0])
 
-            if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
-                move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
-                move_obj.unlink(cr, uid, move_ids, context=context)
-            else:
-                move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
-                move_obj.action_cancel(cr, uid, move_ids, context=context)
+            if not context.get('no_cancel_out'):
+                if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
+                    move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
+                    move_obj.unlink(cr, uid, move_ids, context=context)
+                else:
+                    move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
 
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
                 if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
@@ -3038,7 +3039,7 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-            if proc and context.get('cancel_type'):
+            if proc and context.get('cancel_type') and not context.get('no_cancel_out'):
                 proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
                 proc_obj.action_cancel(cr, uid, [proc])
         else:
