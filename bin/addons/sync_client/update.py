@@ -825,6 +825,10 @@ class update_received(osv.osv):
     def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback,
             message, update, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
+        result = {
+                'res': True,
+                'error_message': ''
+        }
 
         def check_xmlid(xmlid):
             module, sep, xmlid = xmlid.partition('.')
@@ -834,10 +838,6 @@ class update_received(osv.osv):
         for i, field, value in zip(range(len(fields)), fields, values):
             if '/id' not in field: continue
             if not value: continue
-            result = {
-                    'res': True,
-                    'error_message': ''
-            }
             res_val = []
             for xmlid in map(normalize_xmlid, split_xml_ids_list(value)):
                 try:
