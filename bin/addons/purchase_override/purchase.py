@@ -1621,8 +1621,8 @@ stock moves which are already processed : '''
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
                                                                                  round=False, context=date_context)
 
-                    if so.order_type == 'regular' and price_unit_converted < 0.00001:
-                        price_unit_converted = 0.00001
+                    if so.order_type == 'regular' and price_unit_converted < 0.01:
+                        price_unit_converted = 0.01
 
                     line_qty = line.product_qty
                     if line.procurement_id:
