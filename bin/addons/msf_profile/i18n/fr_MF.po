@@ -76024,6 +76024,24 @@ msgstr "Seul un lettrage complet est autorisé lorsque des entrées de deux lett
 msgid "Both Debit and Credit lines are required for reconciliation."
 msgstr "Un lettrage requiert à la fois des lignes en débit et en crédit."
 
+#. module: account_override
+#: code:addons/account_override/account.py:850
+#, python-format
+msgid "Period '%s' is not open! No Journal Entry is created"
+msgstr "La période '%s' n'est pas ouverte ! Pas d'écriture comptable créée."
+
+#. module: account
+#: code:addons/account/account.py:1547
+#, python-format
+msgid "You can't save entries in a non-open period: %s"
+msgstr "Vous ne pouvez pas enregistrer des écritures dans une période non ouverte : %s"
+
+#. module: account_override
+#: code:addons/account_override/account_move_line.py:491
+#, python-format
+msgid "Only manually reconciled entries can be unreconciled."
+msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
+
 #. module: msf_outgoing
 #: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:328
 #, python-format
@@ -76034,12 +76052,6 @@ msgstr "La livraison a déjà été traitée, vous ne pouvez pas la sauvegarder 
 #: view:stock.picking:0
 msgid "Delivery orders which are in draft state"
 msgstr "Bons de livraison dans l'état brouillon"
-
-#. module: account_override
-#: code:addons/account_override/account_move_line.py:491
-#, python-format
-msgid "Only manually reconciled entries can be unreconciled."
-msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_split.py:300
