@@ -75923,3 +75923,9 @@ msgstr "Vous ne pouvez pas enregistrer des écritures dans une période non ouve
 #, python-format
 msgid "Only manually reconciled entries can be unreconciled."
 msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
+
+#. module: msf_outgoing
+#: code:addons/msf_outgoing/wizard/incoming_shipment_processor.py:328
+#, python-format
+msgid "The incoming shipment has already been processed, you cannot save it as draft."
+msgstr "La livraison a déjà été traitée, vous ne pouvez pas la sauvegarder en brouillon."
