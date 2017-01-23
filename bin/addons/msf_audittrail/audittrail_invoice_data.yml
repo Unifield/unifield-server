@@ -95,7 +95,7 @@
       fields = [
         'name', 'document_date', 'date', 'sequence_for_reference',
         'account_id', 'partner_type2',
-        'amount_in', 'amount_out', 
+        'amount_in', 'amount_out',
         'reconciled', 'state',
       ]
 
@@ -111,6 +111,11 @@
         if field_name:
           name_id = field_name[0]
 
+      field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.bank.statement.line'), ('name', '=', 'sequence_for_reference')], context=context)
+      field_other_id = False
+      if field_other_name:
+          field_other_id = field_other_name[0]
+
       rule_id = self.create(cr, uid, {'name': name,
                                       'object_id': object_ids[0],
                                       'log_write': True,
@@ -119,6 +124,7 @@
                                       'field_ids': [(6, 0, fields_ids)],
                                       'parent_field_id': parent_id,
                                       'name_get_field_id': name_id,
+                                      'field_other_id': field_other_id,
                                      }, context=context)
 
       # Subscribe to the rule

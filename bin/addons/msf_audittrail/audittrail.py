@@ -429,6 +429,7 @@ class audittrail_rule(osv.osv):
         "field_ids": fields.many2many('ir.model.fields', 'audit_rule_field_rel', 'rule_id', 'field_id', string='Fields'),
         "parent_field_id": fields.many2one('ir.model.fields', string='Parent fields'),
         "name_get_field_id": fields.many2one('ir.model.fields', string='Displayed field value'),
+        "field_other_id": fields.many2one('ir.model.fields', string='Displayed other field value'),
     }
 
     _defaults = {
@@ -512,8 +513,11 @@ class audittrail_rule(osv.osv):
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
             if thisrule.object_id.model == 'account.bank.statement.line':
-                # for register line we allow to select many lines in track changes view
-                val['domain'] = "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', 'in', active_ids)]"
+                # for register line we allow to select many lines in trac changes view
+                # it is required to use fct_object_id and fct_res_id instead
+                # of object_id and res_id because account.bank.statement.line are sub object of
+                # register and track changes are created this way.
+                val['domain'] = "[('fct_object_id','=', " + str(thisrule.object_id.id) + "), ('fct_res_id', 'in', active_ids)]"
 
             action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
@@ -670,6 +674,13 @@ class audittrail_rule(osv.osv):
                     'res_id': parent_field_id or inherit_field_id or res_id,
                 }
 
+                if rule.field_other_id:
+                    vals.update({
+                        'other_column': self.pool.get(rule.object_id.model).read(cr, uid,
+                            res_id, [rule.field_other_id.name])[rule.field_other_id.name]
+                        }
+                    )
+
                 # Add the name of the created sub-object
                 if parent_field_id:
                     # get the parent model_id
@@ -778,7 +789,20 @@ class audittrail_log_line(osv.osv):
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
-    _order = 'timestamp desc'
+    _order = 'timestamp desc, id desc'
+
+    def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
+        """
+        Change the tracking view depending on the model_object
+        """
+        if view_type == 'tree' and\
+                context.get('active_model', False) in\
+                ('account.bank.statement', 'account.bank.statement.line'):
+            dataobj = self.pool.get('ir.model.data')
+            dummy, view_id = dataobj.get_object_reference(cr, 1, 'register_accounting', 'view_audittrail_log_line_other_column_tree')
+        view = super(audittrail_log_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
+        return view
+
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -912,7 +936,6 @@ class audittrail_log_line(osv.osv):
 
         return super(audittrail_log_line, self).search(cr, uid, args, offset=offset, limit=limit, order=order, context=context, count=count)
 
-
     _columns = {
           'name': fields.char(size=256, string='Description', required=True),
           'object_id': fields.many2one('ir.model', string='Object'),
@@ -930,6 +953,7 @@ class audittrail_log_line(osv.osv):
           'new_value': fields.text("New Value"),
           'field_description': fields.char('Field Description', size=64),
           'trans_field_description': fields.function(_get_field_name, fnct_search=_src_field_name, method=True, type='char', size=64, string='Field Description', store=False),
+          'other_column': fields.char(size=64, string='Other information'),
           'sub_obj_name': fields.char(size=64, string='Order line'),
           # These 3 fields allows the computation of the name of the subobject (sub_obj_name)
           'rule_id': fields.many2one('audittrail.rule', string='Rule'),
