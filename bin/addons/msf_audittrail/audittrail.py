@@ -511,11 +511,25 @@ class audittrail_rule(osv.osv):
                  "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
+
             if thisrule.object_id.model == 'account.bank.statement.line':
                 # for register line we allow to select many lines in track changes view
                 val['domain'] = "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', 'in', active_ids)]"
 
-            action_id = obj_action.create(cr, uid, val)
+            # search if the view does not already exists
+            domain = [('domain', '=', val['domain']),
+                      ('name', '=', val['name']),
+                      ('res_model', '=', val['res_model']),
+                      ('src_model', '=', val['src_model'])]
+            action_search = obj_action.search(cr, uid, domain)
+            if action_search:
+                if len(action_search) > 1:
+                    logger = logging.getLogger('audittrail')
+                    logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), domain))
+                action_id = action_search[0]
+                #obj_action.create(cr, uid, action_id, val)
+            else:
+                action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
@@ -778,7 +792,7 @@ class audittrail_log_line(osv.osv):
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
-    _order = 'timestamp desc'
+    _order = 'timestamp desc, id desc'
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
