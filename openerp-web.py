@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 """Start script for the openerp-web project.
 
 This script is only needed during development for running from the project

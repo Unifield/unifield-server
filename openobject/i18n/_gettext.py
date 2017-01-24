@@ -62,9 +62,9 @@ def _load_translation(path, locale, domain):
             with open(popath, 'rb') as pofile:
                 with open(mopath, 'wb') as mofile:
                     babel.messages.mofile.write_mo(
-                            mofile,
-                            babel.messages.pofile.read_po(
-                                    pofile, locale, domain))
+                        mofile,
+                        babel.messages.pofile.read_po(
+                            pofile, locale, domain))
         except Exception:
             # If the parsing of the PO file broke, don't leave an empty MO
             # file hanging around
@@ -75,7 +75,7 @@ def _load_translation(path, locale, domain):
             raise
 
     return babel.support.Translations.load(
-            locale_path, [locale], domain)
+        locale_path, [locale], domain)
 
 def _load_translations(path, locales, domain):
     if not locales:
@@ -94,11 +94,11 @@ def _load_translations(path, locales, domain):
         except SyntaxError:
             # http://babel.edgewall.org/ticket/213
             cherrypy.log.error(
-                    'Could not load translation domain "%s" for'
-                    ' locale "%s" in addon %s' % (
-                        domain, locale, basename(path)),
-                    context="i18n",
-                    severity=logging.WARNING)
+                'Could not load translation domain "%s" for'
+                ' locale "%s" in addon %s' % (
+                    domain, locale, basename(path)),
+                context="i18n",
+                severity=logging.WARNING)
             cherrypy.log.error(context='i18n', severity=logging.DEBUG,
                                traceback=True)
         if isinstance(translation, babel.support.Translations):
@@ -184,7 +184,7 @@ def lazify(func):
 _lazy_gettext = lazify(_gettext)
 
 def gettext(key, locale=None, domain=None):
-    if cherrypy.request.loading_addons:
+    if hasattr(cherrypy.request, "loading_addons") and cherrypy.request.loading_addons:
         return _lazy_gettext(key, locale, domain)
     return _gettext(key, locale, domain)
 
