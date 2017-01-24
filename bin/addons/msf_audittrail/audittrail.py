@@ -512,20 +512,20 @@ class audittrail_rule(osv.osv):
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
 
-            if thisrule.object_id.model == 'account.bank.statement.line':
+            if thisrule.object_id.model == 'account.bank.statement.line' or\
+                    thisrule.object_id.model == 'account.move.line':
                 # for register line we allow to select many lines in track changes view
-                val['domain'] = "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', 'in', active_ids)]"
+                val['domain'] = "[('fct_object_id','=', %s), ('fct_res_id', 'in', active_ids)]" % str(thisrule.object_id.id)
 
             # search if the view does not already exists
-            domain = [('domain', '=', val['domain']),
-                      ('name', '=', val['name']),
+            search_domain = [('name', '=', val['name']),
                       ('res_model', '=', val['res_model']),
                       ('src_model', '=', val['src_model'])]
-            action_search = obj_action.search(cr, uid, domain)
+            action_search = obj_action.search(cr, uid, search_domain)
             if action_search:
                 if len(action_search) > 1:
                     logger = logging.getLogger('audittrail')
-                    logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), domain))
+                    logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), search_domain))
                 action_id = action_search[0]
                 #obj_action.create(cr, uid, action_id, val)
             else:
@@ -1018,8 +1018,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 values = values[1:-1].split(',')
                 if len(values) and values[0] != '' and relation_model_pool:
                     # int() failed if value '167L'
-                    relation_model_object = relation_model_pool.read(cr, uid, long(values[0]), [relation_model_pool._rec_name])
-                    res = relation_model_object[relation_model_pool._rec_name]
+                    res = relation_model_pool.name_get(cr, uid,
+                            [long(values[0])])[0][1]
+                    #relation_model_object = relation_model_pool.read(cr, uid, long(values[0]), [relation_model_pool._rec_name])
+                    #res = relation_model_object[relation_model_pool._rec_name]
             return res
 
         elif field['ttype'] in ('many2many', 'one2many'):
@@ -1027,9 +1029,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             if values and values != '[]':
                 values = values[1:-1].split(',')
                 values = (int(v) for v in values)
-                res = [x[relation_model_pool._rec_name] for x in \
-                        relation_model_pool.read(cr, uid, values,
-                    [relation_model_pool._rec_name])]
+                res = [x[1] for x in relation_model_pool.name_get(cr, uid,
+                        [long(values[0])])]
             return res
         elif field['ttype'] == 'date':
             res = False
