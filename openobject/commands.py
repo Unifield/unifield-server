@@ -1,8 +1,8 @@
 import os
 import sys
+import subprocess
+import threading
 from optparse import OptionParser
-
-import babel.localedata
 
 import cherrypy
 try:
@@ -81,6 +81,15 @@ def start():
     if options.static:
         openobject.enable_static_paths()
 
+    # Try to start revprox now so that we know what default to set for
+    # port number (revprox ok? port = 18061)
+    if options.port is None:
+        options.port = 8061
+    if revprox(options.port):
+        options.port = 18061
+        options.address = '127.0.0.1'
+        cherrypy.config['tools.proxy.on'] = True
+
     if options.address:
         cherrypy.config['server.socket_host'] = options.address
     if options.port:
@@ -89,6 +98,7 @@ def start():
         except:
             pass
     port = cherrypy.config.get('server.socket_port')
+
     if not isinstance(port, (int, long)) or port < 1 or port > 65535:
         cherrypy.log('Wrong configuration socket_port: %s' % (port,), "ERROR")
         raise ConfigurationError(_("Wrong configuration socket_port: %s") %
@@ -122,3 +132,69 @@ def start():
 
 def stop():
     cherrypy.engine.exit()
+
+# Try to start the reverse proxy. If anything goes wrong, return
+# False. Launch a thread which monitors it's output, copying it to
+# cherrypy.log, and kills the server if revproxy dies.
+def revprox(redir_port):
+    ctx = "REVPROX"
+
+    server_name = cherrypy.config.get('server.server_name')
+    if not server_name:
+        cherrypy.log("server.server_name is not set, not running the reverse proxy", ctx)
+        return False
+
+    rbin = 'revprox'
+    if sys.platform == 'win32':
+        rbin += '.exe'
+    rbin = os.path.abspath(openobject.paths.root('revprox', rbin))
+    if not os.path.exists(rbin):
+        cherrypy.log("%s does not exist, not running the reverse proxy." % rbin, ctx)
+        return False
+
+    # A gross hack for letting the thread talk back to us
+    cherrypy.revprox = { 'proc': None, 'die-on-exit': False }
+
+    # This is the closure that runs in the background
+    def target():
+        proc = subprocess.Popen([ rbin, '-server', server_name, '-redir', str(redir_port) ],
+                                stderr=subprocess.STDOUT,  # Merge stdout and stderr
+                                stdout=subprocess.PIPE)
+        cherrypy.revprox['proc'] = proc
+
+        while True:
+            line = proc.stdout.readline()
+            if line != '':
+                line = line.split(" ", 2)
+                cherrypy.log(line[-1].strip(), ctx)
+            else:
+                break
+
+        # revprox exited, so exit the whole process, so that
+        # we will be restarted by the system.
+        cherrypy.log("reverse proxy exited.", ctx)
+        if cherrypy.revprox['die-on-exit']:
+            sys.exit(1)
+
+    thread = threading.Thread(target=target)
+    thread.start()
+
+    # A callback to register on stop, for killing revprox.
+    def _cb():
+        cherrypy.revprox['die-on-exit'] = False
+        cherrypy.log("stopping", ctx)
+        if cherrypy.revprox['proc'] is not None:
+            cherrypy.revprox['proc'].terminate()
+
+    cherrypy.engine.subscribe('stop', _cb)
+
+    # Wait 1 second, for early termination
+    if thread.is_alive():
+        thread.join(1)
+    if thread.is_alive():
+        cherrypy.log("reverse proxy ok", ctx)
+        cherrypy.revprox['die-on-exit'] = True
+        return True
+
+    cherrypy.log("reverse proxy exited during startup", ctx)
+    return False
