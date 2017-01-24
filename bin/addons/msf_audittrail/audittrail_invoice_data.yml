@@ -96,8 +96,8 @@
         elif rule_id:
             self.write(cr, uid, rule_id, vals, context=context)
 
-      # Subscribe to the rule
-      self.subscribe(cr, uid, rule_id)
+        # Subscribe to the rule
+        self.subscribe(cr, uid, rule_id)
 -
   I will create a rule for Register Line object
 -
