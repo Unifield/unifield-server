@@ -211,13 +211,32 @@ class rml_parse(object):
         '''
         return False if the value stored in field is not a date, True else.
         '''
-        if not date_format:
-            date_format = '%Y-%m-%d'
-        try:
-            datetime.strptime(date, date_format)
-        except ValueError:
+        if not date:
             return False
-        return True
+        if not isinstance(date, basestring):
+            return False
+        if len(date) > 19:
+            try:
+                tail = date.split('.')[1]
+                if len(tail) > 3:
+                    return False
+            except:
+                return False
+        date = date[:19]
+        supported_date_formats = [
+                '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%dT%H:%M:%S',
+                '%Y-%m-%d']
+        for date_format in supported_date_formats:
+            if not date_format:
+                date_format = '%Y-%m-%d'
+            try:
+                datetime.strptime(date, date_format)
+            except ValueError:
+                continue
+            else:
+                return True
+        return False
 
 
     def getSel(self, o, field):
