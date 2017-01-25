@@ -896,9 +896,18 @@ class stock_mission_report_line(osv.osv):
 
         return True
 
+    def _get_products(self, cr, uid, ids, context=None):
+        """
+        When a product is changed, return the list of stock.mission.report.line to update
+        """
+        return self.pool.get('stock.mission.report.line').search(cr, uid, [('product_id', 'in', ids)], context=context)
+
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
-        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False),
+        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False, store={
+            'stock.mission.report.line': (lambda cr, uid, ids, c={}: ids, ['product_id'], 10),
+            'product.product': (_get_products, ['default_code'], 10),
+        }),
         'xmlid_code': fields.related('product_id', 'xmlid_code', string='MSFID', type='char', size=18, store=True, write_relate=False, _fnct_migrate=xmlid_code_migration),
         'old_code': fields.related('product_id', 'old_code', string='Old Code', type='char'),
         'name': fields.related('product_id', 'name', string='Name', type='char'),
