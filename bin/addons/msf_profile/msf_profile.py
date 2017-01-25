@@ -1072,6 +1072,13 @@ class patch_scripts(osv.osv):
             smrl_obj.write(cr, uid, smrl.id, {'product_state': smrl.product_id.state.code}, context=context)
         return True
 
+    def us_1721_dates_on_products(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date and uf_write_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_write_date = write_date, uf_create_date = create_date""")
+        return True
+
 
 patch_scripts()
 

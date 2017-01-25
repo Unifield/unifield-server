@@ -146,5 +146,9 @@
         <record id="us_2075_partner_locally_created" model="patch.scripts">
             <field name="method">us_2075_partner_locally_created</field>
         </record>
+
+        <record id="us_1721_dates_on_products" model="patch.scripts">
+            <field name="method">us_1721_dates_on_products</field>
+        </record>
     </data>
 </openerp>
