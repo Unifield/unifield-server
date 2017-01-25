@@ -285,6 +285,9 @@ class account_move_line(osv.osv):
         'invoice_line_id': fields.many2one('account.invoice.line', string="Invoice line origin", readonly=True,
                                            help="Invoice line which have produced this line.", ondelete="cascade"),
         'status_move': fields.related('move_id', 'status', type='char', readonly=True, size=128, store=True, write_relate=False, string="JE status", _fnct_migrate=_init_status_move),
+        'sequence_move': fields.related('move_id', 'name', type='char',
+            readonly=True, size=128, store=False, write_relate=False,
+            string="Sequence"),
     }
 
     _defaults = {

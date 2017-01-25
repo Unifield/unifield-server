@@ -512,14 +512,28 @@ class audittrail_rule(osv.osv):
                  "search_view_id": search_view_id and search_view_id[1] or False,
                  "domain": "[('object_id','=', " + str(thisrule.object_id.id) + "), ('res_id', '=', active_id)]"
             }
-            if thisrule.object_id.model == 'account.bank.statement.line':
-                # for register line we allow to select many lines in trac changes view
+
+            if thisrule.object_id.model == 'account.bank.statement.line' or\
+                    thisrule.object_id.model == 'account.move.line':
+                # for register line we allow to select many lines in track changes view
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
                 # register and track changes are created this way.
-                val['domain'] = "[('fct_object_id','=', " + str(thisrule.object_id.id) + "), ('fct_res_id', 'in', active_ids)]"
+                val['domain'] = "[('fct_object_id','=', %s), ('fct_res_id', 'in', active_ids)]" % str(thisrule.object_id.id)
 
-            action_id = obj_action.create(cr, uid, val)
+            # search if the view does not already exists
+            search_domain = [('name', '=', val['name']),
+                      ('res_model', '=', val['res_model']),
+                      ('src_model', '=', val['src_model'])]
+            action_search = obj_action.search(cr, uid, search_domain)
+            if action_search:
+                if len(action_search) > 1:
+                    logger = logging.getLogger('audittrail')
+                    logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), search_domain))
+                action_id = action_search[0]
+                #obj_action.create(cr, uid, action_id, val)
+            else:
+                action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
             keyword = 'client_action_relate'
             value = 'ir.actions.act_window,' + str(action_id)
@@ -800,9 +814,14 @@ class audittrail_log_line(osv.osv):
                 ('account.bank.statement', 'account.bank.statement.line'):
             dataobj = self.pool.get('ir.model.data')
             dummy, view_id = dataobj.get_object_reference(cr, 1, 'register_accounting', 'view_audittrail_log_line_other_column_tree')
+
+        elif view_type == 'tree' and\
+                context.get('active_model', False) in\
+                ('account.move', 'account.move.line'):
+            dataobj = self.pool.get('ir.model.data')
+            dummy, view_id = dataobj.get_object_reference(cr, 1, 'account', 'view_audittrail_log_line_account_move_tree')
         view = super(audittrail_log_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         return view
-
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -1028,8 +1047,10 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
                 values = values[1:-1].split(',')
                 if len(values) and values[0] != '' and relation_model_pool:
                     # int() failed if value '167L'
-                    relation_model_object = relation_model_pool.read(cr, uid, long(values[0]), [relation_model_pool._rec_name])
-                    res = relation_model_object[relation_model_pool._rec_name]
+                    res = relation_model_pool.name_get(cr, uid,
+                            [long(values[0])])[0][1]
+                    #relation_model_object = relation_model_pool.read(cr, uid, long(values[0]), [relation_model_pool._rec_name])
+                    #res = relation_model_object[relation_model_pool._rec_name]
             return res
 
         elif field['ttype'] in ('many2many', 'one2many'):
@@ -1037,9 +1058,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             if values and values != '[]':
                 values = values[1:-1].split(',')
                 values = (int(v) for v in values)
-                res = [x[relation_model_pool._rec_name] for x in \
-                        relation_model_pool.read(cr, uid, values,
-                    [relation_model_pool._rec_name])]
+                res = [x[1] for x in relation_model_pool.name_get(cr, uid,
+                        [long(values[0])])]
             return res
         elif field['ttype'] == 'date':
             res = False
