@@ -2361,10 +2361,10 @@ class account_bank_statement_line(osv.osv):
                 'new_value_fct': 'Hard',
             }
 
-            if rule and absl.statement_id.id and rule.field_other_id:
+            if rule and absl.id and rule.field_other_id:
                 vals.update({
                     'other_column': self.pool.get(rule.object_id.model).read(cr, uid,
-                        absl.statement_id.id, [rule.field_other_id.name])[rule.field_other_id.name]
+                        absl.id, [rule.field_other_id.name])[rule.field_other_id.name]
                     }
                 )
 
