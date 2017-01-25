@@ -4772,7 +4772,7 @@ class stock_move(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
-        #solc_obj = self.pool.get('sale.order.line.cancel')
+        solc_obj = self.pool.get('sale.order.line.cancel')
 
         if context is None:
             context = {}
@@ -4796,9 +4796,6 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-#            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
-#                continue
-
             if move.state == 'cancel':
                 continue
 
@@ -4819,9 +4816,9 @@ class stock_move(osv.osv):
                         continue
 
                     # If the line will be sourced in another way, do not cancel the OUT move
-                    #if solc_obj.search(cr, uid, [('sync_order_line_db_id', '=', sol.sync_order_line_db_id)],
-                    #                   limit=1, order='NO_ORDER', context=context):
-                    #    continue
+                    if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
+                                       limit=1, order='NO_ORDER', context=context):
+                        continue
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
