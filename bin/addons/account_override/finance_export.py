@@ -56,7 +56,9 @@ class finance_archive():
      + Do not repeat headers if you use the same filename for more than 1 request. This avoid having multiple lines as headers.
     """
 
-    def __init__(self, sql, process, context):
+    def __init__(self, sql, process, context=None):
+        if context is None:
+            context = {}
         self.sqlrequests = sql
         self.processrequests = process
         if 'background_id' in context:
