@@ -10,6 +10,11 @@
         fields = ['name','state','ref','journal_id','period_id','date','partner_id','status','sequence_id','manual_name','document_date','analytic_distribution_id','employee_id','instance_id','manual_currency_id']
         fields_ids = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=' ,'account.move'), ('name', 'in', fields)], context=context)
 
+        field_other_name = self.pool.get('ir.model.fields').search(cr, uid, [('model', '=', 'account.move'), ('name', '=', 'name')], context=context)
+        field_other_id = False
+        if field_other_name:
+            field_other_id = field_other_name[0]
+
         vals = {
             'name': name,
             'object_id': object_ids[0],
@@ -17,6 +22,7 @@
             'log_unlink': True,
             'log_create': True,
             'field_ids': [(6, 0, fields_ids)],
+            'field_other_id': field_other_id,
         }
 
         if not rule_id:
