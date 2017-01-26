@@ -75769,3 +75769,7 @@ msgstr "Créé localement"
 msgid "Partner Created on this instance"
 msgstr "Partenaire créé sur cette instance"
 
+#. module: base
+#: field:ir.attachment,size:0
+msgid "Size of the file"
+msgstr "Taille du fichier"
