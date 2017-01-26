@@ -194,7 +194,7 @@
             <Cell ss:StyleID="ssCellBlue"><Data ss:Type="String">${r.company_id.partner_id.address[0].zip|x} ${r.company_id.partner_id.address[0].city|x}</Data></Cell>
             <Cell ss:StyleID="ssCell"><Data ss:Type="String"></Data></Cell>
             <Cell ss:StyleID="ssCell" ss:MergeAcross="1"><Data ss:Type="String">${_('Date of the request:')|x}</Data></Cell>
-            % if r.report_date and isDate(r.report_date, date_format='%Y-%m-%d %H:%M:%S'):
+            % if r.report_date and isDateTime(r.report_date):
             <Cell ss:StyleID="short_date" ss:MergeAcross="2"><Data ss:Type="DateTime">${r.report_date[0:10]|n}T${r.report_date[11:19]|n}.000</Data></Cell>
             % else:
             <Cell ss:StyleID="ssCell" ss:MergeAcross="2"><Data ss:Type="String"></Data></Cell>

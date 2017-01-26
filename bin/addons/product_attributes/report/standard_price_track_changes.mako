@@ -106,7 +106,7 @@
             </Row>
             % for sptc in getSPTC(o.id):
             <Row>
-                % if isDate(sptc.change_date, date_format='%Y-%m-%d %H:%M:%S') and sptc.change_date.replace(' ', 'T'):
+                % if isDateTime(sptc.change_date):
                 <Cell ss:StyleID="line_short_date">
                     <Data ss:Type="DateTime">${sptc.change_date.replace(' ', 'T')|n}.000</Data>
                 </Cell>

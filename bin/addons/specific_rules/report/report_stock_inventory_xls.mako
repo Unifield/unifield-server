@@ -130,7 +130,7 @@
     </Row>
     <Row ss:AutoFitHeight="1">
         <Cell ss:MergeAcross="1" ss:StyleID="poheader"><Data ss:Type="String">Generated on</Data></Cell>
-        % if o.name and isDate(o.name[0:19], date_format='%Y-%m-%d %H:%M:%S'):
+        % if o.name and isDateTime(o.name):
             <Cell ss:MergeAcross="2" ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.name[:10]|n}T${o.name[-8:]|n}.000</Data></Cell>
         % else:
             <Cell ss:MergeAcross="2" ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
