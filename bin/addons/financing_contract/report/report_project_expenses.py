@@ -51,17 +51,11 @@ class report_project_expenses2(report_sxw.rml_parse):
             'getSub2':self.getSub2,
             'getLines2':self.getLines2,
             'getFormula':self.getFormula,
-            'isDate':self.isDate,
             'totalRptCurrency': self.totalRptCurrency,
             'totalBookAmt':self.totalBookAmt,
             'getTotalRptCurrency': self.getTotalRptCurrency,
             'getTotalBookAmt': self.getTotalBookAmt,
         })
-
-    def isDate(self,date):
-        if len(date) > 9 :
-            return True
-        return False
 
     def getFormula(self):
         formul = ''
