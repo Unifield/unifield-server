@@ -48,6 +48,7 @@ class patch_scripts(osv.osv):
 
     def us_2110_patch(self, cr, uid, *a, **b):
         '''setup the size on all attachment'''
+        import base64
         attachment_obj = self.pool.get('ir.attachment')
         attachment_ids = attachment_obj.search(cr, uid, [])
         deleted_count = 0
@@ -65,7 +66,8 @@ class patch_scripts(osv.osv):
                 continue
 
             if attachment.datas:
-                vals['size'] = attachment_obj.get_octet_size(attachment.datas)
+                decoded_datas = base64.decodestring(attachment.datas)
+                vals['size'] = attachment_obj.get_octet_size(decoded_datas)
                 attachment_obj.write(cr, uid, attachment.id, vals)
         if deleted_count:
             logger.warn('%s attachment(s) deleted.' % deleted_count)
