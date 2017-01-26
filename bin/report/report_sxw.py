@@ -190,6 +190,8 @@ class rml_parse(object):
             'time' : time,
             'getSel': self.getSel,
             'isDate': self.isDate,
+            'isDateTime': self.isDateTime,
+            'isTime': self.isTime,
             'getSelValue': self.getSelValue,
             # more context members are setup in setCompany() below:
             #  - company_id
@@ -207,37 +209,27 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
-    def isDate(self, date, date_format=False):
+    def isDate(self, date, date_format=DT_FORMAT):
         '''
-        return False if the value stored in field is not a date, True else.
+        return False if the date is not a datetime matching date_format, True else.
         '''
-        if not date:
+        try:
+            datetime.strptime(date, date_format)
+        except:
             return False
-        if not isinstance(date, basestring):
-            return False
-        if len(date) > 19:
-            try:
-                tail = date.split('.')[1]
-                if len(tail) > 3:
-                    return False
-            except:
-                return False
-        date = date[:19]
-        supported_date_formats = [
-                '%Y-%m-%d %H:%M:%S',
-                '%Y-%m-%dT%H:%M:%S',
-                '%Y-%m-%d']
-        for date_format in supported_date_formats:
-            if not date_format:
-                date_format = '%Y-%m-%d'
-            try:
-                datetime.strptime(date, date_format)
-            except ValueError:
-                continue
-            else:
-                return True
-        return False
+        return True
 
+    def isDateTime(self, date, date_format=DHM_FORMAT):
+        '''
+        return False if the date is not a datetime matching date_format, True else.
+        '''
+        return self.isDate(date, date_format=date_format)
+
+    def isTime(self, time, time_format=HM_FORMAT):
+        '''
+        return False if the time is not a datetime matching time_format, True else.
+        '''
+        return self.isDate(time, date_format=time_format)
 
     def getSel(self, o, field):
         """
