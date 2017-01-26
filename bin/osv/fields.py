@@ -287,7 +287,7 @@ class binary(_column):
                 if not isinstance(size, long):
                     if isinstance(size, str):
                         size = long(__builtin__.float(val))
-                    elif isinstance(size, (int, float)):
+                    elif isinstance(size, (int, __builtin__.float)):
                         size = long(size)
                 res[i] = tools.human_size(size)
             else:
