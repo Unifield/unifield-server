@@ -904,7 +904,7 @@ class stock_mission_report_line(osv.osv):
 
     _columns = {
         'product_id': fields.many2one('product.product', string='Name', required=True, ondelete="cascade", select=1),
-        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, store=True, write_relate=False, store={
+        'default_code': fields.related('product_id', 'default_code', string='Reference', type='char', size=64, write_relate=False, store={
             'stock.mission.report.line': (lambda cr, uid, ids, c={}: ids, ['product_id'], 10),
             'product.product': (_get_products, ['default_code'], 10),
         }),
