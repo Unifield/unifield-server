@@ -669,13 +669,17 @@ class account_account(osv.osv):
         return False
 
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
+        """
+        Check if the chosen activation and inactivation dates are allowed.
+        This check is also done during the synchro.
+        """
         if context is None:
             context = {}
         if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
             if 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-            elif not context.get('sync_update_execution', False) and account_ids is not None:
+            elif account_ids is not None:
                 doc_error = osv.except_osv(_('Warning !'), _('At least one document in draft state using this account has a date '
                                                              'greater than or equal to the selected inactivation date.'))
                 for account in self.browse(cr, uid, account_ids, fields_to_fetch=['reconcile'], context=context):

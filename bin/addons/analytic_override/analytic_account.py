@@ -691,13 +691,17 @@ class analytic_account(osv.osv):
         return False
 
     def _check_date(self, cr, uid, vals, account_ids=None, context=None):
+        """
+        Check if the chosen activation and inactivation dates are allowed.
+        This check is also done during the synchro.
+        """
         if context is None:
             context = {}
         if 'date' in vals and vals['date'] is not False:
             if 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
-            elif not context.get('sync_update_execution', False) and account_ids is not None:
+            elif account_ids is not None:
                 # if the account already exists, do the necessary checks on the following elements:
                 # Analytic Journal Items
                 if self._aal_using_account_after_date(cr, uid, account_ids, vals['date'], context):
