@@ -33,6 +33,7 @@ HIST_STATUS = [('draft', 'Draft'), ('in_progress', 'In Progress'), ('ready', 'Re
 class product_history_consumption(osv.osv):
     _name = 'product.history.consumption'
     _rec_name = 'location_id'
+    _order = 'requestor_date desc, id desc'
 
     def _get_status(self, cr, uid, ids, field_name, args, context=None):
         '''
@@ -40,9 +41,8 @@ class product_history_consumption(osv.osv):
         '''
         res = {}
 
-        for obj in self.browse(cr, uid, ids, context=context):
-            res[obj.id] = obj.status
-
+        read_result = self.read(cr, uid, ids,  ['status'], context=context)
+        res = dict((x['id'], x['status']) for x in read_result)
         return res
 
     _columns = {
@@ -91,7 +91,6 @@ class product_history_consumption(osv.osv):
             context = {}
         res = {'value': {}}
         month_obj = self.pool.get('product.history.consumption.month')
-        
         if date_from:
             date_from = (DateFrom(date_from) + RelativeDateTime(day=1)).strftime('%Y-%m-%d')
             res['value'].update({'date_from': date_from})
@@ -127,7 +126,8 @@ class product_history_consumption(osv.osv):
 
         # Delete all months out of the period
         del_months = []
-        for month_id in month_obj.search(cr, uid, [('history_id', 'in', ids)], context=context):
+        for month_id in month_obj.search(cr, uid, [('history_id', 'in', ids)],
+                order='NO_ORDER', context=context):
             if month_id not in res['value']['month_ids']:
                 del_months.append(month_id)
         if del_months:
@@ -219,9 +219,10 @@ class product_history_consumption(osv.osv):
         import threading
         self.write(cr, uid, ids, {'status': 'in_progress'}, context=context)
         cr.commit()
+        #self._create_lines(cr, uid, ids, product_ids, new_context)
         new_thread = threading.Thread(target=self._create_lines, args=(cr, uid, ids, product_ids, new_context))
         new_thread.start()
-        new_thread.join(10.0)
+        new_thread.join(5.0)
         if new_thread.isAlive():
             view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'consumption_calculation', 'history_consumption_waiting_view')[1]
             return {'type': 'ir.actions.act_window',
@@ -240,31 +241,52 @@ class product_history_consumption(osv.osv):
         Create lines in background
         '''
         import pooler
-        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            new_cr = pooler.get_db(cr.dbname).cursor()
+            prod_obj = self.pool.get('product.product')
+            logger = logging.getLogger('history.consumption')
 
-        # split ids into slices to not read a lot record in the same time (memory)
-        ids_len = len(product_ids)
-        slice_len = 500
-        if ids_len > slice_len:
-            slice_count = ids_len / slice_len
-            if ids_len % slice_len:
-                slice_count = slice_count + 1
-            # http://www.garyrobinson.net/2008/04/splitting-a-pyt.html
-            slices = [product_ids[i::slice_count] for i in range(slice_count)]
-        else:
+            # split ids into slices to not read a lot record in the same time (memory)
+            #product_ids = product_ids[:435]
+            #if 23009 not in product_ids:
+            #    product_ids.append(23009)
+            #if 9273 not in product_ids:
+            #    product_ids.append(9273)
+            ids_len = len(product_ids)
+            slice_len = 500
+            counter = 0
+            slices = []
+            if ids_len > slice_len:
+                while counter < ids_len:
+                    cur_slice = product_ids[counter:counter+slice_len]
+                    slices.append(cur_slice)
+                    counter += slice_len
+            else:
+                slices = [product_ids]
+
             slices = [product_ids]
 
-        for slice_ids in slices:
-            try:
-                self.pool.get('product.product').read(new_cr, uid, slice_ids, ['average'], context=context)
-            except Exception, e:
-                logging.getLogger('history.consumption').warn('Exception in read average', exc_info=True)
-                new_cr.rollback()
-        self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
+            slice_count = 0
+            for slice_ids in slices:
+                # chaque slice_ids contient 496 ou 495 ids, il y a 40 slice_ids
+                # dans slices
+                # 19812 product_ids
+                slice_count += 1
+                print 'slice_count: %s' % slice_count
+                start = time.time()
+                try:
 
-        new_cr.commit()
-        new_cr.close(True)
+                    # XXX pourquoi on fait un read qui semble ne servir à rien ???
+                    prod_obj.read(new_cr, uid, slice_ids, ['average'], context=context)
+                except Exception, e:
+                    logger.warn('Exception in read average', exc_info=True)
+                    new_cr.rollback()
+                print 'slice %s total_time: %s' % (slice_count, str(time.time() - start))
+            self.write(new_cr, uid, ids, {'status': 'ready'}, context=context)
 
+            new_cr.commit()
+        finally:
+            new_cr.close(True)
         return
 
     def open_report(self, cr, uid, ids, context=None):
@@ -495,7 +517,6 @@ class product_product(osv.osv):
             context = {}
 
         res = super(product_product, self).fields_get(cr, uid, fields, context=context)
-        
         if context.get('history_cons', False):
             months = context.get('months', [])
 
@@ -522,8 +543,8 @@ class product_product(osv.osv):
         if context is None:
             context = {}
 
+        res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
         if context.get('history_cons', False):
-            res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
 
             if 'average' not in vals:
                 return res
@@ -538,60 +559,71 @@ class product_product(osv.osv):
                 raise osv.except_osv(_('Error'), _('No months found !'))
 
             obj_id = context.get('obj_id')
-            for r in res:
-                total_consumption = 0.00
-                for month in context.get('months'):
-                    field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
-                    cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
+            total_consumption_dict = dict.fromkeys(ids, 0.00)
+            for month in context.get('months'):
+                start = time.time()
+                field_name = DateFrom(month.get('date_from')).strftime('%m_%Y')
+                cons_context = {'from_date': month.get('date_from'), 'to_date': month.get('date_to'), 'location_id': context.get('location_id')}
+                if context.get('amc') == 'AMC':
+                    cons_type = 'amc'
+                else:
+                    cons_type = 'fmc'
+                    consumption_result = self.read(cr, uid, ids, ['monthly_consumption'],context=cons_context)
+                    fmc_cons_dict = dict((x['id'], x['monthly_consumption'] or 0.00) for x in consumption_result)
+                for r in res:
+                    #if month == {'date_from': '2016-06-01', 'date_to':'2016-06-30'} and r['id'] == 9273:
+                    #    import pdb; pdb.set_trace()
                     consumption = 0.00
                     cons_prod_domain = [('name', '=', field_name),
                                         ('product_id', '=', r['id']),
                                         ('consumption_id', '=', obj_id)]
-                    if context.get('amc') == 'AMC':
-                        cons_prod_domain.append(('cons_type', '=', 'amc'))
-                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
-                        if cons_id:
-                            consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
-                        else:
-                            consumption = self.pool.get('product.product').compute_amc(cr, uid, r['id'], context=cons_context) or 0.00
-                            cons_prod_obj.create(cr, uid, {'name': field_name,
-                                                           'product_id': r['id'],
-                                                           'consumption_id': obj_id,
-                                                           'cons_type': 'amc',
-                                                           'value': consumption}, context=context)
+                    cons_prod_domain.append(('cons_type', '=', cons_type))
+                    cons_ids = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
+                    if cons_ids:
+                        consumption = cons_prod_obj.read(cr, uid,
+                                cons_ids[0], ['value'],
+                                context=context)['value']
                     else:
-                        cons_prod_domain.append(('cons_type', '=', 'fmc'))
-                        cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
-                        if cons_id:
-                            consumption = cons_prod_obj.browse(cr, uid, cons_id[0], context=context).value
+                        if cons_type == 'amc':
+                            consumption = self.compute_amc(cr, uid, r['id'], context=cons_context) or 0.00
                         else:
-                            consumption = self.pool.get('product.product').browse(cr, uid, r['id'], context=cons_context).monthly_consumption or 0.00
-                            cons_prod_obj.create(cr, uid, {'name': field_name,
-                                                           'product_id': r['id'],
-                                                           'consumption_id': obj_id,
-                                                           'cons_type': 'fmc',
-                                                           'value': consumption}, context=context)
-                    total_consumption += consumption
+                            consumption = fmc_cons_dict[r['id']]
+                        cons_prod_obj.create(cr, uid, {'name': field_name,
+                                                       'product_id': r['id'],
+                                                       'consumption_id': obj_id,
+                                                       'cons_type': cons_type,
+                                                       'value': consumption}, context=context)
+
+                    if consumption:
+                        total_consumption_dict[r['id']] += consumption
                     # Update the value for the month
                     r.update({field_name: consumption})
+                stop = time.time() - start
+                print 'month from %s to %s, %s products : %s' % (month.get('date_from'), month.get('date_to'), len(res), str(stop))
+
+            cons_prod_domain = [('name', '=', 'average'),
+                                ('consumption_id', '=', obj_id),
+                                ('cons_type', '=', context.get('amc') == 'AMC' and 'amc' or 'fmc')]
+            print 'start calculing the averages'
+            start = time.time()
+            for product_id in ids:
+                if not total_consumption_dict[product_id]:
+                    continue
 
                 # Update the average field
-                cons_prod_domain = [('name', '=', 'average'),
-                                    ('product_id', '=', r['id']),
-                                    ('consumption_id', '=', obj_id),
-                                    ('cons_type', '=', context.get('amc') == 'AMC' and 'amc' or 'fmc')]
-                r.update({'average': round(total_consumption/float(len(context.get('months'))),2)})
-                cons_id = cons_prod_obj.search(cr, uid, cons_prod_domain, context=context)
-                if cons_id:
-                    cons_prod_obj.write(cr, uid, cons_id, {'value': r['average']}, context=context)
+                cons_prod_domain.append(('product_id', '=', product_id))
+                r.update({'average': round(total_consumption_dict[product_id]/float(len(context.get('months'))),2)})
+                cons_ids = cons_prod_obj.search(cr, uid, cons_prod_domain, order='NO_ORDER', context=context)
+                if cons_ids:
+                    cons_prod_obj.write(cr, uid, cons_ids, {'value': r['average']}, context=context)
                 else:
                     cons_prod_obj.create(cr, uid, {'name': 'average',
                                                    'product_id': r['id'],
                                                    'consumption_id': obj_id,
                                                    'cons_type': context.get('amc') == 'AMC' and 'amc' or 'fmc',
                                                    'value': r['average']}, context=context)
-        else:
-            res = super(product_product, self).read(cr, uid, ids, vals, context=context, load=load)
+            stop = time.time() - start
+            print 'average calculation finished in %s' % (str(stop))
 
         return res
 
@@ -675,7 +707,8 @@ class product_history_consumption_product(osv.osv):
         Return the result in the same order as given in ids
         '''
         res = super(product_history_consumption_product, self).read(cr, uid, ids, fields, context=context, load=load)
-
+        if not isinstance(res, (list, tuple)):
+            return res
         res_final = [None]*len(ids)
         for r in res:
             r_index = ids.index(r['id'])

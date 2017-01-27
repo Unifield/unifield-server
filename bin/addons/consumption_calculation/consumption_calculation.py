@@ -1642,52 +1642,62 @@ class product_product(osv.osv):
             to_date = context.get('to_date')
             rac_domain.append(('period_to', '<=', to_date))
 
-        # Filter for one or some locations    
+        # Filter for one or some locations
         if context.get('location_id', False):
             if type(context['location_id']) == type(1):
                 location_ids = [context['location_id']]
             elif type(context['location_id']) in (type(''), type(u'')):
-                location_ids = self.pool.get('stock.location').search(cr, uid, [('name','ilike',context['location'])], context=context)
+                location_ids = self.pool.get('stock.location').search(cr, uid,
+                        [('name', 'ilike', context['location'])],
+                        order='NO_ORDER', context=context)
             else:
                 location_ids = context.get('location_id', [])
 
-        for id in ids:
-            res[id] = 0.00
-            if from_date and to_date:
-                rcr_domain = ['&', '&', ('product_id', '=', id), ('rac_id.cons_location_id', 'in', location_ids),
-                              # All lines with a report started out the period and finished in the period 
+        res = dict.fromkeys(ids, 0.00)
+        if from_date and to_date:
+            # We want the average for the entire period
+            if to_date < from_date:
+                raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
+            # Calculate the # of months in the period
+            try:
+                to_date_str = strptime(to_date, '%Y-%m-%d')
+            except ValueError:
+                to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
+            try:
+                from_date_str = strptime(from_date, '%Y-%m-%d')
+            except ValueError:
+                from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
+            nb_months = self._get_date_diff(from_date_str, to_date_str)
+            if not nb_months:
+                nb_months = 1
+            uom_id_result = self.read(cr, uid, ids, ['uom_id'], context=context)
+            uom_id_dict = dict((x['id'], x['uom_id'][0]) for x in
+                    uom_id_result)
+            racl_obj = self.pool.get('real.average.consumption.line')
+
+            for prod_id in ids:
+                rcr_domain = ['&', '&', ('product_id', '=', prod_id), ('rac_id.cons_location_id', 'in', location_ids),
+                              # All lines with a report started out the period and finished in the period
                               '|', '&', ('rac_id.period_to', '>=', from_date), ('rac_id.period_to', '<=', to_date),
-                              # All lines with a report started in the period and finished out the period 
+                              # All lines with a report started in the period and finished out the period
                               '|', '&', ('rac_id.period_from', '<=', to_date), ('rac_id.period_from', '>=', from_date),
                               # All lines with a report started before the period  and finished after the period
                               '&', ('rac_id.period_from', '<=', from_date), ('rac_id.period_to', '>=', to_date)]
 
-                rcr_line_ids = self.pool.get('real.average.consumption.line').search(cr, uid, rcr_domain, context=context)
-                for line in self.pool.get('real.average.consumption.line').browse(cr, uid, rcr_line_ids, context=context):
+                rcr_line_ids = racl_obj.search(cr, uid, rcr_domain, order='NO_ORDER', context=context)
+                for line in racl_obj.browse(cr, uid, rcr_line_ids, context=context):
+                    print len(rcr_line_ids)
+                    print 'rcr_line_ids'
+                    #import pdb; pdb.set_trace()
                     cons = self._get_period_consumption(cr, uid, line, from_date, to_date, context=context)
-                    res[id] += uom_obj._compute_qty(cr, uid, line.uom_id.id, cons, line.product_id.uom_id.id)
+                    res[prod_id] += uom_obj._compute_qty(cr, uid, line.uom_id.id, cons, line.product_id.uom_id.id)
 
-                # We want the average for the entire period
-                if to_date < from_date:
-                    raise osv.except_osv(_('Error'), _('You cannot have a \'To Date\' younger than \'From Date\'.'))
-                # Calculate the # of months in the period
-                try:
-                    to_date_str = strptime(to_date, '%Y-%m-%d')
-                except ValueError:
-                    to_date_str = strptime(to_date, '%Y-%m-%d %H:%M:%S')
-
-                try:
-                    from_date_str = strptime(from_date, '%Y-%m-%d')
-                except ValueError:
-                    from_date_str = strptime(from_date, '%Y-%m-%d %H:%M:%S')
-
-                nb_months = self._get_date_diff(from_date_str, to_date_str)
-
-                if not nb_months: nb_months = 1
-
-                uom_id = self.browse(cr, uid, ids[0], context=context).uom_id.id
-                res[id] = res[id]/nb_months
-                res[id] = round(self.pool.get('product.uom')._compute_qty(cr, uid, uom_id, res[id], uom_id), 2)
+                if res[prod_id]:
+                    per_month_consumption = res[prod_id]/nb_months
+                    res[prod_id] = round(uom_obj._compute_qty(cr, uid,
+                        uom_id_dict[prod_id],
+                        per_month_consumption,
+                        uom_id_dict[prod_id]), 2)
 
         return res
 
