@@ -1213,7 +1213,7 @@ class account_invoice(osv.osv):
             return False
         return data
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
         invoices = self.read(cr, uid, ids, self._hook_fields_for_refund(cr, uid))
         obj_invoice_line = self.pool.get('account.invoice.line')
         obj_invoice_tax = self.pool.get('account.invoice.tax')
@@ -1256,6 +1256,10 @@ class account_invoice(osv.osv):
             if period_id:
                 invoice.update({
                     'period_id': period_id,
+                })
+            if document_date:
+                invoice.update({
+                    'document_date': document_date,
                 })
             if description:
                 invoice.update({
