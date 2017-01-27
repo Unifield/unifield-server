@@ -111,6 +111,7 @@ class res_users(osv.osv):
 
     _columns = {
         'context_department_id': fields.many2one('hr.department', 'Departments'),
+        'function': fields.many2one('hr.department', 'User Function', help="Function of the user in the mission")
     }
 
 res_users()
