@@ -159,13 +159,13 @@ class real_average_consumption(osv.osv):
     _columns = {
         'name': fields.char(size=64, string='Reference'),
         'creation_date': fields.datetime(string='Creation date', required=1),
-        'cons_location_id': fields.many2one('stock.location', string='Consumer location', domain=[('usage', '=', 'internal')], required=True, select=1),
+        'cons_location_id': fields.many2one('stock.location', string='Source Location', domain=[('usage', '=', 'internal')], required=True, select=1),
         'cons_location_name': fields.function(_get_act_name, method=True, type='char', string='Consumer location Name', readonly=True, size=128, multi='loc_name', store={
-            'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_id'], 10),
-            'stock.location': (_get_stock_location, ['name'], 20),
-        },),
-        'activity_id': fields.many2one('stock.location', string='Activity', domain=[('usage', '=', 'customer')], required=1, select=1),
-        'activity_name': fields.function(_get_act_name, method=True, type='char', string='Activity Name', readonly=True, size=128, multi='loc_name', store={
+                'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['cons_location_id'], 10),
+                'stock.location': (_get_stock_location, ['name'], 20),
+            },),
+        'activity_id': fields.many2one('stock.location', string='Destination Location', domain=[('usage', '=', 'customer')], required=1, select=1),
+        'activity_name': fields.function(_get_act_name, method=True, type='char', string='Destination Location', readonly=True, size=128, multi='loc_name', store={
             'real.average.consumption': (lambda obj, cr, uid, ids, c={}: ids, ['activity_id'], 10),
             'stock.location': (_get_stock_location, ['name'], 20),
         },),
@@ -1024,7 +1024,7 @@ class real_consumption_change_location(osv.osv_memory):
 
     _columns = {
         'report_id': fields.many2one('real.average.consumption', string='Report'),
-        'location_id': fields.many2one('stock.location', string='Consumer location', required=True),
+        'location_id': fields.many2one('stock.location', string='Source Location', required=True),
     }
 
     def change_location(self, cr, uid, ids, context=None):
