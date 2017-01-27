@@ -559,6 +559,8 @@ def trans_parse_view(de):
         res.append(de.get('sum').encode("utf8"))
     if de.get("confirm"):
         res.append(de.get('confirm').encode("utf8"))
+    if de.get("help"):
+        res.append(de.get('help').encode("utf8"))
     if de.tag == 'translate':
         text_to_translate = ''
         if de.text:

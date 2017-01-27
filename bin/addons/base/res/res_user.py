@@ -340,6 +340,28 @@ class users(osv.osv):
                     result[current_user['id']] = True
         return result
 
+    def _search_role(self, cr, uid, obj, name, args, context=None):
+        '''
+        Return ids matching the condition if research contain is_erp_manager or
+        is_sync_config
+        '''
+        ids = []
+        for cond in args:
+            if cond[0] in ('is_erp_manager', 'is_sync_config'):
+                all_ids = self.search(cr, uid, [])
+                method = getattr(self, '_%s' % name)
+                if method:
+                    res_dict = method(cr, uid, all_ids)
+                    res_ids = [key for key, value in res_dict.items() if not value]
+            else:
+                res_ids = self.search(cr, uid, [cond])
+            ids = ids + res_ids
+
+        if ids:
+            return [('id', 'in', tuple(ids))]
+        else:
+            return [('id', '=', '0')]
+
     def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
         '''
         return True if the user is member of the Sync_Config
@@ -376,6 +398,27 @@ class users(osv.osv):
                 level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
             result[user_id] = level
         return result
+
+    def _search_instance_level(self, cr, uid, obj, name, args, context=None):
+        ids = []
+        for cond in args:
+            if cond[0] == 'instance_level':
+                all_ids = self.search(cr, uid, [])
+                res_dict = self._get_instance_level(cr, uid, all_ids)
+                if cond[1] == '=':
+                    res_ids = [key for key, value in res_dict.items() if value == cond[2]]
+                elif cond[1] == '!=':
+                    res_ids = [key for key, value in res_dict.items() if value != cond[2]]
+                elif cond[1] == 'in':
+                    res_ids = [key for key, value in res_dict.items() if value in cond[2]]
+            else:
+                res_ids = self.search(cr, uid, [cond])
+            ids = ids + res_ids
+
+        if ids:
+            return [('id', 'in', tuple(ids))]
+        else:
+            return [('id', '=', '0')]
 
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
@@ -423,9 +466,10 @@ class users(osv.osv):
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
-        'is_erp_manager': fields.function(_is_erp_manager, method=True, string='Is ERP Manager ?', type="boolean"),
-        'is_sync_config': fields.function(_is_sync_config, method=True, string='Is Sync Config ?', type="boolean"),
-        'instance_level': fields.function(_get_instance_level, method=True, string='Instance level', type="char"),
+        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."),
+        'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
+        'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
+        'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -527,6 +571,7 @@ class users(osv.osv):
         'address_id': False,
         'menu_tips':True,
         'force_password_change': False,
+        'is_synchronizable': False,
     }
 
     @tools.cache()
@@ -539,6 +584,9 @@ class users(osv.osv):
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
+        if not values.get('is_synchronizable', False):
+            # a user which is not synchronizable should not be synchronized
+            values['synchronize'] = False
         return super(users, self).create(cr, uid, values, context)
 
     def write(self, cr, uid, ids, values, context=None):
@@ -558,14 +606,19 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
+        if 'is_synchronizable' in values and not values.get('is_synchronizable',
+                False):
+            # desactivate synchronize if is_synchronizable is set to False
+            values['synchronize'] = False
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # uncheck synchronize checkbox if the user is manager or sync config
         if values.get('groups_id'):
             if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
                any(self._is_erp_manager(cr, uid, ids, context=context).values()):
-                vals = {'synchronize': False}
-                res = super(users, self).write(cr, uid, ids, vals, context=context)
+                values['synchronize'] = False
+                res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
@@ -800,6 +853,56 @@ class users(osv.osv):
         return uid == 1
 
 users()
+
+class wizard_add_users_synchronized(osv.osv_memory):
+    _name = 'wizard.add.users.synchronized'
+
+    _columns = {
+        'user_ids': fields.many2many('res.users', 'res_add_users_synchronized_rel', 'gid', 'uid', 'Users'),
+    }
+
+
+    def add_users_to_white_list(self, cr, uid, ids, context=None):
+        '''
+        Set users as synchronizable
+        '''
+        context = context is None and {} or context
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        user_obj = self.pool.get('res.users')
+        for wiz in self.read(cr, uid, ids, ['user_ids'], context=context):
+            user_obj.write(cr, uid, wiz['user_ids'], {'is_synchronizable': True}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+wizard_add_users_synchronized()
+
+class ir_values(osv.osv):
+    """
+    we override ir.values because we need to filter where the button add users to the white list is displayed
+    """
+
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        new_values = values
+        if context.get('user_white_list', False):
+            # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context
+            return new_values
+
+        if key == 'action' and key2 == 'client_action_multi' and 'res.users' in [x[0] for x in models]:
+            action_list = [x[1] for x in values if x]
+            if 'action_open_wizard_add_users_to_white_list' in action_list:
+                new_values = []
+                for v in values:
+                    if v[1] != 'action_open_wizard_add_users_to_white_list':
+                        new_values.append(v)
+        return new_values
+
+ir_values()
+
 
 class config_users(osv.osv_memory):
     _name = 'res.config.users'
