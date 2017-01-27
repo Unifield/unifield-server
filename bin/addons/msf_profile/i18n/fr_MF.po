@@ -6133,8 +6133,8 @@ msgstr "Paiements en attente"
 
 #. module: sale
 #: report:msf.consumption_report:0
-msgid "Activity :"
-msgstr "Activité :"
+msgid "Destination Location :"
+msgstr "Destination - Zone :"
 
 #. module: purchase_compare_rfq
 #: view:wizard.choose.supplier:0
@@ -69583,10 +69583,15 @@ msgstr "Fournisseur - Liste de Prix"
 
 #. modules: consumption_calculation, sale
 #: report:expiry.report:0
-#: report:msf.consumption_report:0
 #: report:msf.product_list:0
 msgid "Location :"
 msgstr "Zone:"
+
+#. module: consumption_calculation
+#: report:msf.consumption_report:0
+msgid "Location :"
+msgstr "Zone Source :"
+
 
 #. module: account
 #: view:account.period:0

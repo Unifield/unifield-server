@@ -180,7 +180,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Location :</b></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Source Location :</b></para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].cons_location_id and objects[0].cons_location_id.name or False]]</para>
@@ -194,7 +194,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Activity :</b></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Destination Loaction :</b></para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].activity_id and objects[0].activity_id.name or False]]</para>
