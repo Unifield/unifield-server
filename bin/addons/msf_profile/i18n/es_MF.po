@@ -23656,13 +23656,6 @@ msgstr "Corp."
 msgid "RFQs"
 msgstr "Solicitudes de presupuestos"
 
-#. modules: account_activable, analytic_distribution
-#: code:addons/account_activable/account_activable.py:51
-#: code:addons/analytic_distribution/analytic_account.py:232
-#, python-format
-msgid "You cannot set an inactivity date lower than tomorrow!"
-msgstr "¡No se puede establecer una fecha de inactividad anterior a la fecha de mañana!"
-
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_purchase_import_xml_line
 msgid "purchase.import.xml.line"

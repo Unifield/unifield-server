@@ -44412,7 +44412,7 @@ msgstr "CAYMAN ISLANDS DOLLAR"
 msgid "Progress"
 msgstr "Avancement"
 
-#. modules: delivery_mechanism, tender_flow, financing_contract, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, msf_doc_import, account_activable, analytic_distribution, msf_cross_docking, product, stock_override, account_reconciliation, consumption_calculation, kit, sale_override, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, stock
+#. modules: delivery_mechanism, tender_flow, financing_contract, return_claim, msf_accrual, supplier_catalogue, import_data, stock_forecast, msf_doc_import, account_activable, analytic_distribution, msf_cross_docking, product, stock_override, account_reconciliation, consumption_calculation, kit, sale_override, base, delete_button, res_currency_functional, msf_budget, account, msf_outgoing, stock_move_tracking, msf_partner, sale, msf_config_locations, stock, account_override, analytic_override
 #: code:addons/account/account.py:516
 #: code:addons/account/account.py:529
 #: code:addons/account/account.py:532
@@ -44655,6 +44655,8 @@ msgstr "Avancement"
 #: code:addons/tender_flow/tender_flow.py:359
 #: code:addons/tender_flow/tender_flow.py:368
 #: code:addons/tender_flow/tender_flow.py:444
+#: code:addons/account_override/account.py:0
+#: code:addons/analytic_override/analytic_account.py:0
 #, python-format
 msgid "Warning !"
 msgstr "Avertissement !"
@@ -66488,13 +66490,6 @@ msgstr "Sélectionnez la catégorie du produit actuel"
 msgid "TUNISIAN DINAR"
 msgstr "TUNISIAN DINAR"
 
-#. modules: account_activable, analytic_distribution
-#: code:addons/account_activable/account_activable.py:48
-#: code:addons/analytic_distribution/analytic_account.py:227
-#, python-format
-msgid "You cannot set an inactivity date lower than tomorrow!"
-msgstr "Vous ne pouvez pas sélectionner une date d'inactivité antérieure à demain!"
-
 #. module: msf_homere_interface
 #: model:ir.ui.menu,name:msf_homere_interface.import_expat_employees
 msgid "Import expats"
@@ -75854,3 +75849,50 @@ msgstr "Seules les entrées lettrées manuellement peuvent être délettrées."
 #, python-format
 msgid "Wrong total: %.2f, instead of: %.2f"
 msgstr "Total erroné : %.2f, au lieu de : %.2f"
+
+#. module: account_override
+#: code:addons/account_override/account.py:690
+#, python-format
+msgid "At least one unposted or unreconciled Journal Item using this account has a posting date greater than or equal to the selected inactivation date."
+msgstr "Au moins une ligne d'écriture comptable non comptabilisée ou non lettrée utilisant ce compte a une date de comptabilisation supérieure ou égale à la date d'inactivation sélectionnée."
+
+#. module: analytic_override
+#: code:addons/analytic_override/analytic_account.py:709
+#, python-format
+msgid "At least one unposted Analytic Journal Item using this account has a posting date greater than or equal to the selected inactivation date."
+msgstr "Au moins une ligne d'écriture analytique non comptabilisée utilisant ce compte a une date de comptabilisation supérieure ou égale à la date d'inactivation sélectionnée."
+
+#. modules: account_override, analytic_override
+#: code:addons/account_override/account.py:683
+#: code:addons/analytic_override/analytic_account.py:713
+#, python-format
+msgid "At least one document in draft state using this account has a date greater than or equal to the selected inactivation date."
+msgstr "Au moins un document à l'état brouillon utilisant ce compte a une date supérieure ou égale à la date d'inactivation sélectionnée."
+
+#. modules: account_override, analytic_override
+#: code:addons/account_override/account.py:707
+#: code:addons/analytic_override/analytic_account.py:729
+#, python-format
+msgid "At least one draft or temp posted register line using this account has a posting date greater than or equal to the selected inactivation date."
+msgstr "Au moins une ligne de registre utilisant ce compte et étant à l'état brouillon ou comptabilisée temporairement a une date de comptabilisation supérieure ou égale à la date d'inactivation sélectionnée."
+
+#. modules: account_override, analytic_override
+#: code:addons/account_override/account.py:712
+#: code:addons/analytic_override/analytic_account.py:734
+#, python-format
+msgid "At least one draft or partially posted accrual line using this account has a date greater than or equal to the selected inactivation date."
+msgstr "Au moins une ligne de régularisation utilisant ce compte et étant à l'état brouillon ou partiellement comptabilisée a une date supérieure ou égale à la date d'inactivation sélectionnée."
+
+#. modules: account_override, analytic_override
+#: code:addons/account_override/account.py:717
+#: code:addons/analytic_override/analytic_account.py:739
+#, python-format
+msgid "At least one HQ entry (not validated) using this account has a posting date greater than or equal to the selected inactivation date."
+msgstr "Au moins une écriture HQ (non validée) utilisant ce compte a une date de comptabilisation supérieure ou égale à la date d'inactivation sélectionnée."
+
+#. modules: account_override, analytic_override
+#: code:addons/account_override/account.py:722
+#: code:addons/analytic_override/analytic_account.py:744
+#, python-format
+msgid "At least one draft payroll entry using this account has a date greater than or equal to the selected inactivation date."
+msgstr "Au moins une écriture de paie à l'état brouillon utilisant ce compte a une date supérieure ou égale à la date d'inactivation sélectionnée."
