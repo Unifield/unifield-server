@@ -23,7 +23,7 @@
             <field name="name">res.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="35" />
+            <field name="priority">45</field>
 			<field name="inherit_id" ref="base.view_partner_form" />
 			<field name="arch" type="xml">
 				<data>
@@ -53,7 +53,7 @@
 	      <field name="name">res.partner.stock.property.form.inherit</field>
 	      <field name="model">res.partner</field>
 	      <field name="type">form</field>
-	      <field name="priority" eval="16" />
+          <field name="priority">35</field>
 	      <field name="inherit_id" ref="stock.view_partner_property_form"/>
 	      <field name="arch" type="xml">
 			<data>

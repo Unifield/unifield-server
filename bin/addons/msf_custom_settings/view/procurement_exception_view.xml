@@ -21,6 +21,7 @@
             <field name="name">procurement.order.form</field>
             <field name="model">procurement.order</field>
             <field name="type">form</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="procurement.procurement_form_view" />
             <field name="arch" type="xml">
                 <data>

@@ -20017,7 +20017,7 @@ msgstr ""
 #: model:ir.ui.menu,name:stock_batch_recall.menu_batch_recall
 #: view:report.batch.recall:0
 #: view:stock.batch.recall:0
-msgid "Batch Recall"
+msgid "Batch Location"
 msgstr ""
 
 #. module: product_asset

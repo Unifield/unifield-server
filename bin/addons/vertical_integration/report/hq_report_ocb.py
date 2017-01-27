@@ -63,6 +63,7 @@ class finance_archive(finance_export.finance_archive):
         dbname = cr.dbname
         pool = pooler.get_pool(dbname)
         partner_obj = pool.get('res.partner')
+        employee_obj = pool.get('hr.employee')
 
         # define column number corresponding to properties
         partner_name_cl = 9
@@ -73,6 +74,12 @@ class finance_archive(finance_export.finance_archive):
         partner_search_dict = {}
         employee_search_dict = {}
         employee_code_dict = {}
+        partner_name_dict = {}
+        partner_hash_dict = {}
+
+        partner_id_list = list(set([x[partner_id_cl] for x in data if x[partner_id_cl]]))
+        partner_result = partner_obj.read(cr, uid, partner_id_list, ['name'])
+        partner_name_dict = dict((x['id'], x['name']) for x in partner_result)
 
         for line in data:
             tmp_line = list(line)
@@ -90,7 +97,7 @@ class finance_archive(finance_export.finance_archive):
                     partner_id = tmp_line[partner_id_cl]
                     if partner_id:
                         # US-497: extract name from partner_id (better than partner_txt)
-                        tmp_line[partner_name_cl] = partner_obj.read(cr, uid, partner_id, ['name'])['name']
+                        tmp_line[partner_name_cl] = partner_name_dict[partner_id]
 
                 partner_name = tmp_line[partner_name_cl]
                 # Search only if partner_name is not empty
@@ -109,12 +116,13 @@ class finance_archive(finance_export.finance_archive):
 
                 # If we get some ids, fetch the partner hash
                 if partner_id:
-                    if isinstance(partner_id, (int, long)):
-                        partner_id = [partner_id]
-                    partner_hash = self.get_hash(cr, uid, partner_id, 'res.partner')
+                    if partner_id in partner_hash_dict:
+                        partner_hash = partner_hash_dict[partner_id]
+                    else:
+                        partner_hash = self.get_hash(cr, uid, [partner_id], 'res.partner')
+                        partner_hash_dict[partner_id] = partner_hash
 
                 if not partner_id and tmp_line[partner_name_cl]:
-                    employee_obj = pool.get('hr.employee')
                     if partner_name not in employee_search_dict:
                         employee_search = employee_obj.search(cr, uid, [('name', '=', partner_name), ('active', 'in', ['t', 'f'])])
                         if employee_search:
@@ -673,7 +681,7 @@ class hq_report_ocb(report_sxw.report_sxw):
             })
 
         # Launch finance archive object
-        fe = finance_archive(sqlrequests, processrequests)
+        fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive
         return fe.archive(cr, uid)
 

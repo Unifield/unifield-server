@@ -641,9 +641,6 @@ class tender(osv.osv):
                     'comment': line.comment,
                 }
 
-                if line.purchase_order_line_id:
-                    pol_values.update({'confirmed_delivery_date': line.purchase_order_line_id.confirmed_delivery_date})
-
                 data.setdefault(line.supplier_id.id, {}) \
                     .setdefault('order_line', []).append((0,0, dict(pol_values)))
                 # fill data corresponding to po creation

@@ -379,17 +379,11 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        purchase_obj = self.pool.get('purchase.order')
-        commitment_obj = self.pool.get('account.commitment')
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'state']):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
                 if inv.get('purchase_ids', False):
-                    # UTP-808: Allow draft invoice deletion. If commitment exists, set them as done.
-                    if inv.get('state', '') != 'draft':
-                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
-                    else:
-                        for purchase in purchase_obj.browse(cr, uid, inv.get('purchase_ids', []), context=context):
-                            commitment_obj.action_commitment_done(cr, uid, [x.id for x in purchase.commitment_ids])
+                    # US-1702 Do not allow at all the deletion of SI coming from PO
+                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):

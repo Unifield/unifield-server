@@ -21,6 +21,7 @@
 from osv import osv, fields
 
 class account_analytic_chart(osv.osv_memory):
+    _inherit = "wizard.template.form"  # to be able to store the wizard values
     _name = 'account.analytic.chart'
     _description = 'Account Analytic Chart'
 

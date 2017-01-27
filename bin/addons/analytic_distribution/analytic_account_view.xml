@@ -55,6 +55,7 @@
             <field name="name">analytic.account.form</field>
             <field name="model">account.analytic.account</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
                 <data>

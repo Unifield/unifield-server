@@ -638,7 +638,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         res = super(sale_order, self).action_cancel(cr, uid, ids, context=context)
         for order in self.read(cr, uid, ids, ['procurement_request', 'name'], context=context):
             self.infolog(cr, uid, "The %s id:%s (%s) has been canceled." % (
-                order['procurement_request'] and  'Internal request' or 'Field order',
+                order['procurement_request'] and  _('Internal request') or _('Field order'),
                 order['id'], order['name'],
             ))
         return res
@@ -885,7 +885,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                     fnct_search=_invoiced_search, type='boolean', help="It indicates that an invoice has been paid."),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'noinvoice': fields.function(_get_noinvoice, method=True, string="Don't create an invoice", type='boolean'),
-        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=True, states={'draft': [('readonly', False)], 'validated': [('readonly', False)]}),
+        'loan_duration': fields.integer(string='Loan duration', help='Loan duration in months', readonly=False),
         'from_yml_test': fields.boolean('Only used to pass addons unit test', readonly=True, help='Never set this field to true !'),
         'yml_module_name': fields.char(size=1024, string='Name of the module which created the object in the yml tests', readonly=True),
         'company_id2': fields.many2one('res.company', 'Company', select=1),
@@ -1454,7 +1454,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                               'transport_type': so.transport_type,
                                                               'split_type_sale_order': fo_type,
                                                               'ready_to_ship_date': line.order_id.ready_to_ship_date,
-                                                              'original_so_id_sale_order': so.id}, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
+                                                              'original_so_id_sale_order': so.id,
+                                                              'parent_order_name': so.parent_order_name,
+                                                              'fo_to_resource': True,
+                                                              }, context=dict(context, keepDateAndDistrib=True, keepClientOrder=True))
                         # log the action of split
                         self.log(cr, uid, split_id, _('The %s split %s has been created.') % (selec_name, fo_name))
                         self.infolog(cr, uid, "The %s split id:%s (%s) has been created." % (
@@ -1468,8 +1471,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                 # copy the line to the split Fo - the state is forced to 'draft' by default method in original add-ons
                 # -> the line state is modified to sourced when the corresponding procurement is created in action_ship_proc_create
                 new_context = dict(context, keepDateAndDistrib=True, keepLineNumber=True, no_store_function=['sale.order.line'])
-                new_line_id = line_obj.copy(cr, uid, line.id, {'order_id': split_fo_dic[fo_type],
-                                                               'original_line_id': line.id}, context=new_context)
+                new_line_id = line_obj.copy(cr, uid, line.id, {
+                    'order_id': split_fo_dic[fo_type],
+                    'original_line_id': line.id,
+                }, context=new_context)
                 created_line.append(new_line_id)
 
             line_obj._call_store_function(cr, uid, created_line, keys=None, result=None, bypass=False, context=context)
@@ -1518,9 +1523,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                                  'fo_to_resource': True}, context=context)
 
 
-        order_name = self.read(cr, uid, order_id, ['name'], context=context)['name']
+        order_data = self.read(cr, uid, [order_id], ['name', 'procurement_request'], context=context)[0]
+        order_name = order_data['name']
+        order_type = order_data['procurement_request'] and _('Internal request') or _('Field order')
 
-        self.log(cr, uid, order_id, _('The Field order %s has been created to re-source the canceled needs') % order_name, context=dict(context, procurement_request=order.procurement_request))
+        self.log(cr, uid, order_id, _('The %s %s has been created to re-source the canceled needs') % (
+            order_name,
+            order_type,
+        ), context=dict(context, procurement_request=order.procurement_request))
 
         return order_id
 
@@ -2045,7 +2055,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                             msg_type.get('out', {}).get(picking_data.get('subtype', ''), '') or \
                             msg_type.get(picking_data.get('type', ''), ''),
                             picking_id, picking_data.get('name', ''),
-                            order.procurement_request and 'Internal request' or 'Field order',
+                            order.procurement_request and _('Internal request') or _('Field order'),
                             order.id, order.name,
                         ))
 
@@ -2939,7 +2949,7 @@ class sale_order_line(osv.osv):
             self.infolog(cr, uid, "The line id:%s (line number: %s) of the %s id:%s (%s) has been deleted." % ltl)
 
         if lines_to_check:
-            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=False, context=context, update_lines=False)
+            self.check_confirm_order(cr, uid, lines_to_check, run_scheduler=True, context=context, update_lines=False)
 
         return res
 
@@ -2997,12 +3007,13 @@ class sale_order_line(osv.osv):
                 if move['picking_id']:
                     picking_ids.add(move['picking_id'][0])
 
-            if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
-                move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
-                move_obj.unlink(cr, uid, move_ids, context=context)
-            else:
-                move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
-                move_obj.action_cancel(cr, uid, move_ids, context=context)
+            if not context.get('no_cancel_out'):
+                if line.order_id.procurement_request and line.order_id.location_requestor_id.usage == 'customer':
+                    move_obj.write(cr, uid, move_ids, {'state': 'draft'}, context=context)
+                    move_obj.unlink(cr, uid, move_ids, context=context)
+                else:
+                    move_obj.write(cr, uid, move_ids, {'state': 'cancel'}, context=context)
+                    move_obj.action_cancel(cr, uid, move_ids, context=context)
 
             for pick in pick_obj.browse(cr, uid, list(picking_ids), context=context):
                 if not len(pick.move_lines) or (pick.subtype == 'standard' and all(m.state == 'cancel' for m in pick.move_lines)):
@@ -3038,7 +3049,7 @@ class sale_order_line(osv.osv):
             elif line.order_id.procurement_request:
                 # UFTP-82: flagging SO is an IR and its PO is cancelled
                 self.pool.get('sale.order').write(cr, uid, [line.order_id.id], {'is_ir_from_po_cancel': True}, context=context)
-            if proc and context.get('cancel_type'):
+            if proc and context.get('cancel_type') and not context.get('no_cancel_out'):
                 proc_obj.write(cr, uid, [proc], {'product_qty': 0.00}, context=context)
                 proc_obj.action_cancel(cr, uid, [proc])
         else:
@@ -3116,7 +3127,10 @@ class sale_order_line(osv.osv):
         form was opened with 'Enter a Reason for Incoming cancellation' name
         we just keep the view id (2 distincts ids for FO/IR)"""
         self.pool.get('sale.order').log(cr, uid, order_id,
-                                        _('A line was added to the Field Order %s to re-source the canceled line.') % (order_name),
+                                        _('A line was added to the %s %s to re-source the canceled line.') % (
+                                            line.order_id and line.order_id.procurement_request and _('Internal Request') or _('Field Order'),
+                                            order_name
+                                        ),
                                         context={'view_id': context.get('view_id', False)})
 
         return line_id

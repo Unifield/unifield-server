@@ -498,16 +498,11 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
-        if isinstance(l_id, (int, long)):
-            l_id = [l_id]
-        data = self.read(cr, uid, l_id[0], ['confirmed_delivery_date'], context=context)
-
         # Update default
         default.update({'commitment_line_ids': [(6, 0, [])],})
-        default.update({"confirmed_delivery_date": data['confirmed_delivery_date']})
         if 'analytic_distribution_id' not in default and not context.get('keepDateAndDistrib'):
             default['analytic_distribution_id'] = False
-        new_data = super(purchase_order_line, self).copy_data(cr, uid, l_id[0], default, context)
+        new_data = super(purchase_order_line, self).copy_data(cr, uid, l_id, default, context)
         if new_data and new_data.get('analytic_distribution_id'):
             new_data['analytic_distribution_id'] = self.pool.get('analytic.distribution').copy(cr, uid, new_data['analytic_distribution_id'], {}, context=context)
         return new_data

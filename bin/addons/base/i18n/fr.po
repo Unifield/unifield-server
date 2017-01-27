@@ -6517,7 +6517,7 @@ msgstr "Pièces jointes"
 #: model:ir.ui.menu,name:base.menu_sale_config_sales
 #: model:ir.ui.menu,name:base.menu_sales
 msgid "Sales"
-msgstr "Ventes"
+msgstr "Commandes"
 
 #. module: base
 #: field:ir.actions.server,child_ids:0
