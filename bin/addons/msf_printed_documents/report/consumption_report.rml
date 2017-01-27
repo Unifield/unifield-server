@@ -194,7 +194,7 @@
             </tr>
             <tr>
                 <td>
-                    <para style="TextInformation" alignment="LEFT"><b>Destination Loaction :</b></para>
+                    <para style="TextInformation" alignment="LEFT"><b>Destination Location :</b></para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT">[[ objects[0].activity_id and objects[0].activity_id.name or False]]</para>
