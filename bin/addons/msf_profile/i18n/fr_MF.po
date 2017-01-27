@@ -14278,7 +14278,7 @@ msgstr "Sélectionner la période"
 msgid "Saint Lucia"
 msgstr "Sainte-Lucie"
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, specific_rules, kit, stock
+#. modules: msf_outgoing, stock_move_tracking, stock_override, specific_rules, kit, stock, consumption_calculation
 #: field:kit.creation.to.consume,location_src_id_to_consume:0
 #: field:process.to.consume.line,location_src_id_process_to_consume:0
 #: field:substitute.item,location_id_substitute_item:0
@@ -14301,6 +14301,9 @@ msgstr "Sainte-Lucie"
 #: code:addons/msf_doc_import/wizard/__init__.py:78
 #: report:delivery.order:0
 #: report:internal.move:0
+#: field:real.average.consumption,cons_location_id:0
+#: field:real.consumption.change.location,location_id:0
+#: view:real.average.consumption:0
 msgid "Source Location"
 msgstr "Zone Source"
 
@@ -16196,12 +16199,6 @@ msgstr "Valider Commande de Terrain"
 #: field:sale.order.line,delay:0
 msgid "Delivery Lead Time"
 msgstr "Délai de Livraison"
-
-#. module: consumption_calculation
-#: field:real.average.consumption,cons_location_id:0
-#: field:real.consumption.change.location,location_id:0
-msgid "Source Location"
-msgstr "Zone Source"
 
 #. module: sale_override
 #: model:ir.module.module,shortdesc:sale_override.module_meta_information
