@@ -141,7 +141,7 @@ class finance_archive(finance_export.finance_archive):
         aggregate the lines that are on an account where "Shrink entries for HQ export" is checked
         """
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
-        new_data = finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
+        new_data = finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion, display_journal_type=True)
         # For the Instance column (never empty), display only the first 3 characters
         # Use the same value to fill in the Cost Center column (that is empty otherwise)
         instance_code_col = 1
