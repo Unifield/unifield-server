@@ -325,14 +325,14 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'Third party', 'Destination', 'Cost centre', 'Funding pool',
                 'Booking debit', 'Booking credit', 'Booking currency',
                 'Functional debit', 'Functional credit', 'Functional CCY',
-                'Emplid', 'Partner DB ID' '''
+                'Emplid', 'Partner DB ID' 'Employee Name' 'Journal Type' '''
             sqlrequests['plresult'] = """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name,
                     aml.ref, aml.document_date, aml.date, a.code,
                     aml.partner_txt, '', SUBSTR(i.code, 1, 3), '',
                     ROUND(aml.debit_currency, 2), ROUND(aml.credit_currency, 2), c.name,
                     ROUND(aml.debit, 2), ROUND(aml.credit, 2), c.name,
-                    '', ''
+                    '', '', '', j.type
                 FROM account_move_line aml
                 INNER JOIN msf_instance i on i.id = aml.instance_id
                 INNER JOIN account_journal j on j.id = aml.journal_id
