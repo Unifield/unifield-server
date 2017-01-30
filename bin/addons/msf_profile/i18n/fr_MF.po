@@ -76095,7 +76095,7 @@ msgstr "Vérifier les erreurs"
 msgid "A line was added to the %s %s to re-source the canceled line."
 msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."
 
-#. module: sale
+#. modules: sale, msf_printed_documents
 #: report:msf.consumption_report:0
 msgid "Source Location :"
 msgstr "Source Location :"
