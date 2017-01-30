@@ -114,6 +114,8 @@ class hq_report_oca(report_sxw.report_sxw):
                       "0"]]
 
     def create(self, cr, uid, ids, data, context=None):
+        if context is None:
+            context = {}
         # US-2303 Data should always be in English whatever the language settings
         context.update({'lang': 'en_MF'})
         pool = pooler.get_pool(cr.dbname)
