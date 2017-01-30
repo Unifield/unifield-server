@@ -37,10 +37,21 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
+    def _get_journal_type_value(self, cr, uid, journal_type_key):
+        """
+        Returns the value of the Journal Type corresponding to the key in parameter (ex: inkind => In-kind Donation...)
+        If no corresponding value is found, returns the key.
+        """
+        pool = pooler.get_pool(cr.dbname)
+        journal_obj = pool.get('account.journal')
+        journal_type_list = journal_obj.fields_get(cr, uid)['type']['selection']
+        return journal_type_key in dict(journal_type_list) and dict(journal_type_list)[journal_type_key] or journal_type_key
+
     def _handle_od_ji_entries(self, cr, uid, data):
         """
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
-        Modify it for all OD entries that originate from HQ entry corrections:
+        1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+        2) Modifies it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
         Returns a list of tuples (same format as data)
@@ -53,8 +64,10 @@ class finance_archive(finance_export.finance_archive):
         instance_code = 1
         journal = 2
         description = 4
+        journal_type = 22
         for line in data:
             line_list = list(line)
+            line_list[journal_type] = self._get_journal_type_value(cr, uid, line_list[journal_type])
             od_hq_entry = False
             if line_list[journal] == 'OD':
                 aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id', 'reversal_line_id'])
@@ -77,7 +90,8 @@ class finance_archive(finance_export.finance_archive):
     def _handle_od_aji_entries(self, cr, uid, data):
         """
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
-        Modify it for all OD entries that originate from HQ entry corrections:
+        1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+        2) Modifies it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
         Returns a list of tuples (same format as data)
@@ -90,8 +104,10 @@ class finance_archive(finance_export.finance_archive):
         instance_code = 1
         journal = 2
         description = 4
+        journal_type = 22
         for line in data:
             line_list = list(line)
+            line_list[journal_type] = self._get_journal_type_value(cr, uid, line_list[journal_type])
             od_hq_entry = False
             if line_list[journal] == 'OD':
                 aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
@@ -146,10 +162,13 @@ class finance_archive(finance_export.finance_archive):
         # Use the same value to fill in the Cost Center column (that is empty otherwise)
         instance_code_col = 1
         cc_col = 11
+        journal_type_col = 21
         for line in new_data:
             instance_code = line[instance_code_col][:3]
             line[instance_code_col] = instance_code
             line[cc_col] = instance_code
+            # Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+            line[journal_type_col] = self._get_journal_type_value(cr, uid, line[journal_type_col])
         return new_data
 
 
