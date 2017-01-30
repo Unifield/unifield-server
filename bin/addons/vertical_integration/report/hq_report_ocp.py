@@ -70,7 +70,12 @@ class finance_archive(finance_export.finance_archive):
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 11th character of the description field:
                     # exclude the "COR1 - " or "REV - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][10:13] or ''
+                    descr = ''
+                    if line_list[description].startswith('COR1 - '):
+                        descr = line_list[description][7:]
+                    elif line_list[description].startswith('REV - '):
+                        descr = line_list[description][6:]
+                    line_list[journal] = descr and descr[10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -107,7 +112,12 @@ class finance_archive(finance_export.finance_archive):
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 11th character of the description field:
                     # exclude the "COR1 - " or "REV - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][10:13] or ''
+                    descr = ''
+                    if line_list[description].startswith('COR1 - '):
+                        descr = line_list[description][7:]
+                    elif line_list[description].startswith('REV - '):
+                        descr = line_list[description][6:]
+                    line_list[journal] = descr and descr[10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
 
