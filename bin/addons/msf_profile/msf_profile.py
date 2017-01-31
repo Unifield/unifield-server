@@ -46,6 +46,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1613_remove_all_track_changes_action(self, cr, uid, *a, **b):
+        '''
+        each time the msf_audittrail is updated, the subscribe() method is
+        called on all rules.
+        This method create a new action for each rule (even if one already
+        exists). This patch will remove all existing 'Track changes' actions
+        (they will be re-created on the next msf_audittrail update and now
+        there is a check to prevent to have more than one).
+        '''
+        obj_action = self.pool.get('ir.actions.act_window')
+        if obj_action:
+            search_result = obj_action.search(cr, uid,
+                                              [('name', '=', 'Track changes'),
+                                               ('domain', '!=', False)])
+            if search_result:
+                obj_action.unlink(cr, uid, search_result)
+                self._logger.warn('%s Track changes action deleted' % (len(search_result),))
+
+                # call subscribe on all rule to recreate the Trach changes action
+                rule_obj = self.pool.get('audittrail.rule')
+                rules_ids = rule_obj.search(cr, uid, [])
+                rule_obj.subscribe(cr,uid, rules_ids)
+
     def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
         '''
         A button "Activate Instance" as be removed from the user interface, but

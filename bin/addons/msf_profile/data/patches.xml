@@ -5,6 +5,10 @@
             <field name="method">setup_security_on_sync_server</field>
         </record>
 
+        <record id="us_1613" model="patch.scripts">
+            <field name="method">us_1613_remove_all_track_changes_action</field>
+        </record>
+
         <record id="us_2068" model="patch.scripts">
             <field name="method">us_2068_remove_updated_linked_to_activate_instance</field>
         </record>

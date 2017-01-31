@@ -31028,6 +31028,11 @@ msgstr "America/Ensenada"
 msgid "Displayed field value"
 msgstr "Valeur du champ affichée"
 
+#. module: msf_audittrail
+#: field:audittrail.rule,field_other_id:0
+msgid "Displayed other field value"
+msgstr "Valeur du champ supplémentaire affiché"
+
 #. module: sync_client
 #: model:ir.ui.menu,name:sync_client.message_sent_menu
 msgid "Messages Sent Monitor"
