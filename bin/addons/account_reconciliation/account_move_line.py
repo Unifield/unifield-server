@@ -313,6 +313,51 @@ class account_move_line(osv.osv):
             return True
         return super(account_move_line, self)._hook_check_period_state(cr, uid, result, context, *args, **kargs)
 
+    def reverse_fxa(self, cr, uid, fxa_line_ids, context):
+        """
+        Create a reversal FX entry that offsets the FXA line and reconcile them together
+        """
+        am_obj = self.pool.get('account.move')
+        for fxa_line in self.browse(cr, uid, fxa_line_ids, fields_to_fetch=['move_id', 'debit', 'credit'], context=context):
+            am_id = fxa_line.move_id.id
+            am = am_obj.browse(cr, uid, am_id, context=context,
+                               fields_to_fetch=['journal_id', 'period_id', 'document_date', 'date'])
+            counterpart_id = self.search(cr, uid, [('move_id', '=', am_id), ('id', '!=', fxa_line.id)],
+                                         order='NO_ORDER', limit=1, context=context)
+            counterpart_line = counterpart_id and self.browse(cr, uid, counterpart_id[0], context=context,
+                                                              fields_to_fetch=['debit', 'credit'])
+            # create the JE
+            reversal_am_id = am_obj.create(cr, uid,
+                                           {'journal_id': am.journal_id.id,
+                                            'period_id': am.period_id.id,
+                                            'document_date': am.document_date,
+                                            'date': am.date,
+                                            'manual_name': 'Realised loss/gain',
+                                            'state': 'posted',
+                                            'status': 'sys',
+                                            },
+                                           context=context)
+            # create the first JI = copy and reverse the FXA line
+            aml_vals = {
+                'move_id': reversal_am_id,
+                'period_id': am.period_id.id,
+                'document_date': am.document_date,
+                'date': am.date,
+            }
+            rev_fxa_id = self.copy(cr, uid, fxa_line.id, aml_vals, context=context)
+            rev_fxa_vals = {
+                'debit': fxa_line.credit,
+                'credit': fxa_line.debit,
+            }
+            self.write(cr, uid, [rev_fxa_id], rev_fxa_vals, context=context)
+            # create the first JI = copy and reverse the counterpart line
+            rev_counterpart_id = self.copy(cr, uid, counterpart_line.id, aml_vals, context=context)
+            rev_fxa_vals = {
+                'debit': counterpart_line.credit,
+                'credit': counterpart_line.debit,
+            }
+            self.write(cr, uid, rev_counterpart_id, rev_fxa_vals, context=context)
+
     def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
         """
         Delete reconciliation object from given move lines ids (move_ids) and reverse gain/loss lines.
@@ -326,9 +371,11 @@ class account_move_line(osv.osv):
             move_ids = [move_ids]
         reconcile_ids = [x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id']]
         if reconcile_ids:
-            if self.search(cr, uid, [('reconcile_id', 'in', reconcile_ids), ('is_addendum_line', '=', True)], limit=1, order='NO_ORDER', context=context):
-                raise osv.except_osv(_('Error'), _('You cannot unreconcile entries with FX adjustment.'))
-
+            fxa_line_ids = self.search(cr, uid, [('reconcile_id', 'in', reconcile_ids), ('is_addendum_line', '=', True)],
+                                       order='NO_ORDER', limit=1, context=context)
+            if fxa_line_ids:
+                # if there is a FXA create a reversal FX entry to offset it
+                self.reverse_fxa(cr, uid, fxa_line_ids, context)
         return super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
 
 account_move_line()
