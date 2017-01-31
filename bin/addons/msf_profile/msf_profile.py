@@ -250,6 +250,20 @@ class patch_scripts(osv.osv):
         name='sync_remote_warehouse_rule_group_type'
         """)
 
+    # XXX do not remove this patch !!! XXX
+    def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
+        '''
+        Find currencies without associated pricelist and create this price list
+        '''
+        currency_module = self.pool.get('res.currency')
+        # Find currencies without associated pricelist
+        cr.execute("""SELECT id FROM res_currency
+                   WHERE id NOT IN (SELECT currency_id FROM product_pricelist)
+                   AND currency_table_id IS NULL""")
+        curr_ids = cr.fetchall()
+        for cur_id in curr_ids:
+            currency_module.create_associated_pricelist(cr, uid, cur_id[0])
+
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if update_module:

@@ -67,7 +67,7 @@ class res_currency(osv.osv):
         if not table_in_args:
             args.insert(0, ('currency_table_id', '=', False))
         return super(res_currency, self).search(cr, uid, args, offset, limit,
-                order, context, count=count)
+                                                order, context, count=count)
 
     def compute(self, cr, uid, from_currency_id, to_currency_id, from_amount, round=True, context=None):
         if context is None:
@@ -169,7 +169,10 @@ class res_currency(osv.osv):
             # Get all pricelists and versions for the given currency
             pricelist_ids = pricelist_obj.search(cr, uid, [('currency_id', 'in', ids), ('active', 'in', ['t', 'f'])], context=context)
             if not pricelist_ids:
-                to_create = self.search(cr, uid, [('currency_table_id', '=', False), ('id', 'in', ids)], context=context)
+                to_create = self.search(cr, uid,
+                                        [('currency_table_id', '=', False),
+                                         ('id', 'in', ids),
+                                            ('active', 'in', ['t', 'f'])], context=context)
                 for cur_id in to_create:
                     pricelist_ids = self.create_associated_pricelist(cr, uid, cur_id, context=context)
             version_ids = version_obj.search(cr, uid, [('pricelist_id', 'in', pricelist_ids), ('active', 'in', ['t', 'f'])], context=context)
@@ -200,8 +203,8 @@ class res_currency(osv.osv):
 #                                                       ('property_product_pricelist_purchase', 'in', pricelist_ids)], context=context)
             value_reference = ['product.pricelist,%s' % x for x in pricelist_ids]
             partner_ids = property_obj.search(cr, uid, ['|', ('name', '=', 'property_product_pricelist'),
-                                                             ('name', '=', 'property_product_pricelist_purcahse'),
-                                                             ('value_reference', 'in', value_reference)])
+                                                        ('name', '=', 'property_product_pricelist_purcahse'),
+                                                        ('value_reference', 'in', value_reference)])
 
             # Raise an error if the currency is used on partner form
             if partner_ids:
