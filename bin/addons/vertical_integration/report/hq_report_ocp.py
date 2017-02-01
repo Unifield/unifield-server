@@ -80,10 +80,10 @@ class finance_archive(finance_export.finance_archive):
                     descr = ''
                     if re.match('^COR\d - ', line_list[description]):
                         descr = line_list[description][7:]
-                    elif line_list[description].startswith('REV - '):
-                        descr = line_list[description][6:]
                     elif re.match('^REV - COR\d - ', line_list[description]):
                         descr = line_list[description][13:]
+                    elif line_list[description].startswith('REV - '):
+                        descr = line_list[description][6:]
                     line_list[journal] = descr and descr[10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
@@ -130,10 +130,10 @@ class finance_archive(finance_export.finance_archive):
                     descr = ''
                     if re.match('^COR\d - ', line_list[description]):
                         descr = line_list[description][7:]
-                    elif line_list[description].startswith('REV - '):
-                        descr = line_list[description][6:]
                     elif re.match('^REV - COR\d - ', line_list[description]):
                         descr = line_list[description][13:]
+                    elif line_list[description].startswith('REV - '):
+                        descr = line_list[description][6:]
                     line_list[journal] = descr and descr[10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
