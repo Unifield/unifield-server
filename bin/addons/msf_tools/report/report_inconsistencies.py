@@ -190,7 +190,14 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         will get all inconsistents SMRL 
         '''
         smrl_obj = self.pool.get('stock.mission.report.line')
+        product_creator_obj = self.pool.get('product.international.status')
         inconsistent_id_list = []
+
+        intl_status_code_name = {}
+        intl_status_ids = product_creator_obj.search(self.cr, self.uid, [])
+        for intl_status in product_creator_obj.browse(self.cr, self.uid, intl_status_ids):
+            intl_status_code_name.setdefault(intl_status.code, intl_status.name)
+
         if not self.inconsistent:
             prod_obj = self.pool.get('product.product')
             prod_status_obj = self.pool.get('product.status')
@@ -250,7 +257,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
 
             product_result_dict = {}
             state_ud_dict = {}
-            for product in product_result:
+            for product in product_result[0:100]:
                 inconsistent_id_list = []
                 # get the lines matching this product
                 smrl_ids = smrl_obj.search(self.cr, self.uid,
@@ -317,7 +324,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                             'instance_name': instance_level_dict[instance_id]['name'],
                             'smrl_default_code': smrl['default_code'],
                             'smrl_name_template': product['name_template'],
-                            'internationnal_status_code_name': smrl['international_status_code'] and smrl['international_status_code'][1] or '',
+                            'internationnal_status_code_name': smrl['international_status_code'] and intl_status_code_name.get(smrl['international_status_code'], '') or '',
                             'uf_status_code': smrl['product_state'] and uf_status_code_dict[smrl['product_state']]['name'] or '',
                             'ud_status_code': self.get_ud_status(smrl['state_ud']),
                             'active': smrl['product_active'],

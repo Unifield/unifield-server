@@ -72,28 +72,28 @@
         <Row ss:AutoFitHeight="1">
           <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
           <Cell ss:StyleID="tab_content"><Data ss:Type="String"></Data></Cell>
-          <Cell ss:StyleID="tab_content"><Data ss:Type="String">There is no inconsistencies to report</Data></Cell>
+          <Cell ss:StyleID="tab_content"><Data ss:Type="String">${_('There is no inconsistencies to report')|x}</Data></Cell>
         </Row>
     % else:
         <Row ss:AutoFitHeight="1">
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Instance</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Code</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Description</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Product Creator</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">UniField Status</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Unidata Status</Data></Cell>
-          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">Active/Inactive</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Instance')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Code')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Description')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Product Creator')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('UniField Status')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Unidata Status')|x}</Data></Cell>
+          <Cell ss:StyleID="tab_header_orange"><Data ss:Type="String">${_('Active/Inactive')|x}</Data></Cell>
         </Row>
         % for prod in get_products_with_inconsistencies():
                 # HQ data:
                 <Row ss:AutoFitHeight="1">
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('HQ')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${_('HQ')|x}</Data></Cell>
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_default_code'])|x}</Data></Cell>
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_name_template'])|x}</Data></Cell>
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_international_status'] or '')|x}</Data></Cell>
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_state'] or '')|x}</Data></Cell>
                   <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(prod['prod_state_ud']  or '')|x}</Data></Cell>
-                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${('Active' if prod['prod_active'] else 'Inactive')|x}</Data></Cell>
+                  <Cell ss:StyleID="tab_header_gray"><Data ss:Type="String">${(_('Active') if prod['prod_active'] else _('Inactive'))|x}</Data></Cell>
                 </Row>
             % for smrl in prod['smrl_list']:
                     <Row ss:AutoFitHeight="1">
@@ -103,7 +103,7 @@
                       <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['internationnal_status_code_name'] or '')|x}</Data></Cell>
                       <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['uf_status_code'])|x}</Data></Cell>
                       <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(smrl['ud_status_code'] or '')|x}</Data></Cell>
-                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${('Active' if smrl['active'] else 'Inactive')|x}</Data></Cell>
+                      <Cell ss:StyleID="tab_content"><Data ss:Type="String">${(_('Active') if smrl['active'] else _('Inactive'))|x}</Data></Cell>
                     </Row>
             % endfor
         % endfor
