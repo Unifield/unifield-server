@@ -1600,9 +1600,7 @@ stock moves which are already processed : '''
 
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     so = sol.order_id
-                    # # do not update Internal Requests with internal requestor location
-                    # if so and so.procurement_request and so.location_requestor_id.usage != 'customer':
-                    #     continue
+                    # US-1931: Remove code that do not update Internal Requests with internal requestor location
 
                     line_confirmed = False
                     # compute confirmed date for line
