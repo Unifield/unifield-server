@@ -142,11 +142,10 @@ def find_in_path(name):
         return None
 
 def _set_env_pg(remove=False):
-    if os.name == 'nt':
-        if not remove and not os.environ.get('PGPASSWORD', ''):
-            os.environ['PGPASSWORD'] = config['db_password']
-        if remove and os.environ.get('PGPASSWORD'):
-            os.environ['PGPASSWORD'] = ''
+    if not remove and not os.environ.get('PGPASSWORD', ''):
+        os.environ['PGPASSWORD'] = config['db_password']
+    if remove and os.environ.get('PGPASSWORD'):
+        os.environ['PGPASSWORD'] = ''
 
 def pg_dump(db_name, outfile=False):
     try:
@@ -173,7 +172,7 @@ def pg_dump(db_name, outfile=False):
 
         _set_env_pg(remove=True)
         return res
-    except Exception, e:
+    except Exception:
         _logger.error('Dump', exc_info=1)
         raise
 
