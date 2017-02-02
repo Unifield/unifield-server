@@ -1020,10 +1020,22 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
                 prev_currency_id = False
                 for ml in m.line_id:
+                    type_for_register = ml.account_id.type_for_register
+                    curr_aml = ml.currency_id
+                    if type_for_register == 'transfer_same' and \
+                            (not ml.transfer_journal_id or not ml.transfer_journal_id.currency or ml.transfer_journal_id.currency.id != curr_aml.id):
+                        raise osv.except_osv(_('Warning'),
+                                             _('The Third Party must be a liquidity journal with the same currency as the booking one\n'
+                                               'for the account: %s - %s.') % (ml.account_id.code, ml.account_id.name))
+                    elif type_for_register == 'transfer' and \
+                            (not ml.transfer_journal_id or not ml.transfer_journal_id.currency or ml.transfer_journal_id.currency.id == curr_aml.id):
+                        raise osv.except_osv(_('Warning'),
+                                             _('The Third Party must be a liquidity journal with a currency different from the booking one\n'
+                                               'for the account: %s - %s.') % (ml.account_id.code, ml.account_id.name))
                     if not prev_currency_id:
-                        prev_currency_id = ml.currency_id.id
+                        prev_currency_id = curr_aml.id
                         continue
-                    if ml.currency_id.id != prev_currency_id:
+                    if curr_aml.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 

@@ -76082,3 +76082,19 @@ msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulé
 #, python-format
 msgid "Line %s. A Third Party is mandatory for the given account: %s."
 msgstr "Ligne %s. Un Tiers est obligatoire pour le compte donné : %s."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1033
+#, python-format
+msgid "The Third Party must be a liquidity journal with a currency different from the booking one\n"
+"for the account: %s - %s."
+msgstr "Le Tiers doit être un journal de trésorerie avec une devise différente de la devise d'enregistrement\n"
+"pour le compte : %s - %s."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1028
+#, python-format
+msgid "The Third Party must be a liquidity journal with the same currency as the booking one\n"
+"for the account: %s - %s."
+msgstr "Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement\n"
+"pour le compte : %s - %s."
