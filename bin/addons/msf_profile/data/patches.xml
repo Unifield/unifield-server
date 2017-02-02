@@ -146,7 +146,7 @@
         <record id="us_1167_status_inconsistencies" model="patch.scripts">
             <field name="method">us_1167_status_inconsistencies</field>
         </record>
-
+        
         <record id="us_2075_partner_locally_created" model="patch.scripts">
             <field name="method">us_2075_partner_locally_created</field>
         </record>

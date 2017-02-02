@@ -566,6 +566,7 @@ class stock_mission_report(osv.osv):
                     'product_active': prod_active,
                     'state_ud': prod_state_ud,
                     'international_status_code': prod_creator,
+                    'product_state': prod_state or '',
                 }, context=context)
 
             # Don't update lines for full view or non local reports
