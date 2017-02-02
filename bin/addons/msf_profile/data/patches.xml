@@ -158,5 +158,9 @@
         <record id="us_1721_dates_on_products" model="patch.scripts">
             <field name="method">us_1721_dates_on_products</field>
         </record>
+
+        <record id="us_1359_update_move_shipment" model="patch.scripts">
+            <field name="method">us_1359_update_move_shipment</field>
+        </record>
     </data>
 </openerp>

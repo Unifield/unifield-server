@@ -1116,6 +1116,12 @@ class patch_scripts(osv.osv):
         cr.execute("""UPDATE product_product SET uf_write_date = write_date, uf_create_date = create_date""")
         return True
 
+    def us_1359_update_move_shipment(self, cr, uid, *a, **b):
+        """
+        Fill the 'pick_shipment_id' value for stock move in a shipment
+        """
+        cr.execute("""UPDATE stock_move sm SET pick_shipment_id = sp.shipment_id FROM stock_picking sp WHERE sm.picking_id = sp.id AND sp.shipment_id IS NOT NULL""")
+        return True
 
 patch_scripts()
 

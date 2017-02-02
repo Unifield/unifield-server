@@ -4717,6 +4717,37 @@ class stock_move(osv.osv):
 
         return res
 
+    def _get_pick_shipment_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Link the shipment where a stock move is to this stock move
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        res = {}
+        for move in self.browse(cr, uid, ids, context=context):
+            res[move.id] = False
+            if move.picking_id and move.picking_id.shipment_id:
+                res[move.id] = move.picking_id.shipment_id.id
+
+        return res
+
+    def _get_picking(self, cr, uid, ids, context=None):
+        """
+        Return the list of stock.move to update
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        picking_ids = self.pool.get('stock.picking').search(cr, uid, [('id', 'in', ids), ('shipment_id', '!=', False)], order='NO_ORDER', context=context)
+        return self.pool.get('stock.move').search(cr, uid, [('picking_id', '=', picking_ids)], order='NO_ORDER', context=context)
+
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -4743,6 +4774,17 @@ class stock_move(osv.osv):
                 'sale_order_line_number': fields.function(_vals_get,
                                                           method=True, type='integer', string='Sale Order Line Number',
                                                           multi='get_vals_integer',),  # old_multi get_vals
+                'pick_shipment_id': fields.function(
+                    _get_pick_shipment_id,
+                    method=True,
+                    type='many2one',
+                    relation='shipment',
+                    string='Shipment',
+                    store={
+                        'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
+                        'stock.picking': (_get_picking, ['shipment_id'], 10),
+                    }
+                ),  
                 # Fields used for domain
                 'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
                 'location_output_id': fields.many2one('stock.location', string='Output location'),
