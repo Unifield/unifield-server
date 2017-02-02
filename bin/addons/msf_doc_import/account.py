@@ -462,10 +462,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if not partner_needs:
                         errors.append(_('Line %s. No info about given account: %s') % (current_line_num, account.code,))
                         continue
-                    # Check result
+                    # Check partner type compatibility regarding the Account "Type for specific treatment"
                     partner_options = partner_needs['value']['partner_type']['options']
                     partner_type_mandatory = 'partner_type_mandatory' in partner_needs['value'] and \
                                              partner_needs['value']['partner_type_mandatory'] or False
+                    type_for_reg = account.type_for_register
                     if r_partner and ('res.partner', 'Partner') not in partner_options:
                         errors.append(_('Line %s. You cannot use a partner for the given account: %s.') % (current_line_num, account.code))
                         continue
@@ -476,6 +477,16 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
                     if partner_type_mandatory and not r_partner and not r_employee and not r_journal:
                         errors.append(_('Line %s. A Third Party is mandatory for the given account: %s.') % (current_line_num, account.code))
+                    # Check that the currency of the journal is correct in case of an "Internal Transfer" account
+                    partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal, fields_to_fetch=['currency', 'type'], context=context)
+                    is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
+                    if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != r_currency):
+                        errors.append(_('Line %s. The Third Party must be a liquidity journal with the same currency '
+                                        'as the booking one for the given account: %s.') % (current_line_num, account.code))
+                    if type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == r_currency):
+                        errors.append(_('Line %s. The Third Party must be a liquidity journal with a currency '
+                                        'different from the booking one for the given account: %s.') % (current_line_num, account.code))
+
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
                         errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))

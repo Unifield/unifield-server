@@ -1020,15 +1020,15 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
                 prev_currency_id = False
                 for ml in m.line_id:
-                    type_for_register = ml.account_id.type_for_register
+                    type_for_reg = ml.account_id.type_for_register
                     curr_aml = ml.currency_id
-                    if type_for_register == 'transfer_same' and \
-                            (not ml.transfer_journal_id or not ml.transfer_journal_id.currency or ml.transfer_journal_id.currency.id != curr_aml.id):
+                    partner_journal = ml.transfer_journal_id
+                    is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
+                    if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != curr_aml.id):
                         raise osv.except_osv(_('Warning'),
                                              _('The Third Party must be a liquidity journal with the same currency as the booking one\n'
                                                'for the account: %s - %s.') % (ml.account_id.code, ml.account_id.name))
-                    elif type_for_register == 'transfer' and \
-                            (not ml.transfer_journal_id or not ml.transfer_journal_id.currency or ml.transfer_journal_id.currency.id == curr_aml.id):
+                    elif type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == curr_aml.id):
                         raise osv.except_osv(_('Warning'),
                                              _('The Third Party must be a liquidity journal with a currency different from the booking one\n'
                                                'for the account: %s - %s.') % (ml.account_id.code, ml.account_id.name))
