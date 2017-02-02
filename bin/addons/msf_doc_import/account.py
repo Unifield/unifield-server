@@ -477,7 +477,8 @@ class msf_doc_import_accounting(osv.osv_memory):
                         errors.append(_('Line %s. You cannot use a journal for the given account: %s.') % (current_line_num, account.code))
                     if partner_type_mandatory and not r_partner and not r_employee and not r_journal:
                         errors.append(_('Line %s. A Third Party is mandatory for the given account: %s.') % (current_line_num, account.code))
-                    # Check that the currency of the journal is correct in case of an "Internal Transfer" account
+                    # Check that the currency and type of the (journal) third party is correct
+                    # in case of an "Internal Transfer" account
                     partner_journal = r_journal and aj_obj.browse(cr, uid, r_journal, fields_to_fetch=['currency', 'type'], context=context)
                     is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
                     if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != r_currency):
@@ -486,6 +487,10 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with a currency '
                                         'different from the booking one for the given account: %s.') % (current_line_num, account.code))
+                    if is_liquidity and file_journal_id == partner_journal.id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('Line %s. The journal used for the internal transfer must be different from the '
+                                               'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
 
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
