@@ -519,6 +519,28 @@
             </field>
         </record>
 
+
+        <!-- Bank Statement Track changes view (US-1587 -->
+        <record id="view_audittrail_log_line_other_column_tree" model="ir.ui.view">
+            <field name="name">view.audittrail.log.line.tree.other.column</field>
+            <field name="model">audittrail.log.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Logs" hide_new_button="1" hide_delete_button="1" noteditable="1" editable="top">
+                    <field name="log" />
+                    <field name="timestamp" />
+                    <field name="other_column" string="Sequence"/>
+                    <field name="sub_obj_name" string="Description"/>
+                    <field name="method" />
+                    <field name="trans_field_description" />
+                    <field name="old_value_fct" string="Old value" />
+                    <field name="new_value_fct" string="New value" />
+                    <field name="user_id" />
+                </tree>
+            </field>
+        </record>
+
+
     <!-- Bank Statement Tree  US-807: force the priority to 10 to avoid showing the view in addons, for default tree view, check the view named account.view_bank_statement_tree_for_journal for more info -->
         <record id="account.view_bank_statement_tree" model="ir.ui.view">
             <field name="name">account.bank.statement.tree</field>
