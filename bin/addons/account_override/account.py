@@ -1020,7 +1020,8 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
                 prev_currency_id = False
                 for ml in m.line_id:
-                    # Check that the currency and type of the journal is correct in case of an "Internal Transfer" account
+                    # Check that the currency and type of the (journal) third party is correct
+                    # in case of an "Internal Transfer" account
                     type_for_reg = ml.account_id.type_for_register
                     curr_aml = ml.currency_id
                     partner_journal = ml.transfer_journal_id
