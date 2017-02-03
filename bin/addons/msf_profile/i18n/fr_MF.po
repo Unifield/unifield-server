@@ -4658,7 +4658,7 @@ msgstr "Informations supplémentaires"
 msgid "Search Real Kit Composition Item"
 msgstr "Rechercher l'Article de la Composition Réelle du Kit"
 
-#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, analytic, msf_doc_import, stock, product, msf_homere_interface, hr, register_accounting, base, procurement_report, account_invoice_split, account, msf_outgoing, msf_audittrail, sale, procurement, purchase, product_list, msf_toolsa
+#. modules: process, financing_contract, account_voucher, account_hq_entries, account_override, product_attributes, base_report_designer, msf_accrual, return_claim, account_mcdb, analytic, msf_doc_import, stock, product, msf_homere_interface, hr, register_accounting, base, procurement_report, account_invoice_split, account, msf_outgoing, msf_audittrail, sale, procurement, purchase, product_list, msf_tools
 #: view:account.account.type:0
 #: field:account.account.type,note:0
 #: view:account.analytic.account:0
@@ -76186,17 +76186,17 @@ msgstr "Générer le rapport"
 msgid "Status of the report"
 msgstr "État du rapport"
 
-#: module: msf_tools
+#. module: msf_tools
 #: view:export.report.inconsistencies:0
 msgid "Your export inconsistent products demand will be treated quickly."
 msgstr "Votre export des produits incohérents sera traité rapidement."
 
-#: module: msf_tools
+#. module: msf_tools
 #: view:export.report.inconsistencies:0
 msgid "Due to the volume of data, your report cannot be shown immediatly"
 msgstr "À cause du volume des données, le rapport ne peut pas être affiché immédiatement"
 
-#: module: msf_tools
+#. module: msf_tools
 #: view:export.report.inconsistencies:0
 msgid "When the report will be ready, you can access to it by the menu Tools / Inconsistencies report"
 msgstr "Quand le rapport sera prêt, vous pourrez y accéder depuis le menu Outils / Rapport d'incohérences"
