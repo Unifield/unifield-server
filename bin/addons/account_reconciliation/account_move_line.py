@@ -363,6 +363,19 @@ class account_move_line(osv.osv):
             }
             rev_counterpart_id = self.copy(cr, uid, counterpart_line.id, rev_counterpart_vals, context=context)
 
+    def _check_instance(self, cr, uid, reconcile_id, context):
+        """
+        Checks that the unreconciliation is done at the same instance level as the reconciliation
+        (otherwise raises a warning)
+        """
+        user_obj = self.pool.get('res.users')
+        reconcile_obj = self.pool.get('account.move.reconcile')
+        company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        reconciliation = reconcile_obj.browse(cr, uid, reconcile_id, fields_to_fetch=['instance_id'], context=context)
+        if reconciliation.instance_id and reconciliation.instance_id.id != company.instance_id.id:
+            raise osv.except_osv(_('Warning !'),
+                                 _("You can only unreconcile entries in the same instance where they have been reconciled in."))
+
     def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
         """
         Delete reconciliation object from given move lines ids (move_ids) and reverse gain/loss lines.
@@ -398,6 +411,8 @@ class account_move_line(osv.osv):
                                      _("You can't unreconcile these lines because the FX entry is missing."))
             fxa_line_ids = [rl.id for rl in rec_lines if rl.is_addendum_line]
             if fxa_line_ids:
+                # if there is a FXA the unreconciliation must be done in the same instance as the reconciliation
+                self._check_instance(cr, uid, reconcile_id, context)
                 fxa_set.update(fxa_line_ids)
         # first we delete the reconciliation for all lines including FXA
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
