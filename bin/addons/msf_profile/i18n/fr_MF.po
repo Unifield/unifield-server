@@ -76134,7 +76134,6 @@ msgstr "Vérifier les erreurs"
 msgid "A line was added to the %s %s to re-source the canceled line."
 msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulée."
 
-<<<<<<< TREE
 #. module: mission_stock
 #: field:stock.mission.report.line,state_ud:0
 msgid "UniData status"
