@@ -76083,18 +76083,38 @@ msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulé
 msgid "Line %s. A Third Party is mandatory for the given account: %s."
 msgstr "Ligne %s. Un Tiers est obligatoire pour le compte donné : %s."
 
-#. module: account_override
-#: code:addons/account_override/account.py:1033
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:488
 #, python-format
-msgid "The Third Party must be a liquidity journal with a currency different from the booking one\n"
-"for the account: %s - %s."
-msgstr "Le Tiers doit être un journal de trésorerie avec une devise différente de la devise d'enregistrement\n"
-"pour le compte : %s - %s."
+msgid "Line %s. The Third Party must be a liquidity journal with a currency different from the booking one for the given account: %s."
+msgstr "Ligne %s. Le Tiers doit être un journal de trésorerie avec une devise différente de la devise d'enregistrement pour le compte donné : %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:485
+#, python-format
+msgid "Line %s. The Third Party must be a liquidity journal with the same currency as the booking one for the given account: %s."
+msgstr "Ligne %s. Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement pour le compte donné : %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:492
+#, python-format
+msgid "Line %s. The journal used for the internal transfer must be different from the Journal Entry Journal for the given account: %s."
+msgstr "Ligne %s. Le journal utilisé pour le transfert interne doit être différent du journal de l'écriture comptable pour le compte donné : %s."
 
 #. module: account_override
-#: code:addons/account_override/account.py:1028
+#: code:addons/account_override/account.py:1035
 #, python-format
-msgid "The Third Party must be a liquidity journal with the same currency as the booking one\n"
-"for the account: %s - %s."
-msgstr "Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement\n"
-"pour le compte : %s - %s."
+msgid "Account: %s - %s. The Third Party must be a liquidity journal with a currency different from the booking one."
+msgstr "Compte: %s - %s. Le Tiers doit être un journal de trésorerie avec une devise différente de la devise d'enregistrement."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1031
+#, python-format
+msgid "Account: %s - %s. The Third Party must be a liquidity journal with the same currency as the booking one."
+msgstr "Compte: %s - %s. Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1039
+#, python-format
+msgid "Account: %s - %s. The journal used for the internal transfer must be different from the Journal Entry Journal."
+msgstr "Compte: %s - %s. Le journal utilisé pour le transfert interne doit être différent du journal de l'écriture comptable."
