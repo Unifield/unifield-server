@@ -380,7 +380,8 @@ class account_move_line(osv.osv):
             # US-1784 Prevent unreconciliation if it is balanced in booking but unbalanced in functional
             # (= full reconciliation but FX entry not yet received via sync)
             rec_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconcile_id)], order='NO_ORDER', context=context)
-            rec_lines = self.browse(cr, uid, rec_line_ids, fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency'], context=context)
+            rec_lines = self.browse(cr, uid, rec_line_ids, context=context,
+                                    fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency', 'is_addendum_line'])
             debit = 0.0
             credit = 0.0
             debit_currency = 0.0
@@ -395,10 +396,9 @@ class account_move_line(osv.osv):
             if balanced_in_booking and not balanced_in_fctal:
                 raise osv.except_osv(_('Warning !'),
                                      _("You can't unreconcile these lines because the FX entry is missing."))
-            fxa_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconcile_id), ('is_addendum_line', '=', True)],
-                                       order='NO_ORDER', limit=1, context=context)
+            fxa_line_ids = [rl.id for rl in rec_lines if rl.is_addendum_line]
             if fxa_line_ids:
-                fxa_set.add(fxa_line_ids[0])
+                fxa_set.update(fxa_line_ids)
         # first we delete the reconciliation for all lines including FXA
         res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
         if fxa_set:
