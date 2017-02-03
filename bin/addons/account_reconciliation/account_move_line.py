@@ -315,7 +315,7 @@ class account_move_line(osv.osv):
 
     def reverse_fxa(self, cr, uid, fxa_line_ids, context):
         """
-        Create a reversal FX entry that offsets the FXA and reconcile them together
+        Creates a reversal FX entry that offsets the FXA amount, and reconciles it with the original FXA entry
         """
         am_obj = self.pool.get('account.move')
         for fxa_line in self.browse(cr, uid, fxa_line_ids, context=context,
