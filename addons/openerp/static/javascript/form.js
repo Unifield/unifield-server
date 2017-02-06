@@ -230,6 +230,36 @@ function validate_required(form){
     return result;
 }
 
+function validate_binary_size(form){
+
+    if (typeof form == 'string') {
+        form = jQuery('#' + form).get(0);
+    }
+
+    if (!form) {
+        return true;
+    }
+
+    var elements = MochiKit.Base.filter(function(el){
+        return !el.disabled && el.id && el.name && el.id.indexOf('_terp_listfields/') == -1 && hasElementClass(el, 'binary');
+    }, form.elements);
+
+    var result = true;
+
+    for (var i = 0; i < elements.length; i++) {
+        var elem = elements[i];
+        var elem2 = elem;
+        var value = elem.value;
+        var kind = jQuery(elem).attr('kind');
+
+        if (kind == 'binary') {
+            return check_attachment_size(elem);
+        }
+    }
+    return result;
+}
+
+
 function error_display(msg) {
     var error = jQuery("<table>",{'width': '100%', 'height': '100%'}
                 ).append(
@@ -295,6 +325,11 @@ function submit_form(action, src, target){
 
     var $form = jQuery('#view_form');
     if (/\/save(\?|\/)?/.test(action) && !validate_required($form[0])) {
+        return;
+    }
+
+    // check there is no binary data exceding the maximum size
+    if (/\/save(\?|\/)?/.test(action) && !validate_binary_size($form[0])) {
         return;
     }
 

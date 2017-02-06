@@ -74,7 +74,11 @@ function add_binary(src) {
 function set_binary_filename(src, filename) {
     var $src = jQuery(src);
 
-    check_attachment_size(src);
+    // Check attachment size is not bigger than max attachment size
+    // refuse it if bigger.
+    if (check_attachment_size(src) !== true) {
+        return false
+    }
 
     var name = $src.attr('name');
     var prefix = name.split('/'); prefix.pop();
