@@ -519,7 +519,7 @@ class audittrail_rule(osv.osv):
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
                 # register and track changes are created this way.
-                val['domain'] = "[('fct_object_id','=', %s), ('fct_res_id', 'in', active_ids)]" % str(thisrule.object_id.id)
+                val['domain'] = "[('fct_object_id','=', %d), ('fct_res_id', 'in', active_ids)]" % thisrule.object_id.id
 
             # search if the view does not already exists
             search_domain = [('name', '=', val['name']),
@@ -531,7 +531,6 @@ class audittrail_rule(osv.osv):
                     logger = logging.getLogger('audittrail')
                     logger.warn('There is already %s ir.actions.act_window matching the domain %r, the first one will be updated' % (len(action_search), search_domain))
                 action_id = action_search[0]
-                #obj_action.create(cr, uid, action_id, val)
             else:
                 action_id = obj_action.create(cr, uid, val)
             self.write(cr, uid, [thisrule.id], {"state": "subscribed", "action_id": action_id})
