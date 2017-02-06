@@ -38599,8 +38599,32 @@ msgstr "Ceci indique le type de Journal lié à cette ligne d'écriture comptabl
 #: field:msf.instance,level:0
 #: field:product.nomenclature,level:0
 #: field:stock.reason.type,level:0
+#: field:res.groups,level:0
 msgid "Level"
 msgstr "Niveau"
+
+#. module: base
+#: help:res.groups,level:0
+msgid "Level selected and all higher ones will be able to use this group."
+msgstr "Le niveau selectionné et tous ceux plus élevés seront capable d'utiliser ce groupe."
+
+#. module: base
+#: code:addons/base/res/res_user.py:97
+#, python-format
+msgid "You cannot edit a group level higher than your instance level (%s is higher than %s)."
+msgstr "Vous ne pouvez pas editer un groupe d'un niveau supérieur à celui de votre instance (%s est supérieur à %s)"
+
+#. module: msf_profile
+#: code:addons/msf_profile/user_access_configurator.py:326
+#: code:addons/msf_profile/user_access_configurator.py:352
+#, python-format
+msgid "The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'."
+msgstr "Le mot-clé '%s' après le caractère '$' doit être l'un des suivants : %s. Veuillez vérifier le groupe de nom '%s'."
+
+#. module: base
+#: view:res.groups:0
+msgid "All Levels"
+msgstr "Tous les niveaux"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -52270,8 +52294,10 @@ msgstr "Classement"
 msgid "Invoices generated for a purchase order"
 msgstr "Factures générées pour un bon de commande"
 
-#. module: msf_instance
+#. module: msf_instance, base, msf_field_access_rights
 #: selection:msf.instance,level:0
+#: selection:res.groups,level:0
+#: selection:msf_field_access_rights.field_access_rule,instance_level:0
 msgid "Project"
 msgstr "Projet"
 
@@ -65566,11 +65592,6 @@ msgstr "Expression, doit être Vrai pour correspondre à \n"
 msgid "Configure instance"
 msgstr "Configurer l'instance"
 
-#. module: msf_field_access_rights
-#: selection:msf_field_access_rights.field_access_rule,instance_level:0
-msgid "Project"
-msgstr "Project"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -75932,3 +75953,13 @@ msgstr "Synchroniser"
 #: help:res.users,synchronize:0
 msgid "Synchronize down this user"
 msgstr "Synchroniser cet Utilisateur vers le bas"
+
+#. module: msf_profile
+#: field:res.groups,is_an_admin_profile:0
+msgid "Is an admin profile"
+msgstr "Est un profil admin"
+
+#. module: msf_profile
+#: help:res.groups,is_an_admin_profile:0
+msgid "User group members allowed to set default value for all users."
+msgstr "Les membres de ce groupe sont autorisés à définir les valeurs par défault pour tous les utilisateurs."
