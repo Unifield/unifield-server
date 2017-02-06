@@ -62,7 +62,7 @@ class patch_scripts(osv.osv):
                                                ('domain', '!=', False)])
             if search_result:
                 obj_action.unlink(cr, uid, search_result)
-                self._logger.warn('%s Track changes action deleted' % (len(search_result),))
+                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
 
                 # call subscribe on all rule to recreate the Trach changes action
                 rule_obj = self.pool.get('audittrail.rule')
