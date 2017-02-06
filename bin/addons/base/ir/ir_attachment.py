@@ -136,7 +136,7 @@ class ir_attachment(osv.osv):
         self.check(cr, uid, ids, 'write', context=context, values=vals)
 
         store_data_in_db = self.store_data_in_db(cr, uid)
-        if 'datas' in vals:
+        if 'datas' in vals and vals['datas']:
             # do not write the data in DB but on the local file system
             datas = vals.pop('datas')
             if store_data_in_db:
