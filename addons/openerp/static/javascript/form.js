@@ -1333,7 +1333,7 @@ function removeAttachment() {
 function check_attachment_size(obj) {
     var $datas = jQuery(obj);
     var $max_size = $datas.attr('max-size');
-    if (typeof $max_size !== "undefined") {
+    if (typeof $max_size !== "undefined" && obj.files && obj.files[0]) {
         var $file_size = obj.files[0].size;
         if ($file_size > $max_size) {
             var $mb_size = $file_size/1024/1024;
