@@ -90,7 +90,12 @@ class account_commitment_line(osv.osv):
                     if not total_amount:
                         continue
                     # compute percentage
-                    percentage = (total_amount / line.amount) * 100 or 0.0
+                    if line.amount:
+                        percentage = (total_amount / line.amount) * 100 or 0.0
+                    elif not total_amount:
+                        percentage = 100
+                    else:
+                        percentage = 0
                     vals.update({'percentage': percentage})
                     # create cost_center_line
                     self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)

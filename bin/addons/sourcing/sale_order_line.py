@@ -1363,7 +1363,7 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
             if line['order_id'][0] not in order_to_check:
                 order_to_check.update({line['order_id'][0]: state_to_use})
 
-            if order_type == 'regular' and not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.01:
+            if order_type == 'regular' and not order_proc and line['price_unit'] * line['product_uom_qty'] < 0.00001:
                 raise osv.except_osv(
                     _('Warning'),
                     _('You cannot confirm the sourcing of a line with a subtotal of zero.'),
