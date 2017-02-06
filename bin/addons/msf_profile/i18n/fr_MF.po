@@ -52294,8 +52294,10 @@ msgstr "Classement"
 msgid "Invoices generated for a purchase order"
 msgstr "Factures générées pour un bon de commande"
 
-#. module: msf_instance
+#. module: msf_instance, base, msf_field_access_rights
 #: selection:msf.instance,level:0
+#: selection:res.groups,level:0
+#: selection:msf_field_access_rights.field_access_rule,instance_level:0
 msgid "Project"
 msgstr "Projet"
 
@@ -65590,11 +65592,6 @@ msgstr "Expression, doit être Vrai pour correspondre à \n"
 msgid "Configure instance"
 msgstr "Configurer l'instance"
 
-#. module: msf_field_access_rights
-#: selection:msf_field_access_rights.field_access_rule,instance_level:0
-msgid "Project"
-msgstr "Project"
-
 #. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
@@ -75793,3 +75790,12 @@ msgstr "Créé localement"
 msgid "Partner Created on this instance"
 msgstr "Partenaire créé sur cette instance"
 
+#. module: msf_profile
+#: field:res.groups,is_an_admin_profile:0
+msgid "Is an admin profile"
+msgstr "Est un profil admin"
+
+#. module: msf_profile
+#: help:res.groups,is_an_admin_profile:0
+msgid "User group members allowed to set default value for all users."
+msgstr "Les membres de ce groupe sont autorisés à définir les valeurs par défault pour tous les utilisateurs."
