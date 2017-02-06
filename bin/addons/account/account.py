@@ -1537,15 +1537,20 @@ class account_move(osv.osv):
                         raise osv.except_osv(_('Error'), _("""Couldn't create move with currency different from the secondary currency of the account "%s - %s". Clear the secondary currency field of the account definition if you want to accept all currencies.""") % (line.account_id.code, line.account_id.name))
 
             # When clicking on "Save" for a MANUAL Journal Entry:
-            # IF there are JI, check that there are at least 2 lines
+            # - Check that the period is open.
+            # - IF there are JI, check that there are at least 2 lines
             # and that the entry is balanced using the booking amounts
-            if context.get('from_web_menu', False) and move.line_id \
+            aml_duplication = '__copy_data_seen' in context and 'account.move.line' in context['__copy_data_seen'] or False
+            if context.get('from_web_menu', False) \
                     and context.get('journal_id', False) and not context.get('button', False) \
-                    and not context.get('copy'):
-                if len(move.line_id) < 2:
-                    raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
-                elif abs(amount_currency) > 10 ** -4:
-                    raise osv.except_osv(_('Warning'), _('The entry must be balanced.'))
+                    and not context.get('copy') and not aml_duplication:
+                if move.period_id and move.period_id.state != 'draft':
+                    raise osv.except_osv(_('Warning'), _("You can't save entries in a non-open period: %s") % (move.period_id.name))
+                if move.line_id:
+                    if len(move.line_id) < 2:
+                        raise osv.except_osv(_('Warning'), _('The entry must have at least two lines.'))
+                    elif abs(amount_currency) > 10 ** -4:
+                        raise osv.except_osv(_('Warning'), _('The entry must be balanced.'))
 
             # (US-1709) For a manual entry check that it's balanced using the booking amounts
             # For the other entries keep using the functional amounts

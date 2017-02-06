@@ -492,6 +492,7 @@
             <field name="model">procurement.order</field>
             <field name="inherit_id" ref="procurement.procurement_form_view"/>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page/field[@name='close_move']" position="before">
                     <field name="purchase_id"/>

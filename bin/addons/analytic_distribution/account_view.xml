@@ -44,7 +44,7 @@
             <field name="model">account.account</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="account.view_account_form"/>
-            <field name="priority" eval="18"/>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//field[@name='user_type']" position="replace">

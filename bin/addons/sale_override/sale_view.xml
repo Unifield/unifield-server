@@ -6,6 +6,7 @@
             <field name="name">sale.order.type.form.view</field>
             <field name="model">sale.order</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="sale.view_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -69,7 +70,7 @@
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="2">
                             <field name="fo_to_resource" invisible="1" />
-                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')]}" />
+                            <field name="loan_duration" attrs="{'invisible': [('order_type', '!=', 'loan')], 'required': [('order_type', '=', 'loan')], 'readonly': ['|', ('state', 'not in', ['draft', 'validated']), ('order_type', '!=', 'loan')]}" />
                             <field name="parent_order_name" readonly="True" attrs="{'invisible': [('fo_to_resource', '=', False)]}" />
                         </group>
                         <field name="details" />
@@ -173,6 +174,7 @@
             <field name="name">sale.order.type.search.view</field>
             <field name="model">sale.order</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="sale.view_sales_order_filter" />
             <field name="arch" type="xml">
                 <data>
@@ -409,6 +411,13 @@
                   string="Save and Close"
                   type="object" 
                   icon="gtk-close" />
+                  <button
+                  name="ask_unlink"
+                  type="object"
+                  string="Delete"
+                  icon="gtk-cancel"
+                  invisible="True"
+                  confirm="This button shouldn't be use from form view. Please use the red cross on list view." />
               </form>
             </field>
         </record>

@@ -1621,8 +1621,8 @@ stock moves which are already processed : '''
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
                                                                                  round=False, context=date_context)
 
-                    if so.order_type == 'regular' and price_unit_converted < 0.00001:
-                        price_unit_converted = 0.00001
+                    if so.order_type == 'regular' and price_unit_converted < 0.01:
+                        price_unit_converted = 0.01
 
                     line_qty = line.product_qty
                     if line.procurement_id:
@@ -2363,7 +2363,7 @@ stock moves which are already processed : '''
                 compute_store = move_obj._store_get_values(cr, uid, todo_moves, None, context)
                 compute_store.sort()
                 done = []
-                for _, store_object, store_ids, store_fields2 in compute_store:
+                for null, store_object, store_ids, store_fields2 in compute_store:
                     if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (store_object, store_ids, store_fields2) in done:
                         self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
                         done.append((store_object, store_ids, store_fields2))

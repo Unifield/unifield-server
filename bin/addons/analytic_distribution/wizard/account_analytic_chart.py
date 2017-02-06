@@ -28,17 +28,17 @@ class account_analytic_chart(osv.osv_memory):
     _inherit = "account.analytic.chart"
 
     def _get_instance_header(self, cr, uid, ids, field_names, args,
-        context=None):
+                             context=None):
         def get_codes(instance_recs):
             instance_obj = self.pool.get('msf.instance')
             if not instance_recs:
                 # get mission instances
                 instance_ids = instance_obj.search(cr, uid, [
-                        ('instance_to_display_ids', '=', True),
-                    ], context=context)
+                    ('instance_to_display_ids', '=', True),
+                ], context=context)
                 if instance_ids:
                     instance_recs = instance_obj.browse(cr, uid, instance_ids,
-                        context=context)
+                                                        context=context)
                 else:
                     instance_recs = []
             return [ i.code for i in instance_recs ]
@@ -58,9 +58,9 @@ class account_analytic_chart(osv.osv_memory):
         'fiscalyear': fields.many2one('account.fiscalyear', 'Fiscal year', help = 'Keep empty for all open fiscal years'),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
         'period_from': fields.many2one('account.period', 'From',
-            domain="[('fiscalyear_id', '=', fiscalyear)]"),
+                                       domain="[('fiscalyear_id', '=', fiscalyear)]"),
         'period_to': fields.many2one('account.period', 'To',
-            domain="[('fiscalyear_id', '=', fiscalyear)]"),
+                                     domain="[('fiscalyear_id', '=', fiscalyear)]"),
 
         # US-1179 fields
         'granularity': fields.selection([
@@ -68,7 +68,7 @@ class account_analytic_chart(osv.osv_memory):
             ('parent', 'By parent account'),
         ], 'Granularity', required=True),
         'instance_header': fields.function(_get_instance_header, type='string',
-            method=True, string='Instances'),
+                                           method=True, string='Instances'),
     }
 
     _defaults = {
@@ -78,12 +78,12 @@ class account_analytic_chart(osv.osv_memory):
 
     def default_get(self, cr, uid, fields, context=None):
         res = super(account_analytic_chart, self).default_get(cr, uid, fields,
-            context=context)
+                                                              context=context)
 
         fy_id = res.get('fiscalyear', False)
         if fy_id:
             oc_rec = self.onchange_fiscalyear(cr, uid, False,
-                fiscalyear_id=fy_id, context=context)
+                                              fiscalyear_id=fy_id, context=context)
             if oc_rec and oc_rec.get('value', False):
                 res.update({
                     'period_from': oc_rec['value'].get('period_from', False),
@@ -138,9 +138,9 @@ class account_analytic_chart(osv.osv_memory):
         if wiz.period_to:
             context['to_date'] = wiz.period_to.date_stop
         if wiz.period_from and wiz.period_to and \
-            wiz.period_from.date_start > wiz.period_to.date_start:
+                wiz.period_from.date_start > wiz.period_to.date_start:
             raise osv.except_osv(_("Warning"),
-                _("'From' period can not be after 'To' period"))
+                                 _("'From' period can not be after 'To' period"))
         context['filter_inactive'] = not wiz.show_inactive
         if wiz.currency_id:
             context['currency_id'] = wiz.currency_id.id
@@ -165,6 +165,7 @@ class account_analytic_chart(osv.osv_memory):
             tree_view_id = tree_view_id and tree_view_id[1] or False
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
+        result['keep_open'] = 1
         return result
 
     def button_export(self, cr, uid, ids, context=None):
@@ -187,9 +188,9 @@ class account_analytic_chart(osv.osv_memory):
                 args.append(('type', '!=', 'view'))
 
             if wiz.period_from and wiz.period_to and \
-                wiz.period_from.date_start > wiz.period_to.date_start:
+                    wiz.period_from.date_start > wiz.period_to.date_start:
                 raise osv.except_osv(_("Warning"),
-                    _("'From' period can not be after 'To' period"))
+                                     _("'From' period can not be after 'To' period"))
 
             if wiz.currency_id:
                 context.update({'currency_id': wiz.currency_id.id,})
@@ -229,6 +230,7 @@ class account_analytic_chart(osv.osv_memory):
             'currency': currency_name,
             'wiz_fields': wiz_fields,
             'target_filename': "Balance by analytic account_%s_%s" % (instance_code, strftime('%Y%m%d')),
+            'keep_open': 1,
         } # context permit balance to be processed regarding context's elements
         return {
             'type': 'ir.actions.report.xml',

@@ -183,6 +183,7 @@
             <field name="name">account.journal.tree.instance.inherit</field>
             <field name="model">account.journal</field>
             <field name="type">tree</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="account.view_account_journal_tree"/>
             <field name="arch" type="xml">
                 <field name="code" position="before">
@@ -245,6 +246,7 @@
             <field name="name">account.move.line.tree.editable.instance.inherit</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="res_currency_functional.view_move_line_tree_editable"/>
             <field name="arch" type="xml">
                 <field name="journal_id" position="before">
@@ -259,7 +261,7 @@
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form"/>
-            <field eval="60" name="priority"/>
+            <field name="priority">35</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//field[@name='journal_id']" position="before">
@@ -273,7 +275,7 @@
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="register_accounting.inherit_view_bank_statement_form2"/>
-            <field eval="61" name="priority"/>
+            <field name="priority">35</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form//field[@name='journal_id']" position="before">
@@ -357,6 +359,7 @@
             <field name="name">analytic.account.form.2</field>
             <field name="model">account.analytic.account</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
                 <data>

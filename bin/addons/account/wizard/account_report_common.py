@@ -26,11 +26,12 @@ from osv import fields, osv
 from tools.translate import _
 
 class account_common_report(osv.osv_memory):
+    _inherit = "wizard.template.form"  # to be able to store the wizard values
     _name = "account.common.report"
     _description = "Account Common Report"
 
     def _get_is_report_cross_fy(self, cr, uid, ids, field_names, args,
-        context=None):
+                                context=None):
         res = {}
         if not ids:
             return res
@@ -51,7 +52,7 @@ class account_common_report(osv.osv_memory):
         'date_to': fields.date("End Date"),
         'target_move': fields.selection([('posted', 'All Posted Entries'),
                                          ('all', 'All Entries'),
-                                        ], 'Target Moves', required=True),
+                                         ], 'Target Moves', required=True),
         'is_report_cross_fy': fields.function(_get_is_report_cross_fy, type='boolean', method=True, string='Is report cross FY')
     }
 
@@ -128,7 +129,7 @@ class account_common_report(osv.osv_memory):
             # for exemple on OCBA_ESET101 Jan period id is 5 and Sept of id 3
             # so from/to period are inversed from above union, check this and fix that
             period_br = self.pool.get('account.period').browse(cr, uid, periods,
-                context=context)
+                                                               context=context)
             if period_br and len(period_br) == 2:
                 effective_start_id = period_br[0].id
                 if period_br[0].date_start > period_br[1].date_start:
@@ -168,6 +169,7 @@ class account_common_report(osv.osv_memory):
         if context is None:
             context = {}
         data = {}
+        data['keep_open'] = 1
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move'])[0]

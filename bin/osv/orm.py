@@ -1450,11 +1450,15 @@ class orm_template(object):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('sum'))
                 if trans:
                     node.set('sum', trans)
-            elif node.get('confirm'):
+            if node.get('confirm'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('confirm'))
                 if trans:
                     node.set('confirm', trans)
-            elif node.get('string'):
+            if node.get('help'):
+                trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('help'))
+                if trans:
+                    node.set('help', trans)
+            if node.get('string'):
                 trans = translation_obj._get_source(cr, user, self._name, 'view', context['lang'], node.get('string'))
                 if trans == node.get('string') and ('base_model_name' in context):
                     # If translation is same as source, perhaps we'd have more luck with the alternative model name
@@ -1462,7 +1466,7 @@ class orm_template(object):
                     trans = translation_obj._get_source(cr, user, context['base_model_name'], 'view', context['lang'], node.get('string'))
                 if trans:
                     node.set('string', trans)
-            elif node.tag == 'translate':
+            if node.tag == 'translate':
                 parent = node.getparent()
                 source = node.text
                 for child in node.getchildren():
@@ -1732,11 +1736,10 @@ class orm_template(object):
 
         result = {'type': view_type, 'model': self._name}
 
-        ok = True
-        model = True
+        is_inherited_view = True
         sql_res = False
         parent_view_model = None
-        while ok:
+        while is_inherited_view:
             view_ref = context.get(view_type + '_view_ref', False)
             if view_ref and not view_id:
                 if '.' in view_ref:
@@ -1749,9 +1752,6 @@ class orm_template(object):
             if view_id:
                 query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
-                if model:
-                    query += " AND model = %s"
-                    params += (self._name,)
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
@@ -1763,15 +1763,12 @@ class orm_template(object):
                         type=%s AND
                         inherit_id IS NULL
                     ORDER BY priority''', (self._name, view_type))
-
             sql_res = cr.fetchone()
-
             if not sql_res:
                 break
 
-            ok = sql_res[5]
-            view_id = ok or sql_res[3]
-            model = False
+            is_inherited_view = sql_res[5]
+            view_id = is_inherited_view or sql_res[3]
             parent_view_model = sql_res[6]
 
         # if a view was found
@@ -1796,7 +1793,6 @@ class orm_template(object):
             result['name'] = sql_res[1]
             result['field_parent'] = sql_res[2] or False
         else:
-
             # otherwise, build some kind of default view
             if view_type == 'form':
                 res = self.fields_get(cr, user, context=context)
@@ -3206,7 +3202,7 @@ class orm(orm_template):
 
         cr.commit()     # start a new transaction
 
-        for (key, con, _) in self._sql_constraints:
+        for (key, con, null) in self._sql_constraints:
             conname = '%s_%s' % (self._table, key)
 
             cr.execute("SELECT conname, pg_catalog.pg_get_constraintdef(oid, true) as condef FROM pg_constraint where conname=%s", (conname,))
@@ -3306,7 +3302,7 @@ class orm(orm_template):
                     self.pool._store_function[object].append( (self._name, store_field, fnct, fields2, order, length))
                     self.pool._store_function[object].sort(lambda x, y: cmp(x[4], y[4]))
 
-        for (key, _, msg) in self._sql_constraints:
+        for (key, null, msg) in self._sql_constraints:
             self.pool._sql_error[self._table+'_'+key] = msg
 
         # Load manual fields
