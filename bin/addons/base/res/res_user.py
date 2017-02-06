@@ -773,32 +773,20 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         'users': fields.many2many('res.users', 'res_groups_users_rel', 'gid', 'uid', 'Users'),
     }
 
-    def write(self, cr, uid, ids, vals, context=None):
+    def _track_change_of_users(self, cr, uid, previous_values, user_ids,
+            vals, context=None):
+        '''add audittrail entry to the related users if their groups were changed
+        @param previous_values: list of dict containing groups_ids of the users
+        @param user_ids: related user ids
+        @param vals: vals parameter from the write/create
         '''
-        In case user have been added or deleted, a new audit line should be created on the related users
-        '''
-        previous_values = None
-        current_values = None
-        user_obj = self.pool.get('res.users')
+        current_values = {}
         audit_obj = self.pool.get('audittrail.rule')
-        all_user_ids = [] # previous user ids + current
-
         if 'users' in vals:
             if vals['users'] and len(vals['users'][0]) > 2:
-                new_user_ids = vals['users'][0][2]
-            previous_user_ids = []
-            for record in self.read(cr, uid, ids, ['users'], context=context):
-                if record['users']:
-                    previous_user_ids.extend(record['users'])
-            all_user_ids = set(new_user_ids).union(previous_user_ids)
-            previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
-
-        res = super(groups, self).write(cr, uid, ids, vals, context=context)
-
-        if 'users' in vals:
-            if vals['users'] and len(vals['users'][0]) > 2:
-                users_deleted = list(set(previous_user_ids).difference(vals['users'][0][2]))
-                users_added = list(set(vals['users'][0][2]).difference(previous_user_ids))
+                users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
+                users_added = list(set(vals['users'][0][2]).difference(user_ids))
+                user_obj = self.pool.get('res.users')
                 audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
                 if users_deleted:
                     previous_values = [x for x in previous_values if x['id'] in users_deleted]
@@ -808,6 +796,47 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
                     previous_values = [x for x in previous_values if x['id'] in users_added]
                     current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_added, ['groups_id'], context=context))
                     audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_added, 'write', previous_values, current_values, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        In case user have been added, a new audit line should be created on the related users
+        '''
+        change_user_group = False
+        previous_values = []
+        if 'users' in vals and vals['users'] and len(vals['users'][0]) > 2:
+            user_obj = self.pool.get('res.users')
+            previous_values = user_obj.read(cr, uid, vals['users'][0][2], ['groups_id'], context=context)
+            change_user_group = True
+        res = super(groups, self).create(cr, uid, vals, context=context)
+        if change_user_group:
+            self._track_change_of_users(cr, uid, previous_values, [],
+                    vals, context=context)
+        return res
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        In case user have been added or deleted, a new audit line should be created on the related users
+        '''
+        all_user_ids = [] # previous user ids + current
+        previous_values = []
+        user_ids = []
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'users' in vals:
+            new_user_ids = []
+            if vals['users'] and len(vals['users'][0]) > 2:
+                new_user_ids = vals['users'][0][2]
+            for record in self.read(cr, uid, ids, ['users'], context=context):
+                if record['users']:
+                    user_ids.extend(record['users'])
+            all_user_ids = set(new_user_ids).union(user_ids)
+            user_obj = self.pool.get('res.users')
+            previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
+
+        res = super(groups, self).write(cr, uid, ids, vals, context=context)
+        if 'users' in vals:
+            self._track_change_of_users(cr, uid, previous_values, user_ids,
+                    vals, context=context)
         return res
 
     def unlink(self, cr, uid, ids, context=None):
