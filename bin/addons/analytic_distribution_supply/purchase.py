@@ -222,6 +222,7 @@ class purchase_order(osv.osv):
                     'commit_id': commit_id,
                     'amount': total_amount < 0.00001 and 0.00001 or total_amount,
                     'initial_amount': total_amount < 0.00001 and 0.00001 or total_amount,
+                    'account_id': account_id,
                     'purchase_order_line_ids': [(6,0,[x.id for x in po_lines[account_id]])]
                 }, context=context)
                 created_commitment_lines.append(line_id)
