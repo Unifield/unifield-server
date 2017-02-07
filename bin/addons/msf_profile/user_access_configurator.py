@@ -230,7 +230,7 @@ class user_access_configurator(osv.osv_memory):
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
                             if group_name.split('$')[0] not in menu_group_list:
-                                menu_group_list.append(group_name)
+                                menu_group_list.append(group_name.split('$')[0])
 
             # all rows have been treated, the order of group_name_list is not important anymore, we can now exclude groups which are defined multiple times
             data_structure[obj.id]['group_name_list'] = list(set(data_structure[obj.id]['group_name_list']))
@@ -334,7 +334,7 @@ class user_access_configurator(osv.osv_memory):
                 level = None
                 if missing_group_name not in missing_group_names_with_level:
                     # that mean this group have a $XX extention, = a level
-                    # get the group name with level :
+                    # get the group level :
                     group_index = missing_group_names.index(missing_group_name)
                     group_with_level = missing_group_names_with_level[group_index]
                     if group_with_level.startswith('%s$' % missing_group_name):
