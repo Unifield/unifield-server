@@ -152,16 +152,29 @@ def revprox(redir_port):
         cherrypy.log("%s does not exist, not running the reverse proxy." % rbin, ctx)
         return False
 
-    # A gross hack for letting the thread talk back to us
-    cherrypy.revprox = { 'proc': None, 'die-on-exit': False }
+    proc = subprocess.Popen([ rbin, '-server', server_name, '-redir', str(redir_port) ],
+                            stderr=subprocess.STDOUT,  # Merge stdout and stderr
+                            stdout=subprocess.PIPE)
+    ok = False
+    while not ok:
+        line = proc.stdout.readline()
+        if line != '':
+            line = line.strip().split(" ", 2)
+            cherrypy.log(line[-1], ctx)
+            if line[-1] == 'Startup OK.':
+                ok = True
+        else:
+            # Process exited
+            break
 
-    # This is the closure that runs in the background
-    def target():
-        proc = subprocess.Popen([ rbin, '-server', server_name, '-redir', str(redir_port) ],
-                                stderr=subprocess.STDOUT,  # Merge stdout and stderr
-                                stdout=subprocess.PIPE)
-        cherrypy.revprox['proc'] = proc
+    if not ok:
+        cherrypy.log("reverse proxy exited without starting up", ctx)
+        return False
 
+    # It started correctly. So arrange that it's logs are copied
+    # and that it is killed on shutdown.
+
+    def logRead(proc):
         while True:
             line = proc.stdout.readline()
             if line != '':
@@ -169,32 +182,25 @@ def revprox(redir_port):
                 cherrypy.log(line[-1].strip(), ctx)
             else:
                 break
-
-        # revprox exited, so exit the whole process, so that
-        # we will be restarted by the system.
         cherrypy.log("reverse proxy exited.", ctx)
-        if cherrypy.revprox['die-on-exit']:
-            sys.exit(1)
+        if proc.wait() != 0:
+            # revprox exited with an error, so tell cherrypy to exit too.
+            # We will be restarted by the system.
+            cherrypy.engine.stop()
+        return
 
-    thread = threading.Thread(target=target)
+    thread = threading.Thread(target=logRead, args=[proc])
     thread.start()
 
     # A callback to register on stop, for killing revprox.
-    def _cb():
-        cherrypy.revprox['die-on-exit'] = False
+    def _cb(p):
         cherrypy.log("stopping", ctx)
-        if cherrypy.revprox['proc'] is not None:
-            cherrypy.revprox['proc'].terminate()
+        try:
+            p.terminate()
+        except OSError:
+            # Probably "no such process", which is ok.
+            pass
 
-    cherrypy.engine.subscribe('stop', _cb)
+    cherrypy.engine.subscribe('stop', lambda p=proc: _cb(p))
+    return True
 
-    # Wait 1 second, for early termination
-    if thread.is_alive():
-        thread.join(1)
-    if thread.is_alive():
-        cherrypy.log("reverse proxy ok", ctx)
-        cherrypy.revprox['die-on-exit'] = True
-        return True
-
-    cherrypy.log("reverse proxy exited during startup", ctx)
-    return False
