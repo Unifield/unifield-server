@@ -70,6 +70,8 @@ class groups(osv.osv):
         if not instance_level:
             # SYNC_SERVER doesn't have instance level
             return True
+        elif not level:
+            return True # No level = no restriction
         elif instance_level == 'hq':
             return True
         elif instance_level == 'coordo' and level in ('coordo', 'project'):
@@ -598,12 +600,35 @@ class users(osv.osv):
     # User can write to a few of her own fields (but not her groups for example)
     SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
 
+    def remove_higer_level_groups(self, cr, uid, values, context=None):
+        '''
+        check the groups in values an remove those which have higher level
+        than the current instance one.
+        '''
+        if values.get('groups_id') and len(values['groups_id'][0]) > 2:
+            # remove the groups that are not visible from this instance level
+            groups = values['groups_id'][0][2]
+            group_obj = self.pool.get('res.groups')
+            new_group_list = []
+            for group in group_obj.read(cr, uid, groups, ['level'],
+                    context=context):
+                if group_obj.is_able_to_use_this_group(cr, uid,
+                        group['level']):
+                    new_group_list.append(group['id'])
+            values['groups_id'][0] = (
+                    values['groups_id'][0][0],
+                    values['groups_id'][0][1],
+                    new_group_list)
+        return values
+
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
         if not values.get('is_synchronizable', False):
             # a user which is not synchronizable should not be synchronized
             values['synchronize'] = False
+        values = self.remove_higer_level_groups(cr, uid, values,
+                context=context)
         return super(users, self).create(cr, uid, values, context)
 
     def write(self, cr, uid, ids, values, context=None):
@@ -630,7 +655,10 @@ class users(osv.osv):
 
         old_groups = []
         if values.get('groups_id'):
-            old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
+            group_obj = self.pool.get('res.groups')
+            old_groups = group_obj.search(cr, uid, [('users', 'in', ids)], context=context)
+            values = self.remove_higer_level_groups(cr, uid, values,
+                    context=context)
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
