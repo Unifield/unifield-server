@@ -24,7 +24,7 @@
             <field name="name">stock.location.tree</field>
             <field name="model">stock.location</field>
             <field name="type">tree</field>
-            <field name="priority" eval="2"/>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_location_tree2" />
             <field name="arch" type="xml">
                 <data>
@@ -49,7 +49,7 @@
             <field name="name">product.normal.form</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
-            <field eval="300" name="priority"/>
+            <field name="priority">90</field>
             <field name="inherit_id" ref="product_expiry.view_product_form_expiry" />
             <field name="arch" type="xml">
                 <data>
@@ -82,6 +82,7 @@
             <field name="name">purchase.order.form</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
+            <field name="priority">30</field>
             <field name="inherit_id" ref="purchase.purchase_order_form" />
             <field name="arch" type="xml">
                 <data>
@@ -170,6 +171,7 @@
             <field name="name">stock.production.lot.form</field>
             <field name="model">stock.production.lot</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_production_lot_form" />
             <field name="arch" type="xml">
                 <data>
@@ -215,6 +217,7 @@
             <field name="model">stock.production.lot</field>
             <field name="inherit_id" ref="product_expiry.view_move_form_expiry" />
             <field name="type">form</field>
+            <field name="priority">35</field>
             <field name="arch" type="xml">
             <data>
                 <field name="use_date" position="replace" />
@@ -228,7 +231,7 @@
             <field name="name">stock.move.form</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
-            <field eval="4" name="priority"/>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_move_form" />
             <field name="arch" type="xml">
             <data>
@@ -275,7 +278,7 @@
             <field name="name">stock.move.form2</field>
             <field name="model">stock.move</field>
             <field name="type">form</field>
-            <field eval="6" name="priority"/>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_move_form_reception_picking" />
             <field name="arch" type="xml">
                 <data>
@@ -348,6 +351,7 @@
             <field name="name">Stock Moves</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
+            <field name="priority">30</field>
             <field name="field_parent">move_history_ids2</field>
             <field name="inherit_id" ref="stock.stock_move_tree2" />
             <field name="arch" type="xml">
@@ -374,7 +378,7 @@
             <field name="name">stock.move.tree</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
-            <field eval="6" name="priority"/>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_move_tree" />
             <field name="arch" type="xml">
                 <data>
@@ -406,7 +410,7 @@
             <field name="name">stock.move.tree2</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
-            <field name="priority" eval="6" />
+            <field name="priority">20</field>
             <field name="inherit_id" ref="stock.view_move_tree_reception_picking" />
             <field name="arch" type="xml">
                 <data>
@@ -437,6 +441,7 @@
             <field name="name">stock.inventory.form</field>
             <field name="model">stock.inventory</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_inventory_form" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='inventory_line_id']/tree//field[@name='product_id']" position="attributes">

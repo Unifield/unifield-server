@@ -656,7 +656,7 @@ class shipment(osv.osv):
                     'backorder_id': picking.id,
                     'shipment_id': False,
                     'move_lines': [],
-                    'description_ppl': description_ppl, # US-803: added the description
+                    'description_ppl': description_ppl or picking.description_ppl, # US-803: added the description
                 }
                 # Update context for copy
                 context.update({
@@ -4772,6 +4772,7 @@ class stock_move(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
+        solc_obj = self.pool.get('sale.order.line.cancel')
 
         if context is None:
             context = {}
@@ -4795,9 +4796,6 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-#            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
-#                continue
-
             if move.state == 'cancel':
                 continue
 
@@ -4816,6 +4814,12 @@ class stock_move(osv.osv):
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     if sol.order_id.procurement_request and pick_cancel:
                         continue
+
+                    # If the line will be sourced in another way, do not cancel the OUT move
+                    if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
+                                       limit=1, order='NO_ORDER', context=context):
+                        continue
+
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
@@ -5000,7 +5004,7 @@ class pack_family_memory(osv.osv):
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
             values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
-            values['state'] = pf_memory['state']
+            values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values
 

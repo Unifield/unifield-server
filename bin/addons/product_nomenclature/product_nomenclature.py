@@ -868,12 +868,12 @@ class product_product(osv.osv):
             for product in read_result:
                 if product['default_code'] != default_code:
                     # if the default_code change, update the corresponding MSR lines
-                    msf_lines_to_update = msf_line_obj.search(cr, uid,
+                    msf_lines_to_update = msf_line_obj.search(cr, 1,
                                                               [('product_id', '=', product['id'])],
                                                               context=context)
                     all_msf_lines_to_upgrade.extend(msf_lines_to_update)
             if all_msf_lines_to_upgrade:
-                msf_line_obj.write(cr, uid, all_msf_lines_to_upgrade,
+                msf_line_obj.write(cr, 1, all_msf_lines_to_upgrade,
                                    {}, context=context)
         return res
 

@@ -114,6 +114,7 @@
 		<field name="name">inherit.vpicktree</field>
 		<field name="model">stock.picking</field>
 		<field name="type">tree</field>
+            <field name="priority">20</field>
 		<field name="inherit_id" ref="stock.vpicktree" />
 		<field name="arch" type="xml">
 			<data>
@@ -130,6 +131,7 @@
 		<field name="name">inherit.view.picking.out.tree</field>
 		<field name="model">stock.picking</field>
 		<field name="type">tree</field>
+            <field name="priority">35</field>
 		<field name="inherit_id" ref="stock.view_picking_out_tree" />
 		<field name="arch" type="xml">
 			<data>
@@ -184,6 +186,7 @@
             <field name="name">inherit.view.picking.out.search</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="stock.view_picking_out_search" />
             <field name="arch" type="xml">
                 <data>
@@ -209,6 +212,7 @@
             <field name="name">inherit.view.stock.picking.filter</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_stock_picking_filter" />
             <field name="arch" type="xml">
                 <data>
@@ -230,6 +234,7 @@
             <field name="name">inherit.view.picking.internal.search</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="stock.view_picking_internal_search" />
             <field name="arch" type="xml">
                 <data>

@@ -8,6 +8,7 @@
             <field name="name">purchase.form.view.transport.mgmt.line</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
+            <field name="priority">70</field>
             <field name="inherit_id" ref="res_currency_functional.purchase_order_form_inherit" />
             <field name="arch" type="xml">
                 <data>
@@ -77,6 +78,7 @@
             <field name="name">purchase.form.view.transport.mgmt</field>
             <field name="model">purchase.order</field>
             <field name="type">form</field>
+            <field name="priority">50</field>
             <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
             <field name="arch" type="xml">
                 <data>

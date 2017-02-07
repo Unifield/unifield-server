@@ -24,6 +24,8 @@ import time
 
 import pooler
 
+from datetime import datetime
+
 from osv import osv
 from tools.translate import _
 
@@ -33,11 +35,11 @@ from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
 
 def get_import_batch_headers(context=None):
     return [
-         ImportHeader(name=_('get_import_batch_headers_name'), ftype='String', size=80, tech_name='name', required=False),
-         ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
-         ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
-         ImportHeader(name=_('get_import_batch_headers_product_code'), ftype='String', size=80, tech_name='product_id', required=True),
-         ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=True),
+        ImportHeader(name=_('get_import_batch_headers_name'), ftype='String', size=80, tech_name='name', required=False),
+        ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
+        ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
+        ImportHeader(name=_('get_import_batch_headers_product_code'), ftype='String', size=80, tech_name='product_id', required=True),
+        ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=True),
     ]
 
 # Get header list and information
@@ -128,6 +130,7 @@ class wizard_import_batch(osv.osv_memory):
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
         sequence_obj = self.pool.get('ir.sequence')
+        date_tools = self.pool.get('date.tools')
 
         if context is None:
             context = {}
@@ -170,13 +173,13 @@ class wizard_import_batch(osv.osv_memory):
             # Product
             product_id = None
             try:
-                product_id = self.get_product_by_default_code(cr, uid, get_cell(line_data, 'product_id'),
+                product_id = self.get_product_by_default_code(cr, uid, get_cell(line_data, 'product_id').strip(),
                                                               context=context)
             except UnifieldImportException as e:
                 save_error(e)
 
             # Batch number type
-            batch_type = get_cell(line_data, 'type')
+            batch_type = get_cell(line_data, 'type').strip()
             if batch_type.upper() not in (_('Standard').upper(), _('Internal').upper()):
                 save_error(
                     _('The Type of the batch number should be \'Standard\' or \'Internal\''),
@@ -192,8 +195,17 @@ class wizard_import_batch(osv.osv_memory):
                 continue
 
             # Make consistency checks
-            name = get_cell(line_data, 'name')
+            name = get_cell(line_data, 'name').strip()
             life_date = get_cell(line_data, 'life_date')
+            if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 01, 01, 0, 0, 0):
+                date_format = date_tools.get_date_format(cr, uid, context=context)
+                save_error(
+                    _('You cannot create a batch number with an expiry date before %s') % (
+                        datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                    ),
+                )
+                continue
+
             product_brw = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'], context=context)
 
             if not product_brw['batch_management'] and not product_brw['perishable']:

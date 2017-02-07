@@ -118,9 +118,20 @@ class groups(osv.osv):
             if vals['level'] and not self.is_able_to_use_this_group(cr, uid, vals['level']):
                 # remove all users from this groups
                 self.write(cr, uid, new_ids, {'users':[(6, 0, ())]})
+        old_users = []
+        if 'users' in vals:
+            old_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
 
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
+        if 'users' in vals:
+            new_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+            diff_users = set(old_users).symmetric_difference(new_users)
+            if diff_users:
+                clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=ids)
+                map(clear, list(diff_users))
+        if 'menu_access' in vals or 'users' in vals:
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         return res
 
     def create(self, cr, uid, vals, context=None):
@@ -611,19 +622,24 @@ class users(osv.osv):
             # desactivate synchronize if is_synchronizable is set to False
             values['synchronize'] = False
 
+        old_groups = []
+        if values.get('groups_id'):
+            old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # uncheck synchronize checkbox if the user is manager or sync config
         if values.get('groups_id'):
             if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
                any(self._is_erp_manager(cr, uid, ids, context=context).values()):
-                values['synchronize'] = False
-                res = super(users, self).write(cr, uid, ids, values, context=context)
+                vals = {'synchronize': False}
+                res = super(users, self).write(cr, uid, ids, vals, context=context)
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
-        clear = partial(self.pool.get('ir.rule').clear_cache, cr)
+        clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=old_groups)
         map(clear, ids)
         db = cr.dbname
         if db in self._uid_cache:

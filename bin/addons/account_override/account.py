@@ -602,6 +602,9 @@ class account_account(osv.osv):
                     res[r.id] = True  # allowed with no specific field
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
+        # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
+        if 'allowed_partner_field' in context:
+            del context['allowed_partner_field']
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
@@ -842,7 +845,8 @@ class account_move(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
-            if period and period.state == 'created':
+            if period and (period.state == 'created' or \
+                           (context.get('from_web_menu') and period.state != 'draft')):  # don't save manual JE in a non-open period
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!

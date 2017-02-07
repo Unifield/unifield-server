@@ -517,12 +517,14 @@ class update_received(osv.osv):
 
                 #4 check for fallback value : report missing fallback_value
                 #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
-                ret_fb = self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
+                #US-2147: same thing for property_product_pricelist and property_product_pricelist_purchase
+                result = self._check_and_replace_missing_id(cr, uid,
+                                                            import_fields, row, fallback, message, update, context=context)
 
                 if bad_fields :
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
-                if ret_fb: #US-852: if everything is Ok, then do import as normal
+                if result['res']: #US-852: if everything is Ok, then do import as normal
                     values.append(row)
                     update_ids.append(update.id)
                     versions.append( (update.sdref, update.version) )
@@ -535,7 +537,7 @@ class update_received(osv.osv):
                         logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
                 else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
                     self._set_not_run(cr, uid, [update.id],
-                                      log="Cannot execute due to missing the account_move_line",
+                                      log=result['error_message'],
                                       context=context
                                       )
 
@@ -820,8 +822,13 @@ class update_received(osv.osv):
                          and data_rec.sync_date < data_rec.last_modification) # modification after synchro => conflict
                      or next_version < data_rec.version))                     # next version is lower than current version
 
-    def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback, message, context=None):
+    def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback,
+                                      message, update, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
+        result = {
+            'res': True,
+            'error_message': ''
+        }
 
         def check_xmlid(xmlid):
             module, sep, xmlid = xmlid.partition('.')
@@ -843,9 +850,22 @@ class update_received(osv.osv):
                         if 'account_move_line' in xmlid:
                             m, sep, sdref = xmlid.partition('.')
                             if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
-                                return False
+                                result['res'] = False
+                                result['error_message'] = 'Cannot execute due to missing the %s' % field
+                                return result
                         if '/analytic_distribution/' in xmlid:
-                            return False
+                            result['res'] = False
+                            result['error_message'] = 'Cannot execute due to missing the %s' % field
+                            return result
+
+                        #US-2147: property_product_pricelist/id and
+                        # property_product_pricelist_purchase/id are required
+                        # fields, return False if the xmlid don't exists
+                        if field in ('property_product_pricelist/id',
+                                     'property_product_pricelist_purchase/id'):
+                            result['res'] = False
+                            result['error_message'] = 'Cannot execute due to missing the %s' % field
+                            return result
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
@@ -862,7 +882,7 @@ class update_received(osv.osv):
                 else:
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
-        return True
+        return result
 
     _order = 'create_date desc, id desc'
 
