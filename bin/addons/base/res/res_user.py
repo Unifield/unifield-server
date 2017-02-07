@@ -85,7 +85,7 @@ class groups(osv.osv):
 
     def check_level(self, cr, uid, level):
         '''
-        Raise an error message if the group if the level is higher than instance level
+        Raise an error message if the group level is higher than instance level
 
         '''
         instance_level = _get_instance_level(self, cr, uid)
@@ -110,14 +110,20 @@ class groups(osv.osv):
         if 'level' in vals and not bypass_level:
             self.check_level(cr, uid, vals['level'])
         elif 'level' in vals and bypass_level:
-            new_ids = ids[:]
-            if 1 in new_ids:
-                # do not remove admin from his groups
-                new_ids.remove(1)
             # in case of update received with higher group, disassociate the related users
             if vals['level'] and not self.is_able_to_use_this_group(cr, uid, vals['level']):
-                # remove all users from this groups
-                self.write(cr, uid, new_ids, {'users':[(6, 0, ())]})
+                # remove all users from this groups except uid 1 (admin)
+                group_ids_with_admin = []
+                group_ids_without_admin = []
+                for group in self.read(cr, uid, ids, ['users']):
+                    if 1 in group['users']:
+                        group_ids_with_admin.append(group['id'])
+                    else:
+                        group_ids_without_admin.append(group['id'])
+                if group_ids_with_admin:
+                    self.write(cr, uid, group_ids_with_admin, {'users':[(6, 0, (1,))]})
+                if group_ids_without_admin:
+                    self.write(cr, uid, group_ids_without_admin, {'users':[(6, 0, ())]})
         old_users = []
         if 'users' in vals:
             old_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)

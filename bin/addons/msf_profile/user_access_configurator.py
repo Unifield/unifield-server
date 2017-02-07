@@ -229,9 +229,7 @@ class user_access_configurator(osv.osv_memory):
                         if self._cell_is_true(cr, uid, ids, context=context, cell=row.cells[i]):
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
-                            if group_name not in menu_group_list:
-                                if '$' in group_name:
-                                    group_name = group_name.split('$')[0]
+                            if group_name.split('$')[0] not in menu_group_list:
                                 menu_group_list.append(group_name)
 
             # all rows have been treated, the order of group_name_list is not important anymore, we can now exclude groups which are defined multiple times
@@ -303,7 +301,6 @@ class user_access_configurator(osv.osv_memory):
             # remove the $XX extension
             missing_group_names = [group.split('$')[0] for group in
                     missing_group_names_with_level if group]
-            data_structure[obj.id]['group_name_list'] = missing_group_names
 
             # all groups from file are activated (in case a new group in the file which was deactivated previously)
             self._set_active_group_name(cr, uid, ids, context=context, group_names=missing_group_names, active_value=True)
@@ -315,17 +312,17 @@ class user_access_configurator(osv.osv_memory):
                     # check if the level should be modified
                     if group_name not in missing_group_names_with_level:
                         # that mean this group have a $XX extention, = a level
-                        for group_with_level in missing_group_names_with_level:
-                            if group_with_level.startswith('%s$' % group_name):
-                                group, level = group_with_level.split('$')
-                                # edit level on current group
-                                group_ids = group_obj.search(cr, uid,
-                                        [('name', '=', group)], context=context)
-                                if level.lower() not in LEVEL_SELECTION:
-                                    raise osv.except_osv(_('Error'),
-                                            _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), group_with_level))
-                                group_obj.write(cr, uid, group_ids, {'level': LEVEL_SELECTION[level.lower()]}, context)
-                                break
+                        group_index = missing_group_names.index(group_name)
+                        group_with_level = missing_group_names_with_level[group_index]
+                        if group_with_level.startswith('%s$' % group_name):
+                            group, level = group_with_level.split('$')
+                            # edit level on current group
+                            group_ids = group_obj.search(cr, uid,
+                                    [('name', '=', group)], context=context)
+                            if level.lower() not in LEVEL_SELECTION:
+                                raise osv.except_osv(_('Error'),
+                                        _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), group_with_level))
+                            group_obj.write(cr, uid, group_ids, {'level': LEVEL_SELECTION[level.lower()]}, context)
                     # the group from file already exists
                     missing_group_names.remove(group_name)
                 elif not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name):
@@ -337,14 +334,15 @@ class user_access_configurator(osv.osv_memory):
                 level = None
                 if missing_group_name not in missing_group_names_with_level:
                     # that mean this group have a $XX extention, = a level
-                    for group_with_level in missing_group_names_with_level:
-                        if group_with_level.startswith('%s$' % missing_group_name):
-                            group, level = group_with_level.split('$')
-                            break
+                    # get the group name with level :
+                    group_index = missing_group_names.index(missing_group_name)
+                    group_with_level = missing_group_names_with_level[group_index]
+                    if group_with_level.startswith('%s$' % missing_group_name):
+                        group, level = group_with_level.split('$')
                 vals = {
                         'name': missing_group_name,
                         'from_file_import_res_groups': True
-                        }
+                }
 
                 if level:
                     if level.lower() not in LEVEL_SELECTION:
