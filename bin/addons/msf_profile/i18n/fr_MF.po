@@ -76104,3 +76104,8 @@ msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulé
 #: report:msf.consumption_report:0
 msgid "Source Location :"
 msgstr "Source Location :"
+
+#. module: base
+#: field:ir.attachment,size:0
+msgid "Size of the file"
+msgstr "Taille du fichier"
