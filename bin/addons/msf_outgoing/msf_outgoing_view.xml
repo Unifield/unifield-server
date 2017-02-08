@@ -1397,6 +1397,7 @@
 						<separator orientation="vertical"/>
 						<field name="name"/>
 						<field name="partner_id2" />
+                                                <field name="picking_ids" />
 					</group>
 					<newline/>
 					<group expand="0" string="Group By..." colspan="4" col="8">
@@ -1450,6 +1451,7 @@
                 <tree string="Closed shipped lines" editable="top" noteditable="1" hide_delete_button="1" hide_new_button="1" colors="red: not_shipped">
                     <field name="origin"/>
                     <field name="picking_id" string="Pack"/>
+                    <field name="pick_shipment_id" string="Shipment" />
                     <field name="line_number"/>
                     <field name="product_id"/>
                     <field name="product_qty" />
@@ -1472,6 +1474,7 @@
 				<search string="Shipment">
                     <field name="name"/>
                     <field name="picking_id" string="Pack" domain="[('already_shipped','=',True), ('shipment_id','!=',False)]"/>
+                    <field name="pick_shipment_id" string="Shipment" />
                     <field name="origin"/>
                     <field name="prodlot_id"/>
                     <field name="asset_id"/>

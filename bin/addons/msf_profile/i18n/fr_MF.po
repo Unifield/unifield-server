@@ -3367,9 +3367,17 @@ msgstr "Vous devez définir un compte pour l'écriture d'ajustement!"
 #: model:stock.location,name:msf_outgoing.stock_location_dispatch
 #: field:stock.picking,shipment_id:0
 #: view:sale.order.line.followup:0
+#: field:return.pack.shipment.processor,shipment_id:0
+#: field:return.shipment.processor,shipment_id:0
+#: view:shipment:0
+#: field:shipment.additionalitems,shipment_id:0
+#: field:shipment.processor,shipment_id:0
+#: view:stock.move:0
+#: field:stock.move,pick_shipment_id:0
 #, python-format
 msgid "Shipment"
 msgstr "Expédition"
+
 
 #. module: product
 #: help:product.packaging,weight_ul:0
