@@ -645,7 +645,7 @@ class res_partner(osv.osv):
                         elif pl.type == 'purchase':
                             vals['property_product_pricelist_purchase'] = pl.id
 
-        if not vals.get('address'):
+        if not context.get('sync_update_execution') and not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
         if vals.get('name'):
@@ -873,6 +873,26 @@ class res_partner_address(osv.osv):
         '''
         Remove empty addresses if exist and create the new one
         '''
+        def src_addr_link(addresses):
+            cr.execute("""
+                SELECT ccu.constraint_name
+                FROM information_schema.constraint_column_usage ccu
+                WHERE ccu.table_name = %s AND ccu.table_catalog = %s""", (self._table, cr.dbname))
+            constraints = cr.fetchall()
+            cr.execute("""
+                SELECT kcu.column_name, kcu.table_name
+                FROM information_schema.key_column_usage kcu
+                WHERE kcu.table_catalog = %s AND kcu.constraint_name IN %s""", (cr.dbname, tuple([x[0] for x in constraints])))
+            for column, table in cr.fetchall():
+                if table == self._table:
+                    continue
+                cr.execute("""SELECT count(id) FROM %s WHERE %s IN %%s""" % (table, column), (tuple(addresses),))
+                res = cr.fetchall()
+                if res[0][0]:
+                    return True
+
+            return False
+
         if vals.get('partner_id'):
             domain_dict = {
                 'partner_id': vals.get('partner_id'),
@@ -894,7 +914,10 @@ class res_partner_address(osv.osv):
             }
             domain = [(k, '=', v) for k, v in domain_dict.iteritems()]
             addr_ids = self.search(cr, uid, domain, context=context)
-            self.unlink(cr, uid, addr_ids, context=context)
+            if addr_ids and not src_addr_link(addr_ids):
+                self.unlink(cr, uid, addr_ids, context=context)
+            elif addr_ids:
+                self.write(cr, uid, addr_ids, {'active': False}, context=context)
 
         return super(res_partner_address, self).create(cr, uid, vals, context=context)
 
