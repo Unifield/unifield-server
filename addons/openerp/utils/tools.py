@@ -232,6 +232,9 @@ def context_with_concurrency_info(context, concurrency_info):
         concurrency_info = [concurrency_info]
     return dict(ctx, __last_update=dict(concurrency_info))
 
+def get_max_attachment_size():
+    attachment = rpc.RPCProxy('ir.attachment')
+    return attachment.get_attachment_max_size()
 
 class TempFileName(str):
     '''A string representing a temporary file name that will be deleted when object is deleted'''

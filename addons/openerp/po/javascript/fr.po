@@ -110,3 +110,7 @@ msgstr "Objet"
 #: static/javascript/openerp/openerp.ui.tips.js:52
 msgid "Field"
 msgstr "Champ"
+
+#: static/javascript/form.js
+msgid "You cannot upload files bigger than %(max_size)sMB, current size is %(size)sMB"
+msgstr "Vous ne pouvez pas envoyer des fichiers plus gros que %(max_size)sMB, la taille actuelle est de  %(size)sMB"

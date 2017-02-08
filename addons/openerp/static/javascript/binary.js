@@ -19,6 +19,7 @@
 //
 ////////////////////////////////////////////////////////////////////////////////
 
+
 function save_binary_data(src, filename) {
 
     var name = openobject.dom.get(src) ? openobject.dom.get(src).name : src;
@@ -71,24 +72,26 @@ function add_binary(src) {
 }
 
 function set_binary_filename(src, filename) {
-    
     var $src = jQuery(src);
-    
+
+    // Check attachment size is not bigger than max attachment size
+    // refuse it if bigger.
+    if (check_attachment_size(src) !== true) {
+        return false
+    }
+
     var name = $src.attr('name');
-    
     var prefix = name.split('/'); prefix.pop();
     var prefix = prefix.join('/'); prefix = prefix ? prefix + '/' : '';
-    
     var target = getElement(prefix + filename);
     var fname = $src.val() || '';
-    
+
     if (/Windows NT/.test(window.navigator.userAgent)) {
         fname = fname.split('\\'); fname = fname.pop(); 
     }
     else {
         fname = fname.split('/'); fname = fname.pop();
     }
-    
     if (target) {
         target.value = fname;
     }

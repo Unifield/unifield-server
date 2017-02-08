@@ -20,12 +20,14 @@
 ###############################################################################
 from openerp.utils import rpc
 from openerp.widgets import TinyWidget
+from openerp import utils
 
 
 class Sidebar(TinyWidget):
 
     template = "/openerp/widgets/templates/sidebar.mako"
-    params = ['reports', 'actions', 'relates', 'attachments', 'sub_menu', 'view_type', 'model', 'id', 'ctx']
+    params = ['reports', 'actions', 'relates', 'attachments', 'sub_menu',
+              'view_type', 'model', 'id', 'ctx', 'max_attachment_size']
 
     def add_remote_action_values(self, action_type, current_actions):
         actions = rpc.RPCProxy('ir.values').get(
@@ -47,6 +49,7 @@ class Sidebar(TinyWidget):
         self.reports = toolbar.get('print', [])
         self.actions = toolbar.get('action', [])
         self.relates = toolbar.get('relate', [])
+        self.max_attachment_size = utils.get_max_attachment_size()
         self.attachments = []
         self.sub_menu = None
 

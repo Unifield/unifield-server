@@ -230,6 +230,34 @@ function validate_required(form){
     return result;
 }
 
+function validate_binary_size(form){
+
+    if (typeof form == 'string') {
+        form = jQuery('#' + form).get(0);
+    }
+
+    if (!form) {
+        return true;
+    }
+
+    var elements = MochiKit.Base.filter(function(el){
+        return !el.disabled && el.id && el.name && el.id.indexOf('_terp_listfields/') == -1 && hasElementClass(el, 'binary');
+    }, form.elements);
+
+    var result = true;
+
+    for (var i = 0; i < elements.length; i++) {
+        var elem = elements[i];
+        var kind = jQuery(elem).attr('kind');
+
+        if (kind == 'binary') {
+            return check_attachment_size(elem);
+        }
+    }
+    return result;
+}
+
+
 function error_display(msg) {
     var error = jQuery("<table>",{'width': '100%', 'height': '100%'}
                 ).append(
@@ -295,6 +323,11 @@ function submit_form(action, src, target){
 
     var $form = jQuery('#view_form');
     if (/\/save(\?|\/)?/.test(action) && !validate_required($form[0])) {
+        return;
+    }
+
+    // check there is no binary data exceding the maximum size
+    if (/\/save(\?|\/)?/.test(action) && !validate_binary_size($form[0])) {
         return;
     }
 
@@ -1295,6 +1328,26 @@ function removeAttachment() {
     return false;
 }
 
+function check_attachment_size(obj) {
+    var $datas = jQuery(obj);
+    var $max_size = $datas.attr('max-size');
+    if (typeof $max_size !== "undefined" && obj.files && obj.files[0]) {
+        var $file_size = obj.files[0].size;
+        if ($file_size > $max_size) {
+            var $mb_size = $file_size/1024/1024;
+            $mb_size = parseFloat($mb_size).toFixed( 2 );
+            var $mb_max_size = $max_size/1024/1024;
+            $mb_max_size = parseFloat($mb_max_size).toFixed( 2 );
+            var msg = _('You cannot upload files bigger than %(max_size)sMB, current size is %(size)sMB');
+            msg = msg.replace('%(size)s', $mb_size);
+            msg = msg.replace('%(max_size)s', $mb_max_size);
+            return error_display(msg);
+        };
+    };
+    return true;
+}
+
+
 /**
  * @event form submission
  *
@@ -1303,6 +1356,13 @@ function removeAttachment() {
  * Creates a new line in #attachments if the creation succeeds.
  */
 function createAttachment(){
+
+    // Check attachment size is not bigger than max attachment size
+    // refuse it if bigger.
+    if (check_attachment_size(this.children.datas) !== true) {
+        return false
+    }
+
     var $form = jQuery(this);
     if(!jQuery(idSelector('_terp_id')).val() || jQuery(idSelector('_terp_id')).val() == 'False') {
         return error_display(_('No record selected ! You can only attach to existing record.'));
@@ -1315,7 +1375,12 @@ function createAttachment(){
     $form.ajaxSubmit({
         dataType: 'json',
         data: {'requested_with': 'XMLHttpRequest'},
-        success: function(data){
+        type: 'POST',
+        success: function(data) {
+            if ('error' in data) {
+                // display error message from server
+                return error_display(data['error']);
+            }
             var $attachment_line = jQuery('<li>', {
                 'id': 'attachment_item_' + data['id'],
                 'data-id': data['id']
