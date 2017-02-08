@@ -31,6 +31,8 @@ import re
 import threading
 import pooler
 
+MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024 # = 10 MB
+
 class ir_attachment(osv.osv):
     _order = 'create_date DESC, id'
     _logger = logging.getLogger('ir.attachment')
@@ -117,11 +119,16 @@ class ir_attachment(osv.osv):
             return len(ids)
         return ids
 
+    def get_attachment_max_size(self, cr, uid):
+        return MAX_ATTACHMENT_SIZE
+
     def read(self, cr, uid, ids, fields_to_read=None, context=None, load='_classic_read'):
         self.check(cr, uid, ids, 'read', context=context)
         return super(ir_attachment, self).read(cr, uid, ids, fields_to_read, context, load)
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         if isinstance(ids, (int, long)):
@@ -137,6 +144,7 @@ class ir_attachment(osv.osv):
             else:
                 vals['datas'] = '' # erase the old value in DB if any
             decoded_datas = base64.decodestring(datas or '')
+            self.check_file_size(cr, uid, decoded_datas, context=context)
             vals['size'] = self.get_octet_size(decoded_datas)
 
             if not store_data_in_db:
@@ -225,8 +233,9 @@ class ir_attachment(osv.osv):
         '''
         generate a unique name for the attachment
         '''
-        resource_name = self._name_get_resname(cr, uid, [attachment_id,],
+        resource_name = self._name_get_resname(cr, uid, [attachment_id],
                                                None, None, None)[attachment_id]
+        datas_fname = tools.ustr(datas_fname or '')
         file_name = '%s_%s_%s' % (resource_name or 'NOT_LINKED_ATTACHMENT',
                                   attachment_id, datas_fname)
 
@@ -235,7 +244,27 @@ class ir_attachment(osv.osv):
         safe_file_name = ''.join([ch for ch in file_name if safe_char.match(ch)])
         return safe_file_name
 
+    def check_file_size(self, cr, uid, datas, context):
+        '''
+        raise if the size of the len of datas is > MAX_ATTACHMENT_SIZE MB
+        Raise only in case of web interface (to make possible for the system
+        to create bigger attachments)
+        '''
+        if context is None:
+            context = {}
+        data_size = len(datas)
+        if data_size > MAX_ATTACHMENT_SIZE:
+            max_size_mb = round(MAX_ATTACHMENT_SIZE/1024/1024., 2)
+            data_size_mb = round(data_size/1024/1024., 2)
+            msg = _('You cannot upload files bigger than %sMB, current size is %sMB') % (max_size_mb, data_size_mb)
+            if context.get('from_web_interface', False):
+                raise osv.except_osv(_('Error'), msg)
+            else:
+                self._logger.warn('A file attached by the system is bigger than %sMB (%sMB)' % (max_size_mb, data_size_mb))
+
     def create(self, cr, uid, values, context=None):
+        if context is None:
+            context = {}
         self.check(cr, uid, [], mode='create', context=context, values=values)
 
         store_data_in_db = self.store_data_in_db(cr, uid)
@@ -248,6 +277,7 @@ class ir_attachment(osv.osv):
 
         decoded_datas = base64.decodestring(datas)
         values['size'] = self.get_octet_size(decoded_datas)
+        self.check_file_size(cr, uid, decoded_datas, context=context)
         attachment_id = super(ir_attachment, self).create(cr, uid, values,
                                                           context)
         if not store_data_in_db:
@@ -563,6 +593,8 @@ class attachment_config(osv.osv):
         return True
 
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         if 'name' in vals:

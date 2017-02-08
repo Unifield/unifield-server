@@ -75347,6 +75347,12 @@ msgid "You cannot change the path to save attachment because the migration have 
 msgstr "Vous ne pouvez pas changer le chemin car la migration a remonté des erreurs. Veuillez d'abord les corriger"
 
 #. module: base
+#: code:addons/base/ir/ir_attachment.py:250
+#, python-format
+msgid "You cannot upload files bigger than %sMB, current size is %sMB"
+msgstr "Vous ne pouvez pas envoyer des fichiers plus gros que %sMB, la taille actuelle est de  %s MB"
+
+#. module: base
 #: field:ir.attachment,path:0
 msgid "Path"
 msgstr "Dossier"
