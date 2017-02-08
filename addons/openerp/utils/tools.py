@@ -82,7 +82,7 @@ def expr_eval(string, context=None):
 
 def node_attributes(node):
     attrs = node.attributes
-    
+
     if not attrs:
         return {}
     # localName can be a unicode string, we're using attribute names as
@@ -110,22 +110,22 @@ def xml_locate(expr, ref):
         nodes = [n for n in ref.childNodes if n.localName == name]
         try:
             return nodes[index-1]
-        except Exception, e:
+        except Exception:
             return []
 
     parts = expr.split('/')
     for part in parts:
         if part in ('', '.'):
-#            for node in ref.childNodes:
-#               if node.nodeType == node.ELEMENT_NODE:
-#                   ref = node
+            #            for node in ref.childNodes:
+            #               if node.nodeType == node.ELEMENT_NODE:
+            #                   ref = node
             continue
         ref = xml_locate(part, ref)
 
     return [ref]
 
 def get_xpath(expr, pn):
-    
+
     """Find xpath.
 
     >>> get_xpath("/form/group[3]/notebook/page[@string:'Extra Info']/field[@name='progress'], doc)
@@ -135,12 +135,12 @@ def get_xpath(expr, pn):
 
     @return: list of nodes
     """
-    
+
     if '/' not in expr:
         name = expr
         param = None
         index = None
-        
+
         if '[' in expr:
             name, param = expr.split('[')
             try:
@@ -172,7 +172,7 @@ def get_xpath(expr, pn):
             get_child_nodes = all_child_nodes(pn, [])
             if len(get_child_nodes):
                 return get_child_nodes[-1]
-            
+
         for child in pn.childNodes:
             if child.localName and child.localName == name:
                 if param and key in child.attributes.keys():
@@ -181,7 +181,7 @@ def get_xpath(expr, pn):
                 else:
                     return child
         return False
-    
+
     parts = expr.split('/')
     for part in parts:
         if part in ('', '.'):
@@ -196,7 +196,6 @@ def get_node_xpath(node):
 
     pn = node.parentNode
     xp = '/' + node.localName
-    root = xp + '[1]'
 
     if pn and pn.localName and pn.localName != 'view':
         xp = get_node_xpath(pn) + xp
@@ -206,21 +205,24 @@ def get_node_xpath(node):
 
     return xp
 
-def get_size(sz):
+def get_size(data):
     """
     Return the size in a human readable format
     """
-    if not sz:
-        return False
-
-    units = ('bytes', 'Kb', 'Mb', 'Gb')
-    if isinstance(sz,basestring):
-        sz=len(sz)
-    s, i = float(sz), 0
-    while s >= 1024 and i < len(units)-1:
-        s = s / 1024
-        i = i + 1
-    return "%0.2f %s" % (s, units[i])
+    units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
+    if isinstance(data, basestring):
+        size = float(len(data))
+    elif isinstance(data, (int, long)):
+        size = float(data)
+    elif isinstance(data, float):
+        size = data
+    else:
+        return '0 Bytes'
+    unit_index = 0
+    while size >= 1024 and unit_index < len(units) - 1:
+        size = size / 1024
+        unit_index += 1
+    return "%0.2f %s" % (size, units[unit_index])
 
 def context_with_concurrency_info(context, concurrency_info):
     ctx = (context or {})
@@ -237,7 +239,7 @@ class TempFileName(str):
         fd, fn = tempfile.mkstemp(suffix=suffix, prefix=prefix, dir=dir, text=text)
         os.close(fd)
         return str.__new__(cls, fn)
-    
+
     def __init__(self, *args, **kwargs):
         self.__os_path_exists = os.path.exists
         self.__os_unlink = os.unlink

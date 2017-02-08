@@ -21,7 +21,6 @@
 import copy
 import math
 import xml.dom.minidom
-import re
 from openerp import utils
 from itertools import chain, count
 
@@ -169,8 +168,8 @@ class List(TinyWidget):
         self.colors = {}
         for color_spec in attrs.get('colors', '').split(';'):
             if color_spec:
-                colour, test = color_spec.split(':')
-                self.colors[colour] = test
+                colour, test_c = color_spec.split(':')
+                self.colors[colour] = test_c
 
         proxy = rpc.RPCProxy(model)
 
@@ -713,6 +712,11 @@ class NullBoolean(Char):
             self.val = self.value
             self.kind = 'text'
 
+class HumanSize(Char):
+
+    def get_text(self):
+        return utils.get_size(self.value or 0.0)
+
 class Button(TinyInputWidget):
 
     params = ['icon', 'id', 'parent_grid', 'btype', 'confirm', 'width', 'context']
@@ -806,4 +810,5 @@ CELLTYPES = {
     'null_boolean' : NullBoolean,
     'progressbar' : ProgressBar,
     'separator': Separator,
+    'human_size': HumanSize,
 }
