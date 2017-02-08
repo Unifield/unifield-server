@@ -3282,6 +3282,9 @@ class purchase_order_line(osv.osv):
         if not default:
             default = {}
 
+        if 'origin' not in default:
+            default.update({'origin': False})
+
         if 'move_dest_id' not in default:
             default.update({'move_dest_id': False})
 
