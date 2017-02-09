@@ -193,6 +193,18 @@ class hq_report_oca(report_sxw.report_sxw):
             'inkind',
             'extra',
         )
+
+        nb_move_line = len(move_line_ids)
+        move_line_count = 0
+
+        if 'background_id' in context:
+            bg_id = context['background_id']
+        else:
+            bg_id = None
+
+        # assume that this for loop is about 40% of the total treatment
+        move_share = 0.4
+
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             journal = move_line.journal_id
             if journal:
@@ -321,6 +333,16 @@ class hq_report_oca(report_sxw.report_sxw):
                             move_line.journal_id.id not in journal_exclude_subtotal_ids:
                         account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
 
+            move_line_count += 1
+            if move_line_count % 30 == 0:
+                # update percentage every 30 lines, not to do it too often
+                percent = move_line_count / float(nb_move_line)
+                self.shared_update_percent(cr, uid, pool, [bg_id],
+                        percent=percent, share=move_share)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=move_share, finished=True)
+
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
         # US-817: search period from JI (VI from HQ so AJI always with its JI)
         # (AJI period_id is a field function always deduced from date since UTP-943)
@@ -329,6 +351,12 @@ class hq_report_oca(report_sxw.report_sxw):
                                                                                ('journal_id.type', 'not in', ['hq', 'engagement', 'migration']),
                                                                                ('account_id.category', 'not in', ['FREE1', 'FREE2']),
                                                                                ('exported', 'in', to_export)], context=context)
+
+        nb_analytic_line = len(analytic_line_ids)
+        analytic_line_count = 0
+
+        # assume that this for loop is about 50% of the total treatment
+        analytic_share = 0.5
 
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             journal = analytic_line.move_id and analytic_line.move_id.journal_id or False
@@ -434,6 +462,17 @@ class hq_report_oca(report_sxw.report_sxw):
                                         analytic_line.destination_id and analytic_line.destination_id.code or "0"]
                 second_result_lines.append(other_formatted_data)
 
+            analytic_line_count += 1
+            if analytic_line_count % 30 == 0:
+                # update percentage every 30 lines, not to do it too often
+                percent = analytic_line_count / float(nb_analytic_line)
+                self.shared_update_percent(cr, uid, pool, [bg_id],
+                        percent=percent, share=analytic_share,
+                        already_done=move_share)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=analytic_share, finished=True, already_done=move_share)
+
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         if not move_line_ids and not analytic_line_ids:
             first_report = []
@@ -465,6 +504,10 @@ class hq_report_oca(report_sxw.report_sxw):
                                                       sequence_number)
                 if subtotal_lines:
                     third_report += subtotal_lines
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.05, finished=True,
+                already_done=move_share+analytic_share)
 
         # Write result to the final content
         zip_buffer = StringIO.StringIO()
@@ -502,6 +545,10 @@ class hq_report_oca(report_sxw.report_sxw):
         if analytic_line_ids:
             sqltwo = """UPDATE account_analytic_line SET exported = 't' WHERE id in %s;"""
             cr.execute(sqltwo, (tuple(analytic_line_ids),))
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.02, finished=True,
+                already_done=move_share+analytic_share+0.05)
         return (out, 'zip')
 
 hq_report_oca('report.hq.oca', 'account.move.line', False, parser=False)

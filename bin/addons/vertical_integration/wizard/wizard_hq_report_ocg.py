@@ -29,18 +29,24 @@ import csv
 
 class wizard_hq_report_ocg(osv.osv_memory):
     _name = "wizard.hq.report.ocg"
-    
+
     _columns = {
         'instance_id': fields.many2one('msf.instance', 'Top proprietary instance', required=True),
         'fiscalyear_id': fields.many2one('account.fiscalyear', 'Fiscal year', required=True),
         'period_id': fields.many2one('account.period', 'Period', required=True)
     }
-    
+
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c)
     }
-    
+
     def button_create_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         # add parameters
@@ -54,7 +60,20 @@ class wizard_hq_report_ocg(osv.osv_memory):
             period_name = time.strftime('%Y%m', time.strptime(wizard.period_id.date_start, '%Y-%m-%d'))
 
         data['target_filename'] = '%s_%s_formatted data AX import' % (wizard.instance_id and wizard.instance_id.code[0:3] or '', period_name)
-        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocg', 'datas': data}
-    
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': data['target_filename'],
+            'report_name': 'hq.ocg',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'hq.ocg',
+            'datas': data,
+            'context': context,
+        }
+
 wizard_hq_report_ocg()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

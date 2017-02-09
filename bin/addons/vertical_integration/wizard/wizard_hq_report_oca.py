@@ -53,6 +53,12 @@ class wizard_hq_report_oca(osv.osv_memory):
         return res
 
     def button_create_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         # add parameters
@@ -65,7 +71,21 @@ class wizard_hq_report_oca(osv.osv_memory):
         # UFTP-375: Permit user to select all lines or only previous ones
         data['form'].update({'selection': wizard.selection})
         data['target_filename'] = '%s_%s_%s' % (_('Export to HQ System'), wizard.instance_id and wizard.instance_id.code or '', time.strftime('%Y%m%d'))
-        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.oca', 'datas': data}
-    
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': data['target_filename'],
+            'report_name': 'hq.oca',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'hq.oca',
+            'datas': data,
+            'context': context,
+        }
+
 wizard_hq_report_oca()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

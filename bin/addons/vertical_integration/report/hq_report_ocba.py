@@ -169,8 +169,6 @@ class hq_report_ocba(report_sxw.report_sxw):
         """
         Export not expense entries (from AJIs)
         """
-        rate = 0
-
         ee_id = ''
         partner_db_id = ''
         partner_txt = ''
@@ -278,6 +276,11 @@ class hq_report_ocba(report_sxw.report_sxw):
         aml_obj = pool.get('account.move.line')
         aal_obj = pool.get('account.analytic.line')
 
+        if 'background_id' in context:
+            bg_id = context['background_id']
+        else:
+            bg_id = None
+
         # set internal build data
         period = pool.get('account.period').browse(cr, uid,
             form_data['period_id'])
@@ -321,10 +324,16 @@ class hq_report_ocba(report_sxw.report_sxw):
                 context=context):
                 self.export_ji(cr, uid, ji_br, file_data, build_data)
 
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.05, finished=True)
+
         # export skrinked entries for hq
         # (data build in 'build_data' during 'export_ji')
         for key in build_data['shrink']:
             self.export_shrinked_entries(cr, uid, file_data, build_data, key)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.1, finished=True)
 
         # get expense lines
         domain = [
@@ -338,10 +347,25 @@ class hq_report_ocba(report_sxw.report_sxw):
             ('move_id.move_id.state', '=', 'posted'),  # move line of posted JE
         ]
         analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.15, finished=True)
+
         if analytic_line_ids:
+            nb_analytic_line = len(analytic_line_ids)
+            analytic_line_count = 0
             for aji_br in aal_obj.browse(cr, uid, analytic_line_ids,
                 context=context):
                 self.export_aji(cr, uid, aji_br, file_data, build_data)
+                analytic_line_count += 1
+                if analytic_line_count % 10 == 0:
+                    # update percentage every 10 lines, not to do it too often
+                    percent = analytic_line_count / float(nb_analytic_line)
+                    self.shared_update_percent(cr, uid, pool, [bg_id],
+                            percent=percent, share=0.8, already_done=0.15)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.95, finished=True)
 
         return (move_line_ids, analytic_line_ids, )
 

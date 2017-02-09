@@ -49,6 +49,12 @@ class wizard_local_expenses(osv.osv_memory):
     }
 
     def button_create_report(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         # add parameters
@@ -76,7 +82,21 @@ class wizard_local_expenses(osv.osv_memory):
 
         instance = self.pool.get('res.users').get_browse_user_instance(cr, uid, context)
         data['target_filename'] = '%s_%s_%s' % (_('Local Expenses'), instance and instance.code or '', datetime.datetime.now().strftime('%Y%m%d'))
-        return {'type': 'ir.actions.report.xml', 'report_name': 'local.expenses', 'datas': data}
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': data['target_filename'],
+            'report_name': 'local.expenses',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'local.expenses',
+            'datas': data,
+            'context': context,
+        }
 
 wizard_local_expenses()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4

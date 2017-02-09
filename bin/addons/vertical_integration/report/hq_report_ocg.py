@@ -148,10 +148,21 @@ class hq_report_ocg(report_sxw.report_sxw):
                                                                        ('instance_id', 'in', data['form']['instance_ids']),
                                                                        ('account_id.is_analytic_addicted', '=', False),
                                                                        ('journal_id.type', 'not in', ['migration', 'hq', 'cur_adj', 'inkind'])], context=context)
+
+        nb_move_line = len(move_line_ids)
+        move_line_count = 0
+        if 'background_id' in context:
+            bg_id = context['background_id']
+        else:
+            bg_id = None
+
+        # assume that this for loop is about 40% of the total treatment
+        move_share = 0.4
         
         for move_line in pool.get('account.move.line').browse(cr, uid, move_line_ids, context=context):
             # UFTP-194: Just take posted move lines
             if move_line.move_id.state != 'posted':
+                move_line_count += 1
                 continue
             journal = move_line.journal_id
             account = move_line.account_id
@@ -189,9 +200,17 @@ class hq_report_ocg(report_sxw.report_sxw):
                 if (translated_account_code, currency.id) not in account_lines_debit:
                     account_lines_debit[(translated_account_code, currency.id)] = 0.0
                 account_lines_debit[(translated_account_code, currency.id)] += (move_line.debit_currency - move_line.credit_currency)
-                            
-                            
-                            
+
+            move_line_count += 1
+            if move_line_count % 30 == 0:
+                # update percentage every 30 lines, not to do it too often
+                percent = move_line_count / float(nb_move_line)
+                self.shared_update_percent(cr, uid, pool, [bg_id],
+                        percent=percent, share=move_share)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=move_share, finished=True)
+
         cur_adj_journal_ids = pool.get('account.journal').search(cr, uid, [('type', '=', 'cur_adj')], context=context)
         ana_cur_journal_ids = []
         for journal in pool.get('account.journal').browse(cr, uid, cur_adj_journal_ids, context=context):
@@ -202,9 +221,16 @@ class hq_report_ocg(report_sxw.report_sxw):
                                                                                ('instance_id', 'in', data['form']['instance_ids']),
                                                                                ('journal_id.type', 'not in', ['migration', 'hq', 'engagement', 'inkind']),
                                                                                ('journal_id', 'not in', ana_cur_journal_ids)], context=context)
+        nb_analytic_line = len(analytic_line_ids)
+        analytic_line_count = 0
+
+        # assume that this for loop is about 50% of the total treatment
+        analytic_share = 0.5
+
         for analytic_line in pool.get('account.analytic.line').browse(cr, uid, analytic_line_ids, context=context):
             # Just take analytic lines that comes from posted move lines
             if analytic_line.move_state != 'posted':
+                analytic_line_count += 1
                 continue
             journal = analytic_line.move_id and analytic_line.move_id.journal_id
             account = analytic_line.general_account_id
@@ -250,8 +276,17 @@ class hq_report_ocg(report_sxw.report_sxw):
             #main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + formatted_data[11:12] + formatted_data[13:17])
             main_lines[(journal.code, journal.id, currency.id)].append(formatted_data[:9] + [formatted_data[10]] + [department_info] + [cost_center] + formatted_data[13:17] + [field_activity])
 
-        
-        
+            analytic_line_count += 1
+            if analytic_line_count % 30 == 0:
+                # update percentage every 30 lines, not to do it too often
+                percent = analytic_line_count / float(nb_analytic_line)
+                self.shared_update_percent(cr, uid, pool, [bg_id],
+                        percent=percent, share=analytic_share,
+                        already_done=move_share)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=analytic_share, finished=True, already_done=move_share)
+
         first_result_lines = sorted(first_result_lines, key=lambda line: line[2])
         first_report = [first_header] + first_result_lines
         
@@ -273,6 +308,10 @@ class hq_report_ocg(report_sxw.report_sxw):
             if subtotal_lines:
                 second_result_lines += subtotal_lines
         
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.05, finished=True,
+                already_done=move_share+analytic_share)
+
         second_report = [second_header] + second_result_lines    
         
         # file names
@@ -307,6 +346,9 @@ class hq_report_ocg(report_sxw.report_sxw):
         out = zip_buffer.getvalue()
         os.unlink(first_fileobj.name)
         os.unlink(second_fileobj.name)
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                share=0.02, finished=True,
+                already_done=move_share+analytic_share+0.05)
         return (out, 'zip')
 
 hq_report_ocg('report.hq.ocg', 'account.move.line', False, parser=False)
