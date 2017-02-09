@@ -27,6 +27,7 @@ import time
 import threading
 import logging
 import pooler
+import json
 from mx.DateTime import Parser
 from mx.DateTime import RelativeDateTime
 from time import strftime
@@ -448,6 +449,63 @@ class purchase_order(osv.osv):
 
         return res
 
+    def _is_fixed_type(self, cr, uid, ids, field_name, args, context=None):
+        """
+        For each PO, set is the Order Type of the PO can be changed or not
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of purchase.order records to check
+        :param field_name: Name of the field to compute
+        :param args: Extra parameters
+        :param context: Context of the call
+        :return: A dictionnary with ID of the purchase.order record as keys and True/Fales as values
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context =  {}
+
+        res = {}
+        for po in self.browse(cr, uid, ids, context=context):
+            if po.po_from_fo or po.po_from_ir:
+                src_type = []
+                sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
+                for sale in self.read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
+                    if sale['procurement_request'] or sale['order_type'] == 'regular':
+                        src_type.append('regular')
+                        src_type.append('purchase_list')
+
+                    if not sale['procurement_request']:
+                        if sale['order_type'] == 'regular':
+                            src_type.append('direct')
+                        elif sale['order_type'] == 'loan':
+                            src_type.append('loan')
+                        elif sale['order_type'] == 'donation_exp':
+                            src_type.append('donation_exp')
+                        elif sale['order_type'] == 'donation_st':
+                            src_type.append('donation_st')
+                res[po.id] = json.dumps(src_type)
+            else:
+                res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
+
+        return res
+
+    def _order_line_order_type(self, cr, uid, ids, context=None):
+        """
+        Return the list of ID of purchase.order records to update
+        :param cr: Cursor to the database
+        :param uid: ID of the res.users that calls this method
+        :param ids: List of ID of purchase.order.line records updated
+        :param context: Context of the call
+        :return: A list that represents a domain to apply on purchase.order records
+        """
+        lines = self.read(cr, uid, ids, ['order_id'], context=context)
+        po_ids = set()
+        for l in lines:
+            po_ids.add(l['order_id'][0])
+
+        return list(po_ids)
 
     _columns = {
         'order_type': fields.selection(selection=ORDER_TYPES_SELECTION, string='Order Type', required=True, states={'sourced':[('readonly',True)], 'split':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
@@ -548,6 +606,16 @@ class purchase_order(osv.osv):
             string="Line count",
             store=False,
         ),
+        'fixed_order_type': fields.function(
+            _is_fixed_type,
+            method=True,
+            type='char',
+            size=256,
+            string='Possible order types',
+            store={
+                'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
+            },
+        ),
     }
 
     _defaults = {
@@ -569,6 +637,7 @@ class purchase_order(osv.osv):
         'split_po': False,
         'vat_ok': lambda obj, cr, uid, context: obj.pool.get('unifield.setup.configuration').get_config(cr, uid).vat_ok,
         'update_in_progress': False,
+        'fixed_order_type': lambda *a: json.dumps([]),
     }
 
     def _check_po_from_fo(self, cr, uid, ids, context=None):
@@ -590,19 +659,14 @@ class purchase_order(osv.osv):
         '''
         err = []
 
-        for order_type, available_types in SOURCE_TYPES.iteritems():
-            order_ids = self.search(cr, uid, [
-                ('source_type', '=', order_type),
-                ('order_type', 'not in', [x[0] for x in available_types]),
-            ], context=context)
-            for ord in self.read(cr, uid, order_ids, ['name'], context=context):
-                order_types = ' / '.join(x[1] for x in available_types)
+        order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
 
-                err.append(_('%s: Only a %s Purchase order must be used to source a %s Internal request/Field order') % (
-                    ord['name'],
-                    order_types,
-                    order_types,
-                ))
+        for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart'], context=context):
+            if order['is_a_counterpart'] and order['order_type'] != 'loan':
+                err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+            elif json.loads(order['fixed_order_type']) and order['order_type'] not in json.loads(order['fixed_order_type']):
+                allowed_type = ' / '.join(order_types_dict.get(x) for x in json.loads(order['fixed_order_type']))
+                err.append(_('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
 
         if err:
             raise osv.except_osv(
@@ -780,41 +844,35 @@ class purchase_order(osv.osv):
         w = {}
         local_market = None
 
-        # Check the order_type is consistent with source_type
-        src_type = False
-        order_types_ok = []
-        if source_type:
-            for stype, atype in SOURCE_TYPES.iteritems():
-                if stype == source_type:
-                    src_type = stype
-                    order_types_ok = [x[0] for x in atype]
-                    break
+        if ids:
+            order_types_dict = dict((x, y) for x, y in ORDER_TYPES_SELECTION)
+            err = []
+            for order in self.read(cr, uid, ids, ['name', 'fixed_order_type', 'order_type', 'is_a_counterpart']):
+                if order['is_a_counterpart'] and order_type != 'loan':
+                    err.append(_('%s: This purchase order is a loan counterpart. You cannot change its order type') % order['name'])
+                elif json.loads(order['fixed_order_type']) and order_type not in json.loads(order['fixed_order_type']):
+                    allowed_type = ' / '.join(order_types_dict.get(x) for x in json.loads(order['fixed_order_type']))
+                    err.append(
+                        _('%s: Only %s order types are allowed for this purchase order') % (order['name'], allowed_type))
 
-        if src_type and order_type not in order_types_ok:
-            msg_data = {'type': ' / '.join(x[1] for x in SOURCE_TYPES.get(src_type))}
-
-            msg = _('Only a %(type)s Purchase order must be used to source a %(type)s Internal request / Field order') % (msg_data)
-            if id:
-                msg = '%s: %s' % (self.read(cr, uid, ids, ['name'])[0]['name'], msg)
-            else:
-                msg = _('Current Field order: %s') % msg
-
-            return {
-                'warning': {
-                    'title': _('Error'),
-                    'message': msg,
-                },
-                'value': {
-                    'order_type': src_type,
-                }
-            }
+                if err:
+                    return {
+                        'warning': {
+                            'title': _('Error'),
+                            'message': '\n'.join(x for x in err),
+                        },
+                        'value': {
+                            'order_type': order['order_type'],
+                        }
+                    }
 
         # check if the current PO was created from scratch :
         proc_obj = self.pool.get('procurement.order')
         if order_type == 'direct':
             if not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids)]):
+                po = self.read(cr, uid, ids, ['order_type'])[0]
                 return {
-                    'value': {'order_type': 'regular'},
+                    'value': {'order_type': po['order_type']},
                     'warning': {
                         'title': _('Error'),
                         'message': _('You cannot create a direct purchase order from scratch')

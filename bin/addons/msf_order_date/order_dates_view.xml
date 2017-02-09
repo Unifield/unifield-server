@@ -58,7 +58,8 @@
                     
 					<!-- Improve functionalities of onchange_order_type -->
 					<xpath expr="/form//field[@name='order_type']" position="replace">
-					    <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id,delivery_requested_date, source_type)" />
+					    <field name="order_type" on_change="onchange_internal_type(order_type, partner_id, categ, dest_partner_id, warehouse_id,delivery_requested_date, source_type)"
+                               attrs="{'readonly': ['|', '&amp;', ('po_from_fo', '=', True), ('order_type', '=', 'direct'), ('is_a_counterpart', '=', True)]}" />
 					</xpath>
                     
                     <!-- Give the context when create a new PO line -->
