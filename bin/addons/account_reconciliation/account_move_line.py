@@ -404,7 +404,8 @@ class account_move_line(osv.osv):
         reconciliation = reconcile_obj.browse(cr, uid, reconcile_id, fields_to_fetch=['instance_id'], context=context)
         if reconciliation.instance_id and reconciliation.instance_id.id != company.instance_id.id:
             raise osv.except_osv(_('Warning !'),
-                                 _("You can only unreconcile entries in the same instance where they have been reconciled in."))
+                                 _("You can only unreconcile entries with an FX adjustment entry in the same instance "
+                                   "where they have been reconciled in."))
 
     def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
         """
