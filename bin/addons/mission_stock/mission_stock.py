@@ -547,20 +547,25 @@ class stock_mission_report(osv.osv):
         line_obj = self.pool.get('stock.mission.report.line')
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             # Create one line by product
-            cr.execute('''SELECT p.id, ps.code
-                          FROM product_product p, product_template pt
-                              LEFT JOIN product_status ps ON pt.state = ps.id
+            cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
+                          FROM product_product p, product_template pt, product_status ps, product_international_status pis
                           WHERE p.product_tmpl_id = pt.id
+                          AND pt.state = ps.id
+                          AND p.international_status = pis.id
                           AND NOT EXISTS (
                             SELECT product_id
                             FROM
                             stock_mission_report_line smrl WHERE mission_report_id = %s
                             AND p.id = smrl.product_id)
                         ''' % report['id'])
-            for product, prod_state in cr.fetchall():
+            for product, prod_state, prod_active, prod_state_ud, prod_creator in cr.fetchall():
                 line_obj.create(cr, uid, {
-                    'product_id': product,
+                    'product_id': product, 
                     'mission_report_id': report['id'],
+                    'product_state': prod_state,
+                    'product_active': prod_active,
+                    'state_ud': prod_state_ud,
+                    'international_status_code': prod_creator,
                     'product_state': prod_state or '',
                 }, context=context)
 
@@ -957,6 +962,9 @@ class stock_mission_report_line(osv.osv):
                                      'stock.mission.report.line': (lambda self, cr, uid, ids, c=None: ids, ['product_id'], 10),
                                  },
                                  write_relate=False),
+        'product_active': fields.boolean(string='Active'),
+        'state_ud': fields.char(size=128, string='UniData status'),
+        'international_status_code': fields.char(size=128, string='Product Creator'),
         'mission_report_id': fields.many2one('stock.mission.report', string='Mission Report', required=True),
         'internal_qty': fields.float(digits=(16,2), string='Instance Stock'),
         'internal_val': fields.function(_get_internal_val, method=True, type='float', string='Instance Stock Val.'),
@@ -985,6 +993,7 @@ class stock_mission_report_line(osv.osv):
             string='HQ Instance',
             required=True,
         ),
+
     }
 
     @tools.cache(skiparg=2)
@@ -1019,6 +1028,8 @@ class stock_mission_report_line(osv.osv):
         'in_pipe_coor_val': 0.00,
         'instance_id': _get_default_destination_instance_id,
         'product_state': '',
+        'state_ud': '',
+        'international_status_code': '',
     }
 
     def update_full_view_line(self, cr, uid, context=None):
