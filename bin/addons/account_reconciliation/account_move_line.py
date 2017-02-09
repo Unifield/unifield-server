@@ -404,7 +404,7 @@ class account_move_line(osv.osv):
         reconciliation = reconcile_obj.browse(cr, uid, reconcile_id, fields_to_fetch=['instance_id'], context=context)
         if reconciliation.instance_id and reconciliation.instance_id.id != company.instance_id.id:
             raise osv.except_osv(_('Warning !'),
-                                 _("You can only unreconcile entries with an FX adjustment entry in the same instance "
+                                 _("Entries with an FX adjustment entry can only be unreconciled in the same instance "
                                    "where they have been reconciled in."))
 
     def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
@@ -439,7 +439,7 @@ class account_move_line(osv.osv):
             balanced_in_fctal = abs(debit - credit) < 10**-3
             if balanced_in_booking and not balanced_in_fctal:
                 raise osv.except_osv(_('Warning !'),
-                                     _("You can't unreconcile these lines because the FX entry is missing."))
+                                     _("You can't unreconcile these lines because the FX entry is still missing."))
             fxa_line_ids = [rl.id for rl in rec_lines if rl.is_addendum_line]
             if fxa_line_ids:
                 # if there is a FXA the unreconciliation must be done in the same instance as the reconciliation

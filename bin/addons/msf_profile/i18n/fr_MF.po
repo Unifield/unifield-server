@@ -76104,3 +76104,21 @@ msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulé
 #: report:msf.consumption_report:0
 msgid "Source Location :"
 msgstr "Source Location :"
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:337
+#, python-format
+msgid "There is no open period to book the reversal FX entry."
+msgstr "Il n'y a pas de période Ouverte pour enregistrer l'annulation de l'écriture de différence de change."
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:442
+#, python-format
+msgid "You can't unreconcile these lines because the FX entry is still missing."
+msgstr "Vous ne pouvez pas annuler le lettrage de ces lignes car l'écriture de différence de change est encore manquante."
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:407
+#, python-format
+msgid "Entries with an FX adjustment entry can only be unreconciled in the same instance where they have been reconciled in."
+msgstr "Le lettrage des écritures avec une écriture de différence de change ne peut être annulé que dans l'instance dans laquelle les écritures ont été lettrées."
