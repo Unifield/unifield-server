@@ -363,6 +363,8 @@ class account_move_line(osv.osv):
             rev_counterpart_id = self.copy(cr, uid, counterpart_line.id, rev_counterpart_vals, context=context)
             # Set the JE status to "system"
             am_obj.write(cr, uid, [reversal_am_id], {'status': 'sys'}, context=context)
+            # reconcile the original FXA line with its reversal
+            self.reconcile(cr, uid, [fxa_line.id, rev_fxa_id], context=context)
 
     def _check_instance(self, cr, uid, reconcile_id, context):
         """
