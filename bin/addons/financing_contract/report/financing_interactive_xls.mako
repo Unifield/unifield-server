@@ -407,17 +407,29 @@
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('Eligible from:')}</Data>
 </Cell>
+% if isDate(o.eligibility_from_date):
 <Cell ss:StyleID="short_date2">
 <Data ss:Type="DateTime">${ o.eligibility_from_date or '' |n}T00:00:00.000</Data>
 </Cell>
+% else:
+<Cell ss:StyleID="s21">
+<Data ss:Type="String"></Data>
+</Cell>
+% endif
 </Row>
 <Row>
 <Cell ss:StyleID="s21">
 <Data ss:Type="String">${_('to:')}</Data>
 </Cell>
+% if isDate(o.eligibility_to_date):
 <Cell ss:StyleID="short_date2">
 <Data ss:Type="DateTime">${ o.eligibility_to_date |n}T00:00:00.000</Data>
 </Cell>
+% else:
+<Cell ss:StyleID="s21">
+<Data ss:Type="String"></Data>
+</Cell>
+% endif
 </Row>
 <Row ss:AutoFitHeight="0" ss:Height="30.0">
 <Cell ss:StyleID="s21">

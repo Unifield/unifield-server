@@ -200,6 +200,9 @@ class rml_parse(object):
             'strip_name' : self._strip_name,
             'time' : time,
             'getSel': self.getSel,
+            'isDate': self.isDate,
+            'isDateTime': self.isDateTime,
+            'isTime': self.isTime,
             'getSelValue': self.getSelValue,
             # more context members are setup in setCompany() below:
             #  - company_id
@@ -217,11 +220,27 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
-    def isDate(self, date, date_format=False):
+    def isDate(self, date, date_format=DT_FORMAT):
         '''
-        return False if the value stored in field is not a date, True else.
+        return False if the date is not a datetime matching date_format, True else.
         '''
-        return isDate(date, date_format)
+        try:
+            datetime.strptime(date, date_format)
+        except:
+            return False
+        return True
+
+    def isDateTime(self, date, date_format=DHM_FORMAT):
+        '''
+        return False if the date is not a datetime matching date_format, True else.
+        '''
+        return self.isDate(date, date_format=date_format)
+
+    def isTime(self, time, time_format=HM_FORMAT):
+        '''
+        return False if the time is not a datetime matching time_format, True else.
+        '''
+        return self.isDate(time, date_format=time_format)
 
     def getSel(self, o, field):
         """

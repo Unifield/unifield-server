@@ -87,7 +87,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.composition_list_id.composition_reference or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.asset_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(move.prodlot_id.name or '')|x}</Data></Cell>
-        % if move.expired_date not in ('f', False, 'False'):
+        % if isDate(move.expired_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${move.expired_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>

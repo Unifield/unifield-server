@@ -309,13 +309,13 @@
 % for line in getLines(type):
     <Row>
         <% nb_line += 1 %>
-        % if line[1]:
+        % if isDate(line[1]):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[1] or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
 
-        % if line[2]:
+        % if isDate(line[2]):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[2] or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
@@ -324,7 +324,7 @@
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[4] or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[5] or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(line[6] or '')|x}</Data></Cell>
-        % if line[7]:
+        % if isDate(line[7]):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${line[7] or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>

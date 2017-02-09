@@ -68,7 +68,11 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Generated on')}</Data></Cell>
+        % if isDate(o.creation_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.creation_date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="short_date" ><Data ss:Type="String"></Data></Cell>
+        % endif
     </Row>
 
     <Row>
@@ -113,7 +117,7 @@
             % endif
         </Cell>
         <Cell ss:StyleID="short_date" >
-            % if line.valid_until and line.valid_until != 'False':
+            % if isDate(line.valid_until):
                 <Data ss:Type="DateTime">${line.valid_until|n}T00:00:00.000</Data>
             % else:
                 <Data ss:Type="String"></Data>

@@ -316,13 +316,13 @@
 % for o in invoices[type]:
     <Row>
         <% nb_line += 1 %>
-        % if o.document_date:
+        % if isDate(o.document_date):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.document_date or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
         % endif
 
-        % if o.date_invoice:
+        % if isDate(o.date_invoice):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_invoice or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
@@ -331,7 +331,7 @@
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.partner_id and o.partner_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="s33"><Data ss:Type="String">${(o.user_id and o.user_id.name or '')|x}</Data></Cell>
-        % if o.date_due:
+        % if isDate(o.date_due):
             <Cell ss:StyleID="short_date2" ><Data ss:Type="DateTime">${o.date_due or ' ' |n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="short_date2" ><Data ss:Type="String"></Data></Cell>
