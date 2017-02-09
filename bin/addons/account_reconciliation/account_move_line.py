@@ -313,6 +313,32 @@ class account_move_line(osv.osv):
             return True
         return super(account_move_line, self)._hook_check_period_state(cr, uid, result, context, *args, **kargs)
 
+    def _get_reversal_fxa_date_and_period(self, cr, uid, fxa_move, context):
+        '''
+        Returns a tuple with the date and the period to use for the reversal FX entry.
+        Rules:
+        - if the period of the original FXA is Open, the reversal FXA uses its posting date and Period
+        - if the period isn't Open, the posting date is the first date of the next open period. Period 13-16 are excluded.
+        - note that the Document date is always the same as the Posting Date (to avoid FY differences)
+        '''
+        period_obj = self.pool.get('account.period')
+        fxa_period = fxa_move.period_id
+        if fxa_period.state == 'draft':  # Open
+            date_and_period = (fxa_move.date, fxa_move.period_id.id)
+        else:
+            period_ids = period_obj.search(
+                cr, uid,
+                [('date_start', '>', fxa_period.date_start),
+                 ('state', '=', 'draft'),
+                 ('number', '>', 0), ('number', '<', 13)],
+                order='date_start', limit=1, context=context)
+            if not period_ids:
+                raise osv.except_osv(_('Warning !'),
+                                     _('There is no open period to book the reversal FX entry.'))
+            period = period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['date_start'], context=context)
+            date_and_period = (period.date_start, period.id)
+        return date_and_period
+
     def reverse_fxa(self, cr, uid, fxa_line_ids, context):
         """
         Creates a reversal FX entry that offsets the FXA amount, and reconciles it with the original FXA entry
@@ -322,17 +348,18 @@ class account_move_line(osv.osv):
                                     fields_to_fetch=['move_id', 'debit', 'credit', 'debit_currency', 'credit_currency']):
             am_id = fxa_line.move_id.id
             am = am_obj.browse(cr, uid, am_id, context=context,
-                               fields_to_fetch=['journal_id', 'period_id', 'document_date', 'date'])
+                               fields_to_fetch=['journal_id', 'period_id', 'date'])
             counterpart_id = self.search(cr, uid, [('move_id', '=', am_id), ('id', '!=', fxa_line.id)],
                                          order='NO_ORDER', limit=1, context=context)
             counterpart_line = counterpart_id and self.browse(cr, uid, counterpart_id[0], context=context,
                                                               fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency'])
             # create the JE
+            date_and_period = self._get_reversal_fxa_date_and_period(cr, uid, am, context)
             reversal_am_id = am_obj.create(cr, uid,
                                            {'journal_id': am.journal_id.id,
-                                            'period_id': am.period_id.id,
-                                            'document_date': am.document_date,
-                                            'date': am.date,
+                                            'period_id': date_and_period[1],
+                                            'document_date': date_and_period[0],
+                                            'date': date_and_period[0],
                                             'manual_name': 'Realised loss/gain',
                                             'state': 'posted',
                                             },
@@ -340,9 +367,9 @@ class account_move_line(osv.osv):
             # create the first JI = copy and reverse the FXA line
             rev_fxa_vals = {
                 'move_id': reversal_am_id,
-                'period_id': am.period_id.id,
-                'document_date': am.document_date,
-                'date': am.date,
+                'period_id': date_and_period[1],
+                'document_date': date_and_period[0],
+                'date': date_and_period[0],
                 'debit': fxa_line.credit,
                 'credit': fxa_line.debit,
                 'debit_currency': fxa_line.credit_currency,
@@ -352,9 +379,9 @@ class account_move_line(osv.osv):
             # create the second JI = copy and reverse the counterpart line
             rev_counterpart_vals = {
                 'move_id': reversal_am_id,
-                'period_id': am.period_id.id,
-                'document_date': am.document_date,
-                'date': am.date,
+                'period_id': date_and_period[1],
+                'document_date': date_and_period[0],
+                'date': date_and_period[0],
                 'debit': counterpart_line.credit,
                 'credit': counterpart_line.debit,
                 'debit_currency': counterpart_line.credit_currency,
