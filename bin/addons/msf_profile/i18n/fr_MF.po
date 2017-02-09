@@ -38661,11 +38661,17 @@ msgid "You cannot edit a group level higher than your instance level (%s is high
 msgstr "Vous ne pouvez pas editer un groupe d'un niveau supérieur à celui de votre instance (%s est supérieur à %s)"
 
 #. module: msf_profile
-#: code:addons/msf_profile/user_access_configurator.py:326
-#: code:addons/msf_profile/user_access_configurator.py:352
+#: code:addons/msf_profile/user_access_configurator.py:328
+#: code:addons/msf_profile/user_access_configurator.py:343
 #, python-format
 msgid "The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'."
 msgstr "Le mot-clé '%s' après le caractère '$' doit être l'un des suivants : %s. Veuillez vérifier le groupe de nom '%s'."
+
+#. module: msf_profile
+#: code:addons/msf_profile/user_access_configurator.py:315
+#, python-format
+msgid "The group '%s' contain more than one '$' character, it should contain only one maximum"
+msgstr "Le groupe '%s' contient plus d'un caractère '$', il ne devrais en contenir qu'un seul"
 
 #. module: base
 #: view:res.groups:0
