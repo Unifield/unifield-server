@@ -46,6 +46,29 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def us_1613_remove_all_track_changes_action(self, cr, uid, *a, **b):
+        '''
+        each time the msf_audittrail is updated, the subscribe() method is
+        called on all rules.
+        This method create a new action for each rule (even if one already
+        exists). This patch will remove all existing 'Track changes' actions
+        (they will be re-created on the next msf_audittrail update and now
+        there is a check to prevent to have more than one).
+        '''
+        obj_action = self.pool.get('ir.actions.act_window')
+        if obj_action:
+            search_result = obj_action.search(cr, uid,
+                                              [('name', '=', 'Track changes'),
+                                               ('domain', '!=', False)])
+            if search_result:
+                obj_action.unlink(cr, uid, search_result)
+                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
+
+                # call subscribe on all rule to recreate the Trach changes action
+                rule_obj = self.pool.get('audittrail.rule')
+                rules_ids = rule_obj.search(cr, uid, [])
+                rule_obj.subscribe(cr,uid, rules_ids)
+
     def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
         '''
         A button "Activate Instance" as be removed from the user interface, but
@@ -249,6 +272,20 @@ class patch_scripts(osv.osv):
         WHERE model='sync.server.group_type' AND
         name='sync_remote_warehouse_rule_group_type'
         """)
+
+    # XXX do not remove this patch !!! XXX
+    def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
+        '''
+        Find currencies without associated pricelist and create this price list
+        '''
+        currency_module = self.pool.get('res.currency')
+        # Find currencies without associated pricelist
+        cr.execute("""SELECT id FROM res_currency
+                   WHERE id NOT IN (SELECT currency_id FROM product_pricelist)
+                   AND currency_table_id IS NULL""")
+        curr_ids = cr.fetchall()
+        for cur_id in curr_ids:
+            currency_module.create_associated_pricelist(cr, uid, cur_id[0])
 
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')

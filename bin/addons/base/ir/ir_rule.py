@@ -118,7 +118,7 @@ class ir_rule(osv.osv):
                     if uid in [u.id for u in group.users]:
                         group_rule.setdefault(group.id, []).append(rule.id)
                 if not rule.groups:
-                  global_rules.append(rule.id)
+                    global_rules.append(rule.id)
             global_domain = self.domain_create(cr, uid, global_rules)
             count = 0
             group_domains = []
@@ -134,7 +134,9 @@ class ir_rule(osv.osv):
             return global_domain
         return []
 
-    def clear_cache(self, cr, uid):
+    def clear_cache(self, cr, uid, old_groups=False):
+        if not old_groups:
+            old_groups = [0]
         cr.execute("""SELECT DISTINCT m.model
                         FROM ir_rule r
                         JOIN ir_model m
@@ -145,8 +147,8 @@ class ir_rule(osv.osv):
                                        JOIN res_groups_users_rel u_rel
                                          ON g_rel.group_id = u_rel.gid
                                       WHERE g_rel.rule_group_id = r.id
-                                        AND u_rel.uid = %s)
-                    """, (uid,))
+                                        AND (u_rel.uid = %s OR u_rel.gid in %s))
+                    """, (uid, tuple(old_groups)))
         models = map(itemgetter(0), cr.fetchall())
         clear = partial(self._compute_domain.clear_cache, cr.dbname, uid)
         [clear(model, mode) for model in models for mode in self._MODES]

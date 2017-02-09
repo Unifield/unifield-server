@@ -1271,7 +1271,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -5004,7 +5004,7 @@ class pack_family_memory(osv.osv):
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
             values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
-            values['state'] = pf_memory['state']
+            values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values
 

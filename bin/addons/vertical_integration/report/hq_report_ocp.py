@@ -25,6 +25,7 @@ import pooler
 import time
 from time import strftime
 from time import strptime
+import re
 
 from account_override import finance_export
 import hq_report_ocb
@@ -60,17 +61,30 @@ class finance_archive(finance_export.finance_archive):
                 aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id', 'reversal_line_id'])
                 corrected_aml = aml.corrected_line_id
                 reversed_aml = aml.reversal_line_id
-                if corrected_aml and corrected_aml.journal_id.type == 'hq' or False:
-                    # COR entries
-                    od_hq_entry = True
-                elif reversed_aml and reversed_aml.journal_id.type == 'hq' or False:
-                    # REV entries
-                    od_hq_entry = True
+                # US-2346 If there are several levels of correction use the last one to check if the original entry was an HQ entry
+                corr_aml = corrected_aml or reversed_aml
+                if corr_aml:
+                    initial_id = -1
+                    final_id = -2
+                    while initial_id != final_id:
+                        initial_id = corr_aml.id
+                        # check if the corrected line corrects another line
+                        corr_aml = corr_aml.corrected_line_id or corr_aml
+                        final_id = corr_aml.id
+                    if corr_aml.journal_id.type == 'hq':
+                        od_hq_entry = True
                 if od_hq_entry:
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 11th character of the description field:
-                    # exclude the "COR1 - " or "REV - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][10:13] or ''
+                    # exclude the "CORx - " or "REV - " or "REV - CORx - " part
+                    descr = ''
+                    if re.match('^COR\d - ', line_list[description]):
+                        descr = line_list[description][7:]
+                    elif re.match('^REV - COR\d - ', line_list[description]):
+                        descr = line_list[description][13:]
+                    elif line_list[description].startswith('REV - '):
+                        descr = line_list[description][6:]
+                    line_list[journal] = descr and descr[10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
 
@@ -97,17 +111,30 @@ class finance_archive(finance_export.finance_archive):
                 aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
                 corrected_aal = aal.last_corrected_id
                 reversed_aal = aal.reversal_origin
-                if corrected_aal and corrected_aal.journal_id.type == 'hq' or False:
-                    # COR entries
-                    od_hq_entry = True
-                elif reversed_aal and reversed_aal.journal_id.type == 'hq' or False:
-                    # REV entries
-                    od_hq_entry = True
+                # US-2346 If there are several levels of correction use the last one to check if the original entry was an HQ entry
+                corr_aal = corrected_aal or reversed_aal
+                if corr_aal:
+                    initial_id = -1
+                    final_id = -2
+                    while initial_id != final_id:
+                        initial_id = corr_aal.id
+                        # check if the corrected line corrects another line
+                        corr_aal = corr_aal.last_corrected_id or corr_aal
+                        final_id = corr_aal.id
+                    if corr_aal.journal_id.type == 'hq':
+                        od_hq_entry = True
                 if od_hq_entry:
                     line_list[instance_code] = 'SIEG'
                     # for the 3 characters of the journal name taken from the 11th character of the description field:
-                    # exclude the "COR1 - " or "REV - " part
-                    line_list[journal] = ' - ' in line_list[description] and line_list[description].split(' - ')[1][10:13] or ''
+                    # exclude the "CORx - " or "REV - " or "REV - CORx - " part
+                    descr = ''
+                    if re.match('^COR\d - ', line_list[description]):
+                        descr = line_list[description][7:]
+                    elif re.match('^REV - COR\d - ', line_list[description]):
+                        descr = line_list[description][13:]
+                    elif line_list[description].startswith('REV - '):
+                        descr = line_list[description][6:]
+                    line_list[journal] = descr and descr[10:13] or ''
             new_data.append(tuple(line_list))
         return new_data
 

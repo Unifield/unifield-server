@@ -208,7 +208,7 @@
             <field name="name">account.bank.statement.invoice.form.inherit</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
-            <field name="priority">45</field>
+            <field name="priority">24</field>
             <field name="inherit_id" ref="account.view_bank_statement_form"/>
             <field name="arch" type="xml">
               <field name="currency" invisible="1" position="after">
@@ -223,7 +223,7 @@
             <field name="name">account.bank.statement.voucher.tree.inherit</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
-            <field name="priority">40</field>
+            <field name="priority">22</field>
             <field name="inherit_id" ref="account.view_bank_statement_form"/>
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page[@name='statement_line_ids']/field[@name='line_ids']/tree/field[@name='amount']" position="after">
@@ -248,7 +248,7 @@
             <field name="name">account.cash.statement.voucher.tree.inherit</field>
             <field name="model">account.bank.statement</field>
             <field name="type">form</field>
-            <field name="priority">40</field>
+            <field name="priority">23</field>
             <field name="inherit_id" ref="account.view_bank_statement_form2"/>
             <field name="arch" type="xml">
                 <xpath expr="/form/notebook/page/field[@name='line_ids']/tree/field[@name='amount']" position="after">
