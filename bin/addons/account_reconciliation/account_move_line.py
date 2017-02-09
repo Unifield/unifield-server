@@ -335,7 +335,6 @@ class account_move_line(osv.osv):
                                             'date': am.date,
                                             'manual_name': 'Realised loss/gain',
                                             'state': 'posted',
-                                            'status': 'sys',
                                             },
                                            context=context)
             # create the first JI = copy and reverse the FXA line
@@ -362,6 +361,8 @@ class account_move_line(osv.osv):
                 'credit_currency': counterpart_line.debit_currency,
             }
             rev_counterpart_id = self.copy(cr, uid, counterpart_line.id, rev_counterpart_vals, context=context)
+            # Set the JE status to "system"
+            am_obj.write(cr, uid, [reversal_am_id], {'status': 'sys'}, context=context)
 
     def _check_instance(self, cr, uid, reconcile_id, context):
         """
