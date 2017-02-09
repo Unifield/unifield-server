@@ -693,6 +693,8 @@ class ir_translation(osv.osv):
                 domain.append(('res_id', '=', vals['res_id']))
             elif vals.get('xml_id'):
                 domain.append(('xml_id', '=', vals['xml_id']))
+                if vals.get('module'):
+                    domain.append(('module', '=', vals.get('module')))
 
             existing_ids = self.search(cr, uid, domain)
             if existing_ids:
