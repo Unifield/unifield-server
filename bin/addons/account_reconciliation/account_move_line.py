@@ -387,7 +387,7 @@ class account_move_line(osv.osv):
                 'debit_currency': counterpart_line.credit_currency,
                 'credit_currency': counterpart_line.debit_currency,
             }
-            rev_counterpart_id = self.copy(cr, uid, counterpart_line.id, rev_counterpart_vals, context=context)
+            self.copy(cr, uid, counterpart_line.id, rev_counterpart_vals, context=context)
             # Set the JE status to "system"
             am_obj.write(cr, uid, [reversal_am_id], {'status': 'sys'}, context=context)
             # reconcile the original FXA line with its reversal
