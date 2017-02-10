@@ -808,13 +808,14 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
                                    context=context)
             ir = order['procurement_request']
             order_p_type = order['partner_type']
-            if order['order_type'] == 'loan' and order['state'] == 'validated':
+            if order['order_type'] in ('loan', 'donation_exp', 'donation_st') and order['state'] == 'validated':
                 vals.update({
                     'type': 'make_to_stock',
                     'po_cft': False,
                     'supplier': False,
-                    'related_sourcing_id': False,
                 })
+                if order['order_type'] == 'loan':
+                    vals['related_sourcing_id'] = False
 
         if product and vals.get('type', False) == 'make_to_order' and not vals.get('supplier', False):
             vals['supplier'] = product.seller_id and product.seller_id.id or False
@@ -996,6 +997,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
                 )
 
+            if line.order_id.state == 'validated' and line.order_id.order_type in (
+            'donation_st', 'donation_exp') and line.type != 'make_to_stock':
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""You can only source a Donation line from stock.""")
+                )
+
             cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
             cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
             cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
@@ -1147,8 +1155,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'related_sourcing_id': False,
                 })
 
-        # Search lines to modified with loan values
-        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', '=', 'loan'),
+        # Search lines to modified with loan or donation values
+        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', 'in', ['loan', 'donation_st', 'donation_exp']),
                                              ('order_id.state', '=', 'validated'),
                                              ('id', 'in', ids)], context=context)
 
