@@ -907,6 +907,7 @@ function eval_domain_context_request(options){
     if (options.active_id) {
         params['_terp_active_id'] = options.active_id;
         params['_terp_active_ids'] = options.active_ids;
+        params['_terp_previous_active_id'] = openobject.dom.get(prefix.concat('_terp_id').join('/')).value;
     }
 
     var parent_context = openobject.dom.get(prefix.concat('_terp_context').join('/'));
