@@ -135,6 +135,7 @@ class sale_order_sync(osv.osv):
 
         default = {}
         default.update(header_result)
+        default['fo_created_by_po_sync'] = True
 
         so_id = self.create(cr, uid, default , context=context)
         name = self.browse(cr, uid, so_id, context).name
@@ -153,9 +154,6 @@ class sale_order_sync(osv.osv):
                     if po_ids: # IF the PO Loan has already been created, if not, just update the value reference, then when creating the PO loan, this value will be updated
                         # link the FO loan to this PO loan
                         po_object.write(cr, uid, po_ids, {'origin': name}, context=context)
-                        self.write(cr, uid, [so_id], {'fo_created_by_po_sync': True} , context=context)
-                    else:
-                        self.write(cr, uid, [so_id], {'origin': ref, 'fo_created_by_po_sync': True} , context=context)
 
         # reset confirmed_delivery_date to all lines
 #        so_line_obj = self.pool.get('sale.order.line')
