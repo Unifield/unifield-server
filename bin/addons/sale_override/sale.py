@@ -1318,8 +1318,8 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
             if len(order.order_line) < 1:
                 raise osv.except_osv(_('Error'), _('You cannot validate a Field order without line !'))
 
-            # 3/ Check of line procurement method in case of loan PO
-            if order.order_type == 'loan':
+            # 3/ Check of line procurement method in case of loan/donation PO
+            if order.order_type in ['loan', 'donation_st', 'donation_exp']:
                 non_mts_line = line_obj.search(cr, uid, [
                     ('order_id', '=', order.id),
                     ('type', '!=', 'make_to_stock'),

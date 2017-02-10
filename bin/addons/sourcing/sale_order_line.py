@@ -923,10 +923,10 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         l_type = line.type == 'make_to_order'
         o_state = line.order_id and line.order_id.state != 'draft' or False
         ctx_cond = not context.get('fromOrderLine')
-        o_type = line.order_id and line.order_id.order_type == 'loan' or False
+        o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a loan \'on order\'.')
+            return _('You can\'t source a %s \'on order\'.') % o_type == 'loan' and 'loan' or 'donation'
 
         return False
 
@@ -1265,7 +1265,17 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
         ], count=True, context=context)
 
         if loan_stock:
-            raise osv.except_osv(_('Warning'), _("""You can't source a loan 'from stock'."""))
+            raise osv.except_osv(_('Warning'), _("""You can't source a loan 'on order'."""))
+
+        donation_stock = self.search(cr, uid, [
+            ('id', 'in', ids),
+            ('type', '=', 'make_to_order'),
+            ('order_id.state', '!=', 'draft'),
+            ('order_id.order_type', 'in', ['donation_st', 'donation_exp']),
+        ], count=True, context=context)
+
+        if donation_stock:
+            raise osv.except_osv(_('Warning'), _("""You can't source a donation 'on order'."""))
 
         mto_no_cft_no_sup = self.search(cr, uid, [
             ('id', 'in', ids),
