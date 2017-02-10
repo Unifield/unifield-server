@@ -55,7 +55,7 @@ class finance_archive(finance_export.finance_archive):
         If no corresponding value is found, returns the key.
         """
         journal_types = self._get_journal_types(cr, uid)
-        return journal_type_key in journal_types and journal_types[journal_type_key] or journal_type_key
+        return journal_types.get(journal_type_key, journal_type_key)
 
     def _handle_od_ji_entries(self, cr, uid, data):
         """
