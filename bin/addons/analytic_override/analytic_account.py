@@ -382,14 +382,9 @@ class analytic_account(osv.osv):
                 vals['cost_center_ids'] = [(6, 0, [])]
         return vals
 
-    def _check_date(self, vals, context=None):
-        if context is None:
-            context = {}
-        if 'date' in vals and vals['date'] is not False:
-            if vals['date'] <= date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
-                # validate the date (must be > today)
-                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'date_start' in vals and not vals['date_start'] < vals['date']:
+    def _check_date(self, vals):
+        if 'date' in vals and vals['date'] is not False \
+                and 'date_start' in vals and not vals['date_start'] < vals['date']:
                 # validate that activation date
                 raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
@@ -417,7 +412,7 @@ class analytic_account(osv.osv):
         """
         Some verifications before analytic account creation
         """
-        self._check_date(vals, context=context)
+        self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
         return super(analytic_account, self).create(cr, uid, vals, context=context)
@@ -432,7 +427,7 @@ class analytic_account(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        self._check_date(vals, context=context)
+        self._check_date(vals)
         self.set_funding_pool_parent(cr, uid, vals)
         vals = self.remove_inappropriate_links(vals, context=context)
 
