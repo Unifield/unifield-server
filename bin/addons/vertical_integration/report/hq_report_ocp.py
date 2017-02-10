@@ -37,15 +37,25 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
+    _journal_types = None
+
+    def _get_journal_types(self, cr, uid):
+        """
+        Returns a dictionary containing key and value of the Journal Types
+        """
+        if not self._journal_types:
+            pool = pooler.get_pool(cr.dbname)
+            journal_obj = pool.get('account.journal')
+            self._journal_types = dict(journal_obj.fields_get(cr, uid)['type']['selection'])
+        return self._journal_types
+
     def _get_journal_type_value(self, cr, uid, journal_type_key):
         """
         Returns the value of the Journal Type corresponding to the key in parameter (ex: inkind => In-kind Donation...)
         If no corresponding value is found, returns the key.
         """
-        pool = pooler.get_pool(cr.dbname)
-        journal_obj = pool.get('account.journal')
-        journal_type_list = journal_obj.fields_get(cr, uid)['type']['selection']
-        return journal_type_key in dict(journal_type_list) and dict(journal_type_list)[journal_type_key] or journal_type_key
+        journal_types = self._get_journal_types(cr, uid)
+        return journal_type_key in journal_types and journal_types[journal_type_key] or journal_type_key
 
     def _handle_od_ji_entries(self, cr, uid, data):
         """
