@@ -466,25 +466,28 @@ class purchase_order(osv.osv):
         if context is None:
             context =  {}
 
+        context['procurement_request'] = True
+
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
             if po.po_from_fo or po.po_from_ir:
                 src_type = []
                 sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
-                for sale in self.read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
-                    if sale['procurement_request'] or sale['order_type'] == 'regular':
-                        src_type.append('regular')
-                        src_type.append('purchase_list')
+                if sale_ids:
+                    for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
+                        if sale['procurement_request'] or sale['order_type'] == 'regular':
+                            src_type.append('regular')
+                            src_type.append('purchase_list')
 
-                    if not sale['procurement_request']:
-                        if sale['order_type'] == 'regular':
-                            src_type.append('direct')
-                        elif sale['order_type'] == 'loan':
-                            src_type.append('loan')
-                        elif sale['order_type'] == 'donation_exp':
-                            src_type.append('donation_exp')
-                        elif sale['order_type'] == 'donation_st':
-                            src_type.append('donation_st')
+                        if not sale['procurement_request']:
+                            if sale['order_type'] == 'regular':
+                                src_type.append('direct')
+                            elif sale['order_type'] == 'loan':
+                                src_type.append('loan')
+                            elif sale['order_type'] == 'donation_exp':
+                                src_type.append('donation_exp')
+                            elif sale['order_type'] == 'donation_st':
+                                src_type.append('donation_st')
                 res[po.id] = json.dumps(src_type)
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])

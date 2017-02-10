@@ -996,6 +996,13 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     _("""You can't source with 'Request for Quotation' to an internal/inter-section/intermission partner."""),
                 )
 
+
+            if line.order_id.state == 'validated' and line.order_id.order_type in ('donation_st', 'donation_exp') and line.type != 'make_to_stock':
+                raise osv.except_osv(
+                    _('Warning'),
+                    _("""You can't source a Donation line on order.""")
+                )
+
             cond1 = not line.order_id.procurement_request and line.po_cft == 'po'
             cond2 = line.product_id and line.product_id.type in ('service', 'service_recep')
             cond3 = not line.product_id and check_is_service_nomen(self, cr, uid, line.nomen_manda_0.id)
@@ -1147,8 +1154,8 @@ the supplier must be either in 'Internal', 'Inter-section', 'Intermission or 'ES
                     'related_sourcing_id': False,
                 })
 
-        # Search lines to modified with loan values
-        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', '=', 'loan'),
+        # Search lines in loan or donation orders to modified with loan values
+        loan_sol_ids = self.search(cr, uid, [('order_id.order_type', 'in', ['donation_st', 'donation_exp', 'loan']),
                                              ('order_id.state', '=', 'validated'),
                                              ('id', 'in', ids)], context=context)
 

@@ -65,7 +65,8 @@
                     </xpath>
                     <xpath expr="/form/group/field[@name='shipped']" position="after">
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
-                        <field name="order_type" />
+                        <field name="is_a_counterpart" invisible="1" />
+                        <field name="order_type" attrs="{'readonly': ['|', ('state', 'not in', ['draft', 'validated']), ('is_a_counterpart', '=', True)]}" />
                         <field name="source_type" readonly="1" invisible="1" />
                         <field name="priority" />
                         <field name="categ" on_change="onchange_categ(categ)" />
