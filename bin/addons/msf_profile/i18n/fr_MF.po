@@ -41857,7 +41857,7 @@ msgstr "Site Web"
 
 #. modules: msf_outgoing, useability_dashboard_and_menu
 #: model:ir.actions.act_window,name:msf_outgoing.action_shipment
-#: model:ir.actions.act_window,name:useability_dashboard_and_menu.action_shipment
+#: model:ir.actions.act_window,name:useability_dashboard_and_menu.board_action_shipment
 msgid "Shipment Lists"
 msgstr "Expédition - Listes"
 
