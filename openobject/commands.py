@@ -182,8 +182,9 @@ def revprox(redir_port):
                 cherrypy.log(line[-1].strip(), ctx)
             else:
                 break
-        cherrypy.log("reverse proxy exited.", ctx)
-        if proc.wait() != 0:
+        rc = proc.wait()
+        cherrypy.log("reverse proxy exited (rc=%d)." % rc, ctx)
+        if rc != 0:
             # revprox exited with an error, so tell cherrypy to exit too.
             # We will be restarted by the system.
             cherrypy.engine.stop()

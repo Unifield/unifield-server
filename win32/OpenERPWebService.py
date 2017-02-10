@@ -54,8 +54,10 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         # Before we do anything, tell the SCM we are starting the stop process.
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        # stop the running OpenERP Web: say it's a normal exit
-        win32api.TerminateProcess(int(self.openerp_process._handle), 0)
+        # stop the running OpenERP Web and any children (i.e. revprox.exe)
+        pid = str(self.openerp_process.pid)
+        subprocess.call(['taskkill', '/F', '/T', '/PID', pid])
+        self.openerp_process = None
         servicemanager.LogInfoMsg("OpenERP Web stopped correctly")
         # And set my event.
         win32event.SetEvent(self.hWaitStop)
