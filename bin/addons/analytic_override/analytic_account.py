@@ -278,7 +278,7 @@ class analytic_account(osv.osv):
         cr.execute('''select a.code, a.name, d.name from
             '''+self._table+''' d
             left join account_account a on a.default_destination_id = d.id
-            left join account_destination_link l on l.destination_id = d.id and l.account_id = a.id
+            left join account_destination_link l on l.destination_id = d.id and l.account_id = a.id and l.disabled='f'
             where a.default_destination_id is not null and l.destination_id is null and d.id in %s ''', (tuple(ids),)
                    )
         error = []

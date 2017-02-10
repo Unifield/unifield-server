@@ -91,9 +91,30 @@ class account_destination_link(osv.osv):
                                     'account.account': (_get_account_ids, ['code'], 10),
                                 }),
         'used': fields.function(_get_used, string='Used', method=True, type='boolean'),
+        'disabled': fields.boolean('Disabled'),
     }
 
     _sql_constraints = [('unique_account_destination', 'unique(account_id, destination_id)', 'Couple account, destination must be unique!')]
+
+    _defaults = {
+        'disabled': lambda *a: False,
+    }
+
+    def tuple_not_used_in_contract(self, cr, uid, ids, context=None):
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        cr.execute("""select account_destination_id from financing_contract_actual_account_destinations where
+            account_destination_id in %s""", (tuple(ids),))
+        to_disable = set([x[0] for x in cr.fetchall()])
+        cr.execute("""select account_destination_link_id from financing_contract_account_quadruplet q,
+                financing_contract_actual_account_quadruplets used
+            where used.account_quadruplet_id = q.id and q.account_destination_link_id in %s""", (tuple(ids),))
+        to_disable.update([x[0] for x in cr.fetchall()])
+        return list(set(ids).difference(to_disable))
+
+    def unlink(self, cr, uid, ids, context=None):
+        self.write(cr, uid, ids, {'disabled': True}, context=context)
+        return True
 
 account_destination_link()
 
@@ -156,6 +177,7 @@ class account_destination_summary(osv.osv):
                     account_destination_summary sum,
                     funding_pool_associated_destinations d
                 WHERE
+                    l.disabled = 'f' and
                     d.tuple_id = l.id and
                     sum.account_id = l.account_id and
                     sum.funding_pool_id = d.funding_pool_id and
@@ -196,7 +218,8 @@ class account_destination_summary(osv.osv):
                     account_destination_link l,
                     funding_pool_associated_destinations d
                 WHERE
-                    d.tuple_id = l.id
+                    d.tuple_id = l.id and
+                    l.disabled = 'f'
                 GROUP BY
                     l.account_id,d.funding_pool_id
             )
@@ -249,6 +272,10 @@ class account_account(osv.osv):
                     all_ids = [x.id for x in a.destination_ids] or []
                     all_ids.append(dd_id)
                     super(account_account, self).write(cr, uid, [a.id], {'destination_ids': [(6, 0, all_ids)]})
+            link_obj = self.pool.get('account.destination.link')
+            link_ids = link_obj.search(cr, uid, [('account_id', 'in', ids), ('disabled', '=', True)], context=context)
+            if link_ids:
+                link_obj.write(cr, uid, link_ids, {'disabled': False}, context=context)
             return res
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 

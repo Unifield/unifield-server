@@ -76244,3 +76244,8 @@ msgstr "Source Location :"
 #: field:ir.attachment,size:0
 msgid "Size of the file"
 msgstr "Taille du fichier"
+
+#. module: analytic_distribution
+#: field:account.destination.link,disabled:0
+msgid "Disabled"
+msgstr "Désactivé"

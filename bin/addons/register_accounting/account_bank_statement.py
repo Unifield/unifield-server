@@ -1430,6 +1430,7 @@ class account_bank_statement_line(osv.osv):
                     domain = [
                         ('account_id', '=', values.get('account_id')),
                         ('destination_id', '=', emp_destination_id),
+                        ('disabled', '=', False),
                     ]
                     if self.pool.get('account.destination.link').search(cr, uid,
                                                                         domain, limit=1):

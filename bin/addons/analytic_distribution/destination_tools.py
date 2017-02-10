@@ -20,7 +20,7 @@ class many2many_sorted(fields.many2many):
             res[i] = []
         if offset:
             warnings.warn("Specifying offset at a many2many.get() may produce unpredictable results.",
-                      DeprecationWarning, stacklevel=2)
+                          DeprecationWarning, stacklevel=2)
         obj = obj.pool.get(self._obj)
 
         # static domains are lists, and are evaluated both here and on client-side, while string
@@ -46,6 +46,8 @@ class many2many_sorted(fields.many2many):
         if self._limit is not None:
             limit_str = ' LIMIT %d' % self._limit
 
+        if self._rel == 'account_destination_link' and not context.get('display_disabled'):
+            where_c = " %s AND disabled='f' " % (where_c, )
         query = 'SELECT %(rel)s.%(id2)s, %(rel)s.%(id1)s \
                    FROM %(rel)s, %(from_c)s \
                   WHERE %(rel)s.%(id1)s IN %%s \
@@ -63,7 +65,7 @@ class many2many_sorted(fields.many2many):
                'limit': limit_str,
                'order_by': order_by,
                'offset': offset,
-              }
+               }
         cr.execute(query, [tuple(ids),] + where_params)
         for r in cr.fetchall():
             res[r[1]].append(r[0])

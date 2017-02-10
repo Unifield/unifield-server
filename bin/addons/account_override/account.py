@@ -341,6 +341,22 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Filter on field %s not implemented! %s') % (field_names, x,))
         return arg
 
+    def _get_inactivated_for_dest(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Is this account inactive for the destination given in context
+        '''
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        if context and context.get('destination_id'):
+            link_obj = self.pool.get('account.destination.link')
+            inactive_link_ids = link_obj.search(cr, uid, [('disabled', '=', True), ('destination_id', '=', context.get('destination_id')),
+                                                          ('account_id', 'in', ids)], context=context)
+            if inactive_link_ids:
+                for link in link_obj.read(cr, uid, inactive_link_ids, ['account_id'], context=context):
+                    ret[link['account_id'][0]] = True
+        return ret
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
@@ -377,6 +393,8 @@ class account_account(osv.osv):
         'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
         'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
         'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
+
+        'inactivated_for_dest': fields.function(_get_inactivated_for_dest, method=True, type='boolean', string='Is inactive for destination given in context'),
     }
 
     _defaults = {
@@ -614,6 +632,18 @@ class account_account(osv.osv):
                     errors.append(_('%s - %s') % (r.code, r.name))
                 raise osv.except_osv(_('Error'), "\n- ".join(errors))
         return res
+
+    def activate_destination(self, cr, uid, ids, context=None):
+        if not context or not context.get('destination_id'):
+            raise osv.except_osv(_('Error'), _('Activate destination: missing account in context'))
+
+        link = self.pool.get('account.destination.link')
+        link_ids = link.search(cr, uid,
+                               [('account_id', 'in', ids), ('destination_id', '=', context.get('destination_id')), ('disabled', '=', True)],
+                               context=context)
+        if link_ids:
+            link.write(cr, uid, link_ids, {'disabled': False}, context=context)
+        return True
 
 account_account()
 
