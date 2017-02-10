@@ -84,7 +84,7 @@ def start():
     # Try to start revprox now so that we know what default to set for
     # port number (revprox ok? port = 18061)
     if options.port is None:
-        options.port = 8061
+        options.port = cherrypy.config.get('server.socket_port', 8061)
     if revprox(options.port):
         options.port = 18061
         options.address = '127.0.0.1'
@@ -139,9 +139,9 @@ def stop():
 def revprox(redir_port):
     ctx = "REVPROX"
 
-    server_name = cherrypy.config.get('server.server_name')
-    if not server_name:
-        cherrypy.log("server.server_name is not set, not running the reverse proxy", ctx)
+    https_name = cherrypy.config.get('server.https_name')
+    if not https_name:
+        cherrypy.log("server.https_name is not set, not running the reverse proxy", ctx)
         return False
 
     rbin = 'revprox'
@@ -152,7 +152,10 @@ def revprox(redir_port):
         cherrypy.log("%s does not exist, not running the reverse proxy." % rbin, ctx)
         return False
 
-    proc = subprocess.Popen([ rbin, '-server', server_name, '-redir', str(redir_port) ],
+    cmd = [ rbin, '-server', https_name, '-redir', str(redir_port) ]
+    if cherrypy.config.get('server.use_letsencrypt', False):
+        cmd.append('-usele')
+    proc = subprocess.Popen(cmd,
                             stderr=subprocess.STDOUT,  # Merge stdout and stderr
                             stdout=subprocess.PIPE)
     ok = False
