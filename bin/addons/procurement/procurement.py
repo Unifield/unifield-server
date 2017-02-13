@@ -81,13 +81,13 @@ class procurement_order(osv.osv):
     """
     _name = "procurement.order"
     _description = "Procurement"
-    _order = 'priority,date_planned desc'
+    _order = 'priority,date_planned desc, id'
     _log_create = False
     _columns = {
         'name': fields.char('Reason', size=64, required=True, help='Procurement name.'),
         'origin': fields.char('Source Document', size=512,
-            help="Reference of the document that created this Procurement.\n"
-            "This is automatically completed by OpenERP."),
+                              help="Reference of the document that created this Procurement.\n"
+                              "This is automatically completed by OpenERP."),
         'priority': fields.selection([('0','Not urgent'),('1','Normal'),('2','Urgent'),('3','Very Urgent')], 'Priority', required=True),
         'date_planned': fields.datetime('Scheduled date', required=True),
         'date_close': fields.datetime('Date Closed'),
@@ -100,8 +100,8 @@ class procurement_order(osv.osv):
         'close_move': fields.boolean('Close Move at end', required=True),
         'location_id': fields.many2one('stock.location', 'Location', required=True, states={'draft':[('readonly',False)]}, readonly=True),
         'procure_method': fields.selection([('make_to_stock','from stock'),('make_to_order','on order')], 'Procurement Method', states={'draft':[('readonly',False)], 'confirmed':[('readonly',False)]},
-            readonly=True, required=True, help="If you encode manually a Procurement, you probably want to use" \
-            " a make to order method."),
+                                           readonly=True, required=True, help="If you encode manually a Procurement, you probably want to use" \
+                                           " a make to order method."),
 
         'note': fields.text('Note'),
         'message': fields.char('Latest error', size=64, help="Exception occurred while computing procurement orders."),
@@ -136,8 +136,8 @@ class procurement_order(osv.osv):
                 unlink_ids.append(s['id'])
             else:
                 raise osv.except_osv(_('Invalid action !'),
-                        _('Cannot delete Procurement Order(s) which are in %s State!') % \
-                        s['state'])
+                                     _('Cannot delete Procurement Order(s) which are in %s State!') % \
+                                     s['state'])
         return osv.osv.unlink(self, cr, uid, unlink_ids, context=context)
 
     def onchange_product_id(self, cr, uid, ids, product_id, context=None):
@@ -281,17 +281,17 @@ class procurement_order(osv.osv):
             if not res:
                 return False
         return res
-    
+
     def _partner_check_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         check the if supplier is available or not
-        
+
         return the list of available partners
         '''
         procurement = kwargs['procurement']
         result = procurement.product_id.seller_ids
         return result
-    
+
     def _partner_get_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         returns the partner from suppinfo
@@ -311,7 +311,7 @@ class procurement_order(osv.osv):
                 return False
             if not self._partner_check_hook(cr, uid, ids, context=None, procurement=procurement):
                 cr.execute('update procurement_order set message=%s where id=%s',
-                        (_('No supplier defined for this product !'), procurement.id))
+                           (_('No supplier defined for this product !'), procurement.id))
                 return False
             partner = self._partner_get_hook(cr, uid, ids, context=None, procurement=procurement)
 
@@ -327,7 +327,7 @@ class procurement_order(osv.osv):
             address_id = partner_obj.address_get(cr, uid, [partner.id], ['delivery'])['delivery']
             if not address_id:
                 cr.execute('update procurement_order set message=%s where id=%s',
-                        (_('No address defined for the supplier'), procurement.id))
+                           (_('No address defined for the supplier'), procurement.id))
                 return False
         return True
 
@@ -348,7 +348,7 @@ class procurement_order(osv.osv):
         for procurement in self.browse(cr, uid, ids, context=context):
             if procurement.product_qty <= 0.00:
                 raise osv.except_osv(_('Data Insufficient !'),
-                    _('Please check the Quantity in Procurement Order(s), it should not be less than 1!'))
+                                     _('Please check the Quantity in Procurement Order(s), it should not be less than 1!'))
             if procurement.product_id.type in ('product', 'consu'):
                 if not procurement.move_id:
                     source = procurement.location_id.id
@@ -376,7 +376,7 @@ class procurement_order(osv.osv):
         @return: True
         """
         self.write(cr, uid, ids, {'state': 'running',
-                'message': _('from stock: products assigned.')})
+                                  'message': _('from stock: products assigned.')})
         return True
 
     def _check_make_to_stock_service(self, cr, uid, procurement, context=None):
@@ -385,12 +385,12 @@ class procurement_order(osv.osv):
            for computing their own purpose
         @return: True"""
         return True
-    
+
     def _hook_check_mts_on_message(self, cr, uid, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the _check_make_to_stock_product method from procurement>procurement.py>procurement.order
-        
+
         - allow to modify the message written back to procurement order
         '''
         message = kwargs['message']
@@ -410,7 +410,7 @@ class procurement_order(osv.osv):
                 cr.execute('select count(id) from stock_warehouse_orderpoint where product_id=%s', (procurement.product_id.id,))
                 res = cr.fetchone()[0]
                 if not res and not ok:
-                     message = _("Not enough stock and no minimum orderpoint rule defined.")
+                    message = _("Not enough stock and no minimum orderpoint rule defined.")
                 elif not res:
                     message = _("No minimum orderpoint rule defined.")
                 elif not ok:
@@ -510,7 +510,7 @@ class procurement_order(osv.osv):
         '''
         self._procure_confirm(cr, uid, use_new_cursor=use_new_cursor, context=context)
         self._procure_orderpoint_confirm(cr, uid, automatic=automatic,\
-                use_new_cursor=use_new_cursor, context=context)
+                                         use_new_cursor=use_new_cursor, context=context)
 
         return True
 
@@ -527,7 +527,7 @@ class StockPicking(osv.osv):
                 if move.state == 'done' and move.procurements:
                     for procurement in move.procurements:
                         wf_service.trg_validate(user, 'procurement.order',
-                                procurement.id, 'button_check', cursor)
+                                                procurement.id, 'button_check', cursor)
         return res
 
 StockPicking()
@@ -558,20 +558,20 @@ class stock_warehouse_orderpoint(osv.osv):
         'product_id': fields.many2one('product.product', 'Product', required=True, ondelete='cascade', domain=[('type','=','product')]),
         'product_uom': fields.many2one('product.uom', 'Product UOM', required=True),
         'product_min_qty': fields.float('Min Quantity', required=True,
-            help="When the virtual stock goes belong the Min Quantity, OpenERP generates "\
-            "a procurement to bring the virtual stock to the Max Quantity."),
+                                        help="When the virtual stock goes belong the Min Quantity, OpenERP generates "\
+                                        "a procurement to bring the virtual stock to the Max Quantity."),
         'product_max_qty': fields.float('Max Quantity', required=True,
-            help="When the virtual stock goes belong the Max Quantity, OpenERP generates "\
-            "a procurement to bring the virtual stock to the Max Quantity."),
+                                        help="When the virtual stock goes belong the Max Quantity, OpenERP generates "\
+                                        "a procurement to bring the virtual stock to the Max Quantity."),
         'qty_multiple': fields.integer('Qty Multiple', required=True,
-            help="The procurement quantity will by rounded up to this multiple."),
+                                       help="The procurement quantity will by rounded up to this multiple."),
         'procurement_id': fields.many2one('procurement.order', 'Latest procurement', ondelete="set null"),
         'company_id': fields.many2one('res.company','Company',required=True),
         'procurement_draft_ids': fields.function(_get_draft_procurements, method=True, type='many2many', relation="procurement.order", \
-                                string="Related Procurement Orders",help="Draft procurement of the product and location of that orderpoint"),
+                                                 string="Related Procurement Orders",help="Draft procurement of the product and location of that orderpoint"),
         'line_ids': fields.one2many('stock.warehouse.orderpoint.line',
-            'supply_id', string="Products",
-            help='Define the min/max quantity to order for each products'),
+                                    'supply_id', string="Products",
+                                    help='Define the min/max quantity to order for each products'),
     }
     _defaults = {
         'active': lambda *a: 1,
@@ -606,7 +606,7 @@ class stock_warehouse_orderpoint(osv.osv):
             v = {'product_uom': prod.uom_id.id}
             return {'value': v}
         return {}
-    
+
     def copy(self, cr, uid, id, default=None, context=None):
         if not default:
             default = {}
@@ -614,7 +614,7 @@ class stock_warehouse_orderpoint(osv.osv):
             'name': self.pool.get('ir.sequence').get(cr, uid, 'stock.orderpoint') or '',
         })
         return super(stock_warehouse_orderpoint, self).copy(cr, uid, id, default, context=context)
-    
+
 stock_warehouse_orderpoint()
 
 
@@ -632,6 +632,6 @@ class stock_warehouse_orderpoint_line(osv.osv):
         'procurement_id': fields.many2one('procurement.order', 'Procurement', ondelete="set null"),
         'supply_id': fields.many2one('stock.warehouse.orderpoint', string='Supply', ondelete='cascade', required=True)
     }
-    
+
 stock_warehouse_orderpoint_line()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
