@@ -263,72 +263,6 @@ def list_http_services(protocol=None):
     else:
         raise Exception("Incorrect protocol or no http services")
 
-class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
-    rpc_paths = []
-    protocol_version = 'HTTP/1.1'
-
-    _logger = logging.getLogger('xmlrpc_unidata')
-    logf = tools.config.get('log_path_unidata_xmlrpc', False)
-    if logf:
-        dirname = os.path.dirname(logf)
-        if dirname and not os.path.isdir(dirname):
-            os.makedirs(dirname)
-        interval = int(tools.config.get('log_unidata_interval', 7))
-        backup_count = int(tools.config.get('log_unidata_backup_count', 52))
-        when = tools.config.get('log_unidata_when', 'D')
-        handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
-                backup_count)
-        # create a format for log messages and dates
-        format = '[%(asctime)s]:%(name)s:%(message)s'
-        formatter = logging.Formatter(format)
-        handler.setFormatter(formatter)
-        _logger.addHandler(handler)
-        _logger.propagate = False
-    unidata_uid = {}
-
-    def _dispatch(self, method, params):
-        try:
-            service_name = self.path.split("/")[-1]
-            return self.dispatch(service_name, method, params)
-        except netsvc.OpenERPDispatcherException, e:
-            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
-
-    def handle(self):
-        pass
-
-    def finish(self):
-        pass
-
-    def setup(self):
-        self.connection = dummyconn()
-        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
-
-    def get_unidata_uid(self, db_name):
-        '''
-        get the unidata user uid if exists and store it not to request it on
-        each log line.
-        '''
-        if self.unidata_uid.get(db_name, None) is None:
-            self.unidata_uid[db_name] = None
-            db = None
-            cr = None
-            try:
-                db, pool = pooler.get_db_and_pool(db_name, if_open=True)
-                if db is not None and pool is not None:
-                    # look for the unidata user id
-                    cr = db.cursor()
-                    unidata_ids = pool.get('res.users').search(cr, 1,
-                            [('login', '=', 'unidata')])
-                    if unidata_ids:
-                        self.unidata_uid[db_name] = unidata_ids[0]
-                    else:
-                        self.unidata_uid[db_name] = False
-            finally:
-                if cr is not None:
-                    cr.close()
-        return self.unidata_uid[db_name]
-
-
 class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
@@ -353,6 +287,58 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
 
+class XMLRPCUserRequestHandler(XMLRPCRequestHandler):
+
+    _logger = logging.getLogger('xmlrpc_users')
+    logf = tools.config.get('log_user_xmlrpc_path', False)
+    if logf:
+        dirname = os.path.dirname(logf)
+        if dirname and not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        interval = int(tools.config.get('log_user_xmlrpc_interval', 7))
+        backup_count = int(tools.config.get('log_user_xmlrpc_backup_count', 52))
+        when = tools.config.get('log_user_xmlrpc_when', 'D')
+        handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
+                backup_count)
+        # create a format for log messages and dates
+        format = '[%(asctime)s]:%(login)s:%(message)s'
+        formatter = logging.Formatter(format)
+        handler.setFormatter(formatter)
+        _logger.addHandler(handler)
+        _logger.propagate = False
+    xmlrpc_uid_cache = {}
+
+    def get_uid_list2log(self, db_name):
+        '''
+        return a list of user id for which the xmlrpc requests should be logged
+        This list come from the cache if any (not None) else it is read from
+        the database
+        '''
+        if self.xmlrpc_uid_cache.get(db_name, None) is None:
+            self.xmlrpc_uid_cache[db_name] = None
+            db = None
+            cr = None
+            try:
+                db, pool = pooler.get_db_and_pool(db_name, if_open=True)
+                if db is not None and pool is not None:
+                    # look for the user id having log_xmlrpc = True
+                    cr = db.cursor()
+                    res_users_obj = pool.get('res.users')
+                    ids_to_log = res_users_obj.search(cr, 1,
+                            [('log_xmlrpc', '=', True)])
+                    res_user_read = res_users_obj.read(cr, 1, ids_to_log, ['login'])
+                    user_dict = dict((x['id'], x['login']) for x in res_user_read)
+
+                    if user_dict:
+                        self.xmlrpc_uid_cache[db_name] = user_dict
+                    else:
+                        self.xmlrpc_uid_cache[db_name] = {}
+            finally:
+                if cr is not None:
+                    cr.close()
+        return self.xmlrpc_uid_cache[db_name]
+
+
 class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
@@ -375,10 +361,10 @@ class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHand
         self.connection = dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
 
-def init_unidata():
-    # check if path to log xmlrpc unidata exists
-    if tools.config.get('log_path_unidata_xmlrpc', False):
-        reg_http_service(HTTPDir('/xmlrpc/', UnidataXMLRPCRequestHandler))
+def init_xmlrpc_users_log():
+    # check if path to log xmlrpc users exists
+    if tools.config.get('log_user_xmlrpc_path', False):
+        reg_http_service(HTTPDir('/xmlrpc/', XMLRPCUserRequestHandler))
 
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):

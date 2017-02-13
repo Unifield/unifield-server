@@ -139,7 +139,7 @@ if not ( tools.config["stop_after_init"] or \
          tools.config["translate_out"] ):
     service.http_server.init_servers()
     service.http_server.init_xmlrpc()
-    service.http_server.init_unidata()
+    service.http_server.init_xmlrpc_users_log()
     service.http_server.init_static_http()
 
     import service.netrpc_server

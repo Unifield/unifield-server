@@ -535,12 +535,12 @@ class OpenERPDispatcher:
 
     def log(self, title, msg, channel=logging.DEBUG_RPC, depth=None):
         logger = logging.getLogger(title)
-        if hasattr(self, 'get_unidata_uid') and title == 'params' and len(msg) > 1 and tools.config.get('log_path_unidata_xmlrpc', False):
+        if hasattr(self, 'get_uid_list2log') and title == 'params' and len(msg) > 1 and tools.config.get('log_user_xmlrpc_path', False):
             db_name = msg[0]
             current_user = msg[1]
-            unidata_uid = hasattr(self, 'unidata_uid') and self.get_unidata_uid(db_name) or False
-            if unidata_uid and current_user == unidata_uid:
-                self._logger.log(logging.INFO, msg)
+            xmlrpc_uid_cache = self.get_uid_list2log(db_name) or False
+            if xmlrpc_uid_cache and current_user in xmlrpc_uid_cache:
+                self._logger.log(logging.INFO, msg, extra={'login': xmlrpc_uid_cache[current_user]})
 
         if logger.isEnabledFor(channel):
             for line in pformat(msg, depth=depth).split('\n'):

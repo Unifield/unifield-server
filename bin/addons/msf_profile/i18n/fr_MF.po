@@ -76104,3 +76104,15 @@ msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulé
 #: report:msf.consumption_report:0
 msgid "Source Location :"
 msgstr "Source Location :"
+
+#. module: base
+#: field:res.config.users,log_xmlrpc:0
+#: field:res.users,log_xmlrpc:0
+msgid "Log XMLRPC requests"
+msgstr "Journaliser les requettes XMLRPC"
+
+#. module: base
+#: help:res.config.users,log_xmlrpc:0
+#: help:res.users,log_xmlrpc:0
+msgid "Log the XMLRPC requests of this user into a dedicated file"
+msgstr "Enregistrez les requêtes XMLRPC de cet utilisateur dans un fichier dédié"

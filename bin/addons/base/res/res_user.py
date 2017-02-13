@@ -31,6 +31,7 @@ from service import security
 import netsvc
 import logging
 from passlib.hash import bcrypt
+from service import http_server
 
 class groups(osv.osv):
     _name = "res.groups"
@@ -351,6 +352,7 @@ class users(osv.osv):
         'is_erp_manager': fields.function(_is_erp_manager, method=True, string='Is ERP Manager ?', type="boolean"),
         'is_sync_config': fields.function(_is_sync_config, method=True, string='Is Sync Config ?', type="boolean"),
         'instance_level': fields.function(_get_instance_level, method=True, string='Instance level', type="char"),
+        'log_xmlrpc': fields.boolean('Log XMLRPC requests', help="Log the XMLRPC requests of this user into a dedicated file"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -464,6 +466,12 @@ class users(osv.osv):
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
+        if 'log_xmlrpc' in values:
+            # clear the cache of the list of uid to log
+            xmlrpc_uid_cache = http_server.XMLRPCUserRequestHandler.xmlrpc_uid_cache
+            if cr.dbname in xmlrpc_uid_cache:
+                xmlrpc_uid_cache[cr.dbname] = None
+
         return super(users, self).create(cr, uid, values, context)
 
     def write(self, cr, uid, ids, values, context=None):
@@ -486,6 +494,12 @@ class users(osv.osv):
         old_groups = []
         if values.get('groups_id'):
             old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
+
+        if 'log_xmlrpc' in values:
+            # clear the cache of the list of uid to log
+            xmlrpc_uid_cache = http_server.XMLRPCUserRequestHandler.xmlrpc_uid_cache
+            if cr.dbname in xmlrpc_uid_cache:
+                xmlrpc_uid_cache[cr.dbname] = None
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
