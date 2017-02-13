@@ -532,8 +532,23 @@ def replace_request_password(args):
     return args
 
 class OpenERPDispatcher:
+
     def log(self, title, msg, channel=logging.DEBUG_RPC, depth=None):
         logger = logging.getLogger(title)
+        if hasattr(self, 'get_unidata_uid') and title == 'params' and len(msg) > 1 and tools.config.get('log_path_unidata_xmlrpc', False):
+            db_name = msg[0]
+            current_user = msg[1]
+            unidata_uid = hasattr(self._logger, 'unidata_uid') and getattr(self._logger, 'unidata_uid') or None
+            if not unidata_uid:
+                unidata_uid = self.get_unidata_uid(db_name)
+                if unidata_uid is not None:
+                    setattr(self._logger, 'unidata_uid', unidata_uid)
+            else:
+                unidata_uid = getattr(self._logger, 'unidata_uid')
+
+            if unidata_uid and current_user == unidata_uid:
+                self._logger.log(logging.INFO, msg)
+
         if logger.isEnabledFor(channel):
             for line in pformat(msg, depth=depth).split('\n'):
                 logger.log(channel, line)

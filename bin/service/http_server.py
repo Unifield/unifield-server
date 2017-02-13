@@ -42,6 +42,7 @@ import select
 import socket
 import xmlrpclib
 import logging
+import pooler
 
 import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
@@ -262,9 +263,75 @@ def list_http_services(protocol=None):
     else:
         raise Exception("Incorrect protocol or no http services")
 
+class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+    rpc_paths = []
+    protocol_version = 'HTTP/1.1'
+
+    _logger = logging.getLogger('xmlrpc_unidata')
+    file_handler = logging.FileHandler('/tmp/test.log')
+    logf = tools.config.get('log_path_unidata_xmlrpc', False)
+    dirname = os.path.dirname(logf)
+    if dirname and not os.path.isdir(dirname):
+        os.makedirs(dirname)
+    interval = int(tools.config.get('log_unidata_nb_days_rotation', 7))
+    backup_count = int(tools.config.get('log_unidata_backup_count', 52))
+    when = tools.config.get('log_unidata_when', 'D')
+    handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
+            backup_count)
+    # create a format for log messages and dates
+    format = '[%(asctime)s]:%(name)s:%(message)s'
+    formatter = logging.Formatter(format)
+    handler.setFormatter(formatter)
+    _logger.addHandler(handler)
+    _logger.propagate = False
+    unidata_uid = None
+
+    def _dispatch(self, method, params):
+        try:
+            service_name = self.path.split("/")[-1]
+            return self.dispatch(service_name, method, params)
+        except netsvc.OpenERPDispatcherException, e:
+            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
+
+    def handle(self):
+        pass
+
+    def finish(self):
+        pass
+
+    def setup(self):
+        self.connection = dummyconn()
+        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+
+    def get_unidata_uid(self, db_name):
+        '''
+        get the unidata user uid if exists and store it not to request it on
+        each log line.
+        '''
+        if self.unidata_uid is None:
+            db = None
+            cr = None
+            try:
+                db, pool = pooler.get_db_and_pool(db_name, if_open=True)
+                if db is not None and pool is not None:
+                    # look for the unidata user id
+                    cr = db.cursor()
+                    unidata_ids = pool.get('res.users').search(cr, 1,
+                            [('login', '=', 'unidata')])
+                    if unidata_ids:
+                        self.unidata_uid = unidata_ids[0]
+                    else:
+                        self.unidata_uid = False
+            finally:
+                if cr is not None:
+                    cr.close()
+        return self.unidata_uid
+
+
 class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     rpc_paths = []
     protocol_version = 'HTTP/1.1'
+
     _logger = logging.getLogger('xmlrpc')
 
     def _dispatch(self, method, params):
@@ -283,6 +350,7 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,
     def setup(self):
         self.connection = dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+
 
 class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
     rpc_paths = []
@@ -305,6 +373,11 @@ class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHand
     def setup(self):
         self.connection = dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+
+def init_unidata():
+    # check if path to log xmlrpc unidata exists
+    if tools.config.get('log_path_unidata_xmlrpc', False):
+        reg_http_service(HTTPDir('/xmlrpc/', UnidataXMLRPCRequestHandler))
 
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):
