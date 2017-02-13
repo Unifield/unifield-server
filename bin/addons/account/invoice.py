@@ -884,7 +884,11 @@ class account_invoice(osv.osv):
             if inv.type in ('in_invoice', 'in_refund'):
                 # UTP-594: Get ref and name
                 if inv.type == 'in_invoice':
-                    name = inv.name or '/'  # US-1669 Use the IVI description
+                    if inv.is_intermission and not inv.is_debit_note and not inv.is_inkind_donation or False:
+                        # US-1669 For an IVI use the IVI description
+                        name = inv.name or '/'
+                    else:
+                        name = inv.origin and inv.origin or '/'
                     ref = inv.origin and inv.origin or inv.reference and inv.reference
                 else:
                     name = inv.name and inv.name or '/'
