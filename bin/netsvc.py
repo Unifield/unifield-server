@@ -44,10 +44,11 @@ def ops_event(dbname, kind, dat, uid=1):
     try:
         cr = None
         db, pool = pooler.get_db_and_pool(dbname, if_open=True)
-        cr = db.cursor()
-        oe = pool.get('operations.event')
-        oe.create(cr, uid, { 'kind': kind, 'data': dat })
-        cr.commit()
+        if db is not None and pool is not None:
+            cr = db.cursor()
+            oe = pool.get('operations.event')
+            oe.create(cr, uid, { 'kind': kind, 'data': dat })
+            cr.commit()
     except:
         pass
     finally:
@@ -61,8 +62,9 @@ def ops_count(dbname, cat, what):
 
     try:
         db, pool = pooler.get_db_and_pool(dbname, if_open=True)
-        oc = pool.get('operations.count')
-        oc.increment(':'.join([cat, what]))
+        if db is not None and pool is not None:
+            oc = pool.get('operations.count')
+            oc.increment(':'.join([cat, what]))
     except:
         pass
 
