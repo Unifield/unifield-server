@@ -548,11 +548,12 @@ class stock_mission_report(osv.osv):
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             # Create one line by product
             cr.execute('''SELECT p.id, ps.code, p.active, p.state_ud, pis.code
-                          FROM product_product p, product_template pt, product_status ps, product_international_status pis
-                          WHERE p.product_tmpl_id = pt.id
-                          AND pt.state = ps.id
-                          AND p.international_status = pis.id
-                          AND NOT EXISTS (
+                          FROM product_product p
+                          INNER JOIN product_template pt ON p.product_tmpl_id = pt.id
+                          LEFT JOIN product_status ps on pt.state = ps.id
+                          LEFT JOIN product_international_status pis on p.international_status = pis.id
+                          WHERE
+                          NOT EXISTS (
                             SELECT product_id
                             FROM
                             stock_mission_report_line smrl WHERE mission_report_id = %s

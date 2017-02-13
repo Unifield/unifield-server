@@ -1139,7 +1139,7 @@ class patch_scripts(osv.osv):
 
         for smrl in smrl_obj.browse(cr, uid, smrl_to_update, context=context):
             smrl_obj.write(cr, uid, smrl.id, {
-                'state_ud': smrl.product_id.state_ud,
+                'state_ud': smrl.product_id.state_ud or '',
                 'product_active': smrl.product_id.active,
                 'international_status_code': smrl.product_id.international_status.code if smrl.product_id.international_status else '',
             }, context=context)
