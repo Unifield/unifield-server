@@ -38,10 +38,31 @@ class finance_archive(finance_export.finance_archive):
     Extend existing class with new methods for this particular export.
     """
 
+    _journal_types = None
+
+    def _get_journal_types(self, cr, uid):
+        """
+        Returns a dictionary containing key and value of the Journal Types
+        """
+        if not self._journal_types:
+            pool = pooler.get_pool(cr.dbname)
+            journal_obj = pool.get('account.journal')
+            self._journal_types = dict(journal_obj.fields_get(cr, uid)['type']['selection'])
+        return self._journal_types
+
+    def _get_journal_type_value(self, cr, uid, journal_type_key):
+        """
+        Returns the value of the Journal Type corresponding to the key in parameter (ex: inkind => In-kind Donation...)
+        If no corresponding value is found, returns the key.
+        """
+        journal_types = self._get_journal_types(cr, uid)
+        return journal_types.get(journal_type_key, journal_type_key)
+
     def _handle_od_ji_entries(self, cr, uid, data):
         """
         Takes data in parameter corresponding to ACCOUNT MOVE LINES (results from 'bs_entries' or 'plresult' requests)
-        Modify it for all OD entries that originate from HQ entry corrections:
+        1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+        2) Modifies it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
         Returns a list of tuples (same format as data)
@@ -54,8 +75,10 @@ class finance_archive(finance_export.finance_archive):
         instance_code = 1
         journal = 2
         description = 4
+        journal_type = 22
         for line in data:
             line_list = list(line)
+            line_list[journal_type] = self._get_journal_type_value(cr, uid, line_list[journal_type])
             od_hq_entry = False
             if line_list[journal] == 'OD':
                 aml = aml_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['corrected_line_id', 'reversal_line_id'])
@@ -91,7 +114,8 @@ class finance_archive(finance_export.finance_archive):
     def _handle_od_aji_entries(self, cr, uid, data):
         """
         Takes data in parameter corresponding to ACCOUNT ANALYTIC LINES (results from 'rawdata' request)
-        Modify it for all OD entries that originate from HQ entry corrections:
+        1) Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+        2) Modifies it for all OD entries that originate from HQ entry corrections:
         - instance: becomes 'SIEG'
         - journal: for the journal name, the description field is used: we take the 3 digits starting from the 11th one
         Returns a list of tuples (same format as data)
@@ -104,8 +128,10 @@ class finance_archive(finance_export.finance_archive):
         instance_code = 1
         journal = 2
         description = 4
+        journal_type = 22
         for line in data:
             line_list = list(line)
+            line_list[journal_type] = self._get_journal_type_value(cr, uid, line_list[journal_type])
             od_hq_entry = False
             if line_list[journal] == 'OD':
                 aal = aal_obj.browse(cr, uid, line_list[id_from_db], fields_to_fetch=['last_corrected_id', 'reversal_origin'])
@@ -168,15 +194,18 @@ class finance_archive(finance_export.finance_archive):
         aggregate the lines that are on an account where "Shrink entries for HQ export" is checked
         """
         finance_archive_ocb = hq_report_ocb.finance_archive(self.sqlrequests, self.processrequests)
-        new_data = finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion)
+        new_data = finance_archive_ocb.postprocess_consolidated_entries(cr, uid, data, excluded_journal_types, column_deletion, display_journal_type=True)
         # For the Instance column (never empty), display only the first 3 characters
         # Use the same value to fill in the Cost Center column (that is empty otherwise)
         instance_code_col = 1
         cc_col = 11
+        journal_type_col = 21
         for line in new_data:
             instance_code = line[instance_code_col][:3]
             line[instance_code_col] = instance_code
             line[cc_col] = instance_code
+            # Replaces the journal type "key" by its corresponding "value" (ex: inkind => In-kind Donation)
+            line[journal_type_col] = self._get_journal_type_value(cr, uid, line[journal_type_col])
         return new_data
 
 
@@ -258,7 +287,8 @@ class hq_report_ocp(report_sxw.report_sxw):
                        c.name AS "booking_currency", 
                        CASE WHEN al.amount < 0 THEN ABS(ROUND(al.amount, 2)) ELSE 0.0 END AS debit, 
                        CASE WHEN al.amount > 0 THEN ROUND(al.amount, 2) ELSE 0.0 END AS credit,
-                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name
+                       cc.name AS "functional_currency", hr.identification_id as "emplid", aml.partner_id, hr.name_resource as hr_name,
+                       CASE WHEN j.code = 'OD' THEN j.type ELSE aj.type END AS journal_type
                 FROM account_analytic_line AS al, 
                      account_account AS a, 
                      account_analytic_account AS aa, 
@@ -312,7 +342,8 @@ class hq_report_ocp(report_sxw.report_sxw):
             'bs_entries': """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name, aml.ref, aml.document_date, aml.date,
                        a.code, aml.partner_txt, '', SUBSTR(i.code, 1, 3), '', aml.debit_currency, aml.credit_currency, c.name,
-                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id, hr.name_resource as hr_name
+                       ROUND(aml.debit, 2), ROUND(aml.credit, 2), cc.name, hr.identification_id as "Emplid", aml.partner_id,
+                       hr.name_resource as hr_name, j.type
                 FROM account_move_line aml left outer join hr_employee hr on hr.id = aml.employee_id, 
                      account_account AS a, 
                      res_currency AS c, 
@@ -350,14 +381,14 @@ class hq_report_ocp(report_sxw.report_sxw):
                 'Third party', 'Destination', 'Cost centre', 'Funding pool',
                 'Booking debit', 'Booking credit', 'Booking currency',
                 'Functional debit', 'Functional credit', 'Functional CCY',
-                'Emplid', 'Partner DB ID' '''
+                'Emplid', 'Partner DB ID' 'Employee Name' 'Journal Type' '''
             sqlrequests['plresult'] = """
                 SELECT aml.id, SUBSTR(i.code, 1, 3), j.code, m.name as "entry_sequence", aml.name,
                     aml.ref, aml.document_date, aml.date, a.code,
                     aml.partner_txt, '', SUBSTR(i.code, 1, 3), '',
                     ROUND(aml.debit_currency, 2), ROUND(aml.credit_currency, 2), c.name,
                     ROUND(aml.debit, 2), ROUND(aml.credit, 2), c.name,
-                    '', ''
+                    '', '', '', j.type
                 FROM account_move_line aml
                 INNER JOIN msf_instance i on i.id = aml.instance_id
                 INNER JOIN account_journal j on j.id = aml.journal_id
@@ -392,7 +423,7 @@ class hq_report_ocp(report_sxw.report_sxw):
 
         processrequests = [
             {
-                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID'],
+                'headers': ['DB ID', 'Instance', 'Journal', 'Entry sequence', 'Description', 'Reference', 'Document date', 'Posting date', 'G/L Account', 'Third party', 'Destination', 'Cost centre', 'Funding pool', 'Booking debit', 'Booking credit', 'Booking currency', 'Functional debit', 'Functional credit',  'Functional CCY', 'Emplid', 'Partner DB ID', 'Journal Type'],
                 'filename': monthly_export_filename,
                 'key': 'rawdata',
                 'function': 'postprocess_aji_entries',
