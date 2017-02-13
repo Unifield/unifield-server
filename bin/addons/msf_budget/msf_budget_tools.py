@@ -289,7 +289,15 @@ class msf_budget_tools(osv.osv):
         if 'currency_table_id' in context:
             currency_table = context['currency_table_id']
 
+        if 'background_id' in context:
+            bg_id = context['background_id']
+            bg_report_obj = self.pool.get('memory.background.report')
+        else:
+            bg_id = None
+            bg_report_obj = None
+
         # parse each line and add it to the right array
+        analytic_line_count = 0
         for analytic_line in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
             date_context = {'date': analytic_line.source_date or analytic_line.date,
                             'currency_table_id': currency_table}
@@ -303,6 +311,13 @@ class msf_budget_tools(osv.osv):
             # add the amount to correct month
             month = datetime.datetime.strptime(analytic_line.date, '%Y-%m-%d').month
             res[analytic_line.general_account_id.id, analytic_line.destination_id.id][month - 1] += round(actual_amount, 2)
+
+            if bg_report_obj:
+                analytic_line_count += 1
+                percent = analytic_line_count / float(len(analytic_lines) + 1)  # add 1
+                # to the total because task is not finish at the end of the for
+                # loop, there is some ZIP work to do
+                bg_report_obj.update_percent(cr, uid, [bg_id], percent)
 
         # after all lines are parsed, absolute of every column
         for line in res.keys():

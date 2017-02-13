@@ -464,7 +464,7 @@ class hq_report_ocp(report_sxw.report_sxw):
             })
 
         # Create a finance archive object
-        fe = finance_archive(sqlrequests, processrequests)
+        fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive
         return fe.archive(cr, uid)
 
