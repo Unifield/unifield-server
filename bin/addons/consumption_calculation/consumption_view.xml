@@ -102,8 +102,8 @@
             <field name="arch" type="xml">
                 <tree string="Real consumption reports">
             <field name="name" />
-                    <field name="cons_location_name" string="Consumer location" />
-                    <field name="activity_name" string="Activity" />
+                    <field name="cons_location_name" string="Source Location" />
+                    <field name="activity_name" string="Destination Location" />
                     <field name="period_from" />
                     <field name="period_to" />
                     <field name="nb_lines" />
@@ -284,6 +284,7 @@
             <field name="name">monthlu.cons.product.form.view</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
+            <field name="priority">95</field>
             <field name="inherit_id" ref="product.product_normal_form_view" />
             <field name="arch" type="xml">
                 <data>
@@ -298,6 +299,7 @@
             <field name="name">monthlu.cons.product.stock.form.view</field>
             <field name="model">product.product</field>
             <field name="type">form</field>
+            <field name="priority">75</field>
             <field name="inherit_id" ref="stock.view_normal_stock_property_form" />
             <field name="arch" type="xml">
                 <field name="virtual_available" position="after">

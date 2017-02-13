@@ -8,7 +8,7 @@
             <field name="model">sale.order</field>
             <field name="type">form</field>
             <field name="inherit_id" ref="sale.view_order_form" />
-            <field name="priority" eval="20"/>
+            <field name="priority">40</field>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="/form/notebook" position="before">

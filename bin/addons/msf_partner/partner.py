@@ -832,6 +832,13 @@ res_partner()
 class res_partner_address(osv.osv):
     _inherit = 'res.partner.address'
 
+    _columns = {
+        'office_name': fields.char(
+            string='Office name',
+            size=128,
+        ),
+    }
+
     def unlink(self, cr, uid, ids, context=None):
         """
         Check if the deleted address is not a system one

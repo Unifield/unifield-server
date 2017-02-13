@@ -6,6 +6,7 @@
             <field name="name">stock.move.memory.tree</field>
             <field name="model">stock.move.memory.in</field>
             <field name="type">tree</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="stock.stock_move_memory_tree_in" />
             <field name="arch" type="xml">
                 <data>
@@ -47,6 +48,7 @@
             <field name="name">stock.move.memory.tree</field>
             <field name="model">stock.move.memory.out</field>
             <field name="type">tree</field>
+            <field name="priority">35</field>
             <field name="inherit_id" ref="stock.stock_move_memory_tree_out" />
             <field name="arch" type="xml">
                 <data>

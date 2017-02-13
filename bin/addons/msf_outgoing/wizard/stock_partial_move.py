@@ -21,7 +21,6 @@
 
 from osv import fields, osv
 from tools.translate import _
-import time
 import decimal_precision as dp
 
 # xml parser
@@ -35,7 +34,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
     add split method to base out object
     '''
     _inherit = "stock.move.memory.out"
-    
+
     def split(self, cr, uid, ids, context=None):
         '''
         open the split wizard, the user can select the qty for the new move
@@ -45,14 +44,14 @@ class stock_partial_move_memory_out(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz_obj = self.pool.get('wizard')
-        
+
         # data - no step needed for present split wizard
         name = _("Split Selected Stock Move")
         model = 'split.memory.move'
         # we need to get the memory move id to know which line to split
         # and class name, to know which type of moves
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], name=name, model=model, w_type='create', context=dict(context, memory_move_ids=ids, class_name=self._name))
-    
+
     def change_product(self, cr, uid, ids, context=None):
         '''
         open the change product wizard, the user can select the new product
@@ -81,11 +80,13 @@ class stock_partial_move_memory_out(osv.osv_memory):
                                                                product_id=product_id,
                                                                uom_category_id=uom_category_id,
                                                                uom_id=uom_id))
-        
+
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         '''
         change the function name to do_incoming_shipment
         '''
+        if context is None:
+            context = {}
         result = super(stock_partial_move_memory_out, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree':
             root = etree.fromstring(result['arch'])
@@ -113,7 +114,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
                             field.set('invisible', 'True')
                     result['arch'] = etree.tostring(root)
         return result
-    
+
 #    update code to allow delete lines (or not but must be consistent in all wizards)
 #    I would say, maybe not allow (by hidding the button not raise exception in method -> causes bug)
 #    because then the user can always see the corresponding full list and change its mind
@@ -130,12 +131,12 @@ class stock_partial_move_memory_out(osv.osv_memory):
               # override for decimal precision - after purchase override so Purchase Price Computation exists
               'cost' : fields.float("Cost", digits_compute=dp.get_precision('Purchase Price Computation'), help="Unit Cost for this product line"),
               }
-    
+
     _defaults = {'integrity_status': 'empty',
                  'force_complete': False,
                  'quantity': 0.0,
                  }
-    
+
     def _check_quantity(self, cr, uid, ids, context=None):
         '''
         Checks if quantity is correct
@@ -150,7 +151,7 @@ class stock_partial_move_memory_out(osv.osv_memory):
 #                     'You must assign a positive quantity value or 0.',
 #                     ['quantity']),
 #                    ]
-    
+
     _order = 'line_number asc'
 
 stock_partial_move_memory_out()
@@ -159,7 +160,7 @@ stock_partial_move_memory_out()
 class stock_partial_move_memory_in(osv.osv_memory):
     _name = "stock.move.memory.in"
     _inherit = "stock.move.memory.out"
-    
+
 stock_partial_move_memory_in()
 
 
@@ -169,7 +170,7 @@ class stock_partial_move_memory_picking(osv.osv_memory):
     '''
     _name = "stock.move.memory.picking"
     _inherit = "stock.move.memory.out"
-    
+
 stock_partial_move_memory_picking()
 
 
@@ -181,7 +182,7 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
     _inherit = "stock.move.memory.picking"
     _columns = {'qty_to_return': fields.float(string='Qty to return', digits_compute=dp.get_precision('Product UoM') ),
                 }
-    
+
     def _check_qty_to_return(self, cr, uid, ids, context=None):
         '''
         Checks if qty_to_return is correct
@@ -190,13 +191,13 @@ class stock_partial_move_memory_returnproducts(osv.osv_memory):
             if move.qty_to_return < 0:
                 raise osv.except_osv(_('Warning !'), _('You must assign a positive "quantity to return" value or 0.'))
         return True
-    
+
 # no constraint at move level for now because of OEB-99
 #    _constraints = [(_check_qty_to_return,
 #                     'You must assign a positive quantity to return value or 0',
 #                     ['qty_to_return']),
 #                    ]
-    
+
     _defaults = {
         'qty_to_return': 0.0,
     }
@@ -221,7 +222,7 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
     '''
     _name = "stock.move.memory.ppl"
     _inherit = "stock.move.memory.picking"
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -240,35 +241,35 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             else:
                 qty_per_pack = 0
             values['qty_per_pack'] = qty_per_pack
-                    
+
         return result
-    
+
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 # functions
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'qty_per_pack': fields.function(_vals_get, method=True, type='float', string='Qty p.p.', multi='get_vals_X',), # old_multi get_vals
                 }
-    
+
     def create(self, cr, uid, vals, context=None):
         '''
         default value of qty_per_pack to quantity
         of from_pack and to_pack to 1
-        
+
         those fields have a constraint assigned to them, and must
         therefore be completed with default value at creation
         '''
         if 'qty_per_pack' not in vals:
             vals.update(qty_per_pack=vals['quantity_ordered'])
-        
+
         if 'from_pack' not in vals:
             vals.update(from_pack=1)
-            
+
         if 'to_pack' not in vals:
             vals.update(to_pack=1)
-            
+
         return super(stock_partial_move_memory_ppl, self).create(cr, uid, vals, context)
-    
+
     def _check_from_to_pack(self, cr, uid, ids, context=None):
         """ Checks if from_pack is assigned to memory move or not.
         @return: True or False
@@ -281,7 +282,7 @@ class stock_partial_move_memory_ppl(osv.osv_memory):
             if move.to_pack < move.from_pack:
                 raise osv.except_osv(_('Warning !'), _('"to pack" value must be greater or equal to "from pack" value.'))
         return True
-    
+
     # existence integrity
     # the constraint are at memory.move level for ppl1 because we do not
     # want to wait until the end of ppl2 and stock.move update to validate
@@ -299,7 +300,7 @@ stock_partial_move_memory_ppl()
 class stock_partial_move_memory_families(osv.osv_memory):
     '''
     view corresponding to pack families
-    
+
     integrity constraint 
     '''
     _name = "stock.move.memory.families"
@@ -315,10 +316,10 @@ class stock_partial_move_memory_families(osv.osv_memory):
         'wizard_id' : fields.many2one('stock.partial.move', string="Wizard"),
         'integrity_status': fields.selection(string=' ', selection=INTEGRITY_STATUS_SELECTION, readonly=True),
     }
-    
+
     _defaults = {'integrity_status': 'empty',
                  }
-    
+
     def onchange_pack_type(self, cr, uid, ids, pack_type, context=None):
         '''
         Update values of stock.move.memory.families from the stock_pack selected
@@ -333,20 +334,20 @@ class stock_partial_move_memory_families(osv.osv_memory):
             length, width, height = p_type_read['length'], p_type_read['width'], p_type_read['height']
             res.update({'value': {'length': length, 'width': width, 'height': height}})
         return res
-    
+
 stock_partial_move_memory_families()
 
 
 class stock_partial_move_memory_shipment_create(osv.osv_memory):
     '''
     view corresponding to pack families for shipment create
-    
+
     integrity constraint 
     '''
     _name = "stock.move.memory.shipment.create"
     _inherit = "stock.move.memory.families"
     _rec_name = 'from_pack'
-    
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -366,13 +367,13 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 selected_weight = memory_move.weight * memory_move.selected_number
             if context.get('step') == 'returnpacksfromshipment':
                 num_returned = memory_move.return_to > 0 \
-                and memory_move.return_from > 0 \
-                and memory_move.return_to >= memory_move.return_from \
-                and memory_move.return_to - memory_move.return_from + 1 \
-                or 0.0
+                    and memory_move.return_from > 0 \
+                    and memory_move.return_to >= memory_move.return_from \
+                    and memory_move.return_to - memory_move.return_from + 1 \
+                    or 0.0
                 selected_weight = memory_move.weight * num_returned
             values['selected_weight'] = selected_weight
-                    
+
         return result
 
     def _get_volume(self, cr, uid, ids, fields, arg, context=None):
@@ -381,7 +382,7 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
             vol = ( shipment.length * shipment.width * shipment.height * float(shipment.num_of_packs) ) / 1000.0
             result[shipment.id] = vol
         return result
-    
+
     _columns = {'sale_order_id': fields.many2one('sale.order', string="Sale Order Ref"),
                 'ppl_id': fields.many2one('stock.picking', string="PPL Ref"), 
                 'draft_packing_id': fields.many2one('stock.picking', string="Draft Packing Ref"),
@@ -391,7 +392,7 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
                 'num_of_packs': fields.function(_vals_get, method=True, type='integer', string='#Packs', multi='get_vals',),
                 'selected_weight' : fields.function(_vals_get, method=True, type='float', string='Selected Weight [kg]', multi='get_vals_X',), # old_multi get_vals
                 }
-    
+
     def _check_selected_number(self, cr, uid, ids, context=None):
         ''' 
         Checks if selected number is correct
@@ -405,36 +406,36 @@ class stock_partial_move_memory_shipment_create(osv.osv_memory):
 #                     'You cannot select negative number.',
 #                     ['selected_number']),
 #                    ]
-    
-    
+
+
 stock_partial_move_memory_shipment_create()
 
 
 class stock_partial_move_memory_shipment_returnpacks(osv.osv_memory):
     '''
     view corresponding to pack families for packs return
-    
+
     integrity constraint 
     '''
     _name = "stock.move.memory.shipment.returnpacks"
     _inherit = "stock.move.memory.shipment.create"
-    
+
 stock_partial_move_memory_shipment_returnpacks()
 
 
 class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory):
     '''
     view corresponding to pack families for packs return from shipment
-    
+
     integrity constraint 
     '''
     _name = "stock.move.memory.shipment.returnpacksfromshipment"
     _inherit = "stock.move.memory.shipment.returnpacks"
     _columns = {
-                'return_from' : fields.integer(string="Return From"),
-                'return_to' : fields.integer(string="Return To"),
+        'return_from' : fields.integer(string="Return From"),
+        'return_to' : fields.integer(string="Return To"),
     }
-    
+
     def split(self, cr, uid, ids, context=None):
         # quick integrity check
         assert context, 'No context defined, problem on method call'
@@ -442,7 +443,7 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
         wiz_obj = self.pool.get('wizard')
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         for memory_move in self.browse(cr, uid, ids, context=context):
             # create new memory move - copy for memory is not implemented
             fields = self.fields_get(cr, uid, context=context)
@@ -457,9 +458,9 @@ class stock_partial_move_memory_shipment_returnpacksfromshipment(osv.osv_memory)
                 else:
                     assert False, 'copy of %s value is not implemented'%type
 
-            new_memory_move = self.create(cr, uid, values, context=context)
-        
+            self.create(cr, uid, values, context=context)
+
         # udpate the original wizard
         return wiz_obj.open_wizard(cr, uid, context['active_ids'], w_type='update', context=context)
-    
+
 stock_partial_move_memory_shipment_returnpacksfromshipment()

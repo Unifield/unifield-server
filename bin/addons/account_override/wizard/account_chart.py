@@ -38,17 +38,17 @@ class account_chart(osv.osv_memory):
         return res
 
     def _get_instance_header(self, cr, uid, ids, field_names, args,
-        context=None):
+                             context=None):
         def get_codes(instance_recs):
             instance_obj = self.pool.get('msf.instance')
             if not instance_recs:
                 # get mission instances
                 instance_ids = instance_obj.search(cr, uid, [
-                        ('instance_to_display_ids', '=', True),
-                    ], context=context)
+                    ('instance_to_display_ids', '=', True),
+                ], context=context)
                 if instance_ids:
                     instance_recs = instance_obj.browse(cr, uid, instance_ids,
-                        context=context)
+                                                        context=context)
                 else:
                     instance_recs = []
             return [ i.code for i in instance_recs ]
@@ -70,14 +70,14 @@ class account_chart(osv.osv_memory):
         'target_move': fields.selection([('posted', 'Posted Entries'),
                                          ('all', 'All Entries'),
                                          ('draft', 'Unposted Entries'),
-                                        ], 'Move status', required = True),
+                                         ], 'Move status', required = True),
         'output_currency_id': fields.many2one('res.currency', 'Output currency', help="Add a new column that display lines amounts in the given currency"),
 
         # US-1179 fields
         'initial_balance': fields.boolean("Include initial balances",
-            help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
+                                          help='It adds initial balance row on report which display previous sum amount of debit/credit/balance'),
         'is_initial_balance_available': fields.function(_get_fake, method=True,
-            type='boolean', string="Is initial balance filter available ?"),
+                                                        type='boolean', string="Is initial balance filter available ?"),
         'account_type': fields.selection([
             ('all', 'All'),
             ('pl', 'Profit & Loss'),
@@ -88,7 +88,7 @@ class account_chart(osv.osv_memory):
             ('parent', 'By parent account'),
         ], 'Granularity', required=True),
         'instance_header': fields.function(_get_instance_header, type='string',
-            method=True, string='Instances'),
+                                           method=True, string='Instances'),
     }
 
     _defaults = {
@@ -101,7 +101,7 @@ class account_chart(osv.osv_memory):
 
     def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id, context=None):
         res = super(account_chart, self).onchange_fiscalyear(cr, uid, ids,
-            fiscalyear_id, context=context)
+                                                             fiscalyear_id, context=context)
         if res is None:
             res = {}
 
@@ -124,7 +124,7 @@ class account_chart(osv.osv_memory):
         return res
 
     def on_change_period(self, cr, uid, ids, period_from, fiscalyear_id,
-        context=None):
+                         context=None):
         res = {}
 
         ib_available = fiscalyear_id or False
@@ -134,9 +134,9 @@ class account_chart(osv.osv_memory):
                 # and period start = FY 1st period
                 # if period_from not picked will be included (implicit FY start)
                 fy_rec = self.pool.get('account.fiscalyear').browse(cr, uid,
-                    fiscalyear_id, context=context)
+                                                                    fiscalyear_id, context=context)
                 period_from_rec = self.pool.get('account.period').browse(cr,
-                    uid, period_from, context=context)
+                                                                         uid, period_from, context=context)
                 ib_available = period_from_rec.date_start == fy_rec.date_start
 
         res['value'] = {'is_initial_balance_available': ib_available, }
@@ -197,7 +197,7 @@ class account_chart(osv.osv_memory):
                     # US-227 include tax account for BS accounts selection
                     domain = [ '|', ('code', '=', 'tax') ] + domain
                 res = self.pool.get('account.account.type').search(cr, uid,
-                    domain, context=context)
+                                                                   domain, context=context)
 
         return res
 
@@ -227,11 +227,11 @@ class account_chart(osv.osv_memory):
 
         domain_tuples_str = []
         account_type_ids = self._get_account_type_ids(cr, uid,
-            data['account_type'], context=context)
+                                                      data['account_type'], context=context)
         if account_type_ids:
             account_ids = account_obj.search(cr, uid, [
-                    ('user_type', 'in', account_type_ids),
-                ], context=context)
+                ('user_type', 'in', account_type_ids),
+            ], context=context)
             if account_ids:
                 is_flat_view = True  # disable tree mode
                 """if not is_flat_view:
@@ -256,9 +256,10 @@ class account_chart(osv.osv_memory):
         result['view_id'] = [tree_view_id]
         result['views'] = [(tree_view_id, 'tree')]
         if domain_tuples_str:
-           if not is_flat_view:
+            if not is_flat_view:
                 domain_tuples_str.insert(0, "('parent_id','=',False)")
-           result['domain'] = "[%s]" % (', '.join(domain_tuples_str), )
+            result['domain'] = "[%s]" % (', '.join(domain_tuples_str), )
+        result['keep_open'] = 1
         return result
 
     def button_export(self, cr, uid, ids, context=None):
@@ -275,7 +276,7 @@ class account_chart(osv.osv_memory):
             if wiz.granularity and wiz.granularity == 'account':
                 args.append(('type', '!=', 'view'))
             account_type_ids = self._get_account_type_ids(cr, uid,
-                wiz.account_type, context=context)
+                                                          wiz.account_type, context=context)
             if account_type_ids:
                 args.append(('user_type', 'in', account_type_ids))
 
@@ -320,6 +321,7 @@ class account_chart(osv.osv_memory):
             'currency': currency_name,
             'wiz_fields': wiz_fields,
             'target_filename': "Balance by account_%s_%s" % (instance_code, strftime('%Y%m%d')),
+            'keep_open': 1,
         } # context permit balance to be processed regarding context's elements
 # filename
         return {

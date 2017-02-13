@@ -726,7 +726,7 @@ class wizard_import_in_simulation_screen(osv.osv):
                         SIMU_LINES[wiz.id]['line_ids'].pop(index_in_line)
                     for file_line in file_lines:
                         nb_treated_lines += 1
-                        percent_completed = nb_treated_lines / nb_file_lines * 100
+                        percent_completed = round(nb_treated_lines / float(nb_file_lines) * 100)
                         self.write(cr, uid, [wiz.id], {'nb_treated_lines': nb_treated_lines,
                                                        'percent_completed': percent_completed}, context=context)
                         vals = values.get(file_line[0], [])
@@ -1101,7 +1101,15 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                 if not prod_id and values[1]:
                     prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[1]), ], context=context)
                     if not prod_ids:
+                        # if we didn't manage to link our product code with existing product in DB, we cannot continue checks
+                        # because it needs the product id:
                         errors.append(_('Product not found in database'))
+                        write_vals.update({
+                            'error_msg': errors[-1],
+                            'type_change': 'error',
+                        })
+                        self.write(cr, uid, [line.id], write_vals, context=context)
+                        continue
                     else:
                         write_vals['imp_product_id'] = prod_ids[0]
                 else:

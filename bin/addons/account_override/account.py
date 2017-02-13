@@ -602,6 +602,9 @@ class account_account(osv.osv):
                     res[r.id] = True  # allowed with no specific field
                 else:
                     res[r.id] = hasattr(r, allowed_partner_field) and getattr(r, allowed_partner_field) or False
+        # once the checks are done, remove allowed_partner_field from context so as not to reuse it for another record
+        if 'allowed_partner_field' in context:
+            del context['allowed_partner_field']
         if raise_it:
             not_compatible_ids = [ id for id in res if not res[id] ]
             if not_compatible_ids:
@@ -819,8 +822,10 @@ class account_move(osv.osv):
             vals.update({'date': self.pool.get('account.period').get_date_in_period(cr, uid, strftime('%Y-%m-%d'), vals.get('period_id'))})
         if not vals.get('document_date', False):
             vals.update({'document_date': vals.get('date')})
+        manual_je = False
         if 'from_web_menu' in context:
             vals.update({'status': 'manu'})
+            manual_je = True
             # Update context in order journal item could retrieve this @creation
             if 'document_date' in vals:
                 context['document_date'] = vals.get('document_date')
@@ -837,12 +842,17 @@ class account_move(osv.osv):
             vals['name'] = context['seqnums'][journal.id]
         else:
             # Create sequence for move lines
-            period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
+            if manual_je and 'period_id' in vals:
+                # For manual JE use the period selected in the form
+                period_ids = vals['period_id'] and [vals['period_id']] or []
+            else:
+                period_ids = self.pool.get('account.period').get_period_from_date(cr, uid, vals['date'])
             if not period_ids:
                 raise osv.except_osv(_('Warning'), _('No period found for creating sequence on the given date: %s') % (vals['date'] or ''))
             period = self.pool.get('account.period').browse(cr, uid, period_ids)[0]
             # UF-2479: If the period is not open yet, raise exception for the move
-            if period and period.state == 'created':
+            if period and (period.state == 'created' or \
+                           (manual_je and period.state != 'draft')):  # don't save manual JE in a non-open period
                 raise osv.except_osv(_('Error !'), _('Period \'%s\' is not open! No Journal Entry is created') % (period.name,))
 
             # Context is very important to fetch the RIGHT sequence linked to the fiscalyear!

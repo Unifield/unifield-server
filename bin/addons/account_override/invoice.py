@@ -225,7 +225,7 @@ class account_invoice(osv.osv):
                                                           method=True, string="Can be imported as invoice in a debit note?",),
         'imported_invoices': fields.one2many('account.invoice.line', 'import_invoice_id', string="Imported invoices", readonly=True),
         'partner_move_line': fields.one2many('account.move.line', 'invoice_partner_link', string="Partner move line", readonly=True),
-        'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", readonly="True"),
+        'fake_journal_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="account.journal", string="Journal", hide_default_menu=True, readonly="True"),
         'fake_currency_id': fields.function(_get_fake_m2o_id, method=True, type='many2one', relation="res.currency", string="Currency", readonly="True"),
         'have_donation_certificate': fields.function(_get_have_donation_certificate, method=True, type='boolean', string="Have a Certificate of donation?"),
         'purchase_list': fields.boolean(string='Purchase List ?', help='Check this box if the invoice comes from a purchase list', readonly=True, states={'draft':[('readonly',False)]}),
@@ -379,17 +379,11 @@ class account_invoice(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-        purchase_obj = self.pool.get('purchase.order')
-        commitment_obj = self.pool.get('account.commitment')
-        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note', 'state']):
+        for inv in self.read(cr, uid, ids, ['purchase_ids', 'type', 'is_inkind_donation', 'is_debit_note']):
             if inv.get('type', '') == 'in_invoice' and not inv.get('is_inkind_donation', False) and not inv.get('is_debit_note', False):
                 if inv.get('purchase_ids', False):
-                    # UTP-808: Allow draft invoice deletion. If commitment exists, set them as done.
-                    if inv.get('state', '') != 'draft':
-                        raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
-                    else:
-                        for purchase in purchase_obj.browse(cr, uid, inv.get('purchase_ids', []), context=context):
-                            commitment_obj.action_commitment_done(cr, uid, [x.id for x in purchase.commitment_ids])
+                    # US-1702 Do not allow at all the deletion of SI coming from PO
+                    raise osv.except_osv(_('Warning'), _('You cannot cancel or delete a supplier invoice linked to a PO.'))
         return True
 
     def _hook_period_id(self, cr, uid, inv, context=None):

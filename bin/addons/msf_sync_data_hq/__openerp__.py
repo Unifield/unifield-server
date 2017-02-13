@@ -38,6 +38,7 @@
         'data/product.nomenclature.csv',
         'data/product.category.csv',
         'data/product.product.csv',
+        'data/account.tax.csv',
     ],
     'demo_xml': [],
     'test':[],

@@ -56,11 +56,10 @@ class hq_report_oca(report_sxw.report_sxw):
 
     def create_counterpart(self, cr, uid, line):
         """ third report: up balances """
-        pool = pooler.get_pool(cr.dbname)
         # method to create counterpart line
         return line[:2] + \
-               ["20750",
-                "0",  # before US-274/7 was expat EMP identification line[3]
+            ["20750",
+             "0",  # before US-274/7 was expat EMP identification line[3]
                 "0",
                 line[5],  # expat employee name or "0"
                 line[6],
@@ -69,10 +68,9 @@ class hq_report_oca(report_sxw.report_sxw):
                 line[8]] + line[10:]
 
     def create_subtotal(self, cr, uid, line_key,
-        line_debit, line_functional_debit, line_functional_debit_no_ccy_adj,
-        counterpart_date, country_code, sequence_number):
+                        line_debit, line_functional_debit, line_functional_debit_no_ccy_adj,
+                        counterpart_date, country_code, sequence_number):
         """ third report: up balances """
-        pool = pooler.get_pool(cr.dbname)
         # method to create subtotal + counterpart line
         if len(line_key) > 2 and line_debit != 0.0 and line_functional_debit != 0.0:
             # US-118: func debit with no FXA currency adjustement entries
@@ -114,6 +112,10 @@ class hq_report_oca(report_sxw.report_sxw):
                       "0"]]
 
     def create(self, cr, uid, ids, data, context=None):
+        if context is None:
+            context = {}
+        # US-2303 Data should always be in English whatever the language settings
+        context.update({'lang': 'en_MF'})
         pool = pooler.get_pool(cr.dbname)
 
         first_header = ['Proprietary Instance',
@@ -150,12 +152,12 @@ class hq_report_oca(report_sxw.report_sxw):
         # US-118: func debit with no FXA currency adjustement entries
         account_lines_functional_debit_no_ccy_adj = {}
         journal_exclude_subtotal_ids = pool.get('account.journal').search(cr,
-            uid, [('type', 'in', ('cur_adj', 'revaluation'))], context=context)
+                                                                          uid, [('type', 'in', ('cur_adj', 'revaluation'))], context=context)
         # General variables
         period = pool.get('account.period').browse(cr, uid, data['form']['period_id'])
         period_name = period and period.code or "0"
         counterpart_date = period and period.date_stop and \
-                           datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
+            datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or ""
         integration_ref = "0"
         country_code = "0"
         move_prefix = "0"
@@ -316,7 +318,7 @@ class hq_report_oca(report_sxw.report_sxw):
                     # no booking amount but funct one then cause a wrong balance
                     # for ccy inverted rate computation
                     if not journal_exclude_subtotal_ids or \
-                        move_line.journal_id.id not in journal_exclude_subtotal_ids:
+                            move_line.journal_id.id not in journal_exclude_subtotal_ids:
                         account_lines_functional_debit_no_ccy_adj[(account.code, currency.name, period_name)] += funct_balance
 
         # UFTP-375: Do not include FREE1 and FREE2 analytic lines
@@ -346,7 +348,7 @@ class hq_report_oca(report_sxw.report_sxw):
                 if analytic_line.move_id.journal_id.type == 'accrual':
                     ldate = analytic_line.document_date or analytic_line.date
             elif analytic_line.journal_id \
-                and analytic_line.journal_id.code == 'ACC':
+                    and analytic_line.journal_id.code == 'ACC':
                 # sync border case no JI for the AJI
                 ldate = analytic_line.document_date or analytic_line.date
 
@@ -449,10 +451,10 @@ class hq_report_oca(report_sxw.report_sxw):
             for key in sorted(account_lines_debit.iterkeys(), key=lambda tuple: tuple[0]):
                 # create the sequence number for those lines
                 sequence_number = move_prefix + "-" + \
-                                  period.date_start[5:7] + "-" + \
-                                  period.date_start[:4] + "-" + \
-                                  key[0] + "-" + \
-                                  key[1]
+                    period.date_start[5:7] + "-" + \
+                    period.date_start[:4] + "-" + \
+                    key[0] + "-" + \
+                    key[1]
 
                 subtotal_lines = self.create_subtotal(cr, uid, key,
                                                       account_lines_debit[key],
