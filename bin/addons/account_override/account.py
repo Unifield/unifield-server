@@ -476,17 +476,11 @@ class account_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
-    def _check_date(self, vals, context=None):
-        if context is None:
-            context = {}
-
-        if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
-            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
-                # validate the date (must be > today)
-                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+    def _check_date(self, vals):
+        if 'inactivation_date' in vals and vals['inactivation_date'] is not False \
+                and 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
-                raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+            raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
     def _check_allowed_partner_type(self, vals):
         '''
@@ -504,14 +498,14 @@ class account_account(osv.osv):
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
     def create(self, cr, uid, vals, context=None):
-        self._check_date(vals, context=context)
+        self._check_date(vals)
         self._check_allowed_partner_type(vals)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        self._check_date(vals, context=context)
+        self._check_date(vals)
         self._check_allowed_partner_type(vals)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 

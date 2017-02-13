@@ -66596,13 +66596,6 @@ msgstr "Sélectionnez la catégorie du produit actuel"
 msgid "TUNISIAN DINAR"
 msgstr "TUNISIAN DINAR"
 
-#. modules: account_activable, analytic_distribution
-#: code:addons/account_activable/account_activable.py:48
-#: code:addons/analytic_distribution/analytic_account.py:227
-#, python-format
-msgid "You cannot set an inactivity date lower than tomorrow!"
-msgstr "Vous ne pouvez pas sélectionner une date d'inactivité antérieure à demain!"
-
 #. module: msf_homere_interface
 #: model:ir.ui.menu,name:msf_homere_interface.import_expat_employees
 msgid "Import expats"
