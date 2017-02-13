@@ -100,18 +100,6 @@ class account_destination_link(osv.osv):
         'disabled': lambda *a: False,
     }
 
-    def tuple_not_used_in_contract(self, cr, uid, ids, context=None):
-        if isinstance(ids, (int, long)):
-            ids = [ids]
-        cr.execute("""select account_destination_id from financing_contract_actual_account_destinations where
-            account_destination_id in %s""", (tuple(ids),))
-        to_disable = set([x[0] for x in cr.fetchall()])
-        cr.execute("""select account_destination_link_id from financing_contract_account_quadruplet q,
-                financing_contract_actual_account_quadruplets used
-            where used.account_quadruplet_id = q.id and q.account_destination_link_id in %s""", (tuple(ids),))
-        to_disable.update([x[0] for x in cr.fetchall()])
-        return list(set(ids).difference(to_disable))
-
     def unlink(self, cr, uid, ids, context=None):
         self.write(cr, uid, ids, {'disabled': True}, context=context)
         return True
