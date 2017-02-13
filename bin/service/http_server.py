@@ -270,20 +270,21 @@ class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogH
     _logger = logging.getLogger('xmlrpc_unidata')
     file_handler = logging.FileHandler('/tmp/test.log')
     logf = tools.config.get('log_path_unidata_xmlrpc', False)
-    dirname = os.path.dirname(logf)
-    if dirname and not os.path.isdir(dirname):
-        os.makedirs(dirname)
-    interval = int(tools.config.get('log_unidata_nb_days_rotation', 7))
-    backup_count = int(tools.config.get('log_unidata_backup_count', 52))
-    when = tools.config.get('log_unidata_when', 'D')
-    handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
-            backup_count)
-    # create a format for log messages and dates
-    format = '[%(asctime)s]:%(name)s:%(message)s'
-    formatter = logging.Formatter(format)
-    handler.setFormatter(formatter)
-    _logger.addHandler(handler)
-    _logger.propagate = False
+    if logf:
+        dirname = os.path.dirname(logf)
+        if dirname and not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        interval = int(tools.config.get('log_unidata_interval', 7))
+        backup_count = int(tools.config.get('log_unidata_backup_count', 52))
+        when = tools.config.get('log_unidata_when', 'D')
+        handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
+                backup_count)
+        # create a format for log messages and dates
+        format = '[%(asctime)s]:%(name)s:%(message)s'
+        formatter = logging.Formatter(format)
+        handler.setFormatter(formatter)
+        _logger.addHandler(handler)
+        _logger.propagate = False
     unidata_uid = None
 
     def _dispatch(self, method, params):
