@@ -170,6 +170,7 @@ SectionEnd
 Section -RestartService
     nsExec::Exec '"$INSTDIR\service\OpenERPWebService.exe" -auto -install'
     sleep 2
+    nsExec::Exec 'sc failure openerp-web-6.0 reset= 0 actions= restart/0/restart/0/restart/0'
     nsExec::Exec "sc config openerp-web-6.0 depend= openerp-server-6.0"
     nsExec::Exec "net start openerp-web-6.0"
     sleep 2
