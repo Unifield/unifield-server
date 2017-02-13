@@ -268,7 +268,6 @@ class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogH
     protocol_version = 'HTTP/1.1'
 
     _logger = logging.getLogger('xmlrpc_unidata')
-    file_handler = logging.FileHandler('/tmp/test.log')
     logf = tools.config.get('log_path_unidata_xmlrpc', False)
     if logf:
         dirname = os.path.dirname(logf)
