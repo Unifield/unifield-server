@@ -538,14 +538,7 @@ class OpenERPDispatcher:
         if hasattr(self, 'get_unidata_uid') and title == 'params' and len(msg) > 1 and tools.config.get('log_path_unidata_xmlrpc', False):
             db_name = msg[0]
             current_user = msg[1]
-            unidata_uid = hasattr(self._logger, 'unidata_uid') and getattr(self._logger, 'unidata_uid') or None
-            if not unidata_uid:
-                unidata_uid = self.get_unidata_uid(db_name)
-                if unidata_uid is not None:
-                    setattr(self._logger, 'unidata_uid', unidata_uid)
-            else:
-                unidata_uid = getattr(self._logger, 'unidata_uid')
-
+            unidata_uid = hasattr(self, 'unidata_uid') and self.get_unidata_uid(db_name) or False
             if unidata_uid and current_user == unidata_uid:
                 self._logger.log(logging.INFO, msg)
 

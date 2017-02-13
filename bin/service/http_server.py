@@ -285,7 +285,7 @@ class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogH
         handler.setFormatter(formatter)
         _logger.addHandler(handler)
         _logger.propagate = False
-    unidata_uid = None
+    unidata_uid = {}
 
     def _dispatch(self, method, params):
         try:
@@ -309,7 +309,8 @@ class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogH
         get the unidata user uid if exists and store it not to request it on
         each log line.
         '''
-        if self.unidata_uid is None:
+        if self.unidata_uid.get(db_name, None) is None:
+            self.unidata_uid[db_name] = None
             db = None
             cr = None
             try:
@@ -320,13 +321,13 @@ class UnidataXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogH
                     unidata_ids = pool.get('res.users').search(cr, 1,
                             [('login', '=', 'unidata')])
                     if unidata_ids:
-                        self.unidata_uid = unidata_ids[0]
+                        self.unidata_uid[db_name] = unidata_ids[0]
                     else:
-                        self.unidata_uid = False
+                        self.unidata_uid[db_name] = False
             finally:
                 if cr is not None:
                     cr.close()
-        return self.unidata_uid
+        return self.unidata_uid[db_name]
 
 
 class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
