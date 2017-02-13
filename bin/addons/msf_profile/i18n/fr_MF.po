@@ -76242,3 +76242,45 @@ msgstr "Taille du fichier"
 #: field:account.destination.link,disabled:0
 msgid "Disabled"
 msgstr "Désactivé"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:478
+#, python-format
+msgid "Line %s. A Third Party is mandatory for the given account: %s."
+msgstr "Ligne %s. Un Tiers est obligatoire pour le compte donné : %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:488
+#, python-format
+msgid "Line %s. The Third Party must be a liquidity journal with a currency different from the booking one for the given account: %s."
+msgstr "Ligne %s. Le Tiers doit être un journal de trésorerie avec une devise différente de la devise d'enregistrement pour le compte donné : %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:485
+#, python-format
+msgid "Line %s. The Third Party must be a liquidity journal with the same currency as the booking one for the given account: %s."
+msgstr "Ligne %s. Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement pour le compte donné : %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:492
+#, python-format
+msgid "Line %s. The journal used for the internal transfer must be different from the Journal Entry Journal for the given account: %s."
+msgstr "Ligne %s. Le journal utilisé pour le transfert interne doit être différent du journal de l'écriture comptable pour le compte donné : %s."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1035
+#, python-format
+msgid "Account: %s - %s. The Third Party must be a liquidity journal with a currency different from the booking one."
+msgstr "Compte: %s - %s. Le Tiers doit être un journal de trésorerie avec une devise différente de la devise d'enregistrement."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1031
+#, python-format
+msgid "Account: %s - %s. The Third Party must be a liquidity journal with the same currency as the booking one."
+msgstr "Compte: %s - %s. Le Tiers doit être un journal de trésorerie avec la même devise que la devise d'enregistrement."
+
+#. module: account_override
+#: code:addons/account_override/account.py:1039
+#, python-format
+msgid "Account: %s - %s. The journal used for the internal transfer must be different from the Journal Entry Journal."
+msgstr "Compte: %s - %s. Le journal utilisé pour le transfert interne doit être différent du journal de l'écriture comptable."
