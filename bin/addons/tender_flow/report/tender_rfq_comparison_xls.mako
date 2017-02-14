@@ -541,7 +541,7 @@
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Details')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${o.details or ''|x}</Data></Cell>
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Currency')}:</Data></Cell>
-    <Cell ss:StyleID="sData"><Data ss:Type="String">${get_same_and_default_currency(o)[1].name or ''|x}</Data></Cell>
+    <Cell ss:StyleID="sData"><Data ss:Type="String">${o.company_id.currency_id.name or ''|x}</Data></Cell>
     <Cell ss:StyleID="sTitle" ss:MergeAcross="1"><Data ss:Type="String">${_('Tender Priority')}:</Data></Cell>
     <Cell ss:StyleID="sData"><Data ss:Type="String">${getSel(o, 'priority')|x}</Data></Cell>
    </Row>
@@ -588,7 +588,11 @@
       %>
     <Cell ss:StyleID="s87"><Data ss:Type="String">${line.get(sup_name, '')|x}</Data></Cell>
     <Cell ss:StyleID="s88"><Data ss:Type="Number">${line.get(sup_price, 0.00)}</Data></Cell>
-    <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
+    % if line.get(sup_confirmed_delivery_date, False):
+        <Cell ss:StyleID="sShortDate"><Data ss:Type="DateTime">${line.get(sup_confirmed_delivery_date, '')|x}T00:00:00.000</Data></Cell>
+    % else:
+        <Cell ss:StyleID="s87"><Data ss:Type="String"></Data></Cell>
+    % endif
     <Cell ss:StyleID="s90"><Data ss:Type="String">${line.get(sup_comment, '')|x}</Data></Cell>
       % endfor
     <Cell ss:StyleID="s91"><Data ss:Type="String">${line.choosen_supplier_id or ''|x}</Data></Cell>

@@ -118,6 +118,30 @@
                   sequence="2"
                   action="action_product_list"
                   parent="base.menu_product" />
+
+        <record id="product_list_line_list_view" model="ir.ui.view">
+            <field name="name">product.list.line.list.view</field>
+            <field name="model">product.list.line</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Products" show_add_button="1" hide_new_button="True">
+                    <field name="name" />
+                    <field name="comment" />
+                </tree>
+            </field>
+        </record>
+
+        <record id="product_list_line_search_view" model="ir.ui.view">
+            <field name="name">product.list.line.search.view</field>
+            <field name="model">product.list.line</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Products">
+                    <field name="ref" />
+                    <field name="desc" />
+                </search>
+            </field>
+        </record>
                   
     </data>
 </openerp>

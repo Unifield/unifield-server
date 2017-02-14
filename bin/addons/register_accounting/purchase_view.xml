@@ -8,6 +8,7 @@
             <field name='model'>purchase.order</field>
             <field name="inherit_id" ref="purchase_override.purchase_order_type_form_view" />
             <field name='type'>form</field>
+            <field name="priority">55</field>
             <field name='arch' type='xml'>
                 <data>
                     <xpath expr="/form/notebook/page[@string='Invoices']//field[@name='invoice_ids']" position="after">

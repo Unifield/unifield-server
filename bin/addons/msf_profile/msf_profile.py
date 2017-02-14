@@ -105,6 +105,60 @@ class patch_scripts(osv.osv):
                     self._logger.warn('sync_server_entity_rel, total of %s objects deleted.' % total_puller_deleted)
                 self._logger.warn('ir.model.data, total of %s objects deleted.' % removed_obj)
 
+    def us_1613_remove_all_track_changes_action(self, cr, uid, *a, **b):
+        '''
+        each time the msf_audittrail is updated, the subscribe() method is
+        called on all rules.
+        This method create a new action for each rule (even if one already
+        exists). This patch will remove all existing 'Track changes' actions
+        (they will be re-created on the next msf_audittrail update and now
+        there is a check to prevent to have more than one).
+        '''
+        obj_action = self.pool.get('ir.actions.act_window')
+        if obj_action:
+            search_result = obj_action.search(cr, uid,
+                                              [('name', '=', 'Track changes'),
+                                               ('domain', '!=', False)])
+            if search_result:
+                obj_action.unlink(cr, uid, search_result)
+                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
+
+                # call subscribe on all rule to recreate the Trach changes action
+                rule_obj = self.pool.get('audittrail.rule')
+                rules_ids = rule_obj.search(cr, uid, [])
+                rule_obj.subscribe(cr,uid, rules_ids)
+
+    def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
+        '''
+        A button "Activate Instance" as be removed from the user interface, but
+        this button had some related updates that are sent to new instance on
+        the first sync and genereate not run. Remove all of this updates on the
+        sync server.
+        '''
+        update_module = self.pool.get('sync.server.update')
+        if update_module:
+            # this script is exucuted on server side only
+            update_to_delete_ids = update_module.search(cr, uid,
+                                                        [('sdref', 'in',
+                                                          ('sync_client_activate_wizard_action',
+                                                           'BAR_sync_clientactivate_entity_wizard_view_activate'))])
+            update_module.unlink(cr, uid, update_to_delete_ids)
+
+    def us_2075_partner_locally_created(self, cr, uid, *a, **b):
+        entity = self.pool.get('sync.client.entity')
+        if entity:
+            identifier = entity.get_entity(cr, uid).identifier
+            if identifier:
+                cr.execute("""update res_partner set locally_created='f' where id in (
+                    select res_id from ir_model_data d
+                    where d.module='sd'
+                        and d.model='res.partner'
+                        and name not in ('msf_doc_import_supplier_tbd', 'order_types_res_partner_local_market')
+                        and name not like '%s%%'
+                    ) """ % (identifier, ))
+                self._logger.warn('%s non local partners updated' % (cr.rowcount,))
+        return True
+
     def setup_security_on_sync_server(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
         if not update_module:
@@ -163,7 +217,7 @@ class patch_scripts(osv.osv):
         """
         from passlib.hash import bcrypt
         users_obj = self.pool.get('res.users')
-        user_ids = users_obj.search(cr, uid, [])
+        user_ids = users_obj.search(cr, uid, [('active', 'in', ('t', 'f'))])
         for user in users_obj.read(cr, uid, user_ids, ['password']):
             original_password = tools.ustr(user['password'])
             # check the password is not already encrypted
@@ -293,6 +347,20 @@ class patch_scripts(osv.osv):
         WHERE model='sync.server.group_type' AND
         name='sync_remote_warehouse_rule_group_type'
         """)
+
+    # XXX do not remove this patch !!! XXX
+    def us_1030_create_pricelist_patch(self, cr, uid, *a, **b):
+        '''
+        Find currencies without associated pricelist and create this price list
+        '''
+        currency_module = self.pool.get('res.currency')
+        # Find currencies without associated pricelist
+        cr.execute("""SELECT id FROM res_currency
+                   WHERE id NOT IN (SELECT currency_id FROM product_pricelist)
+                   AND currency_table_id IS NULL""")
+        curr_ids = cr.fetchall()
+        for cur_id in curr_ids:
+            currency_module.create_associated_pricelist(cr, uid, cur_id[0])
 
     def us_918_patch(self, cr, uid, *a, **b):
         update_module = self.pool.get('sync.server.update')
@@ -1114,6 +1182,13 @@ class patch_scripts(osv.osv):
 
         for smrl in smrl_obj.browse(cr, uid, smrl_to_modify, context=context):
             smrl_obj.write(cr, uid, smrl.id, {'product_state': smrl.product_id.state.code}, context=context)
+        return True
+
+    def us_1721_dates_on_products(self, cr, uid, *a, **b):
+        """
+        Fill the uf_create_date and uf_write_date for existing products
+        """
+        cr.execute("""UPDATE product_product SET uf_write_date = write_date, uf_create_date = create_date""")
         return True
 
 

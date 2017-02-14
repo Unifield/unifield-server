@@ -41,6 +41,7 @@
             <field name="name">account.journal.tree.inherit</field>
             <field name="model">account.journal</field>
             <field name="type">tree</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_account_journal_tree"/>
             <field name="arch" type="xml">
                 <data>

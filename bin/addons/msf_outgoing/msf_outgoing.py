@@ -419,10 +419,17 @@ class shipment(osv.osv):
         """
         partner_obj = self.pool.get('res.partner')
         addr_obj = self.pool.get('res.partner.address')
+        so_obj = self.pool.get('sale.order')
 
         if vals.get('partner_id2') and not context.get('create_shipment'):
-            consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
-            consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+            if vals.get('sale_id'):
+                sale_brw = so_obj.browse(cr, uid, vals['sale_id'], context=context)
+                consignee_partner = sale_brw.partner_id
+                consignee_addr_id = sale_brw.partner_shipping_id.id
+            else:
+                consignee_partner = partner_obj.browse(cr, uid, vals.get('partner_id2'), context=context)
+                consignee_addr_id = partner_obj.address_get(cr, uid, consignee_partner.id)['default']
+
             consignee_addr = addr_obj.browse(cr, uid, consignee_addr_id, context=context)
 
             addr = ''
@@ -649,7 +656,7 @@ class shipment(osv.osv):
                     'backorder_id': picking.id,
                     'shipment_id': False,
                     'move_lines': [],
-                    'description_ppl': description_ppl, # US-803: added the description
+                    'description_ppl': description_ppl or picking.description_ppl, # US-803: added the description
                 }
                 # Update context for copy
                 context.update({
@@ -1264,7 +1271,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -2862,6 +2869,7 @@ class stock_picking(osv.osv):
                                   'partner_id2': partner_id,
                                   'shipment_expected_date': rts,
                                   'shipment_actual_date': rts,
+                                  'sale_id': vals.get('sale_id', False),
                                   'transport_type': sale_id and sale_order_obj.read(cr, uid, sale_id, ['transport_type'], context=context)['transport_type'] or False,
                                   'sequence_id': self.create_sequence(cr, uid, {'name':name,
                                                                                 'code':name,
@@ -4764,6 +4772,7 @@ class stock_move(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
+        solc_obj = self.pool.get('sale.order.line.cancel')
 
         if context is None:
             context = {}
@@ -4787,9 +4796,6 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-#            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
-#                continue
-
             if move.state == 'cancel':
                 continue
 
@@ -4808,6 +4814,12 @@ class stock_move(osv.osv):
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
                     if sol.order_id.procurement_request and pick_cancel:
                         continue
+
+                    # If the line will be sourced in another way, do not cancel the OUT move
+                    if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
+                                       limit=1, order='NO_ORDER', context=context):
+                        continue
+
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
                         sol_obj.add_resource_line(cr, uid, sol.id, False, diff_qty, context=context)
@@ -4992,7 +5004,7 @@ class pack_family_memory(osv.osv):
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
             values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
-            values['state'] = pf_memory['state']
+            values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values
 

@@ -45,8 +45,8 @@
         <field name="analytic_distribution_id">
             % if need_ad and o.analytic_distribution_id:
                 % for ccl in o.analytic_distribution_id.cost_center_lines:
-                <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
-                <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
+                <field name="ad_destination_name">${(ccl.destination_id.code or '')|x}</field>
+                <field name="ad_cost_center_name">${(ccl.analytic_id.code or '')|x}</field>
                 <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
                 <field name="ad_subtotal">${((ccl.percentage/100.00)*o.amount_total or 0.00)|x}</field>
                 % endfor
@@ -97,8 +97,8 @@
                 <field name="analytic_distribution_id">
                 % if need_ad and l.analytic_distribution_id:
                         % for ccl in l.analytic_distribution_id.cost_center_lines:
-                        <field name="ad_destination_name">${(ccl.destination_id.name or '')|x}</field>
-                        <field name="ad_cost_center_name">${(ccl.analytic_id.name or '')|x}</field>
+                        <field name="ad_destination_name">${(ccl.destination_id.code or '')|x}</field>
+                        <field name="ad_cost_center_name">${(ccl.analytic_id.code or '')|x}</field>
                         <field name="ad_percentage">${(ccl.percentage or 0.00)|x}</field>
                         <field name="ad_subtotal">${((ccl.percentage/100.00)*l.price_subtotal or 0.00)|x}</field>
                         % endfor
