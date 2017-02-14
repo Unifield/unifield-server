@@ -2924,6 +2924,11 @@ class sale_order_line(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
+        if context is None:
+            context = {}
+
+        context['procurement_request'] = True
+
         lines_to_log = []
 
         for line in self.browse(cr, uid, ids, context=context):
