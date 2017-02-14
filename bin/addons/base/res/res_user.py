@@ -468,7 +468,7 @@ class users(osv.osv):
             values['login'] = tools.ustr(values['login']).lower()
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
-            xmlrpc_uid_cache = http_server.XMLRPCUserRequestHandler.xmlrpc_uid_cache
+            xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
             if cr.dbname in xmlrpc_uid_cache:
                 xmlrpc_uid_cache[cr.dbname] = None
 
@@ -497,7 +497,7 @@ class users(osv.osv):
 
         if 'log_xmlrpc' in values:
             # clear the cache of the list of uid to log
-            xmlrpc_uid_cache = http_server.XMLRPCUserRequestHandler.xmlrpc_uid_cache
+            xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
             if cr.dbname in xmlrpc_uid_cache:
                 xmlrpc_uid_cache[cr.dbname] = None
 

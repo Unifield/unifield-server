@@ -249,7 +249,6 @@ def init_logger():
             handler = logging.handlers.SysLogHandler('/dev/log')
         format = '%s %s' % (release.description, release.version) \
             + ':%(dbname)s:%(levelname)s:%(name)s:%(message)s'
-
     elif tools.config['logfile']:
         # LogFile Handler
         logf = tools.config['logfile']
@@ -270,6 +269,7 @@ def init_logger():
         # Normal Handler on standard output
         handler = logging.StreamHandler(sys.stdout)
 
+
     if isinstance(handler, logging.StreamHandler) and os.isatty(handler.stream.fileno()):
         formatter = ColoredFormatter(format)
     else:
@@ -285,7 +285,6 @@ def init_logger():
     oeh.setFormatter(DBFormatter(format))
     oeh.setLevel(logging.ERROR)
     logger.addHandler(oeh)
-
     logger.setLevel(int(tools.config['log_level'] or '0'))
 
 

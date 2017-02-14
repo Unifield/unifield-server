@@ -269,27 +269,6 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,
 
     _logger = logging.getLogger('xmlrpc')
 
-    def _dispatch(self, method, params):
-        try:
-            service_name = self.path.split("/")[-1]
-            return self.dispatch(service_name, method, params)
-        except netsvc.OpenERPDispatcherException, e:
-            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
-
-    def handle(self):
-        pass
-
-    def finish(self):
-        pass
-
-    def setup(self):
-        self.connection = dummyconn()
-        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
-
-
-class XMLRPCUserRequestHandler(XMLRPCRequestHandler):
-
-    _logger = logging.getLogger('xmlrpc_users')
     logf = tools.config.get('log_user_xmlrpc_path', False)
     if logf:
         dirname = os.path.dirname(logf)
@@ -338,6 +317,23 @@ class XMLRPCUserRequestHandler(XMLRPCRequestHandler):
                     cr.close()
         return self.xmlrpc_uid_cache[db_name]
 
+    def _dispatch(self, method, params):
+        try:
+            service_name = self.path.split("/")[-1]
+            return self.dispatch(service_name, method, params)
+        except netsvc.OpenERPDispatcherException, e:
+            raise xmlrpclib.Fault(tools.exception_to_unicode(e.exception), e.traceback)
+
+    def handle(self):
+        pass
+
+    def finish(self):
+        pass
+
+    def setup(self):
+        self.connection = dummyconn()
+        self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
+
 
 class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler, gzip_xmlrpclib.GzipXMLRPCRequestHandler):
     rpc_paths = []
@@ -360,11 +356,6 @@ class GzipXMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHand
     def setup(self):
         self.connection = dummyconn()
         self.rpc_paths = map(lambda s: '/%s' % s, netsvc.ExportService._services.keys())
-
-def init_xmlrpc_users_log():
-    # check if path to log xmlrpc users exists
-    if tools.config.get('log_user_xmlrpc_path', False):
-        reg_http_service(HTTPDir('/xmlrpc/', XMLRPCUserRequestHandler))
 
 def init_xmlrpc():
     if tools.config.get('xmlrpc', False):
