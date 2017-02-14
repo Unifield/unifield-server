@@ -287,6 +287,24 @@ def init_logger():
     logger.addHandler(oeh)
     logger.setLevel(int(tools.config['log_level'] or '0'))
 
+    logf = tools.config.get('log_user_xmlrpc_path', False)
+    if logf:
+        _logger = logging.getLogger('xmlrpc')
+        dirname = os.path.dirname(logf)
+        if dirname and not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        interval = int(tools.config.get('log_user_xmlrpc_interval', 7))
+        backup_count = int(tools.config.get('log_user_xmlrpc_backup_count', 52))
+        when = tools.config.get('log_user_xmlrpc_when', 'D')
+        handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
+                backup_count)
+        # create a format for log messages and dates
+        format = '[%(asctime)s]:%(login)s:%(message)s'
+        formatter = logging.Formatter(format)
+        handler.setFormatter(formatter)
+        _logger.addHandler(handler)
+        _logger.propagate = False
+
 
 class Logger(object):
     def __init__(self):

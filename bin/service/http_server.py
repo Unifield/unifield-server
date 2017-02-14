@@ -269,22 +269,6 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,FixSendError,HttpLogHandler,
 
     _logger = logging.getLogger('xmlrpc')
 
-    logf = tools.config.get('log_user_xmlrpc_path', False)
-    if logf:
-        dirname = os.path.dirname(logf)
-        if dirname and not os.path.isdir(dirname):
-            os.makedirs(dirname)
-        interval = int(tools.config.get('log_user_xmlrpc_interval', 7))
-        backup_count = int(tools.config.get('log_user_xmlrpc_backup_count', 52))
-        when = tools.config.get('log_user_xmlrpc_when', 'D')
-        handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
-                backup_count)
-        # create a format for log messages and dates
-        format = '[%(asctime)s]:%(login)s:%(message)s'
-        formatter = logging.Formatter(format)
-        handler.setFormatter(formatter)
-        _logger.addHandler(handler)
-        _logger.propagate = False
     xmlrpc_uid_cache = {}
 
     def get_uid_list2log(self, db_name):
