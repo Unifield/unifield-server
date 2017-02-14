@@ -259,6 +259,10 @@ class return_pack_shipment_family_processor(osv.osv):
             readonly=True,
             multi='pack_info',
         ),
+        'comment': fields.text(
+            string='Comment',
+            readonly=True,
+        ),
         'integrity_status': fields.selection(
             string=' ',
             selection=[

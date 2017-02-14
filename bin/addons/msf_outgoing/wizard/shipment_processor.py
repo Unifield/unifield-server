@@ -193,6 +193,7 @@ class shipment_processor(osv.osv):
                     'draft_packing_id': family.draft_packing_id and family.draft_packing_id.id or False,
                     'description_ppl': family.description_ppl,
                     'ppl_id': family.ppl_id and family.ppl_id.id or False,
+                    'comment': family.comment,
                 }
 
                 family_obj.create(cr, uid, family_vals, context=context)
@@ -346,6 +347,10 @@ class shipment_family_processor(osv.osv):
             store=False,
             readonly=True,
             multi='pack_info',
+        ),
+        'comment': fields.text(
+            string='Comment',
+            readonly=True,
         ),
         'integrity_status': fields.selection(
             string=' ',
