@@ -71,38 +71,22 @@ class patch_scripts(osv.osv):
                     'Error',
                     err_msg,
                 )
-            else:
+            elif server_model_white_set:
                 # get model list
                 cr.execute('SELECT DISTINCT(model) FROM ir_model_data')
                 model_list = [x and x[0] for x in cr.fetchall()]
                 model_to_remove = (set(model_list).difference(server_model_white_set))
-                puller_log_obj = self.pool.get('sync.server.puller_logs')
-                total_puller_deleted = 0
+                import pprint
+                pp = pprint.PrettyPrinter(indent=2)
+                model_to_remove_pp = pp.pformat(model_to_remove)
+                self._logger.warn('%s models should not be part of ir_model_data.' % len(model_to_remove))
+                self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
+
                 for model in model_to_remove:
-                    cr.execute("DELETE FROM ir_model_data where model='%s' RETURNING id" % model)
+                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' RETURNING id" % model)
                     current_count = cr.rowcount
-                    deleted_ids = [x and x[0] for x in cr.fetchall()]
-
-                    # if this script is executed on server side, also delete
-                    # related sync_server_entity_rel
-                    if puller_log_obj:
-                        total_ids = len(deleted_ids)
-                        start_chunk = 0
-                        chunk_size = 1000
-                        puller_deleted = 0
-                        while start_chunk < total_ids:
-                            ids_chunk = deleted_ids[start_chunk:start_chunk+chunk_size]
-                            cr.execute("""DELETE FROM sync_server_entity_rel
-                            WHERE update_id in %s""", (tuple(ids_chunk),))
-                            start_chunk += chunk_size
-                            puller_deleted += cr.rowcount
-                        self._logger.warn('sync_server_entity_rel, model=%s, %s objects deleted.' % (model, puller_deleted))
-                        total_puller_deleted += puller_deleted
-
                     removed_obj += current_count
                     self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
-                if puller_log_obj:
-                    self._logger.warn('sync_server_entity_rel, total of %s objects deleted.' % total_puller_deleted)
                 self._logger.warn('ir.model.data, total of %s objects deleted.' % removed_obj)
 
     def us_1613_remove_all_track_changes_action(self, cr, uid, *a, **b):

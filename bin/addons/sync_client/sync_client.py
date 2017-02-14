@@ -516,20 +516,30 @@ class Entity(osv.osv):
         model_field_dict = {}
 
         # search for model of sync_server.sync_rule
-        rule_module = self.pool.get('sync.client.rule')
+        if self.pool.get('sync_server.sync_rule'):
+            rule_module = self.pool.get('sync_server.sync_rule')
+            model_field_name = 'model_id'
+        else:
+            rule_module = self.pool.get('sync.client.rule')
+            model_field_name = 'model'
         obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
-        for obj in rule_module.read(cr, uid, obj_ids, ['model', 'included_fields']):
-            if obj['model'] not in model_field_dict:
-                model_field_dict[obj['model']] = set()
-            model_field_dict[obj['model']].update(eval(obj['included_fields']))
+        for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'included_fields']):
+            if obj[model_field_name] not in model_field_dict:
+                model_field_dict[obj[model_field_name]] = set()
+            model_field_dict[obj[model_field_name]].update(eval(obj['included_fields']))
 
         # search for model of sync_server.message_rule
-        rule_module = self.pool.get('sync.client.message_rule')
+        if self.pool.get('sync_server.message_rule'):
+            rule_module = self.pool.get('sync_server.message_rule')
+            model_field_name = 'model_id'
+        else:
+            rule_module = self.pool.get('sync.client.message_rule')
+            model_field_name = 'model'
         obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
-        for obj in rule_module.read(cr, uid, obj_ids, ['model', 'arguments']):
-            if obj['model'] not in model_field_dict:
-                model_field_dict[obj['model']] = set()
-            model_field_dict[obj['model']].update(eval(obj['arguments']))
+        for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'arguments']):
+            if obj[model_field_name] not in model_field_dict:
+                model_field_dict[obj[model_field_name]] = set()
+            model_field_dict[obj[model_field_name]].update(eval(obj['arguments']))
 
         model_set = set(model_field_dict.keys())
 
