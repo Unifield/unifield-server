@@ -192,9 +192,9 @@ def revprox(redir_port):
             # revprox exited with an error, so tell cherrypy to exit too.
             # We will be restarted by the system (see setup.nsi: "sc failure...")
             cherrypy.engine.stop()
-            # However, if it gets stuck on "Bus STOPPED", exit to be sure
+            # However, if it gets stuck on "Bus STOPPED", use exit to be sure
             time.sleep(5)
-            sys.exit(1)
+            os._exit(1)
         return
 
     thread = threading.Thread(target=logRead, args=[proc])
