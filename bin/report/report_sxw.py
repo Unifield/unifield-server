@@ -268,7 +268,7 @@ class rml_parse(object):
                 if char in new_name:
                     new_name = new_name.replace(char, replacement_char)
 
-        return new_namei[:31]
+        return new_name[:31]
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
