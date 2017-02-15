@@ -428,17 +428,19 @@ class account_move_line(osv.osv):
             credit = 0.0
             debit_currency = 0.0
             credit_currency = 0.0
+            fxa_line_ids = []
             for rec_line in rec_lines:
                 debit += rec_line.debit
                 credit += rec_line.credit
                 debit_currency += rec_line.debit_currency
                 credit_currency += rec_line.credit_currency
+                if rec_line.is_addendum_line:
+                    fxa_line_ids.append(rec_line.id)
             balanced_in_booking = abs(debit_currency - credit_currency) < 10**-3
             balanced_in_fctal = abs(debit - credit) < 10**-3
             if balanced_in_booking and not balanced_in_fctal:
                 raise osv.except_osv(_('Warning !'),
                                      _("You can't unreconcile these lines because the FX entry is still missing."))
-            fxa_line_ids = [rl.id for rl in rec_lines if rl.is_addendum_line]
             if fxa_line_ids:
                 # if there is a FXA the unreconciliation must be done in the same instance as the reconciliation
                 self._check_instance(cr, uid, reconcile_id, context)
