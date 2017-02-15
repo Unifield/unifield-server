@@ -46,6 +46,10 @@ class ocp_matching_export_wizard(osv.osv_memory):
         """
         if context is None:
             context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
         wizard = self.browse(cr, uid, ids[0], context=context)
         data = {}
         data['form'] = {}
@@ -69,6 +73,20 @@ class ocp_matching_export_wizard(osv.osv_memory):
         selected_period = period and strftime('%Y%m', strptime(period.date_start, '%Y-%m-%d')) or ''
         current_time = time.strftime('%d%m%y%H%M%S')
         data['target_filename'] = '%s_%s_%s_Check on reconcilable entries' % (instance_code, selected_period, current_time)
-        return {'type': 'ir.actions.report.xml', 'report_name': 'hq.ocp.matching', 'datas': data}
+
+        background_id = self.pool.get('memory.background.report').create(cr, uid, {
+            'file_name': data['target_filename'],
+            'report_name': 'hq.ocp.matching',
+        }, context=context)
+        context['background_id'] = background_id
+        context['background_time'] = 2
+
+        data['context'] = context
+        return {
+            'type': 'ir.actions.report.xml',
+            'report_name': 'hq.ocp.matching',
+            'datas': data,
+            'context': context,
+        }
 
 ocp_matching_export_wizard()

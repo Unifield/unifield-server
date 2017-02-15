@@ -29,18 +29,16 @@ from osv.orm import except_orm
 import pooler
 import tools
 from tools.translate import _
-from threading import Lock
-import logging
 
 class procurement_order(osv.osv):
     _inherit = 'procurement.order'
-    
+
     def _hook_request_vals(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the request values
         '''
         return kwargs['request_vals']
-    
+
     def _hook_add_purchase_created(self, cr, uid, *args, **kwargs):
         '''
         Returns the created docs in report
@@ -59,7 +57,6 @@ class procurement_order(osv.osv):
         @param context: A standard dictionary for contextual values
         @return:  Dictionary of values
         '''
-        logger = logging.getLogger('procure.confirm')
 
         if context is None:
             context = {}
@@ -89,7 +86,7 @@ class procurement_order(osv.osv):
             report_later = 0
             purchase_ids = []
             while True:
-                cr.execute("select id from procurement_order where state='confirmed' and procure_method='make_to_order' order by priority,date_planned limit 500 offset %s", (offset,))
+                cr.execute("select id from procurement_order where state='confirmed' and procure_method='make_to_order' order by priority,date_planned, id limit 500 offset %s", (offset,))
                 ids = map(lambda x: x[0], cr.fetchall())
                 # Put a lock on procurement.order
                 procurement_obj.write(cr, uid, ids, {}, context=context)
@@ -97,7 +94,7 @@ class procurement_order(osv.osv):
                     if maxdate >= proc.date_planned:
                         try:
                             wf_service.trg_validate(uid, 'procurement.order', proc.id, 'button_check', cr)
-                        except except_orm, e:
+                        except except_orm:
                             ids.remove(proc.id)
                             continue
                     else:
@@ -106,8 +103,8 @@ class procurement_order(osv.osv):
                 for proc in procurement_obj.browse(cr, uid, ids, context=context):
                     if proc.state == 'exception':
                         report.append('PROC %d: on order - %3.2f %-5s - %s' % \
-                                (proc.id, proc.product_qty, proc.product_uom.name,
-                                    proc.product_id.name))
+                                      (proc.id, proc.product_qty, proc.product_uom.name,
+                                       proc.product_id.name))
                         report_except += 1
                     elif proc.purchase_id:
                         purchase_ids.append(proc.id)
@@ -133,8 +130,8 @@ class procurement_order(osv.osv):
                 for proc in procurement_obj.browse(cr, uid, report_ids, context=context):
                     if proc.state == 'exception':
                         report.append('PROC %d: from stock - %3.2f %-5s - %s' % \
-                                (proc.id, proc.product_qty, proc.product_uom.name,
-                                    proc.product_id.name,))
+                                      (proc.id, proc.product_qty, proc.product_uom.name,
+                                       proc.product_id.name,))
                         report_except += 1
                 if use_new_cursor:
                     cr.commit()
@@ -159,10 +156,10 @@ class procurement_order(osv.osv):
         '''
                 summary += '\n'.join(report)
                 request_vals = {'name': "Procurement Processing Report.",
-                        'act_from': uid,
-                        'act_to': uid,
-                        'body': summary,
-                    }
+                                'act_from': uid,
+                                'act_to': uid,
+                                'body': summary,
+                                }
                 self._hook_request_vals(cr, uid, request_vals=request_vals, context=context)
                 request.create(cr, uid, request_vals)
 
@@ -222,10 +219,10 @@ class procurement_order(osv.osv):
                     'product_uom': product.uom_id.id,
                     'location_id': location_id,
                     'procure_method': 'make_to_order',
-                    })
+                })
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_confirm', cr)
                 wf_service.trg_validate(uid, 'procurement.order', proc_id, 'button_check', cr)
-                
+
     def _do_create_proc_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         hook to update defaults data
@@ -241,7 +238,7 @@ class procurement_order(osv.osv):
         assert op, 'missing op'
         assert qty, 'missing qty'
         assert newdate, 'missing newdate'
-        
+
         values = {'name': op.name,
                   'date_planned': newdate.strftime('%Y-%m-%d'),
                   'product_id': opl.product_id.id,
@@ -251,9 +248,9 @@ class procurement_order(osv.osv):
                   'procure_method': 'make_to_order',
                   'origin': op.name,
                   }
-        
+
         return values
-    
+
     def _hook_product_type_consu(self, cr, uid, *args, **kwargs):
         '''
         kwargs['op'] is the current min/max rule
@@ -263,7 +260,7 @@ class procurement_order(osv.osv):
         return opl.product_id.type not in ('consu')
 
     def _procure_orderpoint_confirm(self, cr, uid, automatic=False,
-            use_new_cursor=False, context=None, user_id=False):
+                                    use_new_cursor=False, context=None, user_id=False):
         '''
         Create procurement based on Orderpoint
         use_new_cursor: False or the dbname
@@ -317,9 +314,9 @@ class procurement_order(osv.osv):
                             continue
 
                     prods = location_obj._product_virtual_get(cr, uid,
-                            op.location_id.id, [opl.product_id.id],
-                            {'uom': opl.product_uom_id.id},
-                            ['confirmed', 'waiting', 'assigned', 'done', 'hidden'])[opl.product_id.id]
+                                                              op.location_id.id, [opl.product_id.id],
+                                                              {'uom': opl.product_uom_id.id},
+                                                              ['confirmed', 'waiting', 'assigned', 'done', 'hidden'])[opl.product_id.id]
 
                     if prods < opl.product_min_qty:
                         qty = max(opl.product_min_qty, opl.product_max_qty)-prods
@@ -329,28 +326,27 @@ class procurement_order(osv.osv):
                             qty += opl.qty_multiple - reste
 
                         newdate = datetime.today() + relativedelta(
-                                days = int(opl.product_id.seller_delay))
+                            days = int(opl.product_id.seller_delay))
                         if qty <= 0:
                             continue
                         if self._hook_product_type_consu(cr, uid, op=op, opl=opl):
-    #                    if opl.product_id.type not in ('consu'):
+                            #                    if opl.product_id.type not in ('consu'):
                             if opl.procurement_id and \
-                                opl.procurement_id.state == 'draft':
+                                    opl.procurement_id.state == 'draft':
                                 # Check draft procurement related to this order point line
-                                pro_ids = [x.id for x in op.procurement_draft_ids]
                                 cr.execute('select id, product_qty from procurement_order where id = %s order by product_qty desc', str(opl.procurement_id.id))
                                 procure_datas = cr.dictfetchall()
                                 to_generate = qty
                                 for proc_data in procure_datas:
                                     if to_generate >= proc_data['product_qty']:
                                         wf_service.trg_validate(uid,
-                                            'procurement.order',
-                                            proc_data['id'], 'button_confirm',
-                                            cr)
+                                                                'procurement.order',
+                                                                proc_data['id'], 'button_confirm',
+                                                                cr)
                                         procurement_obj.write(cr, uid,
-                                            [proc_data['id']],
-                                            {'origin': op.name},
-                                            context=context)
+                                                              [proc_data['id']],
+                                                              {'origin': op.name},
+                                                              context=context)
                                         to_generate -= proc_data['product_qty']
                                     if not to_generate:
                                         break
@@ -358,21 +354,21 @@ class procurement_order(osv.osv):
 
                         if qty:
                             values = self._do_create_proc_hook(cr, uid, ids,
-                                context=context, op=op, opl=opl, qty=qty,
-                                newdate=newdate)
+                                                               context=context, op=op, opl=opl, qty=qty,
+                                                               newdate=newdate)
                             proc_id = procurement_obj.create(cr, uid, values,
-                                context=context)
+                                                             context=context)
                             created_proc.append(proc_id)
                             wf_service.trg_validate(uid, 'procurement.order',
-                                proc_id, 'button_confirm', cr)
+                                                    proc_id, 'button_confirm', cr)
                             wf_service.trg_validate(uid, 'procurement.order',
-                                proc_id, 'button_check', cr)
+                                                    proc_id, 'button_check', cr)
                             orderpoint_line_obj.write(cr, uid, [opl.id],
-                                    {'procurement_id': proc_id},
-                                    context=context)  # order point line procurement created
+                                                      {'procurement_id': proc_id},
+                                                      context=context)  # order point line procurement created
                             orderpoint_obj.write(cr, uid, [op.id],
-                                    {'procurement_id': proc_id},
-                                    context=context)  # header level log of last procurement created
+                                                 {'procurement_id': proc_id},
+                                                 context=context)  # header level log of last procurement created
             offset += len(ids)
             if use_new_cursor:
                 cr.commit()
@@ -386,8 +382,8 @@ class procurement_order(osv.osv):
         for proc in procurement_obj.browse(cr, uid, created_proc):
             if proc.state == 'exception':
                 report.append('PROC %d: from stock - %3.2f %-5s - %s' % \
-                    (proc.id, proc.product_qty, proc.product_uom.name,
-                     proc.product_id.name,))
+                              (proc.id, proc.product_qty, proc.product_uom.name,
+                               proc.product_id.name,))
                 report_except += 1
             elif proc.purchase_id:
                 created_doc += "    * %s => %s \n" % (proc.name, proc.purchase_id.name)

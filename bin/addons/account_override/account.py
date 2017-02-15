@@ -341,6 +341,22 @@ class account_account(osv.osv):
                 raise osv.except_osv(_('Error'), _('Filter on field %s not implemented! %s') % (field_names, x,))
         return arg
 
+    def _get_inactivated_for_dest(self, cr, uid, ids, field_name, args, context=None):
+        '''
+        Is this account inactive for the destination given in context
+        '''
+        ret = {}
+        for id in ids:
+            ret[id] = False
+        if context and context.get('destination_id'):
+            link_obj = self.pool.get('account.destination.link')
+            inactive_link_ids = link_obj.search(cr, uid, [('disabled', '=', True), ('destination_id', '=', context.get('destination_id')),
+                                                          ('account_id', 'in', ids)], context=context)
+            if inactive_link_ids:
+                for link in link_obj.read(cr, uid, inactive_link_ids, ['account_id'], context=context):
+                    ret[link['account_id'][0]] = True
+        return ret
+
     _columns = {
         'name': fields.char('Name', size=128, required=True, select=True, translate=True),
         'activation_date': fields.date('Active from', required=True),
@@ -377,6 +393,8 @@ class account_account(osv.osv):
         'has_partner_type_ex': fields.boolean('Employee Expat'),  # Expat
         'has_partner_type_book': fields.boolean('Journal'),  # transfer journal
         'has_partner_type_empty': fields.boolean('Empty'),  # US-1307 empty
+
+        'inactivated_for_dest': fields.function(_get_inactivated_for_dest, method=True, type='boolean', string='Is inactive for destination given in context'),
     }
 
     _defaults = {
@@ -458,17 +476,11 @@ class account_account(osv.osv):
                 account_ids += tmp_ids
         return account_ids
 
-    def _check_date(self, vals, context=None):
-        if context is None:
-            context = {}
-
-        if 'inactivation_date' in vals and vals['inactivation_date'] is not False:
-            if vals['inactivation_date'] <= datetime.date.today().strftime('%Y-%m-%d') and not context.get('sync_update_execution', False):
-                # validate the date (must be > today)
-                raise osv.except_osv(_('Warning !'), _('You cannot set an inactivity date lower than tomorrow!'))
-            elif 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
+    def _check_date(self, vals):
+        if 'inactivation_date' in vals and vals['inactivation_date'] is not False \
+                and 'activation_date' in vals and not vals['activation_date'] < vals['inactivation_date']:
                 # validate that activation date
-                raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
+            raise osv.except_osv(_('Warning !'), _('Activation date must be lower than inactivation date!'))
 
     def _check_allowed_partner_type(self, vals):
         '''
@@ -486,14 +498,14 @@ class account_account(osv.osv):
             raise osv.except_osv(_('Warning !'), _('At least one Allowed Partner type must be selected.'))
 
     def create(self, cr, uid, vals, context=None):
-        self._check_date(vals, context=context)
+        self._check_date(vals)
         self._check_allowed_partner_type(vals)
         return super(account_account, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
-        self._check_date(vals, context=context)
+        self._check_date(vals)
         self._check_allowed_partner_type(vals)
         return super(account_account, self).write(cr, uid, ids, vals, context=context)
 
@@ -614,6 +626,18 @@ class account_account(osv.osv):
                     errors.append(_('%s - %s') % (r.code, r.name))
                 raise osv.except_osv(_('Error'), "\n- ".join(errors))
         return res
+
+    def activate_destination(self, cr, uid, ids, context=None):
+        if not context or not context.get('destination_id'):
+            raise osv.except_osv(_('Error'), _('Activate destination: missing account in context'))
+
+        link = self.pool.get('account.destination.link')
+        link_ids = link.search(cr, uid,
+                               [('account_id', 'in', ids), ('destination_id', '=', context.get('destination_id')), ('disabled', '=', True)],
+                               context=context)
+        if link_ids:
+            link.write(cr, uid, link_ids, {'disabled': False}, context=context)
+        return True
 
 account_account()
 
@@ -1027,10 +1051,28 @@ class account_move(osv.osv):
                     raise osv.except_osv(_('Warning'), _('You cannot post entries in a non-opened period: %s') % (m.period_id.name))
                 prev_currency_id = False
                 for ml in m.line_id:
+                    # Check that the currency and type of the (journal) third party is correct
+                    # in case of an "Internal Transfer" account
+                    type_for_reg = ml.account_id.type_for_register
+                    curr_aml = ml.currency_id
+                    partner_journal = ml.transfer_journal_id
+                    is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
+                    if type_for_reg == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != curr_aml.id):
+                        raise osv.except_osv(_('Warning'),
+                                             _('Account: %s - %s. The Third Party must be a liquidity journal with the same '
+                                               'currency as the booking one.') % (ml.account_id.code, ml.account_id.name))
+                    elif type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == curr_aml.id):
+                        raise osv.except_osv(_('Warning'),
+                                             _('Account: %s - %s. The Third Party must be a liquidity journal with a currency '
+                                               'different from the booking one.') % (ml.account_id.code, ml.account_id.name))
+                    if is_liquidity and m.journal_id and m.journal_id.id == partner_journal.id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('Account: %s - %s. The journal used for the internal transfer must be different from the '
+                                               'Journal Entry Journal.') % (ml.account_id.code, ml.account_id.name))
                     if not prev_currency_id:
-                        prev_currency_id = ml.currency_id.id
+                        prev_currency_id = curr_aml.id
                         continue
-                    if ml.currency_id.id != prev_currency_id:
+                    if curr_aml.id != prev_currency_id:
                         raise osv.except_osv(_('Warning'), _('You cannot have two different currencies for the same Journal Entry!'))
         return super(account_move, self).button_validate(cr, uid, ids, context=context)
 

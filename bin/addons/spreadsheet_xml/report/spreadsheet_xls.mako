@@ -62,11 +62,11 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Row>
   % for h in get_headers():
     <% result = h[2](row, index, objects) %>
-    % if h[1] == 'date' and result and result != 'False':
+    % if h[1] == 'date' and isDate(result):
         <Cell ss:StyleID="sShortDate">
             <Data ss:Type="DateTime">${result|n}T00:00:00.000</Data>
         </Cell>
-    % elif h[1] == 'datetime' and result and result != 'False':
+    % elif h[1] == 'datetime' and isDateTime(result):
         <Cell ss:StyleID="sDate">
             <Data ss:Type="DateTime">${("%s.000"%result.replace(' ','T'))|n}</Data>
         </Cell>

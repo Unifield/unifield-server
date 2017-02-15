@@ -41,6 +41,8 @@
         'security/ir.model.access.csv',
         'report/report_stopped_products_view.xml',
         'report/report_stopped_products_report.xml',
+        'report/report_inconsistencies_view.xml',
+        'report/report_inconsistencies_report.xml',
         'automated_import_data.xml',
     ],
     'demo_xml': [

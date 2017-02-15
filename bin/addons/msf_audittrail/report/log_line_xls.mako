@@ -81,7 +81,7 @@
     % for line in get_lines(order_id(objects[0].id)):
     <Row>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.log or '')|x}</Data></Cell>
-        % if line.timestamp:
+        % if isDateTime(line.timestamp):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.timestamp[:10]|n}T${line.timestamp[11:]}.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
