@@ -76284,3 +76284,32 @@ msgstr "Compte: %s - %s. Le Tiers doit être un journal de trésorerie avec la m
 #, python-format
 msgid "Account: %s - %s. The journal used for the internal transfer must be different from the Journal Entry Journal."
 msgstr "Compte: %s - %s. Le journal utilisé pour le transfert interne doit être différent du journal de l'écriture comptable."
+
+#. modules: register_accounting, stock_override, supplier_catalogue, financing_contract, consumption_calculation, msf_audittrail, msf_doc_import, msf_supply_doc_export
+#: report:addons/consumption_calculation/report/report_incoming_consumption_xls.mako:56
+#: report:addons/consumption_calculation/report/report_real_consumption_xls.mako:56
+#: report:addons/financing_contract/report/financing_interactive_xls.mako:335
+#: report:addons/financing_contract/report/project_expenses_xls.mako:341
+#: report:addons/msf_audittrail/report/log_line_xls.mako:58
+#: report:addons/msf_doc_import/report/import_generic_template.mako:73
+#: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:81
+#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:82
+#: report:addons/msf_supply_doc_export/report/product_list_xls.mako:46
+#: report:addons/msf_supply_doc_export/report/report_incoming_shipment_xls.mako:59
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:57
+#: report:addons/msf_supply_doc_export/report/report_internal_request_xls.mako:47
+#: report:addons/msf_supply_doc_export/report/report_purchase_order_xls.mako:56
+#: report:addons/msf_supply_doc_export/report/report_request_for_quotation_xls.mako:57
+#: report:addons/msf_supply_doc_export/report/report_sale_order_xls.mako:56
+#: report:addons/msf_supply_doc_export/report/report_tender_xls.mako:56
+#: report:addons/msf_supply_doc_export/report/report_validated_purchase_order_xls.mako:63
+#: report:addons/msf_supply_doc_export/report/stock_cost_reevaluation_xls.mako:56
+#: report:addons/msf_supply_doc_export/report/stock_initial_inventory_xls.mako:55
+#: report:addons/msf_supply_doc_export/report/stock_inventory_xls.mako:55
+#: report:addons/register_accounting/report/cheque_inventory_xls.mako:113
+#: report:addons/register_accounting/report/open_advances_xls.mako:111
+#: report:addons/register_accounting/report/pending_cheque_xls.mako:163
+#: report:addons/stock_override/report/stock_card_report_xls.mako:92
+#: report:addons/supplier_catalogue/report/report_supplier_catalogue_lines_xls.mako:56
+msgid "Sheet 1"
+msgstr "Feuille 1"
