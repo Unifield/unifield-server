@@ -416,7 +416,7 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
-        reconcile_ids = [x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id']]
+        reconcile_ids = set(x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id'])
         fxa_set = set()
         for reconcile_id in reconcile_ids:
             # US-1784 Prevent unreconciliation if it is balanced in booking but unbalanced in functional
