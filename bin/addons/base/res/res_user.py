@@ -758,6 +758,8 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
                 users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
                 users_added = list(set(vals['users'][0][2]).difference(user_ids))
                 user_obj = self.pool.get('res.users')
+                if not hasattr(user_obj, 'check_audit'):
+                    return
                 audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
                 if users_deleted:
                     previous_values = [x for x in previous_values if x['id'] in users_deleted]
