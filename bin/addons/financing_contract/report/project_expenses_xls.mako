@@ -338,7 +338,7 @@
   </Styles>
 
   % for o in objects:
-  <Worksheet ss:Name="${"%s"%( o.code and o.code.replace('/', '_') +'_'+str(o.id) or 'Sheet1')|x}">
+  <Worksheet ss:Name="${"%s"%sanitizeWSName( o.code and o.code.replace('/', '_') +'_'+str(o.id) or _('Sheet 1'))|x}">
 
     <Table x:FullColumns="1" x:FullRows="1">
       <Column ss:AutoFitWidth="0" ss:Width="102.75"/>

@@ -89,7 +89,7 @@ def parse_origin(origin):
     return ''
 %>
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.location_id and o.location_id.name or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s" % sanitizeWSName(o.location_id and o.location_id.name or _('Sheet 1'))|x}">
 <Table ss:ExpandedColumCount="8" x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="0" ss:Width="73.00" />
 <Column ss:AutoFitWidth="0" ss:Width="88.50" />

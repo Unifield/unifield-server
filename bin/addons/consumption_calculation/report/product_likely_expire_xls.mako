@@ -160,7 +160,7 @@ if cols < 0:
 <%
 worksheet_name = d_str.replace('/', '-')
 %>
-<ss:Worksheet ss:Name="${worksheet_name}">
+<ss:Worksheet ss:Name="${sanitizeWSName(worksheet_name)}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="120" />
 <Column ss:AutoFitWidth="1" ss:Width="250" />

@@ -399,7 +399,7 @@
     </WorksheetOptions>
   </Worksheet>
 % for o in objects:
-  <Worksheet ss:Name="${o.period_id.name|x}, ${o.journal_id.code|x}">
+  <Worksheet ss:Name="${sanitizeWSName(o.period_id.name)|x}, ${sanitizeWSName(o.journal_id.code)|x}">
     <Names>
       <NamedRange ss:Name="Print_Titles" ss:RefersTo="=!R11"/>
     </Names>

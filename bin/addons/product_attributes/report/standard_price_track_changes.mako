@@ -55,7 +55,7 @@
         </Style>
     </Styles>
     % for o in objects:
-    <ss:Worksheet ss:Name="${o.default_code|x}">
+    <ss:Worksheet ss:Name="${sanitizeWSName(o.default_code)|x}">
         <Table>
             <Column ss:AutoFitWidth="1" ss:Width="120" />
             <Column ss:AutoFitWidth="1" ss:Width="120" />

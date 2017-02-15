@@ -54,7 +54,7 @@
 ## we loop over the purchase_order so "objects" == purchase_order 
 % for o in objects:
 ## we loop over the purchase_order_line
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.name.split('/')[-1] or _('Sheet 1'))|x}">
 ## definition of the columns' size
 <% nb_of_columns = 8 %>
 <Table x:FullColumns="1" x:FullRows="1">

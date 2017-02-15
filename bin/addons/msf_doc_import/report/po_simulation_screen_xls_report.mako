@@ -79,7 +79,7 @@
   </Style>
 </Styles>
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.order_id.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="0">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.order_id.name.split('/')[-1] or _('Sheet 1'))|x}" ss:Protected="0">
 ## definition of the columns' size
 <% nb_of_columns = 17 %>
 <Table x:FullColumns="1" x:FullRows="1">

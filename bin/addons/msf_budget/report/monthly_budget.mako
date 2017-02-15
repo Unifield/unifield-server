@@ -202,7 +202,7 @@
 
 <!-- Browse each budget -->
 % for o in objects:
-<ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
+<ss:Worksheet ss:Name="${sanitizeWSName(sheet_name(o.name and o.name.split('/')[-1]))|x}">
 
   <Table x:FullColumns="1" x:FullRows="1">
     <Column ss:Width="80.75"/>

@@ -332,7 +332,7 @@
 </Styles>
 
 % for o in objects:
-<Worksheet ss:Name="${"%s"%(o.code.replace('/', '_') or 'Sheet1')|x}">
+<Worksheet ss:Name="${"%s"%sanitizeWSName(o.code.replace('/', '_') or _('Sheet 1'))|x}">
 <Table >
 <Column ss:AutoFitWidth="0" ss:Width="93.75"/>
 <Column ss:AutoFitWidth="0" ss:Width="87"/>

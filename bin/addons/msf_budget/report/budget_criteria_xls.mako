@@ -679,7 +679,7 @@
 <% company_currency = companyCurrency() %>
 
 % for o in objects:
-<ss:Worksheet ss:Name="${sheet_name(o.name and o.name.split('/')[-1])|x}">
+<ss:Worksheet ss:Name="${sanitizeWSName(sheet_name(o.name and o.name.split('/')[-1]))|x}">
 
 <% cost_center_ids = getCostCenters(o.cost_center_id.id) %>
 <% date_start = o.fiscalyear_id.date_start.val %>

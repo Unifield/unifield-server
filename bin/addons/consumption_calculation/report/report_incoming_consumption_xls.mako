@@ -53,7 +53,7 @@
 </Styles>
 ## ==================================== we loop over the stock_picking so "objects" == stock_picking  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.name.replace('/', '_') or _('Sheet 1'))|x}">
 
 ## definition of the columns' size
 <% nb_of_columns = 7 %>

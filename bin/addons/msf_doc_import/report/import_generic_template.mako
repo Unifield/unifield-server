@@ -70,7 +70,7 @@
         </Style>
     </Styles>
 
-    <ss:Worksheet ss:Name="${data.get('model_name', _('Sheet 1'))|x}" ss:Protected="0">
+    <ss:Worksheet ss:Name="${sanitizeWSName(data.get('model_name', _('Sheet 1')))|x}" ss:Protected="0">
 
         <Table x:FullColumns="1" x:FullRows="1">
 

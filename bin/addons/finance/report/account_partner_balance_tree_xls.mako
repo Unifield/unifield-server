@@ -206,7 +206,7 @@ if p_entries[0].account_type == 'payable':
 else:
     worsheet_name = 'Receivable Accounts'
 %>
-<Worksheet ss:Name="${worsheet_name}">
+<Worksheet ss:Name="${sanitizeWSName(worsheet_name)}">
 <%
     col_count = 9
     if data['model'] == 'account.account':

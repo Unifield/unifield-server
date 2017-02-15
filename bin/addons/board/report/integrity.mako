@@ -61,7 +61,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
     <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
 </Style>
 </Styles>
-<Worksheet ss:Name="${sheet_name(_t(get_title()))}">
+<Worksheet ss:Name="${sanitizeWSName(sheet_name(_t(get_title())))}">
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="150" />
 <Column ss:AutoFitWidth="1" ss:Width="150" />

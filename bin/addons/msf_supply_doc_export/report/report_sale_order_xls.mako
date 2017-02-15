@@ -53,7 +53,7 @@
 </Styles>
 ##  we loop over the sale_order so "objects" == sale_order
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.name.split('/')[-1] or _('Sheet 1'))|x}">
 
 ## definition of the columns' size
 <% nb_of_columns = 8 %>

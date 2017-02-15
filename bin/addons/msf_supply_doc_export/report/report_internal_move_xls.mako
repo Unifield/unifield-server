@@ -54,7 +54,7 @@
 ## we loop over the stock_picking sp "objects" == stock_picking
 % for o in objects:
 ## we loop over the stock_move
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.name.split('/')[-1] or _('Sheet 1'))|x}">
 ## definition of the columns' size
 <% nb_of_columns = 6 %>
 <Table x:FullColumns="1" x:FullRows="1">

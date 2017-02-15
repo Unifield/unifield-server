@@ -60,7 +60,7 @@
 </Styles>
 ## ==================================== we loop over the purchase_order "objects" == purchase_order  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.split('/')[-1] or 'Sheet1')|x}" ss:Protected="1">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.name.split('/')[-1] or _('Sheet 1'))|x}" ss:Protected="1">
     ## definition of the columns' size
 <% max_ad_lines = maxADLines(o) %>
 <% nb_of_columns = 17 %>

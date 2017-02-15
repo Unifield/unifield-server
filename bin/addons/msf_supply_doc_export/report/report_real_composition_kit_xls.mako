@@ -53,7 +53,7 @@
 </Styles>
 ## ==================================== we loop over the composition_kit so "objects" == composition_kit  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s %s" % (o.composition_product_id.default_code and o.composition_product_id.default_code.replace('/', '_'), o.composition_reference and o.composition_reference.replace('/', '_'))|x}">
+<ss:Worksheet ss:Name="${sanitizeWSName("%s %s" % (o.composition_product_id.default_code and o.composition_product_id.default_code.replace('/', '_'), o.composition_reference and o.composition_reference.replace('/', '_')))|x}">
 
 ## definition of the columns' size
 <Table x:FullColumns="1" x:FullRows="1">

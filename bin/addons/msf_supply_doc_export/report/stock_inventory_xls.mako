@@ -52,7 +52,7 @@
 </Styles>
 ## ==================================== we loop over the stock_initial_inventory so "objects" == stock_initial_inventory  ====================================================
 % for o in objects:
-<ss:Worksheet ss:Name="${"%s"%(o.name.replace('/', '_') or 'Sheet1')|x}">
+<ss:Worksheet ss:Name="${"%s"%sanitizeWSName(o.name.replace('/', '_') or _('Sheet 1'))|x}">
 <Table >
     <Column ss:AutoFitWidth="1" ss:Span="3" ss:Width="64.26"/>
     <Row>

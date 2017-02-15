@@ -90,7 +90,7 @@
   </Style>
  </Styles>
  % for o in objects:
- <Worksheet ss:Name="${(o.number or title(o)+' '+str(o.id))|x}">
+ <Worksheet ss:Name="${sanitizeWSName((o.number or title(o)+' '+str(o.id)))|x}">
   <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultColumnWidth="90" ss:DefaultRowHeight="15">
    <Column ss:AutoFitWidth="0" ss:Width="110.25"/>

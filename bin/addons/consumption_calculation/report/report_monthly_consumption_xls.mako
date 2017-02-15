@@ -56,7 +56,7 @@
 % for o in objects:
 <% val += 1 %>
 ## the val enables to have several reports with the same name (in tab) except for the val
-<ss:Worksheet ss:Name="${"%s- %s"%(val, o.cons_location_id)|x}">
+<ss:Worksheet ss:Name="${sanitizeWSName("%s- %s"%(val, o.cons_location_id))|x}">
 
 ## definition of the columns' size
 <Table x:FullColumns="1" x:FullRows="1">

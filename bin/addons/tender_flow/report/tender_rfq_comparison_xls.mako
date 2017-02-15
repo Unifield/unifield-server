@@ -493,7 +493,7 @@
 
  </Styles>
  % for o in objects:
- <Worksheet ss:Name="${sheet_name(o.name)|x}">
+ <Worksheet ss:Name="${sanitizeWSName(sheet_name(o.name))|x}">
   <Table x:FullColumns="1"
    x:FullRows="1" ss:DefaultRowHeight="15">
    <Column ss:AutoFitWidth="0" ss:Width="50"/>
