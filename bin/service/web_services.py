@@ -178,8 +178,9 @@ class db(netsvc.ExportService):
                     # this is needed to be able to install the module msf_profile
                     res_group_obj = pool.get('res.groups')
                     group_extended_id = res_group_obj.get_extended_interface_group(cr, 1)
-                    res_users_obj = pool.get('res.users')
-                    res_users_obj.write(cr, uid, uid, {'groups_id': [(4, group_extended_id)]})
+                    if group_extended_id:
+                        res_users_obj = pool.get('res.users')
+                        res_users_obj.write(cr, uid, uid, {'groups_id': [(4, group_extended_id)]})
                     serv.actions[id]['clean'] = True
                     cr.commit()
                 except Exception, e:
