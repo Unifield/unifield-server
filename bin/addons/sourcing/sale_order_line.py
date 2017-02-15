@@ -926,7 +926,7 @@ The parameter '%s' should be an browse_record instance !""") % (method, self._na
         o_type = line.order_id and line.order_id.order_type in ['loan', 'donation_st', 'donation_exp'] or False
 
         if l_type and o_state and ctx_cond and o_type:
-            return _('You can\'t source a %s \'on order\'.') % o_type == 'loan' and 'loan' or 'donation'
+            return _('You can\'t source a %s \'on order\'.') % (line.order_id.order_type == 'loan' and _('loan') or _('donation'))
 
         return False
 

@@ -464,24 +464,24 @@ class purchase_order(osv.osv):
         res = {}
         for po in self.browse(cr, uid, ids, context=context):
             if po.po_from_fo or po.po_from_ir:
-                src_type = []
+                src_type = set()
                 sale_ids = self.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
                 if sale_ids:
                     for sale in self.pool.get('sale.order').read(cr, uid, sale_ids, ['procurement_request', 'order_type'], context=context):
                         if sale['procurement_request'] or sale['order_type'] == 'regular':
-                            src_type.append('regular')
-                            src_type.append('purchase_list')
+                            src_type.add('regular')
+                            src_type.add('purchase_list')
 
                         if not sale['procurement_request']:
                             if sale['order_type'] == 'regular':
-                                src_type.append('direct')
+                                src_type.add('direct')
                             elif sale['order_type'] == 'loan':
-                                src_type.append('loan')
+                                src_type.add('loan')
                             elif sale['order_type'] == 'donation_exp':
-                                src_type.append('donation_exp')
+                                src_type.add('donation_exp')
                             elif sale['order_type'] == 'donation_st':
-                                src_type.append('donation_st')
-                res[po.id] = json.dumps(src_type)
+                                src_type.add('donation_st')
+                res[po.id] = json.dumps(list(src_type))
             else:
                 res[po.id] = json.dumps([x[0] for x in ORDER_TYPES_SELECTION])
 
@@ -615,6 +615,7 @@ class purchase_order(osv.osv):
             size=256,
             string='Possible order types',
             store={
+                'purchase.order': (lambda obj, cr, uid, ids, c={}: ids, ['order_line'], 10),
                 'purchase.order.line': (_order_line_order_type, ['order_id'], 10),
             },
         ),
@@ -876,6 +877,15 @@ class purchase_order(osv.osv):
                     'warning': {
                         'title': _('Error'),
                         'message': _('You cannot create a direct purchase order from scratch')
+                    },
+                }
+            elif not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids), ('po_cft', '=', 'dpo')]):
+                po = self.read(cr, uid, ids, ['order_type'])[0]
+                return {
+                    'value': {'order_type': po['order_type']},
+                    'warning': {
+                        'title': _('Error'),
+                        'message': _('You cannot select Direct Purchase order for a lines sourced to a normal PO'),
                     },
                 }
 
