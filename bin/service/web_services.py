@@ -166,12 +166,20 @@ class db(netsvc.ExportService):
                         mids = modobj.search(cr, 1, [('state', '=', 'installed')])
                         modobj.update_translations(cr, 1, mids, lang)
 
-                    cr.execute('UPDATE res_users SET password=%s, context_lang=%s, active=True WHERE login=%s', (
+                    cr.execute('UPDATE res_users SET password=%s, context_lang=%s, active=True WHERE login=%s RETURNING id', (
                         user_password, lang, 'admin'))
+                    uid = cr.fetchone()[0]
                     cr.execute('SELECT login, password, name ' \
                                '  FROM res_users ' \
                                ' ORDER BY login')
                     serv.actions[id]['users'] = cr.dictfetchall()
+
+                    # add the extended interface group to the admin
+                    # this is needed to be able to install the module msf_profile
+                    res_group_obj = pool.get('res.groups')
+                    group_extended_id = res_group_obj.get_extended_interface_group(cr, 1)
+                    res_users_obj = pool.get('res.users')
+                    res_users_obj.write(cr, uid, uid, {'groups_id': [(4, group_extended_id)]})
                     serv.actions[id]['clean'] = True
                     cr.commit()
                 except Exception, e:

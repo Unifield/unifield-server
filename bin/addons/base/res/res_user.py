@@ -167,36 +167,6 @@ class users(osv.osv):
                                 body=self.get_welcome_mail_body(
                                     cr, uid, context=context) % user)
 
-    def _set_interface_type(self, cr, uid, ids, name, value, arg, context=None):
-        """Implementation of 'view' function field setter, sets the type of interface of the users.
-        @param name: Name of the field
-        @param arg: User defined argument
-        @param value: new value returned
-        @return:  True/False
-        """
-        if not value or value not in ['simple','extended']:
-            return False
-        group_obj = self.pool.get('res.groups')
-        extended_group_id = group_obj.get_extended_interface_group(cr, uid, context=context)
-        # First always remove the users from the group (avoids duplication if called twice)
-        self.write(cr, uid, ids, {'groups_id': [(3, extended_group_id)]}, context=context)
-        # Then add them back if requested
-        if value == 'extended':
-            self.write(cr, uid, ids, {'groups_id': [(4, extended_group_id)]}, context=context)
-        return True
-
-
-    def _get_interface_type(self, cr, uid, ids, name, args, context=None):
-        """Implementation of 'view' function field getter, returns the type of interface of the users.
-        @param field_name: Name of the field
-        @param arg: User defined argument
-        @return:  Dictionary of values
-        """
-        group_obj = self.pool.get('res.groups')
-        extended_group_id = group_obj.get_extended_interface_group(cr, uid, context=context)
-        extended_users = group_obj.read(cr, uid, extended_group_id, ['users'], context=context)['users']
-        return dict(zip(ids, ['extended' if user in extended_users else 'simple' for user in ids]))
-
     def _email_get(self, cr, uid, ids, name, arg, context=None):
         # perform this as superuser because the current user is allowed to read users, and that includes
         # the email, even without any direct read access on the res_partner_address object.
@@ -283,8 +253,9 @@ class users(osv.osv):
         for user_id in ids:
             level = False
             company_id = self._get_company(cr, user_id, context=context)
-            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
-                                                            ['instance_id'], context=context)['instance_id']
+            company_obj = self.pool.get('res.company')
+            instance_id = company_obj.read(cr, uid, company_id,
+                    ['instance_id'], context=context).get('instance_id', False)
             instance_id = instance_id and instance_id[0] or False
             if instance_id:
                 level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
@@ -330,8 +301,7 @@ class users(osv.osv):
         'context_tz': fields.selection(_tz_get,  'Timezone', size=64,
                                        help="The user's timezone, used to perform timezone conversions "
                                        "between the server and the client."),
-        'view': fields.function(_get_interface_type, method=True, type='selection', fnct_inv=_set_interface_type,
-                                selection=[('simple','Simplified'),('extended','Extended')],
+        'view': fields.selection([('simple','Simplified'),('extended','Extended')],
                                 string='Interface', help="Choose between the simplified interface and the extended one"),
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
@@ -441,6 +411,7 @@ class users(osv.osv):
         'address_id': False,
         'menu_tips':True,
         'force_password_change': False,
+        'view': 'simple',
     }
 
     @tools.cache()
@@ -864,10 +835,10 @@ class res_config_view(osv.osv_memory):
         'name':fields.char('Name', size=64),
         'view': fields.selection([('simple','Simplified'),
                                   ('extended','Extended')],
-                                 'Interface', required=True ),
+                                 'Interface', required=False ),
     }
     _defaults={
-        'view':lambda self,cr,uid,*args: self.pool.get('res.users').browse(cr, uid, uid).view or 'simple',
+        'view': 'simple',
     }
 
     def execute(self, cr, uid, ids, context=None):
