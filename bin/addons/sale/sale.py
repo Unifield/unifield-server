@@ -987,7 +987,7 @@ class sale_order_line(osv.osv):
             taxes = tax_obj.compute_all(cr, uid, line.tax_id, price, line.product_uom_qty, line.order_id.partner_invoice_id.id, line.product_id, line.order_id.partner_id)
             cur = line.order_id.pricelist_id.currency_id
             res[line.id] = cur_obj.round(cr, uid, cur.rounding, taxes['total'])
-            if res[line.id] < 0.01:
+            if price > 0 and res[line.id] < 0.01:
                 res[line.id] = 0.01
         return res
 

@@ -658,7 +658,7 @@ class procurement_request_line(osv.osv):
             if line.order_id.procurement_request:
                 subtotal = line.cost_price * line.product_uom_qty
                 res[line.id] = cur_obj.round(cr, uid, curr_browse.rounding, subtotal)
-                if res[line.id] < 0.01:
+                if line.cost_price > 0 and res[line.id] < 0.01:
                     res[line.id] = 0.01
             else:
                 new_ids.append(line.id)
