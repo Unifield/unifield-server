@@ -200,6 +200,7 @@ class rml_parse(object):
             'strip_name' : self._strip_name,
             'time' : time,
             'getSel': self.getSel,
+            'sanitizeWSName': self.sanitizeWorksheetName,
             'isDate': self.isDate,
             'isDateTime': self.isDateTime,
             'isTime': self.isTime,
@@ -250,6 +251,24 @@ class rml_parse(object):
 
     def getSelValue(self, obj_name, field, value):
         return self.pool.get('ir.model.fields').get_selection(self.cr, self.uid, obj_name, field, value, self.localcontext)
+
+    def sanitizeWorksheetName(self, name):
+        '''
+        according to microsoft documentation :
+        https://msdn.microsoft.com/en-us/library/office/aa140066(v=office.10).aspx#odc_xmlss_ss:worksheet
+        The following caracters are not allowed : /, \, ?, *, [, ]
+        It also seems that microsoft excel do not accept Worksheet name longer
+        than 31 characters.
+        '''
+        replacement_char = '-'
+        not_allowed_char_list = ['/', '\\', '?', '*', '[', ']']
+        new_name = name
+        if set(new_name).intersection(not_allowed_char_list):
+            for char in not_allowed_char_list:
+                if char in new_name:
+                    new_name = new_name.replace(char, replacement_char)
+
+        return new_namei[:31]
 
     def setTag(self, oldtag, newtag, attrs=None):
         return newtag, attrs
