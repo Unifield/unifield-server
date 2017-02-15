@@ -83,7 +83,7 @@ class patch_scripts(osv.osv):
                 self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
 
                 for model in model_to_remove:
-                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' RETURNING id" % model)
+                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'" % model)
                     current_count = cr.rowcount
                     removed_obj += current_count
                     self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
