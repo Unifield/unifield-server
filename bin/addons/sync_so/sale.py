@@ -136,6 +136,7 @@ class sale_order_sync(osv.osv):
         default = {}
         default.update(header_result)
         default['fo_created_by_po_sync'] = True
+        default['procurement_request'] = False
 
         so_id = self.create(cr, uid, default , context=context)
         name = self.browse(cr, uid, so_id, context).name
