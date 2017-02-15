@@ -346,12 +346,10 @@ class account_move_line(osv.osv):
         am_obj = self.pool.get('account.move')
         for fxa_line in self.browse(cr, uid, fxa_line_ids, context=context,
                                     fields_to_fetch=['move_id', 'debit', 'credit', 'debit_currency', 'credit_currency']):
-            am_id = fxa_line.move_id.id
-            am = am_obj.browse(cr, uid, am_id, context=context,
-                               fields_to_fetch=['journal_id', 'period_id', 'date'])
-            counterpart_id = self.search(cr, uid, [('move_id', '=', am_id), ('id', '!=', fxa_line.id)],
+            am = fxa_line.move_id
+            counterpart_id = self.search(cr, uid, [('move_id', '=', am.id), ('id', '!=', fxa_line.id)],
                                          order='NO_ORDER', limit=1, context=context)
-            counterpart_line = counterpart_id and self.browse(cr, uid, counterpart_id[0], context=context,
+            counterpart_line = self.browse(cr, uid, counterpart_id[0], context=context,
                                                               fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency'])
             # create the JE
             date_and_period = self._get_reversal_fxa_date_and_period(cr, uid, am, context)
