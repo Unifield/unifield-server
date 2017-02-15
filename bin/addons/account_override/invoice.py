@@ -417,8 +417,8 @@ class account_invoice(osv.osv):
         if not context:
             context = {}
         res = super(account_invoice, self).fields_view_get(cr, uid, view_id, view_type, context=context, toolbar=toolbar, submenu=submenu)
-        doc = etree.XML(res['arch'])
         if view_type == 'tree' and (context.get('journal_type', False) == 'inkind' or context.get('journal_type', False) == 'intermission'):
+            doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='partner_id']")
             name = _('Donor')
             if context.get('journal_type') == 'intermission':
@@ -427,6 +427,7 @@ class account_invoice(osv.osv):
                 node.set('string', name)
             res['arch'] = etree.tostring(doc)
         elif view_type in ('tree', 'search') and context.get('type') in ['out_invoice', 'out_refund']:
+            doc = etree.XML(res['arch'])
             nodes = doc.xpath("//field[@name='supplier_reference']")
             for node in nodes:
                 node.getparent().remove(node)
@@ -434,6 +435,7 @@ class account_invoice(osv.osv):
         elif view_type == 'form' and context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' \
                 and not context.get('is_debit_note', False) and not context.get('is_intermission', False):
             # Restriction on allowed partners for STV: Inter-section or External type, customers only
+            doc = etree.XML(res['arch'])
             partner_nodes = doc.xpath("//field[@name='partner_id']")
             partner_domain_stv = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
             for node in partner_nodes:
