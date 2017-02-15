@@ -25,6 +25,7 @@
             <field name="name">res.currency_functional.form</field>
             <field name="model">res.currency</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="base.view_currency_form"/>
             <field name="arch" type="xml">
                 <data>

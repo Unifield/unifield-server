@@ -102,13 +102,13 @@
             <field name="act_window_id" ref="action_ppl_board"/>
         </record>
 
-        <record id="action_shipment" model="ir.actions.act_window">
+        <record id="board_action_shipment" model="ir.actions.act_window">
             <field name="name">Shipment Lists</field>
             <field name="res_model">shipment</field>
             <field name="type">ir.actions.act_window</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('state', 'not in', ['done', 'cancel']), ('num_of_packs','!=', 0)]</field>
+            <field name="domain">[('state', 'not in', ['cancel', 'delivered']), ('num_of_packs','!=', 0)]</field>
             <field name="context">{'packing_screen': True, 'search_default_not_empty':1, 'search_default_partner': 1}</field>
             <field name="search_view_id" ref="msf_outgoing.view_shipment_search"/>
         </record>
@@ -125,7 +125,7 @@
                             <action name="%(action_outgoing_product_board)d" string="Delivery Orders" menu_ref="%(stock.menu_action_picking_tree)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action name="%(action_picking_ticket_board)d" string="Picking Tickets" menu_ref="%(msf_outgoing.menu_action_picking_ticket)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action name="%(action_ppl_board)d" string="Pre-Packing Lists" menu_ref="%(msf_outgoing.menu_action_ppl)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
-                            <action name="%(action_shipment)d" string="Shipments" menu_ref="%(msf_outgoing.menu_action_shipment)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
+                            <action name="%(board_action_shipment)d" string="Shipments" menu_ref="%(msf_outgoing.menu_action_shipment)d,%(msf_outgoing.menu_warehouse_deliveries)d,%(stock.menu_stock_warehouse_mgmt)d" />
                             <action colspan="4" name="%(procurement.procurement_action_board)d" string="Procurements in Exception" width="510" />
                         </child1>
                     </hpaned>

@@ -72,7 +72,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.average_cost or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.location_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_name or '')|x}</Data></Cell>
-        % if line.expiry_date != 'False'.replace(' ', ''):
+        % if isDate(line.expiry_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ></Cell>

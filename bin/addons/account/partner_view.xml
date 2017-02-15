@@ -69,7 +69,7 @@
             <field name="name">res.partner.property.form.inherit</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority">2</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
                 <page string="History" position="before">
@@ -138,6 +138,7 @@
             groups="base.group_extended"/>
 
         <record id="view_res_partner_reconcile" model="ir.ui.view">
+            <field name="priority">65</field>
             <field name="name">res.partner.form.reconcile</field>
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>

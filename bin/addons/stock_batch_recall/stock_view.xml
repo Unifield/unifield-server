@@ -7,7 +7,7 @@
 	        <field name="model">report.batch.recall</field>
 	        <field name="type">search</field>
 	        <field name="arch" type="xml">
-	            <search string="Batch Recall">
+	            <search string="Batch Location">
 	                <group expand="0" string="Filters...">
 	                    <filter icon="terp-go-home" name="location_type_internal" string="Internal" domain="[('location_type','=','internal')]"/>
 	                    <separator orientation="vertical"/>
@@ -28,7 +28,7 @@
 	        <field name="model">report.batch.recall</field>
 	        <field name="type">tree</field>
 	        <field name="arch" type="xml">
-	            <tree string="Batch Recall">
+	            <tree string="Batch Location">
 	                <field name="location_type" invisible="1"/>
 	                <field name="product_id"/>
                     <field name="prodlot_id"/>
@@ -46,7 +46,7 @@
             <field name="model">stock.batch.recall</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Batch Recall">
+                <form string="Batch Location">
                     <field name="product_id" colspan="4" />
                     <field name="prodlot_id" colspan="4" />
                     <field name="expired_date" colspan="4" />
@@ -57,7 +57,7 @@
         </record>
         
         <record id="action_batch_recall" model="ir.actions.act_window">
-            <field name="name">Batch Recall</field>
+            <field name="name">Batch Location</field>
             <field name="res_model">stock.batch.recall</field>
             <field name="view_type">form</field>
             <field name="view_mode">form</field>
@@ -70,7 +70,7 @@
                   parent="stock.menu_traceability" />
                   
         <record id="action_report_batch_recall" model="ir.actions.act_window">
-            <field name="name">Batch Recall</field>
+            <field name="name">Batch Location</field>
             <field name="res_model">report.batch.recall</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>

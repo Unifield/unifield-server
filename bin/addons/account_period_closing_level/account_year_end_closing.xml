@@ -6,6 +6,7 @@
             <field name="name">account.account.form</field>
             <field name="model">account.account</field>
             <field name="type">form</field>
+            <field name="priority">55</field>
             <field name="inherit_id" ref="account.view_account_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//notebook" position="inside">

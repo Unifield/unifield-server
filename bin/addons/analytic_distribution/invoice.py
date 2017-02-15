@@ -156,11 +156,7 @@ class account_invoice(osv.osv):
                 raise osv.except_osv(_('Error'), _("Posting date for the refund is before the invoice's posting date!"))
             if document_date and document_date < inv.document_date:
                 raise osv.except_osv(_('Error'), _("Document date for the refund is before the invoice's document date!"))
-        new_ids = super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id)
-        # add document date
-        if document_date:
-            self.write(cr, uid, new_ids, {'document_date': document_date})
-        return new_ids
+        return super(account_invoice, self).refund(cr, uid, ids, date, period_id, description, journal_id, document_date)
 
     def line_get_convert(self, cr, uid, x, part, date, context=None):
         res = super(account_invoice, self).line_get_convert(cr, uid, x, part, date, context=context)

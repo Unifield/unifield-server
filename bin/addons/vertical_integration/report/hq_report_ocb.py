@@ -145,7 +145,7 @@ class finance_archive(finance_export.finance_archive):
             new_data.append(self.line_to_utf8(tmp_line))
         return new_data
 
-    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False):
+    def postprocess_consolidated_entries(self, cr, uid, data, excluded_journal_types, column_deletion=False, display_journal_type=False):
         """
         ##### WARNING #####
         ### IN CASE CHANGES ARE MADE TO THIS METHOD, keep in mind that this is used for OCP export as well. ###
@@ -177,7 +177,8 @@ CASE WHEN req.total > 0 THEN req.total ELSE 0.0 END AS "debit",
 CASE WHEN req.total < 0 THEN ABS(req.total) ELSE 0.0 END as "credit", 
 c.name AS "booking_currency", 
 CASE WHEN req.func_total > 0 THEN req.func_total ELSE 0.0 END AS "func_debit", 
-CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit"
+CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_credit",
+j.type AS "journal_type"
             FROM (
                 SELECT aml.instance_id, aml.period_id, aml.journal_id, aml.currency_id, aml.account_id, 
                        SUM(amount_currency) AS total, 
@@ -206,9 +207,18 @@ CASE WHEN req.func_total < 0 THEN ABS(req.func_total) ELSE 0.0 END AS "func_cred
         cr.execute(sqltwo, (seq, tuple(excluded_journal_types)))
         datatwo = cr.fetchall()
         # post process datas (add functional currency name, those from company)
+        journal_type_col = 18
         for line in datatwo:
             tmp_line = list(line)
             tmp_line.append(company_currency)
+            # US-2319 If the journal type should be displayed add it at the end of the line (OCP),
+            # else remove it from the result (OCB)
+            journal_type = tmp_line[journal_type_col]
+            del tmp_line[journal_type_col]
+            if display_journal_type:
+                tmp_line.append('')
+                tmp_line.append('')
+                tmp_line.append(journal_type)
             line_ids = tmp_line[0]
             tmp_line[0] = self.get_hash(cr, uid, line_ids, 'account.move.line')
             new_data.append(tmp_line)

@@ -71,7 +71,7 @@
                         <group colspan="4" col="6">
                             <field name="journal_id" on_change="onchange_journal_id(journal_id)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" context="{'from_manual_entry': True}"/>
                             <field name="name" readonly="1"/>
-                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" domain="[('number', '!=', 16)]"/>
+                            <field name="period_id" on_change="onchange_period_id(period_id, date)" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}" domain="[('number', '!=', 16), ('state','=','draft')]"/>
                             <field name="document_date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
                             <field name="date" string="Posting Date" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)]}"/>
 
@@ -100,6 +100,7 @@
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
                                         <field name="reference"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
                                         <field name="partner_id" invisible="1"/>
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>
@@ -180,6 +181,7 @@
             <field name='name'>inherit.view.account.form</field>
             <field name='model'>account.account</field>
             <field name="type">form</field>
+            <field name="priority">50</field>
             <field name='inherit_id' ref='account.view_account_form' />
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='user_type']" position="after">

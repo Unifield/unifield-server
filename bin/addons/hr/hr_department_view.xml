@@ -68,6 +68,7 @@
        <record model="ir.ui.view" id="view_users_form_inherit">
             <field name="name">res.users.form</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="model">res.users</field>
             <field name="inherit_id" ref="base.view_users_form"/>
             <field name="arch" type="xml">

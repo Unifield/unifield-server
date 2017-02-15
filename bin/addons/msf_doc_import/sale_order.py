@@ -263,7 +263,6 @@ class sale_order_line(osv.osv):
         res = {'domain':{}, 'warning':{}}
         product_obj = self.pool.get('product.product')
         uom_obj = self.pool.get('product.uom')
-        uom = False
 
         if product_id:
             product = product_obj.browse(cr, uid, product_id, context=context)
@@ -327,6 +326,8 @@ class sale_order_line(osv.osv):
                     vals['to_correct_ok'] = False
                     vals['text_error'] = False
 
+        if vals.get('state') in ('done', 'cancel'):
+            context['bypass_product_constraints'] = True
         return super(sale_order_line, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):

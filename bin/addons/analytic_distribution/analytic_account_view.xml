@@ -55,11 +55,13 @@
             <field name="name">analytic.account.form</field>
             <field name="model">account.analytic.account</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="account.view_account_analytic_account_form"/>
             <field name="arch" type="xml">
                 <data>
                     <xpath expr="//field[@name='name']" position="replace">
                         <field name="name" select="1"/>
+                        <field name="record_id" invisible="1" />
                     </xpath>    
                     <xpath expr="//field[@name='type']" position="replace">
                     </xpath>    
@@ -100,11 +102,13 @@
                             <field name="tuple_destination_summary" nolabel="1" readonly="1"/>
                         </page>
                         <page string="Expense accounts" attrs="{'invisible': [('category', '!=', 'DEST')]}">
-                            <field name="destination_ids" nolabel="1" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]">
-                                <tree string="Expenses accounts list">
+                            <field name="destination_ids" nolabel="1" domain="[('type', '!=', 'view'), ('is_analytic_addicted', '=', True)]" context="{'destination_id': record_id}">
+                                <tree string="Expenses accounts list" colors="red:inactivated_for_dest">
                                     <field name="code"/>
                                     <field name="name"/>
                                     <field name="note"/>
+                                    <field name="inactivated_for_dest" invisible="True"/>
+                                    <button name="activate_destination" type="object" context="{'destination_id': previous_record_id}" attrs="{'invisible': [('inactivated_for_dest', '=', False)]}" icon="terp-camera_test" string="Re-activate"/>
                                 </tree>
                             </field>
                         </page>
@@ -270,7 +274,7 @@
             <field name="search_view_id" ref="view_analytic_account_search"/>
             <field name="view_id" ref="view_account_analytic_account_tree_inherit"/>
             <field name="domain">[]</field>
-            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1, 'from_web': True}</field>
+            <field name="context">{'search_default_active': 1, 'filter_inactive_accounts': 1, 'from_web': True, 'display_disabled': 1}</field>
         </record>
 
         <menuitem action="action_account_analytic_account_form"

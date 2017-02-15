@@ -274,9 +274,15 @@
         <Cell>
           <Data ss:Type="String">${_('Period end date:')}</Data>
         </Cell>
+        % if isDate(period.date_stop):
         <Cell ss:StyleID="short_date2">
           <Data ss:Type="DateTime">${period.date_stop|n}T00:00:00.000</Data>
         </Cell>
+        % else:
+        <Cell ss:StyleID="s25b" >
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % endif
       </Row>
       <Row>
         <Cell>
