@@ -94,7 +94,8 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         # verification if the server is really running, else quit with an error
         self.openerp_process.wait()
         if not self.stopping:
-            sys.exit("OpenERP Web check: server not running, check the logfile for more info")
+            servicemanager.LogInfoMsg("openerp-web child process died unexpectedly, exiting now")
+            os._exit(1)
 
 if __name__=='__main__':
     # Do with the service whatever option is passed in the command line
