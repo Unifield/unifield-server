@@ -41,7 +41,7 @@ class account_commitment_line(osv.osv):
 
     _columns = {
         'purchase_order_line_ids': fields.many2many('purchase.order.line', 'purchase_line_commitment_rel', 'commitment_id', 'purchase_id',
-            string="Purchase Order Lines", readonly=True),
+                                                    string="Purchase Order Lines", readonly=True),
     }
 
     def create_distribution_from_order_line(self, cr, uid, ids, context=None):
@@ -78,10 +78,10 @@ class account_commitment_line(osv.osv):
                 for el in cc_lines:
                     analytic_id = el[0] or False
                     vals = {
-                            'distribution_id': distrib_id,
-                            'analytic_id': analytic_id,
-                            'currency_id': line.commit_id.currency_id.id,
-                            'destination_id': el[1] or False,
+                        'distribution_id': distrib_id,
+                        'analytic_id': analytic_id,
+                        'currency_id': line.commit_id.currency_id.id,
+                        'destination_id': el[1] or False,
                     }
                     total_amount = 0.0
                     # fetch total amount
@@ -90,7 +90,12 @@ class account_commitment_line(osv.osv):
                     if not total_amount:
                         continue
                     # compute percentage
-                    percentage = (total_amount / line.amount) * 100 or 0.0
+                    if line.amount:
+                        percentage = (total_amount / line.amount) * 100 or 0.0
+                    elif not total_amount:
+                        percentage = 100
+                    else:
+                        percentage = 0
                     vals.update({'percentage': percentage})
                     # create cost_center_line
                     self.pool.get('cost.center.distribution.line').create(cr, uid, vals, context=context)
