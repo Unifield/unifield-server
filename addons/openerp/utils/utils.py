@@ -19,6 +19,8 @@
 #
 ###############################################################################
 from __future__ import with_statement
+from datetime import datetime
+
 import itertools
 import re
 
@@ -28,6 +30,26 @@ import openobject
 from openerp.utils import rpc
 
 crummy_pseudoliteral_matcher = re.compile('^(True|False|None|-?\d+(\.\d+)?|\[.*?\]|\(.*?\)|\{.*?\})$', re.M)
+
+
+def format_datetime_value(value, bound):
+    dt_validator = _VALIDATORS.get('datetime', openobject.validators.DefaultValidator)()
+    d_validator = _VALIDATORS.get('date', openobject.validators.DefaultValidator)()
+    try:
+        dt_validator.to_python(value, None)
+    except formencode.api.Invalid:
+        try:
+            d_validator.to_python(value, None)
+            dt = datetime.strptime(value, d_validator.format)
+            if bound == 'from':
+                dt = datetime.combine(dt, datetime.min.time())
+            elif bound == 'to':
+                dt = datetime.combine(dt, datetime.max.time())
+            value = dt.strftime(dt_validator.format)
+        except formencode.api.Invalid:
+            pass
+    return value
+
 
 class noeval(object):
     """contextmanager that prevent TinyDict from doing evals"""
@@ -89,15 +111,15 @@ class TinyDict(dict):
         if id(data) in previous_dict_ids:
             raise ValueError("Recursive dictionary detected, build_dict does not handle recursive dictionaries.")
         previous_dict_ids.add(id(data))
-    
+
         res = self.build_new(is_params)
-    
+
         for name, value in data.items():
-    
+
             #XXX: safari 3.0 submits selection field even if no `name` attribute
             if not name:
                 continue
-    
+
             if isinstance(name, basestring) and '/' in name:
                 names = name.split('/')
                 root = names[0]
@@ -108,23 +130,23 @@ class TinyDict(dict):
                 # if name is already in res, it might be an o2m value
                 # which tries to overwrite a recursive object/dict
                 res[name] = value
-    
+
         for k, v in res.items():
             if isinstance(v, dict):
                 if not is_params and '__id' in v:
                     _id = v.pop('__id') or 0
                     _id = int(_id)
-    
+
                     # build new dict without keeping previous_dict_ids references
                     values = self.build_dict(v, is_params, previous_dict_ids=None)
                     if values and any(values.itervalues()):
                         res[k] = [(_id and 1, _id, values)]
                     else:
                         res[k] = []
-    
+
                 else:
                     res[k] = self.build_dict(v, is_params and isinstance(v, TinyDict), previous_dict_ids)
-    
+
         previous_dict_ids.remove(id(data))
         return res
 
@@ -337,7 +359,9 @@ class TinyForm(object):
                         value = []
                 except:
                     pass
-
+            elif kind == 'datetime' and (name.endswith('/from') or name.endswith('/to')):
+                bound = name.split('/')[-1]
+                value = format_datetime_value(value, bound)
             elif kind not in _VALIDATORS:
                 kind = 'char'
 
@@ -384,7 +408,7 @@ if __name__ == "__main__":
     kw = {'_terp_view_ids': "[False, 45]",
           'view_ids/_terp_view_ids': '[False, False]',
           'view_ids/child/_terp_view_ids': '[112, 111]'
-    }
+          }
 
     params, data = TinyDict.split(kw)
 

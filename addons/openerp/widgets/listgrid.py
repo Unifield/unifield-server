@@ -21,7 +21,6 @@
 import copy
 import math
 import xml.dom.minidom
-import re
 from openerp import utils
 from itertools import chain, count
 
@@ -82,7 +81,7 @@ class List(TinyWidget):
             self._name = name[:-1]
         if name != '_terp_list':
             self.source = self.name.replace('/', '/') or None
-        
+
         self.sort_order = kw.get('sort_order', '')
         self.sort_key = kw.get('sort_key', '')
         #this Condition is for Dashboard to avoid new, edit, delete operation
@@ -125,18 +124,22 @@ class List(TinyWidget):
         root = dom.childNodes[0]
 
         attrs = node_attributes(root)
-        
+
         # Get the hide status of some buttons - by default buttons are shown
         self.hide_new_button = False
         self.hide_delete_button = False
         self.hide_edit_button = False
+        self.show_add_button = False
         try:
             self.hide_new_button = expr_eval(attrs.get('hide_new_button', False), {'context': context})
+            self.show_add_button = expr_eval(attrs.get('show_add_button', False), {'context': context})
+            if (self.o2m or self.m2m) and self.show_add_button:
+                self.hide_new_button = False
             self.hide_delete_button = expr_eval(attrs.get('hide_delete_button', False), {'context': context})
             self.hide_edit_button = expr_eval(attrs.get('hide_edit_button', False), {'context': context})
         except:
             pass
-        
+
         self.string = attrs.get('string','')
 
         search_param = copy.deepcopy(domain) or []
@@ -144,7 +147,7 @@ class List(TinyWidget):
             for elem in custom_search_domain:
                 if elem not in self.domain:
                     search_param.append(elem)
-                    
+
             for elem in custom_filter_domain:
                 if elem not in self.domain:
                     search_param.append(elem)
@@ -165,11 +168,11 @@ class List(TinyWidget):
         self.colors = {}
         for color_spec in attrs.get('colors', '').split(';'):
             if color_spec:
-                colour, test = color_spec.split(':')
-                self.colors[colour] = test
+                colour, test_c = color_spec.split(':')
+                self.colors[colour] = test_c
 
         proxy = rpc.RPCProxy(model)
-        
+
         default_data = kw.get('default_data', [])
         search_text = terp_params.get('_terp_search_text', False)
         if not self.source:
@@ -210,7 +213,7 @@ class List(TinyWidget):
 
             ctx = rpc.session.context.copy()
             ctx.update(context)
-            
+
             try:    
                 data = proxy.read(ids, fields.keys() + ['__last_update'], ctx)
             except:
@@ -224,7 +227,7 @@ class List(TinyWidget):
             orderer = dict(zip(ids, count()))
             ordering = sorted(order_data, key=lambda object: orderer[object[0]])
             data = [i[1] for i in ordering]
-            
+
             for item in data:
                 self.data_dict[item['id']] = item.copy()
 
@@ -235,11 +238,11 @@ class List(TinyWidget):
 
         self.values = copy.deepcopy(data)
         self.headers, self.hiddens, self.data, self.field_total, self.field_real_total, self.buttons = self.parse(root, fields, data)
-        
+
         for k, v in self.field_total.items():
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
                 self.field_total[k][1] = self.do_sum(self.data, k)
-                
+
         for k, v in self.field_real_total.items():
             if(len([test[0] for test in self.hiddens if test[0] == k])) <= 0:
                 self.field_real_total[k][1] = self.do_real_sum(self.data, k)
@@ -252,13 +255,13 @@ class List(TinyWidget):
 
         if self.pageable:
             self.pager = Pager(ids=self.ids, offset=self.offset,
-                    limit=self.limit, count=self.count,
-                    approximation=self.approximation)
+                               limit=self.limit, count=self.count,
+                               approximation=self.approximation)
             self.pager._name = self.name
-           
+
         if self.editable and context.get('set_editable'):#Treeview editable by default or set_editable in context
             attrs['editable'] = "bottom"
-       
+
         if self.selectable and attrs.get('notselectable'):
             for x in self.values:
                 try:
@@ -317,7 +320,7 @@ class List(TinyWidget):
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
-        
+
         # custom fields - decimal_precision computation
         computation = attrs.get('computation', False)
         if isinstance(computation, basestring):
@@ -342,7 +345,7 @@ class List(TinyWidget):
         digits = attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
-        
+
         # custom fields - decimal_precision computation
         computation = attrs.get('computation', False)
         if isinstance(computation, basestring):
@@ -466,7 +469,7 @@ class List(TinyWidget):
 
                     if 'sum' in attrs:
                         field_total[name] = [attrs['sum'], 0.0]
-                        
+
                     if 'real_sum' in attrs:
                         field_real_total[name] = [attrs['real_sum'], 0.0]
 
@@ -481,7 +484,7 @@ class List(TinyWidget):
                         for color, expr in self.colors.items():
                             try:
                                 if expr_eval(expr,
-                                     dict(row_value, active_id=rpc.session.active_id or False)):
+                                             dict(row_value, active_id=rpc.session.active_id or False)):
                                     cell.color = color
                                     break
                             except:
@@ -602,7 +605,7 @@ class Float(Char):
         digits = self.attrs.get('digits', (16,2))
         if isinstance(digits, basestring):
             digits = eval(digits)
-            
+
         # custom fields - decimal_precision computation
         computation = self.attrs.get('computation', False)
         if isinstance(computation, basestring):
@@ -619,7 +622,7 @@ class FloatTime(Char):
     def get_text(self):
         val = self.value or 0.0
         t = '%02d:%02d' % (math.floor(abs(val)),round(abs(val)%1+0.01,2) * 60)
-        
+
         hour, min = t.split(':')
         if int(min) == 60:
             t = str(int(hour) + 1) + ":00"
@@ -647,10 +650,10 @@ class ProgressBar(Char):
     def get_text(self):
         if not self.value:
             return 0.0
-        
+
         if self.value == "no-progressbar":
             return "no-progressbar"
-        
+
         if isinstance(self.value, float):
             self.value = '%.2f' % (self.value)
             self.value = float(self.value)
@@ -708,6 +711,11 @@ class NullBoolean(Char):
         elif self.value == '?':
             self.val = self.value
             self.kind = 'text'
+
+class HumanSize(Char):
+
+    def get_text(self):
+        return utils.get_size(self.value or 0.0)
 
 class Button(TinyInputWidget):
 
@@ -787,19 +795,20 @@ class Hidden(TinyInputWidget):
 
 
 CELLTYPES = {
-        'char':Char,
-        'many2one':M2O,
-        'reference': Reference,
-        'datetime':DateTime,
-        'date':DateTime,
-        'one2many':O2M,
-        'many2many':M2M,
-        'selection':Selection,
-        'float':Float,
-        'float_time':FloatTime,
-        'integer':Int,
-        'boolean' : Boolean,
-        'null_boolean' : NullBoolean,
-        'progressbar' : ProgressBar,
-        'separator': Separator,
+    'char':Char,
+    'many2one':M2O,
+    'reference': Reference,
+    'datetime':DateTime,
+    'date':DateTime,
+    'one2many':O2M,
+    'many2many':M2M,
+    'selection':Selection,
+    'float':Float,
+    'float_time':FloatTime,
+    'integer':Int,
+    'boolean' : Boolean,
+    'null_boolean' : NullBoolean,
+    'progressbar' : ProgressBar,
+    'separator': Separator,
+    'human_size': HumanSize,
 }

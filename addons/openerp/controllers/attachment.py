@@ -39,6 +39,7 @@ class Attachment(SecuredController):
 
         if id:
             ctx = dict(rpc.session.context)
+            ctx['from_web_interface'] = True
 
             action = dict(
                 rpc.RPCProxy('ir.attachment').action_get(ctx),
@@ -75,13 +76,17 @@ class Attachment(SecuredController):
         ctx = dict(rpc.session.context,
                    default_res_model=params.model, default_res_id=params.id,
                    active_id=False, active_ids=[])
+        ctx['from_web_interface'] = True
 
-        attachment_id = rpc.RPCProxy('ir.attachment').create({
-            'name': datas.filename,
-            'datas_fname': datas.filename,
-            'datas': base64.encodestring(datas.file.read()),
-        }, ctx)
-        return {'id': attachment_id, 'name': datas.filename}
+        try:
+            attachment_id = rpc.RPCProxy('ir.attachment').create({
+                'name': datas.filename,
+                'datas_fname': datas.filename,
+                'datas': base64.encodestring(datas.file.read()),
+            }, ctx)
+            return {'id': attachment_id, 'name': datas.filename}
+        except Exception, e:
+            return {'error': ustr(e)}
 
     @expose('json', methods=('POST',))
     def remove(self, id=False, **kw):

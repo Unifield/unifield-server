@@ -73,7 +73,8 @@
               enctype="multipart/form-data">
             <label for="sidebar_attachments_datas">${_("File")}:</label>
             <input type="file" id="sidebar_attachments_datas" class="binary"
-                   name="datas" kind="binary" size="5"/>
+                   name="datas" kind="binary" size="5"
+                   max-size="${max_attachment_size}"/>
         </form>
     </div>
     % endif
