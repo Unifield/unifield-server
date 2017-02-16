@@ -32,11 +32,12 @@ class account_invoice_refund(osv.osv_memory):
     _name = "account.invoice.refund"
     _description = "Invoice Refund"
     _columns = {
-       'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
-       'period': fields.many2one('account.period', 'Force period'),
-       'journal_id': fields.many2one('account.journal', 'Refund Journal', help='You can select here the journal to use for the refund invoice that will be created. If you leave that field empty, it will use the same journal as the current invoice.'),
-       'description': fields.char('Description', size=128, required=True),
-       'filter_refund': fields.selection([('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')], "Refund Type", required=True, help='Refund invoice base on this type. You can not Modify and Cancel if the invoice is already reconciled'),
+        'date': fields.date('Operation date', help='This date will be used as the invoice date for Refund Invoice and Period will be chosen accordingly!'),
+        'period': fields.many2one('account.period', 'Force period'),
+        'journal_id': fields.many2one('account.journal', 'Refund Journal', hide_default_menu=True,
+                                      help='You can select here the journal to use for the refund invoice that will be created. If you leave that field empty, it will use the same journal as the current invoice.'),
+        'description': fields.char('Description', size=128, required=True),
+        'filter_refund': fields.selection([('modify', 'Modify'), ('refund', 'Refund'), ('cancel', 'Cancel')], "Refund Type", required=True, help='Refund invoice base on this type. You can not Modify and Cancel if the invoice is already reconciled'),
     }
 
     def _get_journal(self, cr, uid, context=None):
@@ -74,8 +75,8 @@ class account_invoice_refund(osv.osv_memory):
         Permits to change values that are taken from initial invoice to new invoice(s)
         """
         res = ['name', 'type', 'number', 'reference', 'comment', 'date_due', 'partner_id', 'address_contact_id', 'address_invoice_id',
-            'partner_insite', 'partner_contact', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line',
-            'journal_id', 'period_id']
+               'partner_insite', 'partner_contact', 'partner_ref', 'payment_term', 'account_id', 'currency_id', 'invoice_line', 'tax_line',
+               'journal_id', 'period_id']
         return res
 
     def _hook_fields_m2o_for_modify_refund(self, cr, uid, *args):
@@ -171,12 +172,12 @@ class account_invoice_refund(osv.osv_memory):
 
                 if not period:
                     raise osv.except_osv(_('Data Insufficient !'), \
-                                            _('No Period found on Invoice!'))
+                                         _('No Period found on Invoice!'))
 
                 refund_id = self._hook_create_refund(cr, uid, [inv.id], date, period, description, journal_id, form)
                 refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                 inv_obj.write(cr, uid, [refund.id], {'date_due': date,
-                                                'check_total': inv.check_total})
+                                                     'check_total': inv.check_total})
 
                 created_inv.append(refund_id[0])
                 if mode in ('cancel', 'modify'):
@@ -191,7 +192,7 @@ class account_invoice_refund(osv.osv_memory):
                         if type(line.reconcile_id) != osv.orm.browse_null:
                             reconcile_obj.unlink(cr, uid, line.reconcile_id.id)
                     wf_service.trg_validate(uid, 'account.invoice', \
-                                        refund.id, 'invoice_open', cr)
+                                            refund.id, 'invoice_open', cr)
                     refund = inv_obj.browse(cr, uid, refund_id[0], context=context)
                     for tmpline in  refund.move_id.line_id:
                         if tmpline.account_id.id == inv.account_id.id:
@@ -201,10 +202,10 @@ class account_invoice_refund(osv.osv_memory):
                             to_reconcile_ids[tmpline.account_id.id].append(tmpline.id)
                     for account in to_reconcile_ids:
                         account_m_line_obj.reconcile(cr, uid, to_reconcile_ids[account],
-                                        writeoff_period_id=period,
-                                        writeoff_journal_id = inv.journal_id.id,
-                                        writeoff_acc_id=inv.account_id.id
-                                        )
+                                                     writeoff_period_id=period,
+                                                     writeoff_journal_id = inv.journal_id.id,
+                                                     writeoff_acc_id=inv.account_id.id
+                                                     )
                     if mode == 'modify':
                         invoice = inv_obj.read(cr, uid, [inv.id], self._hook_fields_for_modify_refund(cr, uid), context=context)
                         invoice = invoice[0]
@@ -224,7 +225,7 @@ class account_invoice_refund(osv.osv_memory):
                             'name': description
                         })
                         for field in self._hook_fields_m2o_for_modify_refund(cr, uid):
-                                invoice[field] = invoice[field] and invoice[field][0]
+                            invoice[field] = invoice[field] and invoice[field][0]
                         inv_id = self._hook_create_invoice(cr, uid, invoice, form)
                         if inv.payment_term.id:
                             data = inv_obj.onchange_payment_term_date_invoice(cr, uid, [inv_id], inv.payment_term.id, date)

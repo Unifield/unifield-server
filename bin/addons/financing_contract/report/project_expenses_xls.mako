@@ -413,15 +413,27 @@
         <Cell ss:StyleID="s21">
           <Data ss:Type="String">${_('Eligible from:')}</Data>
         </Cell>
+        % if isDate(o.eligibility_from_date):
         <Cell ss:StyleID="short_date_head">
           <Data ss:Type="DateTime">${ o.eligibility_from_date or '' |n}T00:00:00.000</Data>
         </Cell>
+        % else:
+        <Cell ss:StyleID="s26">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % endif
         <Cell ss:StyleID="s26">
           <Data ss:Type="String">${_('to:')}</Data>
         </Cell>
+        % if isDate(o.eligibility_to_date):
         <Cell ss:StyleID="short_date_color">
           <Data ss:Type="DateTime">${ o.eligibility_to_date |n}T00:00:00.000</Data>
         </Cell>
+        % else:
+        <Cell ss:StyleID="s26">
+          <Data ss:Type="String"></Data>
+        </Cell>
+        % endif
         <Cell />
         <Cell />
       </Row>
@@ -503,9 +515,15 @@
 % for line in getLines2()[code]:
 
 <Row>
+  % if line[0] and isDate(line[0].document_date):
   <Cell ss:StyleID="s35">
-    <Data ss:Type="DateTime">${ line[0] and line[0].document_date |n}T00:00:00.000</Data>
+    <Data ss:Type="DateTime">${ line[0].document_date |n}T00:00:00.000</Data>
   </Cell>
+  % else:
+  <Cell ss:StyleID="s35">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  % endif
   <Cell ss:StyleID="s36">
     <Data ss:Type="String">${( line[0] and line[0].journal_id and line[0].journal_id.name or '')|x}</Data>
   </Cell>

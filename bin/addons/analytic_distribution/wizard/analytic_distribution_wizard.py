@@ -59,10 +59,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         'currency_id': fields.many2one('res.currency', string="Currency", required=True),
         'distribution_line_id': fields.many2one('distribution.line', string="Distribution Line", readonly=True),
         'type': fields.selection([('cost.center', 'Cost Center Lines'), ('funding.pool', 'Funding Pool Lines'), ('free.1', 'Free 1 Lines'),
-            ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values
-            #+ to construct object research !
+                                  ('free.2', 'Free 2 Lines')], string="Line type", help="Specify the type of lines"), # Important for some method that take this values
+        #+ to construct object research !
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
-            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+                                          domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
         'is_percentage_amount_touched': fields.boolean('Is percentage/amount updated ?', invisible=True),
     }
 
@@ -83,12 +83,12 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
         if wiz and wiz[0]:
             #purchase = wiz[0].purchase_id or wiz[0].purchase_line_id.order_id
             # UTP-952: Remove the default intermission CC
-#            if purchase and wiz[0].partner_type == 'intermission':
-#                try:
-#                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-#                            'analytic_account_project_intermission')[1]
-#                except ValueError:
-#                    pass
+            #            if purchase and wiz[0].partner_type == 'intermission':
+            #                try:
+            #                    res['analytic_id'] = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
+            #                            'analytic_account_project_intermission')[1]
+            #                except ValueError:
+            #                    pass
             if 'destination_id' in fields and wiz[0].account_id:
                 res['destination_id'] = wiz[0].account_id.default_destination_id and wiz[0].account_id.default_destination_id.id or False
 
@@ -200,10 +200,10 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
-                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
-                        or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
-                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                        or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
+                            or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
+                            or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
+                            or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST'), ('destination_ids', '=', parent.account_id)]")
@@ -222,13 +222,13 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 for field in fp_fields:
                     # for accrual lines, only Private Funds must be available
                     if context.get('from_accrual_line', False) \
-                        or context.get('is_intermission', False):
+                            or context.get('is_intermission', False):
                         field.set('domain', "[('id', '=', %s)]" % fp_id)
                     # If context with 'from' exist AND its content is an integer (so an invoice_id)
                     elif (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
-                      or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
-                      or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                      or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
+                            or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
+                            or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
                         # Filter is only on cost_center and MSF Private Fund on invoice header
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'FUNDING'), ('hide_closed_fp', '=', True), '|', ('cost_center_ids', '=', cost_center_id), ('id', '=', %s)]" % fp_id)
                     else:
@@ -238,11 +238,11 @@ class analytic_distribution_wizard_lines(osv.osv_memory):
                 dest_fields = tree.xpath('/tree/field[@name="destination_id"]')
                 for field in dest_fields:
                     if (context.get('from_invoice', False) and isinstance(context.get('from_invoice'), int)) or (context.get('from_commitment', False) and isinstance(context.get('from_commitment'), int)) \
-                        or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
-                        or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
-                        or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
-                        or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
-                        or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
+                            or (context.get('from_purchase', False) and isinstance(context.get('from_purchase'), int)) or (context.get('from_sale_order', False) and isinstance(context.get('from_sale_order'), int)) \
+                            or (context.get('from_model', False) and isinstance(context.get('from_model'), int)) \
+                            or (context.get('direct_invoice_id', False) and isinstance(context.get('direct_invoice_id'), int)) \
+                            or (context.get('from_move', False) and isinstance(context.get('from_move'), int)) \
+                            or (context.get('from_cash_return', False) and isinstance(context.get('from_cash_return'), int)):
 
                         field.set('domain', "[('type', '!=', 'view'), ('state', '=', 'open'), ('category', '=', 'DEST')]")
                     else:
@@ -382,7 +382,7 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
     _columns = {
         'cost_center_id': fields.many2one('account.analytic.account', string="Cost Center", required=True),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=True,
-            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+                                          domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     _defaults = {
@@ -398,7 +398,7 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-            'analytic_account_msf_private_funds')[1]
+                                                                        'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
 
@@ -407,11 +407,11 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
             fp_line = self.pool.get('account.analytic.account').browse(cr, uid, analytic_id)
             # Delete analytic_id if not valid with tuple "account_id/destination_id".
             # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and analytic_id != fp_id:
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and analytic_id != fp_id:
                 res = {'value': {'analytic_id': False}}
         # If no destination, do nothing
         elif not destination_id \
-            or analytic_id == fp_id:  # PF always compatible
+                or analytic_id == fp_id:  # PF always compatible
             res = {}
         # Otherway: delete FP
         else:
@@ -427,7 +427,7 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution',
-            'analytic_account_msf_private_funds')[1]
+                                                                        'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
 
@@ -436,7 +436,7 @@ class analytic_distribution_wizard_fp_lines(osv.osv_memory):
             if cost_center_id not in [x.id for x in fp_line.cost_center_ids] and analytic_id != fp_id:
                 res = {'value': {'analytic_id': False}}
         elif not cost_center_id \
-            or analytic_id == fp_id:  # PF always compatible:
+                or analytic_id == fp_id:  # PF always compatible:
             res = {}
         else:
             res = {'value': {'analytic_id': False}}
@@ -451,7 +451,7 @@ class analytic_distribution_wizard_f1_lines(osv.osv_memory):
 
     _columns = {
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False,
-            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+                                          domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     _defaults = {
@@ -467,7 +467,7 @@ class analytic_distribution_wizard_f2_lines(osv.osv_memory):
 
     _columns = {
         'destination_id': fields.many2one('account.analytic.account', string="Destination", required=False,
-            domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
+                                          domain="[('type', '!=', 'view'), ('category', '=', 'DEST'), ('state', '=', 'open')]"),
     }
 
     _defaults = {
@@ -531,7 +531,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # US-99 JI imported not draft: AD not writable
                 # (from correction wizard: always writable)
                 if not context.get('from_correction', False) and \
-                    el.move_id.state and el.move_id.state not in ['draft']:
+                        el.move_id.state and el.move_id.state not in ['draft']:
                     res[el.id] = False
         return res
 
@@ -593,7 +593,7 @@ class analytic_distribution_wizard(osv.osv_memory):
     _columns = {
         'total_amount': fields.float(string="Total amount", size=64, readonly=True),
         'state': fields.selection([('draft', 'Draft'), ('cc', 'Cost Center only'), ('dispatch', 'All other elements'), ('done', 'Done')],
-            string="State", required=True, readonly=True),
+                                  string="State", required=True, readonly=True),
         'entry_mode': fields.selection([('percentage','Percentage'), ('amount','Amount')], 'Entry Mode', select=1),
         'line_ids': fields.one2many('analytic.distribution.wizard.lines', 'wizard_id', string="Cost Center Allocation"),
         'fp_line_ids': fields.one2many('analytic.distribution.wizard.fp.lines', 'wizard_id', string="Funding Pool Allocation"),
@@ -614,11 +614,11 @@ class analytic_distribution_wizard(osv.osv_memory):
         'accrual_line_id': fields.many2one('msf.accrual.line', string="Accrual Line"),
         'distribution_id': fields.many2one('analytic.distribution', string="Analytic Distribution"),
         'is_writable': fields.function(_is_writable, method=True, string='Is this wizard writable?', type='boolean', readonly=True,
-            help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
+                                       help="This informs wizard if it could be saved or not regarding invoice state or purchase order state", store=False),
         'have_header': fields.function(_have_header, method=True, string='Is this wizard come from an invoice line?',
-            type='boolean', readonly=True, help="This informs the wizard if we are on a line and if the parent has an distrib."),
+                                       type='boolean', readonly=True, help="This informs the wizard if we are on a line and if the parent has an distrib."),
         'account_id': fields.many2one('account.account', string="G/L Account", readonly=True,
-            help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
+                                      help="This account come from an invoice line. When filled in it permits to test compatibility for each funding pool and display those that was linked with."),
         'direct_invoice_id': fields.many2one('wizard.account.invoice', string="Direct Invoice"),
         'direct_invoice_line_id': fields.many2one('wizard.account.invoice.line', string="Direct Invoice Line"),
         'account_direct_invoice_wizard_id': fields.many2one('account.direct.invoice.wizard', string="Direct Invoice Wizard"),
@@ -648,13 +648,13 @@ class analytic_distribution_wizard(osv.osv_memory):
         mode = self.read(cr, uid, ids, ['entry_mode'])[0]['entry_mode']
         self.write(cr, uid, [ids[0]], {'entry_mode': mode=='percentage' and 'amount' or 'percentage'})
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': ids[0],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': ids[0],
+            'context': context,
         }
 
     def _get_lines_from_distribution(self, cr, uid, ids, distrib_id=None, context=None):
@@ -826,7 +826,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Create a new entry if no one for this cost center
             if not search_ids:
                 res = cc_obj.create(cr, uid, {'wizard_id': wizard.id, 'percentage': cc_data[el], 'type': 'cost.center',
-                    'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
+                                              'currency_id': wizard.currency_id and wizard.currency_id.id or False, 'analytic_id': el[0], 'destination_id': el[1]}, context=context)
             # else change current cost center
             else:
                 res = cc_obj.write(cr, uid, search_ids, {'percentage': cc_data[el], 'is_percentage_amount_touched': True}, context=context)
@@ -1051,14 +1051,14 @@ class analytic_distribution_wizard(osv.osv_memory):
                 self.write(cr, uid, [wiz.id], {'distribution_id': distrib_id,}, context=context)
                 # link it to the element we come from (purchase order, invoice, purchase order line, invoice line, etc.)
                 for el in [('invoice_id', 'account.invoice'), ('invoice_line_id', 'account.invoice.line'), ('purchase_id', 'purchase.order'),
-                    ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'),
-                    ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'),
-                    ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'),
-                    ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
-                    ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
-                    ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line'),
-                    ('account_direct_invoice_wizard_id','account.direct.invoice.wizard'),
-                    ('account_direct_invoice_wizard_line_id','account.direct.invoice.wizard.line'),]:
+                           ('purchase_line_id', 'purchase.order.line'), ('register_line_id', 'account.bank.statement.line'),
+                           ('move_line_id', 'account.move.line'), ('direct_invoice_id', 'wizard.account.invoice'),
+                           ('direct_invoice_line_id', 'wizard.account.invoice.line'), ('commitment_id', 'account.commitment'),
+                           ('commitment_line_id', 'account.commitment.line'), ('model_id', 'account.model'), ('model_line_id', 'account.model.line'),
+                           ('accrual_line_id', 'msf.accrual.line'), ('sale_order_id', 'sale.order'), ('sale_order_line_id', 'sale.order.line'), ('move_id', 'account.move'),
+                           ('cash_return_id', 'wizard.cash.return'), ('cash_return_line_id', 'wizard.advance.line'),
+                           ('account_direct_invoice_wizard_id','account.direct.invoice.wizard'),
+                           ('account_direct_invoice_wizard_line_id','account.direct.invoice.wizard.line'),]:
                     if getattr(wiz, el[0], False):
                         obj_id = getattr(wiz, el[0], False).id
                         self.pool.get(el[1]).write(cr, uid, [obj_id], {'analytic_distribution_id': distrib_id}, context=context)
@@ -1083,24 +1083,24 @@ class analytic_distribution_wizard(osv.osv_memory):
         if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
             # Get direct_invoice id
             direct_invoice_id = (wiz.account_direct_invoice_wizard_id and wiz.account_direct_invoice_wizard_id.id) or\
-                    (wiz.account_direct_invoice_wizard_line_id and\
-                            wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
+                (wiz.account_direct_invoice_wizard_line_id and\
+                 wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and\
-                    hasattr(direct_invoice, 'register_id') and\
-                    direct_invoice.register_id.id or False
+                hasattr(direct_invoice, 'register_id') and\
+                direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
                     'type': 'in_invoice',
                     'journal_type': 'purchase',
                     'active_ids': register_id,
-                    })
+                })
             context.update({
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
-                })
+            })
             return {
                 'name': "Supplier Direct Invoice",
                 'type': 'ir.actions.act_window',
@@ -1118,19 +1118,19 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Get register from which we come from
             direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and\
-                    hasattr(direct_invoice, 'register_id') and\
-                    direct_invoice.register_id.id or False
+                hasattr(direct_invoice, 'register_id') and\
+                direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
                     'type': 'in_invoice',
                     'journal_type': 'purchase',
                     'active_ids': register_id,
-                    })
+                })
             context.update({
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
-                })
+            })
             return {
                 'name': "Supplier Direct Invoice",
                 'type': 'ir.actions.act_window',
@@ -1204,7 +1204,7 @@ class analytic_distribution_wizard(osv.osv_memory):
             self.update_analytic_lines(cr, uid, ids, context=context)
 
         if wiz and wiz.move_line_id and wiz.move_line_id.move_id and \
-            wiz.move_line_id.move_id.imported:
+                wiz.move_line_id.move_id.imported:
             # US-99 do not refresh lines as imported JE has no pencil
             # (only AD wizard button allowed)
             o2m_toreload = {}
@@ -1232,15 +1232,15 @@ class analytic_distribution_wizard(osv.osv_memory):
                     {'analytic_distribution_id': distr_id},
                     context=context)
             return_wiz = {
-                 'name': "Cash Return- Wizard",
-                    'type': 'ir.actions.act_window',
-                    'res_model': wizard_name,
-                    'target': 'new',
-                    'view_mode': 'form',
-                    'view_type': 'form',
-                    'res_id': wizard_id,
-                    'context': context,
-                 }
+                'name': "Cash Return- Wizard",
+                'type': 'ir.actions.act_window',
+                'res_model': wizard_name,
+                'target': 'new',
+                'view_mode': 'form',
+                'view_type': 'form',
+                'res_id': wizard_id,
+                'context': context,
+            }
         return return_wiz
 
     def validate(self, cr, uid, wizard_id, context=None):
@@ -1284,7 +1284,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 'currency_id': currency,
             }
             self.pool.get('analytic.distribution.wizard.lines').write(cr, uid, [wizard_line.get('id')], vals,
-                context={'skip_validation': True})
+                                                                      context={'skip_validation': True})
         return True
 
     def button_get_header_distribution(self, cr, uid, ids, context=None):
@@ -1337,13 +1337,13 @@ class analytic_distribution_wizard(osv.osv_memory):
                 # Then retrieve all lines
                 self._get_lines_from_distribution(cr, uid, [wiz.id], distrib.id, context=context)
         return {
-                'type': 'ir.actions.act_window',
-                'res_model': self._name,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'target': 'new',
-                'res_id': ids[0],
-                'context': context,
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'target': 'new',
+            'res_id': ids[0],
+            'context': context,
         }
 
     def button_cancel(self, cr, uid, ids, context=None):
@@ -1362,31 +1362,31 @@ class analytic_distribution_wizard(osv.osv_memory):
         # Retrieve some values to verify if we come from a direct invoice
         wiz = self.browse(cr, uid, ids, context=context)[0]
         if wiz and wiz.move_line_id and wiz.move_line_id.move_id and \
-            wiz.move_line_id.move_id.imported:
+                wiz.move_line_id.move_id.imported:
             # US-99 do not refresh lines as imported JE has no pencil
             # (only AD wizard button allowed)
             o2m_toreload = {}
         if wiz and (wiz.account_direct_invoice_wizard_id or wiz.account_direct_invoice_wizard_line_id):
             # Get direct_invoice id
             direct_invoice_id = (wiz.account_direct_invoice_wizard_id and \
-                    wiz.account_direct_invoice_wizard_id.id) or\
-                    (wiz.account_direct_invoice_wizard_line_id and\
-                    wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
+                                 wiz.account_direct_invoice_wizard_id.id) or\
+                (wiz.account_direct_invoice_wizard_line_id and\
+                 wiz.account_direct_invoice_wizard_line_id.invoice_wizard_id.id) or False
             # Get register from which we come from
             direct_invoice = self.pool.get('account.direct.invoice.wizard').browse(cr,
-                    uid, [direct_invoice_id], context=context)[0]
+                                                                                   uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and\
-                    hasattr(direct_invoice, 'register_id') and\
-                    direct_invoice.register_id.id or False
+                hasattr(direct_invoice, 'register_id') and\
+                direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
                     'active_ids': register_id,
-                    })
+                })
             context.update({
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
-                })
+            })
             return {
                 'name': "Supplier Direct Invoice",
                 'type': 'ir.actions.act_window',
@@ -1404,19 +1404,19 @@ class analytic_distribution_wizard(osv.osv_memory):
             # Get register from which we come from
             direct_invoice = self.pool.get('wizard.account.invoice').browse(cr, uid, [direct_invoice_id], context=context)[0]
             register_id = direct_invoice and\
-                    hasattr(direct_invoice, 'register_id') and\
-                    direct_invoice.register_id.id or False
+                hasattr(direct_invoice, 'register_id') and\
+                direct_invoice.register_id.id or False
             if register_id:
                 context.update({
                     'active_id': register_id,
                     'type': 'in_invoice',
                     'journal_type': 'purchase',
                     'active_ids': register_id,
-                    })
+                })
             context.update({
                 'type': 'in_invoice',
                 'journal_type': 'purchase',
-                })
+            })
             return {
                 'name': "Supplier Direct Invoice",
                 'type': 'ir.actions.act_window',
@@ -1469,7 +1469,7 @@ class analytic_distribution_wizard(osv.osv_memory):
                 if wizard.commitment_id.state == 'open':
                     # Search commitment lines that doesn't have any distribution and that are linked to this commitment
                     cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', wizard.commitment_id.id),
-                        ('analytic_distribution_id', '=', False)], context=context)
+                                                                                       ('analytic_distribution_id', '=', False)], context=context)
                     if cl_ids:
                         operator = 'in'
                         if len(cl_ids) == 1:

@@ -5,6 +5,7 @@
 	       <field name="name">account.invoice.customer.pay</field>
 	       <field name="model">account.invoice</field>
 	       <field name="type">form</field>
+           <field name="priority">80</field>
 	       <field name="inherit_id" ref="account.invoice_form"/>
 	       <field name="arch" type="xml">
 	       <button name="invoice_open" position="after">
@@ -17,6 +18,7 @@
 	        <field name="name">account.invoice.supplier.pay</field>
 	        <field name="model">account.invoice</field>
 	        <field name="type">form</field>
+            <field name="priority">70</field>
 	        <field name="inherit_id" ref="account.invoice_supplier_form"/>
 	        <field name="arch" type="xml">
 	            <button name="invoice_open" position="after">

@@ -75,7 +75,7 @@ class local_rule(osv.osv):
             if not vals.get('model'):
                 vals['active'] = False
             elif not self.pool.get('ir.model').search(cr, uid, [('model', '=',
-                vals['model'])], limit=1, order='NO_ORDER', context=context):
+                                                                 vals['model'])], limit=1, order='NO_ORDER', context=context):
                 self._logger.debug("The following rule doesn't apply to your database and has been disabled. Reason: model %s does not exists!\n%s" % (vals['model'], vals))
                 continue #do not save the rule if there is no valid model
             elif 'active' not in vals:
@@ -148,9 +148,9 @@ class update_to_send(osv.osv):
             if 'id' not in export_fields:
                 export_fields.append('id')
             ids_need_to_push = self.need_to_push(cr, uid, [],
-                [m.group(0) for m in map(re_fieldname.match, export_fields)],
-                empty_ids=True,
-                context=context)
+                                                 [m.group(0) for m in map(re_fieldname.match, export_fields)],
+                                                 empty_ids=True,
+                                                 context=context)
             if not ids_need_to_push:
                 return 0
             domain.append(('id', 'in', ids_need_to_push))
@@ -160,16 +160,16 @@ class update_to_send(osv.osv):
                 return 0
 
             owners = self.get_destination_name(cr, uid,
-                ids_to_compute, rule.owner_field, context)
+                                               ids_to_compute, rule.owner_field, context)
             min_offset = 0
             max_offset = len(ids_to_compute)
 
             while min_offset < max_offset:
                 offset = min_offset + 200 < max_offset and min_offset +200 or max_offset
                 datas = self.export_data(cr, uid, ids_to_compute[min_offset:offset],
-                    export_fields, context=context)['datas']
+                                         export_fields, context=context)['datas']
                 sdrefs = self.get_sd_ref(cr, uid, ids_to_compute,
-                    field=['name','version','force_recreation','id'], context=context)
+                                         field=['name','version','force_recreation','id'], context=context)
                 ustr_export_fields = tools.ustr(export_fields)
                 for (id, row) in zip(ids_to_compute[min_offset:offset], datas):
                     sdref, version, force_recreation, data_id = sdrefs[id]
@@ -198,8 +198,8 @@ class update_to_send(osv.osv):
                 return 0
 
             ids_to_delete = self.need_to_push(cr, uid,
-                self.search_deleted(cr, uid, module='sd', context=context),
-                context=context)
+                                              self.search_deleted(cr, uid, module='sd', context=context),
+                                              context=context)
             if not ids_to_delete:
                 return 0
 
@@ -269,8 +269,8 @@ class update_to_send(osv.osv):
             for update in self.browse(cr, uid, update_ids[min_offset:offset], context=context):
                 try:
                     self.pool.get('ir.model.data').update_sd_ref(cr, uid,
-                        update.sdref, {'version':update.version,sync_field:update.create_date},
-                        context=context)
+                                                                 update.sdref, {'version':update.version,sync_field:update.create_date},
+                                                                 context=context)
                 except ValueError:
                     self._logger.warning("Cannot find record %s during pushing update process!" % update.sdref)
             min_offset += 200
@@ -348,7 +348,7 @@ class update_received(osv.osv):
             return 0
         self._logger.debug("Unfold package %s" % packet['model'])
         if not self.pool.get('ir.model').search(cr, uid, [('model', '=',
-            packet['model'])], limit=1, order='NO_ORDER', context=context):
+                                                           packet['model'])], limit=1, order='NO_ORDER', context=context):
             sync_log(self, "Model %s does not exist" % packet['model'], data=packet)
         packet_type = packet.get('type', 'import')
         if packet_type == 'import':
@@ -508,7 +508,7 @@ class update_received(osv.osv):
             # TODO: skip updates not preparable
             for update in updates:
                 if self.search(cr, uid, [('sdref', '=', update.sdref), ('is_deleted', '=', False), ('run', '=', False),
-                        ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)], limit=1, order='NO_ORDER'):
+                                         ('rule_sequence', '=', update.rule_sequence), ('sequence_number', '<', update.sequence_number)], limit=1, order='NO_ORDER'):
                     # previous not run on the same (sdref, rule_sequence): do not execute
                     self._set_not_run(cr, uid, [update.id], log="Cannot execute due to previous not run on the same record/rule.", context=context)
                     continue
@@ -517,12 +517,14 @@ class update_received(osv.osv):
 
                 #4 check for fallback value : report missing fallback_value
                 #US-852: in case the account_move_line is given but not exist, then do not let the import of the current entry
-                ret_fb = self._check_and_replace_missing_id(cr, uid, import_fields, row, fallback, message, context=context)
+                #US-2147: same thing for property_product_pricelist and property_product_pricelist_purchase
+                result = self._check_and_replace_missing_id(cr, uid,
+                                                            import_fields, row, fallback, message, update, context=context)
 
                 if bad_fields :
                     row = [row[i] for i in range(len(import_fields)) if i not in bad_fields]
 
-                if ret_fb: #US-852: if everything is Ok, then do import as normal
+                if result['res']: #US-852: if everything is Ok, then do import as normal
                     values.append(row)
                     update_ids.append(update.id)
                     versions.append( (update.sdref, update.version) )
@@ -535,9 +537,9 @@ class update_received(osv.osv):
                         logs[update.id] = "Warning: Conflict detected! in content: (%s, %r)" % (update.id, sd_ref)
                 else: #US-852: if account_move_line is missing then ignore the import, and set it as not run
                     self._set_not_run(cr, uid, [update.id],
-                        log="Cannot execute due to missing the account_move_line",
-                        context=context
-                    )
+                                      log=result['error_message'],
+                                      context=context
+                                      )
 
             if bad_fields:
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
@@ -550,9 +552,9 @@ class update_received(osv.osv):
                     import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, tools.ustr(import_error), "\n".join([tools.ustr(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self._set_not_run(cr, uid, update_ids,
-                        log=import_error.strip(),
-                        context=context
-                    )
+                                      log=import_error.strip(),
+                                      context=context
+                                      )
                     raise Exception(message+import_error)
                 # end of the loop: all remaining values has been imported
                 if res[0] == len(values):
@@ -576,14 +578,14 @@ class update_received(osv.osv):
                         values.pop(value_index)
                         versions.pop(value_index)
                         self._set_not_run(cr, uid, [update_ids.pop(value_index)],
-                            log=import_message.strip(),
-                            context=context
-                        )
+                                          log=import_message.strip(),
+                                          context=context
+                                          )
                     else:
                         # Rare case where no line is given by import_data
                         self.write(cr, uid, update_ids, {
                             'execution_date': datetime.now(),
-                            }, context=context)
+                        }, context=context)
                         message += "Cannot import data in model %s:\nReason: %s\n" % (obj._name, import_message)
                         raise Exception(message)
                     # Re-start import_data on rows that succeeds before
@@ -627,9 +629,9 @@ class update_received(osv.osv):
                     e = "Error during unlink on model %s!\nid: %s\nUpdate id: %s\nReason: %s\nSD ref:\n%s\n" \
                         % (obj._name, id, update_id, tools.ustr(error), update.sdref)
                     self._set_not_run(cr, uid, [update_id],
-                        log=tools.ustr(e),
-                        context=context
-                    )
+                                      log=tools.ustr(e),
+                                      context=context
+                                      )
 
                     ########################################################################
                     #
@@ -650,7 +652,7 @@ class update_received(osv.osv):
             }, context=context)
             sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
             toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
-                ('is_deleted', '=', False)], order='NO_ORDER', context=context)
+                                                 ('is_deleted', '=', False)], order='NO_ORDER', context=context)
             if toSetRun_ids:
                 self.write(cr, uid, toSetRun_ids, {
                     'editable' : False,
@@ -699,8 +701,8 @@ class update_received(osv.osv):
             if deleted_update_ids:
                 sdrefs = [elem['sdref'] for elem in self.read(cr, uid, deleted_update_ids, ['sdref'], context=context)]
                 toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs),
-                    ('is_deleted', '=', False), ('run', '=', False)],
-                    order='NO_ORDER', context=context)
+                                                     ('is_deleted', '=', False), ('run', '=', False)],
+                                           order='NO_ORDER', context=context)
                 if toSetRun_ids:
                     self.write(cr, uid, toSetRun_ids, {
                         'execution_date': datetime.now(),
@@ -717,7 +719,7 @@ class update_received(osv.osv):
                     }, context=context)
 
             updates = filter(lambda update: update.id not in deleted_update_ids or
-                    (not do_deletion and force_recreation), updates)
+                             (not do_deletion and force_recreation), updates)
 
             if not updates:
                 continue
@@ -730,18 +732,18 @@ class update_received(osv.osv):
                     for field in eval(updates[0].fields)
                 ]
                 sdref_res_id = obj.find_sd_ref(cr, uid,
-                    sdref_update_ids.keys(),
-                    context=context)
+                                               sdref_update_ids.keys(),
+                                               context=context)
                 confilcting_ids = obj.need_to_push(cr, uid,
-                    sdref_res_id.values(), import_fields, context=context)
+                                                   sdref_res_id.values(), import_fields, context=context)
                 confilcting_updates = filter(
                     lambda update: update.handle_priority and \
-                        update.sdref in sdref_res_id and \
-                        sdref_res_id[update.sdref] in confilcting_ids,
+                    update.sdref in sdref_res_id and \
+                    sdref_res_id[update.sdref] in confilcting_ids,
                     updates)
                 updates_to_ignore = filter(
                     lambda update: priorities[update.source] \
-                                   > priorities[local_entity.name],
+                    > priorities[local_entity.name],
                     confilcting_updates)
                 for update in confilcting_updates:
                     if update not in updates_to_ignore:
@@ -753,19 +755,19 @@ class update_received(osv.osv):
                                update.source, local_entity.name))
                 if updates_to_ignore:
                     self.write(cr, uid,
-                        [update.id for update in updates_to_ignore],
-                        {
-                            'execution_date': datetime.now(),
-                            'editable' : False,
-                            'run' : True,
-                            'log' : \
-                                "This update has been ignored because it " \
-                                "interfere with a local modification while the " \
-                                "origin instance has a lower priority.\n\n" \
-                                "(update source: %s < local instance: %s)" \
-                                % (update.source, local_entity.name),
-                        },
-                        context=context)
+                               [update.id for update in updates_to_ignore],
+                               {
+                                   'execution_date': datetime.now(),
+                                   'editable' : False,
+                                   'run' : True,
+                                   'log' : \
+                                   "This update has been ignored because it " \
+                                   "interfere with a local modification while the " \
+                                   "origin instance has a lower priority.\n\n" \
+                                   "(update source: %s < local instance: %s)" \
+                                   % (update.source, local_entity.name),
+                               },
+                               context=context)
                     updates = filter(
                         lambda update: update not in updates_to_ignore,
                         updates)
@@ -820,12 +822,17 @@ class update_received(osv.osv):
                          and data_rec.sync_date < data_rec.last_modification) # modification after synchro => conflict
                      or next_version < data_rec.version))                     # next version is lower than current version
 
-    def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback, message, context=None):
+    def _check_and_replace_missing_id(self, cr, uid, fields, values, fallback,
+                                      message, update, context=None):
         ir_model_data_obj = self.pool.get('ir.model.data')
+        result = {
+            'res': True,
+            'error_message': ''
+        }
 
         def check_xmlid(xmlid):
             module, sep, xmlid = xmlid.partition('.')
-            assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % full_xmlid
+            assert sep, "Cannot find an xmlid without specifying its module: xmlid=%s" % module
             return not ir_model_data_obj.is_deleted(cr, uid, module, xmlid, context=context)
 
         for i, field, value in zip(range(len(fields)), fields, values):
@@ -843,7 +850,22 @@ class update_received(osv.osv):
                         if 'account_move_line' in xmlid:
                             m, sep, sdref = xmlid.partition('.')
                             if self.search(cr, uid, [('sdref', '=', sdref), ('run', '=', False)], order='NO_ORDER', context=context):
-                                return False
+                                result['res'] = False
+                                result['error_message'] = 'Cannot execute due to missing the %s' % field
+                                return result
+                        if '/analytic_distribution/' in xmlid:
+                            result['res'] = False
+                            result['error_message'] = 'Cannot execute due to missing the %s' % field
+                            return result
+
+                        #US-2147: property_product_pricelist/id and
+                        # property_product_pricelist_purchase/id are required
+                        # fields, return False if the xmlid don't exists
+                        if field in ('property_product_pricelist/id',
+                                     'property_product_pricelist_purchase/id'):
+                            result['res'] = False
+                            result['error_message'] = 'Cannot execute due to missing the %s' % field
+                            return result
                         fb = fallback.get(field, False)
                         if not fb:
                             raise ValueError("no fallback value defined")
@@ -860,7 +882,7 @@ class update_received(osv.osv):
                 else:
                     res_val.append(xmlid)
             values[i] = ','.join(res_val) if res_val else False
-        return True
+        return result
 
     _order = 'create_date desc, id desc'
 

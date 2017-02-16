@@ -1264,8 +1264,8 @@ stock moves which are already processed : '''
                 if line.soq_updated:
                     reset_soq.append(line.id)
 
-                # check if the current product is stopped or not :
-                if line.product_id and line.product_id.state and line.product_id.state.id == stopped_id:
+                # check if the current product is stopped or not : If the PO was created by Sync. engine, do not check
+                if not po.push_fo and line.product_id and line.product_id.state and line.product_id.state.id == stopped_id:
                     raise osv.except_osv(_('Error'), _('You can not validate a PO with stopped products (line %s).') % (line.line_number, ))
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
@@ -1600,9 +1600,7 @@ stock moves which are already processed : '''
 
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     so = sol.order_id
-                    # do not update Internal Requests with internal requestor location
-                    if so and so.procurement_request and so.location_requestor_id.usage != 'customer':
-                        continue
+                    # US-1931: Remove code that do not update Internal Requests with internal requestor location
 
                     line_confirmed = False
                     # compute confirmed date for line
@@ -1621,8 +1619,8 @@ stock moves which are already processed : '''
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
                                                                                  round=False, context=date_context)
 
-                    if so.order_type == 'regular' and price_unit_converted < 0.00001:
-                        price_unit_converted = 0.00001
+                    if so.order_type == 'regular' and price_unit_converted < 0.01:
+                        price_unit_converted = 0.01
 
                     line_qty = line.product_qty
                     if line.procurement_id:
@@ -2363,7 +2361,7 @@ stock moves which are already processed : '''
                 compute_store = move_obj._store_get_values(cr, uid, todo_moves, None, context)
                 compute_store.sort()
                 done = []
-                for _, store_object, store_ids, store_fields2 in compute_store:
+                for null, store_object, store_ids, store_fields2 in compute_store:
                     if store_fields2 in ('dpo_incoming', 'dpo_out', 'overall_qty', 'line_state') and not (store_object, store_ids, store_fields2) in done:
                         self.pool.get(store_object)._store_set_values(cr, uid, store_ids, store_fields2, context)
                         done.append((store_object, store_ids, store_fields2))

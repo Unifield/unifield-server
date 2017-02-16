@@ -7,7 +7,7 @@
             <field name="name">leadtime.partner.form</field>
             <field name="model">res.partner</field>
             <field name="type">form</field>
-            <field name="priority" eval="45" />
+            <field name="priority">70</field>
             <field name="inherit_id" ref="base.view_partner_form" />
             <field name="arch" type="xml">
                 <data>

@@ -76,7 +76,7 @@
                         <filter icon="terp-go-home" name="out" string="Outgoing" domain="[('type','=','out')]"/>
                         <separator orientation="vertical"/>
                         <field name="product_id" default_focus="1"/>
-                        <field name="partner_id" context="{'contact_display':'partner'}"/>
+                        <field name="partner_id" />
                         <field name="order_type" />
                         <field name="reason_type_id" widget="selection"/>
                         <newline />
@@ -120,7 +120,7 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">tree</field>
             <field name="arch" type="xml">
-                <tree string="Export Moves Analysis">
+                <tree string="Export Moves Analysis" noteditable="1">
                     <field name="name" />
                     <field name="date_from" />
                     <field name="date_to" />

@@ -45,7 +45,7 @@ class hr_payroll(osv.osv):
         # Search MSF Private Fund element, because it's valid with all accounts
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-            'analytic_account_msf_private_funds')[1]
+                                                                        'analytic_account_msf_private_funds')[1]
         except ValueError:
             fp_id = 0
         # Browse all given lines to check analytic distribution validity
@@ -97,8 +97,8 @@ class hr_payroll(osv.osv):
             #### END OF CASES
             # if no cost center, distro is invalid (CASE A/)
             if not line.cost_center_id:
-                    res[line.id] = 'invalid'
-                    continue
+                res[line.id] = 'invalid'
+                continue
             if line.funding_pool_id and not line.destination_id: # CASE 2/
                 # D Check, except B check
                 if line.cost_center_id.id not in [x.id for x in line.funding_pool_id.cost_center_ids] and line.funding_pool_id.id != fp_id:
@@ -112,7 +112,7 @@ class hr_payroll(osv.osv):
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids] and line.funding_pool_id.id != fp_id:
+                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.funding_pool_id.tuple_destination_account_ids if not x.disabled] and line.funding_pool_id.id != fp_id:
                     res[line.id] = 'invalid'
                     continue
                 # D Check, except B check
@@ -209,16 +209,16 @@ class hr_payroll(osv.osv):
         'free2_id': fields.many2one('account.analytic.account', string="Free 2", domain="[('category', '=', 'FREE2'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'destination_id': fields.many2one('account.analytic.account', string="Destination", domain="[('category', '=', 'DEST'), ('type', '!=', 'view'), ('state', '=', 'open')]"),
         'analytic_state': fields.function(_get_analytic_state, type='selection', method=True, readonly=True, string="Distribution State",
-            selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state",
-            store={
-                'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
-                'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
-                'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'cost_center_ids', 'tuple_destination_account_ids'], 20),
-                'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
-            }
-        ),
+                                          selection=[('none', 'None'), ('valid', 'Valid'), ('invalid', 'Invalid')], help="Give analytic distribution state",
+                                          store={
+                                              'hr.payroll.msf': (lambda self, cr, uid, ids, c=None: ids, ['account_id', 'cost_center_id', 'funding_pool_id', 'destination_id'], 10),
+                                              'account.account': (_get_trigger_state_account, ['user_type_code', 'destination_ids'], 20),
+                                              'account.analytic.account': (_get_trigger_state_ana, ['date', 'date_start', 'cost_center_ids', 'tuple_destination_account_ids'], 20),
+                                              'account.destination.link': (_get_trigger_state_dest_link, ['account_id', 'destination_id'], 30),
+                                          }
+                                          ),
         'partner_type': fields.function(_get_third_parties, type='reference', method=True, string="Third Parties", readonly=True,
-            selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')]),
+                                        selection=[('res.partner', 'Partner'), ('account.journal', 'Journal'), ('hr.employee', 'Employee')]),
         'field': fields.char(string='Field', readonly=True, size=255, help="Field this line come from in Homère."),
     }
 
@@ -276,12 +276,12 @@ class hr_payroll(osv.osv):
             # Search MSF Private Fund element, because it's valid with all accounts
             try:
                 fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 
-                'analytic_account_msf_private_funds')[1]
+                                                                            'analytic_account_msf_private_funds')[1]
             except ValueError:
                 fp_id = 0
             # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
             # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and funding_pool_id != fp_id:
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and funding_pool_id != fp_id:
                 res = {'value': {'funding_pool_id': False}}
         # If no destination, do nothing
         elif not destination_id:

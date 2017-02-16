@@ -26,6 +26,7 @@ from lxml import etree
 import logging
 import tools
 from os import path
+from datetime import datetime
 
 class product_section_code(osv.osv):
     _name = "product.section.code"
@@ -914,6 +915,8 @@ class product_attributes(osv.osv):
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
         'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
+        'uf_write_date': fields.datetime(_('Write date')),
+        'uf_create_date': fields.datetime(_('Creation date')),
     }
 
     # US-43: Remove the default_get that set value on Product Creator field. By removing the required = True value
@@ -1265,6 +1268,8 @@ class product_attributes(osv.osv):
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
 
+        vals['uf_create_date'] = vals.get('uf_create_date', datetime.now())
+
         res = super(product_attributes, self).create(cr, uid, vals,
                                                      context=context)
 
@@ -1289,6 +1294,7 @@ class product_attributes(osv.osv):
             return True
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
+        int_stat_obj = self.pool.get('product.international.status')
 
         if context is None:
             context = {}
@@ -1328,7 +1334,35 @@ class product_attributes(osv.osv):
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, uid, local_smrl_ids, {'product_state': prod_state}, context=context)
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=context)
+
+        if 'international_status' in vals:
+            intstat_code = ''
+            if vals['international_status']:
+                intstat_id = vals['international_status']
+                if isinstance(intstat_id, (int,long)):
+                    intstat_id = [intstat_id]
+                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('international_status_code', '!=', intstat_code),
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True)
+            ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=context)
+
+        if 'state_ud' in vals:
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True),
+                ('state_ud', '!=', vals['state_ud'] or ''),
+            ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=context)
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1363,6 +1397,16 @@ class product_attributes(osv.osv):
                     #                    'state': phase_out_status,
                 })
 
+        if 'active' in vals:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True),
+                ('product_active', '!=', vals['active'])
+            ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=context)
+
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
@@ -1370,6 +1414,8 @@ class product_attributes(osv.osv):
         for f in ['sterilized', 'closed_article', 'single_use']:
             if f in vals and not vals.get(f):
                 vals[f] = 'no'
+
+        vals['uf_write_date'] = vals.get('uf_write_date', datetime.now())
 
         res = super(product_attributes, self).write(cr, uid, ids, vals, context=context)
 
@@ -1381,6 +1427,7 @@ class product_attributes(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
 
         return res
+
 
     def reactivate_product(self, cr, uid, ids, context=None):
         '''
@@ -1430,7 +1477,7 @@ class product_attributes(osv.osv):
 
         for product in self.browse(cr, uid, ids, context=context):
             # Raise an error if the product is already inactive
-            if not product.active:
+            if not product.active and not context.get('sync_update_execution'):
                 raise osv.except_osv(_('Error'), _('The product [%s] %s is already inactive.') % (product.default_code, product.name))
 
             # Check if the product is in some purchase order lines or request for quotation lines

@@ -6928,13 +6928,6 @@ msgstr ""
 msgid "You cannot have 2 pricelist versions that overlap!"
 msgstr ""
 
-#. modules: account_activable, analytic_distribution
-#: code:addons/account_activable/account_activable.py:48
-#: code:addons/analytic_distribution/analytic_account.py:81
-#, python-format
-msgid "You cannot set an inactivity date lower than tomorrow!"
-msgstr ""
-
 #. module: account_mcdb
 #: report:account.analytic.line:0
 #: report:account.move.line:0
@@ -20017,7 +20010,7 @@ msgstr ""
 #: model:ir.ui.menu,name:stock_batch_recall.menu_batch_recall
 #: view:report.batch.recall:0
 #: view:stock.batch.recall:0
-msgid "Batch Recall"
+msgid "Batch Location"
 msgstr ""
 
 #. module: product_asset

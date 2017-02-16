@@ -5,6 +5,7 @@
             <field name="name">account.analytic.chart.inherit</field>
             <field name="model">account.analytic.chart</field>
             <field name="type">form</field>
+            <field name="priority">20</field>
             <field name="inherit_id" ref="account.account_analytic_chart_view"/>
             <field name="arch" type="xml">
                 <data>
