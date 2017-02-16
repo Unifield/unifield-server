@@ -76122,3 +76122,9 @@ msgstr "Vous ne pouvez pas annuler le lettrage de ces lignes car l'écriture de 
 #, python-format
 msgid "Entries with an FX adjustment entry can only be unreconciled in the same instance where they have been reconciled in."
 msgstr "Le lettrage des écritures avec une écriture de différence de change ne peut être annulé que dans l'instance dans laquelle les écritures ont été lettrées."
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:448
+#, python-format
+msgid "You can't unreconcile these entries in this instance because all legs are not present."
+msgstr "Vous ne pouvez pas annuler le lettrage de ces écritures dans cette instance car toutes les lignes du lettrage ne sont pas présentes."

@@ -441,6 +441,12 @@ class account_move_line(osv.osv):
             if balanced_in_booking and not balanced_in_fctal:
                 raise osv.except_osv(_('Warning !'),
                                      _("You can't unreconcile these lines because the FX entry is still missing."))
+            # The loop is on full reconciliations => if the amounts are partial all legs aren't in the current instance:
+            # prevent from unreconciling
+            if not balanced_in_booking and not balanced_in_fctal:
+                raise osv.except_osv(_('Warning !'),
+                                     _("You can't unreconcile these entries in this instance "
+                                       "because all legs are not present."))
             if fxa_line_ids:
                 # if there is a FXA the unreconciliation must be done in the same instance as the reconciliation
                 self._check_instance(cr, uid, reconcile_id, context)
