@@ -280,7 +280,7 @@ class product_list_line(osv.osv):
             string='Product Description',
             readonly=True,
             type='char',
-            size=64,
+            size=128,
             store={
                 'product.product': (
                     _get_product, ['name'], 10,
