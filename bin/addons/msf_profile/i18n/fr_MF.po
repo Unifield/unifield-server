@@ -76284,3 +76284,22 @@ msgstr "Compte: %s - %s. Le Tiers doit être un journal de trésorerie avec la m
 #, python-format
 msgid "Account: %s - %s. The journal used for the internal transfer must be different from the Journal Entry Journal."
 msgstr "Compte: %s - %s. Le journal utilisé pour le transfert interne doit être différent du journal de l'écriture comptable."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:206
+#: code:addons/msf_doc_import/initial_stock_inventory.py:460
+#: code:addons/msf_doc_import/initial_stock_inventory.py:467
+#: code:addons/msf_doc_import/initial_stock_inventory.py:722
+#: code:addons/msf_doc_import/initial_stock_inventory.py:985
+#, python-format
+msgid "Incorrectly formatted expiry date.\n"
+""
+msgstr "Format incorrect pour la date d'expiration.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:715
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:203
+#, python-format
+msgid "You cannot create a batch number with an expiry date before %s"
+msgstr "Vous ne pouvez pas créer un lot avec une date d'expiration avant %s"

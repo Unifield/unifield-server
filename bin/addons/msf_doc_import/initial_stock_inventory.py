@@ -24,6 +24,7 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from datetime import datetime
 
 
 class stock_inventory(osv.osv):
@@ -701,11 +702,21 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
 
             # Batch
             batch = row.cells[4].data
+            if batch:
+                batch = batch.strip()
 
             # Expiry date
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
                     expiry = row.cells[5].data
+                    if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                        date_format = self.pool.get('date.tools').get_date_format(cr, uid, context=context)
+                        bad_expiry = True
+                        comment += _('You cannot create a batch number with an expiry date before %s') % (
+                            datetime(1900, 01, 01, 0, 0, 0).strftime(date_format)
+                        )
+                        to_correct = True
+                        expiry = False
                 else:
                     bad_expiry = True
                     comment += _('Incorrectly formatted expiry date.\n')
