@@ -626,6 +626,8 @@ class res_partner(osv.osv):
         return super(res_partner, self).write(cr, uid, ids, vals, context=context)
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         vals = self.check_pricelists_vals(cr, uid, vals, context=context)
         if 'partner_type' in vals and vals['partner_type'] in ('internal', 'section', 'esc', 'intermission'):
             msf_customer = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', 'stock_location_internal_customers')
@@ -645,7 +647,7 @@ class res_partner(osv.osv):
                         elif pl.type == 'purchase':
                             vals['property_product_pricelist_purchase'] = pl.id
 
-        if not vals.get('address'):
+        if not context.get('sync_update_execution') and not vals.get('address'):
             vals['address'] = [(0, 0, {'function': False, 'city': False, 'fax': False, 'name': False, 'zip': False, 'title': False, 'mobile': False, 'street2': False, 'country_id': False, 'phone': False, 'street': False, 'active': True, 'state_id': False, 'type': False, 'email': False})]
 
         if vals.get('name'):
@@ -873,6 +875,7 @@ class res_partner_address(osv.osv):
         '''
         Remove empty addresses if exist and create the new one
         '''
+
         if vals.get('partner_id'):
             domain_dict = {
                 'partner_id': vals.get('partner_id'),
@@ -894,7 +897,11 @@ class res_partner_address(osv.osv):
             }
             domain = [(k, '=', v) for k, v in domain_dict.iteritems()]
             addr_ids = self.search(cr, uid, domain, context=context)
-            self.unlink(cr, uid, addr_ids, context=context)
+            if addr_ids:
+                if not self.is_linked(cr, uid, addr_ids):
+                    self.unlink(cr, uid, addr_ids, context=context)
+                else:
+                    self.write(cr, uid, addr_ids, {'active': False}, context=context)
 
         return super(res_partner_address, self).create(cr, uid, vals, context=context)
 
