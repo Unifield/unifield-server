@@ -1030,6 +1030,8 @@ class board_board(osv.osv):
                     continue
                 elif child.get('name'):
                     action_id = int(child.get('name'))
+
+                    # check the group has write permission on the model
                     model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
                     user_groups_id = self.pool.get('res.users').read(cr, uid, uid,
                             ['groups_id'])['groups_id']
@@ -1037,20 +1039,23 @@ class board_board(osv.osv):
                     write_perm = ima_obj.check_group(cr, uid, model, 'write',
                             user_groups_id)
 
-                    if not write_perm:
+                    menu_access = True
+                    # if the group has no write permission, check if the
+                    # user has access to the sub menu of the related objects.
+                    if child.get('menu_ref'):
+                        menu_ids = child.get('menu_ref').split(',')
+                        if not isinstance(menu_ids, list):
+                            menu_ids = [menu_ids]
+
+                        for menu_id in menu_ids:
+                            menu_id = int(menu_id)
+                            if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
+                                menu_access = False
+                                break
+
+                    # if no access on the menu or on the model, delete the node
+                    if not(write_perm or menu_access):
                         node.remove(child)
-                        continue
-
-                if child.get('menu_ref'):
-                    menu_ids = child.get('menu_ref').split(',')
-                    if not isinstance(menu_ids, list):
-                        menu_ids = [menu_ids]
-
-                    for menu_id in menu_ids:
-                        menu_id = int(menu_id)
-                        if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
-                            node.remove(child)
-                            break
             else:
                 child = self.remove_unauthorized_children(cr, uid, child)
 

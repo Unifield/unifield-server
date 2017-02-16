@@ -154,7 +154,7 @@
             <field name="limit">3</field>
 		</record>
 
-		<!-- Show the XXX -->	
+		<!-- Show the XXX -->
         <record id="account_board_period_view" model="ir.ui.view">
             <field name="name">account.period.board</field>
             <field name="model">account.period</field>
@@ -170,7 +170,7 @@
                 </tree>
             </field>
         </record>
-        
+
         <record id="account_board_period" model="ir.actions.act_window">
 			<field name="name">Account Periods</field>
             <field name="res_model">account.period</field>
@@ -179,7 +179,7 @@
 			<field ref="account_board_period_view" name="view_id"/>
 			<field name="domain">[('state', '=', 'draft'), ('special', '=', False)]</field>
             <field name="context">{'board_view': True}</field>
-		</record>        
+		</record>
 
 		<!-- Show HQ entries to be validated -->
         <record id="account_hq_entries_view" model="ir.ui.view">
