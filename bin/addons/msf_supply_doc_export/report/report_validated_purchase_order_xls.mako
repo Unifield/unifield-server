@@ -88,7 +88,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Creation Date')}</Data></Cell>
-        % if o.date_order not in ('False', False):
+        % if isDate(o.date_order):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.date_order|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -104,7 +104,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Delivery Requested Date')}</Data></Cell>
-        % if o.delivery_requested_date not in (False, 'False'):
+        % if isDate(o.delivery_requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -116,7 +116,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('RTS Date')}</Data></Cell>
-        % if o.ready_to_ship_date not in ('False', False):
+        % if isDate(o.ready_to_ship_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.ready_to_ship_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -148,7 +148,7 @@
     </Row>
     <Row>
         <Cell ss:StyleID="header" ><Data ss:Type="String">${_('Shipment Date')}</Data></Cell>
-        % if o.shipment_date not in ('False', False):
+        % if isDate(o.shipment_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.shipment_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
@@ -255,17 +255,17 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or 0.00)|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(o.pricelist_id.currency_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.origin or '')|x}</Data></Cell>
-        % if line.date_planned not in (False, 'False'):
+        % if isDate(line.date_planned):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_requested_date not in (False, 'False'):
+        % elif isDate(o.delivery_requested_date):
         ## if the date does not exist in the line we take the one from the header
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
         % else:
         <Cell ss:StyleID="line" ><Data ss:Type="String"></Data></Cell>
         % endif
-        % if line.confirmed_delivery_date not in ('False', False):
+        % if isDate(line.confirmed_delivery_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.confirmed_delivery_date|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_confirmed_date not in ('False', False):
+        % elif isDate(o.delivery_confirmed_date):
         ## if the date does not exist in the line we take the one from the header
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_confirmed_date|n}T00:00:00.000</Data></Cell>
         % else:

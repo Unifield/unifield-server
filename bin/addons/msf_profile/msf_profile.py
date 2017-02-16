@@ -62,12 +62,35 @@ class patch_scripts(osv.osv):
                                                ('domain', '!=', False)])
             if search_result:
                 obj_action.unlink(cr, uid, search_result)
-                self._logger.warn('%s Track changes action deleted' % (len(search_result),))
-
+                self._logger.warn('%d Track changes action deleted' % (len(search_result),))
                 # call subscribe on all rule to recreate the Trach changes action
                 rule_obj = self.pool.get('audittrail.rule')
                 rules_ids = rule_obj.search(cr, uid, [])
                 rule_obj.subscribe(cr,uid, rules_ids)
+
+    def us_2110_patch(self, cr, uid, *a, **b):
+        '''setup the size on all attachment'''
+        attachment_obj = self.pool.get('ir.attachment')
+        attachment_ids = attachment_obj.search(cr, uid, [])
+        deleted_count = 0
+        logger = logging.getLogger('update')
+        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
+            vals = {}
+            # check existance of the linked document, if the linked document
+            # don't exist anymore, delete the attachement
+            model_obj = self.pool.get(attachment.res_model)
+            if not model_obj or not model_obj.search(cr, uid,
+                                                     [('id', '=', attachment.res_id),]):
+                attachment_obj.unlink(cr, uid, attachment.id)
+                logger.warn('deleting attachment %s' % attachment.id)
+                deleted_count += 1
+                continue
+            if attachment.datas:
+                decoded_datas = base64.decodestring(attachment.datas)
+                vals['size'] = attachment_obj.get_octet_size(decoded_datas)
+                attachment_obj.write(cr, uid, attachment.id, vals)
+        if deleted_count:
+            logger.warn('%s attachment(s) deleted.' % deleted_count)
 
     def us_2068_remove_updated_linked_to_activate_instance(self, cr, uid, *a, **b):
         '''
@@ -367,29 +390,6 @@ class patch_scripts(osv.osv):
                 cr.execute("UPDATE sync_client_update_to_send "
                            "SET sdref='ZMW' "
                            "WHERE sdref='ZMK'")
-    def us_1454_patch(self, cr, uid, *a, **b):
-        '''setup the size on all attachment'''
-        attachment_obj = self.pool.get('ir.attachment')
-        attachment_ids = attachment_obj.search(cr, uid, [])
-        deleted_count = 0
-        logger = logging.getLogger('update')
-        for attachment in attachment_obj.browse(cr, uid, attachment_ids):
-            vals = {}
-            # check existance of the linked document, if the linked document
-            # don't exist anymore, delete the attachement
-            model_obj = self.pool.get(attachment.res_model)
-            if not model_obj or not model_obj.search(cr, uid,
-                                                     [('id', '=', attachment.res_id),]):
-                attachment_obj.unlink(cr, uid, attachment.id)
-                logger.warn('deleting attachment %s' % attachment.id)
-                deleted_count += 1
-                continue
-
-            if not attachment.size and attachment.datas:
-                vals['size'] = attachment_obj.get_size(attachment.datas)
-                attachment_obj.write(cr, uid, attachment.id, vals)
-        if deleted_count:
-            logger.warn('%s attachment(s) deleted.' % deleted_count)
 
     def us_898_patch(self, cr, uid, *a, **b):
         context = {}
@@ -1116,8 +1116,39 @@ class patch_scripts(osv.osv):
         cr.execute("""UPDATE product_product SET uf_write_date = write_date, uf_create_date = create_date""")
         return True
 
+    def us_1359_update_move_shipment(self, cr, uid, *a, **b):
+        """
+        Fill the 'pick_shipment_id' value for stock move in a shipment
+        """
+        cr.execute("""UPDATE stock_move sm SET pick_shipment_id = sp.shipment_id FROM stock_picking sp WHERE sm.picking_id = sp.id AND sp.shipment_id IS NOT NULL""")
+        return True
+
+    def us_1167_status_inconsistencies(self, cr, uid, *a, **b):
+        '''
+        fill fields of stock.mission.report.line:
+            - state_ud
+            - product_active
+            - international_status_code
+        '''
+        prod_obj = self.pool.get('product.product')
+        smrl_obj = self.pool.get('stock.mission.report.line')
+        context = {}
+
+        prod_ids = prod_obj.search(cr, uid, [('active', 'in', ['t', 'f'])], context=context)
+        smrl_to_update = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids), ('mission_report_id.local_report', '=', True)], context=context)
+
+        for smrl in smrl_obj.browse(cr, uid, smrl_to_update, context=context):
+            smrl_obj.write(cr, uid, smrl.id, {
+                'state_ud': smrl.product_id.state_ud or '',
+                'product_active': smrl.product_id.active,
+                'international_status_code': smrl.product_id.international_status.code if smrl.product_id.international_status else '',
+            }, context=context)
+
+        return True
+
 
 patch_scripts()
+
 
 
 class ir_model_data(osv.osv):

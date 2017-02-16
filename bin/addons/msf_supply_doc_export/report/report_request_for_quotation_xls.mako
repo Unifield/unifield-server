@@ -85,13 +85,15 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.product_qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        % if line.date_planned :
+        % if isDate(line.date_planned) :
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.date_planned|n}T00:00:00.000</Data></Cell>
-        % elif o.delivery_requested_date:
+        % elif isDate(o.delivery_requested_date):
         ## if the date does not exist in the line we take the one from the header
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.delivery_requested_date|n}T00:00:00.000</Data></Cell>
+        % else:
+        <Cell ss:StyleID="line" ><Data ss:Type="String">${('')|x}</Data></Cell>
         % endif
-        % if line.confirmed_delivery_date not in ('False', False):
+        % if isDate(line.confirmed_delivery_date):
             <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${line.confirmed_delivery_date or ' '|n}T00:00:00.000</Data></Cell>
         % else:
             <Cell ss:StyleID="line" ><Data ss:Type="String">${('')|x}</Data></Cell>

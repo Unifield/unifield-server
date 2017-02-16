@@ -100,6 +100,7 @@
                                         <button name="button_duplicate" string="Duplicate" type="object" icon="gtk-copy" />
                                         <field name="name"/>
                                         <field name="reference"/>
+                                        <field name="partner_type_mandatory" invisible="1"/>
                                         <field name="account_id" domain="[('restricted_area', '=', 'account_move_lines')]"/>
                                         <field name="partner_id" invisible="1"/>
                                         <field name="debit_currency" sum="Total Booking Debit" string="Book. Debit"/>

@@ -1304,21 +1304,24 @@ def mod10r(number):
             report = codec[ (int(digit) + report) % 10 ]
     return result + str((10 - report) % 10)
 
-
-def human_size(sz):
+def human_size(data):
     """
     Return the size in a human readable format
     """
-    if not sz:
-        return False
-    units = ('bytes', 'Kb', 'Mb', 'Gb')
-    if isinstance(sz,basestring):
-        sz=len(sz)
-    s, i = float(sz), 0
-    while s >= 1024 and i < len(units)-1:
-        s = s / 1024
-        i = i + 1
-    return "%0.2f %s" % (s, units[i])
+    units = ('Bytes', 'KB', 'MB', 'GB', 'TB')
+    if isinstance(data, basestring):
+        size = float(len(data))
+    elif isinstance(data, (int, long)):
+        size = float(data)
+    elif isinstance(data, float):
+        size = data
+    else:
+        return '0 Bytes'
+    unit_index = 0
+    while size >= 1024 and unit_index < len(units) - 1:
+        size = size / 1024
+        unit_index += 1
+    return "%0.2f %s" % (size, units[unit_index])
 
 def logged(f):
     from tools.func import wraps

@@ -200,6 +200,9 @@ class rml_parse(object):
             'strip_name' : self._strip_name,
             'time' : time,
             'getSel': self.getSel,
+            'isDate': self.isDate,
+            'isDateTime': self.isDateTime,
+            'isTime': self.isTime,
             'getSelValue': self.getSelValue,
             # more context members are setup in setCompany() below:
             #  - company_id
@@ -217,11 +220,27 @@ class rml_parse(object):
         self.lang_dict_called = False
         self._transl_regex = re.compile('(\[\[.+?\]\])')
 
-    def isDate(self, date, date_format=False):
+    def isDate(self, date, date_format=DT_FORMAT):
         '''
-        return False if the value stored in field is not a date, True else.
+        return False if the date is not a datetime matching date_format, True else.
         '''
-        return isDate(date, date_format)
+        try:
+            datetime.strptime(date, date_format)
+        except:
+            return False
+        return True
+
+    def isDateTime(self, date, date_format=DHM_FORMAT):
+        '''
+        return False if the date is not a datetime matching date_format, True else.
+        '''
+        return self.isDate(date, date_format=date_format)
+
+    def isTime(self, time, time_format=HM_FORMAT):
+        '''
+        return False if the time is not a datetime matching time_format, True else.
+        '''
+        return self.isDate(time, date_format=time_format)
 
     def getSel(self, o, field):
         """
@@ -704,3 +723,33 @@ class report_sxw(report_rml, preprocess.report):
         html = create_doc(mako_html,html_parser.localcontext)
         return (html,'html')
 
+    def shared_update_percent(self, cr, uid, pool, bg_id_list, percent=None, share=None,
+                              finished=False, already_done=0):
+        '''When there is multiple for loop or multiple operation that should
+        update the percentage of the report, this method permit to say the
+        importance of the share of the total percentage.
+        For example, on the local for loop, 500 element ou of 1000 have been
+        done, percent=0.5. But if this local for loop is only 30% of the total
+        treatment, then share=0.3 and finaly, the percentage updated will be
+        0.5*0.3 = 0.15 -> 15%
+        :param bg_id_list: list of memory.background.report ids that will be updated
+        :param percent: float, it is the percentage of the local loop
+        :param share: float, it represent the importance of the local loop in
+        the whole process
+        :param finished: when True, no matter what percent is, the percentage
+        of the background id will be updated with share
+        '''
+        if not bg_id_list: 
+            return
+        if bg_id_list[0] is None:
+            return
+        if not finished and not percent:
+            return
+
+        bg_report_obj = pool.get('memory.background.report')
+        if finished == True:
+            bg_report_obj.update_percent(cr, uid, bg_id_list,
+                                         share+already_done)
+        else:
+            bg_report_obj.update_percent(cr, uid, bg_id_list,
+                                         percent*share+already_done)

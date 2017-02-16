@@ -20,3 +20,4 @@
 ##############################################################################
 
 import report_stopped_products
+import report_inconsistencies

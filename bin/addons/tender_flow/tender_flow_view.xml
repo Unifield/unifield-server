@@ -210,7 +210,7 @@
                 <data>
                     <field name="details" position="after">
                         <newline />
-                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
+                        <field name="valid_till" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'draft', 'done', 'cancel', 'confirmed', 'confirmed_wait', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="tender_id" attrs="{'invisible': [('rfq_ok', '=', False)],'readonly': [('state', 'in', ['sourced', 'split', 'rfq_updated', 'done', 'cancel', 'confirmed', 'approved', 'except_picking', 'except_invoice'])]}" />
                         <field name="rfq_ok" invisible="1" />
                         <field

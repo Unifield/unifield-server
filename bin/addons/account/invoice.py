@@ -274,7 +274,7 @@ class account_invoice(osv.osv):
         },
             multi='all'),
         'currency_id': fields.many2one('res.currency', 'Currency', required=True, readonly=True, states={'draft':[('readonly',False)]}),
-        'journal_id': fields.many2one('account.journal', 'Journal', required=True, readonly=True, states={'draft':[('readonly',False)]}),
+        'journal_id': fields.many2one('account.journal', 'Journal', required=True, hide_default_menu=True, readonly=True, states={'draft':[('readonly',False)]}),
         'company_id': fields.many2one('res.company', 'Company', required=True, change_default=True, readonly=True, states={'draft':[('readonly',False)]}),
         'check_total': fields.float('Total', digits_compute=dp.get_precision('Account'), states={'open':[('readonly',True)],'close':[('readonly',True)],'paid':[('readonly',True)]}),
         'reconciled': fields.function(_reconciled, method=True, string='Paid/Reconciled', type='boolean',
@@ -1213,7 +1213,7 @@ class account_invoice(osv.osv):
             return False
         return data
 
-    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None):
+    def refund(self, cr, uid, ids, date=None, period_id=None, description=None, journal_id=None, document_date=None):
         invoices = self.read(cr, uid, ids, self._hook_fields_for_refund(cr, uid))
         obj_invoice_line = self.pool.get('account.invoice.line')
         obj_invoice_tax = self.pool.get('account.invoice.tax')
@@ -1256,6 +1256,10 @@ class account_invoice(osv.osv):
             if period_id:
                 invoice.update({
                     'period_id': period_id,
+                })
+            if document_date:
+                invoice.update({
+                    'document_date': document_date,
                 })
             if description:
                 invoice.update({

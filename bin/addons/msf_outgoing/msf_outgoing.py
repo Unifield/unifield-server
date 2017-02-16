@@ -1271,7 +1271,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -4717,6 +4717,37 @@ class stock_move(osv.osv):
 
         return res
 
+    def _get_pick_shipment_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Link the shipment where a stock move is to this stock move
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        res = {}
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id'], context=context):
+            res[move.id] = False
+            if move.picking_id and move.picking_id.shipment_id:
+                res[move.id] = move.picking_id.shipment_id.id
+
+        return res
+
+    def _get_picking(self, cr, uid, ids, context=None):
+        """
+        Return the list of stock.move to update
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        picking_ids = self.pool.get('stock.picking').search(cr, uid, [('id', 'in', ids), ('shipment_id', '!=', False)], order='NO_ORDER', context=context)
+        return self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', picking_ids)], order='NO_ORDER', context=context)
+
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -4743,13 +4774,24 @@ class stock_move(osv.osv):
                 'sale_order_line_number': fields.function(_vals_get,
                                                           method=True, type='integer', string='Sale Order Line Number',
                                                           multi='get_vals_integer',),  # old_multi get_vals
-                # Fields used for domain
-                'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
-                'location_output_id': fields.many2one('stock.location', string='Output location'),
-                'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
-                'pt_created': fields.boolean(string='PT created'),
-                'not_shipped': fields.boolean(string='Not shipped'),
-                }
+                'pick_shipment_id': fields.function(
+                    _get_pick_shipment_id,
+                    method=True,
+                    type='many2one',
+                    relation='shipment',
+                    string='Shipment',
+                    store={
+                        'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
+                        'stock.picking': (_get_picking, ['shipment_id'], 10),
+                    }
+    ),  
+        # Fields used for domain
+        'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
+        'location_output_id': fields.many2one('stock.location', string='Output location'),
+        'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
+        'pt_created': fields.boolean(string='PT created'),
+        'not_shipped': fields.boolean(string='Not shipped'),
+    }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
         if context is None:

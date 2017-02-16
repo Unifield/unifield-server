@@ -512,7 +512,7 @@ class audittrail_rule(osv.osv):
                 # it is required to use fct_object_id and fct_res_id instead
                 # of object_id and res_id because account.bank.statement.line are sub object of
                 # register and track changes are created this way.
-                val['domain'] = "[('fct_object_id','=', %s), ('fct_res_id', 'in', active_ids)]" % (thisrule.object_id.id, )
+                val['domain'] = "[('fct_object_id','=', %d), ('fct_res_id', 'in', active_ids)]" % (thisrule.object_id.id, )
 
             # search if the view does not already exists
             search_domain = [('name', '=', val['name']),

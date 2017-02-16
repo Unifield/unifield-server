@@ -1264,8 +1264,8 @@ stock moves which are already processed : '''
                 if line.soq_updated:
                     reset_soq.append(line.id)
 
-                # check if the current product is stopped or not :
-                if line.product_id and line.product_id.state and line.product_id.state.id == stopped_id:
+                # check if the current product is stopped or not : If the PO was created by Sync. engine, do not check
+                if not po.push_fo and line.product_id and line.product_id.state and line.product_id.state.id == stopped_id:
                     raise osv.except_osv(_('Error'), _('You can not validate a PO with stopped products (line %s).') % (line.line_number, ))
 
             message = _("Purchase order '%s' is validated.") % (po.name,)
@@ -1600,9 +1600,7 @@ stock moves which are already processed : '''
 
                     sol = sol_obj.browse(cr, uid, sol_ids[0], context=context)
                     so = sol.order_id
-                    # do not update Internal Requests with internal requestor location
-                    if so and so.procurement_request and so.location_requestor_id.usage != 'customer':
-                        continue
+                    # US-1931: Remove code that do not update Internal Requests with internal requestor location
 
                     line_confirmed = False
                     # compute confirmed date for line
