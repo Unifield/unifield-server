@@ -341,9 +341,11 @@ class account_move_line(osv.osv):
 
     def reverse_fxa(self, cr, uid, fxa_line_ids, context):
         """
-        Creates a reversal FX entry that offsets the FXA amount, and reconciles it with the original FXA entry
+        Creates a reversal FX entry that offsets the FXA amount, and reconciles it with the original FXA entry.
+        The reversal FXA Prop. Instance is the current one, in which the Entry Sequence is created.
         """
         am_obj = self.pool.get('account.move')
+        journal_obj = self.pool.get('account.journal')
         for fxa_line in self.browse(cr, uid, fxa_line_ids, context=context,
                                     fields_to_fetch=['move_id', 'debit', 'credit', 'debit_currency', 'credit_currency']):
             am = fxa_line.move_id
@@ -353,8 +355,14 @@ class account_move_line(osv.osv):
                                                               fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency'])
             # create the JE
             date_and_period = self._get_reversal_fxa_date_and_period(cr, uid, am, context)
+            # get the FXA journal from the current instance
+            journal_ids = journal_obj.search(cr, uid, [('type', '=', 'cur_adj'), ('is_current_instance', '=', True)],
+                                            order='NO_ORDER', limit=1, context=context)
+            if not journal_ids:
+                raise osv.except_osv(_('Warning !'),
+                                     _('No journal found to book the reversal FX entry.'))
             reversal_am_id = am_obj.create(cr, uid,
-                                           {'journal_id': am.journal_id.id,
+                                           {'journal_id': journal_ids[0],  # it also determines the instance_id (= the current instance)
                                             'period_id': date_and_period[1],
                                             'document_date': date_and_period[0],
                                             'date': date_and_period[0],

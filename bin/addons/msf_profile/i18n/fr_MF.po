@@ -76128,3 +76128,9 @@ msgstr "Le lettrage des écritures avec une écriture de différence de change n
 #, python-format
 msgid "You can't unreconcile these entries in this instance because all legs are not present."
 msgstr "Vous ne pouvez pas annuler le lettrage de ces écritures dans cette instance car toutes les lignes du lettrage ne sont pas présentes."
+
+#. module: account_reconciliation
+#: code:addons/account_reconciliation/account_move_line.py:363
+#, python-format
+msgid "No journal found to book the reversal FX entry."
+msgstr "Pas de journal trouvé pour enregistrer l'annulation de l'écriture de différence de change."
