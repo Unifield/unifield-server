@@ -20,7 +20,6 @@
 ##############################################################################
 
 # Win32 python extensions modules
-import win32con
 import win32serviceutil
 import win32service
 import win32event
@@ -54,13 +53,13 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         # Before we do anything, tell the SCM we are starting the stop process.
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        # And set my event.
+        win32event.SetEvent(self.hWaitStop)
         # stop the running OpenERP Web and any children (i.e. revprox.exe)
         pid = str(self.openerp_process.pid)
         subprocess.call(['taskkill', '/F', '/T', '/PID', pid])
         self.openerp_process = None
         servicemanager.LogInfoMsg("OpenERP Web stopped correctly")
-        # And set my event.
-        win32event.SetEvent(self.hWaitStop)
         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
     def StartOpenERP(self):
@@ -71,7 +70,7 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         service_dir = os.path.dirname(sys.argv[0])
         server_dir = os.path.split(service_dir)[0]
         server_path = os.path.join(server_dir, 'openerp-web.exe')
-        result = win32api.SetConsoleCtrlHandler(self.handle, 1)
+        win32api.SetConsoleCtrlHandler(self.handle, 1)
 
         self.openerp_process = subprocess.Popen([server_path], cwd=server_dir, creationflags=win32process.CREATE_NO_WINDOW)
 
