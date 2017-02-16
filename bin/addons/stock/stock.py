@@ -1161,8 +1161,8 @@ class stock_picking(osv.osv):
                         prefix_partner_name = po.partner_id.name + "."
                         if partner_ref.startswith(prefix_partner_name):
                             partner_ref = partner_ref[len(prefix_partner_name):]
-                        origin = 'origin' in invoice_vals and invoice_vals['origin'] or False
-                        new_origin = origin and partner_ref and "%s:%s" % (origin, partner_ref) or False
+                        orig = 'origin' in invoice_vals and invoice_vals['origin'] or False
+                        new_origin = orig and partner_ref and "%s:%s" % (orig, partner_ref) or False
                         if new_origin:
                             invoice_obj.write(cr, uid, invoice_id, {'origin': new_origin}, context=context)
             res[picking.id] = invoice_id
