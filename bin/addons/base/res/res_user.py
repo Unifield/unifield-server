@@ -114,6 +114,7 @@ class users(osv.osv):
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
+    _trace = True
 
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
@@ -177,36 +178,6 @@ class users(osv.osv):
                                     cr, uid, context=context),
                                 body=self.get_welcome_mail_body(
                                     cr, uid, context=context) % user)
-
-    def _set_interface_type(self, cr, uid, ids, name, value, arg, context=None):
-        """Implementation of 'view' function field setter, sets the type of interface of the users.
-        @param name: Name of the field
-        @param arg: User defined argument
-        @param value: new value returned
-        @return:  True/False
-        """
-        if not value or value not in ['simple','extended']:
-            return False
-        group_obj = self.pool.get('res.groups')
-        extended_group_id = group_obj.get_extended_interface_group(cr, uid, context=context)
-        # First always remove the users from the group (avoids duplication if called twice)
-        self.write(cr, uid, ids, {'groups_id': [(3, extended_group_id)]}, context=context)
-        # Then add them back if requested
-        if value == 'extended':
-            self.write(cr, uid, ids, {'groups_id': [(4, extended_group_id)]}, context=context)
-        return True
-
-
-    def _get_interface_type(self, cr, uid, ids, name, args, context=None):
-        """Implementation of 'view' function field getter, returns the type of interface of the users.
-        @param field_name: Name of the field
-        @param arg: User defined argument
-        @return:  Dictionary of values
-        """
-        group_obj = self.pool.get('res.groups')
-        extended_group_id = group_obj.get_extended_interface_group(cr, uid, context=context)
-        extended_users = group_obj.read(cr, uid, extended_group_id, ['users'], context=context)['users']
-        return dict(zip(ids, ['extended' if user in extended_users else 'simple' for user in ids]))
 
     def _email_get(self, cr, uid, ids, name, arg, context=None):
         # perform this as superuser because the current user is allowed to read users, and that includes
@@ -294,8 +265,9 @@ class users(osv.osv):
         for user_id in ids:
             level = False
             company_id = self._get_company(cr, user_id, context=context)
-            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
-                                                            ['instance_id'], context=context)['instance_id']
+            company_obj = self.pool.get('res.company')
+            instance_id = company_obj.read(cr, uid, company_id,
+                                           ['instance_id'], context=context).get('instance_id', False)
             instance_id = instance_id and instance_id[0] or False
             if instance_id:
                 level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
@@ -341,9 +313,8 @@ class users(osv.osv):
         'context_tz': fields.selection(_tz_get,  'Timezone', size=64,
                                        help="The user's timezone, used to perform timezone conversions "
                                        "between the server and the client."),
-        'view': fields.function(_get_interface_type, method=True, type='selection', fnct_inv=_set_interface_type,
-                                selection=[('simple','Simplified'),('extended','Extended')],
-                                string='Interface', help="Choose between the simplified interface and the extended one"),
+        'view': fields.selection([('simple','Simplified'),('extended','Extended')],
+                                 string='Interface', help="Choose between the simplified interface and the extended one"),
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
@@ -452,6 +423,7 @@ class users(osv.osv):
         'address_id': False,
         'menu_tips':True,
         'force_password_change': False,
+        'view': 'simple',
     }
 
     @tools.cache()
@@ -789,6 +761,76 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         'users': fields.many2many('res.users', 'res_groups_users_rel', 'gid', 'uid', 'Users'),
     }
 
+    def _track_change_of_users(self, cr, uid, previous_values, user_ids,
+                               vals, context=None):
+        '''add audittrail entry to the related users if their groups were changed
+        @param previous_values: list of dict containing groups_ids of the users
+        @param user_ids: related user ids
+        @param vals: vals parameter from the write/create
+        '''
+        current_values = {}
+        audit_obj = self.pool.get('audittrail.rule')
+        if isinstance(user_ids, (int, long)):
+            user_ids = [user_ids]
+        if 'users' in vals and user_ids:
+            if vals['users'] and len(vals['users'][0]) > 2:
+                users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
+                users_added = list(set(vals['users'][0][2]).difference(user_ids))
+                user_obj = self.pool.get('res.users')
+                if not hasattr(user_obj, 'check_audit'):
+                    return
+                audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
+                if users_deleted:
+                    previous_values = [x for x in previous_values if x['id'] in users_deleted]
+                    current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_deleted, ['groups_id'], context=context))
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_deleted, 'write', previous_values, current_values, context=context)
+                if users_added:
+                    previous_values = [x for x in previous_values if x['id'] in users_added]
+                    current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_added, ['groups_id'], context=context))
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_added, 'write', previous_values, current_values, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        In case user have been added, a new audit line should be created on the related users
+        '''
+        change_user_group = False
+        previous_values = []
+        if 'users' in vals and vals['users'] and len(vals['users'][0]) > 2:
+            user_obj = self.pool.get('res.users')
+            previous_values = user_obj.read(cr, uid, vals['users'][0][2], ['groups_id'], context=context)
+            change_user_group = True
+        user_id = super(groups, self).create(cr, uid, vals, context=context)
+        if change_user_group:
+            self._track_change_of_users(cr, uid, previous_values, [user_id],
+                                        vals, context=context)
+        return user_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        In case user have been added or deleted, a new audit line should be created on the related users
+        '''
+        all_user_ids = [] # previous user ids + current
+        previous_values = []
+        user_ids = []
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'users' in vals:
+            new_user_ids = []
+            if vals['users'] and len(vals['users'][0]) > 2:
+                new_user_ids = vals['users'][0][2]
+            for record in self.read(cr, uid, ids, ['users'], context=context):
+                if record['users']:
+                    user_ids.extend(record['users'])
+            all_user_ids = set(new_user_ids).union(user_ids)
+            user_obj = self.pool.get('res.users')
+            previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
+
+        res = super(groups, self).write(cr, uid, ids, vals, context=context)
+        if 'users' in vals:
+            self._track_change_of_users(cr, uid, previous_values, user_ids,
+                                        vals, context=context)
+        return res
+
     def unlink(self, cr, uid, ids, context=None):
         group_users = []
         for record in self.read(cr, uid, ids, ['users'], context=context):
@@ -814,10 +856,10 @@ class res_config_view(osv.osv_memory):
         'name':fields.char('Name', size=64),
         'view': fields.selection([('simple','Simplified'),
                                   ('extended','Extended')],
-                                 'Interface', required=True ),
+                                 'Interface', required=False ),
     }
     _defaults={
-        'view':lambda self,cr,uid,*args: self.pool.get('res.users').browse(cr, uid, uid).view or 'simple',
+        'view': 'simple',
     }
 
     def execute(self, cr, uid, ids, context=None):
