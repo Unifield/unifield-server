@@ -48,20 +48,21 @@ class patch_scripts(osv.osv):
 
     def remove_not_synchronized_data(self, cr, uid, *a, **b):
         '''
-        The list of model to synchronize was wrong. It is now build
+        The list of models to synchronize was wrong. It is now build
         automatically and is then more exact.
         This patch will remove all the data from ir_model_data that are not
         synchronized models.
         '''
         from sync_common import WHITE_LIST_MODEL
         removed_obj = 0
-        # get the list of synchronized models
-        entity_obj = self.pool.get('sync.client.entity')
 
+        # if sync_client module is installed, get the list of synchronized models
         if self.pool.get('sync.client.rule') and\
                 self.pool.get('sync.client.message_rule'):
+            entity_obj = self.pool.get('sync.client.entity')
             server_model_white_set = entity_obj.get_model_white_list(cr, uid)
-            # check all models are in the hardcoded white list
+
+            # check that all models from the newly generated list are in the hardcoded white list
             difference = server_model_white_set.difference(WHITE_LIST_MODEL)
             if difference:
                 err_msg = 'Warning: Some models used in the synchronization '\
@@ -72,7 +73,7 @@ class patch_scripts(osv.osv):
                     err_msg,
                 )
             elif server_model_white_set:
-                # get model list
+                # get list of all existing models used in ir_model_data
                 cr.execute('SELECT DISTINCT(model) FROM ir_model_data')
                 model_list = [x and x[0] for x in cr.fetchall()]
                 model_to_remove = (set(model_list).difference(server_model_white_set))
