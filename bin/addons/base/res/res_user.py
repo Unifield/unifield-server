@@ -755,7 +755,7 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         audit_obj = self.pool.get('audittrail.rule')
         if isinstance(user_ids, (int, long)):
             user_ids = [user_ids]
-        if 'users' in vals and users_ids:
+        if 'users' in vals and user_ids:
             if vals['users'] and len(vals['users'][0]) > 2:
                 users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
                 users_added = list(set(vals['users'][0][2]).difference(user_ids))
@@ -786,7 +786,7 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         if change_user_group:
             self._track_change_of_users(cr, uid, previous_values, [user_id],
                     vals, context=context)
-        return res
+        return user_id
 
     def write(self, cr, uid, ids, vals, context=None):
         '''

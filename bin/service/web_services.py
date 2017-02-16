@@ -174,8 +174,8 @@ class db(netsvc.ExportService):
                                ' ORDER BY login')
                     serv.actions[id]['users'] = cr.dictfetchall()
 
-                    # add the extended interface group to the admin
-                    # this is needed to be able to install the module msf_profile
+                    # add the extended interface group to the admin user
+                    # this is needed to be able to install other modules
                     res_group_obj = pool.get('res.groups')
                     group_extended_id = res_group_obj.get_extended_interface_group(cr, 1)
                     if group_extended_id:
