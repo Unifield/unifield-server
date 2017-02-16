@@ -76,7 +76,7 @@ class BackupConfig(osv.osv):
         return 'UNKNOWN_VERSION'
 
     def _set_pg_psw_env_var(self):
-        if not os.environ.get('PGPASSWORD', ''):
+        if tools.config['db_password'] and not os.environ.get('PGPASSWORD', ''):
             os.environ['PGPASSWORD'] = tools.config['db_password']
             self._pg_psw_env_var_is_set = True
 
