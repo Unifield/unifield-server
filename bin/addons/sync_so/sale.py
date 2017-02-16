@@ -138,6 +138,8 @@ class sale_order_sync(osv.osv):
         default['fo_created_by_po_sync'] = True
         default['procurement_request'] = False
 
+        context['procurement_request'] = False
+
         so_id = self.create(cr, uid, default , context=context)
         name = self.browse(cr, uid, so_id, context).name
         if 'order_type' in header_result:
