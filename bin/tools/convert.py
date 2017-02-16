@@ -47,7 +47,6 @@ import osv
 import pooler
 from config import config
 from tools.translate import _
-from yaml_import import convert_yaml_import
 
 # List of etree._Element subclasses that we choose to ignore when parsing XML.
 from tools import SKIPPED_ELEMENT_TYPES, cache
@@ -551,8 +550,8 @@ form: module.record_id""" % (xml_id,)
         uid = self.get_uid(cr, self.uid, data_node, rec)
         wf_service = netsvc.LocalService("workflow")
         wf_service.trg_validate(uid, model,
-            id,
-            str(rec.get('action','')), cr)
+                                id,
+                                str(rec.get('action','')), cr)
 
     #
     # Support two types of notation:
@@ -794,7 +793,7 @@ form: module.record_id""" % (xml_id,)
                 return None
         res = {}
         for field in rec.findall('./field'):
-#TODO: most of this code is duplicated above (in _eval_xml)...
+            #TODO: most of this code is duplicated above (in _eval_xml)...
             f_name = field.get("name",'').encode('utf-8')
             f_ref = field.get("ref",'').encode('utf-8')
             f_search = field.get("search",'').encode('utf-8')
@@ -825,7 +824,7 @@ form: module.record_id""" % (xml_id,)
                     f_val = False
                 else:
                     if f_name in model._columns \
-                              and model._columns[f_name]._type == 'reference':
+                            and model._columns[f_name]._type == 'reference':
                         val = self.model_id_get(cr, f_ref)
                         f_val = val[0] + ',' + str(val[1])
                     else:
@@ -868,17 +867,17 @@ form: module.record_id""" % (xml_id,)
 
         for n in de.findall('./data'):
             for rec in n:
-                    if rec.tag in self._tags:
-                        try:
-                            self._tags[rec.tag](self.cr, rec, n)
-                        except:
-                            self.__logger.error('Parse error in %s:%d: \n%s',
-                                                rec.getroottree().docinfo.URL,
-                                                rec.sourceline,
-                                                etree.tostring(rec).strip(), exc_info=True)
-                            self.cr.rollback()
-                            cache.clean_caches_for_db(self.cr.dbname)
-                            raise
+                if rec.tag in self._tags:
+                    try:
+                        self._tags[rec.tag](self.cr, rec, n)
+                    except:
+                        self.__logger.error('Parse error in %s:%d: \n%s',
+                                            rec.getroottree().docinfo.URL,
+                                            rec.sourceline,
+                                            etree.tostring(rec).strip(), exc_info=True)
+                        self.cr.rollback()
+                        cache.clean_caches_for_db(self.cr.dbname)
+                        raise
         return True
 
     def __init__(self, cr, module, idref, mode, report=None, noupdate=False):
@@ -909,7 +908,7 @@ form: module.record_id""" % (xml_id,)
         }
 
 def convert_csv_import(cr, module, fname, csvcontent, idref=None, mode='init',
-        noupdate=False):
+                       noupdate=False):
     '''Import csv file :
         quote: "
         delimiter: ,
@@ -978,14 +977,29 @@ class ModuleEntityResolver(etree.Resolver):
                     if os.path.exists(filepath):
                         fp = open(filepath, 'rb')
                         return self.resolve_file(fp, context)
-                except IOError, e:
+                except IOError:
                     pass
 #
 # xml import/export
 #
 def convert_xml_import(cr, module, xmlfile, idref=None, mode='init', noupdate=False, report=None):
     parser = etree.XMLParser()
-    parser.resolvers.add(ModuleEntityResolver([config['addons_path']], module))
+
+
+    # if xmlfile is in a subdir (i.e: module/wizard/view.xml)
+    # path set in ENTITY ... SYSTEM should relate to addons_path/module/wizard
+    # on Win wizard dir was missing
+    module_path = os.path.join(config['addons_path'], module)
+    sub_dir = module
+    if isinstance(xmlfile, file):
+        xmlfile_name = xmlfile.name
+        common_prefix = os.path.commonprefix([module_path, xmlfile_name])
+        xmlfile_dir = os.path.dirname(xmlfile_name)
+        extra_dir = os.path.relpath(xmlfile_dir, common_prefix)
+        if extra_dir:
+            sub_dir = os.path.join(extra_dir, module)
+
+    parser.resolvers.add(ModuleEntityResolver([config['addons_path']], sub_dir))
     doc = etree.parse(xmlfile, parser)
     relaxng = etree.RelaxNG(
         etree.parse(os.path.join(config['root_path'],'import_xml.rng' )))

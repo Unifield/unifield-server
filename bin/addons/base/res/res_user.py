@@ -60,8 +60,20 @@ class groups(osv.osv):
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
+        old_users = []
+        if 'users' in vals:
+            old_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
+        if 'users' in vals:
+            new_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+            diff_users = set(old_users).symmetric_difference(new_users)
+            if diff_users:
+                clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=ids)
+                map(clear, list(diff_users))
+        if 'menu_access' in vals or 'users' in vals:
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
         return res
 
     def create(self, cr, uid, vals, context=None):
@@ -443,6 +455,10 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
+        old_groups = []
+        if values.get('groups_id'):
+            old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
         # uncheck synchronize checkbox if the user is manager or sync config
@@ -451,11 +467,12 @@ class users(osv.osv):
                any(self._is_erp_manager(cr, uid, ids, context=context).values()):
                 vals = {'synchronize': False}
                 res = super(users, self).write(cr, uid, ids, vals, context=context)
+            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
-        clear = partial(self.pool.get('ir.rule').clear_cache, cr)
+        clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=old_groups)
         map(clear, ids)
         db = cr.dbname
         if db in self._uid_cache:

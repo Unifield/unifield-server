@@ -1430,6 +1430,7 @@ class account_bank_statement_line(osv.osv):
                     domain = [
                         ('account_id', '=', values.get('account_id')),
                         ('destination_id', '=', emp_destination_id),
+                        ('disabled', '=', False),
                     ]
                     if self.pool.get('account.destination.link').search(cr, uid,
                                                                         domain, limit=1):
@@ -2303,6 +2304,19 @@ class account_bank_statement_line(osv.osv):
         fct_object_id = self.pool.get('ir.model').search(cr, uid, [('model', '=', 'account.bank.statement.line')], context=context)
         if object_id and fct_object_id:
             audit_line_obj = self.pool.get('audittrail.log.line')
+            rule_obj = self.pool.get('audittrail.rule')
+
+            model_id = self.pool.get('ir.model').search(cr, uid,
+                                                        [('model', '=', self._name)], context=context)[0]
+            # get the rule_id
+            rule_ids = rule_obj.search(cr, uid,
+                                       [('object_id', '=', model_id)],
+                                       context=context)
+            rule_id = rule_ids and rule_ids[0] or False
+            if not rule_id:
+                return
+            rule = rule_obj.browse(cr, uid, rule_id, context=context)
+
             # get state field id
             field_pool = self.pool.get('ir.model.fields')
             field_ids = field_pool.search(cr, uid, [('name', '=', 'state'), ('model_id', '=', fct_object_id)])
@@ -2340,21 +2354,30 @@ class account_bank_statement_line(osv.osv):
                 else:
                     log = False
             # set vals
+            vals = {
+                'rule_id': rule_id,
+                'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'new_value': 'hard',
+                'new_value_text': 'Hard',
+                'new_value_fct': 'Hard',
+            }
+
+            if rule and absl.id and rule.field_other_id:
+                vals.update({
+                    'other_column': self.pool.get(rule.object_id.model).read(cr, uid,
+                                                                             absl.id, [rule.field_other_id.name])[rule.field_other_id.name]
+                }
+                )
+
             if direct_hard_post:
                 # UF-2316
-                vals = {
-                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-                    'new_value': 'hard',
-                    'new_value_text': 'Hard',
-                    'new_value_fct': 'Hard',
-                }
                 old_value_vals = {
                     'old_value': 'draft',
                     'old_value_text': 'Draft',
                     'old_value_fct': 'Draft',
                 }
             else:
-                vals = {
+                vals.update({
                     'user_id': uid,
                     'method': 'write',
                     'name': 'state',
@@ -2363,13 +2386,9 @@ class account_bank_statement_line(osv.osv):
                     'fct_object_id': fct_object_id[0],
                     'fct_res_id': absl.id,
                     'sub_obj_name': absl.name,
-                    'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
                     'field_description': 'Status',
                     'trans_field_description': 'Status',
-                    'new_value': 'hard',
-                    'new_value_text': 'Hard',
-                    'new_value_fct': 'Hard',
-                }
+                })
                 old_value_vals = {
                     'old_value': 'temp',
                     'old_value_text': 'Temp',
@@ -2817,7 +2836,7 @@ class account_bank_statement_line(osv.osv):
                 third_type = [('hr.employee', 'Employee')]
                 third_required = True
                 third_selection = 'hr.employee,0'
-            elif a['type_for_register'] == 'down_payment':
+            elif a['type_for_register'] in ['down_payment', 'payroll']:
                 third_type = [('res.partner', 'Partner')]
                 third_required = True
                 third_selection = 'res.partner,0'

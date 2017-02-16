@@ -116,7 +116,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
             },
         ]
         # Launch finance archive object
-        fe = finance_archive(sqlrequests, processrequests)
+        fe = finance_archive(sqlrequests, processrequests, context=context)
         # Use archive method to create the archive
         return fe.archive(cr, uid)
 

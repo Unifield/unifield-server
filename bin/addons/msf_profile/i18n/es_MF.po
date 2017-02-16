@@ -11670,7 +11670,7 @@ msgstr "18 J(A)"
 #. module: consumption_calculation
 #: field:real.average.consumption,cons_location_id:0
 #: field:real.consumption.change.location,location_id:0
-msgid "Consumer location"
+msgid "Source Location"
 msgstr "Ubicación de consumo"
 
 #. module: msf_doc_import
@@ -23655,13 +23655,6 @@ msgstr "Corp."
 #: model:process.node,name:tender_flow.process_node_tender_rfq
 msgid "RFQs"
 msgstr "Solicitudes de presupuestos"
-
-#. modules: account_activable, analytic_distribution
-#: code:addons/account_activable/account_activable.py:51
-#: code:addons/analytic_distribution/analytic_account.py:232
-#, python-format
-msgid "You cannot set an inactivity date lower than tomorrow!"
-msgstr "¡No se puede establecer una fecha de inactividad anterior a la fecha de mañana!"
 
 #. module: msf_doc_import
 #: model:ir.model,name:msf_doc_import.model_purchase_import_xml_line
@@ -62621,12 +62614,16 @@ msgstr "La lista de componentes para consumir está vacía."
 msgid "No correction journal found!"
 msgstr "¡No se ha encontrado un diario de corrección!"
 
-#. modules: base, consumption_calculation
+#. module: base
 #: view:workflow.activity:0
 #: field:workflow.workitem,act_id:0
+msgid "Activity"
+msgstr "Actividad"
+
+#. module: consumption_calculation
 #: view:real.average.consumption:0
 #: field:real.average.consumption,activity_id:0
-msgid "Activity"
+msgid "Destination Location"
 msgstr "Actividad"
 
 #. module: register_accounting

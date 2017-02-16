@@ -50,6 +50,7 @@ from mako import exceptions
 from mako.runtime import Context
 import codecs
 from passlib.hash import bcrypt
+from report import report_sxw
 
 def export_csv(fields, result, result_file_path):
     try:
@@ -973,7 +974,9 @@ class report_spool(netsvc.ExportService):
                 body_mako_tpl = Template(filename=filename, input_encoding='utf-8', default_filters=['unicode'])
                 try:
                     fields_name = [tools.ustr(x) for x in fields_name]
-                    mako_ctx = Context(result_file, fields=fields_name, result=result, title=title, re=re)
+                    mako_ctx = Context(result_file, fields=fields_name,
+                                       result=result, title=title, re=re,
+                                       isDate=report_sxw.isDate)
                     logging.getLogger('web-services').info('Start rendering report %s...' % filename)
                     body_mako_tpl.render_context(mako_ctx)
                     logging.getLogger('web-services').info('report generated.')

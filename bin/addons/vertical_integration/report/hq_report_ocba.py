@@ -67,7 +67,7 @@ class hq_report_ocba(report_sxw.report_sxw):
                     'booking': 0.,
                     'func': 0.,
                     'is_cur_adj': self._CUR_ADJ_JOURNAL_TYPE \
-                        and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE,
+                    and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE,
                     'account_name': r.account_id.name or '',
                     'ids': [],  # shrinked ids
                 }
@@ -160,7 +160,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             'Functional Credit': self._enc_amount(not is_debit and func or 0.),
             'Functional Currency': self._enc(build_data['functional_ccy_name']),
             'Exchange rate': self._enc_amount(rate,
-                digits=self._EXCHANGE_RATE_DIGITS),
+                                              digits=self._EXCHANGE_RATE_DIGITS),
             'Reconciliation code': '',
         }
         self._add_row('entries', file_data=file_data, data=data)
@@ -169,8 +169,6 @@ class hq_report_ocba(report_sxw.report_sxw):
         """
         Export not expense entries (from AJIs)
         """
-        rate = 0
-
         ee_id = ''
         partner_db_id = ''
         partner_txt = ''
@@ -223,7 +221,7 @@ class hq_report_ocba(report_sxw.report_sxw):
 
             # period
             period = pool.get('account.period').browse(cr, uid,
-                data['form']['period_id'])# only for B/S)
+                                                       data['form']['period_id'])# only for B/S)
             form_data['period'] = period
             form_data['period_id'] = period.id
 
@@ -231,7 +229,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             integration_ref = ''
             if len(data['form']['instance_ids']) > 0:
                 parent_instance = pool.get('msf.instance').browse(cr, uid,
-                    data['form']['instance_ids'][0], context=context)
+                                                                  data['form']['instance_ids'][0], context=context)
                 if parent_instance:
                     if period and period.date_start:
                         integration_ref = parent_instance.code[:2] \
@@ -242,14 +240,14 @@ class hq_report_ocba(report_sxw.report_sxw):
             selection = data['form'].get('selection', False)
             if not selection:
                 raise osv.except_osv(_('Error'),
-                    _('No selection value for lines to select.'))
+                                     _('No selection value for lines to select.'))
             if selection == 'all':
                 to_export = ['f', 't']
             elif selection == 'unexported':
                 to_export = ['f']
             else:
                 raise osv.except_osv(_('Error'),
-                    _('Wrong value for selection: %s.') % (selection, ))
+                                     _('Wrong value for selection: %s.') % (selection, ))
             form_data['to_export'] = to_export
 
         file_data = {
@@ -263,35 +261,40 @@ class hq_report_ocba(report_sxw.report_sxw):
 
         # generate export data
         move_line_ids, analytic_line_ids = self._generate_data(cr, uid,
-            file_data=file_data, form_data=form_data,
-            context=context)
+                                                               file_data=file_data, form_data=form_data,
+                                                               context=context)
 
         # generate zip result and post processing
         zip_buffer = self._generate_files(data['target_filename_suffix'],
-            file_data)
+                                          file_data)
         self._mark_exported_entries(cr, uid, move_line_ids, analytic_line_ids)
         return (zip_buffer.getvalue(), 'zip', )
 
     def _generate_data(self, cr, uid, file_data=None, form_data=None,
-            context=None):
+                       context=None):
         pool = pooler.get_pool(cr.dbname)
         aml_obj = pool.get('account.move.line')
         aal_obj = pool.get('account.analytic.line')
 
+        if 'background_id' in context:
+            bg_id = context['background_id']
+        else:
+            bg_id = None
+
         # set internal build data
         period = pool.get('account.period').browse(cr, uid,
-            form_data['period_id'])
+                                                   form_data['period_id'])
 
         functional_ccy_name = pool.get('res.users').browse(cr, uid, [uid],
-            context=context)[0].company_id.currency_id.name
+                                                           context=context)[0].company_id.currency_id.name
         country_code = "0"
         move_prefix = "0"
         if len(form_data['instance_ids']) > 0:
             parent_instance = pool.get('msf.instance').browse(cr, uid,
-                form_data['instance_ids'][0], context=context)
+                                                              form_data['instance_ids'][0], context=context)
             if parent_instance:
                 country_code = self._translate_country(cr, uid, pool,
-                    parent_instance, context=context)
+                                                       parent_instance, context=context)
                 if period and period.date_start:
                     move_prefix = parent_instance.move_prefix[:2]
 
@@ -299,7 +302,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             'period': period,
             'period_name': period and period.code or '',
             'default_date': period and period.date_stop and \
-                datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "",
+            datetime.datetime.strptime(period.date_stop, '%Y-%m-%d').date().strftime('%d/%m/%Y') or "",
             'functional_ccy_name': functional_ccy_name,
             'country_code': country_code,
             'move_prefix': move_prefix,
@@ -318,13 +321,19 @@ class hq_report_ocba(report_sxw.report_sxw):
         move_line_ids = aml_obj.search(cr, uid, domain, context=context)
         if move_line_ids:
             for ji_br in aml_obj.browse(cr, uid, move_line_ids,
-                context=context):
+                                        context=context):
                 self.export_ji(cr, uid, ji_br, file_data, build_data)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                                   share=0.05, finished=True)
 
         # export skrinked entries for hq
         # (data build in 'build_data' during 'export_ji')
         for key in build_data['shrink']:
             self.export_shrinked_entries(cr, uid, file_data, build_data, key)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                                   share=0.1, finished=True)
 
         # get expense lines
         domain = [
@@ -338,10 +347,25 @@ class hq_report_ocba(report_sxw.report_sxw):
             ('move_id.move_id.state', '=', 'posted'),  # move line of posted JE
         ]
         analytic_line_ids = aal_obj.search(cr, uid, domain, context=context)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                                   share=0.15, finished=True)
+
         if analytic_line_ids:
+            nb_analytic_line = len(analytic_line_ids)
+            analytic_line_count = 0
             for aji_br in aal_obj.browse(cr, uid, analytic_line_ids,
-                context=context):
+                                         context=context):
                 self.export_aji(cr, uid, aji_br, file_data, build_data)
+                analytic_line_count += 1
+                if analytic_line_count % 10 == 0:
+                    # update percentage every 10 lines, not to do it too often
+                    percent = analytic_line_count / float(nb_analytic_line)
+                    self.shared_update_percent(cr, uid, pool, [bg_id],
+                                               percent=percent, share=0.8, already_done=0.15)
+
+        self.shared_update_percent(cr, uid, pool, [bg_id],
+                                   share=0.95, finished=True)
 
         return (move_line_ids, analytic_line_ids, )
 
@@ -376,7 +400,7 @@ class hq_report_ocba(report_sxw.report_sxw):
             tmp_fd.close()
 
             out_zipfile.write(tmp_fd.name, target_filename + ".csv",
-                zipfile.ZIP_DEFLATED)
+                              zipfile.ZIP_DEFLATED)
         out_zipfile.close()
 
         # delete temporary files
@@ -402,7 +426,7 @@ class hq_report_ocba(report_sxw.report_sxw):
         def get_month_rate(currency_id, entry_dt):
             cr.execute(
                 "SELECT rate FROM res_currency_rate WHERE currency_id = %s" \
-                    " AND name <= %s ORDER BY name desc LIMIT 1" ,
+                " AND name <= %s ORDER BY name desc LIMIT 1" ,
                 (currency_id, entry_dt, )
             )
             return cr.rowcount and cr.fetchall()[0][0] or False
@@ -410,10 +434,10 @@ class hq_report_ocba(report_sxw.report_sxw):
         if r.currency_id.id == r.functional_currency_id.id:
             return 1.
         if self._CUR_ADJ_JOURNAL_TYPE \
-            and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
+                and r.journal_id.type in self._CUR_ADJ_JOURNAL_TYPE:
             return 1.  # FXA entries always rate 1
         if not is_analytic \
-            and r.debit_currency == 0 and r.credit_currency == 0:
+                and r.debit_currency == 0 and r.credit_currency == 0:
             return 1.
 
         # US-478 accrual account (always refer to previous period)

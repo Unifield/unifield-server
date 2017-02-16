@@ -107,7 +107,7 @@
             <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_bn and 'TRUE' or '-'|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${l.product_ed and 'TRUE' or '-'|x}</Data></Cell>
             <Cell ss:StyleID="line"><Data ss:Type="String">${l.prodlot_name or '-'|x}</Data></Cell>
-            % if l.expiry_date not in (False, 'False'):
+            % if isDate(l.expiry_date):
             <Cell ss:StyleID="line_date"><Data ss:Type="DateTime">${l.expiry_date|n}T00:00:00.000</Data></Cell>
             % else:
             <Cell ss:StyleID="line"><Data ss:Type="String">-</Data></Cell>

@@ -1271,7 +1271,7 @@ class shipment(osv.osv):
                     today = time.strftime(date_format)
                     today_db = time.strftime(db_date_format)
                     so_obj.write(cr, uid, [new_packing.sale_id.id], {'shipment_date': today_db, }, context=context)
-                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, today))
+                    so_obj.log(cr, uid, new_packing.sale_id.id, _("Shipment Date of the Field Order '%s' has been updated to %s.") % (new_packing.sale_id.name, tools.ustr(today)))
 
                 # update locations of stock moves
                 for move in new_packing.move_lines:
@@ -4717,6 +4717,37 @@ class stock_move(osv.osv):
 
         return res
 
+    def _get_pick_shipment_id(self, cr, uid, ids, field_name, args, context=None):
+        """
+        Link the shipment where a stock move is to this stock move
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        res = {}
+        for move in self.browse(cr, uid, ids, fields_to_fetch=['picking_id'], context=context):
+            res[move.id] = False
+            if move.picking_id and move.picking_id.shipment_id:
+                res[move.id] = move.picking_id.shipment_id.id
+
+        return res
+
+    def _get_picking(self, cr, uid, ids, context=None):
+        """
+        Return the list of stock.move to update
+        """
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if context is None:
+            context = {}
+
+        picking_ids = self.pool.get('stock.picking').search(cr, uid, [('id', 'in', ids), ('shipment_id', '!=', False)], order='NO_ORDER', context=context)
+        return self.pool.get('stock.move').search(cr, uid, [('picking_id', 'in', picking_ids)], order='NO_ORDER', context=context)
+
     _columns = {'from_pack': fields.integer(string='From p.'),
                 'to_pack': fields.integer(string='To p.'),
                 'pack_type': fields.many2one('pack.type', string='Pack Type'),
@@ -4743,13 +4774,24 @@ class stock_move(osv.osv):
                 'sale_order_line_number': fields.function(_vals_get,
                                                           method=True, type='integer', string='Sale Order Line Number',
                                                           multi='get_vals_integer',),  # old_multi get_vals
-                # Fields used for domain
-                'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
-                'location_output_id': fields.many2one('stock.location', string='Output location'),
-                'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
-                'pt_created': fields.boolean(string='PT created'),
-                'not_shipped': fields.boolean(string='Not shipped'),
-                }
+                'pick_shipment_id': fields.function(
+                    _get_pick_shipment_id,
+                    method=True,
+                    type='many2one',
+                    relation='shipment',
+                    string='Shipment',
+                    store={
+                        'stock.move': (lambda obj, cr, uid, ids, c={}: ids, ['picking_id'], 10),
+                        'stock.picking': (_get_picking, ['shipment_id'], 10),
+                    }
+    ),  
+        # Fields used for domain
+        'location_virtual_id': fields.many2one('stock.location', string='Virtual location'),
+        'location_output_id': fields.many2one('stock.location', string='Output location'),
+        'invoice_line_id': fields.many2one('account.invoice.line', string='Invoice line'),
+        'pt_created': fields.boolean(string='PT created'),
+        'not_shipped': fields.boolean(string='Not shipped'),
+    }
 
     def copy(self, cr, uid, copy_id, values=None, context=None):
         if context is None:
@@ -4772,7 +4814,7 @@ class stock_move(osv.osv):
         pick_obj = self.pool.get('stock.picking')
         sol_obj = self.pool.get('sale.order.line')
         uom_obj = self.pool.get('product.uom')
-        #solc_obj = self.pool.get('sale.order.line.cancel')
+        solc_obj = self.pool.get('sale.order.line.cancel')
 
         if context is None:
             context = {}
@@ -4796,9 +4838,6 @@ class stock_move(osv.osv):
             if not move.picking_id:
                 continue
 
-#            if not move.has_to_be_resourced and not move.picking_id.has_to_be_resourced:
-#                continue
-
             if move.state == 'cancel':
                 continue
 
@@ -4819,9 +4858,9 @@ class stock_move(osv.osv):
                         continue
 
                     # If the line will be sourced in another way, do not cancel the OUT move
-                    #if solc_obj.search(cr, uid, [('sync_order_line_db_id', '=', sol.sync_order_line_db_id)],
-                    #                   limit=1, order='NO_ORDER', context=context):
-                    #    continue
+                    if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
+                                       limit=1, order='NO_ORDER', context=context):
+                        continue
 
                     diff_qty = uom_obj._compute_qty(cr, uid, move.product_uom.id, move.product_qty, sol.product_uom.id)
                     if move.has_to_be_resourced or move.picking_id.has_to_be_resourced:
@@ -5007,7 +5046,7 @@ class pack_family_memory(osv.osv):
                 values['amount'] = pf_memory['total_amount'] / num_of_packs
             values['total_weight'] = pf_memory['weight'] * num_of_packs
             values['total_volume'] = (pf_memory['length'] * pf_memory['width'] * pf_memory['height'] * num_of_packs) / 1000.0
-            values['state'] = pf_memory['state']
+            values['fake_state'] = pf_memory['state']
 
             result[pf_memory['id']] = values
 
