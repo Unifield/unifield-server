@@ -313,6 +313,106 @@ class account_move_line(osv.osv):
             return True
         return super(account_move_line, self)._hook_check_period_state(cr, uid, result, context, *args, **kargs)
 
+    def _get_reversal_fxa_date_and_period(self, cr, uid, fxa_move, context):
+        '''
+        Returns a tuple with the date and the period to use for the reversal FX entry.
+        Rules:
+        - if the period of the original FXA is Open, the reversal FXA uses its posting date and Period
+        - if the period isn't Open, the posting date is the first date of the next open period. Period 13-16 are excluded.
+        - note that the Document date is always the same as the Posting Date (to avoid FY differences)
+        '''
+        period_obj = self.pool.get('account.period')
+        fxa_period = fxa_move.period_id
+        if fxa_period.state == 'draft':  # Open
+            date_and_period = (fxa_move.date, fxa_move.period_id.id)
+        else:
+            period_ids = period_obj.search(
+                cr, uid,
+                [('date_start', '>', fxa_period.date_start),
+                 ('state', '=', 'draft'),
+                 ('number', '>', 0), ('number', '<', 13)],
+                order='date_start', limit=1, context=context)
+            if not period_ids:
+                raise osv.except_osv(_('Warning !'),
+                                     _('There is no open period to book the reversal FX entry.'))
+            period = period_obj.browse(cr, uid, period_ids[0], fields_to_fetch=['date_start'], context=context)
+            date_and_period = (period.date_start, period.id)
+        return date_and_period
+
+    def reverse_fxa(self, cr, uid, fxa_line_ids, context):
+        """
+        Creates a reversal FX entry that offsets the FXA amount, and reconciles it with the original FXA entry.
+        The reversal FXA Prop. Instance is the current one, in which the Entry Sequence is created.
+        """
+        am_obj = self.pool.get('account.move')
+        journal_obj = self.pool.get('account.journal')
+        for fxa_line in self.browse(cr, uid, fxa_line_ids, context=context,
+                                    fields_to_fetch=['move_id', 'debit', 'credit', 'debit_currency', 'credit_currency']):
+            am = fxa_line.move_id
+            counterpart_id = self.search(cr, uid, [('move_id', '=', am.id), ('id', '!=', fxa_line.id)],
+                                         order='NO_ORDER', limit=1, context=context)
+            counterpart_line = self.browse(cr, uid, counterpart_id[0], context=context,
+                                           fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency'])
+            # create the JE
+            date_and_period = self._get_reversal_fxa_date_and_period(cr, uid, am, context)
+            # get the FXA journal of the current instance
+            journal_ids = journal_obj.search(cr, uid, [('type', '=', 'cur_adj'), ('is_current_instance', '=', True)],
+                                             order='NO_ORDER', limit=1, context=context)
+            if not journal_ids:
+                raise osv.except_osv(_('Warning !'),
+                                     _('No journal found to book the reversal FX entry.'))
+            reversal_am_id = am_obj.create(cr, uid,
+                                           {'journal_id': journal_ids[0],  # it also determines the instance_id (= the current instance)
+                                            'period_id': date_and_period[1],
+                                            'document_date': date_and_period[0],
+                                            'date': date_and_period[0],
+                                            'manual_name': 'Realised loss/gain',
+                                            'state': 'posted',
+                                            },
+                                           context=context)
+            # create the first JI = copy and reverse the FXA line
+            rev_fxa_vals = {
+                'move_id': reversal_am_id,
+                'period_id': date_and_period[1],
+                'document_date': date_and_period[0],
+                'date': date_and_period[0],
+                'debit': fxa_line.credit,
+                'credit': fxa_line.debit,
+                'debit_currency': fxa_line.credit_currency,
+                'credit_currency': fxa_line.debit_currency,
+            }
+            rev_fxa_id = self.copy(cr, uid, fxa_line.id, rev_fxa_vals, context=context)
+            # create the second JI = copy and reverse the counterpart line
+            rev_counterpart_vals = {
+                'move_id': reversal_am_id,
+                'period_id': date_and_period[1],
+                'document_date': date_and_period[0],
+                'date': date_and_period[0],
+                'debit': counterpart_line.credit,
+                'credit': counterpart_line.debit,
+                'debit_currency': counterpart_line.credit_currency,
+                'credit_currency': counterpart_line.debit_currency,
+            }
+            self.copy(cr, uid, counterpart_line.id, rev_counterpart_vals, context=context)
+            # Set the JE status to "system"
+            am_obj.write(cr, uid, [reversal_am_id], {'status': 'sys'}, context=context)
+            # reconcile the original FXA line with its reversal
+            self.reconcile(cr, uid, [fxa_line.id, rev_fxa_id], context=context)
+
+    def _check_instance(self, cr, uid, reconcile_id, context):
+        """
+        Checks that the unreconciliation is done at the same instance level as the reconciliation
+        (otherwise raises a warning)
+        """
+        user_obj = self.pool.get('res.users')
+        reconcile_obj = self.pool.get('account.move.reconcile')
+        company = user_obj.browse(cr, uid, uid, fields_to_fetch=['company_id'], context=context).company_id
+        reconciliation = reconcile_obj.browse(cr, uid, reconcile_id, fields_to_fetch=['instance_id'], context=context)
+        if reconciliation.instance_id and reconciliation.instance_id.id != company.instance_id.id:
+            raise osv.except_osv(_('Warning !'),
+                                 _("Entries with an FX adjustment entry can only be unreconciled in the same instance "
+                                   "where they have been reconciled in."))
+
     def _remove_move_reconcile(self, cr, uid, move_ids=None, context=None):
         """
         Delete reconciliation object from given move lines ids (move_ids) and reverse gain/loss lines.
@@ -324,12 +424,47 @@ class account_move_line(osv.osv):
             context = {}
         if isinstance(move_ids, (int, long)):
             move_ids = [move_ids]
-        reconcile_ids = [x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id']]
-        if reconcile_ids:
-            if self.search(cr, uid, [('reconcile_id', 'in', reconcile_ids), ('is_addendum_line', '=', True)], limit=1, order='NO_ORDER', context=context):
-                raise osv.except_osv(_('Error'), _('You cannot unreconcile entries with FX adjustment.'))
-
-        return super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
+        reconcile_ids = set(x['reconcile_id'][0] for x in self.read(cr, uid, move_ids, ['reconcile_id'], context=context) if x['reconcile_id'])
+        fxa_set = set()
+        for reconcile_id in reconcile_ids:
+            # US-1784 Prevent unreconciliation if it is balanced in booking but unbalanced in functional
+            # (= full reconciliation but FX entry not yet received via sync)
+            rec_line_ids = self.search(cr, uid, [('reconcile_id', '=', reconcile_id)], order='NO_ORDER', context=context)
+            rec_lines = self.browse(cr, uid, rec_line_ids, context=context,
+                                    fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency', 'is_addendum_line'])
+            debit = 0.0
+            credit = 0.0
+            debit_currency = 0.0
+            credit_currency = 0.0
+            fxa_line_ids = []
+            for rec_line in rec_lines:
+                debit += rec_line.debit
+                credit += rec_line.credit
+                debit_currency += rec_line.debit_currency
+                credit_currency += rec_line.credit_currency
+                if rec_line.is_addendum_line:
+                    fxa_line_ids.append(rec_line.id)
+            balanced_in_booking = abs(debit_currency - credit_currency) < 10**-3
+            balanced_in_fctal = abs(debit - credit) < 10**-3
+            if balanced_in_booking and not balanced_in_fctal:
+                raise osv.except_osv(_('Warning !'),
+                                     _("You can't unreconcile these lines because the FX entry is still missing."))
+            # The loop is on full reconciliations => if the amounts are partial all legs aren't in the current instance:
+            # prevent from unreconciling
+            if not balanced_in_booking and not balanced_in_fctal:
+                raise osv.except_osv(_('Warning !'),
+                                     _("You can't unreconcile these entries in this instance "
+                                       "because all legs are not present."))
+            if fxa_line_ids:
+                # if there is a FXA the unreconciliation must be done in the same instance as the reconciliation
+                self._check_instance(cr, uid, reconcile_id, context)
+                fxa_set.update(fxa_line_ids)
+        # first we delete the reconciliation for all lines including FXA
+        res = super(account_move_line, self)._remove_move_reconcile(cr, uid, move_ids, context=context)
+        if fxa_set:
+            # then for each FXA we create a reversal entry and reconcile them together
+            self.reverse_fxa(cr, uid, list(fxa_set), context)
+        return res
 
 account_move_line()
 
