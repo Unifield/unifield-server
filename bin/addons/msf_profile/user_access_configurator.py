@@ -22,6 +22,7 @@
 from osv import osv, fields
 from tools.translate import _
 import base64
+import logging
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
@@ -1021,8 +1022,12 @@ class board_board(osv.osv):
     containing a view of an object on which he doesn't have access.
     '''
     _inherit = 'board.board'
+    _logger = logging.getLogger('board_board')
 
     def remove_unauthorized_children(self,cr, uid, node):
+        iaaw_obj = self.pool.get('ir.actions.act_window')
+        ima_obj = self.pool.get('ir.model.access')
+        user_groups_id = self.pool.get('res.users').read(cr, uid, uid, ['groups_id'])['groups_id']
         for child in node.iterchildren():
             if child.tag == 'action':
                 if child.get('invisible'):
@@ -1032,26 +1037,26 @@ class board_board(osv.osv):
                     action_id = int(child.get('name'))
 
                     # check the group has write permission on the model
-                    model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
-                    user_groups_id = self.pool.get('res.users').read(cr, uid, uid,
-                            ['groups_id'])['groups_id']
-                    ima_obj = self.pool.get('ir.model.access')
+                    model = iaaw_obj.browse(cr, uid, action_id).res_model
                     write_perm = ima_obj.check_group(cr, uid, model, 'write',
                             user_groups_id)
 
+                    if not child.get('menu_ref'):
+                        self._logger.warn('The dashboard \'%s\' does not have menu_ref attribute.'
+                                'This is needed to define security.' % child.get('string'))
+
                     menu_access = True
                     # if the group has no write permission, check if the
-                    # user has access to the sub menu of the related objects.
-                    if child.get('menu_ref'):
+                    # user has access to the sub menu of the related dashboard.
+                    if not write_perm and child.get('menu_ref'):
                         menu_ids = child.get('menu_ref').split(',')
                         if not isinstance(menu_ids, list):
                             menu_ids = [menu_ids]
 
-                        for menu_id in menu_ids:
-                            menu_id = int(menu_id)
-                            if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
-                                menu_access = False
-                                break
+                        menu_ids = [int(menu_id) for menu_id in menu_ids]
+                        if not self.pool.get('ir.ui.menu').search(cr, uid,
+                                [('id', 'in', menu_ids)]):
+                            menu_access = False
 
                     # if no access on the menu or on the model, delete the node
                     if not(write_perm or menu_access):
