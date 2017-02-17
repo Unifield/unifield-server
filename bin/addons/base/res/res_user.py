@@ -378,9 +378,9 @@ class users(osv.osv):
                     pass
                 if manager_group_id:
                     if arg[1] == '=' and arg[2] == False:
-                        res.append(('groups_id', 'not in', 2))
+                        res.append(('groups_id', 'not in', manager_group_id))
                     if arg[1] == '=' and arg[2] == True:
-                        res.append(('groups_id', 'in', 2))
+                        res.append(('groups_id', 'in', manager_group_id))
 
             elif len(arg) > 2 and arg[0] == 'is_sync_config':
                 res_group_obj = self.pool.get('res.groups')
@@ -601,26 +601,38 @@ class users(osv.osv):
     # User can write to a few of her own fields (but not her groups for example)
     SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
 
-    def remove_higer_level_groups(self, cr, uid, values, context=None):
+    def remove_higer_level_groups(self, cr, uid, ids, context=None):
         '''
-        check the groups in values an remove those which have higher level
-        than the current instance one.
+        check the groups of the given user ids and remove those which have
+        higher level than the current instance one.
         '''
-        if values.get('groups_id') and len(values['groups_id'][0]) > 2:
-            # remove the groups that are not visible from this instance level
-            groups = values['groups_id'][0][2]
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # if the groups change, check all this groups are allowed on this level
+        # instance. If not remove the unauthorised ones
+        instance_level = _get_instance_level(self, cr, uid)
+        if instance_level != 'hq':  # all users and all groups are available on hq
+            current_groups = self.read(cr, uid, ids, ['groups_id'],
+                    context=context)
             group_obj = self.pool.get('res.groups')
-            new_group_list = []
-            for group in group_obj.read(cr, uid, groups, ['level'],
-                    context=context):
-                if group_obj.is_able_to_use_this_group(cr, uid,
-                        group['level']):
-                    new_group_list.append(group['id'])
-            values['groups_id'][0] = (
-                    values['groups_id'][0][0],
-                    values['groups_id'][0][1],
-                    new_group_list)
-        return values
+            for user in current_groups:
+                if user['id'] == 1:
+                    # do not remove groups from admin
+                    continue
+                group_ids = user['groups_id']
+                if group_ids:
+                    # remove the groups that are not visible from this instance level
+                    new_group_ids = []
+                    for group in group_obj.read(cr, uid, group_ids, ['level'],
+                            context=context):
+                        if group_obj.is_able_to_use_this_group(cr, uid,
+                                level=group['level'], instance_level=instance_level):
+                            new_group_ids.append(group['id'])
+
+                    if set(group_ids) != set(new_group_ids):
+                        # replace the old groups with the authorized ones
+                        super(users, self).write(cr, uid, user['id'], {'groups_id':
+                            [(6, 0, new_group_ids)]}, context=context)
 
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
@@ -628,9 +640,12 @@ class users(osv.osv):
         if not values.get('is_synchronizable', False):
             # a user which is not synchronizable should not be synchronized
             values['synchronize'] = False
-        values = self.remove_higer_level_groups(cr, uid, values,
-                context=context)
-        return super(users, self).create(cr, uid, values, context)
+
+        user_id = super(users, self).create(cr, uid, values, context)
+        if values.get('groups_id'):
+            self.remove_higer_level_groups(cr, uid, user_id, context=context)
+
+        return user_id
 
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
@@ -656,20 +671,31 @@ class users(osv.osv):
 
         old_groups = []
         if values.get('groups_id'):
-            group_obj = self.pool.get('res.groups')
-            old_groups = group_obj.search(cr, uid, [('users', 'in', ids)], context=context)
-            values = self.remove_higer_level_groups(cr, uid, values,
-                    context=context)
+            old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
 
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
-        # uncheck synchronize checkbox if the user is manager or sync config
         if values.get('groups_id'):
-            if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
-               any(self._is_erp_manager(cr, uid, ids, context=context).values()):
-                vals = {'synchronize': False}
-                res = super(users, self).write(cr, uid, ids, vals, context=context)
-            self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
+            self.remove_higer_level_groups(cr, uid, ids, context=context)
+            if values.get('synchronize', False) or values.get('is_synchronizable',
+                    False):
+                # uncheck synchronize checkbox if the user is manager or sync config
+                sync_config_res = self._is_sync_config(cr, uid, ids,
+                    context=context)
+                vals_sync = {
+                        'synchronize': False,
+                        'is_synchronizable': False,
+                }
+                if any(sync_config_res.values()):
+                    for user_id, is_sync_config in sync_config_res.items():
+                        res2 = super(users, self).write(cr, uid, user_id, vals_sync, context=context)
+
+                erp_manager_res = self._is_erp_manager(cr, uid, ids,
+                        context=context)
+                if any(erp_manager_res.values()):
+                    for user_id, is_sync_config in erp_manager_res.items():
+                        res2 = super(users, self).write(cr, uid, user_id, vals_sync, context=context)
+                self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
         self.company_get.clear_cache(cr.dbname)
