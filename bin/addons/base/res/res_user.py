@@ -363,22 +363,35 @@ class users(osv.osv):
         Return ids matching the condition if research contain is_erp_manager or
         is_sync_config
         '''
-        ids = []
-        for cond in args:
-            if cond[0] in ('is_erp_manager', 'is_sync_config'):
-                all_ids = self.search(cr, uid, [])
-                method = getattr(self, '_%s' % name)
-                if method:
-                    res_dict = method(cr, uid, all_ids)
-                    res_ids = [key for key, value in res_dict.items() if not value]
-            else:
-                res_ids = self.search(cr, uid, [cond])
-            ids = ids + res_ids
+        res = []
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'is_erp_manager':
+                dataobj = self.pool.get('ir.model.data')
 
-        if ids:
-            return [('id', 'in', tuple(ids))]
-        else:
-            return [('id', '=', '0')]
+                manager_group_id = None
+                try:
+                    dataobj = self.pool.get('ir.model.data')
+                    dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                                                                           'group_erp_manager')
+                except ValueError:
+                    # If these groups does not exists anymore
+                    pass
+                if manager_group_id:
+                    if arg[1] == '=' and arg[2] == False:
+                        res.append(('groups_id', 'not in', 2))
+                    if arg[1] == '=' and arg[2] == True:
+                        res.append(('groups_id', 'in', 2))
+
+            elif len(arg) > 2 and arg[0] == 'is_sync_config':
+                res_group_obj = self.pool.get('res.groups')
+                group_ids = res_group_obj.search(cr, uid,
+                                                 [('name', '=', 'Sync_Config')], context=context)
+                if group_ids:
+                    if arg[1] == '=' and arg[2] == False:
+                        res.append(('groups_id', 'not in', group_ids[0]))
+                    if arg[1] == '=' and arg[2] == True:
+                        res.append(('groups_id', 'in', group_ids[0]))
+        return res
 
     def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
         '''
@@ -387,7 +400,6 @@ class users(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = dict.fromkeys(ids, False)
-        group_id = None
         res_group_obj = self.pool.get('res.groups')
         group_ids = res_group_obj.search(cr, uid,
                                          [('name', '=', 'Sync_Config')], context=context)
@@ -399,44 +411,34 @@ class users(osv.osv):
                     result[current_user['id']] = True
         return result
 
-    def _get_instance_level(self, cr, uid, ids, name=None, arg=None, context=None):
+    def _get_instance_level(self, cr, uid, ids, name=None, arg=None,
+            context=None):
         '''
         return the level of the instance related to the company of the user
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        result = {}
-        for user_id in ids:
-            level = False
-            company_id = self._get_company(cr, user_id, context=context)
-            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
-                                                            ['instance_id'], context=context)['instance_id']
-            instance_id = instance_id and instance_id[0] or False
-            if instance_id:
-                level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
-            result[user_id] = level
+
+        level = _get_instance_level(self, cr, uid)
+        result = {}.fromkeys(ids, level)
         return result
 
-    def _search_instance_level(self, cr, uid, obj, name, args, context=None):
-        ids = []
-        for cond in args:
-            if cond[0] == 'instance_level':
-                all_ids = self.search(cr, uid, [])
-                res_dict = self._get_instance_level(cr, uid, all_ids)
-                if cond[1] == '=':
-                    res_ids = [key for key, value in res_dict.items() if value == cond[2]]
-                elif cond[1] == '!=':
-                    res_ids = [key for key, value in res_dict.items() if value != cond[2]]
-                elif cond[1] == 'in':
-                    res_ids = [key for key, value in res_dict.items() if value in cond[2]]
-            else:
-                res_ids = self.search(cr, uid, [cond])
-            ids = ids + res_ids
 
-        if ids:
-            return [('id', 'in', tuple(ids))]
-        else:
-            return [('id', '=', '0')]
+    def _search_instance_level(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'instance_level':
+                level = _get_instance_level(self, cr, uid)
+                if arg[1] == '=':
+                    if level != arg[2]:
+                        res.append(('id', '=', '0'))
+                elif arg[1] == '!=':
+                    if level == arg[2]:
+                        res.append(('id', '=', '0'))
+                elif arg[1] == 'in':
+                    if level not in arg[2]:
+                        res.append(('id', '=', '0'))
+        return res
 
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,

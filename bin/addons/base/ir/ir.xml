@@ -762,7 +762,7 @@
             <field name="res_model">res.users</field>
             <field name="view_type">form</field>
             <field name="view_id" ref="view_users_white_list_tree"/>
-            <field name="domain">[('is_synchronizable', '=', True), ('instance_level', '=', 'section')]</field>
+            <field name="domain">[('is_synchronizable', '=', True), ('instance_level', '=', 'hq')]</field>
             <field name="search_view_id" ref="view_users_search"/>
             <field name="context">{'user_white_list': True}</field>
             <field name="help">List of Users that will be synchronizable. To
@@ -792,7 +792,7 @@
                         </html>
                     </group>
                     <separator colspan="4" />
-                    <field name="user_ids" nolabel="1" colspan="4" mode="tree" domain="[('is_synchronizable', '=', False), ('is_erp_manager', '=', False), ('is_sync_config', '=', False), ('instance_level', '=', 'section')]">
+                    <field name="user_ids" nolabel="1" colspan="4" mode="tree" domain="[('is_synchronizable', '=', False), ('is_erp_manager', '=', False), ('is_sync_config', '=', False), ('instance_level', '=', 'hq')]">
                         <tree string="Add multiple users" editable="top">
                             <field name="name"/>
                             <field name="login"/>
