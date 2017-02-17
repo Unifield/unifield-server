@@ -651,6 +651,13 @@ class update_received(osv.osv):
                 'log' : '',
             }, context=context)
             sdrefs = [elem['sdref'] for elem in self.read(cr, uid, done_ids, ['sdref'], context=context)]
+            for sdref in sdrefs:
+                self.pool.get('ir.model.data').update_sd_ref(
+                    cr, uid, sdref, {
+                        'sync_date': fields.datetime.now(),
+                        'touched' : '[]',
+                    },
+                    context=context)
             toSetRun_ids = self.search(cr, uid, [('sdref', 'in', sdrefs), ('run', '=', False),
                                                  ('is_deleted', '=', False)], order='NO_ORDER', context=context)
             if toSetRun_ids:
