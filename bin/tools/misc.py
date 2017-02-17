@@ -881,6 +881,8 @@ class read_cache(object):
     Timeout: 0 = no timeout, otherwise in seconds
     """
 
+    __caches = []
+
     def __init__(self, prefetch=None, context=None, timeout=None, size=8192):
         if prefetch is None:
             prefetch = []
@@ -894,6 +896,12 @@ class read_cache(object):
         self.cache = LRU(size)
         self.fun = None
         self._context = context
+        read_cache.__caches.append(self)
+
+    @classmethod
+    def clean_caches_for_db(cls, dbname):
+        for c in cls.__caches:
+            c.clear(dbname)
 
     def _unify_args(self, *args, **kwargs):
         # Update named arguments with positional argument values (without self and cr)

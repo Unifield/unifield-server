@@ -597,7 +597,6 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
     pool = pooler.get_pool(dbname)
     trans_obj = pool.get('ir.translation')
-    model_data_obj = pool.get('ir.model.data')
     uid = 1
     l = pool.obj_pool.items()
     l.sort()
@@ -726,20 +725,6 @@ def trans_generate(lang, modules, cr, ignore_name=None, only_translated_terms=Fa
 
             if field_def.help:
                 push_translation(module, 'help', name, 0, encode(field_def.help))
-
-            if field_def.translate:
-                ids = objmodel.search(cr, uid, [])
-                obj_values = objmodel.read(cr, uid, ids, [field_name])
-                for obj_value in obj_values:
-                    res_id = obj_value['id']
-                    if obj.name in ('ir.model', 'ir.ui.menu'):
-                        res_id = 0
-                    model_data_ids = model_data_obj.search(cr, uid, [
-                        ('model', '=', model),
-                        ('res_id', '=', res_id),
-                    ])
-                    if not model_data_ids:
-                        push_translation(module, 'model', name, 0, encode(obj_value[field_name]))
 
             if hasattr(field_def, 'selection'):
                 sel = False
@@ -1032,6 +1017,7 @@ def trans_load_data(cr, fileobj, fileformat, lang, lang_name=None, verbose=True,
                 trans_obj.create(cr, uid, dic)
         if clear_cache:
             tools.cache.clean_caches_for_db(cr.dbname)
+            tools.read_cache.clean_caches_for_db(cr.dbname)
         if verbose:
             logger.info("translation file loaded succesfully")
     except IOError:
