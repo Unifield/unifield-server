@@ -1145,9 +1145,9 @@ class stock_picking(osv.osv):
                         context=context)
                 invoices_group[partner.id] = invoice_id
 
-                # US-1669 For SI with an intersection supplier, add the FO ref to the Source Doc.
-                # For instance the Source Doc format for an SI from C1 to C2 should be: INXXX:PO C1:FO C2
-                # ex: IN/00022:17/se_HQ1/HT101/PO00008-2:17/se_HQ2/HT101/FO00006-2
+                # US-1669 For SI with an intersection supplier, add the Supplier Reference to the Description.
+                # For instance the Description format for an SI from C1 to C2 = Supplier Ref (partner + FOC2) + INXXX
+                # ex: se_HQ2C1.17/se_HQ2/HT101/FO00018-2 : IN/00034
                 in_invoice = inv_type == 'in_invoice'
                 di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
                 inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
@@ -1156,15 +1156,11 @@ class stock_picking(osv.osv):
                 if in_invoice and not di and not inkind_donation and not debit_note and not intermission:  # Supplier Invoice
                     po = picking and picking.purchase_id
                     if po and po.partner_type and po.partner_type == 'section':
-                        partner_ref = po.partner_ref or ''  # ex: 'se_HQ2C1.17/se_HQ2/HT101/FO00006-2'
-                        # remove the partner name
-                        prefix_partner_name = po.partner_id.name + "."
-                        if partner_ref.startswith(prefix_partner_name):
-                            partner_ref = partner_ref[len(prefix_partner_name):]
-                        orig = 'origin' in invoice_vals and invoice_vals['origin'] or False
-                        new_origin = orig and partner_ref and "%s:%s" % (orig, partner_ref) or False
-                        if new_origin:
-                            invoice_obj.write(cr, uid, invoice_id, {'origin': new_origin}, context=context)
+                        partner_ref = po.partner_ref or ''  # ex: 'se_HQ2C1.17/se_HQ2/HT101/FO00018-2'
+                        name_inv = 'name' in invoice_vals and invoice_vals['name'] or False  # ex : IN/00034
+                        new_name = partner_ref and name_inv and "%s : %s" % (partner_ref, name_inv) or False
+                        if new_name:
+                            invoice_obj.write(cr, uid, invoice_id, {'name': new_name}, context=context)
             res[picking.id] = invoice_id
             for move_line in picking.move_lines:
                 if move_line.state == 'cancel':
