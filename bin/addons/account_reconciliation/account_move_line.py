@@ -355,7 +355,7 @@ class account_move_line(osv.osv):
                                                               fields_to_fetch=['debit', 'credit', 'debit_currency', 'credit_currency'])
             # create the JE
             date_and_period = self._get_reversal_fxa_date_and_period(cr, uid, am, context)
-            # get the FXA journal from the current instance
+            # get the FXA journal of the current instance
             journal_ids = journal_obj.search(cr, uid, [('type', '=', 'cur_adj'), ('is_current_instance', '=', True)],
                                             order='NO_ORDER', limit=1, context=context)
             if not journal_ids:
