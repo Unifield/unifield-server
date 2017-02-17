@@ -891,7 +891,7 @@ class update_received(osv.osv):
             values[i] = ','.join(res_val) if res_val else False
         return result
 
-    _order = 'create_date desc, id desc'
+    _order = 'id desc'
 
 update_received()
 
