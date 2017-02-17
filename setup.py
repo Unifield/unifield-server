@@ -24,12 +24,12 @@ try:
         'win32serviceutil',
     ])
     opts['options']['py2exe'].update(
-            skip_archive=1,
-            compressed=0,
-            bundle_files=3,
-            optimize=0,
-            collected_libs_dir='libs',
-            collected_libs_data_relocate='babel,pytz',
+        skip_archive=1,
+        compressed=0,
+        bundle_files=3,
+        optimize=0,
+        collected_libs_dir='libs',
+        collected_libs_data_relocate='babel,pytz',
     )
     opts.setdefault('data_files', []).extend(fixup_data_pytz_zoneinfo())
     opts.update(cmdclass={'py2exe': custom_py2exe},)
@@ -99,16 +99,17 @@ setup(
         'Programming Language :: Python',
         'Environment :: Web Environment',
         'Topic :: Office/Business :: Financial',
-        ],
+    ],
     scripts=['scripts/openerp-web'],
     data_files=(find_data_files('addons/openerp')
-              + find_data_files('addons/view_calendar')
-              + find_data_files('addons/view_diagram')
-              + find_data_files('addons/view_graph')
-              + find_data_files('addons/widget_ckeditor')
-              + find_data_files('doc', patterns='')
-              + find_data_files('openobject', patterns=r'.+\.(cfg|css|js|mako|gif|png|jpg|ico)')
-              + opts.pop('data_files', [])
-    ),
+                + find_data_files('addons/view_calendar')
+                + find_data_files('addons/view_diagram')
+                + find_data_files('addons/view_graph')
+                + find_data_files('addons/widget_ckeditor')
+                + find_data_files('doc', patterns='')
+                + find_data_files('openobject', patterns=r'.+\.(cfg|css|js|mako|gif|png|jpg|ico)')
+                + find_data_files('revprox', patterns='')
+                + opts.pop('data_files', [])
+                ),
     **opts
 )

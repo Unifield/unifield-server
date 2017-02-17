@@ -20,7 +20,6 @@
 ##############################################################################
 
 # Win32 python extensions modules
-import win32con
 import win32serviceutil
 import win32service
 import win32event
@@ -54,11 +53,13 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
     def SvcStop(self):
         # Before we do anything, tell the SCM we are starting the stop process.
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        # stop the running OpenERP Web: say it's a normal exit
-        win32api.TerminateProcess(int(self.openerp_process._handle), 0)
-        servicemanager.LogInfoMsg("OpenERP Web stopped correctly")
         # And set my event.
         win32event.SetEvent(self.hWaitStop)
+        # stop the running OpenERP Web and any children (i.e. revprox.exe)
+        pid = str(self.openerp_process.pid)
+        subprocess.call(['taskkill', '/F', '/T', '/PID', pid])
+        self.openerp_process = None
+        servicemanager.LogInfoMsg("OpenERP Web stopped correctly")
         self.ReportServiceStatus(win32service.SERVICE_STOPPED)
 
     def StartOpenERP(self):
@@ -69,7 +70,7 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         service_dir = os.path.dirname(sys.argv[0])
         server_dir = os.path.split(service_dir)[0]
         server_path = os.path.join(server_dir, 'openerp-web.exe')
-        result = win32api.SetConsoleCtrlHandler(self.handle, 1)
+        win32api.SetConsoleCtrlHandler(self.handle, 1)
 
         self.openerp_process = subprocess.Popen([server_path], cwd=server_dir, creationflags=win32process.CREATE_NO_WINDOW)
 
@@ -92,7 +93,8 @@ class OpenERPWebService(win32serviceutil.ServiceFramework):
         # verification if the server is really running, else quit with an error
         self.openerp_process.wait()
         if not self.stopping:
-            sys.exit("OpenERP Web check: server not running, check the logfile for more info")
+            servicemanager.LogInfoMsg("openerp-web child process died unexpectedly, exiting now")
+            os._exit(1)
 
 if __name__=='__main__':
     # Do with the service whatever option is passed in the command line
