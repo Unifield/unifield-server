@@ -111,6 +111,7 @@
                     <field name="login" select="1"/>
                     <field name="new_password" password="True"/>
                     <field name="force_password_change"/>
+                    <field name="log_xmlrpc" attrs="{'invisible': [('instance_level', '!=', 'section')]}"/>
                     <!-- this functionnality is linked to US-1381. As this
                          ticket was postponed to UF2.1-5, this checkbox will not be displayed until this ticket is not released
                     <field name="synchronize" attrs="{'invisible': ['|', '|', ('is_erp_manager', '=', True), ('is_sync_config', '=', True), ('instance_level', '!=', 'section')]}"/>-->
