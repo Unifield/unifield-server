@@ -171,7 +171,7 @@ class groups(osv.osv):
         if context is None:
             context = {}
 
-        if 'show_all_level' in context and not context.get('show_all_level'):
+        if not context.get('show_all_level'):
             new_args = []
             instance_level = _get_instance_level(self, cr, uid)
             if instance_level == 'project':
@@ -179,8 +179,7 @@ class groups(osv.osv):
             elif instance_level == 'coordo':
                 new_args = [('level', 'in', ['project', 'coordo', False])]
             for arg in args:
-                if arg[0] != 'show_all_level':
-                    new_args.append(arg)
+                new_args.append(arg)
 
             args = new_args
         return super(groups, self).search(cr, uid, args, offset=offset,
