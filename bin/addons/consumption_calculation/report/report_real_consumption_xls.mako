@@ -82,7 +82,7 @@
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.uom_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.prodlot_id.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="short_date" >
-            % if line.expiry_date and line.expiry_date != 'False':
+            % if isDate(line.expiry_date):
                 <Data ss:Type="DateTime">${line.expiry_date|n}T00:00:00.000</Data>
             % else:
                 <Data ss:Type="String"></Data>

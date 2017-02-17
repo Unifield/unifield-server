@@ -72,6 +72,9 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
      % elif d and isDate(d, date_format='%Y-%m-%d %H:%M:%S'):
 <Cell ss:StyleID="sDate">
     <Data ss:Type="DateTime">${d.replace(' ','T')}.000</Data>
+     % elif d and isDate(d, date_format='%Y-%m-%d %H:%M:%S.%f'):
+<Cell ss:StyleID="sDate">
+    <Data ss:Type="DateTime">${d.replace(' ','T')}</Data>
      % elif d and re.match('^-?[0-9]+\.?[0-9]*$', d):
 <Cell ss:StyleID="ssBorder">
     <Data ss:Type="Number">${d}</Data>

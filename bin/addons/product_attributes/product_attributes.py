@@ -1294,6 +1294,7 @@ class product_attributes(osv.osv):
             return True
         smrl_obj = self.pool.get('stock.mission.report.line')
         prod_status_obj = self.pool.get('product.status')
+        int_stat_obj = self.pool.get('product.international.status')
 
         if context is None:
             context = {}
@@ -1333,7 +1334,35 @@ class product_attributes(osv.osv):
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, uid, local_smrl_ids, {'product_state': prod_state}, context=context)
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=context)
+
+        if 'international_status' in vals:
+            intstat_code = ''
+            if vals['international_status']:
+                intstat_id = vals['international_status']
+                if isinstance(intstat_id, (int,long)):
+                    intstat_id = [intstat_id]
+                intstat_code = int_stat_obj.read(cr, uid, intstat_id, ['code'], context=context)[0]['code']
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('international_status_code', '!=', intstat_code),
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True)
+            ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=context)
+
+        if 'state_ud' in vals:
+            # just update SMRL that belongs to our instance:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True),
+                ('state_ud', '!=', vals['state_ud'] or ''),
+            ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=context)
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1368,6 +1397,16 @@ class product_attributes(osv.osv):
                     #                    'state': phase_out_status,
                 })
 
+        if 'active' in vals:
+            local_smrl_ids = smrl_obj.search(cr, uid, [
+                ('product_id', 'in', ids),
+                ('full_view', '=', False),
+                ('mission_report_id.local_report', '=', True),
+                ('product_active', '!=', vals['active'])
+            ], context=context)
+            if local_smrl_ids:
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=context)
+
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':
                 vals['controlled_substance'] = 'True'
@@ -1388,6 +1427,7 @@ class product_attributes(osv.osv):
                 raise osv.except_osv(_('Error'), _('You cannot choose an UoM which is not in the same UoM category of default UoM'))
 
         return res
+
 
     def reactivate_product(self, cr, uid, ids, context=None):
         '''

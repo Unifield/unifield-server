@@ -117,7 +117,7 @@ class hq_entries(osv.osv):
                     continue
             else: # CASE 4/
                 # C Check, except B
-                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids] and line.analytic_id.id != fp_id:
+                if (line.account_id.id, line.destination_id.id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in line.analytic_id.tuple_destination_account_ids if not x.disabled] and line.analytic_id.id != fp_id:
                     res[line.id] = 'invalid'
                     logger.notifyChannel('account_hq_entries', netsvc.LOG_WARNING, _('%s: Tuple Account/DEST (%s/%s) not found in FP (%s)') % (line.id or '', line.account_id.code or '', line.destination_id.code or '', line.analytic_id.code or ''))
                     continue
@@ -442,7 +442,7 @@ class hq_entries(osv.osv):
                 fp_id = 0
             # Delete funding_pool_id if not valid with tuple "account_id/destination_id".
             # but do an exception for MSF Private FUND analytic account
-            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids] and funding_pool_id != fp_id:
+            if (account_id, destination_id) not in [x.account_id and x.destination_id and (x.account_id.id, x.destination_id.id) for x in fp_line.tuple_destination_account_ids if not x.disabled] and funding_pool_id != fp_id:
                 res = {'value': {'analytic_id': False}}
         # If no destination, do nothing
         elif not destination_id:

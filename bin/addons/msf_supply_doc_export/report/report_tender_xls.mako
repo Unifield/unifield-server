@@ -80,9 +80,11 @@
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.qty or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="String">${(line.product_uom.name or '')|x}</Data></Cell>
         <Cell ss:StyleID="line" ><Data ss:Type="Number">${(line.price_unit or '')|x}</Data></Cell>
-        % if o.requested_date :
+        % if isDate(o.requested_date):
         <Cell ss:StyleID="short_date" ><Data ss:Type="DateTime">${o.requested_date|n}T00:00:00.000</Data></Cell>
-        %endif
+        % else:
+        <Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+        % endif
     </Row>
     % endfor
 </Table>

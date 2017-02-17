@@ -75,17 +75,6 @@ class ocb_export_wizard(osv.osv_memory):
                     '  December export")  % (
                     wizard.period_id.name or 'Period 16', )
                 raise osv.except_osv(_('Warning'), msg)
-            """elif wizard.period_id.number == 12:
-                domain = [
-                    ('instance_id', '=', wizard.instance_id.id),
-                    ('fy_id', '=', wizard.period_id.fiscalyear_id.id),
-                    ('state', '=', 'mission-closed'),
-                ]
-                if not self.pool.get('account.fiscalyear.state').search(cr, uid,
-                    domain, count=True, context=context):
-                    msg = _("Target instance '%s' should be at least' \
-                        yearly closed")  % (wizard.instance_id.code, )
-                    raise osv.except_osv(_('Error'), msg)"""
         if wizard.fiscalyear_id:
             data['form'].update({'fiscalyear_id': wizard.fiscalyear_id.id})
         data['form'].update({'selection': wizard.selection})
