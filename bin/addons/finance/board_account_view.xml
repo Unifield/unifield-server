@@ -218,34 +218,7 @@
         </record>
         <!-- End for Payroll -->
 
-        <!-- Custom Accounting Board -->
-        <record id="inherit_board_account_form" model="ir.ui.view">
-            <field name="name">inherit.board.account.form</field>
-            <field name="model">board.board</field>
-            <field name="type">tree</field>
-            <field name='inherit_id' ref='account.board_account_form' />
-            <field name="priority" eval="15"/>
-            <field name="arch" type="xml">
-                <xpath expr="/form" position="replace">
-                    <form string="Account Board">
-                        <hpaned>
-                            <child1>
-                                <action colspan="4" height="160" width="400" name="%(account_board_commitment_voucher)d" string="Commitment Voucher" menu_ref="%(analytic_distribution.menu_commitment)d,%(analytic_distribution.menu_commitment_entries)d" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" />
-                            </child1>
-
-                            <child1>
-                                <action colspan="4" height="160" width="400" name="%(hr_payroll_board)d" string="Payroll Entries to validate" menu_ref="%(msf_homere_interface.menu_finance_payroll)d,%(msf_homere_interface.menu_finance_payroll_entries)d" />
-                                <action colspan="4" height="160" width="400" name="%(account_hq_entries)d" string="HQ Entries to validate" menu_ref="%(account_hq_entries.menu_hq)d,%(account_hq_entries.menu_hq_entries)d" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_period)d" string="Account Periods" menu_ref="%(account.menu_action_account_period_close_tree)d,%(account.menu_action_account_period_form)d" />
-                                <action colspan="4" height="160" width="400" name="%(account_board_currency)d" string="Latest FX rates" menu_ref="%(res_currency_tables.menu_action_report_currency_table_form)d" />
-                            </child1>
-                        </hpaned>
-                    </form>
-                </xpath>
-            </field>
-        </record>
+        <!-- Custom Accounting Board moved to useability_dashboard_and_menu -->
 
     </data>
 </openerp>

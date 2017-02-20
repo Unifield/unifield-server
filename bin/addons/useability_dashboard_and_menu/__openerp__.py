@@ -36,6 +36,7 @@
         "procurement_request",
         "procurement",
         "mission_stock",
+        "msf_homere_interface",
     ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
@@ -63,6 +64,7 @@
         "dashboard/board_purchase_view.xml",
         "dashboard/board_sale_view.xml",
         "dashboard/board_warehouse_view.xml",
+        "dashboard/boad_accounting_view.xml",
     ],
     'demo_xml': [
     ],
