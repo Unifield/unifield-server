@@ -1400,6 +1400,7 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             make_invoice = False
+            move = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
                     if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
@@ -1460,6 +1461,26 @@ class shipment(osv.osv):
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
             invoice_vals['journal_id'] = journal_ids[0]
+
+            # US-1669 Use case "IVO from Supply / Shipment":
+            # - add FO to the Source Doc. WARNING: only one FO ref is taken into account even if there are several FO
+            # - add Customer References (partner + PO) to the Description
+            out_invoice = inv_type == 'out_invoice'
+            debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
+            inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
+            intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
+            is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
+            if is_ivo:
+                origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
+                fo = move and move.sale_line_id and move.sale_line_id.order_id or False
+                origin_ivo = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
+                origin_ivo = origin_ivo and origin_ivo[:64]  # keep only 64 characters (because of the JE ref size)
+                if origin_ivo:
+                    invoice_vals.update({'origin': origin_ivo})
+                name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
+                name_ivo = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
+                if name_ivo:
+                    invoice_vals.update({'name': name_ivo})
 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,
                                             context=context)
