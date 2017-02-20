@@ -22,6 +22,7 @@
 from osv import osv, fields
 from tools.translate import _
 import base64
+import logging
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
@@ -490,7 +491,7 @@ class user_access_configurator(osv.osv_memory):
                     if access_not_in_file:
                         groups_to_write[group.id] += access_not_in_file
                 if group.name in data_structure[obj.id]['group_name_list'] and group.id not in groups_to_write:
-                     groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
+                    groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
 
             for gp_id in groups_to_write:
                 groups_obj.write(cr, uid, [gp_id], {'menu_access': [(6, 0, groups_to_write[gp_id])]}, context=context)
@@ -520,8 +521,6 @@ class user_access_configurator(osv.osv_memory):
         # objects
         model_obj = self.pool.get('ir.model')
         access_obj = self.pool.get('ir.model.access')
-        # list all ids of objects from the database
-        model_ids = model_obj.search(cr, uid, [('osv_memory', '=', False)], context=context)
         # list all ids of acl
         access_ids = access_obj.search(cr, uid, [], context=context)
         # admin user group id
@@ -799,7 +798,7 @@ class res_groups(osv.osv):
             args = new_args
 
         return super(res_groups, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                                              order, context=context, count=count)
 
     def _update_inactive(self, cr, uid, ids, vals, context=None):
         '''
@@ -915,10 +914,10 @@ class res_users(osv.osv):
         res = self.read(cr, uid, uid, ['groups_id'], context=context)
         if res.get('groups_id', False):
             if self.pool.get('res.groups').search_exist(cr, uid, [('id', 'in',
-                res['groups_id']), ('is_an_admin_profile', '=', True)], context=context):
+                                                                   res['groups_id']), ('is_an_admin_profile', '=', True)], context=context):
                 return True
         return False
-        
+
     def _get_fake(self, cr, uid, ids, field_names, args, context=None):
         res = {}
         if not ids:
@@ -929,7 +928,7 @@ class res_users(osv.osv):
         for id in ids:
             res[id] = False
         return res
-        
+
     def _search_get_is_admin(self, cr, uid, obj, name, args, context=None):
         """
         US-42: 'is_admin' field search for ir.rule domain
@@ -945,13 +944,13 @@ class res_users(osv.osv):
         if args[0][1] not in ('=', '!=', ):
             msg = _("Operator '%s' not suported") % (args[0][1], )
             raise osv.except_osv(_('Error'), msg)
-            
+
         admin_id = self._get_admin_id(cr)
         return admin_id and [('id', 'not in', [admin_id])] or []
-        
+
     _columns = {
         'is_admin': fields.function(_get_fake, fnct_search=_search_get_is_admin,
-            type='boolean', method=True, string='Is editable user ?'),
+                                    type='boolean', method=True, string='Is editable user ?'),
     }
 
     _defaults = {
@@ -1021,30 +1020,45 @@ class board_board(osv.osv):
     containing a view of an object on which he doesn't have access.
     '''
     _inherit = 'board.board'
+    _logger = logging.getLogger('board_board')
 
     def remove_unauthorized_children(self,cr, uid, node):
+        iaaw_obj = self.pool.get('ir.actions.act_window')
+        ima_obj = self.pool.get('ir.model.access')
+        user_groups_id = self.pool.get('res.users').read(cr, uid, uid, ['groups_id'])['groups_id']
         for child in node.iterchildren():
             if child.tag == 'action':
                 if child.get('invisible'):
                     node.remove(child)
-                    break
+                    continue
                 elif child.get('name'):
                     action_id = int(child.get('name'))
-                    model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
-                    if not self.pool.get('ir.model.access').check(cr, uid, model, mode='read', raise_exception=False):
+
+                    # check the group has write permission on the model
+                    model = iaaw_obj.browse(cr, uid, action_id).res_model
+                    write_perm = ima_obj.check_group(cr, uid, model, 'write',
+                                                     user_groups_id)
+
+                    if not child.get('menu_ref'):
+                        self._logger.warn('The dashboard \'%s\' does not have menu_ref attribute.'
+                                          'This is needed to define security.' % child.get('string'))
+
+                    menu_access = True
+                    # if the group has no write permission, check if the
+                    # user has access to the sub menu of the related dashboard.
+                    if not write_perm and child.get('menu_ref'):
+                        menu_ids = child.get('menu_ref').split(',')
+                        if not isinstance(menu_ids, list):
+                            menu_ids = [menu_ids]
+
+                        menu_ids = [int(menu_id) for menu_id in menu_ids]
+                        if not self.pool.get('ir.ui.menu').search(cr, uid,
+                                                                  [('id', 'in', menu_ids)]):
+                            menu_access = False
+
+                    # if no access on the menu or on the model, delete the node
+                    if not(write_perm or menu_access):
                         node.remove(child)
-                        break
-
-                if child.get('menu_ref'):
-                    menu_ids = child.get('menu_ref').split(',')
-                    if not isinstance(menu_ids, list):
-                        menu_ids = [menu_ids]
-
-                    for menu_id in menu_ids:
-                        menu_id = int(menu_id)
-                        if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
-                            node.remove(child)
-                            break
             else:
                 child = self.remove_unauthorized_children(cr, uid, child)
 
