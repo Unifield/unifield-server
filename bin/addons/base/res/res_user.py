@@ -60,23 +60,23 @@ class groups(osv.osv):
         ('name_uniq', 'unique (name)', 'The name of the group must be unique !')
     ]
 
-    def is_able_to_use_this_group(self, cr, uid, level, instance_level=None):
+    def is_higher_level(self, cr, uid, from_level=None, to_level=None):
         '''
-        return True if the current instance level is equal or higher than level
-        False otherwise
+        Return True if from_level is upper level than to_level
         '''
-        if instance_level is None:
-            instance_level = _get_instance_level(self, cr, uid)
-        if not instance_level:
+
+        if from_level is None:
+            from_level = _get_instance_level(self, cr, uid)
+        if not from_level:
             # SYNC_SERVER doesn't have instance level
             return True
-        elif not level:
-            return True # No level = no restriction
-        elif instance_level == 'hq':
+        if not to_level or to_level == 'project':
             return True
-        elif instance_level == 'coordo' and level in ('coordo', 'project'):
+        elif from_level == 'hq':
             return True
-        elif instance_level == 'project' and level == 'project':
+        elif from_level == 'coordo' and to_level in ('coordo', 'project'):
+            return True
+        elif from_level == 'project' and to_level == 'project':
             return True
         return False
 
@@ -91,7 +91,7 @@ class groups(osv.osv):
 
         '''
         instance_level = _get_instance_level(self, cr, uid)
-        if level and instance_level and not self.is_able_to_use_this_group(cr, uid, level, instance_level=instance_level):
+        if level and instance_level and not self.is_higher_level(cr, uid, from_level=instance_level, to_level=level):
             selection_dict = dict(self._columns['level'].selection)
             group_level = level and _(selection_dict[level])
             instance_level = instance_level and _(selection_dict[instance_level])
@@ -108,12 +108,13 @@ class groups(osv.osv):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
 
+        user_obj = self.pool.get('res.users')
         bypass_level = context.get('sync_update_execution', False) or context.get('bypass_group_level', False)
         if 'level' in vals and not bypass_level:
             self.check_level(cr, uid, vals['level'])
         elif 'level' in vals and bypass_level:
             # in case of update received with higher group, disassociate the related users
-            if vals['level'] and not self.is_able_to_use_this_group(cr, uid, vals['level']):
+            if vals['level'] and not self.is_higher_level(cr, uid, to_level=vals['level']):
                 # remove all users from this groups except uid 1 (admin)
                 group_ids_with_admin = []
                 group_ids_without_admin = []
@@ -128,12 +129,38 @@ class groups(osv.osv):
                     self.write(cr, uid, group_ids_without_admin, {'users':[(6, 0, ())]})
         old_users = []
         if 'users' in vals:
-            old_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+            old_users = user_obj.search(cr, uid, [('groups_id', 'in', ids)], context=context)
+
+        old_level_dict = {}
+        if 'level' in vals:
+            # get the old group level
+            read_old_level = self.read(cr, uid, ids, ['level'], context=context)
+            old_level_dict = dict((x['id'], x['level']) for x in read_old_level)
 
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
+
+
+        if 'level' in vals:
+            # if the new level is lower level, touch the related users
+            user_to_touch_ids = []
+            for group_id, group_level in old_level_dict.items():
+                if self.is_higher_level(cr, uid,
+                        from_level=group_level,
+                        to_level=vals.get('level', 'project')):  # no level is same as 'project' level
+                    users_ids = self.pool.get('res.users').search(cr, uid,
+                            [('groups_id', '=', group_id),
+                             ('id', '!=', 1),
+                        ], context=context)
+                    user_to_touch_ids.extend(users_ids)
+
+            if user_to_touch_ids:
+                cr.execute('''UPDATE ir_model_data
+                              SET touched = '[''groups_id'']', last_modification = now()
+                              WHERE model =  'res.users' AND res_id in %s''', (tuple(user_to_touch_ids),))
+
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         if 'users' in vals:
-            new_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+            new_users = user_obj.search(cr, uid, [('groups_id', 'in', ids)], context=context)
             diff_users = set(old_users).symmetric_difference(new_users)
             if diff_users:
                 clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=ids)
@@ -625,8 +652,8 @@ class users(osv.osv):
                     new_group_ids = []
                     for group in group_obj.read(cr, uid, group_ids, ['level'],
                             context=context):
-                        if group_obj.is_able_to_use_this_group(cr, uid,
-                                level=group['level'], instance_level=instance_level):
+                        if group_obj.is_higher_level(cr, uid,
+                                from_level=instance_level, to_level=group['level']):
                             new_group_ids.append(group['id'])
 
                     if set(group_ids) != set(new_group_ids):
