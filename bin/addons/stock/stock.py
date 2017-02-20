@@ -1141,9 +1141,8 @@ class stock_picking(osv.osv):
                     invoice_vals['journal_id'] = journal_id
                 # Add hook to changes values before creation
                 invoice_vals = self._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
-                # US-1669 Add to the description:
-                # - the Supplier Reference (partner + FOC2), for SI with an intersection supplier (C1 to C2)
-                # - the Supplier Reference (partner + FOC2), for IVI from Supply (C1 to C2)
+                # US-1669 Add the Supplier Reference (partner + FOC2) to the description in the following use cases:
+                # "IVI from Supply" and "SI with an intersection supplier"
                 in_invoice = inv_type == 'in_invoice'
                 di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
                 inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']

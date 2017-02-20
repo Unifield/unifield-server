@@ -1474,14 +1474,14 @@ class shipment(osv.osv):
             if is_ivo or is_stv:
                 origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
                 fo = move and move.sale_line_id and move.sale_line_id.order_id or False
-                origin_ivo = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
-                origin_ivo = origin_ivo and origin_ivo[:64]  # keep only 64 characters (because of the JE ref size)
-                if origin_ivo:
-                    invoice_vals.update({'origin': origin_ivo})
+                new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
+                new_origin = new_origin and new_origin[:64]  # keep only 64 characters (because of the JE ref size)
+                if new_origin:
+                    invoice_vals.update({'origin': new_origin})
                 name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
-                name_ivo = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
-                if name_ivo:
-                    invoice_vals.update({'name': name_ivo})
+                new_name_inv = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
+                if new_name_inv:
+                    invoice_vals.update({'name': new_name_inv})
 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,
                                             context=context)
