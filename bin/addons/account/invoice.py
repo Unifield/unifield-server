@@ -887,8 +887,11 @@ class account_invoice(osv.osv):
             if inv.type in ('in_invoice', 'in_refund'):
                 # UTP-594: Get ref and name
                 if inv.type == 'in_invoice':
-                    if inv.is_intermission and not inv.is_debit_note and not inv.is_inkind_donation or False:
-                        # US-1669 For an IVI use the IVI description
+                    is_ivi = inv.is_intermission and not inv.is_debit_note and not inv.is_inkind_donation
+                    is_si = not inv.is_direct_invoice and not inv.is_inkind_donation and not inv.is_debit_note and not inv.is_intermission
+                    intersection = inv.partner_id.partner_type == 'section'
+                    if is_ivi or (is_si and intersection):
+                        # US-1669 For an IVI, or an SI with an intersection supplier, use the doc description
                         name = inv.name or '/'
                     else:
                         name = inv.origin and inv.origin or '/'
