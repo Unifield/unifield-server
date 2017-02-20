@@ -799,7 +799,7 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
             user_obj = self.pool.get('res.users')
             previous_values = user_obj.read(cr, uid, vals['users'][0][2], ['groups_id'], context=context)
             change_user_group = True
-        user_id = super(groups, self).create(cr, uid, vals, context=context)
+        user_id = super(groups2, self).create(cr, uid, vals, context=context)
         if change_user_group:
             self._track_change_of_users(cr, uid, previous_values, [user_id],
                     vals, context=context)
@@ -825,7 +825,7 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
             user_obj = self.pool.get('res.users')
             previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
 
-        res = super(groups, self).write(cr, uid, ids, vals, context=context)
+        res = super(groups2, self).write(cr, uid, ids, vals, context=context)
         if 'users' in vals:
             self._track_change_of_users(cr, uid, previous_values, user_ids,
                     vals, context=context)
