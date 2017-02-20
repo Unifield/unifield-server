@@ -45,7 +45,6 @@
         'hr_data.xml',
         'board_hr_view.xml',
         'board_hr_manager_view.xml',
-        'res_users_view.xml',
         ],
     'demo_xml': [
         'hr_demo.xml',

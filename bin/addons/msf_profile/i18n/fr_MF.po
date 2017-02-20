@@ -76104,13 +76104,3 @@ msgstr "Une ligne a été ajoutée a la %s %s pour 're-sourcer' la ligne annulé
 #: report:msf.consumption_report:0
 msgid "Source Location :"
 msgstr "Source Location :"
-
-#. module: hr
-#: field:res.users,function:0
-msgid "User Function"
-msgstr "Fonction de l'utilisateur"
-
-#. module: hr
-#: help:res.users,function:0
-msgid "Function of the user in the mission"
-msgstr "Fonction de l'utilisateur dans la mission"
