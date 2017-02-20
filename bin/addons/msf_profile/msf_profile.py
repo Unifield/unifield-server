@@ -46,6 +46,50 @@ class patch_scripts(osv.osv):
         'model': lambda *a: 'patch.scripts',
     }
 
+    def remove_not_synchronized_data(self, cr, uid, *a, **b):
+        '''
+        The list of models to synchronize was wrong. It is now build
+        automatically and is then more exact.
+        This patch will remove all the data from ir_model_data that are not
+        synchronized models.
+        '''
+        from sync_common import WHITE_LIST_MODEL
+        removed_obj = 0
+
+        # if sync_client module is installed, get the list of synchronized models
+        if self.pool.get('sync.client.rule') and\
+                self.pool.get('sync.client.message_rule'):
+            entity_obj = self.pool.get('sync.client.entity')
+            server_model_white_set = entity_obj.get_model_white_list(cr, uid)
+
+            # check that all models from the newly generated list are in the hardcoded white list
+            difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+            if difference:
+                err_msg = 'Warning: Some models used in the synchronization '\
+                    'rule are not present in the WHITE_LIST_MODEL: %s'
+                self._logger.error(err_msg)
+                raise osv.except_osv(
+                    'Error',
+                    err_msg,
+                )
+            elif server_model_white_set:
+                # get list of all existing models used in ir_model_data
+                cr.execute('SELECT DISTINCT(model) FROM ir_model_data')
+                model_list = [x and x[0] for x in cr.fetchall()]
+                model_to_remove = (set(model_list).difference(server_model_white_set))
+                import pprint
+                pp = pprint.PrettyPrinter(indent=2)
+                model_to_remove_pp = pp.pformat(model_to_remove)
+                self._logger.warn('%s models should not be part of ir_model_data.' % len(model_to_remove))
+                self._logger.warn('The objects linked to the model(s) %s will be removed from ir_model_data.' % model_to_remove_pp)
+
+                for model in model_to_remove:
+                    cr.execute("DELETE FROM ir_model_data WHERE model='%s' AND module='sd'" % model)
+                    current_count = cr.rowcount
+                    removed_obj += current_count
+                    self._logger.warn('ir.model.data, model=%s, %s objects deleted.' % (model, current_count))
+                self._logger.warn('ir.model.data, total of %s objects deleted.' % removed_obj)
+
     def us_1613_remove_all_track_changes_action(self, cr, uid, *a, **b):
         '''
         each time the msf_audittrail is updated, the subscribe() method is
@@ -185,6 +229,8 @@ class patch_scripts(osv.osv):
                                 {'password': encrypted_password})
 
     def us_1610_set_oc_on_all_groups(self, cr, uid, *a, **b):
+        from sync_common import OC_LIST
+        lower_oc_list = [x.lower() for x in OC_LIST]
         logger = logging.getLogger('update')
         update_module = self.pool.get('sync.server.entity_group')
         if update_module:
@@ -196,7 +242,11 @@ class patch_scripts(osv.osv):
                 if 'oc' in group_name:
                     index = group_name.index('oc')
                     oc = group_name[index:index+3]
-                    update_module.write(cr, uid, group['id'], {'oc': oc})
+                    if oc in lower_oc_list:
+                        update_module.write(cr, uid, group['id'], {'oc': oc})
+                    else:
+                        logger.warn("""OC = %s from group '%s' is not in the OC_LIST, please fix
+                                manually""" % (oc, group['name']))
                 else:
                     logger.warn('sync.server.entity_group "%s" does not contain '\
                                 '"oc" or "OC" in its name. Please set up the '\
@@ -213,11 +263,15 @@ class patch_scripts(osv.osv):
                 if 'oc' in entity_name:
                     index = entity_name.index('oc')
                     oc = entity_name[index:index+3]
-                    sync_client_module.write(cr, uid, entity['id'], {'oc': oc})
+                    if oc in lower_oc_list:
+                        sync_client_module.write(cr, uid, entity['id'], {'oc': oc})
+                    else:
+                        logger.warn("""OC = %s from group '%s' is not in the OC_LIST, please fix
+                                manually""" % (oc, group['name']))
                 else:
                     logger.warn('sync.client.entity "%s" does not contain '\
                                 '"oc" or "OC" in its name. Please set up the '\
-                                'oc mannually' % entity['name'])
+                                'oc manually' % entity['name'])
 
     def us_1725_force_sync_on_hr_employee(self, cr, uid, *a, **b):
         '''

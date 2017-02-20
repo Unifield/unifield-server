@@ -7,7 +7,7 @@ import functools
 import types
 from datetime import datetime
 
-from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
+from sync_common import WHITE_LIST_MODEL, xmlid_to_sdref
 
 #import cProfile
 ## Helpers ###################################################################
@@ -470,7 +470,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
-            self._name not in MODELS_TO_IGNORE and
+            self._name in WHITE_LIST_MODEL and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 
@@ -509,7 +509,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
-            self._name not in MODELS_TO_IGNORE and
+            self._name in WHITE_LIST_MODEL and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 
@@ -598,7 +598,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         # synchronization is made.
         # Otherwise, references are kept and synchronization is triggered
         # ...see?
-        if self._name not in MODELS_TO_IGNORE \
+        if self._name in WHITE_LIST_MODEL \
            and not context.get('sync_update_creation'):
             context = dict(context, avoid_sdref_deletion=True)
             if not context.get('sync_update_execution'):

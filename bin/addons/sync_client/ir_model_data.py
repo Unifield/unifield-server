@@ -24,7 +24,7 @@ import logging
 from osv import osv, fields
 import tools
 
-from sync_common import MODELS_TO_IGNORE, MODELS_TO_IGNORE_DOMAIN, normalize_sdref
+from sync_common import WHITE_LIST_MODEL, normalize_sdref
 
 
 class ir_module_module(osv.osv):
@@ -98,16 +98,10 @@ SELECT ARRAY_AGG(ir_model_data.id), COUNT(%(table)s.id) > 0
         """
         # loop on objects that don't match the models to ignore domain in sync common
         result = set()
-        ir_model = self.pool.get('ir.model')
-        model_ids = ir_model.search(cr, 1, MODELS_TO_IGNORE_DOMAIN)
-
-        for model in filter(lambda m:m.model not in MODELS_TO_IGNORE,
-                            ir_model.browse(cr, 1, model_ids)):
-
-            obj = self.pool.get(model.model)
-
+        for model in WHITE_LIST_MODEL:
+            obj = self.pool.get(model)
             if obj is None:
-                self._logger.warn('Could not get object %s while creating all missing sdrefs' % model.model)
+                self._logger.warn('Could not get object %s while creating all missing sdrefs' % model)
                 continue
 
             # ignore wizard objects
@@ -251,7 +245,7 @@ UPDATE ir_model_data SET """+", ".join("%s = %%s" % k for k in rec.keys())+""" W
 
         # when a module load a specific xmlid, the sdref is updated according
         # that xmlid
-        if values['model'] not in MODELS_TO_IGNORE and \
+        if values['model'] in WHITE_LIST_MODEL and \
            values['module'] not in ('sd', '__export__') and \
            not (values['module'] == 'base' and values['name'].startswith('main_')):
             sdref_name = "%(module)s_%(name)s" % values

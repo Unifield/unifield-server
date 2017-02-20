@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <openerp>
     <data>
+        <record id="remove_not_synchronized_data" model="patch.scripts">
+            <field name="method">remove_not_synchronized_data</field>
+        </record>
+
         <record id="us_2110_patch" model="patch.scripts">
             <field name="method">us_2110_patch</field>
         </record>
