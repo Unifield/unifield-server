@@ -1462,7 +1462,7 @@ class shipment(osv.osv):
                 raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
             invoice_vals['journal_id'] = journal_ids[0]
 
-            # US-1669 Use case "IVO from Supply / Shipment":
+            # US-1669 Use cases "IVO from supply / Shipment" and "STV from supply / Shipment":
             # - add FO to the Source Doc. WARNING: only one FO ref is taken into account even if there are several FO
             # - add Customer References (partner + PO) to the Description
             out_invoice = inv_type == 'out_invoice'
@@ -1470,7 +1470,8 @@ class shipment(osv.osv):
             inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
             intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
             is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
-            if is_ivo:
+            is_stv = out_invoice and not debit_note and not inkind_donation and not intermission
+            if is_ivo or is_stv:
                 origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
                 fo = move and move.sale_line_id and move.sale_line_id.order_id or False
                 origin_ivo = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
