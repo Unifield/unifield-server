@@ -169,19 +169,21 @@ class hr_payroll(osv.osv):
             elif ana_account['category'] == 'FUNDING':
                 fp.append(ana_account['id'])
         if len(fp) > 1 or len(cc) > 1 or len(dest) > 1:
-            return self.search(cr, uid, [('state', '=', 'draft'), '|', '|', ('funding_pool_id', 'in', fp), ('cost_center_id','in', cc), ('destination_id','in', dest)])
+            return self.pool.get('hr.payroll.msf').search(cr, uid, [('state', '=', 'draft'), '|', '|', ('funding_pool_id', 'in', fp), ('cost_center_id','in', cc), ('destination_id','in', dest)])
 
         return []
 
     def _get_trigger_state_account(self, cr, uid, ids, context=None):
-        return self.search(cr, uid, [('state', '=', 'draft'), ('account_id', 'in', ids)])
+        pay_obj = self.pool.get('hr.payroll.msf')
+        return pay_obj.search(cr, uid, [('state', '=', 'draft'), ('account_id', 'in', ids)])
 
     def _get_trigger_state_dest_link(self, cr, uid, ids, context=None):
         if isinstance(ids, (int, long)):
             ids = [ids]
         to_update = []
+        pay_obj = self.pool.get('hr.payroll.msf')
         for dest_link in self.read(cr, uid, ids, ['account_id', 'destination_id', 'funding_pool_ids']):
-            to_update += self.search(cr, uid, [
+            to_update += pay_obj.search(cr, uid, [
                 ('state', '=', 'draft'),
                 ('account_id', '=', dest_link['account_id'][0]),
                 ('destination_id', '=', dest_link['destination_id'][0]),
