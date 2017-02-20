@@ -294,7 +294,7 @@ def init_logger():
         if dirname and not os.path.isdir(dirname):
             os.makedirs(dirname)
         interval = int(tools.config.get('log_user_xmlrpc_interval', 7))
-        backup_count = int(tools.config.get('log_user_xmlrpc_backup_count', 52))
+        backup_count = int(tools.config.get('log_user_xmlrpc_backup_count', 26))
         when = tools.config.get('log_user_xmlrpc_when', 'D')
         handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
                                                             backup_count)
