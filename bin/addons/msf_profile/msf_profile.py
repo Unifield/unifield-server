@@ -1184,19 +1184,32 @@ class patch_scripts(osv.osv):
             - product_active
             - international_status_code
         '''
-        prod_obj = self.pool.get('product.product')
-        smrl_obj = self.pool.get('stock.mission.report.line')
+        smr_obj = self.pool.get('stock.mission.report')
         context = {}
 
-        prod_ids = prod_obj.search(cr, uid, [('active', 'in', ['t', 'f'])], context=context)
-        smrl_to_update = smrl_obj.search(cr, uid, [('product_id', 'in', prod_ids), ('mission_report_id.local_report', '=', True)], context=context)
+        smr_ids = smr_obj.search(cr, uid, [('local_report', '=', True)], context=context)
 
-        for smrl in smrl_obj.browse(cr, uid, smrl_to_update, context=context):
-            smrl_obj.write(cr, uid, smrl.id, {
-                'state_ud': smrl.product_id.state_ud or '',
-                'product_active': smrl.product_id.active,
-                'international_status_code': smrl.product_id.international_status.code if smrl.product_id.international_status else '',
-            }, context=context)
+        if not smr_ids:
+            return True
+
+        cr.execute('''
+        UPDATE stock_mission_report_line
+        SET state_ud = sr.state_ud, international_status_code = sr.is_code, product_active = sr.active
+        FROM (
+          SELECT p.id AS id, p.active AS active, COALESCE(p.state_ud, '') AS state_ud, pis.code AS is_code
+          FROM product_product p
+            LEFT JOIN product_template t ON p.product_tmpl_id = t.id
+            LEFT JOIN product_international_status pis ON pis.id = p.international_status
+          ) AS sr
+        WHERE stock_mission_report_line.product_id = sr.id AND stock_mission_report_line.mission_report_id IN %s;
+        ''', (tuple(smr_ids),))
+
+        cr.execute('''
+        UPDATE ir_model_data
+        SET touched = '[''state_ud'', ''product_active'', ''international_status_code'']', last_modification = now()
+        WHERE model = 'stock.mission.report.line' AND res_id IN (
+          SELECT id FROM stock_mission_report_line WHERE mission_report_id IN %s)
+        ''' % (tuple(smr_ids),))
 
         return True
 
