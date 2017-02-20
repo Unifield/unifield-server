@@ -1145,22 +1145,24 @@ class stock_picking(osv.osv):
                         context=context)
                 invoices_group[partner.id] = invoice_id
 
-                # US-1669 For SI with an intersection supplier, add the Supplier Reference to the Description.
-                # For instance the Description format for an SI from C1 to C2 = Supplier Ref (partner + FOC2) + INXXX
-                # ex: se_HQ2C1.17/se_HQ2/HT101/FO00018-2 : IN/00034
+                # US-1669 Add to the description:
+                # - the Supplier Reference (partner + FOC2), for SI with an intersection supplier (C1 to C2)
+                # - the Supplier Reference (partner + FOC2), for IVI from Supply (C1 to C2)
                 in_invoice = inv_type == 'in_invoice'
                 di = 'is_direct_invoice' in invoice_vals and invoice_vals['is_direct_invoice']
                 inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
                 debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
                 intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
-                if in_invoice and not di and not inkind_donation and not debit_note and not intermission:  # Supplier Invoice
-                    po = picking and picking.purchase_id
-                    if po and po.partner_type and po.partner_type == 'section':
-                        partner_ref = po.partner_ref or ''  # ex: 'se_HQ2C1.17/se_HQ2/HT101/FO00018-2'
-                        name_inv = 'name' in invoice_vals and invoice_vals['name'] or False  # ex : IN/00034
-                        new_name = partner_ref and name_inv and "%s : %s" % (partner_ref, name_inv) or False
-                        if new_name:
-                            invoice_obj.write(cr, uid, invoice_id, {'name': new_name}, context=context)
+                is_si = in_invoice and not di and not inkind_donation and not debit_note and not intermission
+                is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
+                po = picking and picking.purchase_id
+                intersection_partner = po and po.partner_type and po.partner_type == 'section'
+                if (is_si and intersection_partner) or is_ivi:
+                    partner_ref = po and po.partner_ref or ''
+                    name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
+                    new_name = partner_ref and name_inv and "%s : %s" % (partner_ref, name_inv) or False
+                    if new_name:
+                        invoice_obj.write(cr, uid, invoice_id, {'name': new_name}, context=context)
             res[picking.id] = invoice_id
             for move_line in picking.move_lines:
                 if move_line.state == 'cancel':
