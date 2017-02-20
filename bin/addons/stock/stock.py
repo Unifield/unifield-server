@@ -1141,10 +1141,6 @@ class stock_picking(osv.osv):
                     invoice_vals['journal_id'] = journal_id
                 # Add hook to changes values before creation
                 invoice_vals = self._hook_invoice_vals_before_invoice_creation(cr, uid, ids, invoice_vals, picking)
-                invoice_id = invoice_obj.create(cr, uid, invoice_vals,
-                        context=context)
-                invoices_group[partner.id] = invoice_id
-
                 # US-1669 Add to the description:
                 # - the Supplier Reference (partner + FOC2), for SI with an intersection supplier (C1 to C2)
                 # - the Supplier Reference (partner + FOC2), for IVI from Supply (C1 to C2)
@@ -1162,7 +1158,15 @@ class stock_picking(osv.osv):
                     name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
                     new_name = partner_ref and name_inv and "%s : %s" % (partner_ref, name_inv) or False
                     if new_name:
-                        invoice_obj.write(cr, uid, invoice_id, {'name': new_name}, context=context)
+                        invoice_vals.update({'name': new_name})
+                # US-1669 Use case IVI from C1 to C2, don't display FOC2 (display only INXXX + POC1)
+                origin_ivi = False
+                if is_ivi:
+                    origin_ivi = picking.name and po and "%s:%s" % (picking.name, po.name) or False
+                if origin_ivi:
+                    invoice_vals.update({'origin': origin_ivi})
+                invoice_id = invoice_obj.create(cr, uid, invoice_vals, context=context)
+                invoices_group[partner.id] = invoice_id
             res[picking.id] = invoice_id
             for move_line in picking.move_lines:
                 if move_line.state == 'cancel':
