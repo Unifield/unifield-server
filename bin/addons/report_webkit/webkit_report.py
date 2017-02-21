@@ -431,6 +431,8 @@ class WebKitParser(report_sxw):
         It also seems that microsoft excel do not accept Worksheet name longer
         than 31 characters.
         '''
+        if not name:
+            return _('Sheet 1')
         replacement_char = '-'
         not_allowed_char_list = ['/', '\\', '?', '*', '[', ']']
         new_name = name
@@ -461,12 +463,9 @@ class WebKitParser(report_sxw):
         sheet_name_dict = {}
         count = 0
         for sheet in spreadsheet_elements:
-            sheet_name = sheet.get('{%(ss)s}Name' % namespaces)
+            sheet_name = sheet.get('{%(ss)s}Name' % namespaces, _('Sheet 1'))
             new_name = self.sanitizeWorksheetName(sheet_name)
             if new_name != sheet_name:
-                if not new_name:
-                    new_name = _('Sheet 1')
-
                 # if the sheet name already exists, modify it to add
                 # a counter to the name
                 if new_name in sheet_name_dict:
