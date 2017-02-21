@@ -51,6 +51,7 @@ WHITE_LIST_MODEL = [
     'free.1.distribution.line',
     'free.2.distribution.line',
     'funding.pool.distribution.line',
+    'hr.department',
     'hq.entries',
     'hr.employee',
     'hr.employee.marital.status',
