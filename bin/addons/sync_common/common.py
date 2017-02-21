@@ -61,9 +61,9 @@ WHITE_LIST_MODEL = [
     'ir.filters',
     'ir.model',
     'ir.model.access',
-    'ir.model.fields',
+    #'ir.model.fields',
     'ir.rule',
-    'ir.sequence',
+    #'ir.sequence',
     'ir.translation',
     'ir.ui.menu',
     #'ir.ui.view', to allow BAR sync

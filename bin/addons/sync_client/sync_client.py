@@ -533,7 +533,7 @@ class Entity(osv.osv):
             if obj[model_field_name] not in model_field_dict:
                 model_field_dict[obj[model_field_name]] = set()
             model_field_dict[obj[model_field_name]].update(eval(obj['arguments']))
-
+       
         model_set = set(model_field_dict.keys())
 
         def get_field_obj(model, field_name):
@@ -566,9 +566,11 @@ class Entity(osv.osv):
                 if field_obj._type in ('many2one', 'many2many', 'one2many'):
                     model_set.add(field_obj._obj)
 
-        # specific case for ir.ui.view to sync BAR
-        if 'ir.ui.view' in model_set:
-            model_set.remove('ir.ui.view')
+        # specific cases to sync BAR and FAR
+        to_remove = ['ir.ui.view', 'ir.model.fields']
+        for f in to_remove:
+            if f in model_set:
+                model_set.remove(f) 
 
         return model_set
 
