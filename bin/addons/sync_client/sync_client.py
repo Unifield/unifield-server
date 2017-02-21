@@ -567,7 +567,7 @@ class Entity(osv.osv):
                     model_set.add(field_obj._obj)
 
         # specific cases to sync BAR and FAR
-        to_remove = ['ir.ui.view', 'ir.model.fields']
+        to_remove = ['ir.ui.view', 'ir.model.fields', 'ir.sequence']
         for f in to_remove:
             if f in model_set:
                 model_set.remove(f) 
