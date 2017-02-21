@@ -137,7 +137,7 @@ class SpreadsheetXML(SpreadsheetTools):
 
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
-        return SpreadsheetRow(table[0].getiterator(etree.QName(self.defaultns, 'Row')))
+        return SpreadsheetRow(table[0].iter('{%s}Row' % self.defaultns))
 
     def enc(self, s):
         if isinstance(s, unicode):
