@@ -76441,3 +76441,10 @@ msgstr "Vous ne pouvez pas annuler le lettrage de ces écritures dans cette inst
 #, python-format
 msgid "No journal found to book the reversal FX entry."
 msgstr "Pas de journal trouvé pour enregistrer l'annulation de l'écriture de différence de change."
+
+#. module: report_webkit
+#: code:addons/report_webkit/webkit_report.py:435
+#: code:addons/report_webkit/webkit_report.py:466
+#, python-format
+msgid "Sheet 1"
+msgstr "Feuille 1"
