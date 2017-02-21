@@ -565,6 +565,11 @@ class Entity(osv.osv):
                     field_obj = get_field_obj(model, field)
                 if field_obj._type in ('many2one', 'many2many', 'one2many'):
                     model_set.add(field_obj._obj)
+
+        # specific case for ir.ui.view to sync BAR
+        if 'ir.ui.view' in model_set:
+            model_set.remove('ir.ui.view')
+
         return model_set
 
     @sync_process('data_push')
