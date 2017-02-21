@@ -480,9 +480,6 @@ class WebKitParser(report_sxw):
                 if new_name not in sheet_name_dict:
                     sheet_name_dict[new_name] = 1
 
-        xml_string = etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
-        file_dom = etree.fromstring(xml_string)
-
         data_time_elements = file_dom.xpath('//ss:Data[@ss:Type="DateTime"]',
                                             namespaces=namespaces)
         element_to_remove = []
