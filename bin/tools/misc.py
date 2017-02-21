@@ -142,7 +142,7 @@ def find_in_path(name):
         return None
 
 def _set_env_pg(remove=False):
-    if config['db_password']:
+    if os.name == 'nt':
         if not remove and not os.environ.get('PGPASSWORD', ''):
             os.environ['PGPASSWORD'] = config['db_password']
         if remove and os.environ.get('PGPASSWORD'):
