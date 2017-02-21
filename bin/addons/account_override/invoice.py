@@ -121,7 +121,6 @@ class account_invoice(osv.osv):
             ('state', '=', 'open'),
             ('type', '=', 'out_invoice'),
             ('journal_id.type', 'not in', ['migration']),
-            ('partner_id.partner_type', '=', 'section'),
         ]
         return dom1+[('is_debit_note', '=', False)]
 
@@ -432,6 +431,15 @@ class account_invoice(osv.osv):
             nodes = doc.xpath("//field[@name='supplier_reference']")
             for node in nodes:
                 node.getparent().remove(node)
+            res['arch'] = etree.tostring(doc)
+        elif view_type == 'form' and context.get('type', False) == 'out_invoice' and context.get('journal_type', False) == 'sale' \
+                and not context.get('is_debit_note', False) and not context.get('is_intermission', False):
+            # Restriction on allowed partners for STV: Inter-section or External type, customers only
+            doc = etree.XML(res['arch'])
+            partner_nodes = doc.xpath("//field[@name='partner_id']")
+            partner_domain_stv = "[('partner_type', 'in', ('section', 'external')), ('customer', '=', True)]"
+            for node in partner_nodes:
+                node.set('domain', partner_domain_stv)
             res['arch'] = etree.tostring(doc)
         return res
 

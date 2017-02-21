@@ -795,7 +795,7 @@ class audittrail_log_line(osv.osv):
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
-    _order = 'timestamp desc, id desc'
+    _order = 'timestamp desc, log desc'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -1050,9 +1050,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = []
             if values and values != '[]':
                 values = values[1:-1].split(',')
-                values = (int(v) for v in values)
-                res = [x[1] for x in relation_model_pool.name_get(cr, uid,
-                                                                  [long(values[0])])]
+                values = [int(v) for v in values]
+                res = [x[1] for x in relation_model_pool.name_get(cr, uid, values)]
             return res
         elif field['ttype'] == 'date':
             res = False
@@ -1076,15 +1075,16 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'selection':
             res = False
             if values:
+                translation_obj = self.pool.get('ir.translation')
                 fct_object = model_pool.browse(cr, uid, model.id, context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)
                     name = '%s,%s' % (fct_object, field['name'])
                     # Search translation
-                    res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
+                    res_tr_ids = translation_obj.search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
                     if res_tr_ids:
-                        res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
+                        res = translation_obj.read(cr, uid, res_tr_ids, ['value'])[0]['value']
                 else:
                     res = values
             return res

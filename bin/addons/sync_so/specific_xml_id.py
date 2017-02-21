@@ -169,8 +169,8 @@ class hq_entries(osv.osv):
             for line_data in self.browse(cr, uid, ids, context=context):
                 if line_data.cost_center_id:
                     cost_center_name = line_data.cost_center_id and \
-                                       line_data.cost_center_id.code and \
-                                       line_data.cost_center_id.code[:3] or ""
+                        line_data.cost_center_id.code and \
+                        line_data.cost_center_id.code[:3] or ""
                     cost_center_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'),
                                                                                                  ('code', '=', cost_center_name)], context=context)
                     if len(cost_center_ids) > 0:
@@ -200,9 +200,13 @@ class account_target_costcenter(osv.osv):
                         res_data = [instance.instance]
                         # if it is a coordo instance, send it to its active projects as well
                         if instance.level == 'coordo':
+                            project_instances = []
                             for project in instance.child_ids:
                                 if project.state == 'active':
-                                    res_data.append(project.instance)
+                                    project_instances.append(project.instance)
+                            if project_instances:
+                                # OC updates sent to project are also retrieved by coordo
+                                res_data = project_instances
                         # if it is a project instance, send it to its active siblings as well
                         elif instance.level == 'project' and instance.parent_id:
                             for project in instance.parent_id.child_ids:
@@ -251,19 +255,8 @@ class account_analytic_account(osv.osv):
         # UFTP-2: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
             ## Check if it is *funding pool* and created at HQ
-            res = dict.fromkeys(ids, False)
-            for target_line in self.browse(cr, uid, ids, context=context):
-                if target_line.instance_id:
-                    instance = target_line.instance_id
-                    if instance.state == 'active':
-                        res_data = [instance.instance]
-                        # if it is a coordo instance, send it to its active projects as well
-                        if instance.level == 'coordo':
-                            for project in instance.child_ids:
-                                if project.state == 'active':
-                                    res_data.append(project.instance)
-                        res[target_line.id] = res_data
-            return res
+            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+
         return super(account_analytic_account, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
@@ -285,20 +278,8 @@ class financing_contract_contract(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
-            ## Check if it is *financing contract* created at HQ
-            res = dict.fromkeys(ids, False)
-            for target_line in self.browse(cr, uid, ids, context=context):
-                if target_line.instance_id:
-                    instance = target_line.instance_id
-                    if instance.state == 'active':
-                        res_data = [instance.instance]
-                        # if it is a coordo instance, send it to its active projects as well
-                        if instance.level == 'coordo':
-                            for project in instance.child_ids:
-                                if project.state == 'active':
-                                    res_data.append(project.instance)
-                        res[target_line.id] = res_data
-            return res
+            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+
         return super(financing_contract_contract, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
 financing_contract_contract()
@@ -311,20 +292,8 @@ class financing_contract_funding_pool_line(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
-            ## Check if it is *financing contract* created at HQ
-            res = dict.fromkeys(ids, False)
-            for target_line in self.browse(cr, uid, ids, context=context):
-                if target_line.instance_id:
-                    instance = target_line.instance_id
-                    if instance.state == 'active':
-                        res_data = [instance.instance]
-                        # if it is a coordo instance, send it to its active projects as well
-                        if instance.level == 'coordo':
-                            for project in instance.child_ids:
-                                if project.state == 'active':
-                                    res_data.append(project.instance)
-                        res[target_line.id] = res_data
-            return res
+            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+
         return super(financing_contract_funding_pool_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
 financing_contract_funding_pool_line()
@@ -337,20 +306,8 @@ class financing_contract_format(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'hidden_instance_id':
-            ## Check if it is *financing contract* created at HQ
-            res = dict.fromkeys(ids, False)
-            for target_line in self.browse(cr, uid, ids, context=context):
-                if target_line.hidden_instance_id:
-                    instance = target_line.hidden_instance_id
-                    if instance.state == 'active':
-                        res_data = [instance.instance]
-                        # if it is a coordo instance, send it to its active projects as well
-                        if instance.level == 'coordo':
-                            for project in instance.child_ids:
-                                if project.state == 'active':
-                                    res_data.append(project.instance)
-                        res[target_line.id] = res_data
-            return res
+            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+
         return super(financing_contract_format, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
 financing_contract_format()
@@ -361,20 +318,8 @@ class financing_contract_format_line(osv.osv):
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         # BKLG-34: Get the children of the given instance and create manually sync updates for them, only when it is Coordo
         if dest_field == 'instance_id':
-            ## Check if it is *financing contract* created at HQ
-            res = dict.fromkeys(ids, False)
-            for target_line in self.browse(cr, uid, ids, context=context):
-                if target_line.instance_id:
-                    instance = target_line.instance_id
-                    if instance.state == 'active':
-                        res_data = [instance.instance]
-                        # if it is a coordo instance, send it to its active projects as well
-                        if instance.level == 'coordo':
-                            for project in instance.child_ids:
-                                if project.state == 'active':
-                                    res_data.append(project.instance)
-                        res[target_line.id] = res_data
-            return res
+            return self.get_coordo_and_project_dest(cr, uid, ids, dest_field, context)
+
         return super(financing_contract_format_line, self).get_destination_name(cr, uid, ids, dest_field, context=context)
 
 financing_contract_format_line()
@@ -544,13 +489,9 @@ class account_analytic_line(osv.osv):
             return False
 
         # NEED REFACTORING FOR THIS METHOD, if the action write on Analytic.line happens often!
-        msf_instance_obj = self.pool.get('msf.instance')
         msg_to_send_obj = self.pool.get("sync.client.message_to_send")
         instance = self.pool.get("sync.client.entity").get_entity(cr, uid, context=context)
-        instance_name = instance.name
-        instance_identifier = instance.identifier
         msf_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id
-        instance_level = msf_instance.level
         line_data = self.read(cr, uid, ids, ['cost_center_id'], context=context)
         line_data = dict((data['id'], data) for data in line_data)
         now = fields.datetime.now()
@@ -588,11 +529,11 @@ class account_analytic_line(osv.osv):
                         if journal_instance and journal_instance != old_destination_name:
                             # we have sent a orphean AJI to old_destination_name: delete it
                             message_data = {'identifier':'delete_%s_to_%s' % (xml_id, old_destination_name),
-                                'sent':False,
-                                'generate_message':True,
-                                'remote_call':self._name + ".message_unlink_analytic_line",
-                                'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
-                                'destination_name':old_destination_name}
+                                            'sent':False,
+                                            'generate_message':True,
+                                            'remote_call':self._name + ".message_unlink_analytic_line",
+                                            'arguments':"[{'model' :  '%s', 'xml_id' : '%s', 'correction_date' : '%s'}]" % (self._name, xml_id, now),
+                                            'destination_name':old_destination_name}
                             msg_to_send_obj.create(cr, uid, message_data)
 
 
@@ -605,8 +546,8 @@ class account_analytic_line(osv.osv):
                     if new_destination_name and xml_id:
                         identifier = 'delete_%s_to_%s' % (xml_id, new_destination_name)
                         exist_ids = msg_to_send_obj.search(cr, uid,
-                                [('identifier', '=', identifier), ('sent', '=',
-                                    False)], order='NO_ORDER')
+                                                           [('identifier', '=', identifier), ('sent', '=',
+                                                                                              False)], order='NO_ORDER')
                         if exist_ids:
                             msg_to_send_obj.unlink(cr, uid, exist_ids, context=context) # delete this unsent delete-message
 
@@ -645,7 +586,7 @@ class account_move_line(osv.osv):
             invoice_ids = []
             line_list = self.browse(cr, uid, ids, context=context)
             invoice_ids = [line.invoice.id for line in line_list if
-                    line.invoice and line.invoice.state != 'paid']
+                           line.invoice and line.invoice.state != 'paid']
             if self.pool.get('account.invoice').test_paid(cr, uid, invoice_ids):
                 self.pool.get('account.invoice').confirm_paid(cr, uid, invoice_ids)
         return res
@@ -722,7 +663,7 @@ class product_product(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         product = self.browse(cr, uid, res_id)
         return get_valid_xml_name('product', product.xmlid_code) if product.xmlid_code else \
-               super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
+            super(product_product, self).get_unique_xml_name(cr, uid, uuid, table_name, res_id)
 
     # UF-2254: Treat the case of product with empty or XXX for default_code
     def write(self, cr, uid, ids, vals, context=None):
@@ -740,15 +681,15 @@ class product_product(osv.osv):
         # if the default_code is empty or XXX, rebuild the xmlid
         model_data_obj = self.pool.get('ir.model.data')
         sdref_ids = model_data_obj.search(cr, uid,
-                [('model','=',self._name),('res_id','=',res_id),('module','=','sd')],
-                order='NO_ORDER')
+                                          [('model','=',self._name),('res_id','=',res_id),('module','=','sd')],
+                                          order='NO_ORDER')
         if not sdref_ids: # xmlid not exist in ir model data -> create new
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
-            name = xmlids.get(res_id, self.get_unique_xml_name(cr, uid, identifier, self._table, res_id))
-            new_data_id = model_data_obj.create(cr, uid, {
+            name = self.get_unique_xml_name(cr, uid, identifier, self._table, res_id)
+            model_data_obj.create(cr, uid, {
                 'noupdate' : False, # don't set to True otherwise import won't work
                 'module' : 'sd',
-                'last_modification' : now,
+                'last_modification' : fields.datetime.now(),
                 'model' : self._name,
                 'res_id' : res_id,
                 'version' : 1,
@@ -805,10 +746,10 @@ class ir_model_access(osv.osv):
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         ima = self.browse(cr, uid, res_id)
         return get_valid_xml_name(
-                  'ir_model_access',
-                  self.pool.get('ir.model').get_sd_ref(cr, uid, ima.model_id.id),
-                  ima.name
-                )
+            'ir_model_access',
+            self.pool.get('ir.model').get_sd_ref(cr, uid, ima.model_id.id),
+            ima.name
+        )
 
 ir_model_access()
 
@@ -870,13 +811,13 @@ class hr_employee(osv.osv):
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         r = self.read(cr, uid, [res_id],
-            ['employee_type', 'identification_id'])[0]
+                      ['employee_type', 'identification_id'])[0]
         if r['employee_type'] and r['employee_type'] == 'ex' and \
-            r['identification_id']:
+                r['identification_id']:
             return get_valid_xml_name('employee', r['identification_id'])
         else:
             return super(hr_employee, self).get_unique_xml_name(cr, uid, uuid,
-                table_name, res_id)
+                                                                table_name, res_id)
 
     def unlink(self, cr, uid, ids, context=None):
         super(hr_employee, self).unlink(cr, uid, ids, context)

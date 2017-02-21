@@ -1223,7 +1223,7 @@ stock moves which are already processed : '''
         for po in self.browse(cr, uid, ids, context=context):
             line_error = []
             if po.order_type == 'regular':
-                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (po.id,))
+                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.00001 OR price_unit = 0.00) AND order_id = %s', (po.id,))
                 line_errors = cr.dictfetchall()
                 for l_id in line_errors:
                     if l_id not in line_error:
@@ -1315,7 +1315,7 @@ stock moves which are already processed : '''
                 raise osv.except_osv(_('Error'), _('Delivery Confirmed Date is a mandatory field.'))
             # for all lines, if the confirmed date is not filled, we copy the header value
             if is_regular:
-                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.01 OR price_unit = 0.00) AND order_id = %s', (po['id'],))
+                cr.execute('SELECT line_number FROM purchase_order_line WHERE (price_unit*product_qty < 0.00001 OR price_unit = 0.00) AND order_id = %s', (po['id'],))
                 line_errors = cr.dictfetchall()
                 for l_id in line_errors:
                     if l_id not in line_error:
@@ -1619,8 +1619,8 @@ stock moves which are already processed : '''
                                                                                  sol.currency_id.id, line.price_unit or 0.0,
                                                                                  round=False, context=date_context)
 
-                    if so.order_type == 'regular' and price_unit_converted < 0.01:
-                        price_unit_converted = 0.01
+                    if so.order_type == 'regular' and price_unit_converted < 0.00001:
+                        price_unit_converted = 0.00001
 
                     line_qty = line.product_qty
                     if line.procurement_id:

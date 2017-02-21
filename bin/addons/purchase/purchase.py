@@ -55,8 +55,8 @@ class purchase_order(osv.osv):
             val = val1 = 0.0
             cur = order.pricelist_id.currency_id
             for line in order.order_line:
-               val1 += line.price_subtotal
-               for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
+                val1 += line.price_subtotal
+                for c in self.pool.get('account.tax').compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty, order.partner_address_id.id, line.product_id.id, order.partner_id)['taxes']:
                     val += c.get('amount', 0.0)
             res[order.id]['amount_tax']=cur_obj.round(cr, uid, cur.rounding, val)
             res[order.id]['amount_untaxed']=cur_obj.round(cr, uid, cur.rounding, val1)
@@ -99,7 +99,7 @@ class purchase_order(osv.osv):
             for invoice in purchase.invoice_ids:
                 if invoice.state not in ('draft','cancel'):
                     tot += invoice.amount_untaxed
-            
+
             if purchase.amount_untaxed:
                 res[purchase.id] = min(100.0, tot * 100.0 / (purchase.amount_untaxed))
             else:
@@ -163,19 +163,19 @@ class purchase_order(osv.osv):
     _columns = {
         'name': fields.char('Order Reference', size=64, required=True, select=True, help="unique number of the purchase order,computed automatically when the purchase order is created"),
         'origin': fields.char('Source Document', size=512,
-            help="Reference of the document that generated this purchase order request."
-        ),
+                              help="Reference of the document that generated this purchase order request."
+                              ),
         'partner_ref': fields.char('Supplier Reference', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, size=64),
         'date_order':fields.date('Date Ordered', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)]}, select=True, help="Date on which this document has been created."),
         'date_approve':fields.date('Date Approved', readonly=1, select=True, help="Date on which purchase order has been approved"),
         'partner_id':fields.many2one('res.partner', 'Supplier', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, change_default=True),
         'partner_address_id':fields.many2one('res.partner.address', 'Address', required=True,
-            states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
+                                             states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},domain="[('partner_id', '=', partner_id)]"),
         'dest_address_id':fields.many2one('res.partner.address', 'Destination Address',
-            states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},
-            help="Put an address if you want to deliver directly from the supplier to the customer." \
-                "In this case, it will remove the warehouse link and set the customer location."
-        ),
+                                          states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]},
+                                          help="Put an address if you want to deliver directly from the supplier to the customer." \
+                                          "In this case, it will remove the warehouse link and set the customer location."
+                                          ),
         'warehouse_id': fields.many2one('stock.warehouse', 'Warehouse', states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}),
         'location_id': fields.many2one('stock.location', 'Destination', required=True, domain=[('usage','<>','view')]),
         'pricelist_id':fields.many2one('product.pricelist', 'Pricelist', required=True, states={'confirmed':[('readonly',True)], 'approved':[('readonly',True)],'done':[('readonly',True)]}, help="The pricelist sets the currency used for this purchase order. It also computes the supplier price for the selected products/quantities."),
@@ -190,28 +190,28 @@ class purchase_order(osv.osv):
         'invoiced': fields.function(_invoiced, method=True, string='Invoiced & Paid', type='boolean', help="It indicates that an invoice has been paid"),
         'invoiced_rate': fields.function(_invoiced_rate, method=True, string='Invoiced', type='float'),
         'invoice_method': fields.selection([('manual','Manual'),('order','From Order'),('picking','From Picking')], 'Invoicing Control', required=True,
-            help="From Order: a draft invoice will be pre-generated based on the purchase order. The accountant " \
-                "will just have to validate this invoice for control.\n" \
-                "From Picking: a draft invoice will be pre-generated based on validated receptions.\n" \
-                "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
-        ),
+                                           help="From Order: a draft invoice will be pre-generated based on the purchase order. The accountant " \
+                                           "will just have to validate this invoice for control.\n" \
+                                           "From Picking: a draft invoice will be pre-generated based on validated receptions.\n" \
+                                           "Manual: allows you to generate suppliers invoices by chosing in the uninvoiced lines of all manual purchase orders."
+                                           ),
         'minimum_planned_date':fields.function(_minimum_planned_date, fnct_inv=_set_minimum_planned_date, method=True, string='Expected Date', type='date', select=True, help="This is computed as the minimum scheduled date of all purchase order lines' products.",
-            store = {
-                'purchase.order.line': (_get_order, ['date_planned'], 10),
-            }
-        ),
+                                               store = {
+                                                   'purchase.order.line': (_get_order, ['date_planned'], 10),
+                                               }
+                                               ),
         'amount_untaxed': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Purchase Price'), string='Untaxed Amount',
-            store={
-                'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
-            }, multi="sums", help="The amount without tax"),
+                                          store={
+            'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+        }, multi="sums", help="The amount without tax"),
         'amount_tax': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Purchase Price'), string='Taxes',
-            store={
-                'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
-            }, multi="sums", help="The tax amount"),
+                                      store={
+            'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+        }, multi="sums", help="The tax amount"),
         'amount_total': fields.function(_amount_all, method=True, digits_compute= dp.get_precision('Purchase Price'), string='Total',
-            store={
-                'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
-            }, multi="sums",help="The total amount"),
+                                        store={
+            'purchase.order.line': (_get_order, ['price_subtotal', 'taxes_id', 'price_unit', 'product_qty', 'product_id'], 10),
+        }, multi="sums",help="The total amount"),
         'fiscal_position': fields.many2one('account.fiscal.position', 'Fiscal Position'),
         'product_id': fields.related('order_line','product_id', type='many2one', relation='product.product', string='Product'),
         'create_uid':  fields.many2one('res.users', 'Responsible'),
@@ -296,14 +296,14 @@ class purchase_order(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-            
+
         return kwargs['message']
-    
+
     def _hook_confirm_order_update_corresponding_so(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the wkf_confirm_order method from purchase>purchase.py>purchase_order
-        
+
         - allow to execute code in order to update corresponding sale order lines and sale orders if exist
         '''
         # Some verifications
@@ -311,7 +311,7 @@ class purchase_order(osv.osv):
             context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
-            
+
         return True
 
     #UTP-872: extracted this method for a particularly check with sync
@@ -348,12 +348,12 @@ class purchase_order(osv.osv):
                     managers.append(manager.id)
             for manager_id in managers:
                 request.create(cr, uid,{
-                       'name' : _("Purchase amount over the limit"),
-                       'act_from' : uid,
-                       'act_to' : manager_id,
-                       'body': _('Somebody has just confirmed a purchase with an amount over the defined limit'),
-                       'ref_partner_id': po.partner_id.id,
-                       'ref_doc1': 'purchase.order,%d' % (po.id,),
+                    'name' : _("Purchase amount over the limit"),
+                    'act_from' : uid,
+                    'act_to' : manager_id,
+                    'body': _('Somebody has just confirmed a purchase with an amount over the defined limit'),
+                    'ref_partner_id': po.partner_id.id,
+                    'ref_doc1': 'purchase.order,%d' % (po.id,),
                 })
     def inv_line_create(self, cr, uid, a, ol):
         return (0, False, {
@@ -384,7 +384,6 @@ class purchase_order(osv.osv):
     def action_invoice_create(self, cr, uid, ids, *args):
         res = False
 
-        journal_obj = self.pool.get('account.journal')
         for o in self.browse(cr, uid, ids):
             il = []
             todo = []
@@ -408,7 +407,7 @@ class purchase_order(osv.osv):
             journal_ids = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'purchase'), ('is_current_instance', '=', True)])
             if not journal_ids:
                 raise osv.except_osv(_('Error !'),
-                    _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
+                                     _('There is no purchase journal defined for this company: "%s" (id:%d)') % (o.company_id.name, o.company_id.id))
             inv = {
                 'name': o.partner_ref or o.name,
                 'reference': o.partner_ref or o.name,
@@ -514,7 +513,7 @@ class purchase_order(osv.osv):
             wf_service.trg_validate(uid, 'stock.picking', picking_id, 'button_confirm', cr)
         raise
         return picking_id
-    
+
     def _hook_copy_name(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         HOOK from purchase>purchase.py for COPY function. Modification of default copy values
@@ -534,13 +533,13 @@ class purchase_order(osv.osv):
         update_values = self._hook_copy_name(cr, uid, [id], context=context, default=default)
         default.update(update_values)
         return super(purchase_order, self).copy(cr, uid, id, default, context)
-    
+
     def _hook_o_line_value(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the values of the PO line
         '''
         return kwargs['o_line']
-    
+
     def _hook_order_infos(self, cr, uid, *args, **kwargs):
         '''
         Hook to change the values of the PO
@@ -675,6 +674,8 @@ class purchase_order_line(osv.osv):
             taxes = tax_obj.compute_all(cr, uid, line.taxes_id, line.price_unit, line.product_qty)
             cur = line.order_id.pricelist_id.currency_id
             res[line.id] = cur_obj.round(cr, uid, cur.rounding, taxes['total'])
+            if line.price_unit > 0 and res[line.id] < 0.01:
+                res[line.id] = 0.01
         return res
 
     _columns = {
@@ -717,7 +718,7 @@ class purchase_order_line(osv.osv):
             default = {}
         default.update({'state':'draft', 'move_ids':[],'invoiced':0,'invoice_lines':[]})
         return super(purchase_order_line, self).copy_data(cr, uid, id, default, context)
-    
+
     def _hook_product_id_change(self, cr, uid, *args, **kwargs):
         '''
         Override the computation of product qty to order
@@ -725,9 +726,9 @@ class purchase_order_line(osv.osv):
         prod = kwargs['product']
         partner_id = kwargs['partner_id']
         qty = kwargs['product_qty']
-        
+
         product_uom_pool = self.pool.get('product.uom')
-        
+
         res = {}
         for s in prod.seller_ids:
             if s.name.id == partner_id:
@@ -741,22 +742,21 @@ class purchase_order_line(osv.osv):
                     res.update({'warning': {'title': _('Warning'), 'message': _('The selected supplier has a minimal quantity set to %s, you cannot purchase less.') % qty}})
         qty_in_product_uom = product_uom_pool._compute_qty(cr, uid, uom, qty, to_uom_id=prod.uom_id.id)
         return res, qty_in_product_uom, qty, seller_delay
-        
+
 
     def product_id_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
+                          partner_id, date_order=False, fiscal_position=False, date_planned=False,
+                          name=False, price_unit=False, notes=False):
         if not pricelist:
             raise osv.except_osv(_('No Pricelist !'), _('You have to select a pricelist or a supplier in the purchase form !\nPlease set one before choosing a product.'))
         if not  partner_id:
             raise osv.except_osv(_('No Partner!'), _('You have to select a partner in the purchase form !\nPlease set one partner before choosing a product.'))
         if not product:
             return {'value': {'price_unit': price_unit or 0.0, 'name': name or '',
-                'notes': notes or'', 'product_uom' : uom or False}, 'domain':{'product_uom':[]}}
+                              'notes': notes or'', 'product_uom' : uom or False}, 'domain':{'product_uom':[]}}
         res = {}
         prod= self.pool.get('product.product').browse(cr, uid, product)
 
-        product_uom_pool = self.pool.get('product.uom')
         lang=False
         if partner_id:
             lang=self.pool.get('res.partner').read(cr, uid, partner_id, ['lang'])['lang']
@@ -773,32 +773,32 @@ class purchase_order_line(osv.osv):
         seller_delay = 0
 
         prod_name = self.pool.get('product.product').name_get(cr, uid, [prod.id], context=context)[0][1]
-        
+
         res, qty_in_product_uom, qty, seller_delay = self._hook_product_id_change(cr, uid, product=prod, partner_id=partner_id,
                                                                                   product_qty=qty, pricelist=pricelist, order_date=date_order, uom_id=uom, 
                                                                                   seller_delay=seller_delay, res=res, context=context)
-        
+
         price = self.pool.get('product.pricelist').price_get(cr,uid,[pricelist],
-                    product, qty_in_product_uom or 1.0, partner_id, {
-                        'uom': uom,
-                        'date': date_order,
-                        })[pricelist]
+                                                             product, qty_in_product_uom or 1.0, partner_id, {
+            'uom': uom,
+            'date': date_order,
+        })[pricelist]
         if price is False:
             warning = {
                 'title': 'No valid pricelist line found !',
                 'message':
                     "Couldn't find a pricelist line matching this product and quantity.\n"
                     "You have to change either the product, the quantity or the pricelist."
-                }
+            }
             res.update({'warning': warning})
         dt = (datetime.now() + relativedelta(days=int(seller_delay) or 0.0)).strftime('%Y-%m-%d %H:%M:%S')
 
 
         res.update({'value': {'price_unit': price, 'name': prod_name,
-            'taxes_id':map(lambda x: x.id, prod.supplier_taxes_id),
-            'date_planned': date_planned or dt,'notes': notes or prod.description_purchase,
-            'product_qty': qty,
-            'product_uom': uom}})
+                              'taxes_id':map(lambda x: x.id, prod.supplier_taxes_id),
+                              'date_planned': date_planned or dt,'notes': notes or prod.description_purchase,
+                              'product_qty': qty,
+                              'product_uom': uom}})
         domain = {}
 
         taxes = self.pool.get('account.tax').browse(cr, uid,map(lambda x: x.id, prod.supplier_taxes_id))
@@ -815,11 +815,11 @@ class purchase_order_line(osv.osv):
         return res
 
     def product_uom_change(self, cr, uid, ids, pricelist, product, qty, uom,
-            partner_id, date_order=False, fiscal_position=False, date_planned=False,
-            name=False, price_unit=False, notes=False):
+                           partner_id, date_order=False, fiscal_position=False, date_planned=False,
+                           name=False, price_unit=False, notes=False):
         res = self.product_id_change(cr, uid, ids, pricelist, product, qty, uom,
-                partner_id, date_order=date_order, fiscal_position=fiscal_position, date_planned=date_planned,
-            name=name, price_unit=price_unit, notes=notes)
+                                     partner_id, date_order=date_order, fiscal_position=fiscal_position, date_planned=date_planned,
+                                     name=name, price_unit=price_unit, notes=notes)
         if 'product_uom' in res['value']:
             if uom and (uom != res['value']['product_uom']) and res['value']['product_uom']:
                 seller_uom_name = self.pool.get('product.uom').read(cr, uid, [res['value']['product_uom']], ['name'])[0]['name']
@@ -848,44 +848,44 @@ class procurement_order(osv.osv):
         res = self.make_po(cr, uid, ids, context=context)
         res = res.values()
         return len(res) and res[0] or 0 #TO CHECK: why workflow is generated error if return not integer value
-    
+
     def get_partner_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         return a dictionary with partner, seller_qty and seller_delay
         '''
         result = {}
-        
+
         procurement = kwargs['procurement']
         partner = procurement.product_id.seller_id # Taken Main Supplier of Product of Procurement.
         seller_qty = procurement.product_id.seller_qty
         seller_delay = int(procurement.product_id.seller_delay)
-        
+
         result.update(partner=partner,
                       seller_qty=seller_qty,
                       seller_delay=seller_delay)
-        
+
         return result
-    
+
     def po_line_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-        
+
         - allow to modify the data for purchase order line creation
         '''
         line = kwargs['line']
         return line
-    
+
     def po_values_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         Please copy this to your module's method also.
         This hook belongs to the make_po method from purchase>purchase.py>procurement_order
-        
+
         - allow to modify the data for purchase order creation
         '''
         values = kwargs['values']
         return values
-    
+
     def create_po_hook(self, cr, uid, ids, context=None, *args, **kwargs):
         '''
         creation of purchase order
@@ -909,10 +909,9 @@ class procurement_order(osv.osv):
         pricelist_obj = self.pool.get('product.pricelist')
         prod_obj = self.pool.get('product.product')
         acc_pos_obj = self.pool.get('account.fiscal.position')
-        po_obj = self.pool.get('purchase.order')
         for procurement in self.browse(cr, uid, ids, context=context):
             res_id = procurement.move_id.id
-            
+
             # partner, seller_qty and seller_delay are computed with hook
             hook = self.get_partner_hook(cr, uid, ids, context=context, procurement=procurement)
             partner = hook['partner']
@@ -950,7 +949,7 @@ class procurement_order(osv.osv):
                 'move_dest_id': res_id,
                 'notes': product.description_purchase,
             }
-            
+
             # line values modification from hook
             line = self.po_line_values_hook(cr, uid, ids, context=context, line=line, procurement=procurement, pricelist=pricelist_id)
 
@@ -960,15 +959,15 @@ class procurement_order(osv.osv):
                 'taxes_id': [(6,0,taxes)]
             })
             values = {
-                      'origin': procurement.origin,
-                      'partner_id': partner_id,
-                      'partner_address_id': address_id,
-                      'location_id': procurement.location_id.id,
-                      'pricelist_id': pricelist_id.id,
-                      'order_line': [(0,0,line)],
-                      'company_id': procurement.company_id.id,
-                      'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
-                      }
+                'origin': procurement.origin,
+                'partner_id': partner_id,
+                'partner_address_id': address_id,
+                'location_id': procurement.location_id.id,
+                'pricelist_id': pricelist_id.id,
+                'order_line': [(0,0,line)],
+                'company_id': procurement.company_id.id,
+                'fiscal_position': partner.property_account_position and partner.property_account_position.id or False,
+            }
             # values modification from hook
             values = self.po_values_hook(cr, uid, ids, context=context, values=values, procurement=procurement, line=line,)
             # purchase creation from hook

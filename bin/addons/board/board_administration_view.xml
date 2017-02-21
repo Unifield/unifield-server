@@ -139,12 +139,12 @@
                 <form string="Administration Dashboard">
                     <hpaned position="100">
                         <child1>
-                            <action width="510" name="%(action_user_connection_tree)d" string="User Connections" />
-                            <action width="510" name="%(action_latest_activities_tree)d" string="Latest Activities" />
+                            <action width="510" name="%(action_user_connection_tree)d" string="User Connections" menu_ref="%(base.menu_action_res_users)d" />
+                            <action width="510" name="%(action_latest_activities_tree)d" string="Latest Activities" menu_ref="%(base.menu_administration)d"/>
                         </child1>
                         <child2>
-                            <action  name="%(board_monthly_res_log_report_action)d" string="Monthly Activity per Document"/>
-                            <action  name="%(board_weekly_res_log_report_action)d" string="Weekly Global Activity" />
+                            <action  name="%(board_monthly_res_log_report_action)d" string="Monthly Activity per Document" menu_ref="%(base.menu_administration)d"/>
+                            <action  name="%(board_weekly_res_log_report_action)d" string="Weekly Global Activity" menu_ref="%(base.menu_administration)d"/>
                         </child2>
                     </hpaned>
                 </form>

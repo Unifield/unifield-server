@@ -658,6 +658,8 @@ class procurement_request_line(osv.osv):
             if line.order_id.procurement_request:
                 subtotal = line.cost_price * line.product_uom_qty
                 res[line.id] = cur_obj.round(cr, uid, curr_browse.rounding, subtotal)
+                if line.cost_price > 0 and res[line.id] < 0.01:
+                    res[line.id] = 0.01
             else:
                 new_ids.append(line.id)
 
@@ -730,7 +732,7 @@ class procurement_request_line(osv.osv):
         return res
 
     _columns = {
-        'cost_price': fields.float(string='Cost price'),
+        'cost_price': fields.float(string='Cost price', digits_compute=dp.get_precision('Sale Price Computation')),
         'procurement_request': fields.boolean(string='Internal Request', readonly=True),
         'latest': fields.char(size=64, string='Latest documents', readonly=True),
         'price_subtotal': fields.function(_amount_line, method=True, string='Subtotal', digits_compute=dp.get_precision('Sale Price')),

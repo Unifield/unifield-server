@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-    <!-- Tree for purchase displayed on the accounting board -->
+        <!-- Tree for purchase displayed on the accounting board -->
         <record id="account_purchase_order_tree" model="ir.ui.view">
             <field name="name">account.purchase.order.tree</field>
             <field name="model">purchase.order</field>
@@ -27,7 +27,7 @@
             </field>
         </record>
 
-    <!-- Action that give a link to the purchase_order_tree only for accounting (priority superior to the mainly purchase_order_tree -->
+        <!-- Action that give a link to the purchase_order_tree only for accounting (priority superior to the mainly purchase_order_tree -->
         <record id="purchase_waiting_msf" model="ir.actions.act_window">
             <field name="name">Purchase Order Waiting Approval</field>
             <field name="type">ir.actions.act_window</field>
@@ -39,34 +39,186 @@
             <field name="search_view_id" eval="False"/>
         </record>
 
-    <!-- Custom Accounting Board -->
-        <record id="inherit_board_account_form" model="ir.ui.view">
-            <field name="name">inherit.board.account.form</field>
-            <field name="model">board.board</field>
-            <field name="type">form</field>
-            <field name='inherit_id' ref='account.board_account_form' />
-            <field name="priority" eval="15"/>
+        <!-- DashBoard -->
+        <record id="account_board_commitment_voucher_view" model="ir.ui.view">
+            <field name="name">account.commitment</field>
+            <field name="model">account.commitment</field>
+            <field name="type">tree</field>
             <field name="arch" type="xml">
-                <xpath expr="/form" position="replace">
-                  <form string="Account Board">
-                  </form>
-                  <!-- DASHBOARD FALSE DELETION UTP-398
-                        <hpaned>
-                            <child1>
-                                <action colspan="4" height="160" width="400" name="%(account.action_draft_customer_invoices_dashboard)d" string="Customer Invoices to Approve" />
-                                <action colspan="4" height="220" name="%(purchase_waiting_msf)d" string="Purchase Order Waiting Approval" width="400"/>
-                                <action colspan="4" height="160" width="400" name="%(account.action_company_analysis_tree)d" string="Company Analysis" />
-                            </child1>
-                            <child2>
-                                <action colspan="4" height="220" name="%(account.action_treasory_graph)d" string="Treasury" />
-                                <action colspan="4" height="220" name="%(account.action_aged_receivable)d" string="Aged Receivables" />
-                            </child2>
-                        </hpaned>
-                      </form>
-                      END OF DASHBOARD FALSE DELETION UTP-398 -->
-                </xpath>
+                <tree string="Statement" limit="5">
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="partner_id"/>
+                    <field name="purchase_id"/>
+                    <field name="currency_id"/>
+                    <field name="state"/>
+                </tree>
             </field>
         </record>
+
+        <record id="account_board_commitment_voucher" model="ir.actions.act_window">
+            <field name="name">Commitment Voucher</field>
+            <field name="res_model">account.commitment</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state', 'in', ('draft','open'))]</field>
+            <field name="context">{'board_view': True}</field>
+            <field ref="account_board_commitment_voucher_view" name="view_id"/>
+            <field name="limit">5</field>
+        </record>
+
+        <record id="account_board_supplier_invoice_draft_view" model="ir.ui.view">
+            <field name="name">account.invoice</field>
+            <field name="model">account.invoice</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Statement" limit="5">
+                    <field name="number"/>
+                    <field name="name"/>
+                    <field name="partner_id"/>
+                    <field name="date_invoice"/>
+                    <field name="date_due"/>
+                    <field name="currency_id"/>
+                    <field name="amount_to_pay"/>
+                    <field name="amount_total"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_board_supplier_invoice_draft" model="ir.actions.act_window">
+            <field name="name">Suppliers invoices pending validation</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state', '=', 'draft')]</field>
+            <field name="context">{'board_view': True}</field>
+            <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
+            <field name="limit">5</field>
+        </record>
+
+        <record id="account_board_supplier_invoice_open" model="ir.actions.act_window">
+            <field name="name">Suppliers invoices pending payment</field>
+            <field name="res_model">account.invoice</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field name="domain">[('state', '=', 'open')]</field>
+            <field name="context">{'board_view': True}</field>
+            <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
+            <field name="limit">5</field>
+        </record>
+
+        <!-- Show the Currency rates -->
+        <record id="account_board_currency_view" model="ir.ui.view">
+            <field name="name">res.currency</field>
+            <field name="model">res.currency</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Latest FX rates"  limit="5">
+                    <field name="name"/>
+                    <field name="rate"/>
+                    <field name="date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_board_currency" model="ir.actions.act_window">
+            <field name="name">Latest FX rates</field>
+            <field name="res_model">res.currency</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_board_currency_view" name="view_id"/>
+            <field name="context">{'board_view': True}</field>
+            <field name="limit">3</field>
+        </record>
+
+        <record id="account_board_period_view" model="ir.ui.view">
+            <field name="name">account.period.board</field>
+            <field name="model">account.period</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Account periods" limit="5">
+                    <field name="name"/>
+                    <field name="code"/>
+                    <field name="date_start"/>
+                    <field name="date_stop"/>
+                    <field name="fiscalyear_id"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_board_period" model="ir.actions.act_window">
+            <field name="name">Account Periods</field>
+            <field name="res_model">account.period</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_board_period_view" name="view_id"/>
+            <field name="domain">[('state', '=', 'draft'), ('special', '=', False)]</field>
+            <field name="context">{'board_view': True}</field>
+        </record>
+
+        <!-- Show HQ entries to be validated -->
+        <record id="account_hq_entries_view" model="ir.ui.view">
+            <field name="name">hq.entries</field>
+            <field name="model">hq.entries</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="HQ Entries to be validated" limit="5">
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="date"/>
+                    <field name="period_id"/>
+                    <field name="account_id"/>
+                    <field name="partner_txt"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="account_hq_entries" model="ir.actions.act_window">
+            <field name="name">HQ Entries to be validated</field>
+            <field name="res_model">hq.entries</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="account_hq_entries_view" name="view_id"/>
+            <field name="domain">[('user_validated', '!=', True)]</field>
+            <field name="context">{'board_view': True}</field>
+            <field name="limit">5</field>
+        </record>
+        <!-- End HQ Entries -->
+
+        <!-- Show the Payrolls entries to be validated -->
+        <record id="hr_payroll_board_view" model="ir.ui.view">
+            <field name="name">hr.payroll.msf</field>
+            <field name="model">hr.payroll.msf</field>
+            <field name="type">tree</field>
+            <field name="arch" type="xml">
+                <tree string="Payroll Entries to be validated" limit="5">
+                    <field name="name"/>
+                    <field name="ref"/>
+                    <field name="period_id"/>
+                    <field name="employee_id_number"/>
+                    <field name="account_id"/>
+                    <field name="amount"/>
+                    <field name="currency_id"/>
+                </tree>
+            </field>
+        </record>
+        <record id="hr_payroll_board" model="ir.actions.act_window">
+            <field name="name">Payroll entries to be validated</field>
+            <field name="res_model">hr.payroll.msf</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form,calendar,graph</field>
+            <field ref="hr_payroll_board_view" name="view_id"/>
+            <field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
+            <field name="context">{'board_view': True}</field>
+            <field name="limit">5</field>
+        </record>
+        <!-- End for Payroll -->
+
+        <!-- Custom Accounting Board moved to useability_dashboard_and_menu -->
 
     </data>
 </openerp>

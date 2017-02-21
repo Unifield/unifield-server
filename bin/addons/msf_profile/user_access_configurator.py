@@ -22,12 +22,14 @@
 from osv import osv, fields
 from tools.translate import _
 import base64
+import logging
 
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 
 RESULT_MODELS_SELECTION = [('group', 'Group'), ('user', 'User'), ('menu', 'Menu')]
-RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated')]
+RESULT_TYPES_SELECTION = [('error', 'Error'), ('warning', 'Warning'), ('created', 'Created'), ('activated', 'Activated'), ('deactivated', 'Deactivated'), ('updated', 'Updated')]
 
+LEVEL_SELECTION = {'hq': 'hq', 'co': 'coordo', 'pr': 'project'}
 
 class user_access_configurator(osv.osv_memory):
     _name = 'user.access.configurator'
@@ -151,7 +153,7 @@ class user_access_configurator(osv.osv_memory):
         {id: {
               'group_name_list': [group_names],
               'menus_groups': {'menu_id': [group_names]}, - we only take the group_name into account if True - if the same group is defined multiple times, it will be deleted at the end of import function
-              'group': {'activated': [group_names], 'deactivated': [group_names], 'created': [group_names], 'warning': [], 'error': []},
+              'group': {'activated': [group_names], 'deactivated': [group_names], 'created': [group_names], 'warning': [], 'error': [], 'updated': []},
               'user': {'activated': [user_names], 'deactivated': [user_names], 'created': [user_names], 'warning': [], 'error': []},
               'menu': {'warning': [], 'error': []},
               }
@@ -169,7 +171,7 @@ class user_access_configurator(osv.osv_memory):
             # data structure returned with processed data from file
             data_structure.update({obj.id: {'group_name_list': [],
                                             'menus_groups': {},
-                                            'group': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': []},
+                                            'group': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': [], 'updated':[]},
                                             'user': {'activated': [], 'deactivated': [], 'created': [], 'warning': [], 'error': []},
                                             'menu': {'warning': [], 'error': []},
                                             }})
@@ -228,8 +230,8 @@ class user_access_configurator(osv.osv_memory):
                         if self._cell_is_true(cr, uid, ids, context=context, cell=row.cells[i]):
                             group_name = data_structure[obj.id]['group_name_list'][i - obj.number_of_non_group_columns_uac]
                             # if the column is defined multiple times, we only add one time the name, but the access selection is aggregated from all related columns
-                            if group_name not in menu_group_list:
-                                menu_group_list.append(group_name)
+                            if group_name.split('$')[0] not in menu_group_list:
+                                menu_group_list.append(group_name.split('$')[0])
 
             # all rows have been treated, the order of group_name_list is not important anymore, we can now exclude groups which are defined multiple times
             data_structure[obj.id]['group_name_list'] = list(set(data_structure[obj.id]['group_name_list']))
@@ -289,31 +291,65 @@ class user_access_configurator(osv.osv_memory):
         group_ids = group_obj.search(cr, uid, [], context=context)
         group_names = group_obj.read(cr, uid, group_ids, ['name'], context=context)
         group_names = [x['name'] for x in group_names]
+        context['bypass_group_level'] = True
 
         # IGL groups are activated
         self._activate_immunity_groups(cr, uid, ids, context=context)
 
+        read_group_names = group_obj.read(cr, uid, group_ids, ['name'], context=context)
+        db_group_names = [x['name'] for x in read_group_names]
+        deactivate_group_names = []
+
         for obj in self.browse(cr, uid, ids, context=context):
+
             # work copy of groups present in the file - will represent the missing groups to be created
-            missing_group_names = list(data_structure[obj.id]['group_name_list'])
-            # all groups from file are activated (in case a new group in the file which was deactivated previously)
-            self._set_active_group_name(cr, uid, ids, context=context, group_names=missing_group_names, active_value=True)
-            # will represent the groups present in the database but not in the file, to be deactivated
-            deactivate_group_names = []
-            # loop through groups in the database - pop from file list if already exist
-            for group_name in group_names:
-                if group_name in missing_group_names:
-                    # the group from file already exists
-                    missing_group_names.remove(group_name)
-                elif not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=group_name):
+            level_group_names = list(data_structure[obj.id]['group_name_list'])
+
+            # build a dict with group_name as key and level as value (or False if no level)
+            file_level_dict = {}
+            for group_name in level_group_names:
+                if len(group_name.split('$')) == 2:
+                    group, level = group_name.split('$')
+                    file_level_dict[group] = level
+                elif len(group_name.split('$')) > 2:
+                    raise osv.except_osv(_('Error'),
+                                         _("The group '%s' contain more than one '$' character, it should contain only one maximum" % group_name))
+                else:
+                    file_level_dict[group_name] = False
+
+            for db_group_name in db_group_names:
+                if db_group_name in file_level_dict:
+                    # the group exists in the file and in the db, check the level
+                    group_ids = self._get_ids_from_group_names(cr, uid, context=context, group_names=[db_group_name])
+                    if group_ids:
+                        level = group_obj.read(cr, uid, group_ids[0], ['level'], context=context)['level']
+                        new_level = file_level_dict[db_group_name]
+                        if new_level and new_level.lower() not in LEVEL_SELECTION:
+                            raise osv.except_osv(_('Error'),
+                                                 _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (new_level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), '%s$%s' % (db_group_name, new_level)))
+                        new_level = new_level and LEVEL_SELECTION[new_level.lower()] or False
+                        if level != new_level:
+                            # the level change
+                            # update it with the one from the file
+                            group_obj.write(cr, uid, group_ids, {'level': new_level}, context)
+                            data_structure[obj.id]['group']['updated'].append(db_group_name)
+                elif not self._group_name_is_immunity(cr, uid, ids, context=context, group_name=db_group_name):
                     # the group from database is not immune and not in the file
-                    deactivate_group_names.append(group_name)
+                    deactivate_group_names.append(db_group_name)
 
             # create the new groups from the file
-            for missing_group_name in missing_group_names:
-                group_obj.create(cr, uid, {'name': missing_group_name, 'from_file_import_res_groups': True}, context=context)
-                # info logging - created groups
-                data_structure[obj.id]['group']['created'].append(missing_group_name)
+            for group, level in file_level_dict.items():
+                if group not in db_group_names:
+                    if level and level.lower() not in LEVEL_SELECTION:
+                        raise osv.except_osv(_('Error'),
+                                             _("The keyword '%s' after '$' character should be one of the following : %s. Check the group name '%s'.") % (level, ', '.join([x.upper() for x in LEVEL_SELECTION.keys()]), '%s$%s' % (group, level)))
+                    level = level and LEVEL_SELECTION[level.lower()] or False
+                    group_obj.create(cr, uid,
+                                     {'name': group,
+                                      'from_file_import_res_groups': True,
+                                      'level': level}, context=context)
+                    # info logging - created groups
+                    data_structure[obj.id]['group']['created'].append(group)
 
             # deactivate the groups not present in the file
             # UF-1996 : Don't deactivate groups not present in the file
@@ -382,7 +418,13 @@ class user_access_configurator(osv.osv_memory):
             # user ids - used to deactivate users for which group is not in the file
             # we do not want to deactivate admin user (even if not in the file)
             user_ids_list = [admin_ids[0]]
-            for group_name in data_structure[obj.id]['group_name_list']:
+            group_names_with_level = list(data_structure[obj.id]['group_name_list'])
+            # remove the $XX extension
+            group_names = [group.split('$')[0] for group in
+                           group_names_with_level if group]
+            data_structure[obj.id]['group_name_list'] = group_names
+
+            for group_name in group_names:
                 # login format from group_name
                 login_name = '_'.join(group_name.lower().split())
                 # check if a user already exist
@@ -490,7 +532,7 @@ class user_access_configurator(osv.osv_memory):
                     if access_not_in_file:
                         groups_to_write[group.id] += access_not_in_file
                 if group.name in data_structure[obj.id]['group_name_list'] and group.id not in groups_to_write:
-                     groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
+                    groups_obj.write(cr, uid, [group.id], {'menu_access': [(6, 0, [])]}, context=context)
 
             for gp_id in groups_to_write:
                 groups_obj.write(cr, uid, [gp_id], {'menu_access': [(6, 0, groups_to_write[gp_id])]}, context=context)
@@ -520,8 +562,6 @@ class user_access_configurator(osv.osv_memory):
         # objects
         model_obj = self.pool.get('ir.model')
         access_obj = self.pool.get('ir.model.access')
-        # list all ids of objects from the database
-        model_ids = model_obj.search(cr, uid, [('osv_memory', '=', False)], context=context)
         # list all ids of acl
         access_ids = access_obj.search(cr, uid, [], context=context)
         # admin user group id
@@ -735,7 +775,7 @@ class user_access_results_groups_line(osv.osv_memory):
                 result[obj.id].update({f:False})
             # name
             string_value = False
-            if obj.type_user_access_results_line in ['created', 'activated', 'deactivated']:
+            if obj.type_user_access_results_line in ['created', 'activated', 'deactivated', 'updated']:
                 string_value = 'The %s %s has been %s.'%(obj.model_user_access_results_line, obj.value_user_access_results_line, obj.type_user_access_results_line)
             elif obj.type_user_access_results_line in ['warning', 'error']:
                 string_value = '%s.'%(obj.value_user_access_results_line)
@@ -799,7 +839,7 @@ class res_groups(osv.osv):
             args = new_args
 
         return super(res_groups, self).search(cr, uid, args, offset, limit,
-                order, context=context, count=count)
+                                              order, context=context, count=count)
 
     def _update_inactive(self, cr, uid, ids, vals, context=None):
         '''
@@ -915,10 +955,10 @@ class res_users(osv.osv):
         res = self.read(cr, uid, uid, ['groups_id'], context=context)
         if res.get('groups_id', False):
             if self.pool.get('res.groups').search_exist(cr, uid, [('id', 'in',
-                res['groups_id']), ('is_an_admin_profile', '=', True)], context=context):
+                                                                   res['groups_id']), ('is_an_admin_profile', '=', True)], context=context):
                 return True
         return False
-        
+
     def _get_fake(self, cr, uid, ids, field_names, args, context=None):
         res = {}
         if not ids:
@@ -929,7 +969,7 @@ class res_users(osv.osv):
         for id in ids:
             res[id] = False
         return res
-        
+
     def _search_get_is_admin(self, cr, uid, obj, name, args, context=None):
         """
         US-42: 'is_admin' field search for ir.rule domain
@@ -945,13 +985,13 @@ class res_users(osv.osv):
         if args[0][1] not in ('=', '!=', ):
             msg = _("Operator '%s' not suported") % (args[0][1], )
             raise osv.except_osv(_('Error'), msg)
-            
+
         admin_id = self._get_admin_id(cr)
         return admin_id and [('id', 'not in', [admin_id])] or []
-        
+
     _columns = {
         'is_admin': fields.function(_get_fake, fnct_search=_search_get_is_admin,
-            type='boolean', method=True, string='Is editable user ?'),
+                                    type='boolean', method=True, string='Is editable user ?'),
     }
 
     _defaults = {
@@ -1021,30 +1061,45 @@ class board_board(osv.osv):
     containing a view of an object on which he doesn't have access.
     '''
     _inherit = 'board.board'
+    _logger = logging.getLogger('board_board')
 
     def remove_unauthorized_children(self,cr, uid, node):
+        iaaw_obj = self.pool.get('ir.actions.act_window')
+        ima_obj = self.pool.get('ir.model.access')
+        user_groups_id = self.pool.get('res.users').read(cr, uid, uid, ['groups_id'])['groups_id']
         for child in node.iterchildren():
             if child.tag == 'action':
                 if child.get('invisible'):
                     node.remove(child)
-                    break
+                    continue
                 elif child.get('name'):
                     action_id = int(child.get('name'))
-                    model = self.pool.get('ir.actions.act_window').browse(cr, uid, action_id).res_model
-                    if not self.pool.get('ir.model.access').check(cr, uid, model, mode='read', raise_exception=False):
+
+                    # check the group has write permission on the model
+                    model = iaaw_obj.browse(cr, uid, action_id).res_model
+                    write_perm = ima_obj.check_group(cr, uid, model, 'write',
+                                                     user_groups_id)
+
+                    if not child.get('menu_ref'):
+                        self._logger.warn('The dashboard \'%s\' does not have menu_ref attribute.'
+                                          'This is needed to define security.' % child.get('string'))
+
+                    menu_access = True
+                    # if the group has no write permission, check if the
+                    # user has access to the sub menu of the related dashboard.
+                    if not write_perm and child.get('menu_ref'):
+                        menu_ids = child.get('menu_ref').split(',')
+                        if not isinstance(menu_ids, list):
+                            menu_ids = [menu_ids]
+
+                        menu_ids = [int(menu_id) for menu_id in menu_ids]
+                        if not self.pool.get('ir.ui.menu').search(cr, uid,
+                                                                  [('id', 'in', menu_ids)]):
+                            menu_access = False
+
+                    # if no access on the menu or on the model, delete the node
+                    if not(write_perm or menu_access):
                         node.remove(child)
-                        break
-
-                if child.get('menu_ref'):
-                    menu_ids = child.get('menu_ref').split(',')
-                    if not isinstance(menu_ids, list):
-                        menu_ids = [menu_ids]
-
-                    for menu_id in menu_ids:
-                        menu_id = int(menu_id)
-                        if not self.pool.get('ir.ui.menu').search(cr, uid, [('id', '=', menu_id)]):
-                            node.remove(child)
-                            break
             else:
                 child = self.remove_unauthorized_children(cr, uid, child)
 

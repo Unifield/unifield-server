@@ -1108,7 +1108,7 @@ class orm_template(object):
                 else:
                     translated_msg = trans._get_source(cr, uid, self._name, 'constraint', lng, source=msg) or msg
                 error_msgs.append(
-                    _("Error occurred while validating the field(s) %s: %s") % (','.join(fields), translated_msg)
+                    _("Error at data validation: %s") % translated_msg
                 )
                 self._invalids.update(fields)
         if error_msgs:
@@ -4915,6 +4915,35 @@ class orm(orm_template):
             else:
                 results[k] = ''
         return results
+
+    def is_linked(self, cr, uid, ids):
+        if not ids:
+            return False
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # get fk constaint names that point to self._table
+        cr.execute("""
+            SELECT ccu.constraint_name
+            FROM information_schema.constraint_column_usage ccu
+            WHERE ccu.table_name = %s AND ccu.table_catalog = %s""", (self._table, cr.dbname))
+        constraints = cr.fetchall()
+
+        # get table and column names
+        cr.execute("""
+            SELECT kcu.column_name, kcu.table_name
+            FROM information_schema.key_column_usage kcu
+            WHERE kcu.table_catalog = %s AND kcu.constraint_name IN %s""", (cr.dbname, tuple([x[0] for x in constraints])))
+        for column, table in cr.fetchall():
+            if table == self._table:
+                continue
+            cr.execute("""SELECT count(id) FROM %s WHERE %s IN %%s""" % (table, column), (tuple(ids),))
+            res = cr.fetchall()
+            if res[0][0]:
+                return True
+
+        return False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

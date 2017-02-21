@@ -44,10 +44,11 @@ def ops_event(dbname, kind, dat, uid=1):
     try:
         cr = None
         db, pool = pooler.get_db_and_pool(dbname, if_open=True)
-        cr = db.cursor()
-        oe = pool.get('operations.event')
-        oe.create(cr, uid, { 'kind': kind, 'data': dat })
-        cr.commit()
+        if db is not None and pool is not None:
+            cr = db.cursor()
+            oe = pool.get('operations.event')
+            oe.create(cr, uid, { 'kind': kind, 'data': dat })
+            cr.commit()
     except:
         pass
     finally:
@@ -61,8 +62,9 @@ def ops_count(dbname, cat, what):
 
     try:
         db, pool = pooler.get_db_and_pool(dbname, if_open=True)
-        oc = pool.get('operations.count')
-        oc.increment(':'.join([cat, what]))
+        if db is not None and pool is not None:
+            oc = pool.get('operations.count')
+            oc.increment(':'.join([cat, what]))
     except:
         pass
 
@@ -247,7 +249,6 @@ def init_logger():
             handler = logging.handlers.SysLogHandler('/dev/log')
         format = '%s %s' % (release.description, release.version) \
             + ':%(dbname)s:%(levelname)s:%(name)s:%(message)s'
-
     elif tools.config['logfile']:
         # LogFile Handler
         logf = tools.config['logfile']
@@ -268,6 +269,7 @@ def init_logger():
         # Normal Handler on standard output
         handler = logging.StreamHandler(sys.stdout)
 
+
     if isinstance(handler, logging.StreamHandler) and os.isatty(handler.stream.fileno()):
         formatter = ColoredFormatter(format)
     else:
@@ -283,8 +285,25 @@ def init_logger():
     oeh.setFormatter(DBFormatter(format))
     oeh.setLevel(logging.ERROR)
     logger.addHandler(oeh)
-
     logger.setLevel(int(tools.config['log_level'] or '0'))
+
+    logf = tools.config.get('log_user_xmlrpc_path', False)
+    if logf:
+        _logger = logging.getLogger('xmlrpc')
+        dirname = os.path.dirname(logf)
+        if dirname and not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        interval = int(tools.config.get('log_user_xmlrpc_interval', 7))
+        backup_count = int(tools.config.get('log_user_xmlrpc_backup_count', 26))
+        when = tools.config.get('log_user_xmlrpc_when', 'D')
+        handler = logging.handlers.TimedRotatingFileHandler(logf, when, interval,
+                                                            backup_count)
+        # create a format for log messages and dates
+        format = '[%(asctime)s]:%(login)s:%(message)s'
+        formatter = logging.Formatter(format)
+        handler.setFormatter(formatter)
+        _logger.addHandler(handler)
+        _logger.propagate = False
 
 
 class Logger(object):
@@ -530,8 +549,16 @@ def replace_request_password(args):
     return args
 
 class OpenERPDispatcher:
+
     def log(self, title, msg, channel=logging.DEBUG_RPC, depth=None):
         logger = logging.getLogger(title)
+        if hasattr(self, 'get_uid_list2log') and title == 'params' and len(msg) > 1 and tools.config.get('log_user_xmlrpc_path', False):
+            db_name = msg[0]
+            current_user = msg[1]
+            xmlrpc_uid_cache = self.get_uid_list2log(db_name) or False
+            if xmlrpc_uid_cache and current_user in xmlrpc_uid_cache:
+                self._logger.log(logging.INFO, msg, extra={'login': xmlrpc_uid_cache[current_user]})
+
         if logger.isEnabledFor(channel):
             for line in pformat(msg, depth=depth).split('\n'):
                 logger.log(channel, line)

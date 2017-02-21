@@ -111,16 +111,16 @@ class shipment_processor(osv.osv):
                 family_obj.write(cr, uid, [family.id], {'selected_number': int(family.num_of_packs), }, context=context)
 
         return {
-                'type': 'ir.actions.act_window',
-                'name': _('Create Shipment'),
-                'res_model': self._name,
-                'view_mode': 'form',
-                'view_type': 'form',
-                'res_id': ids[0],
-                'nodestroy': True,
-                'target': 'new',
-                'context': context,
-                }
+            'type': 'ir.actions.act_window',
+            'name': _('Create Shipment'),
+            'res_model': self._name,
+            'view_mode': 'form',
+            'view_type': 'form',
+            'res_id': ids[0],
+            'nodestroy': True,
+            'target': 'new',
+            'context': context,
+        }
 
     def deselect_all(self, cr, uid, ids, context=None):
         """
@@ -142,16 +142,16 @@ class shipment_processor(osv.osv):
         family_obj.write(cr, uid, family_ids, {'selected_number': 0, }, context=context)
 
         return {
-                'type': 'ir.actions.act_window',
-                'name': _('Create Shipment'),
-                'res_model': self._name,
-                'view_type': 'form',
-                'view_mode': 'form',
-                'res_id': ids[0],
-                'nodestroy': True,
-                'target': 'new',
-                'context': context,
-                }
+            'type': 'ir.actions.act_window',
+            'name': _('Create Shipment'),
+            'res_model': self._name,
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_id': ids[0],
+            'nodestroy': True,
+            'target': 'new',
+            'context': context,
+        }
 
     def create_lines(self, cr, uid, ids, context=None):
         """
@@ -193,6 +193,7 @@ class shipment_processor(osv.osv):
                     'draft_packing_id': family.draft_packing_id and family.draft_packing_id.id or False,
                     'description_ppl': family.description_ppl,
                     'ppl_id': family.ppl_id and family.ppl_id.id or False,
+                    'comment': family.comment,
                 }
 
                 family_obj.create(cr, uid, family_vals, context=context)
@@ -346,6 +347,10 @@ class shipment_family_processor(osv.osv):
             store=False,
             readonly=True,
             multi='pack_info',
+        ),
+        'comment': fields.text(
+            string='Comment',
+            readonly=True,
         ),
         'integrity_status': fields.selection(
             string=' ',
