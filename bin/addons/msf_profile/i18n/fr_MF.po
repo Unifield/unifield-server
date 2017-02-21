@@ -98050,3 +98050,9 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: report_webkit
+#: code:addons/report_webkit/webkit_report.py:435
+#: code:addons/report_webkit/webkit_report.py:466
+#, python-format
+msgid "Sheet 1"
+msgstr "Feuille 1"

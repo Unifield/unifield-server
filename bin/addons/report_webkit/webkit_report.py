@@ -423,6 +423,26 @@ class WebKitParser(report_sxw):
 
         return result
 
+    def sanitizeWorksheetName(self, name):
+        '''
+        according to microsoft documentation :
+        https://msdn.microsoft.com/en-us/library/office/aa140066(v=office.10).aspx#odc_xmlss_ss:worksheet
+        The following caracters are not allowed : /, \, ?, *, [, ]
+        It also seems that microsoft excel do not accept Worksheet name longer
+        than 31 characters.
+        '''
+        if not name:
+            return _('Sheet 1')
+        replacement_char = '-'
+        not_allowed_char_list = ['/', '\\', '?', '*', '[', ']']
+        new_name = name
+        if set(new_name).intersection(not_allowed_char_list):
+            for char in not_allowed_char_list:
+                if char in new_name:
+                    new_name = new_name.replace(char, replacement_char)
+
+        return new_name[:31]
+
     def check_malformed_xml_spreadsheet(self, xml_string, report_name):
         '''Check that the xml spreadsheet doesn't contain
         node <Date ss:Type="DateTime"> with 'False' in the values
@@ -431,10 +451,37 @@ class WebKitParser(report_sxw):
         logger = logging.getLogger('mako_spreadsheet')
         file_dom = etree.fromstring(xml_string)
         namespaces = {
+            'o': 'urn:schemas-microsoft-com:office:office',
+            'x': 'urn:schemas-microsoft-com:office:excel',
             'ss': 'urn:schemas-microsoft-com:office:spreadsheet',
-            'spreadsheet': 'urn:schemas-microsoft-com:office:spreadsheet'
+            'html': 'http://www.w3.org/TR/REC-html40'
         }
-        data_time_elements = file_dom.xpath('//spreadsheet:Data[@ss:Type="DateTime"]',
+
+        spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
+                                              namespaces=namespaces)
+
+        xml_modified = False
+        sheet_name_dict = {}
+        count = 0
+        for sheet in spreadsheet_elements:
+            sheet_name = sheet.get('{%(ss)s}Name' % namespaces, _('Sheet 1'))
+            new_name = self.sanitizeWorksheetName(sheet_name)
+            if new_name != sheet_name:
+                # if the sheet name already exists, modify it to add
+                # a counter to the name
+                if new_name in sheet_name_dict:
+                    sheet_name_dict[new_name] += 1
+                    count = sheet_name_dict[new_name]
+                    new_name = '%s_%s' % (new_name[:28], count)
+                else:
+                    sheet_name_dict[new_name] = 1
+                sheet.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Name'] = new_name
+                xml_modified = True
+            else:
+                if new_name not in sheet_name_dict:
+                    sheet_name_dict[new_name] = 1
+
+        data_time_elements = file_dom.xpath('//ss:Data[@ss:Type="DateTime"]',
                                             namespaces=namespaces)
         element_to_remove = []
         for element in data_time_elements:
@@ -446,7 +493,8 @@ class WebKitParser(report_sxw):
             # if a malformed node exists, replace it with an empty String cell
             element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
             element.text = ''
-        if element_to_remove:
+            xml_modified = True
+        if xml_modified:
             # return modified xml
             return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
         return xml_string
