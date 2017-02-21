@@ -460,6 +460,7 @@ class WebKitParser(report_sxw):
         spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
                                             namespaces=namespaces)
 
+        xml_modified = False
         sheet_name_dict = {}
         count = 0
         for sheet in spreadsheet_elements:
@@ -475,6 +476,7 @@ class WebKitParser(report_sxw):
                 else:
                     sheet_name_dict[new_name] = 1
                 sheet.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Name'] = new_name
+                xml_modified = True
             else:
                 if new_name not in sheet_name_dict:
                     sheet_name_dict[new_name] = 1
@@ -491,7 +493,8 @@ class WebKitParser(report_sxw):
             # if a malformed node exists, replace it with an empty String cell
             element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
             element.text = ''
-        if element_to_remove:
+            xml_modified = True
+        if xml_modified:
             # return modified xml
             return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
         return xml_string
