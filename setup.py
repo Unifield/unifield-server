@@ -58,7 +58,7 @@ if os.name == 'nt':
             "packages": [
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
                 "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
-                "encodings", "dateutil", "wizard", "PIL", "pyparsing",
+                "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
                 "pydot", "asyncore","asynchat", "reportlab", "vobject",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
