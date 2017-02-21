@@ -66,7 +66,7 @@ WHITE_LIST_MODEL = [
     'ir.sequence',
     'ir.translation',
     'ir.ui.menu',
-    'ir.ui.view',
+    #'ir.ui.view', to allow BAR sync
     'kit.creation',
     'kit.creation.to.consume',
     'monthly.review.consumption',
