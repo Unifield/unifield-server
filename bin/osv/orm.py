@@ -1284,6 +1284,8 @@ class orm_template(object):
                     if getattr(field_col, arg, None):
                         res[f][arg] = getattr(field_col, arg)
 
+                if field_col._type == 'float' and self.is_supply:
+                    res[f]['truncate'] = True
                 context_lang = context and context.get('lang', False) or 'en_US'
                 if field_col.string and context_lang != 'en_US':
                     res_trans = translation_obj._get_source(cr, user,
