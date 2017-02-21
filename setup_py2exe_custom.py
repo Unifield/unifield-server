@@ -24,9 +24,8 @@
 
 import os
 import tempfile
-import sys
 
-if sys.platform == 'nt':
+if os.name == 'nt':
     from py2exe.build_exe import py2exe as build_exe, fancy_split
 else:
     # fake it for non-Windows, so that setup.py can be run for
