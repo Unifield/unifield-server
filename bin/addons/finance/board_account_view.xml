@@ -218,7 +218,7 @@
         </record>
         <!-- End for Payroll -->
 
-        <!-- Custom Accounting Board moved to useability_dashboard_and_menu -->
+        <!-- Custom Accounting Board moved to msf_profile/view/boad_accounting_view.xml -->
 
     </data>
 </openerp>
