@@ -840,7 +840,7 @@ msgstr "Expiry date"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:40
 #, python-format
 msgid "get_import_batch_headers_type"
-msgstr "Type"
+msgstr "Type (Standard or Internal)"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/__init__.py:62
