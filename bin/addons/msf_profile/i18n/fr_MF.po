@@ -53952,7 +53952,7 @@ msgstr "Duplicate line"
 #: code:addons/account_reconciliation/wizard/account_reconcile.py:207
 #, python-format
 msgid "When entries from different partial reconciliations are reconciled together, all the legs of these partial reconciliations must be included."
-msgstr "Lorsque des entrées de différents lettrages partiels sont lettrées ensemble, toutes les lignes de ces lettrage partiels doivent être incluses."
+msgstr "Lorsque des entrées de différents lettrages partiels sont lettrées ensemble, toutes les lignes de ces lettrages partiels doivent être incluses."
 
 #. module: account_override
 #: code:addons/account_override/account.py:1131
