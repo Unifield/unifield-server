@@ -67,7 +67,7 @@ class patch_scripts(osv.osv):
             if difference:
                 err_msg = 'Warning: Some models used in the synchronization '\
                     'rule are not present in the WHITE_LIST_MODEL: %s'
-                self._logger.warn(err_msg)
+                self._logger.warn(err_msg % ' ,'.join(list(difference)))
             if server_model_white_set:
                 # get list of all existing models used in ir_model_data
                 cr.execute('SELECT DISTINCT(model) FROM ir_model_data')
