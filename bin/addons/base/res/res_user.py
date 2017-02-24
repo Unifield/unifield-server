@@ -692,22 +692,17 @@ class users(osv.osv):
             self.remove_higer_level_groups(cr, uid, ids, context=context)
             if values.get('synchronize', False) or values.get('is_synchronizable',
                                                               False):
-                # uncheck synchronize checkbox if the user is manager or sync config
-                sync_config_res = self._is_sync_config(cr, uid, ids,
-                                                       context=context)
+                # uncheck synchronize checkbox if the user is manager
                 vals_sync = {
                     'synchronize': False,
                     'is_synchronizable': False,
                 }
-                if any(sync_config_res.values()):
-                    for user_id, is_sync_config in sync_config_res.items():
-                        super(users, self).write(cr, uid, user_id, vals_sync, context=context)
-
                 erp_manager_res = self._is_erp_manager(cr, uid, ids,
                                                        context=context)
                 if any(erp_manager_res.values()):
-                    for user_id, is_sync_config in erp_manager_res.items():
-                        super(users, self).write(cr, uid, user_id, vals_sync, context=context)
+                    for user_id, is_erp_manager in erp_manager_res.items():
+                        if is_erp_manager:
+                            super(users, self).write(cr, uid, user_id, vals_sync, context=context)
                 self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users

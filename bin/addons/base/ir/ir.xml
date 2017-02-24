@@ -786,17 +786,15 @@
                             <ul>
                                 <li><translate>It is done from the HQ</translate></li>
                                 <li><translate>The user is not member of Administration / Access Rights</translate></li>
-                                <li><translate>The user is not member of Sync_Config</translate></li>
                                 <li><translate>The user is not already marked as "Synchronizable"</translate></li>
                             </ul>
                         </html>
                     </group>
                     <separator colspan="4" />
-                    <field name="user_ids" nolabel="1" colspan="4" mode="tree" domain="[('is_synchronizable', '=', False), ('is_erp_manager', '=', False), ('is_sync_config', '=', False), ('instance_level', '=', 'hq')]">
+                    <field name="user_ids" nolabel="1" colspan="4" mode="tree" domain="[('is_synchronizable', '=', False), ('is_erp_manager', '=', False), ('instance_level', '=', 'hq')]">
                         <tree string="Add multiple users" editable="top">
                             <field name="name"/>
                             <field name="login"/>
-                            <field name="is_sync_config" invisible="1"/>
                             <field name="is_erp_manager" invisible="1"/>
                         </tree>
                     </field>
