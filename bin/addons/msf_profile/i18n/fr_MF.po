@@ -36963,10 +36963,14 @@ msgstr "Some documents linked to this partner need to be closed or cancelled bef
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:101
 #: field:weekly.forecast.report,consumption_from:0
 #: field:export.report.stock.move,date_from:0
-#: report:msf.consumption_report:0
 #: report:stock.card.report:0
 msgid "From"
 msgstr "De"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "From"
+msgstr "Du"
 
 #. module: account
 #: help:account.aged.trial.balance,chart_account_id:0
@@ -71022,9 +71026,13 @@ msgstr "Type d'adresse"
 #: view:account.mcdb:0
 #: report:financing.contract:0
 #: report:packing.list:0
-#: report:msf.consumption_report:0
 msgid "to"
 msgstr "à"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "to"
+msgstr "au"
 
 #. module: sync_client
 #: view:sync.client.sync_manager:0
