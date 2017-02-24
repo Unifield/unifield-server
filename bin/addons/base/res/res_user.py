@@ -1061,9 +1061,11 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         '''
         current_values = {}
         audit_obj = self.pool.get('audittrail.rule')
+        if context is None:
+            context = {}
         if isinstance(user_ids, (int, long)):
             user_ids = [user_ids]
-        if 'users' in vals and user_ids:
+        if 'users' in vals:
             if vals['users'] and len(vals['users'][0]) > 2:
                 users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
                 users_added = list(set(vals['users'][0][2]).difference(user_ids))
@@ -1086,15 +1088,18 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         '''
         change_user_group = False
         previous_values = []
+        if context is None:
+            context = {}
         if 'users' in vals and vals['users'] and len(vals['users'][0]) > 2:
             user_obj = self.pool.get('res.users')
             previous_values = user_obj.read(cr, uid, vals['users'][0][2], ['groups_id'], context=context)
-            change_user_group = True
-        user_id = super(groups2, self).create(cr, uid, vals, context=context)
+            if previous_values:
+                change_user_group = True
+        group_id = super(groups2, self).create(cr, uid, vals, context=context)
         if change_user_group:
-            self._track_change_of_users(cr, uid, previous_values, [user_id],
+            self._track_change_of_users(cr, uid, previous_values, [],
                                         vals, context=context)
-        return user_id
+        return group_id
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1103,6 +1108,8 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         all_user_ids = [] # previous user ids + current
         previous_values = []
         user_ids = []
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         if 'users' in vals:
