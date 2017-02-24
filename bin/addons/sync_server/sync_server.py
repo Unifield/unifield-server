@@ -225,7 +225,7 @@ class entity(osv.osv):
         'last_sequence': fields.integer('Last update sequence pulled',
                                         readonly=True),
 
-        'country': fields.char('Country', size=256),
+        'country_id': fields.many2one('res.country', 'Country', ondelete="restrict"),
         'city': fields.char('City', size=256),
         'mission': fields.char('Mission', size=64),
         'latitude': fields.float('Latitude',digits=(16,6)),

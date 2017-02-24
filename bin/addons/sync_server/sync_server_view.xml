@@ -39,7 +39,7 @@
                     <field name="parent_id"/>
                     <field name="activity" allow_sort="1"/>
                     <field name="last_dateactivity" allow_sort="1"/>
-                    <field name="country" />
+                    <field name="country_id" />
                     <field name="mission" />
                 </tree>
             </field>
@@ -76,7 +76,7 @@
                         </group>
                         <group colspan="2" col="2">
                             <separator string="Geographical information" colspan="2"/>
-                            <field name="country" />
+                            <field name="country_id" />
                             <field name="city" />
                             <field name="mission" />
                             <field name="latitude" />
@@ -101,7 +101,7 @@
                     <field name="hardware_id" />
                     <field name="parent_left" />
                     <field name="parent_right" />
-                    <field name="country" />
+                    <field name="country_id" />
                     <field name="mission" />
                 </search>
             </field>
