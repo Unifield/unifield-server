@@ -39,7 +39,7 @@ def get_import_batch_headers(context=None):
         ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
         ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
         ImportHeader(name=_('get_import_batch_headers_product_code'), ftype='String', size=80, tech_name='product_id', required=True),
-        ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=True),
+        ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=False),
     ]
 
 # Get header list and information
