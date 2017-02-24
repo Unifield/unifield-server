@@ -686,6 +686,11 @@ class account_invoice(osv.osv):
         for inv in self.browse(cr, uid, ids):
             values = {}
             curr_date = strftime('%Y-%m-%d')
+            if inv.is_debit_note:
+                for inv_line in inv.invoice_line:
+                    if inv_line.partner_id != inv.partner_id:
+                        raise osv.except_osv(_('Warning'),
+                                             _('All the imported lines must have the same partner as the Debit Note.'))
             if not inv.date_invoice and not inv.document_date:
                 values.update({'date': curr_date, 'document_date': curr_date, 'state': 'date'})
             elif not inv.date_invoice:

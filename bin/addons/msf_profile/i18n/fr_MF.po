@@ -98056,3 +98056,9 @@ msgstr "Pas de Facture"
 #, python-format
 msgid "Sheet 1"
 msgstr "Feuille 1"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:693
+#, python-format
+msgid "All the imported lines must have the same partner as the Debit Note."
+msgstr "Toutes les lignes importées doivent avoir le même partenaire que la Note de Débit."
