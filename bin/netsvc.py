@@ -218,11 +218,7 @@ class OpsEventsHandler(logging.Handler):
         self._logging = False
 
     def emit(self, record):
-        if record.dbname == 'admin':
-            import pdb
-            pdb.set_trace()
-
-        if record.dbname == '?':
+        if hasattr(record, "dbname") and record.dbname == '?':
             return
 
         # During the call to emit, a lock is already held (see logging/__init__.py)
