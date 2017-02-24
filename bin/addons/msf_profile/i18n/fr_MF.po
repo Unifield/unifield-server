@@ -22502,7 +22502,7 @@ msgstr "Ligne %s: Montant double, IN et OUT. N'en utilisez qu'un !"
 #: help:res.config.users,force_password_change:0
 #: help:res.users,force_password_change:0
 msgid "Check out this box to force this user to change his password on next login."
-msgstr "Check out this box to force this user to change his password on next login."
+msgstr "Cochez cette case pour forcer cet utilisateur à changer son mot de passe à la prochaine connexion."
 
 #. module: return_claim
 #: model:ir.model,name:return_claim.model_claim_event
@@ -65323,7 +65323,7 @@ msgstr "Base - Rapport SXW"
 #: field:res.config.users,force_password_change:0
 #: field:res.users,force_password_change:0
 msgid "Change password on next login"
-msgstr "Change password on next login"
+msgstr "Changer le mot de passe à la prochaine connexion"
 
 #. module: sale
 #: model:ir.actions.act_window,name:sale.action_order_tree
@@ -96941,7 +96941,7 @@ msgstr "Mouvement de stock traité"
 #. module: msf_profile
 #: view:res.users:0
 msgid "Show synchronized"
-msgstr "Show synchronized"
+msgstr "Montrer synchronisés"
 
 #. module: account_period_closing_level
 #: view:account.period:0
