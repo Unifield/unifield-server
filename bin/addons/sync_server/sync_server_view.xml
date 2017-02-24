@@ -39,6 +39,8 @@
                     <field name="parent_id"/>
                     <field name="activity" allow_sort="1"/>
                     <field name="last_dateactivity" allow_sort="1"/>
+                    <field name="country" />
+                    <field name="mission" />
                 </tree>
             </field>
         </record>
@@ -49,30 +51,59 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Instance Form">
-                    <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated,updated"/>
-                    <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated"/>
-                    <newline/>
-                    <group colspan="2" col="2"> 
-                        <separator string="Configuration" colspan="2"/>
-                        <field name="name"/>
-                        <field name="identifier"/>
-                        <field name="hardware_id" />
-                        <field name="email"/>
-                        <field name="parent_id"/>
-                        <field name="user_id"/>
+                    <group colspan="2">
+                        <button icon="gtk-apply" string="Validate" name="validate_action" type="object" states="pending,invalidated,updated"/>
+                        <button icon="gtk-apply" string="Invalidate" name="invalidate_action" type="object" states="validated"/>
                     </group>
-                    <group colspan="2" col="2"> 
-                        <separator string="State" colspan="2"/>
-                        <field name="state"/>
-                        <field name="activity"/>
-                        <field name="last_dateactivity"/>
-                        <field name="last_sequence"/>
+                    <group colspan="2" />
+                    <newline/>
+                    <group colspan="4" col="6">
+                        <group colspan="2" col="2">
+                            <separator string="Configuration" colspan="2"/>
+                            <field name="name"/>
+                            <field name="identifier"/>
+                            <field name="hardware_id" />
+                            <field name="email"/>
+                            <field name="parent_id"/>
+                            <field name="user_id"/>
+                        </group>
+                        <group colspan="2" col="2">
+                            <separator string="State" colspan="2"/>
+                            <field name="state"/>
+                            <field name="activity"/>
+                            <field name="last_dateactivity"/>
+                            <field name="last_sequence"/>
+                        </group>
+                        <group colspan="2" col="2">
+                            <separator string="Geographical information" colspan="2"/>
+                            <field name="country" />
+                            <field name="city" />
+                            <field name="mission" />
+                            <field name="latitude" />
+                            <field name="longitude" />
+                        </group>
                     </group>
                     <separator string="Groups" colspan="4"/>
                     <field name="group_ids" colspan="4" nolabel="1"/>
                     <separator string="Children" colspan="4"/>
                     <field name="children_ids" colspan="4" nolabel="1"/>
                 </form>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="entity_form_search">
+            <field name="name">entity.form</field>
+            <field name="model">sync.server.entity</field>
+            <field name="type">search</field>
+            <field name="arch" type="xml">
+                <search string="Instances">
+                    <field name="name" />
+                    <field name="identifier" />
+                    <field name="hardware_id" />
+                    <field name="parent_left" />
+                    <field name="parent_right" />
+                    <field name="country" />
+                    <field name="mission" />
+                </search>
             </field>
         </record>
 
