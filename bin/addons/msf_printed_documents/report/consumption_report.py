@@ -44,13 +44,13 @@ class consumption_report(report_sxw.rml_parse):
         return '%s / %s / %s' % (instance.instance, instance.mission or '', instance.code)
 
     def getDateCreation(self, o):
-        return time.strftime('%d/%b/%Y',time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
+        return time.strftime('%Y-%m-%d',time.strptime(o.creation_date,'%Y-%m-%d %H:%M:%S'))
 
     def getDateFrom(self, o):
-        return time.strftime('%d/%b/%Y',time.strptime(o.period_from,'%Y-%m-%d'))
+        return time.strftime('%Y-%m-%d',time.strptime(o.period_from,'%Y-%m-%d'))
 
     def getDateTo(self, o):
-        return time.strftime('%d/%b/%Y',time.strptime(o.period_to,'%Y-%m-%d'))
+        return time.strftime('%Y-%m-%d',time.strptime(o.period_to,'%Y-%m-%d'))
 
     def get_lines(self, o):
         return o.line_ids
