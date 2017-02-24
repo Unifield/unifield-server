@@ -85224,11 +85224,6 @@ msgid "Canceled"
 msgstr "Annulé"
 
 #. module: base
-#: view:wizard.add.users.synchronized:0
-msgid "The user is not member of Sync_Config"
-msgstr "L'Utilisateur n'est pas membre du groupe Sync_Config"
-
-#. module: base
 #: selection:res.config.users,context_tz:0
 #: selection:res.users,context_tz:0
 msgid "Pacific/Guam"
