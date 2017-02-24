@@ -24,7 +24,24 @@
 
 import os
 import tempfile
-from py2exe.build_exe import py2exe as build_exe, fancy_split
+
+if os.name == 'nt':
+    from py2exe.build_exe import py2exe as build_exe, fancy_split
+else:
+    # fake it for non-Windows, so that setup.py can be run for
+    # installing dependencies.
+    class _be(dict):
+        def __init__(self, arg1,arg2,arg3):
+            pass
+        def __dir__(self):
+            return tuple(self)
+        def __getattribute__(self, name):
+            if name == 'user_options':
+                return []
+            else:
+                raise AttributeError(name)
+    build_exe = _be(1, 2, 3)
+    fancy_split = None
 
 def fixup_data_pytz_zoneinfo():
     r = {}
@@ -36,8 +53,8 @@ def fixup_data_pytz_zoneinfo():
     return r.items()
 
 def byte_compile_noop(py_files, optimize=0, force=0,
-                 target_dir=None, verbose=1, dry_run=0,
-                 direct=None):
+                      target_dir=None, verbose=1, dry_run=0,
+                      direct=None):
 
     compiled_files = []
     from distutils.dir_util import mkpath
@@ -159,11 +176,11 @@ if hasattr(sys, 'frozen'):
         # Run fake compilation - just copy raw .py file into their
         # destination directory
         self.no_compiled_files = byte_compile_noop(py_files,
-                                           target_dir=self.collect_dir,
-                                           optimize=self.optimize,
-                                           force=0,
-                                           verbose=self.verbose,
-                                           dry_run=self.dry_run)
+                                                   target_dir=self.collect_dir,
+                                                   optimize=self.optimize,
+                                                   force=0,
+                                                   verbose=self.verbose,
+                                                   dry_run=self.dry_run)
 
         # Force relocate of specific packages data within collected libs dir
         def fixup_location(l):

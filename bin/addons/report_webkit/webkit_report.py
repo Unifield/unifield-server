@@ -458,7 +458,7 @@ class WebKitParser(report_sxw):
         }
 
         spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
-                                            namespaces=namespaces)
+                                              namespaces=namespaces)
 
         xml_modified = False
         sheet_name_dict = {}
