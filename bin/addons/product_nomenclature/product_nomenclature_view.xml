@@ -316,7 +316,7 @@
             <field name="name">product.category.family.form.view</field>
             <field name="model">product.category</field>
             <field name="type">form</field>
-            <field name="priority">35</field>
+            <field name="priority">25</field>
             <field name="inherit_id" ref="product.product_category_form_view" />
             <field name="arch" type="xml">
                 <xpath expr="/form//field[@name='type']" position="after">
