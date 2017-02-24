@@ -58,7 +58,7 @@ if os.name == 'nt':
             "packages": [
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
                 "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
-                "encodings", "dateutil", "wizard", "PIL", "pyparsing",
+                "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
                 "pydot", "asyncore","asynchat", "reportlab", "vobject",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
@@ -240,7 +240,7 @@ setup(name             = name,
       },
       package_dir      = find_package_dirs(),
       install_requires = [
-          'lxml==2.2.4',
+          'lxml==3.7.3',
           'mako==0.2.5',
           'python-dateutil==2.5.3',
           'psycopg2==2.0.13',
