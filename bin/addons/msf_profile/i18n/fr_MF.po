@@ -21014,11 +21014,6 @@ msgstr "Valid field types : \n"
 "                    - datetime\n"
 "                    - time"
 
-#. module: account_override
-#: field:account.account,has_partner_type_internal:0
-msgid "Internal"
-msgstr "Internal"
-
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:52
 #, python-format
@@ -21028,8 +21023,8 @@ msgstr "Period closing is denied: some Journal Entries remain unposted in this p
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:229
 #, python-format
-msgid "For a 'Standard' batch number, you have to define value in the 'Name' column"
-msgstr "Pour un numéro de lot 'Standard', vous devez définir une valeur dans la colonne 'Nom'"
+msgid "For a 'Standard' batch number, you have to put a value in the 'Batch Number' column"
+msgstr "Pour un numéro de lot 'Standard', vous devez définir une valeur dans la colonne 'numéro de lot'"
 
 #. module: sale
 #: help:sale.config.picking_policy,order_policy:0
@@ -21230,7 +21225,7 @@ msgstr "Un Tiers est Obligatoire pour les acomptes"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:219
 #, python-format
 msgid "You cannot create an 'Internal' batch number for a 'Batch mandatory' product"
-msgstr "Vous ne pouvez pas créer un numéro de lot 'Interne' pour un produit dont le numéro de lot n'est pas obligatoire"
+msgstr "Vous ne pouvez pas créer un numéro de lot 'Interne' pour un produit dont le numéro de lot est obligatoire"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -35047,7 +35042,7 @@ msgstr "Facture(s) ouverte(s)"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:185
 #, python-format
-msgid "The Type of the batch number should be 'Standard' or 'Internal'"
+msgid "The type of the batch number should be 'Standard' or 'Internal'"
 msgstr "Le type du numéro de lot doit être 'Standard' ou 'Interne'"
 
 #. module: res_currency_tables
@@ -51459,7 +51454,7 @@ msgstr "Centre de Coût @importer"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:106
 #, python-format
-msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue tu use Unifield"
+msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue to use Unifield"
 msgstr "Traitement en cours, veuillez laisser cette fenêtre ouverte et cliquez sur le bouton 'Mettre à jour' pour voir la progression de l'import. Sinon, vous pouvez continuer d'utiliser Unifield"
 
 #. module: msf_instance
@@ -87563,7 +87558,7 @@ msgstr "Annulation du rapprochement"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
 #, python-format
 msgid "get_import_batch_headers_type"
-msgstr "Type"
+msgstr "Type (Standard ou Interne)"
 
 #. module: base
 #: model:res.country,name:base.re

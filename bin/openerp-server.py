@@ -68,6 +68,7 @@ logger = logging.getLogger('server')
 # effort.
 def ops_event(what, dbname=None):
     for db in pooler.pool_dic.keys():
+        cr = None
         if dbname is not None and db != dbname:
             continue
         try:
