@@ -224,6 +224,12 @@ class entity(osv.osv):
         'version': fields.integer('version'),
         'last_sequence': fields.integer('Last update sequence pulled',
                                         readonly=True),
+
+        'country_id': fields.many2one('res.country', 'Country', ondelete="restrict"),
+        'city': fields.char('City', size=256),
+        'mission': fields.char('Mission', size=64),
+        'latitude': fields.float('Latitude',digits=(16,6)),
+        'longitude': fields.float('Longitude', digits=(16,6)),
     }
     _defaults = {
         'version': lambda *a: 0,

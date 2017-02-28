@@ -155,13 +155,13 @@
                     <para style="TextInformation" alignment="LEFT"><b>Report Creation Date :</b></para>
                 </td>
                 <td>
-                    <para style="TextInformation" alignment="LEFT">[[ getDateCreation(objects[0]) ]]</para>
+                    <para style="TextInformation" alignment="LEFT">[[ formatLang(getDateCreation(objects[0]), date=True) ]]</para>
                 </td>
                 <td>
                     <para style="TextInformation" alignment="LEFT"></para>
                 </td>
                 <td>
-                    <para style="TextInformation10" alignment="LEFT"><b>Period : </b> From [[ getDateFrom(objects[0]) ]] to [[ getDateTo(objects[0]) ]]</para>
+                    <para style="TextInformation10" alignment="LEFT"><b>Period : </b> <pre>From</pre> [[ formatLang(getDateFrom(objects[0]), date=True) ]] <pre>to</pre> [[ formatLang(getDateTo(objects[0]), date=True) ]]</para>
                 </td>
             </tr>
             <tr>

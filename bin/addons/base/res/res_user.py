@@ -692,22 +692,17 @@ class users(osv.osv):
             self.remove_higer_level_groups(cr, uid, ids, context=context)
             if values.get('synchronize', False) or values.get('is_synchronizable',
                                                               False):
-                # uncheck synchronize checkbox if the user is manager or sync config
-                sync_config_res = self._is_sync_config(cr, uid, ids,
-                                                       context=context)
+                # uncheck synchronize checkbox if the user is manager
                 vals_sync = {
                     'synchronize': False,
                     'is_synchronizable': False,
                 }
-                if any(sync_config_res.values()):
-                    for user_id, is_sync_config in sync_config_res.items():
-                        super(users, self).write(cr, uid, user_id, vals_sync, context=context)
-
                 erp_manager_res = self._is_erp_manager(cr, uid, ids,
                                                        context=context)
                 if any(erp_manager_res.values()):
-                    for user_id, is_sync_config in erp_manager_res.items():
-                        super(users, self).write(cr, uid, user_id, vals_sync, context=context)
+                    for user_id, is_erp_manager in erp_manager_res.items():
+                        if is_erp_manager:
+                            super(users, self).write(cr, uid, user_id, vals_sync, context=context)
                 self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
@@ -1061,9 +1056,11 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         '''
         current_values = {}
         audit_obj = self.pool.get('audittrail.rule')
+        if context is None:
+            context = {}
         if isinstance(user_ids, (int, long)):
             user_ids = [user_ids]
-        if 'users' in vals and user_ids:
+        if 'users' in vals:
             if vals['users'] and len(vals['users'][0]) > 2:
                 users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
                 users_added = list(set(vals['users'][0][2]).difference(user_ids))
@@ -1086,15 +1083,18 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         '''
         change_user_group = False
         previous_values = []
+        if context is None:
+            context = {}
         if 'users' in vals and vals['users'] and len(vals['users'][0]) > 2:
             user_obj = self.pool.get('res.users')
             previous_values = user_obj.read(cr, uid, vals['users'][0][2], ['groups_id'], context=context)
-            change_user_group = True
-        user_id = super(groups2, self).create(cr, uid, vals, context=context)
+            if previous_values:
+                change_user_group = True
+        group_id = super(groups2, self).create(cr, uid, vals, context=context)
         if change_user_group:
-            self._track_change_of_users(cr, uid, previous_values, [user_id],
+            self._track_change_of_users(cr, uid, previous_values, [],
                                         vals, context=context)
-        return user_id
+        return group_id
 
     def write(self, cr, uid, ids, vals, context=None):
         '''
@@ -1103,6 +1103,8 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         all_user_ids = [] # previous user ids + current
         previous_values = []
         user_ids = []
+        if context is None:
+            context = {}
         if isinstance(ids, (int, long)):
             ids = [ids]
         if 'users' in vals:

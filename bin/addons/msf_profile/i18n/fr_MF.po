@@ -18935,7 +18935,7 @@ msgstr "\n"
 msgid "Saint Lucia"
 msgstr "Sainte-Lucie"
 
-#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, msf_doc_import, stock
+#. modules: msf_outgoing, stock_move_tracking, stock_override, consumption_calculation, specific_rules, kit, msf_doc_import, stock, msf_supply_doc_export, sale
 #: view:real.average.consumption:0
 #: field:real.average.consumption,cons_location_id:0
 #: field:real.consumption.change.location,location_id:0
@@ -18946,6 +18946,8 @@ msgstr "Sainte-Lucie"
 #: code:addons/msf_doc_import/wizard/__init__.py:68
 #: code:addons/msf_doc_import/wizard/__init__.py:73
 #: code:addons/msf_doc_import/wizard/__init__.py:78
+#: report:addons/msf_supply_doc_export/report/report_internal_move_xls.mako:77
+#: report:msf.consumption_report:0
 #: field:stock.move.memory.picking,location_id:0
 #: field:stock.move.memory.ppl,location_id:0
 #: field:stock.move.memory.returnproducts,location_id:0
@@ -18964,6 +18966,11 @@ msgstr "Sainte-Lucie"
 #, python-format
 msgid "Source Location"
 msgstr "Zone Source"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "Source Location :"
+msgstr "Zone Source :"
 
 #. module: msf_button_access_rights
 #: view:msf_button_access_rights.button_access_rule:0
@@ -21007,11 +21014,6 @@ msgstr "Valid field types : \n"
 "                    - datetime\n"
 "                    - time"
 
-#. module: account_override
-#: field:account.account,has_partner_type_internal:0
-msgid "Internal"
-msgstr "Internal"
-
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/account_period.py:52
 #, python-format
@@ -21021,8 +21023,8 @@ msgstr "Period closing is denied: some Journal Entries remain unposted in this p
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:229
 #, python-format
-msgid "For a 'Standard' batch number, you have to define value in the 'Name' column"
-msgstr "Pour un numéro de lot 'Standard', vous devez définir une valeur dans la colonne 'Nom'"
+msgid "For a 'Standard' batch number, you have to put a value in the 'Batch Number' column"
+msgstr "Pour un numéro de lot 'Standard', vous devez définir une valeur dans la colonne 'numéro de lot'"
 
 #. module: sale
 #: help:sale.config.picking_policy,order_policy:0
@@ -21223,7 +21225,7 @@ msgstr "Un Tiers est Obligatoire pour les acomptes"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:219
 #, python-format
 msgid "You cannot create an 'Internal' batch number for a 'Batch mandatory' product"
-msgstr "Vous ne pouvez pas créer un numéro de lot 'Interne' pour un produit dont le numéro de lot n'est pas obligatoire"
+msgstr "Vous ne pouvez pas créer un numéro de lot 'Interne' pour un produit dont le numéro de lot est obligatoire"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -22502,7 +22504,7 @@ msgstr "Ligne %s: Montant double, IN et OUT. N'en utilisez qu'un !"
 #: help:res.config.users,force_password_change:0
 #: help:res.users,force_password_change:0
 msgid "Check out this box to force this user to change his password on next login."
-msgstr "Check out this box to force this user to change his password on next login."
+msgstr "Cochez cette case pour forcer cet utilisateur à changer son mot de passe à la prochaine connexion."
 
 #. module: return_claim
 #: model:ir.model,name:return_claim.model_claim_event
@@ -25673,11 +25675,6 @@ msgstr "Si cette case est cochée, toutes les quantités du produit seront mises
 msgid "Other Info"
 msgstr "Autre Information"
 
-#. module: sale
-#: report:msf.consumption_report:0
-msgid "Source Location :"
-msgstr "Source Location :"
-
 #. module: kit
 #: code:addons/kit/kit_creation.py:1456
 #, python-format
@@ -28090,11 +28087,6 @@ msgstr "Reprendre la Synchronisation en arrière-plan "
 #: help:payment.line,move_line_id:0
 msgid "This Entry Line will be referred for the information of the ordering customer."
 msgstr "Cette Ligne d'Ecriture servira de référence pour les informations concernant le client passeur de commande."
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_operation
-msgid "Operations"
-msgstr "Operations"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_delete_lines.py:612
@@ -35050,7 +35042,7 @@ msgstr "Facture(s) ouverte(s)"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:185
 #, python-format
-msgid "The Type of the batch number should be 'Standard' or 'Internal'"
+msgid "The type of the batch number should be 'Standard' or 'Internal'"
 msgstr "Le type du numéro de lot doit être 'Standard' ou 'Interne'"
 
 #. module: res_currency_tables
@@ -36941,7 +36933,7 @@ msgstr "Manage the VAT"
 msgid "Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
 msgstr "Some documents linked to this partner need to be closed or cancelled before deactivating the partner: %s"
 
-#. modules: account, stock_override, supplier_catalogue, consumption_calculation, purchase_override, base, register_accounting, stock
+#. modules: account, stock_override, supplier_catalogue, consumption_calculation, purchase_override, base, register_accounting, stock, sale, analytic_distribution
 #: field:account.analytic.chart,from_date:0
 #: field:project.account.analytic.line,from_date:0
 #: field:res.request,act_from:0
@@ -36956,8 +36948,19 @@ msgstr "Some documents linked to this partner need to be closed or cancelled bef
 #: field:stock.analyze.view,from_date:0
 #: field:supplier.catalogue,period_from:0
 #: field:supplier.historical.catalogue,from_date:0
+#: field:account.chart,period_from:0
+#: field:account.analytic.chart,period_from:0
+#: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:101
+#: field:weekly.forecast.report,consumption_from:0
+#: field:export.report.stock.move,date_from:0
+#: report:stock.card.report:0
 msgid "From"
 msgstr "De"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "From"
+msgstr "Du"
 
 #. module: account
 #: help:account.aged.trial.balance,chart_account_id:0
@@ -47349,11 +47352,6 @@ msgstr "The parameter 'report_brw' of the method _check_report_values() must be 
 msgid "List Type :"
 msgstr "Type de Liste :"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_support
-msgid "Support"
-msgstr "Support"
-
 #. module: purchase
 #: report:purchase.order:0
 msgid "TVA :"
@@ -49313,11 +49311,6 @@ msgstr "restrictive.country.setup"
 #: selection:product.nomenclature,sub_level:0
 msgid "6"
 msgstr "6"
-
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_expatriates
-msgid "Expatriates"
-msgstr "Expatriates"
 
 #. module: return_claim
 #: code:addons/return_claim/return_claim.py:636
@@ -51461,7 +51454,7 @@ msgstr "Centre de Coût @importer"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:106
 #, python-format
-msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue tu use Unifield"
+msgid "Import in progress, please leave this window open and press the button 'Update' to show the progression of the import. Otherwise, you can continue to use Unifield"
 msgstr "Traitement en cours, veuillez laisser cette fenêtre ouverte et cliquez sur le bouton 'Mettre à jour' pour voir la progression de l'import. Sinon, vous pouvez continuer d'utiliser Unifield"
 
 #. module: msf_instance
@@ -57671,16 +57664,6 @@ msgstr "Fax :"
 #: model:ir.model,name:stock_override.model_stock_move_memory_in
 msgid "stock.move.memory.in"
 msgstr "stock.move.memory.in"
-
-#. modules: account, stock_override, consumption_calculation, analytic_distribution
-#: field:account.chart,period_from:0
-#: field:account.analytic.chart,period_from:0
-#: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:101
-#: field:weekly.forecast.report,consumption_from:0
-#: field:export.report.stock.move,date_from:0
-#: report:stock.card.report:0
-msgid "From"
-msgstr "From"
 
 #. modules: account_override, register_accounting
 #: field:account.invoice,st_lines:0
@@ -65323,7 +65306,7 @@ msgstr "Base - Rapport SXW"
 #: field:res.config.users,force_password_change:0
 #: field:res.users,force_password_change:0
 msgid "Change password on next login"
-msgstr "Change password on next login"
+msgstr "Changer le mot de passe à la prochaine connexion"
 
 #. module: sale
 #: model:ir.actions.act_window,name:sale.action_order_tree
@@ -71019,11 +71002,17 @@ msgstr "Demande de Devis Connexe"
 msgid "Address Type"
 msgstr "Type d'adresse"
 
-#. modules: financing_contract, account_mcdb
+#. modules: financing_contract, account_mcdb, msf_outgoing, sale
 #: view:account.mcdb:0
 #: report:financing.contract:0
+#: report:packing.list:0
 msgid "to"
 msgstr "à"
+
+#. module: sale
+#: report:msf.consumption_report:0
+msgid "to"
+msgstr "au"
 
 #. module: sync_client
 #: view:sync.client.sync_manager:0
@@ -83691,11 +83680,6 @@ msgstr "Fusion des bons d'achat"
 msgid "SWISS FRANC"
 msgstr "SWISS FRANC"
 
-#. module: msf_outgoing
-#: report:packing.list:0
-msgid "to"
-msgstr "to"
-
 #. module: product_attributes
 #: field:product.deactivation.error.line,type:0
 msgid "Documents type"
@@ -85222,11 +85206,6 @@ msgstr "Saint Pierre et Miquelon"
 #: view:kit.creation:0
 msgid "Canceled"
 msgstr "Annulé"
-
-#. module: base
-#: view:wizard.add.users.synchronized:0
-msgid "The user is not member of Sync_Config"
-msgstr "L'Utilisateur n'est pas membre du groupe Sync_Config"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -86987,11 +86966,6 @@ msgstr "Centres de Coûts associés"
 msgid "Etc/GMT-4"
 msgstr "Etc/GMT-4"
 
-#. module: analytic_distribution
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination_national_staff
-msgid "National Staff"
-msgstr "National Staff"
-
 #. module: msf_config_locations
 #: field:stock.location,virtual_ok:0
 msgid "Virtual Location"
@@ -87584,7 +87558,7 @@ msgstr "Annulation du rapprochement"
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:39
 #, python-format
 msgid "get_import_batch_headers_type"
-msgstr "Type"
+msgstr "Type (Standard ou Interne)"
 
 #. module: base
 #: model:res.country,name:base.re
@@ -93221,7 +93195,6 @@ msgstr "Facture venant de"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:189
 #: report:addons/account_mcdb/report/report_account_analytic_line_xls.mako:64
 #: report:allocation.invoices.report:0
-#: model:account.analytic.account,name:analytic_distribution.analytic_account_destination
 #: view:account.analytic.line:0
 #: report:addons/analytic_distribution/report/report_account_analytic_chart_export.mako:131
 #: field:analytic.distribution.wizard.f1.lines,destination_id:0
@@ -96941,7 +96914,7 @@ msgstr "Mouvement de stock traité"
 #. module: msf_profile
 #: view:res.users:0
 msgid "Show synchronized"
-msgstr "Show synchronized"
+msgstr "Montrer synchronisés"
 
 #. module: account_period_closing_level
 #: view:account.period:0
@@ -98056,3 +98029,9 @@ msgstr "Pas de Facture"
 #, python-format
 msgid "Sheet 1"
 msgstr "Feuille 1"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:693
+#, python-format
+msgid "All the imported lines must have the same partner as the Debit Note."
+msgstr "Toutes les lignes importées doivent avoir le même partenaire que la Note de Débit."
