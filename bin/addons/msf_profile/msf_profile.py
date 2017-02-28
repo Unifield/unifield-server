@@ -53,6 +53,10 @@ class patch_scripts(osv.osv):
         This patch will remove all the data from ir_model_data that are not
         synchronized models.
         '''
+        if self.pool.get('sync.server.update'):
+            # do not delete anything on server side
+            return
+
         from sync_common import WHITE_LIST_MODEL
         removed_obj = 0
 
