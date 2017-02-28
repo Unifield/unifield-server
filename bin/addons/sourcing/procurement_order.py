@@ -240,7 +240,7 @@ rules if the supplier 'Order creation method' is set to 'Requirements by Order'.
                 if ('order_type', '!=', 'direct') in purchase_domain:
                     purchase_domain.remove(('order_type', '!=', 'direct'))
                 purchase_domain.append(('order_type', '=', 'direct'))
-            elif line.order_id.order_type not in ('loan', 'donation_st', 'donation_exp'):
+            elif procurement.po_cft != 'dpo' and line.order_id.order_type not in ('loan', 'donation_st', 'donation_exp'):
                 purchase_domain.append(('order_type', 'in', ['regular', 'purchase_list']))
 
         if partner.po_by_project in ('project', 'category_project') or (procurement.po_cft == 'dpo' and partner.po_by_project == 'all'):
