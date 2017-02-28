@@ -829,10 +829,6 @@ class Entity(osv.osv):
                     done[:] = []
                     cr.commit()
         finally:
-            # XXX this is the moment to abort the synchronization to reproduce
-            # the problem of US-2306. After aborting, type 'c' to continue
-            # the sync. When it's finish, do another sync and get the problem.
-            # import pdb; pdb.set_trace()
             cr.commit()
 
             if logger:
