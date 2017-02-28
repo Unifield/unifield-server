@@ -265,7 +265,7 @@ class hq_entries_import_wizard(osv.osv_memory):
                         " %s (posting) / %s (account) / %s (amount) / %s (3rd party) /" \
                         " %s (%s)")
             raise osv.except_osv(_('Error'), pattern % (
-                description, reference, document_date, date,
+                ustr(description), ustr(reference), document_date, date,
                 account_description, booking_amount,
                 ustr(third_party),
                 emp_cc_id and emp_cc_id.name or cost_center,
