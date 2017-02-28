@@ -266,9 +266,9 @@ class hq_entries_import_wizard(osv.osv_memory):
                         " %s (%s)")
             raise osv.except_osv(_('Error'), pattern % (
                 ustr(description), ustr(reference), document_date, date,
-                account_description, booking_amount,
+                ustr(account_description), booking_amount,
                 ustr(third_party),
-                emp_cc_id and emp_cc_id.name or cost_center,
+                emp_cc_id and ustr(emp_cc_id.name) or ustr(cost_center),
                 emp_cc_id and 'Emp default CC' or 'CC'
             ))
 
