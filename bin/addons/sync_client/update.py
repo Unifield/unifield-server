@@ -550,18 +550,10 @@ class update_received(osv.osv):
                 import_fields = [import_fields[i] for i in range(len(import_fields)) if i not in bad_fields]
 
             # Import batch of values
-            data_obj = self.pool.get('ir.model.data')
             while values:
                 try:
                     res = secure_import_data(obj, import_fields, values)
                 except Exception, import_error:
-                    # US-2306 : Clear _get_id cache in case of exception
-                    index_id = eval(update.fields).index('id')
-                    for value in values:
-                        sdref = value[index_id]
-                        module, sep, xmlid = sdref.partition('.')
-                        data_obj._get_id.clear_cache(cr.dbname,
-                                uid, module, xmlid)
                     import_error = "Error during importation in model %s!\nUpdate ids: %s\nReason: %s\nData imported:\n%s\n" % (obj._name, update_ids, tools.ustr(import_error), "\n".join([tools.ustr(v) for v in values]))
                     # Rare Exception: import_data raised an Exception
                     self._set_not_run(cr, uid, update_ids,
