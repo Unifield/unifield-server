@@ -1162,29 +1162,6 @@ class Entity(osv.osv):
                 % (_(monitor.status_dict[last_log[0]]), last_log[1], last_log[2], last_log[3])
         return "Connected"
 
-    def clear_get_id_cache(self, cr, uid, context=None):
-        '''
-        Clear cache of not commited updates. This is usefull when a sync is
-        aborted: in this case updates are executed, _get_id is then cached but
-        as the transaction is not commited, id exists in cache but not in the
-        database, so the id cache must be flushed
-        '''
-        updates = self.pool.get(context.get('update_received_model',
-            'sync.client.update_received'))
-        update_ids = updates.search(cr, uid, [('run', '=', False)],
-                order='NO_ORDER', context=context)
-        updates_result =  updates.read(cr, uid, update_ids,
-                ['fields', 'values'], context=context)
-        data_obj = self.pool.get('ir.model.data')
-        for update in updates_result:
-            # US-2306 : Clear _get_id cache in case of exception
-            index_id = eval(update['fields']).index('id')
-            values = eval(update['values'])
-            sdref = values[index_id]
-            module, sep, xmlid = sdref.partition('.')
-            data_obj._get_id.clear_cache(cr.dbname,
-                    uid, module, xmlid)
-
     def interrupt_sync(self, cr, uid, context=None):
         if self.is_syncing():
             #try:
@@ -1192,9 +1169,8 @@ class Entity(osv.osv):
             #except StandardError:
             #    return False
             self.aborting = True
-            # US-2306 : before to close the cursor, clear the _get_id cache of
-            # updates that have been executed (and not committed)
-            self.clear_get_id_cache(cr, uid, context=context)
+            # US-2306 : before to close the cursor, clear the _get_id caches
+            self.pool.get('ir.model.data')._get_id.clear_cache(cr.dbname)
             self.sync_cursor.close(True)
         return True
 
