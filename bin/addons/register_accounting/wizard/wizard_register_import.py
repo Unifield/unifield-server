@@ -494,45 +494,67 @@ class wizard_register_import(osv.osv_memory):
                         errors.append(_("Line %s. Thirdparty not compatible with account '%s - %s'") % (current_line_num, account['code'], account['name'], ))
                         continue
 
+                    analytic_account_obj = self.pool.get('account.analytic.account')
+
                     # free 1
                     if line[cols['free1']]:
                         free1 = line[cols['free1']]
-                        free_1_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FREE1'), ('code', '=', free1)])
+                        free_1_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'FREE1'), ('code', '=', free1)])
                         if free_1_ids:
                             r_free1 = free_1_ids[0]
+                            view_type = analytic_account_obj.read(cr, uid, r_free1, ['type'], context=context)['type']
+                            if view_type == 'view':
+                                errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['free1']], _('Free 1')))
+                                continue
 
 
                     # free 2
                     if line[cols['free2']]:
                         free2 = line[cols['free2']]
-                        free_2_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FREE2'), ('code', '=', free2)])
+                        free_2_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'FREE2'), ('code', '=', free2)])
                         if free_2_ids:
                             r_free2 = free_2_ids[0]
+                            view_type = analytic_account_obj.read(cr, uid, r_free2, ['type'], context=context)['type']
+                            if view_type == 'view':
+                                errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['free2']], _('Free 2')))
+                                continue
 
                     # Check analytic axis only if G/L account is an analytic-a-holic account
                     if account.get('is_analytic_addicted', False):
                         # Check Destination
                         try:
                             if line[cols['destination']]:
-                                destination_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['destination']]), ('code', '=', line[cols['destination']])])
+                                destination_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[cols['destination']]), ('code', '=', line[cols['destination']])])
                                 if destination_ids:
                                     r_destination = destination_ids[0]
+                                    view_type = analytic_account_obj.read(cr, uid, r_destination, ['type'], context=context)['type']
+                                    if view_type == 'view':
+                                        errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['destination']], _('Destination')))
+                                        continue
                         except IndexError, e:
                             pass
                         # Check Cost Center
                         try:
                             if line[cols['cost_center']]:
-                                cc_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['cost_center']]), ('code', '=', line[cols['cost_center']])])
+                                cc_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[cols['cost_center']]), ('code', '=', line[cols['cost_center']])])
                                 if cc_ids:
                                     r_cc = cc_ids[0]
+                                    view_type = analytic_account_obj.read(cr, uid, r_cc, ['type'], context=context)['type']
+                                    if view_type == 'view':
+                                        errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['cost_center']], _('Cost Center')))
+                                        continue
                         except IndexError, e:
                             pass
                         # Check funding pool
                         try:
                             if line[cols['funding_pool']]:
-                                fp_ids = self.pool.get('account.analytic.account').search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['funding_pool']]), ('code', '=', line[cols['funding_pool']])])
+                                fp_ids = analytic_account_obj.search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[cols['funding_pool']]), ('code', '=', line[cols['funding_pool']])])
                                 if fp_ids:
                                     r_fp = fp_ids[0]
+                                    view_type = analytic_account_obj.read(cr, uid, r_fp, ['type'], context=context)['type']
+                                    if view_type == 'view':
+                                        errors.append(_('Line %s. %s is a VIEW type %s!') % (current_line_num, line[cols['funding_pool']], _('Funding Pool')))
+                                        continue
 
                         except IndexError, e:
                             pass

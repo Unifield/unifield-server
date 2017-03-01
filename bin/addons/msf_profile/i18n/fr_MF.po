@@ -39088,12 +39088,6 @@ msgstr "# pull data"
 msgid "The line '%s' is already posted!"
 msgstr "La ligne '%s' est déjà comptabilisée!"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/account.py:408
-#, python-format
-msgid "Line %s. %s is a VIEW type Cost Center!"
-msgstr "Ligne %s. %s est un Centre de coût de type VUE !"
-
 #. module: product
 #: field:product.template,purchase_ok:0
 msgid "Can be Purchased"
@@ -98035,3 +98029,13 @@ msgstr "Feuille 1"
 #, python-format
 msgid "All the imported lines must have the same partner as the Debit Note."
 msgstr "Toutes les lignes importées doivent avoir le même partenaire que la Note de Débit."
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:507
+#: code:addons/register_accounting/wizard/wizard_register_import.py:519
+#: code:addons/register_accounting/wizard/wizard_register_import.py:532
+#: code:addons/register_accounting/wizard/wizard_register_import.py:544
+#: code:addons/register_accounting/wizard/wizard_register_import.py:556
+#, python-format
+msgid "Line %s. %s is a VIEW type %s!"
+msgstr "Ligne %s. %s est un(e) %s de type VUE !"
