@@ -757,7 +757,13 @@ class audittrail_rule(osv.osv):
                                 'new_value': new_value,
                                 'old_value': old_value,
                             })
-                            log_line_obj.create(cr, uid, line)
+                            log_line_id = log_line_obj.create(cr, uid, line)
+
+                            # call _get_values at line creation step to set
+                            # old_value_text because in case of deletion of
+                            # the associated object it will not be possible
+                            # to determine it later.
+                            log_line_obj._get_values(cr, uid, log_line_id, [fields_to_trace[field].id], arg=None, context=context)
 
         context['translate_fields'] = True
 
@@ -825,6 +831,8 @@ class audittrail_log_line(osv.osv):
         Return the value of the field according to his type
         '''
         res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
