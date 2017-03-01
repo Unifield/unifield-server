@@ -851,6 +851,7 @@ class Form(TinyInputWidget):
                 if expr_eval(attrs.get('noteditable'), new_values):
                     self.noteditable = True
                     self.hide_button_save = True
+                    self.hide_button_edit = True
             except:
                 pass
 
