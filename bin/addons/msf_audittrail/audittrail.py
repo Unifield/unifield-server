@@ -759,12 +759,6 @@ class audittrail_rule(osv.osv):
                             })
                             log_line_id = log_line_obj.create(cr, uid, line)
 
-                            # call _get_values at line creation step to set
-                            # old_value_text because in case of deletion of
-                            # the associated object it will not be possible
-                            # to determine it later.
-                            log_line_obj._get_values(cr, uid, log_line_id, [fields_to_trace[field].id], arg=None, context=context)
-
         context['translate_fields'] = True
 
     def get_sequence(self, cr, uid, obj_name, res_id, context=None):
@@ -825,6 +819,30 @@ class audittrail_log_line(osv.osv):
             dummy, view_id = dataobj.get_object_reference(cr, 1, 'account', 'view_audittrail_log_line_account_move_tree')
         view = super(audittrail_log_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         return view
+
+    def create(self, cr, uid, vals, context=None):
+        """
+        get text values at create step because in some cases the text values
+        will not be available (when a object link to this one is deleted, then
+        the delete track log cannot get the text value cause the object is
+        deleted)
+        """
+        field_id = vals.get('field_id', False)
+        fct_object_id = vals.get('fct_object_id', False)
+        object_id = vals.get('object_id', False)
+        old_value = vals.get('old_value', False)
+        new_value = vals.get('new_value', False)
+        model = fct_object_id or object_id
+
+        if field_id:
+            if not vals.get('old_value_text', False) and old_value:
+                vals['old_value_text'] = get_value_text(self, cr, uid,
+                        field_id, False, str(old_value), model, context=context)
+            if not vals.get('new_value_text', False) and new_value:
+                vals['new_value_text'] = get_value_text(self, cr, uid,
+                        field_id, False, str(new_value), model, context=context)
+
+        return super(audittrail_log_line, self).create(cr, uid, vals, context=context)
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
