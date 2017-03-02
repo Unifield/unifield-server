@@ -39088,6 +39088,12 @@ msgstr "# pull data"
 msgid "The line '%s' is already posted!"
 msgstr "La ligne '%s' est déjà comptabilisée!"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:408
+#, python-format
+msgid "Line %s. %s is a VIEW type Cost Center!"
+msgstr "Ligne %s. %s est un Centre de coût de type VUE !"
+
 #. module: product
 #: field:product.template,purchase_ok:0
 msgid "Can be Purchased"
