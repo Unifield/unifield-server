@@ -757,7 +757,7 @@ class audittrail_rule(osv.osv):
                                 'new_value': new_value,
                                 'old_value': old_value,
                             })
-                            log_line_id = log_line_obj.create(cr, uid, line)
+                            log_line_obj.create(cr, uid, line)
 
         context['translate_fields'] = True
 
