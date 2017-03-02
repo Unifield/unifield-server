@@ -8,7 +8,8 @@ from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from service.web_services import report_spool
 from tools.translate import _
-
+import logging
+import pooler
 
 
 class export_report_inconsistencies(osv.osv):
@@ -21,6 +22,7 @@ class export_report_inconsistencies(osv.osv):
         'state': fields.selection(
             [('draft', 'Draft'),
              ('in_progress', 'In Progress'),
+             ('error', 'Error'),
              ('ready', 'Ready')],
             string='State',
             readonly=True,
@@ -50,7 +52,7 @@ class export_report_inconsistencies(osv.osv):
 
             # state of report is in progress :
             self.write(cr, uid, [report.id], {
-                'name': time.strftime('%Y-%m-%d %H:%M:%S'), 
+                'name': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'state': 'in_progress'
             }, context=context)
 
@@ -60,7 +62,8 @@ class export_report_inconsistencies(osv.osv):
             }
 
             cr.commit()
-            new_thread = threading.Thread(target=self.generate_report_bkg, args=(cr, uid, report.id, datas, context))
+
+            new_thread = threading.Thread(target=self.generate_new_report_bkg_newthread, args=(cr, uid, report.id, datas, context))
             new_thread.start()
             new_thread.join(timeout=25.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
 
@@ -89,21 +92,35 @@ class export_report_inconsistencies(osv.osv):
 
         return res
 
+    def generate_new_report_bkg_newthread(self, cr, uid, report_ids, datas, context=None):
+        '''
+        run the thread protected with a try except
+        '''
+        if isinstance(report_ids, (int, long)):
+            report_ids = [report_ids]
+        logger = logging.getLogger('Product Status inconsistencies report')
+        new_cr = pooler.get_db(cr.dbname).cursor()
+        try:
+            self.generate_report_bkg(new_cr, uid, report_ids, datas, context=context)
+        except Exception as e:
+            logger.error('Error while running the Product Status inconsistencies report: %s' % str(e))
+            self.write(new_cr, uid, report_ids, {
+                'state': 'error'
+            }, context=context)
+            new_cr.commit()
+        finally:
+            new_cr.close(True)
 
     def generate_report_bkg(self, cr, uid, report_ids, datas, context=None):
         '''
         Generate the report in background (thread)
         '''
-        attachment_obj = self.pool.get('ir.attachment')
-
         if context is None:
             context ={}
+        attachment_obj = self.pool.get('ir.attachment')
 
         if isinstance(report_ids, (int, long)):
             report_ids = [report_ids]
-
-        import pooler
-        new_cr = pooler.get_db(cr.dbname).cursor()
 
         # export datas :
         report_name = "inconsistencies.xls"
@@ -112,11 +129,11 @@ class export_report_inconsistencies(osv.osv):
         res_export = rp_spool.exp_report(cr.dbname, uid, report_name, report_ids, datas, context)
         file_res = {'state': False}
         while not file_res.get('state'):
-            file_res = rp_spool.exp_report_get(new_cr.dbname, uid, res_export)
+            file_res = rp_spool.exp_report_get(cr.dbname, uid, res_export)
             time.sleep(0.5)
 
         # attach report to the right panel :
-        attachment_obj.create(new_cr, uid, {
+        attachment_obj.create(cr, uid, {
             'name': attachment_name,
             'datas_fname': attachment_name,
             'description': "Inconsistencies with HQ",
@@ -126,11 +143,8 @@ class export_report_inconsistencies(osv.osv):
         }, context=context)
 
         # state is now 'ready' :
-        self.write(new_cr, uid, report_ids, {'state': 'ready'}, context= context)
-
-        new_cr.commit()
-        new_cr.close(True)
-
+        self.write(cr, uid, report_ids, {'state': 'ready'}, context= context)
+        cr.commit()
         return True
 
 
