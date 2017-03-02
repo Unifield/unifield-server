@@ -216,7 +216,7 @@ class financing_contract_contract(osv.osv):
         # UTP-1063: Don't use MSF Private Funds anymore
         try:
             fp_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, 'analytic_distribution', 'analytic_account_msf_private_funds')[1]
-        except Exception as e:
+        except Exception:
             fp_id = 0
 
         #US-385: Move the funding pool and cost center outside the loop, put them at header of the domain
@@ -479,7 +479,7 @@ class financing_contract_contract(osv.osv):
                 project_budget += round(line.project_budget)
                 allocated_real += round(line.allocated_real)
                 project_real += round(line.project_real)
-                reporting_line_id = self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
+                self.create_reporting_line(cr, uid, contract, line, contract_line_id, context=context)
 
         # Refresh contract line with general infos
         analytic_domain = self.get_contract_domain(cr, uid, contract, context=context)
@@ -628,6 +628,9 @@ class financing_contract_contract(osv.osv):
     def write(self, cr, uid, ids, vals, context=None):
         if not ids:
             return True
+        if context is None:
+            context = {}
+
         if 'donor_id' in vals:
             donor = self.pool.get('financing.contract.donor').browse(cr, uid, vals['donor_id'], context=context)
             for contract in self.browse(cr, uid, ids, context=context):
@@ -660,9 +663,10 @@ class financing_contract_contract(osv.osv):
         format =  self.browse(cr,uid,ids,context=context)[0].format_id
         funding_pool_ids = [x.funding_pool_id.id for x in format.funding_pool_ids]
 
-        earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
-        if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
-            raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
+        if not context.get('sync_update_execution'):
+            earmarked_funding_pools = [x.funded for x in format.funding_pool_ids]
+            if not any(earmarked_funding_pools) and format.reporting_type == 'allocated':
+                raise osv.except_osv(_('Error'), _("At least one funding pool should be defined as earmarked in the funding pool list of this financing contract."))
 
 
         cost_center_ids = [x.id for x in format.cost_center_ids]
