@@ -462,14 +462,15 @@ class wizard_register_import(osv.osv_memory):
                             partner_type = 'employee'
                         elif type_for_register in ['transfer', 'transfer_same']:
                             tp_ids = self.pool.get('account.journal').search(cr, uid, [('code', '=', line[cols['third_party']])])
-                            partner_type = 'journal'
-                            tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
-                            if type_for_register == 'transfer':
-                                if tp_journal.currency.id == register_currency:
-                                    errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
-                            if type_for_register == 'transfer_same':
-                                if tp_journal.currency.id != register_currency:
-                                    errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
+                            if tp_ids:
+                                partner_type = 'journal'
+                                tp_journal = self.pool.get('account.journal').browse(cr, uid, tp_ids, context=context)[0]
+                                if type_for_register == 'transfer':
+                                    if tp_journal.currency.id == register_currency:
+                                        errors.append(_('Line %s. A Transfer Journal must have a different currency than the register.') % (current_line_num,))
+                                if type_for_register == 'transfer_same':
+                                    if tp_journal.currency.id != register_currency:
+                                        errors.append(_('Line %s. A Transfer Same Journal must have the same currency as the register.') % (current_line_num,))
                         else:
                             tp_ids = self.pool.get('res.partner').search(cr, uid, [('name', '=', line[cols['third_party']])])
                             partner_type = 'partner'
