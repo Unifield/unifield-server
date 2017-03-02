@@ -827,22 +827,9 @@ class audittrail_log_line(osv.osv):
         the delete track log cannot get the text value cause the object is
         deleted)
         """
-        field_id = vals.get('field_id', False)
-        fct_object_id = vals.get('fct_object_id', False)
-        object_id = vals.get('object_id', False)
-        old_value = vals.get('old_value', False)
-        new_value = vals.get('new_value', False)
-        model = fct_object_id or object_id
-
-        if field_id:
-            if not vals.get('old_value_text', False) and old_value:
-                vals['old_value_text'] = get_value_text(self, cr, uid,
-                        field_id, False, str(old_value), model, context=context)
-            if not vals.get('new_value_text', False) and new_value:
-                vals['new_value_text'] = get_value_text(self, cr, uid,
-                        field_id, False, str(new_value), model, context=context)
-
-        return super(audittrail_log_line, self).create(cr, uid, vals, context=context)
+        line_id = super(audittrail_log_line, self).create(cr, uid, vals, context=context)
+        self._get_values(cr, uid, line_id, None, None, context=context)
+        return line_id
 
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
