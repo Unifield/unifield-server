@@ -191,150 +191,130 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
 
         intl_status_code_name = {}
         intl_status_ids = product_creator_obj.search(self.cr, self.uid, [])
-        for intl_status in product_creator_obj.browse(self.cr, self.uid, intl_status_ids):
-            intl_status_code_name.setdefault(intl_status.code, intl_status.name)
+        for intl_status in product_creator_obj.read(self.cr, self.uid,
+                intl_status_ids, ['code', 'name']):
+            intl_status_code_name.setdefault(intl_status['code'],
+            intl_status['name'])
 
         if not self.inconsistent:
             prod_obj = self.pool.get('product.product')
             prod_status_obj = self.pool.get('product.status')
-
-            smrl_ids = smrl_obj.search(self.cr, self.uid, [('full_view', '=', False)], order='NO_ORDER', context=self.localcontext)
-
-            # check stock mission report line for inconsistencies with HQ (our instance):
             self.inconsistent = {}
-            read_smrl_result = smrl_obj.read(self.cr, self.uid, smrl_ids,
-                                             ['product_id', 'product_state', 'state_ud',
-                                              'product_active', 'mission_report_id', 'default_code',
-                                              'international_status_code'],
-                                             context=self.localcontext)
 
-            read_smrl_result_dict = {}
-            all_product_ids = []
-            for read_smrl in read_smrl_result:
-                read_smrl_result_dict[read_smrl['id']] = read_smrl
-                all_product_ids.append(read_smrl['product_id'][0])
-            del read_smrl_result
+            request = '''
+                SELECT
+                    smr.name,
+                    pp.default_code,
+                    pp.name_template,
+                    smrl.international_status_code,
+                    smrl.product_state,
+                    smrl.state_ud,
+                    smrl.product_active,
+                    instance.level,
+                    pp.id,
+                    pp.international_status,
+                    pt.state,
+                    pp.state_ud,
+                    pp.active
+                FROM
+                    stock_mission_report_line AS smrl
+                    INNER JOIN product_product AS pp ON pp.id = smrl.product_id
+                        INNER JOIN product_template AS pt ON pp.product_tmpl_id = pt.id
+                    INNER JOIN product_status AS ps ON pt.state = ps.id
+                    INNER JOIN stock_mission_report AS smr ON smr.id = smrl.mission_report_id
+                    INNER JOIN msf_instance AS instance ON smr.instance_id = instance.id
+                    JOIN (VALUES ('section',1), ('coordo',2), ('project',3)) AS il(id, ordering) ON instance.level = il.id
+                WHERE
+                    smrl.full_view='f' AND
+                    (ps.code != smrl.product_state /*OR
+                    pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active*/)
 
+                ORDER BY
+                    pp.default_code, il.ordering, smr.name;
+            '''
+            self.cr.execute(request)
+            smrl_results = self.cr.fetchall()  # this object is 3.3 MB in RAM
+                                               # with 340 000 lines of result
+
+            all_product_ids = prod_obj.search(self.cr, self.uid, [('active', 'in', ('t', 'f'))],
+                    context=self.localcontext)
             # read all product informations
             product_result = prod_obj.read(self.cr, self.uid, all_product_ids,
-                                           ['state', 'state_ud', 'active', 'name_template',
-                                            'international_status', 'default_code'],
+                                            ['international_status', 'state'],
                                            context=self.localcontext)
             product_dict = dict((x['id'], x) for x in product_result)
-
-            # get all product_status
-            prod_status_ids = prod_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
-            prod_status_result = prod_status_obj.read(self.cr, self.uid, prod_status_ids, ['code'], context=self.localcontext)
-            prod_status_dict = dict((x['id'], x['code']) for x in prod_status_result)
-
-            # get all instance id and build a level dict
-            instance_obj = self.pool.get('msf.instance')
-            instance_ids = instance_obj.search(self.cr, self.uid, [])
-            instance_read_result = instance_obj.read(self.cr, self.uid, instance_ids,
-                                                     ['level', 'name'], context=self.localcontext)
-            instance_level_dict = dict((x['id'], x) for x in
-                                       instance_read_result)
-
-            # get all report id and build a instance dict
-            smr_obj = self.pool.get('stock.mission.report')
-            smr_ids = smr_obj.search(self.cr, self.uid, [])
-            smr_read_result = smr_obj.read(self.cr, self.uid, smr_ids,
-                                           ['instance_id'], context=self.localcontext)
-            smr_instance_dict = dict((x['id'], x) for x in
-                                     smr_read_result)
 
             # get all uf_status codes
             uf_status_obj = self.pool.get('product.status')
             uf_status_code_ids = uf_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
             uf_status_code_read_result = uf_status_obj.read(self.cr, self.uid,
-                                                            uf_status_code_ids, ['code', 'name'], context=self.localcontext)
-            uf_status_code_dict = dict((x['code'], x) for x in
+                    uf_status_code_ids, ['code', 'name'], context=self.localcontext)
+            uf_status_code_dict = dict((x['code'], x['name']) for x in
                                        uf_status_code_read_result)
 
-            product_result_dict = {}
+            self.cr.execute('SELECT DISTINCT(state_ud) FROM product_product')
+            state_ud_list = [x[0] for x in self.cr.fetchall()]
             state_ud_dict = {}
-            for product in product_result:
-                inconsistent_id_list = []
-                # get the lines matching this product
-                smrl_ids = smrl_obj.search(self.cr, self.uid,
-                                           [('full_view', '=', False),
-                                            ('product_id', '=', product['id'])],
-                                           order='NO_ORDER', context=self.localcontext)
+            imf_obj = self.pool.get('ir.model.fields')
+            for state_ud in state_ud_list:
+                state_ud_name = imf_obj.get_selection(self.cr, self.uid,
+                    'product.product', 'state_ud', state_ud,
+                    context=self.localcontext)
+                state_ud_dict[state_ud] = state_ud_name
 
-                # get the inconsistent related lines
-                for smrl_id in smrl_ids:
-                    smrl = read_smrl_result_dict[smrl_id]
-                    product = product_dict[smrl['product_id'][0]]
-                    # in product_product state is False when empty
-                    # in smrl product_state is '' when empty:
-                    if not product['state'] and not smrl['product_state']:
-                        pass
-                    elif not product['state'] and smrl['product_state']:
-                        inconsistent_id_list.append(smrl['id'])
-                        continue
-                    elif product['state'] and not smrl['product_state']:
-                        inconsistent_id_list.append(smrl['id'])
-                        continue
-                    elif product['state'] and product['state'] in prod_status_dict:
-                        state_code = prod_status_dict[product['state'][0]]
-                        if state_code != smrl['product_state']:
-                            inconsistent_id_list.append(smrl['id'])
-                            continue
+            keys = (
+                'instance_name',
+                'smrl_default_code',
+                'smrl_name_template',
+                'internationnal_status_code_name',
+                'uf_status_code',
+                'ud_status_code',
+                'active',
+                'instance_level',
+                'product_id',
+                'product_international_status',
+                'product_state',
+                'product_state_ud',
+                'product_active',
+            )
 
-                    if not product['state_ud'] and not smrl['state_ud']:
-                        pass
-                    elif product['state_ud'] != smrl['state_ud']:
-                        inconsistent_id_list.append(smrl['id'])
-                        continue
-
-                    if product['active'] != smrl['product_active']: # if null in DB smrl.product_active = False ....
-                        inconsistent_id_list.append(smrl['id'])
-                        continue
-
-                if inconsistent_id_list:
-                    product_result_dict[product['id']] = {}
-                    current_prod = product_result_dict[product['id']]
-                    current_prod['smrl_list'] = []
-                    prod_state_ud = ''
-                    if product['state_ud']:
-                        if product['state_ud'] not in state_ud_dict:
-                            product_browse_obj = prod_obj.browse(self.cr, self.uid, product['id'], context=self.localcontext)
-                            state_ud_name = self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, product_browse_obj, 'state_ud', self.localcontext)
-                            state_ud_dict[product['state_ud']] = state_ud_name
-                        prod_state_ud = state_ud_dict[product['state_ud']]
-                    current_prod.update({
-                        'prod_default_code': product['default_code'],
-                        'prod_name_template': product['name_template'],
-                        'prod_international_status': product['international_status'] and product['international_status'][1] or '',
+            for smrl_line in smrl_results:
+                smrl = dict(zip(keys, smrl_line))
+                product_id = smrl.pop('product_id')
+                product = product_dict[product_id]
+                prod_default_code = smrl['smrl_default_code']
+                prod_name_template = smrl['smrl_name_template']
+                prod_international_status = smrl.pop('product_international_status')
+                prod_state = smrl.pop('product_state')
+                prod_state_ud = smrl.pop('product_state_ud')
+                prod_active = smrl.pop('product_active')
+                if product_id not in self.inconsistent:
+                    product = {
+                        'prod_default_code': prod_default_code,
+                        'prod_name_template': prod_name_template,
+                        'prod_international_status': product['international_status'][1],
                         'prod_state': product['state'] and product['state'][1] or '',
-                        'prod_state_ud': prod_state_ud,
-                        'prod_active': product['active'],
-                    })
+                        'prod_state_ud': state_ud_dict[prod_state_ud],
+                        'prod_active': prod_active,
+                    }
+                    self.inconsistent[product_id] = product
+                    self.inconsistent[product_id]['smrl_list'] = []
 
-                    # build the result list dict
-                    for smrl_id in inconsistent_id_list:
-                        smrl = read_smrl_result_dict[smrl_id]
-                        instance_id = smr_instance_dict[smrl['mission_report_id'][0]]['instance_id'][0]
+                # tweak results to display better strings
+                if smrl['uf_status_code']:
+                    smrl['uf_status_code'] = uf_status_code_dict[smrl['uf_status_code']]
+                if smrl['ud_status_code']:
+                    smrl['ud_status_code'] = self.get_ud_status(smrl['ud_status_code'])
+                if smrl['internationnal_status_code_name']:
+                    smrl['internationnal_status_code_name'] = intl_status_code_name[smrl['internationnal_status_code_name']]
 
-                        smrl_dict = {
-                            'instance_name': instance_level_dict[instance_id]['name'],
-                            'smrl_default_code': smrl['default_code'],
-                            'smrl_name_template': product['name_template'],
-                            'internationnal_status_code_name': smrl['international_status_code'] and intl_status_code_name.get(smrl['international_status_code'], '') or '',
-                            'uf_status_code': smrl['product_state'] and uf_status_code_dict[smrl['product_state']]['name'] or '',
-                            'ud_status_code': self.get_ud_status(smrl['state_ud']),
-                            'active': smrl['product_active'],
-                            'instance_level': instance_level_dict[instance_id]['level'],
-                        }
-                        product_result_dict[product['id']]['smrl_list'].append(smrl_dict)
-                    product_result_dict[product['id']]['smrl_list'].sort(key=lambda smrl: smrl['instance_level']) 
-                    self.inconsistent[product['id']] = product_result_dict[product['id']]
+                smrl_list = self.inconsistent[product_id]['smrl_list']
+                smrl_list.append(smrl)
 
         if prod_id:
             return self.inconsistent[prod_id]
         else:
             return self.inconsistent
-
 
     def get_products_with_inconsistencies(self):
         '''
