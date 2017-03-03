@@ -98035,3 +98035,23 @@ msgstr "Feuille 1"
 #, python-format
 msgid "All the imported lines must have the same partner as the Debit Note."
 msgstr "Toutes les lignes importées doivent avoir le même partenaire que la Note de Débit."
+
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "Your export inconsistent products demand will be treated quickly."
+msgstr "Votre demande d'export des produits inconsistants va être traîtée rapidement."
+
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "Due to the volume of data, your report cannot be shown immediatly."
+msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché immédiatement."
+
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "In case there would be to much inconsistances, only the first 100 products related lines would be displayed."
+msgstr "Dans le cas où il y aurait trop d'inconsistances, seules les lignes liées au 100 premiers produits seraient affichées."
+
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "When the report will be ready, you can access to it by the menu Tools / Product Status Inconsistencies"
+msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils / Incohérences du statut des produits"
