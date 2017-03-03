@@ -1197,8 +1197,8 @@ class patch_scripts(osv.osv):
             LEFT JOIN product_template t ON p.product_tmpl_id = t.id
             LEFT JOIN product_international_status pis ON pis.id = p.international_status
           ) AS sr
-        WHERE stock_mission_report_line.product_id = sr.id AND stock_mission_report_line.mission_report_id IN %s;
-        ''', (tuple(smr_ids),))
+        WHERE stock_mission_report_line.product_id = sr.id;
+        ''')
 
         cr.execute('''
         UPDATE ir_model_data
