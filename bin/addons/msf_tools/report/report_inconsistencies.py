@@ -104,10 +104,12 @@ class export_report_inconsistencies(osv.osv):
             self.generate_report_bkg(new_cr, uid, report_ids, datas, context=context)
         except Exception as e:
             logger.error('Error while running the Product Status inconsistencies report: %s' % str(e))
-            self.write(new_cr, uid, report_ids, {
+            new_cr2 = pooler.get_db(cr.dbname).cursor()
+            self.write(new_cr2, uid, report_ids, {
                 'state': 'error'
             }, context=context)
-            new_cr.commit()
+            new_cr2.commit()
+            new_cr2.close(True)
         finally:
             new_cr.close(True)
 
@@ -261,7 +263,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
 
                 # get the inconsistent related lines
                 for smrl_id in smrl_ids:
-                    smrl = read_smrl_result_dict[smrl_id] 
+                    smrl = read_smrl_result_dict[smrl_id]
                     product = product_dict[smrl['product_id'][0]]
                     # in product_product state is False when empty
                     # in smrl product_state is '' when empty:
@@ -299,7 +301,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                             product_browse_obj = prod_obj.browse(self.cr, self.uid, product['id'], context=self.localcontext)
                             state_ud_name = self.pool.get('ir.model.fields').get_browse_selection(self.cr, self.uid, product_browse_obj, 'state_ud', self.localcontext)
                             state_ud_dict[product['state_ud']] = state_ud_name
-                        prod_state_ud = state_ud_dict[product['state_ud']] 
+                        prod_state_ud = state_ud_dict[product['state_ud']]
                     current_prod.update({
                         'prod_default_code': product['default_code'],
                         'prod_name_template': product['name_template'],
