@@ -65,7 +65,7 @@ class export_report_inconsistencies(osv.osv):
 
             new_thread = threading.Thread(target=self.generate_new_report_bkg_newthread, args=(cr, uid, report.id, datas, context))
             new_thread.start()
-            new_thread.join(timeout=25.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
+            new_thread.join(timeout=5.0) # join = wait until new_thread is finished but if it last more then timeout value, you can continue to work
 
             res = {
                 'type': 'ir.actions.act_window',
@@ -227,7 +227,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active)
 
                 ORDER BY
-                    pp.default_code, il.ordering, smr.name;
+                    pp.default_code, il.ordering, smr.name
             '''
             self.cr.execute(request)
             smrl_results = self.cr.fetchall()  # this object is 3.3 MB in RAM
@@ -275,6 +275,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 'product_active',
             )
 
+            product_count = 0
             for smrl_line in smrl_results:
                 smrl = dict(zip(keys, smrl_line))
                 product_id = smrl.pop('product_id')
@@ -284,6 +285,8 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 prod_state_ud = smrl.pop('product_state_ud')
                 prod_active = smrl.pop('product_active')
                 if product_id not in self.inconsistent:
+                    if product_count > 100:
+                        continue
                     product = {
                         'prod_default_code': prod_default_code,
                         'prod_name_template': prod_name_template,
@@ -293,6 +296,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                         'prod_active': prod_active,
                     }
                     self.inconsistent[product_id] = product
+                    product_count += 1
                     self.inconsistent[product_id]['smrl_list'] = []
 
                 # tweak results to display better strings
