@@ -817,6 +817,7 @@ class shipment(osv.osv):
                     ('picking_id', '=', picking.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack),
+                    ('comment', '=', family.comment),
                 ], context=context)
 
                 # Update the moves, decrease the quantities
