@@ -185,9 +185,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         prod_id: You can get only SMRL with product_id, if you don't give this information you
         will get all inconsistents SMRL 
         '''
-        smrl_obj = self.pool.get('stock.mission.report.line')
         product_creator_obj = self.pool.get('product.international.status')
-        inconsistent_id_list = []
 
         intl_status_code_name = {}
         intl_status_ids = product_creator_obj.search(self.cr, self.uid, [])
@@ -198,7 +196,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
 
         if not self.inconsistent:
             prod_obj = self.pool.get('product.product')
-            prod_status_obj = self.pool.get('product.status')
             self.inconsistent = {}
 
             request = '''
@@ -284,8 +281,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 product = product_dict[product_id]
                 prod_default_code = smrl['smrl_default_code']
                 prod_name_template = smrl['smrl_name_template']
-                prod_international_status = smrl.pop('product_international_status')
-                prod_state = smrl.pop('product_state')
                 prod_state_ud = smrl.pop('product_state_ud')
                 prod_active = smrl.pop('product_active')
                 if product_id not in self.inconsistent:
