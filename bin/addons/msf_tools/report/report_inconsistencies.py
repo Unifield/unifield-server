@@ -253,7 +253,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
 
             product_result_dict = {}
             state_ud_dict = {}
-            for product in product_result[0:100]:
+            for product in product_result:
                 inconsistent_id_list = []
                 # get the lines matching this product
                 smrl_ids = smrl_obj.search(self.cr, self.uid,
