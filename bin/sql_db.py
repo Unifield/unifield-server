@@ -186,7 +186,10 @@ class Cursor(object):
             raise
         except Exception:
             if log_exceptions:
-                self.__logger.exception("bad query: %s", self._obj.query or query)
+                query = self._obj.query or query
+                if len(query) > 500000:
+                    query = ''.join((query[:500000], '... the query has been truncated because it is too big (%s characters)' % len(query)))
+                self.__logger.exception("bad query: %s", query)
             raise
 
         if self.sql_log:
