@@ -214,7 +214,7 @@ class stock_picking(osv.osv):
         if out_info.get('move_lines', False):
             for line in out_info['move_lines']:
                 # Don't get the returned pack lines
-                if line.get('location_dest_id', {}).get('usage', 'customer') == 'customer':
+                if line.get('location_dest_id', {}).get('usage', 'customer') == 'customer' and not line.get('not_shipped', False):
                     # aggregate according to line number
                     line_dic = result.setdefault(line.get('line_number'), {})
                     # set the data
@@ -395,7 +395,8 @@ class stock_picking(osv.osv):
                                 self._logger.info(message)
                                 raise Exception(message)
                             else:
-                                message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
+                                print 'picking_id', in_id, 'line_number', data.get('line_number')
+                                message = "11Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                                     in_name, po_name,
                                 )
                                 self._logger.info(message)
@@ -504,7 +505,7 @@ class stock_picking(osv.osv):
                     processed_in = self.search(cr, uid, [('id', '=', in_id), ('state', '=', 'done')], context=context)
                     if processed_in:
                         in_name = self.browse(cr, uid, in_id, context=context)['name']
-                        message = "Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
+                        message = "22Unable to receive Shipment Details into an Incoming Shipment in this instance as IN %s (%s) already fully/partially cancelled/Closed" % (
                             in_name, po_name,
                         )
                 if not same_in and not processed_in:
