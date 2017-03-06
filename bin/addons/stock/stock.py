@@ -1076,6 +1076,8 @@ class stock_picking(osv.osv):
         invoice_obj = self.pool.get('account.invoice')
         invoice_line_obj = self.pool.get('account.invoice.line')
         address_obj = self.pool.get('res.partner.address')
+        po_obj = self.pool.get('purchase.order')
+        fo_obj = self.pool.get('sale.order')
         invoices_group = {}
         res = {}
         inv_type = type
@@ -1152,12 +1154,23 @@ class stock_picking(osv.osv):
                 is_ivi = in_invoice and not debit_note and not inkind_donation and intermission
                 po = picking and picking.purchase_id
                 intersection_partner = po and po.partner_type and po.partner_type == 'section'
+                external_partner = po and po.partner_type and po.partner_type == 'external'
+                new_name = False
                 if (is_si and intersection_partner) or is_ivi:
                     partner_ref = po and po.partner_ref or ''
                     name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
                     new_name = partner_ref and name_inv and "%s : %s" % (partner_ref, name_inv) or False
-                    if new_name:
-                        invoice_vals.update({'name': new_name})
+                elif is_si and external_partner:
+                    # US-2562 Use case "SI from Supply (external supplier): C1 provides and ships to P1 (internal)"
+                    # => if it's a one to one order (FO = PO), add the FO Customer Reference to the SI Description
+                    fo_ids = po and po_obj.get_so_ids_from_po_ids(cr, uid, [po.id], context=context)
+                    if fo_ids and len(fo_ids) == 1:
+                        fo = fo_obj.browse(cr, uid, fo_ids[0], fields_to_fetch=['partner_type', 'client_order_ref'], context=context)
+                        if fo.partner_type and fo.partner_type == 'internal' and fo.client_order_ref:
+                            name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
+                            new_name = name_inv and "%s : %s" % (fo.client_order_ref, name_inv) or False
+                if new_name:
+                    invoice_vals.update({'name': new_name})
                 # US-1669 Use case IVI from C1 to C2, don't display FOC2 (display only INXXX + POC1)
                 origin_ivi = False
                 if is_ivi:
