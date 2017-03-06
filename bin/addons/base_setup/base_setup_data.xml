@@ -39,7 +39,6 @@
     </record>
 
     <record id="base.user_root" model="res.users">
-      <field name="action_id" ref="action_base_setup"/>
       <field name="menu_id" ref="action_base_setup"/>
     </record>
 
