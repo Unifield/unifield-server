@@ -218,7 +218,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     stock_mission_report_line AS smrl
                     INNER JOIN product_product AS pp ON pp.id = smrl.product_id
                     INNER JOIN product_template AS pt ON pp.product_tmpl_id = pt.id
-                    INNER JOIN product_status AS ps ON pt.state = ps.id
+                    LEFT JOIN product_status AS ps ON pt.state = ps.id
                     INNER JOIN stock_mission_report AS smr ON smr.id = smrl.mission_report_id
                     INNER JOIN msf_instance AS instance ON smr.instance_id = instance.id
                     JOIN (VALUES ('section',1), ('coordo',2), ('project',3)) AS il(id, ordering) ON instance.level = il.id
