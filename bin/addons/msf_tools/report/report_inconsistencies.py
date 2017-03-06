@@ -223,8 +223,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     JOIN (VALUES ('section',1), ('coordo',2), ('project',3)) AS il(id, ordering) ON instance.level = il.id
                 WHERE
                     smrl.full_view='f' AND
-                    (coalesce(ps.code, '') = '' AND coalesce(smrl.product_state, '') != '') OR
-                    (ps.code != smrl.product_state OR
+                    (coalesce(ps.code, '') != coalesce(smrl.product_state, '') OR
                     pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active)
 
                 ORDER BY
