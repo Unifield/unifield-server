@@ -820,11 +820,24 @@ class audittrail_log_line(osv.osv):
         view = super(audittrail_log_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         return view
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        get text values at create step because in some cases the text values
+        will not be available (when a object link to this one is deleted, then
+        the delete track log cannot get the text value cause the object is
+        deleted)
+        """
+        line_id = super(audittrail_log_line, self).create(cr, uid, vals, context=context)
+        self._get_values(cr, uid, line_id, None, None, context=context)
+        return line_id
+
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return the value of the field according to his type
         '''
         res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
@@ -963,8 +976,8 @@ class audittrail_log_line(osv.osv):
         'log': fields.integer("Log ID"),
         'old_value_fct': fields.function(_get_values, method=True, string='Old Value Fct', type='char', store=False, multi='values'),
         'new_value_fct': fields.function(_get_values, method=True, string='New Value Fct', type='char', store=False, multi='values'),
-        'old_value_text': fields.char(size=256, string='Old Value'),
-        'new_value_text': fields.char(size=256, string='New Value'),
+        'old_value_text': fields.char(size=1024, string='Old Value'),
+        'new_value_text': fields.char(size=1024, string='New Value'),
         'old_value': fields.text("Old Value"),
         'new_value': fields.text("New Value"),
         'field_description': fields.char('Field Description', size=64),
