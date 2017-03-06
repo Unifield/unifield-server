@@ -183,7 +183,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
         Based on the fields: product_active, state_ud and international_status_code
 
         prod_id: You can get only SMRL with product_id, if you don't give this information you
-        will get all inconsistents SMRL 
+        will get all inconsistents SMRL
         '''
         product_creator_obj = self.pool.get('product.international.status')
 
@@ -212,11 +212,12 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     pp.international_status,
                     pt.state,
                     pp.state_ud,
-                    pp.active
+                    pp.active,
+                    pp.international_status
                 FROM
                     stock_mission_report_line AS smrl
                     INNER JOIN product_product AS pp ON pp.id = smrl.product_id
-                        INNER JOIN product_template AS pt ON pp.product_tmpl_id = pt.id
+                    INNER JOIN product_template AS pt ON pp.product_tmpl_id = pt.id
                     INNER JOIN product_status AS ps ON pt.state = ps.id
                     INNER JOIN stock_mission_report AS smr ON smr.id = smrl.mission_report_id
                     INNER JOIN msf_instance AS instance ON smr.instance_id = instance.id
@@ -233,14 +234,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             smrl_results = self.cr.fetchall()  # this object is 3.3 MB in RAM
                                                # with 340 000 lines of result
 
-            all_product_ids = prod_obj.search(self.cr, self.uid, [('active', 'in', ('t', 'f'))],
-                    context=self.localcontext)
-            # read all product informations
-            product_result = prod_obj.read(self.cr, self.uid, all_product_ids,
-                                            ['international_status', 'state'],
-                                           context=self.localcontext)
-            product_dict = dict((x['id'], x) for x in product_result)
-
             # get all uf_status codes
             uf_status_obj = self.pool.get('product.status')
             uf_status_code_ids = uf_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
@@ -249,6 +242,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             uf_status_code_dict = dict((x['code'], x['name']) for x in
                                        uf_status_code_read_result)
 
+            # build a dict of state_ud
             self.cr.execute('SELECT DISTINCT(state_ud) FROM product_product')
             state_ud_list = [x[0] for x in self.cr.fetchall()]
             state_ud_dict = {}
@@ -258,6 +252,20 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     'product.product', 'state_ud', state_ud,
                     context=self.localcontext)
                 state_ud_dict[state_ud] = state_ud_name
+
+            # build a dict of product internationnal_status
+            int_status_obj = self.pool.get('product.international.status')
+            ids = int_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
+            read_result = int_status_obj.read(self.cr, self.uid, ids,
+                    ['code', 'name'], context=self.localcontext)
+            status_code_dict = dict((x['code'], x['name']) for x in read_result)
+
+            # build a dict of product status
+            status_obj = self.pool.get('product.status')
+            ids = status_obj.search(self.cr, self.uid, [], context=self.localcontext)
+            read_result = status_obj.read(self.cr, self.uid, ids,
+                    ['code', 'name'], context=self.localcontext)
+            state_code_dict = dict((x['code'], x['name']) for x in read_result)
 
             keys = (
                 'instance_name',
@@ -271,28 +279,33 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 'product_id',
                 'product_international_status',
                 'product_state',
-                'product_state_ud',
-                'product_active',
+                'prod_state_ud',
+                'prod_active',
+                'prod_international_status',
             )
 
             product_count = 0
             for smrl_line in smrl_results:
                 smrl = dict(zip(keys, smrl_line))
                 product_id = smrl.pop('product_id')
-                product = product_dict[product_id]
                 prod_default_code = smrl['smrl_default_code']
                 prod_name_template = smrl['smrl_name_template']
-                prod_state_ud = smrl.pop('product_state_ud')
-                prod_active = smrl.pop('product_active')
+                prod_state_ud = smrl.pop('prod_state_ud')
+                prod_state_ud = prod_state_ud in state_ud_dict and state_ud_dict[prod_state_ud] or ''
+                prod_active = smrl.pop('prod_active')
+                prod_state = smrl['product_state']
+                prod_state = prod_state in state_code_dict and state_code_dict[prod_state] or ''
+                prod_int_status = smrl.pop('prod_international_status')
+                prod_int_status = prod_int_status in status_code_dict and status_code_dict[prod_int_status] or ''
                 if product_id not in self.inconsistent:
                     if product_count > 100:
-                        continue
+                        break
                     product = {
                         'prod_default_code': prod_default_code,
                         'prod_name_template': prod_name_template,
-                        'prod_international_status': product['international_status'][1],
-                        'prod_state': product['state'] and product['state'][1] or '',
-                        'prod_state_ud': state_ud_dict[prod_state_ud],
+                        'prod_international_status': prod_int_status,
+                        'prod_state': prod_state,
+                        'prod_state_ud': prod_state_ud,
                         'prod_active': prod_active,
                     }
                     self.inconsistent[product_id] = product
