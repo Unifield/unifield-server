@@ -38,10 +38,6 @@
       <field name="target">new</field>
     </record>
 
-    <record id="base.user_root" model="res.users">
-      <field name="menu_id" ref="action_base_setup"/>
-    </record>
-
     <record id="attachment_config_default" model="attachment.config">
         <field name="name">c:\attachments\</field>
     </record>
