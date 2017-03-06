@@ -242,15 +242,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                                        uf_status_code_read_result)
 
             # build a dict of state_ud
-            self.cr.execute('SELECT DISTINCT(state_ud) FROM product_product')
-            state_ud_list = [x[0] for x in self.cr.fetchall()]
-            state_ud_dict = {}
-            imf_obj = self.pool.get('ir.model.fields')
-            for state_ud in state_ud_list:
-                state_ud_name = imf_obj.get_selection(self.cr, self.uid,
-                    'product.product', 'state_ud', state_ud,
-                    context=self.localcontext)
-                state_ud_dict[state_ud] = state_ud_name
+            state_ud_dict = dict(prod_obj._columns['state_ud'].selection)
 
             # build a dict of product internationnal_status
             int_status_obj = self.pool.get('product.international.status')
