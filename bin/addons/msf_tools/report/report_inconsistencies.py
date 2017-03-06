@@ -212,8 +212,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     pp.international_status,
                     pt.state,
                     pp.state_ud,
-                    pp.active,
-                    pp.international_status
+                    pp.active
                 FROM
                     stock_mission_report_line AS smrl
                     INNER JOIN product_product AS pp ON pp.id = smrl.product_id
@@ -224,6 +223,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     JOIN (VALUES ('section',1), ('coordo',2), ('project',3)) AS il(id, ordering) ON instance.level = il.id
                 WHERE
                     smrl.full_view='f' AND
+                    (coalesce(ps.code, '') = '' AND coalesce(smrl.product_state, '') != '') OR
                     (ps.code != smrl.product_state OR
                     pp.state_ud != smrl.state_ud OR pp.active != smrl.product_active)
 
@@ -258,14 +258,14 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
             ids = int_status_obj.search(self.cr, self.uid, [], context=self.localcontext)
             read_result = int_status_obj.read(self.cr, self.uid, ids,
                     ['code', 'name'], context=self.localcontext)
-            status_code_dict = dict((x['code'], x['name']) for x in read_result)
+            status_code_dict = dict((x['id'], x['name']) for x in read_result)
 
             # build a dict of product status
             status_obj = self.pool.get('product.status')
             ids = status_obj.search(self.cr, self.uid, [], context=self.localcontext)
             read_result = status_obj.read(self.cr, self.uid, ids,
                     ['code', 'name'], context=self.localcontext)
-            state_code_dict = dict((x['code'], x['name']) for x in read_result)
+            state_code_dict = dict((x['id'], x['name']) for x in read_result)
 
             keys = (
                 'instance_name',
@@ -281,25 +281,24 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 'product_state',
                 'prod_state_ud',
                 'prod_active',
-                'prod_international_status',
             )
 
             product_count = 0
             for smrl_line in smrl_results:
                 smrl = dict(zip(keys, smrl_line))
                 product_id = smrl.pop('product_id')
-                prod_default_code = smrl['smrl_default_code']
-                prod_name_template = smrl['smrl_name_template']
                 prod_state_ud = smrl.pop('prod_state_ud')
-                prod_state_ud = prod_state_ud in state_ud_dict and state_ud_dict[prod_state_ud] or ''
                 prod_active = smrl.pop('prod_active')
-                prod_state = smrl['product_state']
-                prod_state = prod_state in state_code_dict and state_code_dict[prod_state] or ''
-                prod_int_status = smrl.pop('prod_international_status')
-                prod_int_status = prod_int_status in status_code_dict and status_code_dict[prod_int_status] or ''
                 if product_id not in self.inconsistent:
                     if product_count > 100:
                         break
+                    prod_default_code = smrl['smrl_default_code']
+                    prod_name_template = smrl['smrl_name_template']
+                    prod_state_ud = prod_state_ud in state_ud_dict and state_ud_dict[prod_state_ud] or ''
+                    prod_state = smrl['product_state']
+                    prod_state = prod_state in state_code_dict and state_code_dict[prod_state] or ''
+                    prod_int_status = smrl['product_international_status']
+                    prod_int_status = prod_int_status in status_code_dict and status_code_dict[prod_int_status] or ''
                     product = {
                         'prod_default_code': prod_default_code,
                         'prod_name_template': prod_name_template,
@@ -312,7 +311,7 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     product_count += 1
                     self.inconsistent[product_id]['smrl_list'] = []
 
-                # tweak results to display better strings
+                # tweak results to display string instead of codes
                 if smrl['uf_status_code']:
                     smrl['uf_status_code'] = uf_status_code_dict[smrl['uf_status_code']]
                 if smrl['ud_status_code']:
