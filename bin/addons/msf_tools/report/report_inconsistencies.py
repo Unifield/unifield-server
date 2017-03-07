@@ -304,12 +304,9 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                     self.inconsistent[product_id]['smrl_list'] = []
 
                 # tweak results to display string instead of codes
-                if smrl['uf_status_code']:
-                    smrl['uf_status_code'] = uf_status_code_dict[smrl['uf_status_code']]
-                if smrl['ud_status_code']:
-                    smrl['ud_status_code'] = self.get_ud_status(smrl['ud_status_code'])
-                if smrl['internationnal_status_code_name']:
-                    smrl['internationnal_status_code_name'] = intl_status_code_name[smrl['internationnal_status_code_name']]
+                smrl['uf_status_code'] = smrl['uf_status_code'] and uf_status_code_dict[smrl['uf_status_code']] or ''
+                smrl['ud_status_code'] = smrl['ud_status_code'] and self.get_ud_status(smrl['ud_status_code']) or ''
+                smrl['internationnal_status_code_name'] = smrl['internationnal_status_code_name'] and intl_status_code_name[smrl['internationnal_status_code_name']] or ''
 
                 smrl_list = self.inconsistent[product_id]['smrl_list']
                 smrl_list.append(smrl)
