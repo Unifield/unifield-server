@@ -1773,6 +1773,7 @@ class orm_template(object):
 
             is_inherited_view = sql_res[5]
             view_id = is_inherited_view or sql_res[3]
+            model = False
             parent_view_model = sql_res[6]
 
         # if a view was found
