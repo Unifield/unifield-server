@@ -164,6 +164,7 @@ class product_history_consumption(osv.osv):
         if not months:
             raise osv.except_osv(_('Error'), _('You have to choose at least one month for consumption history'))
 
+        domain = []
         if obj.nomen_manda_0:
             for report in self.browse(cr, uid, ids, context=context):
                 product_ids = []
@@ -182,14 +183,13 @@ class product_history_consumption(osv.osv):
                     nom = report.nomen_manda_0.id
                     field = 'nomen_manda_0'
                 if nom:
+                    domain = [(field, '=', nom)]
                     product_ids.extend(self.pool.get('product.product').search(cr, uid, [(field, '=', nom)], context=context))
 
         if obj.sublist_id:
             context.update({'search_default_list_ids': obj.sublist_id.id})
             for line in obj.sublist_id.product_ids:
                 product_ids.append(line.name.id)
-
-        domain = [('id', 'in', product_ids)]
 
         if not obj.nomen_manda_0 and not obj.sublist_id:
             domain = []
