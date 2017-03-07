@@ -45,6 +45,7 @@ from report.report_sxw import report_sxw, report_rml, _int_format, \
     _float_format, _date_format, _dttime_format, browse_record_list, \
     rml_parse
 from lxml import etree
+from lxml.etree import XMLSyntaxError
 import addons
 import tools
 from tools.translate import _
@@ -449,7 +450,15 @@ class WebKitParser(report_sxw):
         log an error if that is the case an remove the corresponding node.
         '''
         logger = logging.getLogger('mako_spreadsheet')
-        file_dom = etree.fromstring(xml_string)
+        try:
+            file_dom = etree.fromstring(xml_string)
+        except XMLSyntaxError as e:
+            # US-2540: in case of xml syntax error, log the error and return
+            # the malformed XML
+            error_message = 'Error in report %s: %s' % (report_name, e)
+            logger.error(error_message)
+            return xml_string
+
         namespaces = {
             'o': 'urn:schemas-microsoft-com:office:office',
             'x': 'urn:schemas-microsoft-com:office:excel',
