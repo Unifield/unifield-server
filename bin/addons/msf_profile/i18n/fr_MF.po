@@ -77836,6 +77836,11 @@ msgstr "Mauritanie"
 msgid "Orders"
 msgstr "Commandes"
 
+#. module: base
+#: model:ir.ui.menu,name:base.menu_base_partner
+msgid "Sales"
+msgstr "Commandes"
+
 #. module: account
 #: field:account.addtmpl.wizard,cparent_id:0
 msgid "Parent target"
@@ -93514,7 +93519,7 @@ msgstr "Continuer"
 #: model:process.process,name:sale.process_process_salesprocess0
 #: view:sale.order:0
 msgid "Sales"
-msgstr "Commandes "
+msgstr "Commandes"
 
 #. modules: purchase, msf_outgoing, stock_move_tracking, sale, kit, stock
 #: field:kit.creation,consumed_ids_kit_creation:0
