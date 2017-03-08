@@ -45743,7 +45743,7 @@ msgstr "TRINIDAD AND TOBAGO DOLLAR"
 #: model:ir.ui.menu,name:sales_followup.menu_sale_followup_multi
 #: view:sale.followup.multi.wizard:0
 msgid "FO Follow-up per client"
-msgstr "FO Follow-up per client"
+msgstr "Suivi Commande Terrain par Client"
 
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:249
