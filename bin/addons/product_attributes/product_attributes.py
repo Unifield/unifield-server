@@ -1318,6 +1318,8 @@ class product_attributes(osv.osv):
                 vals['default_code'] = vals['default_code'].strip()
                 if ' ' in vals['default_code']:
                     # Check if the old code was 'XXX'
+                    # in case there is, it mean it is a duplicate and spaces
+                    # are not allowed.
                     if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
                         raise osv.except_osv(
                             _('Error'),
