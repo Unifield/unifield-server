@@ -63,9 +63,6 @@
                                     <translate>Due to the volume of data, your report cannot be shown immediatly.</translate><br />
                                 </p>
                                 <p style="font-size:14px;align:center">
-                                    <translate>In case there would be to much inconsistances, only the first 100 products related lines would be displayed.</translate><br />
-                                </p>
-                                <p style="font-size:14px;align:center">
                                     <translate>When the report will be ready, you can access to it by the menu Tools / Product Status Inconsistencies</translate><br />
                                 </p>
                             </div>

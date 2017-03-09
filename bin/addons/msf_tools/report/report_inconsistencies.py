@@ -275,15 +275,12 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                 'prod_active',
             )
 
-            product_count = 0
             for smrl_line in smrl_results:
                 smrl = dict(zip(keys, smrl_line))
                 product_id = smrl.pop('product_id')
                 prod_state_ud = smrl.pop('prod_state_ud')
                 prod_active = smrl.pop('prod_active')
                 if product_id not in self.inconsistent:
-                    if product_count > 100:
-                        break
                     prod_default_code = smrl['smrl_default_code']
                     prod_name_template = smrl['smrl_name_template']
                     prod_state_ud = prod_state_ud in state_ud_dict and state_ud_dict[prod_state_ud] or ''
@@ -300,7 +297,6 @@ class parser_report_inconsistencies_xls(report_sxw.rml_parse):
                         'prod_active': prod_active,
                     }
                     self.inconsistent[product_id] = product
-                    product_count += 1
                     self.inconsistent[product_id]['smrl_list'] = []
 
                 # tweak results to display string instead of codes

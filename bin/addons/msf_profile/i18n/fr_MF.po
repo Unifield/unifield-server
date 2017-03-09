@@ -98048,10 +98048,5 @@ msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché 
 
 #. module: msf_tools
 #: view:export.report.inconsistencies:0
-msgid "In case there would be to much inconsistances, only the first 100 products related lines would be displayed."
-msgstr "Dans le cas où il y aurait trop d'inconsistances, seules les lignes liées au 100 premiers produits seraient affichées."
-
-#. module: msf_tools
-#: view:export.report.inconsistencies:0
 msgid "When the report will be ready, you can access to it by the menu Tools / Product Status Inconsistencies"
 msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils / Incohérences du statut des produits"
