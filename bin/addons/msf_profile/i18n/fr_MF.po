@@ -86092,6 +86092,12 @@ msgid "Product Qty should be greater than 0.00"
 msgstr "La qté du produit doit être supérieure à 0.00"
 
 #. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1180
+#, python-format
+msgid "Unit Price should be greater than 0.00"
+msgstr "Le prix unitaire doit être supérieure à 0.00"
+
+#. module: msf_doc_import
 #: view:wizard.export.po.validated:0
 msgid "Download file"
 msgstr "Download file"

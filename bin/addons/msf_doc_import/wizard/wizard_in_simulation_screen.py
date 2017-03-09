@@ -1176,9 +1176,13 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             err_msg = _('Incorrect float value for field \'Price Unit\'')
             try:
                 unit_price = float(values[5])
+                if unit_price < 0:
+                    err_msg = _('Unit Price should be greater than 0.00')
+                    raise ValueError(err_msg)
                 write_vals['imp_price_unit'] = unit_price
             except Exception:
                 errors.append(err_msg)
+                write_vals['type_change'] = 'error'
 
             # Currency
             currency_value = values[6]
