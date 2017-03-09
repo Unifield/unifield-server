@@ -98110,3 +98110,17 @@ msgstr "Mission reopen available ?"
 msgid "Not Invoice"
 msgstr "Pas de Facture"
 
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "Your export inconsistent products demand will be treated quickly."
+msgstr "Votre demande d'export des produits inconsistants va être traîtée rapidement."
+
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "Due to the volume of data, your report cannot be shown immediatly."
+msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché immédiatement."
+
+#. module: msf_tools
+#: view:export.report.inconsistencies:0
+msgid "When the report will be ready, you can access to it by the menu Tools / Product Status Inconsistencies"
+msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils / Incohérences du statut des produits"
