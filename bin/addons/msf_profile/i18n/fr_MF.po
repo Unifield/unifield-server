@@ -9660,6 +9660,7 @@ msgstr "No need"
 #: selection:wizard.advance.line,partner_type:0
 #: field:wizard.import.cheque.lines,employee_id:0
 #: field:wizard.register.import.lines,employee_id:0
+#: field:wizard.import.invoice.lines,employee_id:0
 #: model:ir.model,name:sync_so.model_hr_employee
 #, python-format
 msgid "Employee"
