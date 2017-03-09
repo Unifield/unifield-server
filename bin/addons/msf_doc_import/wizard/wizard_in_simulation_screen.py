@@ -22,6 +22,7 @@
 # Module imports
 import base64
 from mx import DateTime
+from datetime import datetime
 import threading
 import time
 import logging
@@ -368,9 +369,13 @@ class wizard_import_in_simulation_screen(osv.osv):
             index += 1
             values.setdefault(index, [])
             for cell_nb in range(len(row)):
-                cell_data = row.cells and row.cells[cell_nb] and \
-                    row.cells[cell_nb].data
-                values[index].append(cell_data)
+                try:
+                    cell_data = row.cells and row.cells[cell_nb] and \
+                        row.cells[cell_nb].data
+                    values[index].append(cell_data)
+                except DateTime.mxDateTime.RangeError as e:
+                    raise osv.except_osv(_('Error'), _('Line %s of the imported file, \
+the date has a wrong format: %s') % (index+1, str(e)))
 
         return values
 
@@ -457,13 +462,17 @@ class wizard_import_in_simulation_screen(osv.osv):
                 values_header_errors = []
                 values_line_errors = []
                 message = ''
-
                 header_values = {}
+                file_parse_errors = []
 
-                if wiz.filetype == 'excel':
-                    values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
-                else:
-                    values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+                try:
+                    if wiz.filetype == 'excel':
+                        values = self.get_values_from_excel(cr, uid, wiz.file_to_import, context=context)
+                    else:
+                        values = self.get_values_from_xml(cr, uid, wiz.file_to_import, context=context)
+                except Exception as e:
+                    file_parse_errors.append(str(e))
+
 
                 '''
                 We check for each line if the number of columns is consistent
@@ -473,37 +482,38 @@ class wizard_import_in_simulation_screen(osv.osv):
                 '''
                 # Check number of columns on lines
 
-                for x in xrange(1, NB_OF_HEADER_LINES + 1):
-                    if len(values.get(x, [])) != 2:
-                        lines_to_ignored.append(x)
-                        error_msg = _('Line %s of the imported file: The header \
+                if not file_parse_errors:
+                    for x in xrange(1, NB_OF_HEADER_LINES + 1):
+                        if len(values.get(x, [])) != 2:
+                            lines_to_ignored.append(x)
+                            error_msg = _('Line %s of the imported file: The header \
     information must be on two columns: Column A for name of the field and column\
      B for value.') % x
-                        file_format_errors.append(error_msg)
+                            file_format_errors.append(error_msg)
 
-                if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
-                    error_msg = _('Line 8 of the Excel file: This line is \
+                    if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
+                        error_msg = _('Line 8 of the Excel file: This line is \
     mandatory and must have %s columns. The values on this line must be the name \
     of the field for IN lines.') % NB_LINES_COLUMNS
-                    file_format_errors.append(error_msg)
-
-                for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
-                    if len(values.get(x, [])) != NB_LINES_COLUMNS:
-                        lines_to_ignored.append(x)
-                        error_msg = _('Line %s of the imported file: The line \
-    information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
                         file_format_errors.append(error_msg)
 
-                nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
-                self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
+                    for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
+                        if len(values.get(x, [])) != NB_LINES_COLUMNS:
+                            lines_to_ignored.append(x)
+                            error_msg = _('Line %s of the imported file: The line \
+    information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
+                            file_format_errors.append(error_msg)
 
-                if len(file_format_errors):
+                    nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
+                    self.write(cr, uid, [wiz.id], {'nb_file_lines': nb_file_lines}, context=context)
+
+                if file_format_errors or file_parse_errors:
                     message = _('''## IMPORT STOPPED ##
 
-    Nothing has been imported because of bad file format. See below:
+Nothing has been imported because of %s. See below:
 
-    ## File format errors ##\n\n''')
-                    for err in file_format_errors:
+    ## File errors ##\n\n''') % (file_format_errors and _('a bad file format') or _('a file parse error'))
+                    for err in file_format_errors + file_parse_errors:
                         message += '%s\n' % err
 
                     self.write(cr, uid, [wiz.id], {'message': message, 'state': 'error'}, context)
@@ -601,7 +611,12 @@ class wizard_import_in_simulation_screen(osv.osv):
 
                     # Qty
                     if vals[4]:
-                        qty = float(vals[4])
+                        try:
+                            qty = float(vals[4])
+                        except ValueError:
+                            # do not raise here if the qty is not a float as
+                            # it is checked later in import_line()
+                            pass
 
                     # Batch and expiry date
                     # Put the batch + expiry date in a cache to create
@@ -823,7 +838,7 @@ class wizard_import_in_simulation_screen(osv.osv):
             SIMU_LINES = {}
         except Exception, e:
             logging.getLogger('in.simulation simulate').warn('Exception', exc_info=True)
-            self.write(cr, uid, ids, {'message': e}, context=context)
+            self.write(cr, uid, ids, {'message': e, 'state': 'error'}, context=context)
             cr.commit()
             cr.close(True)
 
@@ -1099,7 +1114,10 @@ class wizard_import_in_line_simulation_screen(osv.osv):
                     prod_id = PRODUCT_CODE_ID.get(values[1])
 
                 if not prod_id and values[1]:
-                    prod_ids = prod_obj.search(cr, uid, [('default_code', '=', values[1]), ], context=context)
+                    stripped_product_code = values[1].strip()
+                    prod_ids = prod_obj.search(cr, uid,
+                            [('default_code', '=', stripped_product_code)],
+                            context=context)
                     if not prod_ids:
                         # if we didn't manage to link our product code with existing product in DB, we cannot continue checks
                         # because it needs the product id:
@@ -1124,6 +1142,9 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             err_msg = _('Incorrect float value for field \'Product Qty\'')
             try:
                 qty = float(values[3])
+                if qty < 0:
+                    err_msg = _('Product Qty should be greater than 0.00')
+                    raise ValueError(err_msg)
                 write_vals['imp_product_qty'] = qty
             except Exception:
                 errors.append(err_msg)
@@ -1218,12 +1239,26 @@ class wizard_import_in_line_simulation_screen(osv.osv):
             if not lot_check and not exp_check and exp_value:
                 warnings.append(_('An expired date is defined on the imported file but the product doesn\'t require expired date - Expired date ignored'))
             elif exp_value:
+                date_tools = self.pool.get('date.tools')
+                date_format = date_tools.get_date_format(cr, uid, context=context)
                 if exp_value and type(exp_value) == type(DateTime.now()):
-                    write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
+                    if datetime.strptime(exp_value.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                        err_msg = _('You cannot create a batch number with an expiry date before %s') % (
+                                    datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                )
+                        errors.append(err_msg)
+                    else:
+                        write_vals['imp_exp_date'] = exp_value.strftime('%Y-%m-%d')
                 elif exp_value and isinstance(exp_value, str):
                     try:
                         time.strptime(exp_value, '%Y-%m-%d')
-                        write_vals['imp_exp_date'] = exp_value
+                        if datetime.strptime(exp_value, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                            error_msg = _('You cannot create a batch number with an expiry date before %s') % (
+                                        datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                    )
+                            errors.append(err_msg)
+                        else:
+                            write_vals['imp_exp_date'] = exp_value
                     except ValueError:
                         err_msg = _('Incorrect date value for field \'Expired date\'')
                         errors.append(err_msg)

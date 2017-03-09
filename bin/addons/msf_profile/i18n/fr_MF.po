@@ -46300,10 +46300,12 @@ msgid "Field description"
 msgstr "Description du champ"
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:203
+#: code:addons/msf_doc_import/wizard/wizard_import_batch.py:211
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1247
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1257
 #, python-format
 msgid "You cannot create a batch number with an expiry date before %s"
-msgstr "You cannot create a batch number with an expiry date before %s"
+msgstr "Vous ne pouvez pas pas créer un numéro de lot avec une date d'expiration antérieure à %s"
 
 #. module: product_nomenclature
 #: code:addons/product_nomenclature/product_nomenclature.py:295
@@ -86084,6 +86086,7 @@ msgstr "Total Project - Balance"
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:291
 #: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:206
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:172
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1147
 #, python-format
 msgid "Product Qty should be greater than 0.00"
 msgstr "La qté du produit doit être supérieure à 0.00"
@@ -93142,22 +93145,34 @@ msgid "You have to select some line to return to a register."
 msgstr "Vous devez sélectionner une ligne pour retourner dans un Registre."
 
 #. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:501
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:511
 #, python-format
 msgid "## IMPORT STOPPED ##\n"
 "\n"
-"    Nothing has been imported because of bad file format. See below:\n"
+"Nothing has been imported because of %s. See below:\n"
 "\n"
-"    ## File format errors ##\n"
-"\n"
-""
-msgstr "## IMPORT STOPPED ##\n"
-"\n"
-"    Nothing has been imported because of bad file format. See below:\n"
-"\n"
-"    ## File format errors ##\n"
+"    ## File errors ##\n"
 "\n"
 ""
+msgstr "## IMPORT STOPPÉ ##\n"
+"\n"
+"Rien n'a été importé du à %s. Voir ci-après:\n"
+"\n"
+"    ## Erreur de fichier ##\n"
+"\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:515
+#, python-format
+msgid "a bad file format"
+msgstr "un mauvais format de fichier"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:515
+#, python-format
+msgid "a file parse error"
+msgstr "une erreur d'anaylyse de fichier"
 
 #. module: account_mcdb
 #: field:account.mcdb,rev_instance_ids:0
@@ -98035,3 +98050,9 @@ msgstr "Feuille 1"
 #, python-format
 msgid "All the imported lines must have the same partner as the Debit Note."
 msgstr "Toutes les lignes importées doivent avoir le même partenaire que la Note de Débit."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:377
+#, python-format
+msgid "Line %s of the imported file, the date has a wrong format: %s"
+msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct : %s"
