@@ -251,12 +251,11 @@ class product_history_consumption(osv.osv):
             ''')
         else:
             cr.execute('''
-              SELECT distinct(product_id)
-              FROM stock_move
-              WHERE state = 'done'
-                AND
-                (location_id IN %s OR location_dest_id IN %s)
-            ''', (tuple(context.get('location_id', [])), tuple(context.get('location_id', []))))
+              SELECT distinct(s.product_id)
+              FROM stock_move s
+                LEFT JOIN stock_location l ON l.id = s.location_id OR l.id = s.location_dest_id
+              WHERE l.usage in ('customer', 'internal')
+            ''')
         product_ids = [x[0] for x in cr.fetchall()]
 
         # split ids into slices to not read a lot record in the same time (memory)
