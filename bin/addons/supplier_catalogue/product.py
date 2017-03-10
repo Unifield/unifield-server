@@ -222,10 +222,13 @@ class pricelist_partnerinfo(osv.osv):
             context = {}
 
         if not context.get('noraise'):
-            for line in self.browse(cr, uid, ids, context=context):
-                if line.min_quantity <= 0.00:
-                    raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') %line.suppinfo_id.product_id.name)
-                    return False
+            read_result = self.read(cr, uid, ids, ['min_quantity'],
+                    context=context)
+            negative_qty = [x['id'] for x in read_result if x['min_quantity'] <= 0.00]
+            if negative_qty:
+                line = self.browse(cr, uid, negative_qty[0], context=context)
+                raise osv.except_osv(_('Error'), _('The line of product %s has a negative or zero min. quantity !') % line.suppinfo_id.product_id.name)
+                return False
 
         return True
 

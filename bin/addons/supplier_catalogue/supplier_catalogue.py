@@ -250,7 +250,7 @@ class supplier_catalogue(osv.osv):
                     new_supinfo_vals.update({'name': vals['partner_id'],
                                              'delay': delay})
 
-                # Change pricelist data according to new data
+                # Change pricelist data according to new data (only if there is change)
                 new_price_vals = {}
                 if 'period_to' in vals:
                     new_price_vals['period_to'] = vals.get('period_to', None)
@@ -269,7 +269,23 @@ class supplier_catalogue(osv.osv):
                 if new_supinfo_vals:
                     supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
 
-                pricelist_ids = [x[1] for x in vals['line_ids'] if x]
+                pricelist_ids = []
+                if 'line_ids' in vals:
+                    line_ids = [x[1] for x in vals['line_ids'] if x]
+                    line_obj = self.pool.get('supplier.catalogue.line')
+                    line_result = line_obj.read(cr, uid, line_ids,
+                            ['partner_info_id'], context=context)
+                    pricelist_ids = [x['partner_info_id'][0] for x in
+                            line_result if x['partner_info_id']]
+                else:
+                    # if no lines are edited, then it means the catalog itself
+                    # has been edited and the new vals should be applied to
+                    # all lines (that could be long operation)
+                    cr.execute('''SELECT partner_info_id
+                    FROM supplier_catalogue_line
+                    WHERE catalogue_id = %s ''' % (ids[0]))
+                    pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
+
                 if pricelist_ids and new_price_vals:
                     price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
@@ -297,7 +313,9 @@ class supplier_catalogue(osv.osv):
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
-        # Update lines
+
+        # Update lines, this is required as many operations are done in the
+        # suppliser.catatogue.line.write() when the catalog state change
         line_obj.write(cr, uid, line_ids, {}, context=context)
 
         return True
@@ -324,8 +342,6 @@ class supplier_catalogue(osv.osv):
                         'message': _('Warning! There is already another inactive catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check'),
                     },
                 })
-
-
 
         return res
 
@@ -1044,10 +1060,13 @@ class supplier_catalogue_line(osv.osv):
             ids = [ids]
 
         if not context.get('noraise'):
-            for line in self.browse(cr, uid, ids, context=context):
-                if line.min_qty <= 0.00:
-                    raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
-                    return False
+            read_result = self.read(cr, uid, ids, ['min_quantity'],
+                    context=context)
+            negative_qty = [x['id'] for x in read_result if x['min_quantity'] <= 0.00]
+            if negative_qty:
+                line = self.browse(cr, uid, negative_qty[0], context=context)
+                raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
+                return False
 
         return True
 
