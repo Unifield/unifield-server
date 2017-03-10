@@ -251,24 +251,27 @@ class supplier_catalogue(osv.osv):
                                              'delay': delay})
 
                 # Change pricelist data according to new data
-                new_price_vals = {'valid_till': vals.get('period_to', None),
-                                  'valid_from': vals.get('period_from', catalogue.period_from),
-                                  'currency_id': vals.get('currency_id', catalogue.currency_id.id),
-                                  'name': vals.get('name', catalogue.name),}
+                new_price_vals = {}
+                if 'period_to' in vals:
+                    new_price_vals['period_to'] = vals.get('period_to', None)
+                if 'period_from' in vals:
+                    new_price_vals['period_from'] = vals.get('period_from',
+                            catalogue.period_from)
+                if 'currency_id' in vals:
+                    new_price_vals['currency_id'] = vals.get('currency_id',
+                            catalogue.currency_id.id)
+                if 'name' in vals:
+                    new_price_vals['name'] = vals.get('name', catalogue.name)
 
-                # utp1033 optimisation
-                pricelist_ids = []
-                #for line in catalogue.line_ids:
-                #    if line.partner_info_id:
-                #        pricelist_ids.append(line.partner_info_id.id)
-                cr.execute('''select partner_info_id from supplier_catalogue_line where catalogue_id = %s ''' % (ids[0]))
-                pricelist_ids += [x[0] for x in cr.fetchall() if x[0] is not None]
-                #pricelist_ids =  cr.fetchall()  returns tuples - may be a problem
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid,
                         [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
-                supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
-                price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
+                if new_supinfo_vals:
+                    supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+
+                pricelist_ids = [x[1] for x in vals['line_ids'] if x]
+                if pricelist_ids and new_price_vals:
+                    price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
         res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
@@ -1081,9 +1084,10 @@ class supplier_catalogue_line(osv.osv):
         res = {}
 
         if product_id:
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v.update({'line_uom_id': product.uom_id.id})
-            res = self.change_uom_qty(cr, uid, ids, product.uom_id.id, min_qty, min_order_qty)
+            product = self.pool.get('product.product').read(cr, uid,
+                    product_id, ['uom_id'], context=context)
+            v.update({'line_uom_id': product['uom_id'][0]})
+            res = self.change_uom_qty(cr, uid, ids, product['uom_id'][0], min_qty, min_order_qty)
         else:
             return {}
 
