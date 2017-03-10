@@ -1061,9 +1061,9 @@ class supplier_catalogue_line(osv.osv):
             ids = [ids]
 
         if not context.get('noraise'):
-            read_result = self.read(cr, uid, ids, ['min_quantity'],
+            read_result = self.read(cr, uid, ids, ['min_qty'],
                     context=context)
-            negative_qty = [x['id'] for x in read_result if x['min_quantity'] <= 0.00]
+            negative_qty = [x['id'] for x in read_result if x['min_qty'] <= 0.00]
             if negative_qty:
                 line = self.browse(cr, uid, negative_qty[0], context=context)
                 raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
