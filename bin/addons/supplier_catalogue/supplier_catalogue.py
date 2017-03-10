@@ -214,6 +214,8 @@ class supplier_catalogue(osv.osv):
         supinfo_obj = self.pool.get('product.supplierinfo')
         price_obj = self.pool.get('pricelist.partnerinfo')
         user_obj = self.pool.get('res.users')
+        line_obj = self.pool.get('supplier.catalogue.line')
+        partner_obj = self.pool.get('res.partner')
 
         if context is None:
             context = {}
@@ -246,7 +248,7 @@ class supplier_catalogue(osv.osv):
 
                 # Change the partner of all supplier info instances
                 if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
-                    delay = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).default_delay
+                    delay = partner_obj.browse(cr, uid, vals['partner_id'], context=context).default_delay
                     new_supinfo_vals.update({'name': vals['partner_id'],
                                              'delay': delay})
 
@@ -272,7 +274,6 @@ class supplier_catalogue(osv.osv):
                 pricelist_ids = []
                 if 'line_ids' in vals:
                     line_ids = [x[1] for x in vals['line_ids'] if x]
-                    line_obj = self.pool.get('supplier.catalogue.line')
                     line_result = line_obj.read(cr, uid, line_ids,
                             ['partner_info_id'], context=context)
                     pricelist_ids = [x['partner_info_id'][0] for x in
