@@ -73790,7 +73790,7 @@ msgstr "Bon de Commande - Suivi "
 #: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Force Availability"
-msgstr "Disponibilité des Effectifs"
+msgstr "Forcer la disponibilité"
 
 #. modules: account, register_accounting
 #: view:account.invoice.refund:0
