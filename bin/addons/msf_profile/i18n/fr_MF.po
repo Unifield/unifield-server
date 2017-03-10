@@ -14221,7 +14221,7 @@ msgstr "Jordan"
 #: selection:stock.move.processor,integrity_status:0
 #: selection:validate.move.processor,integrity_status:0
 msgid "Expiry Date is Missing"
-msgstr "Expiry Date is Missing"
+msgstr "Date d'expiration manquant"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -56728,8 +56728,9 @@ msgstr "Allocation Funding Pool"
 
 #. module: order_types
 #: view:stock.picking.not.available:0
-msgid "Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available)"
-msgstr "Les quantités non disponibles ne seront pas déplacées et resteront sur le document Reliquat de Commande (sauf si vous \"forcez la disponibilité\" au cas où vous êtes certains que les marchandises sont disponibles)"
+#: view:stock.picking:0
+msgid "Non available quantities will not be moved and will remain in the backorder document (unless you 'force availability' if you are sure goods are available)"
+msgstr "Les quantités non disponibles ne seront pas déplacées et resteront sur le document Reliquat de Commande (sauf si vous 'forcez la disponibilité' au cas où vous êtes certains que les marchandises sont disponibles)"
 
 #. module: account
 #: view:account.tax.template:0
@@ -73790,7 +73791,7 @@ msgstr "Bon de Commande - Suivi "
 #: view:stock.picking:0
 #: view:stock.picking:0
 msgid "Force Availability"
-msgstr "Disponibilité des Effectifs"
+msgstr "Forcer la disponibilité"
 
 #. modules: account, register_accounting
 #: view:account.invoice.refund:0
@@ -94953,12 +94954,6 @@ msgstr "Ajouter ou non l'en-tête RML de la société"
 #: selection:account.account.type,close_method:0
 msgid "Detail"
 msgstr "Détail"
-
-#. modules: msf_outgoing, stock
-#: view:stock.picking:0
-#: view:stock.picking:0
-msgid "Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"
-msgstr "Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available"
 
 #. module: mission_stock
 #: code:addons/mission_stock/wizard/mission_stock_wizard.py:108
