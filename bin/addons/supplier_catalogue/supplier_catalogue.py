@@ -273,21 +273,20 @@ class supplier_catalogue(osv.osv):
 
                 pricelist_ids = []
                 if 'line_ids' in vals:
+                    # lines are being edited
                     line_ids = [x[1] for x in vals['line_ids'] if x]
                     line_result = line_obj.read(cr, uid, line_ids,
                             ['partner_info_id'], context=context)
                     pricelist_ids = [x['partner_info_id'][0] for x in
                             line_result if x['partner_info_id']]
-                else:
-                    # if no lines are edited, then it means the catalog itself
-                    # has been edited and the new vals should be applied to
-                    # all lines (that could be long operation)
+
+                if new_price_vals:
+                    # the catalog itself has been edited, all the related lines
+                    # should be updated accordingly (that could be long operation)
                     cr.execute('''SELECT partner_info_id
                     FROM supplier_catalogue_line
                     WHERE catalogue_id = %s ''' % (ids[0]))
                     pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
-
-                if pricelist_ids and new_price_vals:
                     price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
         res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
