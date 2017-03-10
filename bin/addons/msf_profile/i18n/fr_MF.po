@@ -56728,8 +56728,8 @@ msgstr "Allocation Funding Pool"
 
 #. module: order_types
 #: view:stock.picking.not.available:0
-msgid "Non available quantities will not be moved and will remain in the backorder document (unless you “force availability” if you are sure goods are available)"
-msgstr "Les quantités non disponibles ne seront pas déplacées et resteront sur le document Reliquat de Commande (sauf si vous “forcez la disponibilité” au cas où vous êtes certains que les marchandises sont disponibles)"
+msgid "Non available quantities will not be moved and will remain in the backorder document (unless you &quot;force availability&quot; if you are sure goods are available)"
+msgstr "Les quantités non disponibles ne seront pas déplacées et resteront sur le document Reliquat de Commande (sauf si vous &quot;forcez&quot; la disponibilité” au cas où vous êtes certains que les marchandises sont disponibles)"
 
 #. module: account
 #: view:account.tax.template:0
