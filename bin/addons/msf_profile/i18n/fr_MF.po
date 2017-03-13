@@ -98125,3 +98125,30 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:343
+#, python-format
+msgid "The account \"%s - %s\" is only compatible with a Liquidity Journal Third Party\n"
+"having the same currency as the booking one."
+msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Journal de Trésorerie\n"
+"ayant la même devise que la devise d'enregistrement."
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:347
+#, python-format
+msgid "The account \"%s - %s\" is only compatible with a Liquidity Journal Third Party\n"
+"having a currency different from the booking one."
+msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Journal de Trésorerie\n"
+"ayant une devise différente de la devise d'enregistrement."
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:353
+#, python-format
+msgid "The account \"%s - %s\" is only compatible with a Partner Third Party."
+msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenaire."
+
+#. module: account_corrections
+#: code:addons/account_corrections/wizard/journal_items_corrections.py:350
+#, python-format
+msgid "The account \"%s - %s\" is only compatible with an Employee Third Party."
+msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Employé."
