@@ -112,7 +112,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
 
             # default values
             product_id = False
-            product_cost = 1.00
             currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
             location_id = False
             location_not_found = False
@@ -146,7 +145,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     to_correct_ok = True
 
                 # Product name
-                p_name = row.cells[1].data
                 if not product_id:
                     to_correct_ok = True
                     product_error.append(line_num)
@@ -195,6 +193,19 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             if row.cells[4].data:
                 if row.cells[4].type == 'datetime':
                     expiry = row.cells[4].data.strftime('%Y-%m-%d')
+                    if datetime.strptime(expiry, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                        date_tools = self.pool.get('date.tools')
+                        date_format = date_tools.get_date_format(cr, uid, context=context)
+                        comment = _('You cannot set an expiry date before %s') % (
+                                datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                            )
+                        expiry = False
+                        bad_expiry = True
+                        to_correct_ok = True
+                elif row.cells[4].type == 'datetime_error':
+                    bad_expiry = True
+                    comment = _('Incorrectly formatted expiry date: %s') % row.cells[5].data
+                    to_correct_ok = True
                 else:
                     bad_expiry = True
                     comment += _('Incorrectly formatted expiry date.\n')
@@ -231,6 +242,13 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             else:
                 if row.cells[5].type in ['int', 'float']:
                     product_qty = row.cells[5].data
+                    if product_qty < 0:
+                        comment += _('Product Qty cannot be < 0. It has been reset to 0.')
+                        product_qty = 0.00
+                        to_correct_ok = True
+                elif row.cells[5].type == 'int_error':
+                    comment += _('Incorrect number format: %s') % row.cells[5].data
+                    to_correct_ok = True
                 else:
                     product_qty = 0.00
 
@@ -646,7 +664,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     to_correct_ok = True
 
                 # Product name
-                p_name = row.cells[1].data
                 if not product_id:
                     to_correct_ok = True
                     product_error.append(line_num)
