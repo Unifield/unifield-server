@@ -31,8 +31,13 @@ class SpreadsheetCell(SpreadsheetTools):
                         self.type = 'float'
                         self.data = float(self.data or 0.0)
                     else:
-                        self.type = 'int'
-                        self.data = int(self.data)
+                        try:
+                            self.type = 'int'
+                            self.data = int(self.data)
+                        except Exception as e:
+                            self.type = 'int_error'
+                            self.data = str(e)
+
                 elif dtype == 'Boolean':
                     self.data = self.data in ('1', 'T', 't', 'True', 'true')
                     self.type = 'bool'

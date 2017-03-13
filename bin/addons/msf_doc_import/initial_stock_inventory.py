@@ -662,6 +662,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 if row.cells[2].type in ('int', 'float'):
                     product_cost = cost
+                    if product_cost < 0:
+                        comment += _('Product Cost cannot be < 0. It has been reset to 1.')
+                        product_cost = 1.00
+                        to_correct_ok = True
                 elif product_id:
                     product_cost = product_obj.browse(cr, uid, product_id).standard_price
                 else:
@@ -718,6 +722,13 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 if row.cells[6].type in ['int', 'float']:
                     product_qty = row.cells[6].data
+                    if product_qty < 0:
+                        comment += _('Product Qty cannot be < 0. It has been reset to 0.')
+                        product_qty = 0.00
+                        to_correct_ok = True
+                elif row.cells[6].type == 'int_error':
+                    comment += _('Incorrect number format: %s') % row.cells[6].data
+                    to_correct_ok = True
                 else:
                     product_qty = 0.00
 
