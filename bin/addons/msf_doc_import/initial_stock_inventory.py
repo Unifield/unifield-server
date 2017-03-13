@@ -204,7 +204,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                         to_correct_ok = True
                 elif row.cells[4].type == 'datetime_error':
                     bad_expiry = True
-                    comment = _('Incorrectly formatted expiry date: %s') % row.cells[5].data
+                    comment = _('Incorrectly formatted expiry date: %s') % row.cells[4].data
                     to_correct_ok = True
                 else:
                     bad_expiry = True
