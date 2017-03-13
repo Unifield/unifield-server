@@ -137,6 +137,10 @@ class SpreadsheetXML(SpreadsheetTools):
 
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
+        if not table:
+            # in case no table, raise something understandable instead
+            # of giving a let-me-fix
+            raise osv.except_osv(_('Error'), _('File format problem: no Table found in the file, check the file format.'))
         return SpreadsheetRow(table[0].iter('{%s}Row' % self.defaultns))
 
     def enc(self, s):
