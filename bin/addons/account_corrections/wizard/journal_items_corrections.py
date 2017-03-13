@@ -325,6 +325,31 @@ class journal_items_corrections(osv.osv_memory):
 #        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
 #        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
+    def _check_account_partner_compatibility(self, account, aml, context):
+        """
+        Raises a warning if the new account selected in the Correction Wizard isn't compatible with the JI partner
+        """
+        acc_type = account.type_for_register
+        if acc_type != 'none':
+            # Check the compatibility with the "Type For Specific Treatment" of the account
+            if acc_type in ['transfer', 'transfer_same']:
+                partner_journal = aml.transfer_journal_id
+                is_liquidity = partner_journal and partner_journal.type in ['cash', 'bank', 'cheque'] and partner_journal.currency
+                if acc_type == 'transfer_same' and (not is_liquidity or partner_journal.currency.id != aml.currency_id.id):
+                    raise osv.except_osv(_('Warning'),
+                                         _('The account "%s - %s" is only compatible with a Liquidity Journal Third Party\n'
+                                           'having the same currency as the booking one.') % (account.code, account.name))
+                elif acc_type == 'transfer' and (not is_liquidity or partner_journal.currency.id == aml.currency_id.id):
+                    raise osv.except_osv(_('Warning'),
+                                         _('The account "%s - %s" is only compatible with a Liquidity Journal Third Party\n'
+                                           'having a currency different from the booking one.') % (account.code, account.name))
+            elif acc_type == 'advance' and not aml.employee_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with an Employee Third Party.') % (account.code, account.name))
+            elif acc_type in ['down_payment', 'payroll'] and not aml.partner_id:
+                raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
+                                                     'with a Partner Third Party.') % (account.code, account.name))
+
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
         Do a correction from the given line
@@ -361,6 +386,7 @@ class journal_items_corrections(osv.osv_memory):
         res = [] # no result yet
         # Correct account
         if comparison == 1:
+            self._check_account_partner_compatibility(new_lines[0].account_id, old_line, context)
             res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
