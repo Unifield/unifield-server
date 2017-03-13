@@ -693,7 +693,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
                     expiry = row.cells[5].data
-                    if datetime.strptime(expiry.strftime('%Y-%m-%d'), '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                    if expiry < datetime(1900, 01, 01, 0, 0, 0):
                         date_tools = self.pool.get('date.tools')
                         date_format = date_tools.get_date_format(cr, uid, context=context)
                         comment = _('You cannot set an expiry date before %s') % (
