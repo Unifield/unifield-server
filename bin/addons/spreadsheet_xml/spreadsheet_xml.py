@@ -37,8 +37,12 @@ class SpreadsheetCell(SpreadsheetTools):
                     self.data = self.data in ('1', 'T', 't', 'True', 'true')
                     self.type = 'bool'
                 elif dtype == 'DateTime' and self.data:
-                    self.data = DateTime.ISO.ParseDateTime(self.data)
-                    self.type = 'datetime'
+                    try:
+                        self.data = DateTime.ISO.ParseDateTime(self.data)
+                        self.type = 'datetime'
+                    except Exception as e:
+                        self.data = str(e)
+                        self.type = 'datetime_error'
                 elif dtype == 'String':
                     self.type = 'str'
                     if self.data:
