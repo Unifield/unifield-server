@@ -325,10 +325,13 @@ class journal_items_corrections(osv.osv_memory):
 #        res, move_ids = aml_obj.reverse_move(cr, uid, [wizard.move_line_id.id], wizard.date, context=context)
 #        return {'type': 'ir.actions.act_window_close', 'success_move_line_ids': res}
 
-    def _check_account_partner_compatibility(self, account, aml, context):
+    def _check_account_partner_compatibility(self, cr, uid, account, aml, context):
         """
-        Raises a warning if the new account selected in the Correction Wizard isn't compatible with the JI partner
+        Check the compatibility between the account and the aml Third Party: raise a warning if they are not compatible.
+        :param account: new account selected in the Correction Wizard
+        :param aml: Journal Item to be corrected
         """
+        acc_obj = self.pool.get('account.account')
         acc_type = account.type_for_register
         if acc_type != 'none':
             # Check the compatibility with the "Type For Specific Treatment" of the account
@@ -349,6 +352,11 @@ class journal_items_corrections(osv.osv_memory):
             elif acc_type in ['down_payment', 'payroll'] and not aml.partner_id:
                 raise osv.except_osv(_('Warning'), _('The account "%s - %s" is only compatible '
                                                      'with a Partner Third Party.') % (account.code, account.name))
+        else:
+            # Check the compatibility with the Allowed Partner Types
+            acc_obj.is_allowed_for_thirdparty(cr, uid, [account.id], partner_type=aml.partner_type or False, partner_txt=aml.partner_txt or False,
+                                              employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
+                                              partner_id=aml.partner_id or False, raise_it=True, context=context)
 
     def action_confirm(self, cr, uid, ids, context=None, distrib_id=False):
         """
@@ -386,7 +394,7 @@ class journal_items_corrections(osv.osv_memory):
         res = [] # no result yet
         # Correct account
         if comparison == 1:
-            self._check_account_partner_compatibility(new_lines[0].account_id, old_line, context)
+            self._check_account_partner_compatibility(cr, uid, new_lines[0].account_id, old_line, context)
             res = aml_obj.correct_account(cr, uid, [old_line.id], wizard.date, new_lines[0].account_id.id, distrib_id, context=context)
             if not res:
                 raise osv.except_osv(_('Error'), _('No account changed!'))
