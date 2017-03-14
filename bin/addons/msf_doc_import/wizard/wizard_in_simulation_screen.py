@@ -483,25 +483,17 @@ the date has a wrong format: %s') % (index+1, str(e)))
                 # Check number of columns on lines
 
                 if not file_parse_errors:
-                    for x in xrange(1, NB_OF_HEADER_LINES + 1):
-                        if len(values.get(x, [])) != 2:
-                            lines_to_ignored.append(x)
-                            error_msg = _('Line %s of the imported file: The header \
-    information must be on two columns: Column A for name of the field and column\
-     B for value.') % x
-                            file_format_errors.append(error_msg)
-
                     if len(values.get(NB_OF_HEADER_LINES + 1, [])) != NB_LINES_COLUMNS:
                         error_msg = _('Line 8 of the Excel file: This line is \
-    mandatory and must have %s columns. The values on this line must be the name \
-    of the field for IN lines.') % NB_LINES_COLUMNS
+mandatory and must have %s columns. The values on this line must be the name \
+of the field for IN lines.') % NB_LINES_COLUMNS
                         file_format_errors.append(error_msg)
 
                     for x in xrange(NB_OF_HEADER_LINES + 2, len(values) + 1):
                         if len(values.get(x, [])) != NB_LINES_COLUMNS:
                             lines_to_ignored.append(x)
                             error_msg = _('Line %s of the imported file: The line \
-    information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
+information must be on %s columns. The line %s has %s columns') % (x, NB_LINES_COLUMNS, x, len(values.get(x, [])))
                             file_format_errors.append(error_msg)
 
                     nb_file_lines = len(values) - NB_OF_HEADER_LINES - 1
