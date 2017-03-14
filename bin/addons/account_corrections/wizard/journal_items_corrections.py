@@ -354,6 +354,7 @@ class journal_items_corrections(osv.osv_memory):
                                                      'with a Partner Third Party.') % (account.code, account.name))
         else:
             # Check the compatibility with the Allowed Partner Types
+            # (according to US-1307 this check is done only when the account has no "Type For Specific Treatment")
             acc_obj.is_allowed_for_thirdparty(cr, uid, [account.id], partner_type=aml.partner_type or False, partner_txt=aml.partner_txt or False,
                                               employee_id=aml.employee_id or False, transfer_journal_id=aml.transfer_journal_id or False,
                                               partner_id=aml.partner_id or False, raise_it=True, context=context)
