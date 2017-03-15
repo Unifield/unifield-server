@@ -251,7 +251,7 @@ class product_justification_code(osv.osv):
     _rec_name = 'code'
     _columns = {
         'code': fields.char('Justification Code', size=32, required=True, translate=True),
-        'description': fields.char('Justification Description', size=256, required=True),
+        'description': fields.char('Justification Description', size=256, required=True, translate=True),
     }
 
     def name_get(self, cr, user, ids, context=None):
