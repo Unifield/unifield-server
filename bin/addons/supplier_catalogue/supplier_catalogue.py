@@ -255,15 +255,15 @@ class supplier_catalogue(osv.osv):
                 # Change pricelist data according to new data (only if there is change)
                 new_price_vals = {}
                 if 'period_to' in vals:
-                    new_price_vals['period_to'] = vals.get('period_to', None)
+                    new_price_vals['period_to'] = vals['period_to'] or None
                 if 'period_from' in vals:
-                    new_price_vals['period_from'] = vals.get('period_from',
-                            catalogue.period_from)
+                    new_price_vals['period_from'] = vals['period_from'] or\
+                            catalogue.period_from
                 if 'currency_id' in vals:
-                    new_price_vals['currency_id'] = vals.get('currency_id',
-                            catalogue.currency_id.id)
+                    new_price_vals['currency_id'] = vals['currency_id'] or\
+                            catalogue.currency_id.id
                 if 'name' in vals:
-                    new_price_vals['name'] = vals.get('name', catalogue.name)
+                    new_price_vals['name'] = vals['name'] or catalogue.name
 
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid,
