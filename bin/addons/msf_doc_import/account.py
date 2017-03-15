@@ -30,6 +30,7 @@ from base64 import decodestring
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import threading
 import pooler
+import mx
 from msf_doc_import import ACCOUNTING_IMPORT_JOURNALS
 
 class msf_doc_import_accounting(osv.osv_memory):
@@ -255,6 +256,9 @@ class msf_doc_import_accounting(osv.osv_memory):
                     # Check document date
                     if not line[cols['Document Date']]:
                         errors.append(_('Line %s. No document date specified!') % (current_line_num,))
+                        continue
+                    if not isinstance(line[cols['Document Date']], type(mx.DateTime.now())):
+                        errors.append(_('Line %s, the column \'Document Date\' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example).') % (current_line_num,))
                         continue
                     r_document_date = line[cols['Document Date']].strftime('%Y-%m-%d')
                     # Bypass this line if NO debit AND NO credit
