@@ -254,16 +254,10 @@ class supplier_catalogue(osv.osv):
 
                 # Change pricelist data according to new data (only if there is change)
                 new_price_vals = {}
-                if 'period_to' in vals:
-                    new_price_vals['period_to'] = vals['period_to'] or None
-                if 'period_from' in vals:
-                    new_price_vals['period_from'] = vals['period_from'] or\
-                            catalogue.period_from
-                if 'currency_id' in vals:
-                    new_price_vals['currency_id'] = vals['currency_id'] or\
-                            catalogue.currency_id.id
-                if 'name' in vals:
-                    new_price_vals['name'] = vals['name'] or catalogue.name
+                for prop in ('period_to', 'period_from', 'currency_id',
+                        'name'):
+                    if prop in vals:
+                        new_price_vals[prop] = vals[prop]
 
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid,
