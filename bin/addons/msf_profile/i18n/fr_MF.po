@@ -98125,3 +98125,8 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:463
+#, python-format
+msgid "Line %s. Description is missing for the given account: %s."
+msgstr "Ligne %s. La description est manquante pour le compte : %s."

@@ -457,6 +457,12 @@ class msf_doc_import_accounting(osv.osv_memory):
                         'partner_id': r_partner or False,
                         'transfer_journal_id': r_journal or False,
                     }
+
+                    # US-2470
+                    if not vals['description']:
+                        errors.append(_('Line %s. Description is missing for the given account: %s.') % (current_line_num, account.code))
+                        continue
+
                     # UTP-1056: Add employee possibility. So we need to check if employee and/or partner is authorized
                     partner_needs = self.pool.get('account.bank.statement.line').onchange_account(cr, uid, False, account_id=account.id, context=context)
                     if not partner_needs:
