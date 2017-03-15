@@ -134,6 +134,9 @@ class import_cell_data(osv.osv_memory):
         list_of_values = []
         for cell_nb in range(len(row)):
             cell_data = self.get_cell_data(cr, uid, ids, row, cell_nb)
+            # cells filled with whitespace should behave the same as cells that are empty
+            if isinstance(cell_data, basestring) and cell_data.isspace():
+                cell_data = ''
             list_of_values.append(cell_data)
         return list_of_values
 

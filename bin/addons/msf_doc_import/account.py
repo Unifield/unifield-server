@@ -170,6 +170,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         errors = []
         current_instance = self.pool.get('res.users').browse(cr, uid, uid).company_id.instance_id.id or False
 
+        current_line_num = None
         try:
             # Update wizard
             self.write(cr, uid, ids, {'message': _('Cleaning up old imports…'), 'progression': 1.00})
@@ -540,7 +541,11 @@ class msf_doc_import_accounting(osv.osv_memory):
                 cr.close(True)
         except Exception as e:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e.args and e.args[0] or '',), 'state': 'done', 'progression': 100.0})
+            if current_line_num is not None:
+                message = _("An error occured line %s: %s") % (current_line_num, e.args and e.args[0] or '',)
+            else:
+                message = _("An error occured: %s") % (e.args and e.args[0] or '',)
+            self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
             if not from_yml:
                 cr.close(True)
         return True
