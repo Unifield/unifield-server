@@ -469,6 +469,7 @@ class WebKitParser(report_sxw):
         spreadsheet_elements = file_dom.xpath('//ss:Worksheet',
                                               namespaces=namespaces)
 
+        # Check spreadcheet names
         xml_modified = False
         sheet_name_dict = {}
         count = 0
@@ -490,12 +491,15 @@ class WebKitParser(report_sxw):
                 if new_name not in sheet_name_dict:
                     sheet_name_dict[new_name] = 1
 
+        # Check date cells
         data_time_elements = file_dom.xpath('//ss:Data[@ss:Type="DateTime"]',
                                             namespaces=namespaces)
         element_to_remove = []
         for element in data_time_elements:
             if 'False' in element.text:
-                error_message = 'Line %s of document %s is corrupted : %s' % (element.sourceline, report_name, element.text)
+                error_message = 'Line %s of document %s is corrupted, ' \
+                        'DateTime cannot contain \'False\': %s' % \
+                        (element.sourceline, report_name, element.text)
                 logger.error(error_message)
                 element_to_remove.append(element)
         for element in element_to_remove:
@@ -503,6 +507,22 @@ class WebKitParser(report_sxw):
             element.attrib['{urn:schemas-microsoft-com:office:spreadsheet}Type'] = 'String'
             element.text = ''
             xml_modified = True
+
+        # Check Number cells
+        number_cells = file_dom.xpath('//ss:Data[@ss:Type="Number"]',
+                                            namespaces=namespaces)
+        for cell in number_cells:
+            # if space in the in Numbers, remove them
+            forbidden_chars = [' ', u'\xa0']
+            for char in forbidden_chars:
+                if char in cell.text:
+                    error_message = 'Line %s of document %s is corrupted, a '\
+                            'Number cannot contain characters or spaces: %s' % \
+                            (cell.sourceline, report_name, cell.text)
+                    logger.warning(error_message)
+                    cell.text = cell.text.replace(char, '')
+                    xml_modified = True
+
         if xml_modified:
             # return modified xml
             return etree.tostring(file_dom, xml_declaration=True, encoding="utf-8")
