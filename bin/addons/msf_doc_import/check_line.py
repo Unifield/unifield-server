@@ -519,6 +519,13 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
 
     if row.cells[ed_cell_nb] and row.cells[ed_cell_nb].type == 'datetime' and row.cells[ed_cell_nb].data:
         expiry_date = row.cells[ed_cell_nb].data
+        if expiry_date:
+            try:
+                expiry_date = expiry_date.strftime('%Y-%m-%d')
+            except:
+                error_list.append(_('The expiry date cannot be formated to \'%Y-%m-%d\'. Batch not selected'))
+                expiry_date = False
+
 
     prd_brw = product_id and product_obj and product_obj.browse(cr, uid, product_id) or False
 
@@ -526,7 +533,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     ed_mgmt = prd_brw and prd_brw.perishable
 
     if not bn_ids and product_id and batch_name and expiry_date:
-        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date.strftime('%Y-%m-%d'))])
+        bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name), ('life_date', '=', expiry_date)])
         if not bn_ids:
             if bn_obj.search(cr, uid, [('product_id', '=', product_id), ('name', '=', batch_name)]):
                 if bn_mgmt:
@@ -537,7 +544,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
                 bn_ids = [bn_obj.create(cr, uid, {
                     'product_id': product_id,
                     'name': batch_name,
-                    'life_date': expiry_date.strftime('%Y-%m-%d'),
+                    'life_date': expiry_date,
                 })]
             else:
                 error_list.append(_('Batch not found'))
@@ -545,7 +552,7 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
         if bn_mgmt:
             error_list.append(_('The Batch number is not set.'))
         elif ed_mgmt:
-            bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date.strftime('%Y-%m-%d'))])
+            bn_ids = bn_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry_date)])
     elif not bn_ids and product_id and batch_name:
         if bn_mgmt:
             error_list.append(_('Expiry date is not set, so batch not selected.'))

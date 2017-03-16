@@ -148,7 +148,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     import_to_correct = True
 
                 # Product name
-                p_name = row.cells[1].data
                 if not product_id:
                     to_correct_ok = True
                     import_to_correct = True
@@ -199,9 +198,13 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             # Expiry date
             if row.cells[4].data:
                 if row.cells[4].type == 'datetime':
-                    expiry = row.cells[4].data.strftime('%Y-%m-%d')
+                    try:
+                        expiry = row.cells[4].data.strftime('%Y-%m-%d')
+                    except:
+                        bad_expiry = True
                 else:
                     bad_expiry = True
+                if bad_expiry:
                     comment += _('Incorrectly formatted expiry date.\n')
                     to_correct_ok = True
                     import_to_correct = True
@@ -656,7 +659,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     import_to_correct = True
 
                 # Product name
-                p_name = row.cells[1].data
                 if not product_id:
                     to_correct_ok = True
                     import_to_correct = True
@@ -706,11 +708,17 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if row.cells[5].data:
                 if row.cells[5].type == 'datetime':
                     expiry = row.cells[5].data
+                    if expiry:
+                        try:
+                            expiry = expiry.strftime('%Y-%m-%d')
+                        except:
+                            bad_expiry = True
                 else:
                     bad_expiry = True
-                    comment += _('Incorrectly formatted expiry date.\n')
-                    to_correct_ok = True
-                    import_to_correct = True
+            if bad_expiry:
+                comment += _('Incorrectly formatted expiry date.\n')
+                to_correct_ok = True
+                import_to_correct = True
 
             # Quantity
             p_qty = row.cells[6].data
@@ -771,6 +779,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if product_uom and product_qty:
                 product_qty = self.pool.get('product.uom')._compute_round_up_qty(cr, uid, product_uom, product_qty)
 
+
             to_write = {
                 'product_id': product_id,
                 'average_cost': product_cost,
@@ -778,7 +787,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                 'location_id': location_id,
                 'location_not_found': location_not_found,
                 'prodlot_name': batch,
-                'expiry_date': expiry and expiry.strftime('%Y-%m-%d') or False,
+                'expiry_date': expiry or False,
                 'bad_expiry': bad_expiry,
                 'bad_batch_name': bad_batch_name,
                 'product_qty': product_qty,

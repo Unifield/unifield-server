@@ -70,13 +70,9 @@ your support team and give us this message.
         :param date_value: String value to compute
         :return: A datetime instance or False
         """
+        # US:2527: accept only one format, reject other
         date_format = [
             '%Y-%m-%d',
-            '%Y-%m/%d',
-            '%d-%m-%Y',
-            '%d/%m/%Y',
-            '%d-%b-%Y',
-            '%d/%b-%Y',
         ]
 
         d = False
