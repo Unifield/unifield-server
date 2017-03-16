@@ -1187,7 +1187,7 @@ class stock_picking(osv.osv):
 
                 # US-2041 - Do not invoice Picking Ticket / Delivery Order lines that are not linked to a DPO when
                 # invoice creation was requested at DPO confirmation
-                if picking.type == 'out' and context.get('invoice_dpo_confirmation') and not move_line.dpo_line_id:
+                if picking.type == 'out' and context.get('invoice_dpo_confirmation') and move_line.dpo_id.id != context.get('invoice_dpo_confirmation'):
                     all_pick_lines_invoiced = False
                     continue
 
@@ -1250,9 +1250,10 @@ class stock_picking(osv.osv):
                     'invoice_state': 'invoiced',
                 }, context=context)
             self._invoice_hook(cr, uid, picking, invoice_id)
-        self.write(cr, uid, res.keys(), {
-            'invoice_state': 'invoiced',
-        }, context=context)
+        if all_pick_lines_invoiced:
+            self.write(cr, uid, res.keys(), {
+                'invoice_state': 'invoiced',
+            }, context=context)
         return res
 
     def test_done(self, cr, uid, ids, context=None):

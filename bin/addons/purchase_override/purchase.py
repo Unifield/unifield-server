@@ -2133,7 +2133,7 @@ stock moves which are already processed : '''
 
             if to_invoice:
                 conf_context = context.copy()
-                conf_context['invoice_dpo_confirmation'] = True
+                conf_context['invoice_dpo_confirmation'] = order.id
                 self.pool.get('stock.picking').action_invoice_create(cr, uid, list(to_invoice), type='out_invoice', context=conf_context)
 
         # @@@override@purchase.purchase.order.wkf_approve_order
