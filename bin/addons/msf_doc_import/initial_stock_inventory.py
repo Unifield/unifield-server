@@ -713,6 +713,7 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                             expiry = expiry.strftime('%Y-%m-%d')
                         except:
                             bad_expiry = True
+                            expiry = False
                 else:
                     bad_expiry = True
             if bad_expiry:
