@@ -202,6 +202,7 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                                 )
                             bad_expiry = True
                             to_correct_ok = True
+                            expiry = False
                     except:
                         comment += _('Incorrectly formatted expiry date.\n')
                         bad_expiry = True
@@ -720,7 +721,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     expiry = row.cells[5].data
                     if expiry:
                         try:
-                            expiry = expiry.strftime('%Y-%m-%d')
                             if expiry < datetime(1900, 01, 01, 0, 0, 0):
                                 date_tools = self.pool.get('date.tools')
                                 date_format = date_tools.get_date_format(cr, uid, context=context)
@@ -729,6 +729,9 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                                     )
                                 bad_expiry = True
                                 to_correct_ok = True
+                                expiry = False
+                            else:
+                                expiry = expiry.strftime('%Y-%m-%d')
                         except:
                             comment += _('Incorrectly formatted expiry date.\n')
                             bad_expiry = True
