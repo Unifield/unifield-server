@@ -155,6 +155,7 @@ class account_analytic_line(osv.osv):
         default.update({
             'output_currency': False,
             'output_amount': 0.0,
+            'exported': False,
         })
         return super(account_analytic_line, self).copy(cr, uid, id, default, context=context)
 
