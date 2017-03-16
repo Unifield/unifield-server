@@ -36,7 +36,7 @@ class wizard_hq_report_oca(osv.osv_memory):
 
     _defaults = {
         'fiscalyear_id': lambda self, cr, uid, c: self.pool.get('account.fiscalyear').find(cr, uid, time.strftime('%Y-%m-%d'), context=c),
-        'selection': lambda *a: 'unexported',
+        'selection': lambda *a: 'all',
     }
 
     def onchange_instance_id(self, cr, uid, ids, context=None):
