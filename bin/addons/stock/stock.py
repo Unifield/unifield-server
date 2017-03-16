@@ -1180,9 +1180,22 @@ class stock_picking(osv.osv):
                 invoice_id = invoice_obj.create(cr, uid, invoice_vals, context=context)
                 invoices_group[partner.id] = invoice_id
             res[picking.id] = invoice_id
+            all_pick_lines_invoiced = True
             for move_line in picking.move_lines:
                 if move_line.state == 'cancel':
                     continue
+
+                # US-2041 - Do not invoice Picking Ticket / Delivery Order lines that are not linked to a DPO when
+                # invoice creation was requested at DPO confirmation
+                if picking.type == 'out' and context.get('invoice_dpo_confirmation') and not move_line.dpo_line_id:
+                    all_pick_lines_invoiced = False
+                    continue
+
+                # US-2041 - Do not invoice Picking Ticket / Delivery Order lines that are linked to a DPO
+                # when the invoice creation was requested at Picking Ticket / Delivery Order processing
+                if picking.type == 'out' and not context.get('invoice_dpo_confirmation') and move_line.dpo_line_id:
+                    continue
+
                 origin = move_line.picking_id.name or ''
                 if move_line.picking_id.origin:
                     origin += ':' + move_line.picking_id.origin
@@ -1232,9 +1245,10 @@ class stock_picking(osv.osv):
 
             invoice_obj.button_compute(cr, uid, [invoice_id], context=context,
                                        set_total=(inv_type in ('in_invoice', 'in_refund')))
-            self.write(cr, uid, [picking.id], {
-                'invoice_state': 'invoiced',
-            }, context=context)
+            if all_pick_lines_invoiced:
+                self.write(cr, uid, [picking.id], {
+                    'invoice_state': 'invoiced',
+                }, context=context)
             self._invoice_hook(cr, uid, picking, invoice_id)
         self.write(cr, uid, res.keys(), {
             'invoice_state': 'invoiced',
