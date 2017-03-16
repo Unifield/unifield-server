@@ -24,6 +24,7 @@ from osv import fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from datetime import datetime
 
 
 class stock_inventory(osv.osv):
@@ -81,7 +82,6 @@ class stock_inventory(osv.osv):
         location_obj = self.pool.get('stock.location')
         batch_obj = self.pool.get('stock.production.lot')
         obj_data = self.pool.get('ir.model.data')
-        import_to_correct = False
 
         vals = {}
         vals['inventory_line_id'] = []
@@ -112,7 +112,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
 
             # default values
             product_id = False
-            product_cost = 1.00
             currency_id = self.pool.get('res.users').browse(cr, uid, uid).company_id.currency_id.id
             location_id = False
             location_not_found = False
@@ -130,7 +129,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             product_code = row.cells[0].data
             if not product_code:
                 to_correct_ok = True
-                import_to_correct = True
                 no_product_error.append(line_num)
                 continue
             else:
@@ -145,12 +143,10 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                             product_cache.update({product_code: product_id})
                 except Exception:
                     to_correct_ok = True
-                    import_to_correct = True
 
                 # Product name
                 if not product_id:
                     to_correct_ok = True
-                    import_to_correct = True
                     product_error.append(line_num)
                     continue
 
@@ -159,7 +155,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             if not loc_id:
                 location_id = False
                 to_correct_ok = True
-                import_to_correct = True
             else:
                 try:
                     location_name = loc_id.strip()
@@ -167,7 +162,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     if not loc_ids:
                         location_id = False
                         to_correct_ok = True
-                        import_to_correct = True
                         location_not_found = True
                     else:
                         location_id = loc_ids[0]
@@ -200,14 +194,26 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                 if row.cells[4].type == 'datetime':
                     try:
                         expiry = row.cells[4].data.strftime('%Y-%m-%d')
+                        if datetime.strptime(expiry, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
+                            date_tools = self.pool.get('date.tools')
+                            date_format = date_tools.get_date_format(cr, uid, context=context)
+                            comment = _('You cannot set an expiry date before %s\n') % (
+                                    datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                )
+                            bad_expiry = True
+                            to_correct_ok = True
                     except:
+                        comment += _('Incorrectly formatted expiry date.\n')
                         bad_expiry = True
-                else:
+                        to_correct_ok = True
+                elif row.cells[4].type == 'datetime_error':
+                    comment = _('Incorrectly formatted expiry date: %s\n') % row.cells[4].data
                     bad_expiry = True
-                if bad_expiry:
-                    comment += _('Incorrectly formatted expiry date.\n')
                     to_correct_ok = True
-                    import_to_correct = True
+                else:
+                    comment += _('Incorrectly formatted expiry date.\n')
+                    bad_expiry = True
+                    to_correct_ok = True
                 if expiry and not batch:
                     batch_ids = batch_obj.search(cr, uid, [('product_id', '=', product_id), ('life_date', '=', expiry)], context=context)
                     if batch_ids:
@@ -222,7 +228,6 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     elif product.batch_management and not batch_name:
                         batch = False
                         to_correct_ok = True
-                        import_to_correct = True
                 elif expiry and batch:
                     b_expiry = batch_obj.browse(cr, uid, batch, context=context).life_date
                     if expiry != b_expiry:
@@ -241,6 +246,13 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
             else:
                 if row.cells[5].type in ['int', 'float']:
                     product_qty = row.cells[5].data
+                    if product_qty < 0:
+                        comment += _('Product Qty cannot be < 0. It has been reset to 0.')
+                        product_qty = 0.00
+                        to_correct_ok = True
+                elif row.cells[5].type == 'int_error':
+                    comment += _('Incorrect number format: %s') % row.cells[5].data
+                    to_correct_ok = True
                 else:
                     product_qty = 0.00
 
@@ -592,7 +604,6 @@ class initial_stock_inventory(osv.osv):
         product_obj = self.pool.get('product.product')
         location_obj = self.pool.get('stock.location')
         obj_data = self.pool.get('ir.model.data')
-        import_to_correct = False
 
         vals = {}
         vals['inventory_line_id'] = []
@@ -641,7 +652,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             product_code = row.cells[0].data
             if not product_code:
                 to_correct_ok = True
-                import_to_correct = True
                 no_product_error.append(line_num)
                 continue
             else:
@@ -656,12 +666,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                             product_cache.update({product_code: product_id})
                 except Exception:
                     to_correct_ok = True
-                    import_to_correct = True
 
                 # Product name
                 if not product_id:
                     to_correct_ok = True
-                    import_to_correct = True
                     product_error.append(line_num)
                     continue
 
@@ -675,6 +683,10 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 if row.cells[2].type in ('int', 'float'):
                     product_cost = cost
+                    if product_cost < 0:
+                        comment += _('Product Cost cannot be < 0. It has been reset to 1.')
+                        product_cost = 1.00
+                        to_correct_ok = True
                 elif product_id:
                     product_cost = product_obj.browse(cr, uid, product_id).standard_price
                 else:
@@ -686,7 +698,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             if not loc_id:
                 location_id = False
                 to_correct_ok = True
-                import_to_correct = True
             else:
                 try:
                     location_name = loc_id.strip()
@@ -694,7 +705,6 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     if not loc_ids:
                         location_id = False
                         to_correct_ok = True
-                        import_to_correct = True
                         location_not_found = True
                     else:
                         location_id = loc_ids[0]
@@ -711,14 +721,26 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
                     if expiry:
                         try:
                             expiry = expiry.strftime('%Y-%m-%d')
+                            if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                                date_tools = self.pool.get('date.tools')
+                                date_format = date_tools.get_date_format(cr, uid, context=context)
+                                comment = _('You cannot set an expiry date before %s\n') % (
+                                        datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                    )
+                                bad_expiry = True
+                                to_correct_ok = True
                         except:
+                            comment += _('Incorrectly formatted expiry date.\n')
                             bad_expiry = True
-                else:
+                            to_correct_ok = True
+                elif row.cells[5].type == 'datetime_error':
+                    comment = _('Incorrectly formatted expiry date: %s\n') % row.cells[5].data
                     bad_expiry = True
-            if bad_expiry:
-                comment += _('Incorrectly formatted expiry date.\n')
-                to_correct_ok = True
-                import_to_correct = True
+                    to_correct_ok = True
+                else:
+                    comment += _('Incorrectly formatted expiry date.\n')
+                    bad_expiry = True
+                    to_correct_ok = True
 
             # Quantity
             p_qty = row.cells[6].data
@@ -727,6 +749,13 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             else:
                 if row.cells[6].type in ['int', 'float']:
                     product_qty = row.cells[6].data
+                    if product_qty < 0:
+                        comment += _('Product Qty cannot be < 0. It has been reset to 0.')
+                        product_qty = 0.00
+                        to_correct_ok = True
+                elif row.cells[6].type == 'int_error':
+                    comment += _('Incorrect number format: %s') % row.cells[6].data
+                    to_correct_ok = True
                 else:
                     product_qty = 0.00
 
