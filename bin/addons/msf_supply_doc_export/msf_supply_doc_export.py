@@ -122,6 +122,9 @@ purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/m
 # VALIDATED PURCHASE ORDER (Excel XML)
 class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_MF'
         super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
@@ -146,6 +149,9 @@ SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addo
 # VALIDATE PURCHASE ORDER (Pure XML)
 class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_MF'
         super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
