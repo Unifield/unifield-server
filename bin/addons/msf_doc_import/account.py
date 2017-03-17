@@ -546,7 +546,7 @@ class msf_doc_import_accounting(osv.osv_memory):
         except Exception as e:
             cr.rollback()
             if current_line_num is not None:
-                message = _("An error occured line %s: %s") % (current_line_num, e.args and e.args[0] or '',)
+                message = _("An error occured on line %s: %s") % (current_line_num, e.args and e.args[0] or '',)
             else:
                 message = _("An error occured: %s") % (e.args and e.args[0] or '',)
             self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
