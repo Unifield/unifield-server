@@ -357,7 +357,7 @@ from/to this location will be shown.""",
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        loc_usage = ['supplier', 'customer', 'internal']
+        loc_usage = ['supplier', 'customer', 'internal', 'inventory', 'procurement', 'production']
         for report in self.browse(cr, uid, ids, context=context):
             domain = [
                 ('location_id.usage', 'in', loc_usage),
