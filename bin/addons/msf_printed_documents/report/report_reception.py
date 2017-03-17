@@ -93,14 +93,14 @@ class report_reception(report_sxw.rml_parse):
 
     def getQtyPO(self,line):
         # line amount from the PO, always the same on all INs for a given PO
-        val = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        val = line.purchase_line_id.product_qty if line.purchase_line_id else line.product_qty
         return "{0:.2f}".format(val)
 
     def getQtyBO(self,line,o):
         # Back Order amount = PO amount - all receipts
 
         # get PO qty
-        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else line.product_qty
         # get received qty (current and previous INs)
         cr, uid = self.cr, self.uid
         val = 0.00
