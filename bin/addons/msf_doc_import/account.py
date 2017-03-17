@@ -487,10 +487,25 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if type_for_reg == 'transfer' and (not is_liquidity or partner_journal.currency.id == r_currency):
                         errors.append(_('Line %s. The Third Party must be a liquidity journal with a currency '
                                         'different from the booking one for the given account: %s.') % (current_line_num, account.code))
+
                     if is_liquidity and file_journal_id == partner_journal.id:
                         raise osv.except_osv(_('Warning'),
                                              _('Line %s. The journal used for the internal transfer must be different from the '
                                                'Journal Entry Journal for the given account: %s.') % (current_line_num, account.code))
+
+                    if account.type == 'liquidity':
+                        # do not permit to import line with liquidity account
+                        # except when importing in Migration journal
+                        is_migration = False
+                        if file_journal_id and aj_obj.read(cr, uid,
+                                file_journal_id, ['type'],
+                                context=context)['type'] == 'migration':
+                            is_migration = True
+
+                        if not is_migration:
+                            raise osv.except_osv(_('Error'),
+                                                 _('Line %s. It is not possible to import account of type \'Liquidity\', '
+                                                 'please check the account %s.') % (current_line_num, account.code))
 
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
