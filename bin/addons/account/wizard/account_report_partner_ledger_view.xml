@@ -21,6 +21,13 @@
                 <field name="page_split"/>
                 <field name="tax"/>
                 <newline/>
+                <field name="partner_ids">
+                    <tree noteditable="1">
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="partner_type"/>
+                    </tree>
+                </field>
             </xpath>
             </data>
             </field>

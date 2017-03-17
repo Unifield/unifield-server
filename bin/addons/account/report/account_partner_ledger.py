@@ -124,25 +124,28 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 " " + self.TAX_REQUEST + " " \
                 "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
         self.account_ids = [a for (a,) in self.cr.fetchall()]
-        partner_to_use = []
-        self.cr.execute(
-                "SELECT DISTINCT l.partner_id " \
-                "FROM account_move_line AS l, account_account AS account, " \
-                " account_move AS am " \
-                "WHERE l.partner_id IS NOT NULL " \
-                    "AND l.account_id = account.id " \
-                    "AND am.id = l.move_id " \
-                    "AND am.state IN %s"
-#                    "AND " + self.query +" " \
-                    "AND l.account_id IN %s " \
-                    " " + PARTNER_REQUEST + " " \
-                    "AND account.active ",
-                (tuple(move_state), tuple(self.account_ids),))
+        if data['form'].get('partner_ids', False):
+            new_ids = data['form']['partner_ids']
+        else:
+            partner_to_use = []
+            self.cr.execute(
+                    "SELECT DISTINCT l.partner_id " \
+                    "FROM account_move_line AS l, account_account AS account, " \
+                    " account_move AS am " \
+                    "WHERE l.partner_id IS NOT NULL " \
+                        "AND l.account_id = account.id " \
+                        "AND am.id = l.move_id " \
+                        "AND am.state IN %s"
+    #                    "AND " + self.query +" " \
+                        "AND l.account_id IN %s " \
+                        " " + PARTNER_REQUEST + " " \
+                        "AND account.active ",
+                    (tuple(move_state), tuple(self.account_ids),))
 
-        res = self.cr.dictfetchall()
-        for res_line in res:
-            partner_to_use.append(res_line['partner_id'])
-        new_ids = partner_to_use
+            res = self.cr.dictfetchall()
+            for res_line in res:
+                partner_to_use.append(res_line['partner_id'])
+            new_ids = partner_to_use
         self.partner_ids = new_ids
         objects = obj_partner.browse(self.cr, self.uid, new_ids)
         res = super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
