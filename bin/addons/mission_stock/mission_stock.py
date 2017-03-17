@@ -320,7 +320,7 @@ class stock_mission_report(osv.osv):
 
                 writer.writerow(data_list)
             except Exception, e:
-                logging.getLogger('Mission stock report').warning("""An error is occured when generate the mission stock report file : %s\n""" % e, exc_info=True)
+                logging.getLogger('Mission stock report').warning("""An error is occurred when generate the mission stock report file : %s\n""" % e, exc_info=True)
 
         if not write_attachment_in_db:
             # delete previous reports in DB if any
@@ -398,7 +398,7 @@ class stock_mission_report(osv.osv):
                 #sheet.row(row_count).height = 60*20 # to fit the previous hardcoded mako configuration
                 row_count += 1
             except Exception, e:
-                logging.getLogger('MSR').warning("""An error is occured when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
+                logging.getLogger('MSR').warning("""An error is occurred when generate the mission stock report xls file : %s\n""" % e, exc_info=True)
         file_name = STOCK_MISSION_REPORT_NAME_PATTERN % (report_id, report_type + '.xls')
         if not write_attachment_in_db:
             xls_file = open(os.path.join(attachments_path, file_name), 'wb')

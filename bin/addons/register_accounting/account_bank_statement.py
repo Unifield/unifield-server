@@ -448,7 +448,7 @@ class account_bank_statement(osv.osv):
                 # Verify that another bank statement exists.
                 st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', reg.id)], context=context)
                 if len(st_prev_ids) > 1:
-                    raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                    raise osv.except_osv(_('Error'), _('A problem occurred: More than one register have this one as previous register!'))
                 if st_prev_ids:
                     self.write(cr, uid, st_prev_ids, {'balance_start': reg.balance_end_real}, context=context)
         return res
@@ -686,7 +686,7 @@ class account_bank_statement_line(osv.osv):
         - draft
         - temp posting
         - hard posting
-        - unknown if an error occured or anything else (for an example the move have a new state)
+        - unknown if an error occurred or anything else (for an example the move have a new state)
         """
         res = {}
         # Optimization: Use SQL request instead of a browse to improve result generation for cases where you have a lot of line (30+)
@@ -2048,7 +2048,7 @@ class account_bank_statement_line(osv.osv):
         for line in self.read(cr, uid, ids, ['is_down_payment', 'down_payment_id']):
             if line.get('is_down_payment', False) and line.get('down_payment_id'):
                 if not self.pool.get('wizard.down.payment').check_register_line_and_po(cr, uid, line.get('id'), line.get('down_payment_id')[0], context=context):
-                    raise osv.except_osv(_('Warning'), _('An error occured on down_payment check. Please contact an administrator to resolve this problem.'))
+                    raise osv.except_osv(_('Warning'), _('An error occurred on down_payment check. Please contact an administrator to resolve this problem.'))
         return res
 
     def copy(self, cr, uid, absl_id, default=None, context=None):

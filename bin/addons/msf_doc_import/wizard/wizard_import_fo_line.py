@@ -316,7 +316,7 @@ class wizard_import_fo_line(osv.osv_memory):
                 # we reset the state of the FO to draft (initial state)
             except Exception as e:
                 self.write(cr, uid, ids, {
-                    'message': _('An unknow error occured, please contact the support team. Error message: %s') % tools.ustr(e),
+                    'message': _('An unknow error occurred, please contact the support team. Error message: %s') % tools.ustr(e),
                     'state': 'done',
                 }, context=context)
             finally:

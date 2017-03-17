@@ -570,7 +570,7 @@ class hr_payroll_import(osv.osv_memory):
                                 self._uf_side_rounding_line_create(cr, uid, ids,
                                     context=context, header_vals=header_vals,
                                     amount=-1 * res_amount_rounded)
-                            #raise osv.except_osv(_('Error'), _('An error occured on balance and no payroll rounding line found.'))
+                            #raise osv.except_osv(_('Error'), _('An error occurred on balance and no payroll rounding line found.'))
                         else:
                             # Fetch Payroll rounding amount line and update
                             pr = self.pool.get('hr.payroll.msf').browse(cr, uid, pr_ids[0])

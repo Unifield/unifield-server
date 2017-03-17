@@ -651,7 +651,7 @@ class weekly_forecast_report(osv.osv):
             logging.getLogger('weekly.forecast.report').warn('Exception', exc_info=True)
             new_cr.rollback()
             progress_comment = """
-            An error occured during the processing of the report.\n
+            An error occurred during the processing of the report.\n
             Details of the error:\n
             %s
             """ % str(e)

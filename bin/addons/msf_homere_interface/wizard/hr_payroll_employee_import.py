@@ -373,7 +373,7 @@ class hr_payroll_employee_import(osv.osv_memory):
                     if len(n_ids) == 1:
                         res_nation = n_ids[0]
                     else:
-                        raise osv.except_osv(_('Error'), _('An error occured on nationality. Please verify all nationalities.'))
+                        raise osv.except_osv(_('Error'), _('An error occurred on nationality. Please verify all nationalities.'))
                 vals.update({'country_id': res_nation})
             # Update gender
             if sexe:

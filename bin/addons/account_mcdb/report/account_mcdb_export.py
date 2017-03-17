@@ -54,7 +54,7 @@ class account_line_csv_export(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not writer:
-            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+            raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
         if currency_id:
@@ -174,7 +174,7 @@ class account_line_csv_export(osv.osv_memory):
         # Is funding pool column needed?
         display_fp = context.get('display_fp', False)
         if not writer:
-            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+            raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
         # Prepare some value
         currency_name = ""
         field_sel = self.pool.get('ir.model.fields').get_browse_selection
@@ -275,7 +275,7 @@ class account_line_csv_export(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
         if not writer:
-            raise osv.except_osv(_('Error'), _('An error occured. Please contact an administrator to resolve this problem.'))
+            raise osv.except_osv(_('Error'), _('An error occurred. Please contact an administrator to resolve this problem.'))
 
         # Prepare some value
         currency_name = ""

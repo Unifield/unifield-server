@@ -397,7 +397,7 @@ class account_commitment(osv.osv):
             res = self.pool.get('account.analytic.line').unlink(cr, uid, search_ids, context=context)
             # And finally update commitment voucher state and lines amount
             if not res:
-                raise osv.except_osv(_('Error'), _('An error occured on engagement lines deletion.'))
+                raise osv.except_osv(_('Error'), _('An error occurred on engagement lines deletion.'))
             self.pool.get('account.commitment.line').write(cr, uid, [x.id for x in c.line_ids], {'amount': 0}, context=context)
             self.write(cr, uid, [c.id], {'state':'done'}, context=context)
         return True

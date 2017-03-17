@@ -115,7 +115,7 @@ class wizard_import_ir_line(osv.osv_memory):
                     currency_index, order_currency_code)
             except Exception as e:
                 lines_to_correct = -1
-                msg = "An error occured when the system was checking the "\
+                msg = "An error occurred when the system was checking the "\
                       "currency value of data. Error raised: %s" % str(e)
                 error_list.append(msg)
             if lines_to_correct > 0:
