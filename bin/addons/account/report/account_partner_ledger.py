@@ -24,6 +24,7 @@ import re
 from report import report_sxw
 from common_report_header import common_report_header
 import pooler
+from tools.translate import _
 
 class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
@@ -363,6 +364,18 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
          if self.amount_currency:
              return True
          return False
+
+    def _get_journal(self, data, instance_ids=False):
+        """
+        If all journals have been selected: display "All journals" instead of listing all of them
+        """
+        journal_ids = data.get('form', False) and data['form'].get('journal_ids', False)
+        self.cr.execute('SELECT COUNT(id) FROM account_journal;')
+        nb_journals = self.cr.fetchone()[0]
+        if journal_ids and len(journal_ids) == nb_journals:
+            return [_('All journals')]
+        else:
+            return super(third_party_ledger, self)._get_journal(data, instance_ids)
 
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
