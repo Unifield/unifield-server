@@ -108,7 +108,7 @@ class hq_report_ocb_matching(report_sxw.report_sxw):
         processrequests = [
             {
                 'headers': ['DB ID', 'Entry Sequence', 'Description', 'Reference', 'Document Date', 'Posting Date', 'G/L Account', 'Third Party', 'Booking Debit', 'Booking Credit', 'Booking Currency', 'Functional Debit', 'Functional Credit', 'Functional Currency', 'Reconcile reference'],
-                'filename': instance_name + "_%(year)s%(month)s_Check on reconcilable entries.csv",
+                'filename': "Check on reconcilable entries.csv",
                 'key': 'reconciliable',
                 'query_params': (tuple(excluded_journal_types), tuple(instance_ids),),
                 'function': 'postprocess_reconciliable',
