@@ -98125,3 +98125,8 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:545
+#, python-format
+msgid "An error occured on line %s: %s"
+msgstr "Une erreur est survenue à la ligne %s: %s"
