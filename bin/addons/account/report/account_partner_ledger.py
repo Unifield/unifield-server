@@ -370,12 +370,12 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         If all journals have been selected: display "All journals" instead of listing all of them
         """
         journal_ids = data.get('form', False) and data['form'].get('journal_ids', False)
-        self.cr.execute('SELECT COUNT(id) FROM account_journal;')
-        nb_journals = self.cr.fetchone()[0]
-        if journal_ids and len(journal_ids) == nb_journals:
-            return [_('All journals')]
-        else:
-            return super(third_party_ledger, self)._get_journal(data, instance_ids)
+        if journal_ids:
+            self.cr.execute('SELECT COUNT(id) FROM account_journal;')
+            nb_journals = self.cr.fetchone()[0]
+            if len(journal_ids) == nb_journals:
+                return [_('All journals')]
+        return super(third_party_ledger, self)._get_journal(data, instance_ids)
 
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
