@@ -2139,7 +2139,7 @@ class stock_picking(osv.osv):
 
         family_read_result = pack_fam_obj.read(cr, uid,
                                                list(family_set),
-                                               ['num_of_packs', 'total_weight', 'total_volume', 'shipment_id', 'not_shipped'],
+                                               ['num_of_packs', 'total_weight', 'total_volume', 'shipment_id', 'not_shipped', 'comment', 'from_pack', 'to_pack'],
                                                context=context)
 
         family_dict = dict((x['id'], x) for x in family_read_result)
@@ -2156,12 +2156,18 @@ class stock_picking(osv.osv):
                 num_of_packs = 0
                 total_weight = 0
                 total_volume = 0
+                keys = []
                 for family_id in family_ids:
+                    
                     if family_id in family_dict:
                         family = family_dict[family_id]
+                        key = (family['from_pack'], family['to_pack'])
+                        if key in keys:
+                            continue
                         if family['shipment_id'] and family['not_shipped']:
                             if self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context):
                                 continue
+                        keys.append(key)
                     num_of_packs += int(family['num_of_packs'])
                     total_weight += float(family['total_weight'])
                     total_volume += float(family['total_volume'])
