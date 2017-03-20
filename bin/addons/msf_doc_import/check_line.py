@@ -24,6 +24,7 @@ This module is dedicated to help checking lines of Excel file at importation.
 """
 from msf_doc_import import MAX_LINES_NB
 from tools.translate import _
+from mx import DateTime
 import logging
 import pooler
 
@@ -517,15 +518,26 @@ def compute_batch_expiry_value(cr, uid, **kwargs):
     if row.cells[bn_cell_nb] and row.cells[bn_cell_nb].type in ('int', 'str') and row.cells[bn_cell_nb].data:
         batch_name = row.cells[bn_cell_nb].data
 
-    if row.cells[ed_cell_nb] and row.cells[ed_cell_nb].type == 'datetime' and row.cells[ed_cell_nb].data:
-        expiry_date = row.cells[ed_cell_nb].data
+    if row.cells[ed_cell_nb] and row.cells[ed_cell_nb].data:
+        if row.cells[ed_cell_nb].type == 'str':
+            # if the cell is type str, cast it to DateTime
+            try:
+                expiry_date = DateTime.strptime(row.cells[ed_cell_nb].data, '%d/%m/%Y')
+            except:
+                error_list.append(_('Incorrectly formatted expiry date: %s. '
+                    'The expected date should be > 01/01/1900 in this format '
+                    'DD/MM/YYYY.') % row.cells[ed_cell_nb].data)
+                expiry_date = False
+        elif row.cells[ed_cell_nb].type == 'datetime':
+            expiry_date = row.cells[ed_cell_nb].data
         if expiry_date:
             try:
                 expiry_date = expiry_date.strftime('%Y-%m-%d')
             except:
-                error_list.append(_('The expiry date cannot be formated to \'%Y-%m-%d\'. Batch not selected'))
+                error_list.append(_('Incorrectly formatted expiry date: %s. '
+                    'The expected date should be > 01/01/1900 in this format '
+                    'DD/MM/YYYY.') % expiry_date)
                 expiry_date = False
-
 
     prd_brw = product_id and product_obj and product_obj.browse(cr, uid, product_id) or False
 

@@ -27228,7 +27228,7 @@ msgstr "Procurement Report"
 #, python-format
 msgid "Please check expiry date is correct.\n"
 ""
-msgstr "Please check expiry date is correct.\n"
+msgstr "Veuillez vérifier que la date d'expiration est correcte.\n"
 ""
 
 #. module: kit
@@ -32280,7 +32280,7 @@ msgstr "Etes-vous certain de vouloir annuler le lettrage de cet enregistrement ?
 #: code:addons/msf_doc_import/initial_stock_inventory.py:960
 #, python-format
 msgid "Other batch exists for this expiry date"
-msgstr "Other batch exists for this expiry date"
+msgstr "Un autre lot existe pour cette date d'expiration"
 
 #. module: analytic_distribution
 #: view:mass.reallocation.wizard:0
@@ -73575,7 +73575,7 @@ msgstr "Module for defining proprietary instances, their informations\n"
 #, python-format
 msgid "Other batch with the same expiry date exist.\n"
 ""
-msgstr "Other batch with the same expiry date exist.\n"
+msgstr "Un autre lot avec la même date d'expiration existe.\n"
 ""
 
 #. module: base
@@ -98119,7 +98119,7 @@ msgstr "Vous ne pouvez pas définir une date d'expiration avant %s\n"
 #: code:addons/msf_doc_import/initial_stock_inventory.py:726
 #, python-format
 msgid "Product Qty cannot be < 0. It has been reset to 0."
-msgstr "Product Qty cannot be < 0. It has been reset to 0."
+msgstr "La Qté Produit ne peux pas être < 0. Elle a été réinitialisée à 0."
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:442
@@ -98129,13 +98129,6 @@ msgid "Incorrectly formatted expiry date. Batch not created.\n"
 ""
 msgstr "Format incorrect pour la date d'expiration. Lot non créé.\n"
 ""
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/initial_stock_inventory.py:209
-#: code:addons/msf_doc_import/initial_stock_inventory.py:711
-#, python-format
-msgid "Incorrectly formatted expiry date: %s\n"
-msgstr "Format de date d'expiration incorrect: %s\n"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/initial_stock_inventory.py:206
@@ -98166,3 +98159,46 @@ msgstr "Problem de format de fichier :  aucun tableau trouvé dans le fichier, v
 #: model:product.justification.code,description:product_attributes.justification_code_jpa
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/check_line.py:527
+#: code:addons/msf_doc_import/check_line.py:536
+#, python-format
+msgid "Incorrectly formatted expiry date: %s. The expected date should be > 01/01/1900 in this format DD/MM/YYYY."
+""
+msgstr "Format incorrect pour la date d'expiration : %s. La date attendue doit être > 01/01/1900 dans ce format JJ/MM/AAAA."
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:215
+#, python-format
+msgid "Incorrectly formatted expiry date: %s. The expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n"
+""
+msgstr "Format incorrect pour la date d'expiration : %s. La date attendue doit être > 01/01/1900 dans ce format JJ/MM/AAAA.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:209
+#: code:addons/msf_doc_import/initial_stock_inventory.py:233
+#: code:addons/msf_doc_import/initial_stock_inventory.py:240
+#: code:addons/msf_doc_import/initial_stock_inventory.py:762
+#, python-format
+msgid "Incorrectly formatted expiry date. The expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n"
+""
+msgstr "Format incorrect pour la date d'expiration. La date attendue doit être > 01/01/1900 dans ce format JJ/MM/AAAA.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:492
+#, python-format
+msgid "Incorrectly formatted expiry date. The expected date should be > 01/01/1900 in this format DD/MM/YYYY. Batch not created.\n"
+""
+msgstr "Format incorrect pour la date d'expiration. La date attendue doit être > 01/01/1900 dans ce format JJ/MM/AAAA. Lot non selectionné.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:117
+#: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:119
+#, python-format
+msgid "The date format was not correct. The expected date should be > 01/01/1900 in this format DD/MM/YYYY."
+msgstr "Format de date incorrect. La date attendue doit être > 01/01/1900 dans ce format JJ/MM/AAAA."

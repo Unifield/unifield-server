@@ -72,7 +72,7 @@ your support team and give us this message.
         """
         # US:2527: accept only one format, reject other
         date_format = [
-            '%Y-%m-%d',
+            '%d/%m/%Y',
         ]
 
         d = False
@@ -114,9 +114,9 @@ your support team and give us this message.
                 if d:
                     return (0, d, None)
                 else:
-                    return (-1, value, _('The date format was not correct'))
+                    return (-1, value, _('The date format was not correct. The expected date should be > 01/01/1900 in this format DD/MM/YYYY.'))
             else:
-                return (-1, value, _('The date format was not correct'))
+                return (-1, value, _('The date format was not correct. The expected date should be > 01/01/1900 in this format DD/MM/YYYY.'))
         elif header[1] == 'Integer':
             if vtype == 'number':
                 return (0, value, None)

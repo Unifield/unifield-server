@@ -25,6 +25,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 from datetime import datetime
+from mx import DateTime
 
 
 class stock_inventory(osv.osv):
@@ -190,13 +191,13 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                     batch = False
 
             # Expiry date
+            date_tools = self.pool.get('date.tools')
+            date_format = date_tools.get_date_format(cr, uid, context=context)
             if row.cells[4].data:
                 if row.cells[4].type == 'datetime':
                     try:
                         expiry = row.cells[4].data.strftime('%Y-%m-%d')
                         if datetime.strptime(expiry, '%Y-%m-%d') < datetime(1900, 01, 01, 0, 0, 0):
-                            date_tools = self.pool.get('date.tools')
-                            date_format = date_tools.get_date_format(cr, uid, context=context)
                             comment = _('You cannot set an expiry date before %s\n') % (
                                     datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                                 )
@@ -204,15 +205,34 @@ Product Code*, Product Description*, Location*, Batch*, Expiry Date*, Quantity*"
                             to_correct_ok = True
                             expiry = False
                     except:
-                        comment += _('Incorrectly formatted expiry date.\n')
+                        comment += _('Incorrectly formatted expiry date. The '
+                            'expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
                         bad_expiry = True
                         to_correct_ok = True
                 elif row.cells[4].type == 'datetime_error':
-                    comment = _('Incorrectly formatted expiry date: %s\n') % row.cells[4].data
+                    comment = _('Incorrectly formatted expiry date: %s. The '
+                        'expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n') % row.cells[4].data
                     bad_expiry = True
                     to_correct_ok = True
+                elif row.cells[4].type == 'str':
+                    try:
+                        expiry = DateTime.strptime(row.cells[4].data, '%d/%m/%Y')
+                        if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                            comment += _('You cannot set an expiry date before %s\n') % (
+                                    datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                )
+                            bad_expiry = True
+                            to_correct_ok = True
+                            expiry = False
+                    except:
+                        comment += _('Incorrectly formatted expiry date. The expected'
+                            ' date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
+                        bad_expiry = True
+                        to_correct_ok = True
+                        expiry = False
                 else:
-                    comment += _('Incorrectly formatted expiry date.\n')
+                    comment += _('Incorrectly formatted expiry date. The '
+                        'expected date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
                     bad_expiry = True
                     to_correct_ok = True
                 if expiry and not batch:
@@ -462,7 +482,8 @@ class stock_inventory_line(osv.osv):
             elif batch_name and not bad_expiry and not expiry:
                 comment += _('Expiry date is missing.\n')
             elif batch_name and bad_expiry:
-                comment += _('Incorrectly formatted expiry date. Batch not created.\n')
+                comment += _('Incorrectly formatted expiry date. The expected'
+                    ' date should be > 01/01/1900 in this format DD/MM/YYYY. Batch not created.\n')
                 vals['expiry_date'] = False
             else:
                 comment += _('Batch is missing.\n')
@@ -716,15 +737,31 @@ Product Code*, Product Description*, Initial Average Cost*, Location*, Batch*, E
             batch = row.cells[4].data
 
             # Expiry date
+            date_tools = self.pool.get('date.tools')
+            date_format = date_tools.get_date_format(cr, uid, context=context)
             if row.cells[5].data:
-                if row.cells[5].type == 'datetime':
+                if row.cells[5].type == 'str':
+                    try:
+                        expiry = DateTime.strptime(row.cells[5].data, '%d/%m/%Y')
+                        if expiry < datetime(1900, 01, 01, 0, 0, 0):
+                            comment += _('You cannot set an expiry date before %s\n') % (
+                                    datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                                )
+                            bad_expiry = True
+                            to_correct_ok = True
+                            expiry = False
+                    except:
+                        comment += _('Incorrectly formatted expiry date. The expected'
+                            ' date should be > 01/01/1900 in this format DD/MM/YYYY.\n')
+                        bad_expiry = True
+                        to_correct_ok = True
+                        expiry = False
+                elif row.cells[5].type == 'datetime':
                     expiry = row.cells[5].data
                     if expiry:
                         try:
                             if expiry < datetime(1900, 01, 01, 0, 0, 0):
-                                date_tools = self.pool.get('date.tools')
-                                date_format = date_tools.get_date_format(cr, uid, context=context)
-                                comment = _('You cannot set an expiry date before %s\n') % (
+                                comment += _('You cannot set an expiry date before %s\n') % (
                                         datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
                                     )
                                 bad_expiry = True
