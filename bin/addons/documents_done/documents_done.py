@@ -470,7 +470,7 @@ class documents_done_wizard(osv.osv):
                     FROM
                         purchase_order po
                     WHERE
-                        state NOT IN ('draft', 'done', 'cancel')
+                        state NOT IN ('draft', 'done', 'cancel', 'split')
                       AND
                         rfq_ok = False)
                 UNION
