@@ -134,9 +134,16 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 " " + self.TAX_REQUEST + " " \
                 "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
         self.account_ids = [a for (a,) in self.cr.fetchall()]
+        new_ids = []
         if data['form'].get('partner_ids', False):
-            new_ids = data['form']['partner_ids']
-        else:
+            partner_selected_ids = data['form']['partner_ids']
+            self.cr.execute('SELECT COUNT(id) FROM res_partner;')
+            nb_partners = self.cr.fetchone()[0]
+            if len(partner_selected_ids) != nb_partners:
+                # if some partners are specifically selected: display them
+                new_ids = partner_selected_ids
+        if not new_ids:
+            # if all partners are selected: display only those linked to entries having the requested state
             partner_to_use = []
             self.cr.execute(
                     "SELECT DISTINCT l.partner_id " \
