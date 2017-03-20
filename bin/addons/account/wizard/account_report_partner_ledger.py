@@ -36,6 +36,8 @@ class account_partner_ledger(osv.osv_memory):
         'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page'),
         'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
                                         string='Partners', help='Display the report for specific partners only'),
+        'instance_ids': fields.many2many('msf.instance', 'account_partner_ledger_instance_rel', 'wizard_id', 'instance_id',
+                                        string='Proprietary Instances', help='Display the report for specific proprietary instances only'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
     }
@@ -51,7 +53,8 @@ class account_partner_ledger(osv.osv_memory):
         if context is None:
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
-        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency', 'tax', 'partner_ids'])[0])
+        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency',
+                                                     'tax', 'partner_ids', 'instance_ids'])[0])
         if data['form']['page_split']:
             return {
                 'type': 'ir.actions.report.xml',

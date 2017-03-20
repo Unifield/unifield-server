@@ -105,6 +105,15 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.exclude_tax is True:
             self.TAX_REQUEST = "AND t.code != 'tax'"
 
+        # Create the part of the request concerning instances
+        instance_ids = data['form'].get('instance_ids', False)
+        if not instance_ids:
+            self.INSTANCE_REQUEST = "AND l.instance_id IS NULL"
+        elif len(instance_ids) == 1:
+            self.INSTANCE_REQUEST = "AND l.instance_id = %s" % instance_ids[0]
+        else:
+            self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(instance_ids),)
+
         if (data['model'] == 'res.partner'):
             ## Si on imprime depuis les partenaires
             if ids:
@@ -197,6 +206,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 "AND m.state IN %s " \
                 " " + RECONCILE_TAG + " "\
                 " " + self.DATE_FROM + " "\
+                " " + self.INSTANCE_REQUEST + " "
                 "ORDER BY l.date",
                 (partner.id, tuple(self.account_ids), tuple(move_state)))
         res = self.cr.dictfetchall()
@@ -256,6 +266,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                         "AND account_id IN %s" \
                         " " + RECONCILE_TAG + " " \
                         " " + self.DATE_TO + " "\
+                        " " + self.INSTANCE_REQUEST + " "
                         "AND " + self.init_query + " ",
                     (partner.id, tuple(move_state), tuple(self.account_ids)))
             contemp = self.cr.fetchone()
@@ -274,6 +285,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                     "AND account_id IN %s" \
                     " " + RECONCILE_TAG + " " \
                     " " + self.DATE_FROM + " " \
+                    " " + self.INSTANCE_REQUEST + " "
                     "AND " + self.query + " ",
                 (partner.id, tuple(move_state), tuple(self.account_ids),))
 
@@ -307,6 +319,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                         "AND account_id IN %s" \
                         " " + RECONCILE_TAG + " " \
                         " " + self.DATE_TO + " " \
+                        " " + self.INSTANCE_REQUEST + " "\
                         "AND " + self.init_query + " ",
                     (partner.id, tuple(move_state), tuple(self.account_ids)))
             contemp = self.cr.fetchone()
@@ -325,6 +338,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                     "AND account_id IN %s" \
                     " " + RECONCILE_TAG + " " \
                     " " + self.DATE_FROM + " " \
+                    " " + self.INSTANCE_REQUEST + " "\
                     "AND " + self.query + " ",
                 (partner.id, tuple(move_state), tuple(self.account_ids),))
 
@@ -375,6 +389,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             nb_journals = self.cr.fetchone()[0]
             if len(journal_ids) == nb_journals:
                 return [_('All journals')]
+        instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
         return super(third_party_ledger, self)._get_journal(data, instance_ids)
 
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',

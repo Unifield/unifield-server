@@ -28,6 +28,12 @@
                         <field name="partner_type"/>
                     </tree>
                 </field>
+                <field name="instance_ids">
+                    <tree noteditable="1">
+                        <field name="name"/>
+                        <field name="code"/>
+                    </tree>
+                </field>
             </xpath>
             </data>
             </field>
