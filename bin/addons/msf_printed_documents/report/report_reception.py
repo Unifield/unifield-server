@@ -205,7 +205,12 @@ class report_reception(report_sxw.rml_parse):
         if o.state == 'assigned':
           actual_receipt_date = ''
         else:
-            actual_receipt_date = time.strftime('%d/%m/%Y', time.strptime(o.date,'%Y-%m-%d %H:%M:%S'))
+            ard = time.strptime(o.date, '%Y-%m-%d %H:%M:%S')
+            for move in o.move_lines:
+                mard = time.strptime(move.date, '%Y-%m-%d %H:%M:%S')
+                if mard < ard:
+                    ard = mard
+            actual_receipt_date = time.strftime('%d/%m/%Y', mard)
         return actual_receipt_date
 
     def get_lines(self, o):
