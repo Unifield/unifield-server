@@ -496,7 +496,6 @@ class msf_doc_import_accounting(osv.osv_memory):
                     if account.type == 'liquidity':
                         # do not permit to import line with liquidity account
                         # except when importing in Migration journal
-                        is_migration = False
                         if file_journal_id and aj_obj.read(cr, uid,
                                 file_journal_id, ['type'],
                                 context=context)['type'] != 'migration':
