@@ -58,7 +58,7 @@ def mako_template(text):
     This template uses UTF-8 encoding
     """
     # default_filters=['unicode', 'h'] can be used to set global filters
-    return Template(text, input_encoding='utf-8', output_encoding='utf-8')
+    return Template(text, input_encoding='utf-8', output_encoding='utf-8', default_filters=['decode.utf8'])
 
 class _int_noformat(_int_format):
     def __str__(self):
