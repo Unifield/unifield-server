@@ -43,18 +43,12 @@ class account_partner_ledger(osv.osv_memory):
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
     }
 
-    def _get_all_instances(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        return self.pool.get('msf.instance').search(cr, uid, [], context=context)
-
     _defaults = {
        'reconcil': True,
        'initial_balance': False,
        'page_split': False,
        'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'
        'only_active_partners': False,
-       'instance_ids': _get_all_instances,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
     }
 

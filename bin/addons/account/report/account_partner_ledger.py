@@ -108,8 +108,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         # Create the part of the request concerning instances
         instance_ids = data['form'].get('instance_ids', False)
         if not instance_ids:
-            self.INSTANCE_REQUEST = "AND l.instance_id IS NULL"
-        elif len(instance_ids) == 1:
+            # select all instances by default
+            instance_ids = self.pool.get('msf.instance').search(self.cr, self.uid, [], order='NO_ORDER')
+        if len(instance_ids) == 1:
             self.INSTANCE_REQUEST = "AND l.instance_id = %s" % instance_ids[0]
         else:
             self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(instance_ids),)
@@ -151,6 +152,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                     "AND am.state IN %s"
                     "AND l.partner_id = rp.id "
                     "AND l.account_id IN %s "
+                    " " + self.INSTANCE_REQUEST + " "
                     " " + PARTNER_REQUEST + " "
                     "AND rp.active IN %s "
                     "AND account.active ",
