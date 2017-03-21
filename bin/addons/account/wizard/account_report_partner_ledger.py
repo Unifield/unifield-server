@@ -46,12 +46,12 @@ class account_partner_ledger(osv.osv_memory):
         if context is None:
             context = {}
         context.update({'active_test': False})  # to also display the inactive partners
-        return self.pool.get('res.partner').search(cr, uid, [], order='NO_ORDER', context=context)
+        return self.pool.get('res.partner').search(cr, uid, [], context=context)
 
     def _get_all_instances(self, cr, uid, context=None):
         if context is None:
             context = {}
-        return self.pool.get('msf.instance').search(cr, uid, [], order='NO_ORDER', context=context)
+        return self.pool.get('msf.instance').search(cr, uid, [], context=context)
 
     _defaults = {
        'reconcil': True,
