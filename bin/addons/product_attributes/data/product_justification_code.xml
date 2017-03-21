@@ -66,6 +66,10 @@
             <field name="code">PM</field>
             <field name="description">Article must be used only in a properly designed programme, it may imply a medical risk if misused.</field>
         </record>
+        <record id="justification_code_pmf" model="product.justification.code">
+            <field name="code">PMF</field>
+            <field name="description">Article must be used only in a properly designed programme, it may imply a medical risk if misused. Monitor the use, efficacy for at least one year after the introduction of new drugs</field>
+        </record>
         <record id="justification_code_jpme" model="product.justification.code">
             <field name="code">PME</field>
             <field name="description">Article only for a properly designed Programme, it may imply a Medical risk if misused, Expensive.</field>
