@@ -499,10 +499,7 @@ class msf_doc_import_accounting(osv.osv_memory):
                         is_migration = False
                         if file_journal_id and aj_obj.read(cr, uid,
                                 file_journal_id, ['type'],
-                                context=context)['type'] == 'migration':
-                            is_migration = True
-
-                        if not is_migration:
+                                context=context)['type'] != 'migration':
                             raise osv.except_osv(_('Error'),
                                                  _('Line %s. It is not possible to import account of type \'Liquidity\', '
                                                  'please check the account %s.') % (current_line_num, account.code))
