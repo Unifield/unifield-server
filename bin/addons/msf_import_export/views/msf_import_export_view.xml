@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<openerp>
+<data>
+
+    <record id="msf_import_export_view" model="ir.ui.view">
+        <field name="name">msf.import.export.view</field>
+        <field name="model">msf.import.export</field>
+        <field name="type">form</field>
+        <field name="arch" type="xml">
+            <form string="Import / Export">
+                <group col="4" colspan="4">
+                    <field name="display_file_import" invisible="1" />
+                    <field name="display_file_export" invisible="1" />
+                    <field name='domain_type' on_change="domain_type_change(0, 'mandatory', domain_type, model_list_selection)" />
+                    <field name='model_list_selection' on_change="domain_type_change(1, 'mandatory', domain_type, model_list_selection)" />
+                </group>
+                <group col="4" colspan="4">
+                    <field name="hide_export_3_entries" invisible="1" />
+                    <field name="hide_export_all_entries" invisible="1" />
+                    <group colspan="2" col="2" name="file_import" attrs="{'invisible':[('display_file_import', '=', False)]}">
+                        <separator string="File Import" colspan="2"/>
+                        <field name="file" colspan="4"/>
+                        <button name="test_import" string="Test file" type="object" icon="gtk-ok" colspan="4"/>
+                        <button name="import_xml" string="Import" type="object" icon="gtk-ok" colspan="4"/>
+                    </group>
+                    <group colspan="2" col="2" name="file_export" attrs="{'invisible':[('display_file_import', '=', False)]}">
+                        <separator string="File Export" colspan="2"/>
+                        <button name="export_empty" string="Export Empty Template" type="object" icon="gtk-save" colspan="4"/>
+                        <button name="export_3_entries" string="Export template with first 3 entries" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_export_3_entries', '=', True)]}"/>
+                        <button name="export_all_entries" string="Export templates with all data" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_export_all_entries', '=', True)]}"/>
+                    </group>
+                </group>
+            </form>
+        </field>
+    </record>
+
+    <record id="msf_import_export_action" model="ir.actions.act_window">
+        <field name="name">Import / Export</field>
+        <field name="res_model">msf.import.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="msf_import_export_menu"
+              parent="object_query.menu_preferences"
+              action="msf_import_export_action" />
+
+</data>
+</openerp>
