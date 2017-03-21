@@ -53,6 +53,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'display_initial_balance':self._display_initial_balance,
             'display_currency':self._display_currency,
             'get_target_move': self._get_target_move,
+            'get_instances': self._get_instances,
         })
 
     def set_context(self, objects, data, ids, report_type=None):
@@ -106,14 +107,14 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             self.TAX_REQUEST = "AND t.code != 'tax'"
 
         # Create the part of the request concerning instances
-        instance_ids = data['form'].get('instance_ids', False)
-        if not instance_ids:
+        self.instance_ids = data['form'].get('instance_ids', False)
+        if not self.instance_ids:
             # select all instances by default
-            instance_ids = self.pool.get('msf.instance').search(self.cr, self.uid, [], order='NO_ORDER')
-        if len(instance_ids) == 1:
-            self.INSTANCE_REQUEST = "AND l.instance_id = %s" % instance_ids[0]
+            self.instance_ids = self.pool.get('msf.instance').search(self.cr, self.uid, [], order='NO_ORDER')
+        if len(self.instance_ids) == 1:
+            self.INSTANCE_REQUEST = "AND l.instance_id = %s" % self.instance_ids[0]
         else:
-            self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(instance_ids),)
+            self.INSTANCE_REQUEST = "AND l.instance_id IN %s" % (tuple(self.instance_ids),)
 
         if (data['model'] == 'res.partner'):
             ## Si on imprime depuis les partenaires
@@ -390,12 +391,26 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         """
         journal_ids = data.get('form', False) and data['form'].get('journal_ids', False)
         if journal_ids:
-            self.cr.execute('SELECT COUNT(id) FROM account_journal;')
-            nb_journals = self.cr.fetchone()[0]
+            journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
+            nb_journals = journal_obj.search(self.cr, self.uid, [], order='NO_ORDER', count=True, context=data.get('context', {}))
             if len(journal_ids) == nb_journals:
                 return [_('All journals')]
         instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
         return super(third_party_ledger, self)._get_journal(data, instance_ids)
+
+    def _get_instances(self, data):
+        """
+        Get the codes of all instances selected (or "All instances" if they are all selected)
+        """
+        res = []
+        if self.instance_ids:
+            instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
+            nb_instances = instance_obj.search(self.cr, self.uid, [], order='NO_ORDER', count=True, context=data.get('context', {}))
+            if len(self.instance_ids) == nb_instances:
+                return [_('All instances')]
+            res = [i.code for i in instance_obj.browse(self.cr, self.uid, self.instance_ids,
+                                                       fields_to_fetch=['code'], context=data.get('context', {}))]
+        return res
 
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
