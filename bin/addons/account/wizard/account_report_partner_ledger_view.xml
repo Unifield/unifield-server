@@ -20,26 +20,21 @@
                 <field name="amount_currency"/>
                 <field name="page_split"/>
                 <field name="tax"/>
-            </xpath>
-            <xpath expr="//page[@name='journal_ids']" position="after">
-                <page string="Partners" name="partner_ids">
-                    <field name="partner_ids" colspan="4" nolabel="1" context="{'active_test': False}">
-                        <tree noteditable="1">
-                            <field name="name"/>
-                            <field name="ref"/>
-                            <field name="partner_type"/>
-                        </tree>
-                    </field>
-                </page>
-                <page string="Proprietary Instances" name="instance_ids">
-                    <field name="instance_ids" colspan="4" nolabel="1">
-                        <tree noteditable="1">
-                            <field name="code"/>
-                            <field name="name"/>
-                            <field name="level"/>
-                        </tree>
+                <field name="only_active_partners"/>
+                <field name="instance_ids">
+                    <tree noteditable="1">
+                        <field name="code"/>
+                        <field name="name"/>
+                    </tree>
                 </field>
-                </page>
+                <field name="partner_ids" domain="[('name', '!=', 'To be defined')]"
+                       context="{'active_test': only_active_partners}">
+                    <tree noteditable="1">
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="partner_type"/>
+                    </tree>
+                </field>
             </xpath>
             </data>
             </field>

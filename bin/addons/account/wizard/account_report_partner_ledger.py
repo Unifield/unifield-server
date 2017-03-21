@@ -36,17 +36,12 @@ class account_partner_ledger(osv.osv_memory):
         'page_split': fields.boolean('One Partner Per Page', help='Display Ledger Report with One partner per page'),
         'partner_ids': fields.many2many('res.partner', 'account_partner_ledger_partner_rel', 'wizard_id', 'partner_id',
                                         string='Partners', help='Display the report for specific partners only'),
+        'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
         'instance_ids': fields.many2many('msf.instance', 'account_partner_ledger_instance_rel', 'wizard_id', 'instance_id',
                                         string='Proprietary Instances', help='Display the report for specific proprietary instances only'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
     }
-
-    def _get_all_partners(self, cr, uid, context=None):
-        if context is None:
-            context = {}
-        context.update({'active_test': False})  # to also display the inactive partners
-        return self.pool.get('res.partner').search(cr, uid, [], context=context)
 
     def _get_all_instances(self, cr, uid, context=None):
         if context is None:
@@ -58,7 +53,7 @@ class account_partner_ledger(osv.osv_memory):
        'initial_balance': False,
        'page_split': False,
        'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'
-       'partner_ids': _get_all_partners,
+       'only_active_partners': False,
        'instance_ids': _get_all_instances,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
     }
@@ -68,7 +63,7 @@ class account_partner_ledger(osv.osv_memory):
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency',
-                                                     'tax', 'partner_ids', 'instance_ids'])[0])
+                                                     'tax', 'partner_ids', 'only_active_partners', 'instance_ids'])[0])
         if data['form']['page_split']:
             return {
                 'type': 'ir.actions.report.xml',
