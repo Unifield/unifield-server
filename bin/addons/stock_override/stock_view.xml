@@ -664,7 +664,7 @@
                                     <group colspan="2" col="2">
                                         <separator string="Locations" colspan="2"/>
                                         <field name="location_id"
-                                        	domain="[('usage', '!=', 'view'), ('usage', '=', 'supplier'), ('id', '!=', location_dest_id)]"
+                                        	domain="[('usage', '!=', 'view'), ('id', '!=', location_dest_id), '|', '&amp;', ('usage', '=', 'customer'), ('location_category', '=', 'consumption_unit'), ('usage', '=', 'supplier')]"
                                         	context="{'specific_rules_tree_view': True, 'prodlot_id': prodlot_id, 'product_id': product_id, 'compute_child': False}"
                                         	attrs="{'readonly': [('from_wkf_line', '=', True)]}"
                                         	 />
