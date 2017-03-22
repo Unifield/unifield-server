@@ -205,7 +205,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             # Put the backorderd qty on the first line
             if not lines:
                 continue
-            lines[fl_index]['backordered_qty'] = bo_qty
+            lines[fl_index]['backordered_qty'] = bo_qty if line.order_id.state != 'cancel' else 0.00
 
             for line in lines:
                 if only_bo and line.get('backordered_qty', 0.00) <= 0.00:
