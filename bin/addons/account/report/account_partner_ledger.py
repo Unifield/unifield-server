@@ -72,6 +72,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.period_id = data['form'].get('period_from', False)
         self.date_from = data['form'].get('date_from', False)
         self.exclude_tax = data['form'].get('tax', False)
+        self.instance_ids = data['form'].get('instance_ids', False)
         PARTNER_REQUEST = ''
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -107,7 +108,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             self.TAX_REQUEST = "AND t.code != 'tax'"
 
         # Create the part of the request concerning instances
-        self.instance_ids = data['form'].get('instance_ids', False)
         if not self.instance_ids:
             # select all instances by default
             self.instance_ids = self.pool.get('msf.instance').search(self.cr, self.uid, [], order='NO_ORDER')
