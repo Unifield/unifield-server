@@ -1081,6 +1081,7 @@ class stock_picking(osv.osv):
         invoices_group = {}
         res = {}
         inv_type = type
+        all_pick_lines_invoiced = True
         for picking in self.browse(cr, uid, ids, context=context):
             if picking.invoice_state != '2binvoiced':
                 continue
