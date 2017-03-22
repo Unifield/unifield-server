@@ -21,6 +21,10 @@
 
 
 import time
+
+from datetime import datetime
+from datetime import timedelta
+
 import tools
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
@@ -145,6 +149,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     if ppl:
                         packing = move.picking_id.previous_step_id.name
                         shipment = move.picking_id.shipment_id.name
+                        eta = datetime.strptime(move.picking_id.shipment_id.shipment_expected_date[0:10], '%Y-%m-%d')
+                        eta += timedelta(days=line.order_id.partner_id.supplier_lt or 0.00)
                         if not grouped:
                             key = (packing, shipment, move.product_uom.name)
                         else:
@@ -155,7 +161,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'delivered_qty': not only_bo and move.product_qty or 0.00,
                             'delivered_uom': not only_bo and move.product_uom.name or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
-                            'eta': not only_bo and move.picking_id.shipment_id.planned_date_of_arrival or '',
+                            'eta': not only_bo and eta.strftime('%Y-%m-%d'),
                             'transport': not only_bo and move.picking_id.shipment_id.transport_type or '',
                         })
                     else:
