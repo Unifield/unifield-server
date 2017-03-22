@@ -297,6 +297,9 @@ class msf_import_export(osv.osv_memory):
 
         raise osv.except_osv(_('Info'), _('File structure is correct.'))
 
+    def import_xml(self, cr, uid, context=None):
+        pass
+
 msf_import_export()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
