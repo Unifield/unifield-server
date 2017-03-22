@@ -110,6 +110,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
             if line.procurement_id and line.procurement_id.purchase_id:
                 po_name = line.procurement_id.purchase_id.name
                 cdd = line.procurement_id.purchase_id.delivery_confirmed_date
+            if not cdd and line.order_id.delivery_confirmed_date:
+                cdd = line.order_id.delivery_confirmed_date
 
             for move in line.move_ids:
                 m_type = move.product_qty != 0.00 and move.picking_id.type == 'out'
@@ -199,6 +201,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'delivered_qty': 0.00,
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty,
+                    'cdd': cdd,
                 }
                 lines.append(data)
 
