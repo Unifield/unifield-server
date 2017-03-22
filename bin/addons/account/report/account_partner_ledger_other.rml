@@ -302,7 +302,7 @@
         <para style="terp_default_8">
             <font color="white"> </font>
         </para>
-        <blockTable colWidths="70.0,70.0,70.0,118.0,70.0,70.0,70.0" style="Table1">
+        <blockTable colWidths="60.0,60.0,60.0,118.0,60.0,60.0,60.0,60.0" style="Table1">
             <tr>
                 <td>
                     <para style="terp_tblheader_General_Centre">Chart of Account</para>
@@ -320,6 +320,9 @@
                     <para style="terp_tblheader_General_Centre">Partner's</para>
                 </td>
                 <td>
+                  <para style="terp_tblheader_General_Centre">Accounts</para>
+                </td>
+                <td>
                     <para style="terp_tblheader_General_Centre">Target Moves</para>
                 </td>
                 <td>
@@ -327,7 +330,7 @@
                 </td>
             </tr>
         </blockTable>
-        <blockTable colWidths="70.0,70.0,70.0,118.0,70.0,70.0,70.0" style="Table4">
+        <blockTable colWidths="60.0,60.0,60.0,118.0,60.0,60.0,60.0,60.0" style="Table4">
             <tr>
                 <td>
                     <para style="terp_default_Centre_8">[[ get_account(data) or '' ]]</para>
@@ -386,6 +389,9 @@
                 </td>
                 <td>
                     <para style="terp_default_Centre_8">[[ get_partners() ]]</para>
+                </td>
+                <td>
+                  <para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_accounts(data) ]) ]]</para>
                 </td>
                 <td>
                     <para style="terp_default_Centre_8">[[ get_target_move(data) ]]</para>
