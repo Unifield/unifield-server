@@ -19,9 +19,14 @@
 #
 ##############################################################################
 
-from osv import fields, osv
-from tools.translate import _
+import base64
 
+from osv import fields
+from osv import osv
+from tools.translate import _
+from tempfile import TemporaryFile
+from lxml import etree
+from lxml.etree import XMLSyntaxError
 
 MODEL_DICT = {
     # SUPPLY
@@ -83,7 +88,6 @@ MODEL_DICT = {
         'model': 'ir.rule'
     },
 }
-
 
 MODEL_DATA_DICT = {
     'product.product': {
@@ -212,9 +216,10 @@ class msf_import_export(osv.osv_memory):
             ], 'Type', required=True,
             help='Type of object to import/export'),
         'model_list_selection': fields.selection(_model_selection_get, 'Object to Import/Export', required=True),
-        'file': fields.binary('File to import .xml'),
+        'binary_file': fields.binary('File to import .xml'),
         'hide_export_3_entries': fields.boolean('Hide export 3 entries button'),
         'hide_export_all_entries': fields.boolean('Hide export all entries button'),
+        'display_test_import_button': fields.boolean('Display test import button'),
     }
 
     _default = {
@@ -222,6 +227,7 @@ class msf_import_export(osv.osv_memory):
         'display_file_export': lambda *a: False,
         'hide_export_3_entries': lambda *a: False,
         'hide_export_all_entries': lambda *a: False,
+        'display_test_import_button': lambda *a: False,
     }
 
     def domain_type_change(self, cr, uid, obj_id, position, field_type, domain_type, model_list_selection, context=None):
@@ -246,8 +252,50 @@ class msf_import_export(osv.osv_memory):
             else:
                 result['value']['hide_export_3_entries'] = False
                 result['value']['hide_export_all_entries'] = False
-
         return result
+
+    def file_change(self, cr, uid, obj_id, binary_file, context=None):
+        if context is None:
+            context = {}
+        result = {
+                'value': {
+                    'display_test_import_button': False,
+                }
+        }
+        if binary_file:
+            result['value']['display_test_import_button'] = True
+        return result
+
+    def check_xml_syntax(self, cr, uid, xml_string, context=None):
+        '''Try to parse the xml file and raise if there is an error
+        '''
+        try:
+            file_dom = etree.fromstring(xml_string)
+        except XMLSyntaxError as e:
+            raise osv.except_osv(_('Error'), _('File structure is incorrect, '
+                'please correct. You may generate a template with the File '
+                'export functionality.'))
+
+    def test_import(self, cr, uid, ids, context=None):
+        '''check file structure is correct
+        '''
+        obj = self.read(cr, uid, ids[0])
+        fileobj = TemporaryFile('w+')
+        if not obj['binary_file']:
+            raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        try:
+            xml_string = base64.decodestring(obj['binary_file'])
+            self.check_xml_syntax(cr, uid, xml_string, context=context)
+        finally:
+            fileobj.close()
+
+        # check that the required column are present
+        # XXX to be written
+
+        # check all column present in the file exists in the database
+        # XXX to be written
+
+        raise osv.except_osv(_('Info'), _('File structure is correct.'))
 
 msf_import_export()
 
