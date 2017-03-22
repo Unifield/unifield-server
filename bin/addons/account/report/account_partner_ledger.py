@@ -73,6 +73,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.date_from = data['form'].get('date_from', False)
         self.exclude_tax = data['form'].get('tax', False)
         self.instance_ids = data['form'].get('instance_ids', False)
+        self.account_ids = data['form'].get('account_ids', False)
         PARTNER_REQUEST = ''
         move_state = ['draft','posted']
         if self.target_move == 'posted':
@@ -127,15 +128,17 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         else:
             self.ACCOUNT_TYPE = ['payable','receivable']
 
-        self.cr.execute(
-            "SELECT a.id " \
-            "FROM account_account a " \
-            "LEFT JOIN account_account_type t " \
-                "ON (a.user_type=t.id) " \
-                'WHERE a.type IN %s' \
-                " " + self.TAX_REQUEST + " " \
-                "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
-        self.account_ids = [a for (a,) in self.cr.fetchall()]
+        # get the account list (if some accounts have been specifically selected use them directly)
+        if not self.account_ids:
+            self.cr.execute(
+                "SELECT a.id " \
+                "FROM account_account a " \
+                "LEFT JOIN account_account_type t " \
+                    "ON (a.user_type=t.id) " \
+                    'WHERE a.type IN %s' \
+                    " " + self.TAX_REQUEST + " " \
+                    "AND a.active", (tuple(self.ACCOUNT_TYPE), ))
+            self.account_ids = [a for (a,) in self.cr.fetchall()]
         if data['form'].get('partner_ids', False):
             new_ids = data['form']['partner_ids']  # some partners are specifically selected
         else:

@@ -14,12 +14,12 @@
                 <label nolabel="1" colspan="4" string="This report is an analysis done by a partner. It is a PDF report containing one line per partner representing the cumulative credit balance"/>
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
-                <field name="result_selection" on_change="onchange_result_selection(result_selection)"/>
+                <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="initial_balance"/>
                 <field name="reconcil"/>
                 <field name="amount_currency"/>
                 <field name="page_split"/>
-                <field name="tax"/>
+                <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="only_active_partners"/>
                 <field name="instance_ids">
                     <tree noteditable="1">
@@ -36,7 +36,12 @@
                     </tree>
                 </field>
                 <field name="account_domain" invisible="1"/>
-                <field name="account_ids" domain="account_domain"/>
+                <field name="account_ids" domain="account_domain">
+                    <tree noteditable="1">
+                        <field name="code"/>
+                        <field name="name"/>
+                    </tree>
+                </field>
             </xpath>
             </data>
             </field>

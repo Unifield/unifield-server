@@ -56,9 +56,9 @@ class account_partner_ledger(osv.osv_memory):
        'tax': False, # UFTP-312: Add an exclude tax account possibility
     }
 
-    def onchange_result_selection(self, cr, uid, ids, result_selection, context=None):
+    def onchange_result_selection_or_tax(self, cr, uid, ids, result_selection, exclude_tax, context=None):
         """
-        Adapt the domain of the account according to the types selected by the user
+        Adapt the domain of the account according to the selections made by the user
         Note: directly changing the domain on the many2many field "account_ids" doesn't work in that case so we use the
         invisible field "account_domain" to store the domain and use it in the view...
         """
@@ -66,12 +66,14 @@ class account_partner_ledger(osv.osv_memory):
             context = {}
         res = {}
         if result_selection == 'supplier':
-            account_domain = "[('type', 'in', ['payable'])]"
+            account_domain = [('type', 'in', ['payable'])]
         elif result_selection == 'customer':
-            account_domain = "[('type', 'in', ['receivable'])]"
+            account_domain = [('type', 'in', ['receivable'])]
         else:
-            account_domain = "[('type', 'in', ['payable', 'receivable'])]"
-        res['value'] = {'account_domain': account_domain}
+            account_domain = [('type', 'in', ['payable', 'receivable'])]
+        if exclude_tax:
+            account_domain.append(('user_type_code', '!=', 'tax'))
+        res['value'] = {'account_domain': '%s' % account_domain}
         return res
 
     def _print_report(self, cr, uid, ids, data, context=None):
@@ -79,7 +81,8 @@ class account_partner_ledger(osv.osv_memory):
             context = {}
         data = self.pre_print_report(cr, uid, ids, data, context=context)
         data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency',
-                                                     'tax', 'partner_ids', 'only_active_partners', 'instance_ids'])[0])
+                                                     'tax', 'partner_ids', 'only_active_partners', 'instance_ids',
+                                                     'account_ids'])[0])
         if data['form']['page_split']:
             return {
                 'type': 'ir.actions.report.xml',
