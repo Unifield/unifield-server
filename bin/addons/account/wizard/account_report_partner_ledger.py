@@ -39,8 +39,11 @@ class account_partner_ledger(osv.osv_memory):
         'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
         'instance_ids': fields.many2many('msf.instance', 'account_partner_ledger_instance_rel', 'wizard_id', 'instance_id',
                                         string='Proprietary Instances', help='Display the report for specific proprietary instances only'),
+        'account_ids': fields.many2many('account.account', 'account_partner_ledger_account_rel', 'wizard_id', 'account_id',
+                                        string='Accounts', help='Display the report for specific accounts only'),
         'amount_currency': fields.boolean("With Currency", help="It adds the currency column if the currency is different then the company currency"),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        'account_domain': fields.char('Account domain', size=250, required=False),
     }
 
     _defaults = {
@@ -48,9 +51,28 @@ class account_partner_ledger(osv.osv_memory):
        'initial_balance': False,
        'page_split': False,
        'result_selection': 'supplier',  # UF-1715: 'Payable Accounts' by default instead of 'Receivable'
+       'account_domain': "[('type', 'in', ['payable'])]",
        'only_active_partners': False,
        'tax': False, # UFTP-312: Add an exclude tax account possibility
     }
+
+    def onchange_result_selection(self, cr, uid, ids, result_selection, context=None):
+        """
+        Adapt the domain of the account according to the types selected by the user
+        Note: directly changing the domain on the many2many field "account_ids" doesn't work in that case so we use the
+        invisible field "account_domain" to store the domain and use it in the view...
+        """
+        if context is None:
+            context = {}
+        res = {}
+        if result_selection == 'supplier':
+            account_domain = "[('type', 'in', ['payable'])]"
+        elif result_selection == 'customer':
+            account_domain = "[('type', 'in', ['receivable'])]"
+        else:
+            account_domain = "[('type', 'in', ['payable', 'receivable'])]"
+        res['value'] = {'account_domain': account_domain}
+        return res
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:
