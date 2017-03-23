@@ -532,8 +532,8 @@ class msf_import_export(osv.osv_memory):
         def save_error(errors, row_index):
             if not isinstance(errors, list):
                 errors = [errors]
-            import_errors.setdefault(row_index, [])
-            import_errors[row_index].extend(errors)
+            import_errors.setdefault(row_index+2, [])
+            import_errors[row_index+2].extend(errors)
 
         # Manage warnings
         import_warnings = {}
