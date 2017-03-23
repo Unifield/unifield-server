@@ -1047,7 +1047,7 @@ class orm_template(object):
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + traceback.format_exc(), '')
 
             if config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
