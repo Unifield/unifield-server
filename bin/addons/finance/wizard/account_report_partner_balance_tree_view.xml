@@ -99,14 +99,22 @@
                 <field name="display_partner"/>
                 <field name="output_currency" invisible="1" />
                 <newline />
+                <field name="tax"/>
+                <field name="only_active_partners"/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                             <field name="code" />
                             <field name="name" />
                     </tree>
                 </field>
-                <newline/>
-                <field name="tax"/>
+                <field name="partner_ids" domain="[('name', '!=', 'To be defined')]"
+                       context="{'active_test': only_active_partners}">
+                    <tree noteditable="1">
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="partner_type"/>
+                    </tree>
+                </field>
             </xpath>
             
             <xpath expr="//group[1]" position="replace">

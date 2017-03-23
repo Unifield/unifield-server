@@ -340,6 +340,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'output_currency': fields.many2one('res.currency', 'Output Currency', required=True),
         'instance_ids': fields.many2many('msf.instance', 'account_report_general_ledger_instance_rel', 'instance_id', 'argl_id', 'Proprietary Instances'),
         'tax': fields.boolean('Exclude tax', help="Exclude tax accounts from process"),
+        'partner_ids': fields.many2many('res.partner', 'account_partner_balance_partner_rel', 'wizard_id', 'partner_id',
+                                        string='Partners', help='Display the report for specific partners only'),
+        'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -352,6 +355,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'result_selection': 'supplier',
         'journal_ids': _get_journals,
         'tax': False,
+        'only_active_partners': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -372,7 +376,9 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['ids'] = context.get('active_ids', [])
         data['model'] = context.get('active_model', 'ir.ui.menu')
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
-        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner', 'output_currency', 'instance_ids', 'tax'])[0]
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
+                                                'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
+                                                'output_currency', 'instance_ids', 'tax', 'partner_ids', 'only_active_partners'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:

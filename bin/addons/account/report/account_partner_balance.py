@@ -55,6 +55,16 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
 
+        self.PARTNER_REQUEST = ''
+        if data['form'].get('partner_ids', False):  # some partners are specifically selected
+            partner_ids = data['form']['partner_ids']
+            if len(partner_ids) == 1:
+                self.PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
+            else:
+                self.PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
+        elif data['form'].get('only_active_partners'):  # check if we should include only active partners
+            self.PARTNER_REQUEST = "AND p.active = 't'"
+
         if (self.result_selection == 'customer' ):
             self.ACCOUNT_TYPE = ('receivable',)
         elif (self.result_selection == 'supplier'):
@@ -108,6 +118,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             "WHERE ac.id IN %s " \
             "AND am.state IN %s " \
             "AND " + self.query + "" \
+            " " + self.PARTNER_REQUEST + " "
             "GROUP BY p.id, p.ref, p.name,l.account_id,ac.name,ac.code " \
             "ORDER BY l.account_id,p.name",
             (tuple(self.account_ids), tuple(move_state)))
@@ -253,11 +264,12 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         temp_res = 0.0
         self.cr.execute(
                 "SELECT sum(debit) " \
-                "FROM account_move_line AS l " \
+                "FROM account_move_line AS l LEFT JOIN res_partner p ON l.partner_id = p.id "
                 "JOIN account_move am ON (am.id = l.move_id)" \
                 "WHERE l.account_id IN %s"  \
                     "AND am.state IN %s" \
-                    "AND " + self.query + "",
+                    "AND " + self.query + " "
+                    " " + self.PARTNER_REQUEST + " ",
                     (tuple(self.account_ids), tuple(move_state)))
         temp_res = float(self.cr.fetchone()[0] or 0.0)
         return temp_res
@@ -272,11 +284,12 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         temp_res = 0.0
         self.cr.execute(
                 "SELECT sum(credit) " \
-                "FROM account_move_line AS l " \
+                "FROM account_move_line AS l LEFT JOIN res_partner p ON l.partner_id = p.id "
                 "JOIN account_move am ON (am.id = l.move_id)" \
                 "WHERE l.account_id IN %s" \
                     "AND am.state IN %s" \
-                    "AND " + self.query + "",
+                    "AND " + self.query + ""
+                    " " + self.PARTNER_REQUEST + " ",
                     (tuple(self.account_ids), tuple(move_state)))
         temp_res = float(self.cr.fetchone()[0] or 0.0)
         return temp_res
@@ -292,11 +305,12 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         temp_res = 0.0
         self.cr.execute(
                 "SELECT sum(debit-credit) " \
-                "FROM account_move_line AS l " \
+                "FROM account_move_line AS l LEFT JOIN res_partner p ON l.partner_id = p.id "
                 "JOIN account_move am ON (am.id = l.move_id)" \
                 "WHERE l.account_id IN %s" \
                     "AND am.state IN %s" \
                     "AND " + self.query + " " \
+                    " " + self.PARTNER_REQUEST + " "
                     "AND l.blocked=TRUE ",
                     (tuple(self.account_ids), tuple(move_state), ))
         temp_res = float(self.cr.fetchone()[0] or 0.0)
