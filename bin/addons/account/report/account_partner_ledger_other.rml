@@ -474,7 +474,7 @@
             <blockTable colWidths="332.0,64.0,64.0,79.0" style="Table3">
                 <tr>
                     <td>
-                        <para style="terp_default_Bold_9">[[ p.ref ]] - [[ p.name ]]</para>
+                        <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
                     </td>
                     <td>
                         <para style="terp_default_Bold_9_Right">[[ formatLang((sum_debit_partner(p))) ]]</para>
@@ -637,7 +637,7 @@
             <blockTable colWidths="261.0,64.0,64.0,79.0,71.0" style="Table12">
                 <tr>
                     <td>
-                        <para style="terp_default_Bold_9">[[ p.ref ]] - [[ p.name ]]</para>
+                        <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
                     </td>
                     <td>
                         <para style="terp_default_Bold_9_Right">[[ formatLang((sum_debit_partner(p))) ]]</para>
