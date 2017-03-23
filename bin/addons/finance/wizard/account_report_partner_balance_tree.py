@@ -78,6 +78,16 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('tax', False):
             TAX_REQUEST = "AND at.code != 'tax'"
 
+        self.PARTNER_REQUEST = ''
+        if data['form'].get('partner_ids', False):  # some partners are specifically selected
+            partner_ids = data['form']['partner_ids']
+            if len(partner_ids) == 1:
+                self.PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
+            else:
+                self.PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
+        elif data['form'].get('only_active_partners'):  # check if we should include only active partners
+            self.PARTNER_REQUEST = "AND p.active = 't'"
+
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
@@ -93,6 +103,7 @@ class account_partner_balance_tree(osv.osv):
             " AND am.state IN " + move_state + "" \
             " AND " + where + "" \
             " " + TAX_REQUEST + " " \
+            " " + self.PARTNER_REQUEST + " " \
             " GROUP BY ac.type,p.id,p.ref,p.name" \
             " ORDER BY ac.type,p.name"
         cr.execute(query)
