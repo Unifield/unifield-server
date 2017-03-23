@@ -8,7 +8,7 @@
         <field name="type">form</field>
         <field name="arch" type="xml">
             <form string="Import / Export">
-                <group col="4" colspan="4">
+                <group>
                     <field name="display_file_import" invisible="1" />
                     <field name="display_file_export" invisible="1" />
                     <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />

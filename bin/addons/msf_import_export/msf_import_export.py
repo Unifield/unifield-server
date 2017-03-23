@@ -28,6 +28,7 @@ import re
 import pooler
 import tools
 
+from mx import DateTime
 from osv import fields
 from osv import osv
 from tools.translate import _
@@ -108,66 +109,51 @@ MODEL_DATA_DICT = {
             ImportHeader(name=_('XMLID'), ftype='String', size=80, tech_name='xmlid_code'),
             ImportHeader(name=_('Old code'), ftype='String', size=80, tech_name='old_code'),
             ImportHeader(name=_('Type'), ftype='String', size=80, tech_name='type'),
-            ImportHeader(name=_('Transport product'), ftype='String', size=80, tech_name='transport_ok'),
+            ImportHeader(name=_('Transport product'), ftype='Boolean', size=80, tech_name='transport_ok'),
             ImportHeader(name=_('Product SubType'), ftype='String', size=80, tech_name='subtype'),
-            ImportHeader(name=_('Asset Type'), ftype='String', size=80, tech_name='asset_type_id'),
+            ImportHeader(name=_('Asset Type'), ftype='String', size=80, tech_name='asset_type_id.name'),
+            ImportHeader(name=_('Procurement Method'), ftype='String', size=80, tech_name='procure_method'),
+            ImportHeader(name=_('Supply Method'), ftype='String', size=80, tech_name='supply_method'),
+            ImportHeader(name=_('Cost Price'), ftype='Float', size=80, tech_name='standard_price'),
+            ImportHeader(name=_('Volume'), ftype='Float', size=80, tech_name='volume'),
+            ImportHeader(name=_('Gross weight'), ftype='Float', size=80, tech_name='weight'),
             ImportHeader(name=_('Product Creator'), ftype='String', size=80, tech_name='international_status.name', required=True),
+            ImportHeader(name=_('Status'), ftype='String', size=80, tech_name='state.name'),
+            ImportHeader(name=_('Active'), ftype='Boolean', size=80, tech_name='active'),
+            ImportHeader(name=_('Expiry Date Mandatory'), ftype='Boolean', size=80, tech_name='perishable'),
+            ImportHeader(name=_('Batch Number Mandatory'), ftype='Boolean', size=80, tech_name='batch_management'),
+            ImportHeader(name=_('Default Unit of Measure'), ftype='String', size=80, tech_name='uom_id.name'),
+            ImportHeader(name=_('Exchangeable Unit Of Measure'), ftype='String', size=80, tech_name='uom_po_id.name'),
             ImportHeader(name=_('Main Type'), ftype='String', size=80, tech_name='nomen_manda_0.name', required=True),
             ImportHeader(name=_('Group'), ftype='String', size=80, tech_name='nomen_manda_1.name', required=True),
             ImportHeader(name=_('Family'), ftype='String', size=80, tech_name='nomen_manda_2.name', required=True),
             ImportHeader(name=_('Root'), ftype='String', size=80, tech_name='nomen_manda_3.name', required=True),
-        ],
-        'field_list': [
-            'default_code',
-            'name',
-            'xmlid_code',
-            'old_code',
-            'type',
-            'transport_ok',
-            'subtype',
-            'asset_type_id.name',
-            'procure_method',
-            'supply_method',
-            'standard_price',
-            'volume',
-            'weight',
-            'international_status.name',
-            'state.name',
-            'active',
-            'perishable',
-            'batch_management',
-            'uom_id.name',
-            'uom_po_id.name',
-            'nomen_manda_0.name',
-            'nomen_manda_1.name',
-            'nomen_manda_2.name',
-            'nomen_manda_3.name',
-            'life_time',
-            'use_time',
-            'short_shelf_life',
-            'alert_time',
-            'heat_sensitive_item.code',
-            'cold_chain',
-            'sterilized',
-            'single_use',
-            'narcotic',
-            'justification_code_id.id',
-            'controlled_substance',
-            'closed_article',
-            'restricted_country',
-            'country_restriction',
-            'dangerous_goods',
-            'un_code',
-            'criticism',
-            'abc_class',
-            'product_catalog_path',
-            'description',
-            'description2',
-            'description_sale',
-            'description_purchase',
-            'procure_delay',
-            'property_account_income.code',
-            'property_account_expense.code',
+            ImportHeader(name=_('Product Life Time'), ftype='Number', size=80, tech_name='life_time'),
+            ImportHeader(name=_('Product Use Time'), ftype='Number', size=80, tech_name='use_time'),
+            ImportHeader(name=_('Short Shelf Life'), ftype='String', size=80, tech_name='short_shelf_life'),
+            ImportHeader(name=_('Product Alert Time'), ftype='Number', size=80, tech_name='alert_time'),
+            ImportHeader(name=_('Temperature sensitive item'), ftype='String', size=80, tech_name='heat_sensitive_item.name'),
+            ImportHeader(name=_('Cold chain'), ftype='String', size=80, tech_name='cold_chain'),
+            ImportHeader(name=_('Sterile'), ftype='String', size=80, tech_name='sterilized'),
+            ImportHeader(name=_('Single Use'), ftype='String', size=80, tech_name='single_use'),
+            ImportHeader(name=_('Narcotic'), ftype='Boolean', size=80, tech_name='narcotic'),
+            ImportHeader(name=_('Justification Code'), ftype='String', size=80, tech_name='justification_code_id.id'),
+            ImportHeader(name=_('Controlled Substance'), ftype='String', size=80, tech_name='controlled_substance'),
+            ImportHeader(name=_('Closed Article'), ftype='String', size=80, tech_name='closed_article'),
+            ImportHeader(name=_('Restricted in the Country'), ftype='Boolean', size=80, tech_name='restricted_country'),
+            ImportHeader(name=_('Country Restriction'), ftype='String', size=80, tech_name='country_restriction'),
+            ImportHeader(name=_('Dangerous goods'), ftype='String', size=80, tech_name='dangerous_goods'),
+            ImportHeader(name=_('UN Code'), ftype='String', size=80, tech_name='un_code'),
+            ImportHeader(name=_('Criticality'), ftype='String', size=80, tech_name='criticism'),
+            ImportHeader(name=_('ABC Class'), ftype='String', size=80, tech_name='abc_class'),
+            ImportHeader(name=_('Product Catalog Path'), ftype='String', size=80, tech_name='product_catalog_path'),
+            ImportHeader(name=_('Description'), ftype='String', size=80, tech_name='description'),
+            ImportHeader(name=_('Description 2'), ftype='String', size=80, tech_name='description2'),
+            ImportHeader(name=_('Field Description'), ftype='String', size=80, tech_name='description_sale'),
+            ImportHeader(name=_('Purchase Description'), ftype='String', size=80, tech_name='description_purchase'),
+            ImportHeader(name=_('Procurement Lead Time'), ftype='Number', size=80, tech_name='procure_delay'),
+            ImportHeader(name=_('Income Account'), ftype='String', size=80, tech_name='property_account_income.code'),
+            ImportHeader(name=_('Expense Account'), ftype='String', size=80, tech_name='property_account_expense.code'),
         ],
         'required_field_list': [
             'name',
@@ -180,13 +166,6 @@ MODEL_DATA_DICT = {
         'hide_export_all_entries': True,
     },
     'product.nomenclature': {
-        'field_list': [
-            'level',
-            'name',
-            'type',
-            'parent_id',
-            'msfid'
-        ],
         'required_field_list': [
             'level',
             'name',
@@ -195,25 +174,16 @@ MODEL_DATA_DICT = {
         'hide_export_all_entries': True,
     },
     'product.category': {
-        'field_list': [
-        ],
-        'required_field_list': [
-        ],
     },
     'account.account': {
-        'field_list': [],
     },
     'account.journal': {
-        'field_list': [],
     },
     'analytic.account': {
-        'field_list': [],
     },
     'res.groups': {
-        'field_list': [],
     },
     'ir.rule': {
-        'field_list': [],
     },
 }
 
@@ -414,18 +384,10 @@ class msf_import_export(osv.osv_memory):
                 'please correct. You may generate a template with the File '
                 'export functionality.'))
 
-    #def check_headers(self, cr, uid, ids, xml_string, context=None):
-    #    file_dom = etree.fromstring(xml_string)
-
-
     def test_import(self, cr, uid, ids, context=None):
-        '''check file structure is correct
+        '''Warn if file structure is correct
         '''
-        if not self.check_import(cr, uid, ids, context=context):
-            raise osv.except_osv(_('Error'), _('File structure is incorrect, '
-                'please correct. You may generate a template with the File '
-                'export functionality.'))
-        else:
+        if self.check_import(cr, uid, ids, context=context):
             raise osv.except_osv(_('Info'), _('File structure is correct.'))
 
     def check_import(self, cr, uid, ids, context=None):
@@ -454,7 +416,9 @@ class msf_import_export(osv.osv_memory):
     def check_required_fields(self, cr, uid, wizard_brw, head, context=None):
         model = MODEL_DICT[wizard_brw.model_list_selection]['model']
         model_obj = self.pool.get(model)
-        required_field_list = MODEL_DATA_DICT[model]['required_field_list']
+        required_field_list = []
+        if 'required_field_list' in MODEL_DATA_DICT[model]:
+            required_field_list = MODEL_DATA_DICT[model]['required_field_list']
         header_columns = [_(head[i].data.upper()) for i in range(0, len(head))]
         missing_columns = []
         for field in required_field_list:
@@ -475,10 +439,7 @@ class msf_import_export(osv.osv_memory):
         if isinstance(ids, (int, long)):
             ids = [ids]
 
-        if not self.check_import(cr, uid, ids, context=context):
-            raise osv.except_osv(_('Error'), _('File structure is incorrect, '
-                'please correct. You may generate a template with the File '
-                'export functionality.'))
+        self.check_import(cr, uid, ids, context=context)
 
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
@@ -634,13 +595,10 @@ WHERE n3.level = 3)
             return newids[0]
 
         def process_data(field, value, fields_def):
-            if not value or field not in fields_def:
+            if value is None or field not in fields_def:
                 return
             if '.' not in field:
-                # type datetime, date, bool, int, float
-                if fields_def[field]['type'] == 'boolean':
-                    value = value.lower() not in ('0', 'false', 'off','-', 'no', 'n')
-                elif fields_def[field]['type'] == 'selection':
+                if fields_def[field]['type'] == 'selection':
                     if impobj == 'product.product' and self._cache[dbname].get('product.product.%s.%s' % (field, value), False):
                         value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
                     else:
@@ -651,13 +609,6 @@ WHERE n3.level = 3)
                                     self._cache[dbname].setdefault('product.product.%s' % field, {})
                                     self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
                                 break
-                elif fields_def[field]['type'] == 'date':
-                    dt = DateTime.strptime(value,"%d/%m/%Y")
-                    value = dt.strftime("%Y-%m-%d")
-                elif fields_def[field]['type'] == 'float':
-                    # remove space and unbreakable space
-                    value = re.sub('[  ]+', '', value)
-                    value = float(value.replace(',', '.'))
                 return value
 
             else:
@@ -707,7 +658,7 @@ WHERE n3.level = 3)
                     self.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
 
                 for n,h in enumerate(header_codes):
-                    if line_data[n]:
+                    if isinstance(line_data[n], basestring):
                         line_data[n] = line_data[n].rstrip()
 
                     # UFTP-327
