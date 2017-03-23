@@ -11,8 +11,7 @@
                 <group col="4" colspan="4">
                     <field name="display_file_import" invisible="1" />
                     <field name="display_file_export" invisible="1" />
-                    <field name='domain_type' on_change="domain_type_change(0, 'mandatory', domain_type, model_list_selection)" />
-                    <field name='model_list_selection' on_change="domain_type_change(1, 'mandatory', domain_type, model_list_selection)" />
+                    <field name='model_list_selection' on_change="domain_type_change(model_list_selection)" />
                 </group>
                 <group col="4" colspan="4">
                     <field name="hide_export_3_entries" invisible="1" />
@@ -20,9 +19,15 @@
                     <group colspan="2" col="2" name="file_import" attrs="{'invisible':[('display_file_import', '=', False)]}">
                         <separator string="File Import" colspan="2"/>
                         <field name="display_test_import_button" invisible="1" />
-                        <field name="binary_file" colspan="4" on_change="file_change(binary_file)"/>
+                        <field name="import_file" colspan="4" on_change="file_change(import_file)"/>
                         <button name="test_import" string="Test file" type="object" icon="gtk-ok" colspan="4" attrs="{'invisible':[('display_test_import_button', '=', False)]}" />
-                        <button name="import_xml" string="Import" type="object" icon="gtk-ok" colspan="4"/>
+                        <button name="import_xml" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}" />
+                        <separator colspan="4" string="Information" />
+                        <group colspan="6" col="4">
+                            <field name="state" />
+                            <field name="progression" widget="progressbar" />
+                            <button name="update" type="object" string="Update" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'progress')]}" colspan="4" />
+                        </group>
                     </group>
                     <group colspan="2" col="2" name="file_export" attrs="{'invisible':[('display_file_import', '=', False)]}">
                         <separator string="File Export" colspan="2"/>
@@ -30,22 +35,63 @@
                         <button name="export_3_entries" string="Export template with first 3 entries" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_export_3_entries', '=', True)]}"/>
                         <button name="export_all_entries" string="Export templates with all data" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_export_all_entries', '=', True)]}"/>
                     </group>
+                    <group colspan="4" attrs="{'invisible': [('show_warning', '=', False)]}">
+                        <separator colspan="4" string="Warning messages" />
+                        <field name="warning_message" nolabel="1" colspan="4" />
+                    </group>
+
+                    <group colspan="4" attrs="{'invisible': [('show_error', '=', False)]}">
+                        <separator colspan="4" string="Error messages" />
+                        <field name="error_message" nolabel="1" colspan="4" />
+                    </group>
                 </group>
             </form>
         </field>
     </record>
 
-    <record id="msf_import_export_action" model="ir.actions.act_window">
-        <field name="name">Import / Export</field>
+
+    <record id="msf_import_export_supply_action" model="ir.actions.act_window">
+        <field name="name">Supply</field>
         <field name="res_model">msf.import.export</field>
         <field name="view_type">form</field>
         <field name="view_mode">form</field>
-        <field name="target">new</field>
+        <field name="target">current</field>
+        <field name="context">{'domain_type': 'supply'}</field>
+    </record>
+
+    <record id="msf_import_export_finance_action" model="ir.actions.act_window">
+        <field name="name">Finance</field>
+        <field name="res_model">msf.import.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'domain_type': 'finance'}</field>
+    </record>
+
+    <record id="msf_import_export_non_functional_action" model="ir.actions.act_window">
+        <field name="name">Non Funcutional</field>
+        <field name="res_model">msf.import.export</field>
+        <field name="view_type">form</field>
+        <field name="view_mode">form</field>
+        <field name="target">current</field>
+        <field name="context">{'domain_type': 'non_functionnal'}</field>
     </record>
 
     <menuitem id="msf_import_export_menu"
-              parent="object_query.menu_preferences"
-              action="msf_import_export_action" />
+              parent="object_query.menu_preferences" />
+
+    <menuitem id="msf_import_export_supply_menu"
+              parent="msf_import_export_menu"
+              action="msf_import_export_supply_action" />
+
+    <menuitem id="msf_import_export_finance_menu"
+              parent="msf_import_export_menu"
+              action="msf_import_export_finance_action" />
+
+    <menuitem id="msf_import_export_non_functional_menu"
+              parent="msf_import_export_menu"
+              action="msf_import_export_non_functional_action" />
+
 
 </data>
 </openerp>

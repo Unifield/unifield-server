@@ -20,13 +20,24 @@
 ##############################################################################
 
 import base64
+import time
+import threading
+import logging
+import re
+
+import pooler
+import tools
 
 from osv import fields
 from osv import osv
 from tools.translate import _
+
 from tempfile import TemporaryFile
 from lxml import etree
 from lxml.etree import XMLSyntaxError
+
+from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
+from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
 
 MODEL_DICT = {
     # SUPPLY
@@ -43,7 +54,7 @@ MODEL_DICT = {
     'product_category': {
         'name': 'Product Categories',
         'domain_type': 'supply',
-        'model': 'product.categories',
+        'model': 'product.category',
     },
     'suppliers': {
         'name': 'Suppliers',
@@ -91,6 +102,21 @@ MODEL_DICT = {
 
 MODEL_DATA_DICT = {
     'product.product': {
+        'header_list': [
+            ImportHeader(name=_('Code'), ftype='String', size=80, tech_name='default_code'),
+            ImportHeader(name=_('Description'), ftype='String', size=80, tech_name='name', required=True),
+            ImportHeader(name=_('XMLID'), ftype='String', size=80, tech_name='xmlid_code'),
+            ImportHeader(name=_('Old code'), ftype='String', size=80, tech_name='old_code'),
+            ImportHeader(name=_('Type'), ftype='String', size=80, tech_name='type'),
+            ImportHeader(name=_('Transport product'), ftype='String', size=80, tech_name='transport_ok'),
+            ImportHeader(name=_('Product SubType'), ftype='String', size=80, tech_name='subtype'),
+            ImportHeader(name=_('Asset Type'), ftype='String', size=80, tech_name='asset_type_id'),
+            ImportHeader(name=_('Product Creator'), ftype='String', size=80, tech_name='international_status.name', required=True),
+            ImportHeader(name=_('Main Type'), ftype='String', size=80, tech_name='nomen_manda_0.name', required=True),
+            ImportHeader(name=_('Group'), ftype='String', size=80, tech_name='nomen_manda_1.name', required=True),
+            ImportHeader(name=_('Family'), ftype='String', size=80, tech_name='nomen_manda_2.name', required=True),
+            ImportHeader(name=_('Root'), ftype='String', size=80, tech_name='nomen_manda_3.name', required=True),
+        ],
         'field_list': [
             'default_code',
             'name',
@@ -145,11 +171,11 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'name',
-            'internationnal_status.name'
-            'nomen_manda_0.name',
-            'nomen_manda_1.name',
-            'nomen_manda_2.name',
-            'nomen_manda_3.name',
+            'international_status',
+            'nomen_manda_0',
+            'nomen_manda_1',
+            'nomen_manda_2',
+            'nomen_manda_3',
         ],
         'hide_export_all_entries': True,
     },
@@ -195,28 +221,22 @@ MODEL_DATA_DICT = {
 class msf_import_export(osv.osv_memory):
     _name = 'msf.import.export'
     _description = 'MSF Import Export'
+    _inherit = 'abstract.wizard.import'
 
-
-    def _model_selection_get(self, cr, uid, context=None, domain_type=None):
-        '''return a selection of the model of domain_type
-        '''
+    def _get_model_list(self, cr, uid, context=None):
         if context is None:
             context = {}
+        domain_type = None
+        if 'domain_type' in context:
+            domain_type = context['domain_type']
         result_list = [(key, value['name']) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
         return sorted(result_list, key=lambda a: a[1])
 
     _columns = {
         'display_file_import': fields.boolean('File Import'),
         'display_file_export': fields.boolean('File Export'),
-        'domain_type': fields.selection([
-            ('', ''),
-            ('supply', 'Supply'),
-            ('finance', 'Finance'),
-            ('non_functionnal', 'Non-Functionnal')
-            ], 'Type', required=True,
-            help='Type of object to import/export'),
-        'model_list_selection': fields.selection(_model_selection_get, 'Object to Import/Export', required=True),
-        'binary_file': fields.binary('File to import .xml'),
+        'model_list_selection': fields.selection(selection=_get_model_list, string='Object to Import/Export', required=True),
+        'import_file': fields.binary('File to import .xml'),
         'hide_export_3_entries': fields.boolean('Hide export 3 entries button'),
         'hide_export_all_entries': fields.boolean('Hide export all entries button'),
         'display_test_import_button': fields.boolean('Display test import button'),
@@ -230,17 +250,135 @@ class msf_import_export(osv.osv_memory):
         'display_test_import_button': lambda *a: False,
     }
 
-    def domain_type_change(self, cr, uid, obj_id, position, field_type, domain_type, model_list_selection, context=None):
+    def _set_code_name(self, cr, uid, data, row, headers):
+        if not data.get('name'):
+            data['name'] = row[0]
+        if not data.get('code'):
+            data['code'] = row[0]
+
+    def _set_nomen_level(self, cr, uid, data, row, headers):
+
+        if data.get('parent_id', False):
+            n_obj = self.pool.get('product.nomenclature')
+            parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
+            if parent_ids:
+                parent_id = parent_ids[0]
+
+                v = self.onChangeParentId(cr, uid, id, data.get('type'),
+                                          parent_id)
+                if v['value']['level']:
+                    data['level'] = v['value']['level']
+                data['parent_id'] = parent_id
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Parent Nomenclature "%s" not found')
+                                     % (data['parent_id']))
+
+    def _set_product_category(self, cr, uid, data, row, headers):
+        n_obj = self.pool.get('product.nomenclature')
+        aa_obj = self.pool.get('account.account')
+        context = {}
+
+        family_msfid = data.get('family_id', False)
+        if family_msfid:
+            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', family_msfid)], limit=1, context=context)
+            if nomen_ids:
+                data['family_id'] = nomen_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Product category MSFID "%s" not found')
+                                     % (family_msfid))
+        else:
+            raise osv.except_osv(_('Warning !'),
+                                 _('Product category MSFID required'))
+
+        paec_code = data.get('property_account_expense_categ', False)
+        if paec_code:
+            paec_ids = aa_obj.search(cr, uid, [('code', '=', paec_code)], context=context)
+            if paec_ids:
+                data['property_account_expense_categ'] = paec_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Account code "%s" not found')
+                                     % (paec_code))
+        else:
+            data['property_account_expense_categ'] = None
+
+        paic_code = data.get('property_account_income_categ', False)
+        if paic_code:
+            paic_ids = aa_obj.search(cr, uid, [('code', '=', paic_code)], context=context)
+            if paic_ids:
+                data['property_account_income_categ'] = paic_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Account code "%s" not found')
+                                     % (paic_code))
+        else:
+            data['property_account_income_categ'] = None
+
+        dea_code = data.get('donation_expense_account', False)
+        if dea_code:
+            dea_ids = aa_obj.search(cr, uid, [('code', '=', dea_code)], context=context)
+            if dea_ids:
+                data['donation_expense_account'] = dea_ids[0]
+            else:
+                raise osv.except_osv(_('Warning !'),
+                                     _('Expense account code "%s" not found')
+                                     % (dea_code))
+        else:
+            data['donation_expense_account'] = None
+
+    def _set_full_path_nomen(self, cr, uid, headers, row, col):
+        if not col:
+            # modify headers if needed
+            for n,h in enumerate(headers):
+                m = re.match("^nomen_manda_([0123]).name$", h)
+                if m:
+                    col[int(m.group(1))] = n
+                    headers[n] = "nomen_manda_%s.complete_name"%(m.group(1), )
+
+        if row:
+            for manda in sorted(col.keys()):
+                if manda != 0:
+                    row[col[manda]] = ' | '.join([row[col[manda-1]], row[col[manda]]])
+        return col
+
+    def _set_default_value(self, cr, uid, data, row, headers):
+        # Create new list of headers with the name of each fields (without dots)
+        new_headers = []
+        for h in headers:
+            if '.' in h:
+                new_headers.append(h.split('.')[0])
+            else:
+                new_headers.append(h)
+
+        # Get the default value
+        defaults = self.pool.get('product.product').default_get(cr, uid, new_headers)
+        # If no value in file, set the default value
+        for h in new_headers:
+            if h in defaults and (not h in data or not data[h]):
+                data[h] = defaults[h]
+
+    post_hook = {
+        'account.budget.post': _set_code_name,
+        'product.nomenclature': _set_nomen_level,
+        'product.product': _set_default_value,
+        'product.category': _set_product_category,
+    }
+
+    pre_hook = {
+        'product.product': _set_full_path_nomen,
+    }
+
+    post_load_hook = {
+    }
+
+    def domain_type_change(self, cr, uid, ids, model_list_selection, context=None):
         if context is None:
             context = {}
 
         result = {'value': {}}
-        if position == 0 and domain_type:
-            selection = self._model_selection_get(cr, uid, context=context, domain_type=domain_type)
-            result['value']['model_list_selection'] = selection
-            result['value']['display_file_import'] = False
-            result['value']['display_file_export'] = False
-        elif position == 1 and model_list_selection:
+        if model_list_selection:
             result['value']['display_file_import'] = True
             result['value']['display_file_export'] = True
             model = MODEL_DICT.get(model_list_selection) and MODEL_DICT[model_list_selection]['model']
@@ -254,7 +392,7 @@ class msf_import_export(osv.osv_memory):
                 result['value']['hide_export_all_entries'] = False
         return result
 
-    def file_change(self, cr, uid, obj_id, binary_file, context=None):
+    def file_change(self, cr, uid, obj_id, import_file, context=None):
         if context is None:
             context = {}
         result = {
@@ -262,7 +400,7 @@ class msf_import_export(osv.osv_memory):
                     'display_test_import_button': False,
                 }
         }
-        if binary_file:
+        if import_file:
             result['value']['display_test_import_button'] = True
         return result
 
@@ -276,16 +414,32 @@ class msf_import_export(osv.osv_memory):
                 'please correct. You may generate a template with the File '
                 'export functionality.'))
 
+    #def check_headers(self, cr, uid, ids, xml_string, context=None):
+    #    file_dom = etree.fromstring(xml_string)
+
+
     def test_import(self, cr, uid, ids, context=None):
         '''check file structure is correct
         '''
+        if not self.check_import(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('File structure is incorrect, '
+                'please correct. You may generate a template with the File '
+                'export functionality.'))
+        else:
+            raise osv.except_osv(_('Info'), _('File structure is correct.'))
+
+    def check_import(self, cr, uid, ids, context=None):
         obj = self.read(cr, uid, ids[0])
         fileobj = TemporaryFile('w+')
-        if not obj['binary_file']:
+        if not obj['import_file']:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
         try:
-            xml_string = base64.decodestring(obj['binary_file'])
+            xml_string = base64.decodestring(obj['import_file'])
             self.check_xml_syntax(cr, uid, xml_string, context=context)
+            for wiz in self.browse(cr, uid, ids, context=context):
+                rows, nb_rows = self.read_file(wiz, context=context)
+                head = rows.next()
+                self.check_required_fields(cr, uid, wiz, head, context=context)
         finally:
             fileobj.close()
 
@@ -294,11 +448,419 @@ class msf_import_export(osv.osv_memory):
 
         # check all column present in the file exists in the database
         # XXX to be written
+        return True
 
-        raise osv.except_osv(_('Info'), _('File structure is correct.'))
 
-    def import_xml(self, cr, uid, context=None):
-        pass
+    def check_required_fields(self, cr, uid, wizard_brw, head, context=None):
+        model = MODEL_DICT[wizard_brw.model_list_selection]['model']
+        model_obj = self.pool.get(model)
+        required_field_list = MODEL_DATA_DICT[model]['required_field_list']
+        header_columns = [_(head[i].data.upper()) for i in range(0, len(head))]
+        missing_columns = []
+        for field in required_field_list:
+            if field in model_obj._columns:
+                column_name = _(model_obj._columns[field].string)
+            elif field in model_obj._inherit_fields:
+                column_name = model_obj._inherit_fields[field][2].string 
+            if column_name.upper() not in header_columns:
+                missing_columns.append(column_name)
+        if missing_columns:
+            raise osv.except_osv(_('Info'), _('The following required columns '
+                'are missing in the imported file: %s') % ', '.join(missing_columns))
+
+    def import_xml(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        if not self.check_import(cr, uid, ids, context=context):
+            raise osv.except_osv(_('Error'), _('File structure is incorrect, '
+                'please correct. You may generate a template with the File '
+                'export functionality.'))
+
+        for wiz in self.browse(cr, uid, ids, context=context):
+            rows, nb_rows = self.read_file(wiz, context=context)
+            head = rows.next()
+            model = MODEL_DICT[wiz.model_list_selection]['model']
+            expected_headers = MODEL_DATA_DICT[model]['header_list']
+            self.check_headers(head, expected_headers, context=context)
+
+            self.write(cr, uid, [wiz.id], {
+                'total_lines_to_import': nb_rows,
+                'state': 'progress',
+                'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+                'info_message': _('Import in progress, please leave this window open and press the button \'Update\' '
+                                  'to show the progression of the import. Otherwise, you can continue to use Unifield'),
+            }, context=context)
+            wiz.total_lines_to_import = nb_rows
+
+            thread = threading.Thread(
+                target=self.bg_import,
+                args=(cr.dbname, uid, wiz, expected_headers, rows, context),
+            )
+            thread.start()
+        return True
+
+    def bg_import(self, dbname, uid, import_brw, headers, rows, context=None):
+        """
+        Run the import of lines in background
+        :param dbname: Name of the database
+        :param uid: ID of the res.users that calls this method
+        :param import_brw: browse_record of a wizard.import.batch
+        :param headers: List of expected headers
+        :param rows: Iterator on file rows
+        :param context: Context of the call
+        :return: True
+        """
+
+        prodlot_obj = self.pool.get('stock.production.lot')
+        product_obj = self.pool.get('product.product')
+        sequence_obj = self.pool.get('ir.sequence')
+        date_tools = self.pool.get('date.tools')
+
+        if context is None:
+            context = {}
+
+        cr = pooler.get_db(dbname).cursor()
+        nb_imported_lines = 0
+
+        # Manage errors
+        import_errors = {}
+
+        def save_error(errors, row_index):
+            if not isinstance(errors, list):
+                errors = [errors]
+            import_errors.setdefault(row_index, [])
+            import_errors[row_index].extend(errors)
+
+        # Manage warnings
+        import_warnings = {}
+
+        def save_warnings(warnings):
+            if not isinstance(warnings, list):
+                warnings = [warnings]
+            import_warnings.setdefault(row_index+2, [])
+            import_warnings[row_index+2].extend(warnings)
+
+        model = MODEL_DICT[import_brw.model_list_selection]['model']
+        impobj = self.pool.get(model)
+        start_time = time.time()
+
+        if model == 'product.product':
+            # Create the cache
+            if not hasattr(self, '_cache'):
+                self._cache = {}
+            self._cache.setdefault(dbname, {})
+
+            if not hasattr(self.pool.get('product.nomenclature'), '_cache'):
+                self.pool.get('product.nomenclature')._cache = {}
+            self.pool.get('product.nomenclature')._cache.setdefault(dbname, {})
+
+            # Clear the cache
+            self._cache[dbname] = {'product.nomenclature': {'name': {}, 'complete_name': {}},
+                                   'product.uom': {'name': {}},
+                                   'product.asset.type': {'name': {}},
+                                   'product.international.status': {'name': {}},
+                                   }
+            # Product nomenclature
+            cr.execute('SELECT name, id FROM product_nomenclature;')
+            for nv in cr.dictfetchall():
+                self._cache[dbname]['product.nomenclature']['name'].update({nv['name']: nv['id']})
+            # Product category
+            cr.execute('SELECT id, family_id FROM product_category;')
+            for pc in cr.dictfetchall():
+                self.pool.get('product.nomenclature')._cache[dbname].update({pc['family_id']: pc['id']})
+            # Product nomenclature complete name
+            cr.execute('''SELECT id, name FROM
+(
+(SELECT
+    n0.id, n0.name AS name
+FROM product_nomenclature n0
+WHERE n0.level = 0)
+UNION
+(SELECT n1.id, n0.name ||' | '|| n1.name AS name
+FROM product_nomenclature n1
+  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
+WHERE n1.level = 1)
+UNION
+(SELECT n2.id, n0.name ||' | '|| n1.name ||' | '|| n2.name AS name
+FROM product_nomenclature n1
+  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
+  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
+WHERE n2.level = 2)
+UNION
+(SELECT n3.id, n0.name ||' | '|| n1.name ||' | '|| n2.name ||' | '|| n3.name AS name
+FROM product_nomenclature n1
+  LEFT JOIN product_nomenclature n0 ON n1.parent_id = n0.id
+  LEFT JOIN product_nomenclature n2 ON n2.parent_id = n1.id
+  LEFT JOIN product_nomenclature n3 ON n3.parent_id = n2.id
+WHERE n3.level = 3)
+) AS cn''')
+            for cnv in cr.dictfetchall():
+                self._cache[dbname]['product.nomenclature']['complete_name'].update({cnv['name']: cnv['id']})
+            # Product UoM
+            cr.execute('SELECT name, id FROM product_uom;')
+            for uv in cr.dictfetchall():
+                self._cache[dbname]['product.uom']['name'].update({uv['name']: uv['id']})
+            # Asset type
+            cr.execute('SELECT name, id FROM product_asset_type;')
+            for av in cr.dictfetchall():
+                self._cache[dbname]['product.asset.type']['name'].update({av['name']: av['id']})
+            # International status
+            cr.execute('SELECT name, id FROM product_international_status;')
+            for iv in cr.dictfetchall():
+                self._cache[dbname]['product.international.status']['name'].update({iv['name']: iv['id']})
+
+        fields_def = impobj.fields_get(cr, uid, context=context)
+        i = 0
+
+        def _get_obj(header, value, fields_def):
+            list_obj = header.split('.')
+            relation = fields_def[list_obj[0]]['relation']
+            if impobj._name == 'product.product' and value in self._cache.get(dbname, {}).get(relation, {}).get(list_obj[1], {}):
+                return self._cache[dbname][relation][list_obj[1]][value]
+            new_obj = self.pool.get(relation)
+            newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
+            if not newids:
+                # no obj
+                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
+
+            if impobj._name == 'product.product':
+                self._cache[dbname].setdefault(relation, {})
+                self._cache[dbname][relation].setdefault(list_obj[1], {})
+                self._cache[dbname][relation][list_obj[1]][value] = newids[0]
+            return newids[0]
+
+        def process_data(field, value, fields_def):
+            if not value or field not in fields_def:
+                return
+            if '.' not in field:
+                # type datetime, date, bool, int, float
+                if fields_def[field]['type'] == 'boolean':
+                    value = value.lower() not in ('0', 'false', 'off','-', 'no', 'n')
+                elif fields_def[field]['type'] == 'selection':
+                    if impobj == 'product.product' and self._cache[dbname].get('product.product.%s.%s' % (field, value), False):
+                        value = self._cache[dbname]['product.product.%s.%s' % (field, value)]
+                    else:
+                        for key, val in fields_def[field]['selection']:
+                            if value.lower() in [tools.ustr(key).lower(), tools.ustr(val).lower()]:
+                                value = key
+                                if impobj == 'product.product':
+                                    self._cache[dbname].setdefault('product.product.%s' % field, {})
+                                    self._cache[dbname]['product.product.%s.%s' % (field, value)] = key
+                                break
+                elif fields_def[field]['type'] == 'date':
+                    dt = DateTime.strptime(value,"%d/%m/%Y")
+                    value = dt.strftime("%Y-%m-%d")
+                elif fields_def[field]['type'] == 'float':
+                    # remove space and unbreakable space
+                    value = re.sub('[  ]+', '', value)
+                    value = float(value.replace(',', '.'))
+                return value
+
+            else:
+                if fields_def[field.split('.')[0]]['type'] in 'many2one':
+                    return _get_obj(field, value, fields_def)
+
+            raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
+
+
+
+
+        i = 1
+        nb_error = 0
+        nb_succes = 0
+        nb_update_success = 0
+        col_datas = {}
+        nb_lines_ok = 0
+        header_codes = [x[3] for x in headers]
+        if self.pre_hook.get(impobj._name):
+            # for headers mod.
+            col_datas = self.pre_hook[impobj._name](impobj, cr, uid, header_codes, {}, col_datas)
+
+        for row_index, row in enumerate(rows):
+            res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
+            if res < 0:
+                save_error(errors, row_index)
+                continue
+
+            if all(not x for x in line_data):
+                save_warnings(
+                    _('Line seemed empty, so this line was ignored')
+                )
+                continue
+
+            newo2m = False
+            delimiter = False
+            o2mdatas = {}
+            i += 1
+            if i%101 == 0 and obj['debug']:
+                logging.getLogger('import data').info('Object: %s, Item: %s'%(obj['object'],i))
+
+            data = {}
+            try:
+                n = 0
+                line_ok = True
+                if self.pre_hook.get(impobj._name):
+                    self.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
+
+                for n,h in enumerate(header_codes):
+                    if line_data[n]:
+                        line_data[n] = line_data[n].rstrip()
+
+                    # UFTP-327
+                    # if required reject cells with exceeded field length
+                    if 'import_data_field_max_size' in context:
+                        if h in context['import_data_field_max_size']:
+                            max_size = context['import_data_field_max_size'][h]
+                            if len(line_data[n]) > max_size:
+                                msg_tpl = "field '%s' value exceed field length of %d"
+                                msg = msg_tpl % (h , max_size, )
+                                logging.getLogger('import data').info(
+                                    'Error %s'% (msg, ))
+                                cr.rollback()
+                                error = "Line %s, row: %s, %s" % (i, n, msg, )
+                                save_error(error, row_index)
+                                nb_error += 1
+                                line_ok = False
+                                break
+
+                    if newo2m and ('.' not in h or h.split('.')[0] != newo2m or h.split('.')[1] == delimiter):
+                        data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
+                        o2mdatas = {}
+                        delimiter = False
+                        newo2m = False
+                    if '.' not in h:
+                        # type datetime, date, bool, int, float
+                        value = process_data(h, line_data[n], fields_def)
+                        if value is not None:
+                            data[h] = value
+                    else:
+                        points = h.split('.')
+                        if row[n] and fields_def[points[0]]['type'] == 'one2many':
+                            newo2m = points[0]
+                            delimiter = points[1]
+                            new_fields_def = self.pool.get(fields_def[newo2m]['relation']).fields_get(cr, uid, context=context)
+                            o2mdatas[points[1]] = process_data('.'.join(points[1:]), line_data[n], new_fields_def)
+                        elif fields_def[points[0]]['type'] in 'many2one':
+                            if not line_data[n]:
+                                data[points[0]] = False
+                            elif line_data[n]:
+                                data[points[0]] = _get_obj(h, line_data[n], fields_def) or False
+                        elif fields_def[points[0]]['type'] in 'many2many' and line_data[n]:
+                            data.setdefault(points[0], []).append((4, _get_obj(h, line_data[n], fields_def)))
+                if not line_ok:
+                    continue
+                if newo2m and o2mdatas:
+                    data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
+
+                if self.post_hook.get(impobj._name):
+                    self.post_hook[impobj._name](impobj, cr, uid, data, line_data, header_codes)
+
+                # Search if an object already exist. If not, create it.
+                ids_to_update = []
+
+                if impobj._name == 'product.product':
+                    # Allow to update the product, use xmlid_code or default_code
+                    if 'xmlid_code' in data:
+                        ids_to_update = impobj.search(cr, uid, [('xmlid_code',
+                            '=', data['xmlid_code'])], order='NO_ORDER')
+                    if 'default_code' in data:
+                        ids_to_update = impobj.search(cr, uid, [('default_code',
+                            '=', data['default_code'])], order='NO_ORDER')
+                elif impobj._name == 'product.nomenclature':
+                    ids_to_update = impobj.search(cr, uid, [('msfid', '=',
+                        data['msfid'])], order='NO_ORDER')
+                elif impobj._name == 'product.category':
+                    ids_to_update = impobj.search(cr, uid, [('msfid', '=',
+                        data['msfid'])], order='NO_ORDER')
+
+                if ids_to_update:
+                    #UF-2170: remove the standard price value from the list for update product case
+                    if 'standard_price' in data:
+                        del data['standard_price']
+                    impobj.write(cr, uid, ids_to_update, data)
+                    nb_update_success += 1
+                    cr.commit()
+
+                else:
+                    impobj.create(cr, uid, data, context={'from_import_menu': True})
+                    nb_succes += 1
+                    cr.commit()
+            except osv.except_osv, e:
+                logging.getLogger('import data').info('Error %s'%e.value)
+                cr.rollback()
+                error = "Line %s, row: %s, %s"%(i, n, e.value)
+                save_error(error, row_index)
+                nb_error += 1
+            except Exception, e:
+                cr.rollback()
+                logging.getLogger('import data').info('Error %s'%e)
+                error = "Line %s, row: %s, %s"%(i, n, e)
+                save_error(error, row_index)
+                nb_error += 1
+
+            nb_imported_lines += 1
+            self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
+
+        warn_msg = ''
+        for lnum, warnings in import_warnings.iteritems():
+            for warn in warnings:
+                warn_msg += _('Line %s: %s') % (lnum, warn)
+                warn_msg += '\n'
+
+        err_msg = ''
+        for lnum, errors in import_errors.iteritems():
+            for err in errors:
+                err_msg += _('Line %s: %s') % (lnum, err)
+                err_msg += '\n'
+
+        if err_msg:
+            cr.rollback()
+
+        info_msg = _('''Processing of file completed in %s second(s)!
+- Total lines to import: %s
+- Total lines %s: %s %s
+- Total lines with errors: %s %s
+%s
+        ''') % (
+            str(round(time.time() - start_time)),
+            import_brw.total_lines_to_import-1,
+            err_msg and _('without errors') or _('imported'),
+            nb_lines_ok,
+            warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
+                len(import_warnings.keys()) or '',
+            ),
+            err_msg and len(import_errors.keys()) or 0,
+            err_msg and _('(see error messages below)'),
+            err_msg and _("no data will be imported until all the error messages are corrected") or '',
+        )
+
+        self.write(cr, uid, [import_brw.id], {
+            'error_message': err_msg,
+            'show_error': err_msg and True or False,
+            'warning_message': warn_msg,
+            'show_warning': warn_msg and True or False,
+            'info_message': info_msg,
+            'state': 'done',
+            'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
+        }, context=context)
+
+        if self.post_load_hook.get(impobj._name):
+            self.post_load_hook[impobj._name](impobj, cr, uid)
+
+        if impobj == 'product.product':
+            # Clear the cache
+            self._cache[dbname] = {}
+            self.pool.get('product.nomenclature')._cache[dbname] = {}
+
+
+        cr.commit()
+        cr.close()
+
+        return True
 
 msf_import_export()
 

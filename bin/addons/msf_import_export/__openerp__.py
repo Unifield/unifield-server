@@ -24,9 +24,10 @@
     "version": "1.0",
     "depends": ["base",
                 "product",
+                "msf_doc_import",
                 ],
     "author": "MSF, TeMPO Consulting",
-    "website": "",
+    "website": "http://www.tempo-consulting.fr",
     "category": "Specific Modules",
     "description": """
         Interface for import/export
