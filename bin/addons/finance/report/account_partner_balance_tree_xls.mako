@@ -312,7 +312,7 @@ header_col_merge_count = col_count - 1
 % for p_obj in p_entries:
 <%
 partner_name = (p_obj.name or '')
-partner_ref = (p_obj.partner_id.ref or '')
+partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 %>
 <Row>
 <Cell ss:StyleID="ssPartner">
