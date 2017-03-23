@@ -245,8 +245,8 @@
         <td><para style="P8"><u>[[ formatLang(sum_litige()) ]] [[ company.currency_id.name ]]</u></para></td>
       </tr>
       <tr>
-        <td><para style="P3">[[ repeatIn(lines(), 'a') ]]<font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font><font>[[ a['ref'] ]] [[ a['type']==3 and a['code'] ]]</font></para></td>
-        <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ a['name'] ]]</para></td>
+        <td><para style="P3">[[ repeatIn(lines(), 'a') ]]<font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font><font>[[ a['type']==3 and a['code'] ]]</font></para></td>
+        <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ a['name'] ]][[ a['ref'] and ' - %s' % a['ref'] ]]</para></td>
         <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['debit']) ]]</para></td>
         <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['credit']) ]]</para></td>
         <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['balance']) ]] [[ company.currency_id.name ]]</para></td>

@@ -229,7 +229,7 @@ else:
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
+<Column ss:AutoFitWidth="1" ss:Width="80" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="60" />
 <Column ss:AutoFitWidth="1" ss:Width="50" />
@@ -292,6 +292,9 @@ header_col_merge_count = col_count - 1
 <Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Partner</Data>
 </Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Partner Ref.</Data>
+</Cell>
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Account</Data>
 </Cell>
@@ -309,10 +312,14 @@ header_col_merge_count = col_count - 1
 % for p_obj in p_entries:
 <%
 partner_name = (p_obj.name or '')
+partner_ref = (p_obj.partner_id.ref or '')
 %>
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${partner_name|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${partner_ref|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>
@@ -330,6 +337,9 @@ partner_name = (p_obj.name or '')
 ## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
 <Row>
+<Cell ss:StyleID="ssAccountLine">
+    <Data ss:Type="String"></Data>
+</Cell>
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
