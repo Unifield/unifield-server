@@ -78,15 +78,23 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('tax', False):
             TAX_REQUEST = "AND at.code != 'tax'"
 
-        self.PARTNER_REQUEST = ''
+        PARTNER_REQUEST = ''
         if data['form'].get('partner_ids', False):  # some partners are specifically selected
             partner_ids = data['form']['partner_ids']
             if len(partner_ids) == 1:
-                self.PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
+                PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
             else:
-                self.PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
+                PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
         elif data['form'].get('only_active_partners'):  # check if we should include only active partners
-            self.PARTNER_REQUEST = "AND p.active = 't'"
+            PARTNER_REQUEST = "AND p.active = 't'"
+
+        ACCOUNT_REQUEST = ''
+        if data['form'].get('account_ids', False):  # some accounts are specifically selected
+            account_ids = data['form']['account_ids']
+            if len(account_ids) == 1:
+                ACCOUNT_REQUEST = 'AND ac.id = %s' % account_ids[0]
+            else:
+                ACCOUNT_REQUEST = 'AND ac.id IN %s' % (tuple(account_ids),)
 
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
@@ -103,7 +111,8 @@ class account_partner_balance_tree(osv.osv):
             " AND am.state IN " + move_state + "" \
             " AND " + where + "" \
             " " + TAX_REQUEST + " " \
-            " " + self.PARTNER_REQUEST + " " \
+            " " + PARTNER_REQUEST + " " \
+            " " + ACCOUNT_REQUEST + " " \
             " GROUP BY ac.type,p.id,p.ref,p.name" \
             " ORDER BY ac.type,p.name"
         cr.execute(query)
@@ -392,7 +401,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
-                                                'output_currency', 'instance_ids', 'tax', 'partner_ids', 'only_active_partners'])[0]
+                                                'output_currency', 'instance_ids', 'tax', 'partner_ids',
+                                                'only_active_partners', 'account_ids'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:

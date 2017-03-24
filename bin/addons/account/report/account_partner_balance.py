@@ -55,6 +55,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context', {}))
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
+        self.account_ids = data['form'].get('account_ids', False)
 
         self.PARTNER_REQUEST = ''
         if data['form'].get('partner_ids', False):  # some partners are specifically selected
@@ -79,14 +80,16 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         if self.exclude_tax is True:
             self.TAX_REQUEST = "AND t.code != 'tax'"
 
-        self.cr.execute("SELECT a.id " \
-                "FROM account_account a " \
-                "LEFT JOIN account_account_type t " \
-                    "ON (a.user_type = t.id) " \
-                    "WHERE a.type IN %s " \
-                    " " + self.TAX_REQUEST + " " \
+        # get the account list (if some accounts have been specifically selected use them directly)
+        if not self.account_ids:
+            self.cr.execute("SELECT a.id "
+                "FROM account_account a "
+                "LEFT JOIN account_account_type t "
+                    "ON (a.user_type = t.id) "
+                    "WHERE a.type IN %s "
+                    " " + self.TAX_REQUEST + " "
                     "AND a.active", (self.ACCOUNT_TYPE,))
-        self.account_ids = [a for (a,) in self.cr.fetchall()]
+            self.account_ids = [a for (a,) in self.cr.fetchall()]
         res = super(partner_balance, self).set_context(objects, data, ids, report_type=report_type)
         common_report_header._set_context(self, data)
         return res
