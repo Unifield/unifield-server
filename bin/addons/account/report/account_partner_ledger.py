@@ -417,23 +417,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                                                        fields_to_fetch=['code'], context=data.get('context', {}))]
         return res
 
-    def _get_accounts(self, data):
-        """
-        Get the codes of all accounts selected (or "All accounts" if they are all selected)
-        """
-        res = []
-        if self.account_ids:
-            account_obj = pooler.get_pool(self.cr.dbname).get('account.account')
-            account_domain = self.ACCOUNT_TYPE and [('type', 'in', self.ACCOUNT_TYPE)] or [('type', 'in', ['payable', 'receivable'])]
-            if self.exclude_tax:
-                account_domain.append(('user_type_code', '!=', 'tax'))
-            nb_accounts = account_obj.search(self.cr, self.uid, account_domain, order='NO_ORDER', count=True, context=data.get('context', {}))
-            if len(self.account_ids) == nb_accounts:
-                return [_('All accounts')]
-            res = [i.code for i in account_obj.browse(self.cr, self.uid, self.account_ids,
-                                                       fields_to_fetch=['code'], context=data.get('context', {}))]
-        return res
-
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,
         header='internal')

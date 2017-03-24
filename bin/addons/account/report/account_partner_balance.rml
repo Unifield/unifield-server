@@ -182,13 +182,14 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="90.0,80.0,80.0,130.0,80.0,80.0" style="Table2_header">
+    <blockTable colWidths="85.0,65.0,65.0,130.0,65.0,65.0,65.0" style="Table2_header">
       <tr>
         <td><para style="terp_tblheader_General_Centre">Chart of Account</para></td>
         <td><para style="terp_tblheader_General_Centre">Fiscal Year</para></td>
         <td><para style="terp_tblheader_General_Centre">Journals</para></td>
         <td><para style="terp_tblheader_General_Centre">Filter By [[ get_filter(data)!='No Filter' and get_filter(data) ]]</para></td>
         <td><para style="terp_tblheader_General_Centre">Partner's</para></td>
+        <td><para style="terp_tblheader_General_Centre">Accounts</para></td>
         <td><para style="terp_tblheader_General_Centre">Target Moves</para></td>
       </tr>
       <tr>
@@ -219,6 +220,7 @@
           </blockTable>
         </td>
         <td> <para style="terp_default_Centre_9">[[ get_partners()  ]]</para></td>
+        <td><para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_accounts(data) ]) ]]</para></td>
         <td><para style="terp_default_Centre_8">[[ get_target_move(data) ]] </para></td>
       </tr>
     </blockTable>
