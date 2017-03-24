@@ -354,6 +354,8 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'partner_ids': fields.many2many('res.partner', 'account_partner_balance_partner_rel', 'wizard_id', 'partner_id',
                                         string='Partners', help='Display the report for specific partners only'),
         'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
+        'account_ids': fields.many2many('account.account', 'account_partner_balance_account_rel', 'wizard_id', 'account_id',
+                                        string='Accounts', help='Display the report for specific accounts only'),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -364,6 +366,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
     _defaults = {
         'display_partner': 'non-zero_balance',
         'result_selection': 'supplier',
+        'account_domain': "[('type', 'in', ['payable'])]",
         'journal_ids': _get_journals,
         'tax': False,
         'only_active_partners': False,

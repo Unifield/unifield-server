@@ -30,11 +30,32 @@ class account_common_partner_report(osv.osv_memory):
                                               ('supplier','Payable Accounts'),
                                               ('customer_supplier','Receivable and Payable Accounts')],
                                               "Partner's", required=True),
+        'account_domain': fields.char('Account domain', size=250, required=False),
     }
 
     _defaults = {
         'result_selection': 'customer',
     }
+
+    def onchange_result_selection_or_tax(self, cr, uid, ids, result_selection, exclude_tax, context=None):
+        """
+        Adapt the domain of the account according to the selections made by the user
+        Note: directly changing the domain on the many2many field "account_ids" doesn't work in that case so we use the
+        invisible field "account_domain" to store the domain and use it in the view...
+        """
+        if context is None:
+            context = {}
+        res = {}
+        if result_selection == 'supplier':
+            account_domain = [('type', 'in', ['payable'])]
+        elif result_selection == 'customer':
+            account_domain = [('type', 'in', ['receivable'])]
+        else:
+            account_domain = [('type', 'in', ['payable', 'receivable'])]
+        if exclude_tax:
+            account_domain.append(('user_type_code', '!=', 'tax'))
+        res['value'] = {'account_domain': '%s' % account_domain}
+        return res
 
     def pre_print_report(self, cr, uid, ids, data, context=None):
         if context is None:
