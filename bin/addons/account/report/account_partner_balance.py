@@ -117,7 +117,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                             "AND " + self.query + " " \
                             "AND blocked = TRUE " \
                     ") AS enlitige " \
-            "FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id) " \
+            "FROM account_move_line l INNER JOIN res_partner p ON (l.partner_id=p.id) "
             "JOIN account_account ac ON (l.account_id = ac.id)" \
             "JOIN account_move am ON (am.id = l.move_id)" \
             "WHERE ac.id IN %s " \
@@ -269,7 +269,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         temp_res = 0.0
         self.cr.execute(
                 "SELECT sum(debit) " \
-                "FROM account_move_line AS l LEFT JOIN res_partner p ON l.partner_id = p.id "
+                "FROM account_move_line AS l INNER JOIN res_partner p ON l.partner_id = p.id "
                 "JOIN account_move am ON (am.id = l.move_id)" \
                 "WHERE l.account_id IN %s"  \
                     "AND am.state IN %s" \
@@ -289,7 +289,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         temp_res = 0.0
         self.cr.execute(
                 "SELECT sum(credit) " \
-                "FROM account_move_line AS l LEFT JOIN res_partner p ON l.partner_id = p.id "
+                "FROM account_move_line AS l INNER JOIN res_partner p ON l.partner_id = p.id "
                 "JOIN account_move am ON (am.id = l.move_id)" \
                 "WHERE l.account_id IN %s" \
                     "AND am.state IN %s" \
@@ -310,7 +310,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         temp_res = 0.0
         self.cr.execute(
                 "SELECT sum(debit-credit) " \
-                "FROM account_move_line AS l LEFT JOIN res_partner p ON l.partner_id = p.id "
+                "FROM account_move_line AS l INNER JOIN res_partner p ON l.partner_id = p.id "
                 "JOIN account_move am ON (am.id = l.move_id)" \
                 "WHERE l.account_id IN %s" \
                     "AND am.state IN %s" \

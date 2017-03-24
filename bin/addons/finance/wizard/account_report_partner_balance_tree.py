@@ -103,7 +103,7 @@ class account_partner_balance_tree(osv.osv):
             " COALESCE(sum(debit),0) AS debit, COALESCE(sum(credit), 0) AS credit," \
             " CASE WHEN sum(debit) > sum(credit) THEN sum(debit) - sum(credit) ELSE 0 END AS sdebit," \
             " CASE WHEN sum(debit) < sum(credit) THEN sum(credit) - sum(debit) ELSE 0 END AS scredit" \
-            " FROM account_move_line l LEFT JOIN res_partner p ON (l.partner_id=p.id)" \
+            " FROM account_move_line l INNER JOIN res_partner p ON (l.partner_id=p.id)" \
             " JOIN account_account ac ON (l.account_id = ac.id)" \
             " JOIN account_move am ON (am.id = l.move_id)" \
             " JOIN account_account_type at ON (ac.user_type = at.id)" \
