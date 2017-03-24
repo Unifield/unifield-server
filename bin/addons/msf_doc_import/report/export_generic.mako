@@ -107,11 +107,19 @@
             % endfor
             </Row>
 
-            <Row>
-            % for col in data.get('header_columns', []):
-                <Cell ss:StyleID="${col[1]|x}" />
+            % for row in data.get('rows', []):
+                <Row>
+                % for cell in row:
+                    <Cell ss:StyleID="${data.get('header_columns', [])[row.index(cell)][1]|x}">
+                        % if data.get('header_columns', [])[row.index(cell)][1] == 'String' and not cell:
+                            <Data ss:Type="String"></Data>
+                        % else:
+                            <Data ss:Type="String">${cell}</Data>
+                        % endif
+                    </Cell>
+                % endfor
+                </Row>
             % endfor
-            </Row>
         </Table>
         
         <x:WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">

@@ -27,4 +27,9 @@ XlsWebKitParser(
     'addons/msf_doc_import/report/import_generic_template.mako',
 )
 
+XlsWebKitParser(
+    'report.wizard.export.generic',
+    'msf.import.export',
+    'addons/msf_doc_import/report/export_generic.mako',
+)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
