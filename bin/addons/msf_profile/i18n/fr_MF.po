@@ -12445,7 +12445,7 @@ msgstr "Erreur Utilisateur"
 #. module: sync_client
 #: view:hq.monitor:0
 msgid "Monitor Not Run lines on instances"
-msgstr "Monitor Not Run lines on instances"
+msgstr "Surveillance des lignes Pas Exécutés"
 
 #. module: hr
 #: selection:hr.job,state:0
@@ -21180,7 +21180,7 @@ msgstr "Patch"
 #: model:ir.actions.act_window,name:sync_client.sync_hq_instance_version_action
 #: model:ir.ui.menu,name:sync_client.sync_hq_instance_version_menu
 msgid "Version Instances Monitor"
-msgstr "Version Instances Monitor"
+msgstr "Surveillance des Versions des Instances"
 
 #. module: reason_types_moves
 #: field:stock.location,is_replenishment:0
@@ -24493,7 +24493,7 @@ msgstr "Fiscalyear"
 #. module: sync_client
 #: model:ir.actions.act_window,name:sync_client.sync_monitor_action
 msgid "Synchronisation Monitor"
-msgstr "Moniteur de synchronisation"
+msgstr "Surveillance de synchronisation"
 
 #. module: account_mcdb
 #: selection:account.mcdb,reversed:0
@@ -39047,7 +39047,7 @@ msgstr "Montant Total à Payer à ce Fournisseur."
 #: model:ir.actions.act_window,name:sync_client.update_to_send_action
 #: model:ir.ui.menu,name:sync_client.update_sent_menu
 msgid "Update Sent Monitor"
-msgstr "Mise à jour des Moniteurs Envoyés"
+msgstr "Surveillance des Mises à jour Envoyés"
 
 #. module: account
 #: view:account.analytic.chart:0
@@ -54091,7 +54091,7 @@ msgstr "Erreur de contrainte lors de la Composition Kit."
 #: model:ir.actions.act_window,name:sync_client.message_received_action
 #: model:ir.ui.menu,name:sync_client.Message_received_menu
 msgid "Message Received Monitor"
-msgstr "Surveillance Message Reçu"
+msgstr "Surveillance Messages Reçu"
 
 #. module: base
 #: selection:res.config.users,context_tz:0
@@ -91609,7 +91609,7 @@ msgstr "Total amt booking ccy"
 #: model:ir.actions.act_window,name:sync_client.update_received_action
 #: model:ir.ui.menu,name:sync_client.update_received_menu
 msgid "Update Received Monitor"
-msgstr "Mise à jour des Moniteurs Recus"
+msgstr "Surveillance des Mises à jour Recus"
 
 #. module: sale_override
 #: model:ir.actions.act_window,name:sale_override.sale_order_sourcing_progress_action
@@ -98124,4 +98124,43 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 #: model:product.justification.code,description:product_attributes.justification_code_jpa
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
+
+#. module: sync_client
+#: view:sync.client.update_received:0
+msgid "Updates Received"
+msgstr "Mises à jour Recus"
+
+#. module: sync_client
+#: view:sync.client.update_to_send:0
+msgid "Updates to Send"
+msgstr "Mises à jour à envoyer"
+
+#. module: sync_client
+#: view:sync.client.update_received:0
+#: view:sync.client.update_to_send:0
+msgid "Fields -> Values"
+msgstr "Champs -> Valeurs"
+
+#. module: sync_client
+#: view:sync.client.update_received:0
+msgid "Last execution"
+msgstr "Dernier execution"
+
+#. module: sync_client
+#: view:sync.client.update_received:0
+msgid "First Execution Messages"
+msgstr "Messages après le premier execution"
+
+#. module: sync_client
+#: view:sync.client.update_received:0
+msgid "Last Execution Messages"
+msgstr "Messages après le dernier execution"
+
+#. module: sync_client
+#: field:sync.client.update_received,force_recreation:0
+#: field:sync.client.update_to_send,force_recreation:0
+msgid "Force record recreation"
+msgstr "Forcer le recreation de rec."
+
+
 
