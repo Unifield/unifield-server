@@ -335,17 +335,10 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
 
     def _get_journal(self, data, instance_ids=False):
         """
-        If all journals have been selected: display "All journals" instead of listing all of them
+        If all journals have been selected: display "All Journals" instead of listing all of them
         """
-        journal_ids = data.get('form', False) and data['form'].get('journal_ids', False)
-        if journal_ids:
-            journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
-            # note: IKD and ODX journals are excluded from the report
-            nb_journals = journal_obj.search(self.cr, self.uid, [('type', 'not in', ['inkind', 'extra'])],
-                                             order='NO_ORDER', count=True, context=data.get('context', {}))
-            if len(journal_ids) == nb_journals:
-                return [_('All journals')]
-        instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
+        if data.get('form', False) and data['form'].get('all_journals', False):
+            return [_('All Journals')]
         return super(partner_balance, self)._get_journal(data, instance_ids)
 
 report_sxw.report_sxw('report.account.partner.balance', 'res.partner', 'account/report/account_partner_balance.rml',parser=partner_balance, header="internal")
