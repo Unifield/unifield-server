@@ -96,6 +96,10 @@ class account_partner_balance_tree(osv.osv):
             else:
                 ACCOUNT_REQUEST = 'AND ac.id IN %s' % (tuple(account_ids),)
 
+        RECONCILE_REQUEST = ''
+        if not data['form'].get('include_reconciled_entries', True):
+            RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
@@ -113,6 +117,7 @@ class account_partner_balance_tree(osv.osv):
             " " + TAX_REQUEST + " " \
             " " + PARTNER_REQUEST + " " \
             " " + ACCOUNT_REQUEST + " " \
+            " " + RECONCILE_REQUEST + " " \
             " GROUP BY ac.type,p.id,p.ref,p.name" \
             " ORDER BY ac.type,p.name"
         cr.execute(query)
@@ -365,6 +370,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'only_active_partners': fields.boolean('Only active partners', help='Display the report for active partners only'),
         'account_ids': fields.many2many('account.account', 'account_partner_balance_account_rel', 'wizard_id', 'account_id',
                                         string='Accounts', help='Display the report for specific accounts only'),
+        'include_reconciled_entries': fields.boolean('Include Reconciled Entries', help='Take reconciled entries into account'),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -379,6 +385,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'journal_ids': _get_journals,
         'tax': False,
         'only_active_partners': False,
+        'include_reconciled_entries': True,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -402,7 +409,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
                                                 'output_currency', 'instance_ids', 'tax', 'partner_ids',
-                                                'only_active_partners', 'account_ids'])[0]
+                                                'only_active_partners', 'account_ids', 'include_reconciled_entries'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
             if default_journals:

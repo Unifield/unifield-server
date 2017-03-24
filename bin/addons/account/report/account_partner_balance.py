@@ -81,6 +81,10 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         if self.exclude_tax is True:
             self.TAX_REQUEST = "AND t.code != 'tax'"
 
+        self.RECONCILE_REQUEST = ''
+        if not data['form'].get('include_reconciled_entries', True):
+            self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
+
         # get the account list (if some accounts have been specifically selected use them directly)
         if not self.account_ids:
             self.cr.execute("SELECT a.id "
@@ -124,6 +128,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             "AND am.state IN %s " \
             "AND " + self.query + "" \
             " " + self.PARTNER_REQUEST + " "
+            " " + self.RECONCILE_REQUEST + " "
             "GROUP BY p.id, p.ref, p.name,l.account_id,ac.name,ac.code " \
             "ORDER BY l.account_id,p.name",
             (tuple(self.account_ids), tuple(move_state)))
@@ -274,7 +279,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 "WHERE l.account_id IN %s"  \
                     "AND am.state IN %s" \
                     "AND " + self.query + " "
-                    " " + self.PARTNER_REQUEST + " ",
+                    " " + self.PARTNER_REQUEST + " "
+                    " " + self.RECONCILE_REQUEST + " ",
                     (tuple(self.account_ids), tuple(move_state)))
         temp_res = float(self.cr.fetchone()[0] or 0.0)
         return temp_res
@@ -294,7 +300,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 "WHERE l.account_id IN %s" \
                     "AND am.state IN %s" \
                     "AND " + self.query + ""
-                    " " + self.PARTNER_REQUEST + " ",
+                    " " + self.PARTNER_REQUEST + " "
+                    " " + self.RECONCILE_REQUEST + " ",
                     (tuple(self.account_ids), tuple(move_state)))
         temp_res = float(self.cr.fetchone()[0] or 0.0)
         return temp_res
@@ -316,6 +323,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     "AND am.state IN %s" \
                     "AND " + self.query + " " \
                     " " + self.PARTNER_REQUEST + " "
+                    " " + self.RECONCILE_REQUEST + " "
                     "AND l.blocked=TRUE ",
                     (tuple(self.account_ids), tuple(move_state), ))
         temp_res = float(self.cr.fetchone()[0] or 0.0)

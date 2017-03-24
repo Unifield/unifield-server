@@ -98,7 +98,7 @@
                 <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="display_partner"/>
                 <field name="output_currency" invisible="1" />
-                <newline />
+                <field name="include_reconciled_entries"/>
                 <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
                 <field name="only_active_partners"/>
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
