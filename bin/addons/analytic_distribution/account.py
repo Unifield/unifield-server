@@ -101,6 +101,11 @@ class account_destination_link(osv.osv):
     }
 
     def unlink(self, cr, uid, ids, context=None):
+        if context is None:
+            context = {}
+        if context.get('sync_update_execution'):
+            return super(account_destination_link, self).unlink(cr, uid, ids, context)
+
         self.write(cr, uid, ids, {'disabled': True}, context=context)
         return True
 
