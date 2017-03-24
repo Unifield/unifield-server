@@ -392,30 +392,29 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
 
     def _get_journal(self, data, instance_ids=False):
         """
-        If all journals have been selected: display "All journals" instead of listing all of them
+        If all journals have been selected: display "All Journals" instead of listing all of them
         """
         journal_ids = data.get('form', False) and data['form'].get('journal_ids', False)
         if journal_ids:
             journal_obj = pooler.get_pool(self.cr.dbname).get('account.journal')
             nb_journals = journal_obj.search(self.cr, self.uid, [], order='NO_ORDER', count=True, context=data.get('context', {}))
             if len(journal_ids) == nb_journals:
-                return [_('All journals')]
+                return [_('All Journals')]
         instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
         return super(third_party_ledger, self)._get_journal(data, instance_ids)
 
     def _get_instances(self, data):
         """
-        Get the codes of all instances selected (or "All instances" if they are all selected)
+        Return:
+        - "All Instances" if no specific instance is selected
+        - or the codes of all instances selected
         """
-        res = []
-        if self.instance_ids:
+        instance_ids = data.get('form', False) and data['form'].get('instance_ids', False)
+        if instance_ids:
             instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
-            nb_instances = instance_obj.search(self.cr, self.uid, [], order='NO_ORDER', count=True, context=data.get('context', {}))
-            if len(self.instance_ids) == nb_instances:
-                return [_('All instances')]
-            res = [i.code for i in instance_obj.browse(self.cr, self.uid, self.instance_ids,
+            return [i.code for i in instance_obj.browse(self.cr, self.uid, self.instance_ids,
                                                        fields_to_fetch=['code'], context=data.get('context', {}))]
-        return res
+        return [_('All Instances')]
 
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,

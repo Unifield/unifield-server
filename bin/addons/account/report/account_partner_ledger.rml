@@ -371,7 +371,7 @@
           <para style="terp_default_Centre_8">[[ get_partners() ]]</para>
         </td>
         <td>
-          <para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_accounts(data) ]) ]]</para>
+          <para style="terp_default_Centre_8">[[', '.join([ acc or '' for acc in get_accounts(data) ]) ]]</para>
         </td>
         <td>
           <para style="terp_default_Centre_8">[[ get_target_move(data) ]]</para>

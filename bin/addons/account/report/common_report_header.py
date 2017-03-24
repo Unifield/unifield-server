@@ -122,20 +122,16 @@ class common_report_header(object):
 
     def _get_accounts(self, data):
         """
-        Get the codes of all accounts selected (or "All accounts" if they are all selected)
+        Return:
+        - "All Accounts" if no specific account is selected
+        - or the codes of all accounts selected
         """
-        res = []
-        if self.account_ids:
+        account_ids = data.get('form', False) and data['form'].get('account_ids', False)
+        if account_ids:
             account_obj = pooler.get_pool(self.cr.dbname).get('account.account')
-            account_domain = self.ACCOUNT_TYPE and [('type', 'in', self.ACCOUNT_TYPE)] or [('type', 'in', ['payable', 'receivable'])]
-            if self.exclude_tax:
-                account_domain.append(('user_type_code', '!=', 'tax'))
-            nb_accounts = account_obj.search(self.cr, self.uid, account_domain, order='NO_ORDER', count=True, context=data.get('context', {}))
-            if len(self.account_ids) == nb_accounts:
-                return [_('All accounts')]
-            res = [i.code for i in account_obj.browse(self.cr, self.uid, self.account_ids,
+            return [i.code for i in account_obj.browse(self.cr, self.uid, self.account_ids,
                                                        fields_to_fetch=['code'], context=data.get('context', {}))]
-        return res
+        return [_('All Accounts')]
 
     def _get_sortby(self, data):
         raise (_('Error'), _('Not implemented'))

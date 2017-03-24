@@ -249,7 +249,9 @@ header_col_merge_count = col_count - 1
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell> </Row>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Accounts</Data></Cell>
+</Row>
 <Row>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
@@ -275,10 +277,10 @@ header_col_merge_count = col_count - 1
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(prop_instances or '')|x}</Data>
  </Cell>
- <Cell ss:StyleID="ssCell">
-    <Data ss:Type="String"></Data>
-</Cell>
- </Row>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${(', '.join([ acc or '' for acc in get_accounts(data) ]))|x}</Data>
+ </Cell>
+</Row>
 ## separation line after header
 <Row>
 % for n in range(col_count):

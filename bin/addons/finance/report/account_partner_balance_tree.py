@@ -22,6 +22,7 @@
 from tools.translate import _
 from report import report_sxw
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
+import pooler
 
 class account_partner_balance_tree(report_sxw.rml_parse):
 
@@ -43,6 +44,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_end_period': self.get_end_period,
             'get_target_move': self._get_target_move,
             'get_prop_instances': self._get_prop_instances,
+            'get_accounts': self._get_accounts,
 
             # data
             'get_partners': self._get_partners,
@@ -158,6 +160,19 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         if data.get('form', False) and data['form'].get('chart_account_id', False):
             return self.pool.get('account.account').browse(self.cr, self.uid, data['form']['chart_account_id']).name
         return ''
+
+    def _get_accounts(self, data):
+        """
+        Return:
+        - "All Accounts" if no specific account is selected
+        - or the codes of all accounts selected
+        """
+        account_ids = data.get('form', False) and data['form'].get('account_ids', False)
+        if account_ids:
+            account_obj = pooler.get_pool(self.cr.dbname).get('account.account')
+            return [i.code for i in account_obj.browse(self.cr, self.uid, account_ids,
+                                                      fields_to_fetch=['code'], context=data.get('context', {}))]
+        return [_('All Accounts')]
 
     def _get_filter(self, data):
         if data.get('form', False) and data['form'].get('filter', False):
