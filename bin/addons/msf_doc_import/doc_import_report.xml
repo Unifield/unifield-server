@@ -46,7 +46,7 @@
             string="Import Generic template" />
 
         <report
-            id="report_wizard_export_generic"
+            id="wizard_export_generic"
             model="msf.import.export"
             name="wizard.export.generic"
             file="msf_doc_import/report/export_generic.mako"

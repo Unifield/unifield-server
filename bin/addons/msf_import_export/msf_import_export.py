@@ -24,6 +24,7 @@ import time
 import threading
 import logging
 import re
+import codecs
 
 import pooler
 import tools
@@ -32,6 +33,12 @@ from mx import DateTime
 from osv import fields
 from osv import osv
 from tools.translate import _
+from tools.misc import file_open
+from tempfile import NamedTemporaryFile
+from mako.template import Template
+from mako import exceptions
+from mako.runtime import Context
+from report import report_sxw
 
 from tempfile import TemporaryFile
 from lxml import etree
@@ -105,64 +112,64 @@ MODEL_DATA_DICT = {
     'product.product': {
         'report_name': _('Product_Export'),
         'header_list': [
-            ImportHeader(name=_('Code'), ftype='String', size=100, tech_name='default_code'),
-            ImportHeader(name=_('Description'), ftype='String', size=300, tech_name='name', required=True),
-            ImportHeader(name=_('XMLID'), ftype='String', size=100, tech_name='xmlid_code'),
-            ImportHeader(name=_('Old code'), ftype='String', size=80, tech_name='old_code'),
-            ImportHeader(name=_('Type'), ftype='String', size=160, tech_name='type'),
-            ImportHeader(name=_('Transport product'), ftype='Boolean', size=40, tech_name='transport_ok'),
-            ImportHeader(name=_('Product SubType'), ftype='String', size=80, tech_name='subtype'),
-            ImportHeader(name=_('Asset Type'), ftype='String', size=80, tech_name='asset_type_id.name'),
-            ImportHeader(name=_('Procurement Method'), ftype='String', size=80, tech_name='procure_method'),
-            ImportHeader(name=_('Supply Method'), ftype='String', size=80, tech_name='supply_method'),
-            ImportHeader(name=_('Cost Price'), ftype='Float', size=80, tech_name='standard_price'),
-            ImportHeader(name=_('Volume'), ftype='Float', size=80, tech_name='volume'),
-            ImportHeader(name=_('Gross weight'), ftype='Float', size=80, tech_name='weight'),
-            ImportHeader(name=_('Product Creator'), ftype='String', size=80, tech_name='international_status.name', required=True),
-            ImportHeader(name=_('Status'), ftype='String', size=80, tech_name='state.name'),
-            ImportHeader(name=_('Active'), ftype='Boolean', size=40, tech_name='active'),
-            ImportHeader(name=_('Expiry Date Mandatory'), ftype='Boolean', size=40, tech_name='perishable'),
-            ImportHeader(name=_('Batch Number Mandatory'), ftype='Boolean', size=40, tech_name='batch_management'),
-            ImportHeader(name=_('Default Unit of Measure'), ftype='String', size=40, tech_name='uom_id.name'),
-            ImportHeader(name=_('Exchangeable Unit Of Measure'), ftype='String', size=80, tech_name='uom_po_id.name'),
-            ImportHeader(name=_('Main Type'), ftype='String', size=60, tech_name='nomen_manda_0.name', required=True),
-            ImportHeader(name=_('Group'), ftype='String', size=160, tech_name='nomen_manda_1.name', required=True),
-            ImportHeader(name=_('Family'), ftype='String', size=160, tech_name='nomen_manda_2.name', required=True),
-            ImportHeader(name=_('Root'), ftype='String', size=160, tech_name='nomen_manda_3.name', required=True),
-            ImportHeader(name=_('Product Life Time'), ftype='Number', size=80, tech_name='life_time'),
-            ImportHeader(name=_('Product Use Time'), ftype='Number', size=80, tech_name='use_time'),
-            ImportHeader(name=_('Short Shelf Life'), ftype='String', size=80, tech_name='short_shelf_life'),
-            ImportHeader(name=_('Product Alert Time'), ftype='Number', size=80, tech_name='alert_time'),
-            ImportHeader(name=_('Temperature sensitive item'), ftype='String', size=80, tech_name='heat_sensitive_item.name'),
-            ImportHeader(name=_('Cold chain'), ftype='String', size=80, tech_name='cold_chain'),
-            ImportHeader(name=_('Sterile'), ftype='String', size=80, tech_name='sterilized'),
-            ImportHeader(name=_('Single Use'), ftype='String', size=80, tech_name='single_use'),
-            ImportHeader(name=_('Narcotic'), ftype='Boolean', size=40, tech_name='narcotic'),
-            ImportHeader(name=_('Justification Code'), ftype='String', size=80, tech_name='justification_code_id.id'),
-            ImportHeader(name=_('Controlled Substance'), ftype='String', size=80, tech_name='controlled_substance'),
-            ImportHeader(name=_('Closed Article'), ftype='String', size=80, tech_name='closed_article'),
-            ImportHeader(name=_('Restricted in the Country'), ftype='Boolean', size=40, tech_name='restricted_country'),
-            ImportHeader(name=_('Country Restriction'), ftype='String', size=80, tech_name='country_restriction'),
-            ImportHeader(name=_('Dangerous goods'), ftype='String', size=80, tech_name='dangerous_goods'),
-            ImportHeader(name=_('UN Code'), ftype='String', size=80, tech_name='un_code'),
-            ImportHeader(name=_('Criticality'), ftype='String', size=80, tech_name='criticism'),
-            ImportHeader(name=_('ABC Class'), ftype='String', size=80, tech_name='abc_class'),
-            ImportHeader(name=_('Product Catalog Path'), ftype='String', size=80, tech_name='product_catalog_path'),
-            ImportHeader(name=_('Description'), ftype='String', size=80, tech_name='description'),
-            ImportHeader(name=_('Description 2'), ftype='String', size=80, tech_name='description2'),
-            ImportHeader(name=_('Field Description'), ftype='String', size=80, tech_name='description_sale'),
-            ImportHeader(name=_('Purchase Description'), ftype='String', size=80, tech_name='description_purchase'),
-            ImportHeader(name=_('Procurement Lead Time'), ftype='Number', size=80, tech_name='procure_delay'),
-            ImportHeader(name=_('Income Account'), ftype='String', size=80, tech_name='property_account_income.code'),
-            ImportHeader(name=_('Expense Account'), ftype='String', size=80, tech_name='property_account_expense.code'),
+            'default_code',
+            'name',
+            'xmlid_code',
+            'old_code',
+            'type',
+            'transport_ok',
+            'subtype',
+            'asset_type_id.name',
+            'procure_method',
+            'supply_method',
+            'standard_price',
+            'volume',
+            'weight',
+            'international_status.name',
+            'state.name',
+            'active',
+            'perishable',
+            'batch_management',
+            'uom_id.name',
+            'uom_po_id.name',
+            'nomen_manda_0.name',
+            'nomen_manda_1.name',
+            'nomen_manda_2.name',
+            'nomen_manda_3.name',
+            'life_time',
+            'use_time',
+            'short_shelf_life',
+            'alert_time',
+            'heat_sensitive_item.code',
+            'cold_chain',
+            'sterilized',
+            'single_use',
+            'narcotic',
+            'justification_code_id.id',
+            'controlled_substance',
+            'closed_article',
+            'restricted_country',
+            'country_restriction',
+            'dangerous_goods',
+            'un_code',
+            'criticism',
+            'abc_class',
+            'product_catalog_path',
+            'description',
+            'description2',
+            'description_sale',
+            'description_purchase',
+            'procure_delay',
+            'property_account_income.code',
+            'property_account_expense.code',
         ],
         'required_field_list': [
             'name',
-            'international_status',
-            'nomen_manda_0',
-            'nomen_manda_1',
-            'nomen_manda_2',
-            'nomen_manda_3',
+            'international_status.name',
+            'nomen_manda_0.name',
+            'nomen_manda_1.name',
+            'nomen_manda_2.name',
+            'nomen_manda_3.name',
         ],
         'hide_download_all_entries': True,
     },
@@ -221,80 +228,85 @@ class msf_import_export(osv.osv_memory):
         'display_test_import_button': lambda *a: False,
     }
 
-    def download_all_entries_file(self, cr, uid, ids, context=None):
+    def generic_download(self, cr, uid, ids, template_only=False,
+            nb_lines=None, context=None):
         """
-        Download a template filled with all datas of the modèle
+        mutualise the code of all download button in one place
         """
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        wiz = self.browse(cr, uid, ids[0])
+        model = MODEL_DICT[wiz.model_list_selection]['model']
+        fields = MODEL_DATA_DICT[model]['header_list']
+        data = {
+            'model': model,
+            'fields': fields,
+            'nb_lines': nb_lines,
+            'template_only': template_only,
+        }
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'wizard.export.generic',
-            'datas': self._get_entries_file_data(cr, uid, ids,
-                nb_lines=None, context=context)
+            'datas': data,
+            'context': context,
         }
+
+    def download_all_entries_file(self, cr, uid, ids, context=None):
+        """
+        Download a template filled with all datas of the modele
+        """
+        return self.generic_download(cr, uid, ids, context=context)
 
     def download_3_entries_file(self, cr, uid, ids, context=None):
         """
         Download a template filled with the first 3 lines of data
         """
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'wizard.export.generic',
-            'datas': self._get_entries_file_data(cr, uid, ids,
-                nb_lines=3, context=context)
-        }
+        return self.generic_download(cr, uid, ids, nb_lines=3, context=context)
 
     def download_template_file(self, cr, uid, ids, context=None):
         """
         Download the template file (without any data)
         """
-        return {
-            'type': 'ir.actions.report.xml',
-            'report_name': 'wizard.import.generic.template',
-            'datas': self._get_template_file_data(cr, uid, ids, context=context),
-        }
+        return self.generic_download(cr, uid, ids, template_only=True,
+                context=context)
 
-    def _get_entries_file_data(self, cr, uid, ids, nb_lines=None, context=None):
-        result = self._get_template_file_data(cr, uid, ids, context=context)
-        wiz = self.browse(cr, uid, ids[0])
-        model = MODEL_DICT[wiz.model_list_selection]['model']
-        expected_headers = MODEL_DATA_DICT[model]['header_list']
-        fields = [x[3].replace('.', '/') for x in expected_headers]
-        exported_lines = self._get_exported_lines(cr, uid, model=model,
-                fields=fields, nb_lines=nb_lines, context=context)
-        result.update({'rows': exported_lines})
-        return result
-
-    def _get_exported_lines(self, cr, uid, model, fields, nb_lines=None, ids=None, context=None):
-        rows = []
-        counter = 0
-        chunk_size = 100
+    def _get_headers(self, cr, uid, model, context=None):
+        '''
+        Generate a list of ImportHeader objects using the data that retived
+        from the field name.
+        '''
+        headers = []
+        field_list = MODEL_DATA_DICT[model]['header_list']
         model_obj = self.pool.get(model)
-        if not ids:
-            ids = model_obj.search(cr, uid, [], limit=nb_lines, context=context)
-        for i in range(0, len(ids), chunk_size):
-            ids_chunk = ids[i:i + chunk_size]
-            counter += len(ids_chunk)
-            rows.extend(model_obj.export_data(cr, uid, ids_chunk, fields,
-                                                         context=context)['datas'])
-            progression = float(counter) / len(ids)
-            # XXX faire en background les longs rapports (voir ./bin/service/web_services.py)
-            #bg_obj.update_percent(cr, uid, bg_id, progression, context=context)
+        for field in field_list:
+            res = {'tech_name': field}
+            if field in MODEL_DATA_DICT[model]['required_field_list']:
+                res['required'] = True
+            if '.' in field:
+                field = field.split('.')[0]
+            if field in model_obj._columns:
+                field_obj = model_obj._columns[field]
+            elif field in model_obj._inherit_fields:
+                field_obj = model_obj._inherit_fields[field][2]
+            else:
+                raise osv.except_osv(_('Error'),
+                                     _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                                     % (field, model))
 
-        return rows
-
-    def _get_template_file_data(self,cr, uid, ids, context=None):
-        """
-        Return values for the import template file report generation
-        """
-        wiz = self.browse(cr, uid, ids[0])
-        model = MODEL_DICT[wiz.model_list_selection]['model']
-        expected_headers = MODEL_DATA_DICT[model]['header_list']
-        report_name = _(MODEL_DATA_DICT[model].get('report_name', _('Sheet 1')))
-        return {
-            'model': 'couscous_report',
-            'model_name': report_name,
-            'header_columns': expected_headers,
-        }
+            if field_obj._type == 'boolean':
+                res['ftype'] = 'Boolean'
+            elif field_obj._type == 'float':
+                res['ftype'] = 'Float'
+            elif field_obj._type == 'integer':
+                res['ftype'] = 'Number'
+            else:
+                res['ftype'] = 'String'
+            res['name'] = _(field_obj.string)
+            headers.append(ImportHeader(**res))
+        return headers
 
     def _set_code_name(self, cr, uid, data, row, headers):
         if not data.get('name'):
@@ -498,10 +510,12 @@ class msf_import_export(osv.osv_memory):
         header_columns = [_(head[i].data.upper()) for i in range(0, len(head))]
         missing_columns = []
         for field in required_field_list:
+            if '.' in field:
+                field = field.split('.')[0]
             if field in model_obj._columns:
                 column_name = _(model_obj._columns[field].string)
             elif field in model_obj._inherit_fields:
-                column_name = model_obj._inherit_fields[field][2].string 
+                column_name = model_obj._inherit_fields[field][2].string
             if column_name.upper() not in header_columns:
                 missing_columns.append(column_name)
         if missing_columns:
@@ -521,7 +535,7 @@ class msf_import_export(osv.osv_memory):
             rows, nb_rows = self.read_file(wiz, context=context)
             head = rows.next()
             model = MODEL_DICT[wiz.model_list_selection]['model']
-            expected_headers = MODEL_DATA_DICT[model]['header_list']
+            expected_headers = self._get_headers(cr, uid, model, context=context)
             self.check_headers(head, expected_headers, context=context)
 
             self.write(cr, uid, [wiz.id], {
@@ -817,14 +831,14 @@ WHERE n3.level = 3)
                     nb_succes += 1
                     cr.commit()
             except osv.except_osv, e:
-                logging.getLogger('import data').info('Error %s'%e.value)
+                logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
                 error = "Line %s, row: %s, %s"%(i, n, e.value)
                 save_error(error, row_index)
                 nb_error += 1
             except Exception, e:
                 cr.rollback()
-                logging.getLogger('import data').info('Error %s'%e)
+                logging.getLogger('import data').info('Error %s' % e)
                 error = "Line %s, row: %s, %s"%(i, n, e)
                 save_error(error, row_index)
                 nb_error += 1

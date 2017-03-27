@@ -78,6 +78,7 @@
     </record>
 
     <menuitem id="msf_import_export_menu"
+              name="Import / Export"
               parent="object_query.menu_preferences" />
 
     <menuitem id="msf_import_export_supply_menu"
