@@ -83,7 +83,10 @@ class report_generic_export_parser(report_sxw.rml_parse):
             if all_cells_chain:
                 longest_chain = max(all_cells_chain, key=len)
                 if longest_chain:
-                    size = 8*len(longest_chain)
+                    size = 8*len(longest_chain)  # 8 have been choosed by
+                                                 # empirical testing, it seems
+                                                 # that excel don't use width as
+                                                 # number of caraters width
                     size = min(size, 300)
                     size = max(size, 60)
                     res['size'] = size
