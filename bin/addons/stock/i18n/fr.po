@@ -4260,6 +4260,12 @@ msgid "Optional localization details, for information purpose only"
 msgstr ""
 "Détails facultatifs sur la localisation, uniquement à but informatif."
 
+#. module: stock
+#: code:addons/stock/stock.py:2988
+#, python-format
+msgid "is validated."
+msgstr "est validé."
+
 #, python-format
 #~ msgid "Message !"
 #~ msgstr "Message !"
