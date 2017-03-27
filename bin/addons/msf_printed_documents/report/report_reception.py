@@ -228,7 +228,7 @@ class report_reception(report_sxw.rml_parse):
                 mard = time.strptime(move.date, '%Y-%m-%d %H:%M:%S')
                 if mard < ard:
                     ard = mard
-            actual_receipt_date = time.strftime('%d/%m/%Y', mard)
+            actual_receipt_date = time.strftime('%d/%m/%Y', ard)
         return actual_receipt_date
 
     def get_lines(self, o):
