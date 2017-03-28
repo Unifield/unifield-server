@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <document filename="test.pdf">
-  <template pageSize="(595.0,842.0)" title="Test" author="OpenERP S.A.(sales@openerp.com)" allowSplitting="20">
+  <template pageSize="(842.0,595.0)" title="Test" author="OpenERP S.A.(sales@openerp.com)" allowSplitting="20">
     <pageTemplate id="first">
-      <frame id="first" x1="28.0" y1="28.0" width="539" height="772"/>
+      <frame id="first" x1="28.0" y1="57.0" width="772" height="481"/>
     </pageTemplate>
   </template>
   <stylesheet>
@@ -282,7 +282,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="60.0,60.0,60.0,118.0,60.0,60.0,60.0,60.0" style="Table1">
+    <blockTable colWidths="85.0,85.0,85.0,167.0,85.0,85.0,85.0,85.0" style="Table1">
       <tr>
         <td>
           <para style="terp_tblheader_General_Centre">Chart of Account</para>
@@ -310,7 +310,7 @@
         </td>
       </tr>
     </blockTable>
-    <blockTable colWidths="60.0,60.0,60.0,118.0,60.0,60.0,60.0,60.0" style="Table4">
+    <blockTable colWidths="85.0,85.0,85.0,167.0,85.0,85.0,85.0,85.0" style="Table4">
       <tr>
         <td>
           <para style="terp_default_Centre_8">[[ get_account(data) or '' ]]</para>
@@ -323,7 +323,7 @@
         </td>
         <td>
           <para style="terp_default_Centre_8">[[ get_filter(data)=='No Filter' and get_filter(data) or removeParentNode('para') ]]</para>
-          <blockTable colWidths="58.0,58.0" style="Table7">
+          <blockTable colWidths="82.0,82.0" style="Table7">
             <tr>
               <td>
                 <para style="terp_tblheader_General_Centre">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]] Start Date</para>
@@ -333,7 +333,7 @@
               </td>
             </tr>
           </blockTable>
-          <blockTable colWidths="58.0,58.0" style="Table9">
+          <blockTable colWidths="82.0,82.0" style="Table9">
             <tr>
               <td>
                 <para style="terp_default_Centre_8">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]] [[ formatLang(get_start_date(data),date=True) ]]</para>
@@ -343,7 +343,7 @@
               </td>
             </tr>
           </blockTable>
-          <blockTable colWidths="58.0,58.0" style="Table10">
+          <blockTable colWidths="82.0,82.0" style="Table10">
             <tr>
               <td>
                 <para style="terp_tblheader_General_Centre">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]] Start Period</para>
@@ -353,7 +353,7 @@
               </td>
             </tr>
           </blockTable>
-          <blockTable colWidths="58.0,58.0" style="Table11">
+          <blockTable colWidths="82.0,82.0" style="Table11">
             <tr>
               <td>
                 <para style="terp_default_Centre_8">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]] [[ get_start_period(data) or removeParentNode('para') ]]</para>
@@ -388,7 +388,7 @@
       <para style="terp_default_2">
         <font face="Helvetica">[[ display_currency(data) == False or removeParentNode('section') ]]</font>
       </para>
-      <blockTable colWidths="52.0,31.0,78.0,46.0,124.0,64.0,64.0,79.0" style="Table2">
+      <blockTable colWidths="74.0,44.0,110.0,65.0,175.0,91.0,91.0,112.0" style="Table2">
         <tr>
           <td>
             <para style="terp_tblheader_Details">Date</para>
@@ -416,7 +416,7 @@
           </td>
         </tr>
       </blockTable>
-      <blockTable colWidths="332.0,64.0,64.0,79.0" style="Table3">
+      <blockTable colWidths="470.0,90.0,90.0,112.0" style="Table3">
         <tr>
           <td>
             <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
@@ -436,7 +436,7 @@
         <para style="terp_default_2">
           <font face="Helvetica">[[data['form']['initial_balance']==True or removeParentNode('section') ]]</font>
         </para>
-        <blockTable colWidths="332.0,64.0,64.0,79.0" style="Table5">
+        <blockTable colWidths="470.0,90.0,90.0,112.0" style="Table5">
           <tr>
             <td>
               <para style="terp_default_9">Initial Balance</para>
@@ -455,7 +455,7 @@
       </section>
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(p), 'line') ]]</para>
-        <blockTable colWidths="52.0,31.0,78.0,46.0,124.0,64.0,64.0,79.0" style="Table6">
+        <blockTable colWidths="74.0,44.0,110.0,65.0,175.0,91.0,91.0,112.0" style="Table6">
           <tr>
             <td>
               <para style="terp_default_9">[[ formatLang(line['date'],date=True) ]]</para>
@@ -495,7 +495,7 @@
       <para style="terp_default_2">
         <font face="Helvetica">[[ display_currency(data) == True or removeParentNode('section') ]]</font>
       </para>
-      <blockTable colWidths="52.0,31.0,67.0,48.0,62.0,64.0,64.0,79.0,71.0" style="Table8">
+      <blockTable colWidths="74.0,44.0,94.0,68.0,88.0,91.0,91.0,112.0,100.0" style="Table8">
         <tr>
           <td>
             <para style="terp_tblheader_Details">Date</para>
@@ -526,7 +526,7 @@
           </td>
         </tr>
       </blockTable>
-      <blockTable colWidths="261.0,64.0,64.0,79.0,71.0" style="Table12">
+      <blockTable colWidths="370.0,90.0,90.0,112.0,100.0" style="Table12">
         <tr>
           <td>
             <para style="terp_default_Bold_9">[[ p.name ]][[ p.ref and ' - %s' % p.ref]]</para>
@@ -549,7 +549,7 @@
       </blockTable>
       <section>
         <para style="terp_default_2">[[ data['form']['initial_balance']==True or removeParentNode('section') ]] </para>
-        <blockTable colWidths="261.0,64.0,64.0,79.0,71.0" style="Table13">
+        <blockTable colWidths="367.0,90.0,90.0,112.0,100.0" style="Table12">
           <tr>
             <td>
               <para style="terp_default_9">Initial Balance</para>
@@ -573,7 +573,7 @@
       </section>
       <section>
         <para style="terp_default_8">[[ repeatIn(lines(p), 'line') ]]</para>
-        <blockTable colWidths="52.0,31.0,67.0,48.0,62.0,64.0,64.0,79.0,71.0" style="Table14">
+        <blockTable colWidths="74.0,44.0,94.0,68.0,88.0,91.0,91.0,112.0,100.0" style="Table14">
           <tr>
             <td>
               <para style="terp_default_9">[[ formatLang(line['date'],date=True) ]]</para>
