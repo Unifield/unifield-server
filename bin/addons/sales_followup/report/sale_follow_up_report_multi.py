@@ -195,6 +195,13 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             # No move found
             if first_line:
+                shipment = ''
+                packing = ''
+
+                if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
+                    packing = move.picking_id.previous_step_id.name
+                    shipment = move.picking_id.shipment_id.name
+
                 data = {
                     'line_number': line.line_number,
                     'po_name': po_name,
@@ -202,8 +209,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'product_name': line.product_id.name,
                     'uom_id': line.product_uom.name,
                     'ordered_qty': line.product_uom_qty,
-                    'packing': '',
-                    'shipment': '',
+                    'packing': packing,
+                    'shipment': shipment,
                     'delivered_qty': 0.00,
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty,
