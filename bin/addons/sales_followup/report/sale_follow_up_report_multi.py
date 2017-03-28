@@ -147,8 +147,8 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         first_line = False
 
                     if ppl:
-                        packing = move.picking_id.previous_step_id.name
-                        shipment = move.picking_id.shipment_id.name
+                        packing = move.picking_id.previous_step_id.name or ''
+                        shipment = move.picking_id.shipment_id.name or ''
                         eta = datetime.strptime(move.picking_id.shipment_id.shipment_expected_date[0:10], '%Y-%m-%d')
                         eta += timedelta(days=line.order_id.partner_id.supplier_lt or 0.00)
                         if not grouped:
@@ -165,18 +165,23 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             'transport': not only_bo and move.picking_id.shipment_id.transport_type or '',
                         })
                     else:
-                        packing = move.picking_id.name
+                        if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
+                            packing = move.picking_id.previous_step_id.name
+                            shipment = move.picking_id.shipment_id.name
+                        else:
+                            shipment = move.picking_id.name
+                            packing = ''
                         if not grouped:
                             key = (packing, False, move.product_uom.name)
                         else:
                             key = (packing, False, move.product_uom.name, line.line_number)
                         if not only_bo:
                             data.update({
-                                'packing': '',
+                                'packing': packing,
                                 'delivered_qty': move.product_qty,
                                 'delivered_uom': move.product_uom.name,
-                                'rts': move.picking_id.min_date[0:10],
-                                'shipment': packing,
+                                'rts': line.order_id.ready_to_ship_date,
+                                'shipment': shipment,
                             })
 
                     if key in keys:
@@ -195,13 +200,6 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
 
             # No move found
             if first_line:
-                shipment = ''
-                packing = ''
-
-                if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
-                    packing = move.picking_id.previous_step_id.name
-                    shipment = move.picking_id.shipment_id.name
-
                 data = {
                     'line_number': line.line_number,
                     'po_name': po_name,
@@ -209,8 +207,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'product_name': line.product_id.name,
                     'uom_id': line.product_uom.name,
                     'ordered_qty': line.product_uom_qty,
-                    'packing': packing,
-                    'shipment': shipment,
+                    'rts': line.order_id.state not in ('draft', 'validated', 'cancel') and line.order_id.ready_to_ship_date or '',
                     'delivered_qty': 0.00,
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty,
