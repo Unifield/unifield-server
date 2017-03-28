@@ -2652,8 +2652,15 @@ stock moves which are already processed : '''
                         'res_id': wiz_id,
                         'target': 'new',
                         'context': context}
-
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order',
+            'res_id': ids[0],
+            'target': 'dummy',
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'context': context,
+        }
 
     def round_to_soq(self, cr, uid, ids, context=None):
         """
@@ -4413,7 +4420,15 @@ class purchase_order_line_unlink_wizard(osv.osv_memory):
             })
             return so_obj.open_cancel_wizard(cr, uid, so_to_cancel_ids, context=context)
 
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'purchase.order',
+            'target': 'dummy',
+            'res_id': list(po_ids)[0],
+            'view_type': 'form',
+            'view_mode': 'form,tree',
+            'context': context,
+        }
 
 
     def cancel_and_resource(self, cr, uid, ids, context=None):
