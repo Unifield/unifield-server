@@ -162,7 +162,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
 </Row>
-% for l in objects[0].line_ids:
+% for l in sorted(objects[0].line_ids, key=lambda x: (x.product_code, x.batch_number, x.expiry_date)):
 % if l.expiry_date < now:
 <Row>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
@@ -211,7 +211,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
 </Row>
-% for l in objects[0].line_ids:
+% for l in sorted(objects[0].line_ids, key=lambda x: (x.product_code, x.batch_number, x.expiry_date)):
 % if l.expiry_date >= now:
 <Row>
 <Cell ss:StyleID="line"><Data ss:Type="String">${(l.product_id.default_code or '')|x}</Data></Cell>
