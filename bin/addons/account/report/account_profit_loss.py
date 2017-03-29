@@ -137,10 +137,10 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                         accounts_temp.append(account)
             if self.result_sum_dr > self.result_sum_cr:
                 self.res_pl['type'] = _('Net Loss')
-                self.res_pl['balance'] = (self.result_sum_dr - self.result_sum_cr)
             else:
                 self.res_pl['type'] = _('Net Profit')
-                self.res_pl['balance'] = (self.result_sum_cr - self.result_sum_dr)
+            # The balance is always "Total expense + Total income", no matter if it's a profit or a loss
+            self.res_pl['balance'] = self.result_sum_dr + self.result_sum_cr
             self.result[typ] = accounts_temp
             cal_list[typ] = self.result[typ]
         if cal_list:
