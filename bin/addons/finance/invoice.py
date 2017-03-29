@@ -31,6 +31,7 @@ class account_invoice(osv.osv):
         'picking_id': fields.many2one('stock.picking', string="Picking"),
         'purchase_ids': fields.many2many('purchase.order', 'purchase_invoice_rel', 'invoice_id', 'purchase_id', 'Purchase Order',
             help="Purchase Order from which invoice have been generated"),
+        'type_for_register': fields.related('account_id', 'type_for_register', type='selection', readonly=True),
     }
 
 account_invoice()
