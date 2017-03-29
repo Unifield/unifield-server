@@ -60,10 +60,30 @@ MODEL_DICT = {
         'domain_type': 'finance',
         'model': 'account.journal'
     },
-    'analytic_account': {
+    'analytic_accounts': {
         'name': 'Analytic Accounts',
         'domain_type': 'finance',
         'model': 'account.analytic.account'
+    },
+    'analytic_journals': {
+        'name': 'Analytic Journals',
+        'domain_type': 'finance',
+        'model': 'account.analytic.journal'
+    },
+    'employees': {
+        'name': 'Employees',
+        'domain_type': 'finance',
+        'model': 'hr.employee'
+    },
+    'hq_entries': {
+        'name': 'HQ Entries',
+        'domain_type': 'finance',
+        'model': 'hq.entries'
+    },
+    'currency': {
+        'name': 'Currency',
+        'domain_type': 'finance',
+        'model': 'res.currency'
     },
 
 
@@ -244,24 +264,132 @@ MODEL_DATA_DICT = {
             'unit_price',
         ],
     },
+
+
+
     'gl_accounts': {
         'header_list': [
+            'user_type',
+            'accrual_account',
+            'activation_date',
+            'code',
+            'default_destination_id',
+            'inactivation_date',
+            'type',
+            'name',
+            'note',
+            'type_for_register',
+            'reconcile',
+            'parent_id',
+            'is_not_hq_correctible',
+            'shrink_entries_for_hq',
+            'currency_revaluation',
         ],
         'required_field_list': [
+            'name',
+            'code',
+            'type',
+            'type_for_register',
+            'user_type',
+            'activation_date',
         ],
     },
     'gl_journals': {
         'header_list': [
+            'code',
+            'currency',
+            'default_credit_account_id',
+            'default_debit_account_id',
+            'name',
+            'type',
+            'analytic_journal_id',
         ],
         'required_field_list': [
+            'code',
+            'name',
+            'type',
+            'analytic_journal_id',
         ],
     },
-    'analytic_account': {
+    'analytic_accounts': {
         'header_list': [
+            'name',
+            'code',
+            'category',
+            'parent_id',
+            'type',
+            'date_start',
         ],
         'required_field_list': [
+            'name',
+            'code',
+            'category',
+            'parent_id',
+            'date_start',
         ],
     },
+    'analytic_journals': {
+        'header_list': [
+            'active',
+            'code',
+            'name',
+            'type',
+        ],
+        'required_field_list': [
+            'code',
+            'name',
+            'type',
+        ],
+    },
+    'employees': {
+        'header_list': [
+            'name',
+            'identification_id',
+            'active',
+        ],
+        'required_field_list': [
+            'name',
+            'identification_id',
+        ],
+    },
+    'hq_entries': {
+        'header_list': [
+            'name',
+            'ref',
+            'document_date',
+            'date',
+            'account_id',
+            'partner_txt',
+            'amount',
+            'currency_id',
+            'destination_id',
+            'cost_center_id',
+            'analytic_id',
+            'free_1_id',
+            'free_2_id',
+        ],
+        'required_field_list': [
+            'name',
+            'account_id',
+            'currency_id',
+            'destination_id',
+            'analytic_id',
+        ],
+    },
+    'currency': {
+        'header_list': [
+            'name',
+            'rate',
+        ],
+        'required_field_list': [
+            'name',
+            'rate',
+        ],
+    },
+
+
+
+
     'user_groups': {
         'header_list': [
         ],
