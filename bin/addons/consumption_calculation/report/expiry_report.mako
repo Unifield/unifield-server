@@ -157,7 +157,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Stock</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Expirity Date</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Expiry Date</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Qty</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
@@ -206,7 +206,7 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Stock</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">UoM</Data></Cell>
 <Cell ss:StyleID="header"><Data ss:Type="String">Batch</Data></Cell>
-<Cell ss:StyleID="header"><Data ss:Type="String">Expirity Date</Data></Cell>
+<Cell ss:StyleID="header"><Data ss:Type="String">Expiry Date</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Qty</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Unit Cost</Data></Cell>
 <Cell ss:StyleID="headerRight"><Data ss:Type="String">Exp. Value</Data></Cell>
