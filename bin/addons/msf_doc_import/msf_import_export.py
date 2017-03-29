@@ -505,133 +505,12 @@ class msf_import_export(osv.osv_memory):
             headers.append(ImportHeader(**res))
         return headers
 
-    def _set_code_name(self, cr, uid, data, row, headers):
-        if not data.get('name'):
-            data['name'] = row[0]
-        if not data.get('code'):
-            data['code'] = row[0]
-
-    def _set_nomen_level(self, cr, uid, data, row, headers):
-
-        if data.get('parent_id', False):
-            n_obj = self.pool.get('product.nomenclature')
-            parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
-            if parent_ids:
-                parent_id = parent_ids[0]
-
-                v = self.onChangeParentId(cr, uid, id, data.get('type'),
-                                          parent_id)
-                if v['value']['level']:
-                    data['level'] = v['value']['level']
-                data['parent_id'] = parent_id
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Parent Nomenclature "%s" not found')
-                                     % (data['parent_id']))
-
-    def _set_product_category(self, cr, uid, data, row, headers):
-        n_obj = self.pool.get('product.nomenclature')
-        aa_obj = self.pool.get('account.account')
-        context = {}
-
-        family_msfid = data.get('family_id', False)
-        if family_msfid:
-            nomen_ids = n_obj.search(cr, uid, [('msfid', '=', family_msfid)], limit=1, context=context)
-            if nomen_ids:
-                data['family_id'] = nomen_ids[0]
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Product category MSFID "%s" not found')
-                                     % (family_msfid))
-        else:
-            raise osv.except_osv(_('Warning !'),
-                                 _('Product category MSFID required'))
-
-        paec_code = data.get('property_account_expense_categ', False)
-        if paec_code:
-            paec_ids = aa_obj.search(cr, uid, [('code', '=', paec_code)], context=context)
-            if paec_ids:
-                data['property_account_expense_categ'] = paec_ids[0]
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Account code "%s" not found')
-                                     % (paec_code))
-        else:
-            data['property_account_expense_categ'] = None
-
-        paic_code = data.get('property_account_income_categ', False)
-        if paic_code:
-            paic_ids = aa_obj.search(cr, uid, [('code', '=', paic_code)], context=context)
-            if paic_ids:
-                data['property_account_income_categ'] = paic_ids[0]
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Account code "%s" not found')
-                                     % (paic_code))
-        else:
-            data['property_account_income_categ'] = None
-
-        dea_code = data.get('donation_expense_account', False)
-        if dea_code:
-            dea_ids = aa_obj.search(cr, uid, [('code', '=', dea_code)], context=context)
-            if dea_ids:
-                data['donation_expense_account'] = dea_ids[0]
-            else:
-                raise osv.except_osv(_('Warning !'),
-                                     _('Expense account code "%s" not found')
-                                     % (dea_code))
-        else:
-            data['donation_expense_account'] = None
-
-    def _set_full_path_nomen(self, cr, uid, headers, row, col):
-        if not col:
-            # modify headers if needed
-            for n,h in enumerate(headers):
-                m = re.match("^nomen_manda_([0123]).name$", h)
-                if m:
-                    col[int(m.group(1))] = n
-                    headers[n] = "nomen_manda_%s.complete_name"%(m.group(1), )
-
-        if row:
-            for manda in sorted(col.keys()):
-                if manda != 0:
-                    row[col[manda]] = ' | '.join([row[col[manda-1]], row[col[manda]]])
-        return col
-
-    def _set_default_value(self, cr, uid, data, row, headers):
-        # Create new list of headers with the name of each fields (without dots)
-        new_headers = []
-        for h in headers:
-            if '.' in h:
-                new_headers.append(h.split('.')[0])
-            else:
-                new_headers.append(h)
-
-        # Get the default value
-        defaults = self.pool.get('product.product').default_get(cr, uid, new_headers)
-        # If no value in file, set the default value
-        for h in new_headers:
-            if h in defaults and (not h in data or not data[h]):
-                data[h] = defaults[h]
-
-    post_hook = {
-        'account.budget.post': _set_code_name,
-        'product.nomenclature': _set_nomen_level,
-        'product.product': _set_default_value,
-        'product.category': _set_product_category,
-    }
-
-    pre_hook = {
-        'product.product': _set_full_path_nomen,
-    }
-
-    post_load_hook = {
-    }
-
     def domain_type_change(self, cr, uid, ids, model_list_selection, context=None):
+        """When the type of object to import/export change, change the buttons
+        to display or not according to the new object model
+        """
         if context is None:
             context = {}
-
         result = {'value': {}}
         if model_list_selection:
             result['value']['display_file_import'] = True
@@ -647,13 +526,11 @@ class msf_import_export(osv.osv_memory):
         return result
 
     def file_change(self, cr, uid, obj_id, import_file, context=None):
+        """Display the import button only if a file as been selected
+        """
         if context is None:
             context = {}
-        result = {
-                'value': {
-                    'display_test_import_button': False,
-                }
-        }
+        result = {'value': {'display_test_import_button': False}}
         if import_file:
             result['value']['display_test_import_button'] = True
         return result
@@ -688,14 +565,7 @@ class msf_import_export(osv.osv_memory):
                 self.check_required_fields(cr, uid, wiz, head, context=context)
         finally:
             fileobj.close()
-
-        # check that the required column are present
-        # XXX to be written
-
-        # check all column present in the file exists in the database
-        # XXX to be written
         return True
-
 
     def check_required_fields(self, cr, uid, wizard_brw, head, context=None):
         selection = wizard_brw.model_list_selection
@@ -769,6 +639,7 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
+        import_data_obj = self.pool.get('import_data')
 
         cr = pooler.get_db(dbname).cursor()
         nb_imported_lines = 0
@@ -903,9 +774,6 @@ WHERE n3.level = 3)
 
             raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
 
-
-
-
         i = 1
         nb_error = 0
         nb_succes = 0
@@ -913,9 +781,9 @@ WHERE n3.level = 3)
         col_datas = {}
         nb_lines_ok = 0
         header_codes = [x[3] for x in headers]
-        if self.pre_hook.get(impobj._name):
+        if import_data_obj.pre_hook.get(impobj._name):
             # for headers mod.
-            col_datas = self.pre_hook[impobj._name](impobj, cr, uid, header_codes, {}, col_datas)
+            col_datas = import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, {}, col_datas)
 
         for row_index, row in enumerate(rows):
             res, errors, line_data = self.check_error_and_format_row(import_brw.id, row, headers, context=context)
@@ -937,8 +805,8 @@ WHERE n3.level = 3)
             try:
                 n = 0
                 line_ok = True
-                if self.pre_hook.get(impobj._name):
-                    self.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
+                if import_data_obj.pre_hook.get(impobj._name):
+                    import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
 
                 for n,h in enumerate(header_codes):
                     if isinstance(line_data[n], basestring):
@@ -990,8 +858,8 @@ WHERE n3.level = 3)
                 if newo2m and o2mdatas:
                     data.setdefault(newo2m, []).append((0, 0, o2mdatas.copy()))
 
-                if self.post_hook.get(impobj._name):
-                    self.post_hook[impobj._name](impobj, cr, uid, data, line_data, header_codes)
+                if import_data_obj.post_hook.get(impobj._name):
+                    import_data_obj.post_hook[impobj._name](impobj, cr, uid, data, line_data, header_codes)
 
                 # Search if an object already exist. If not, create it.
                 ids_to_update = []
@@ -1082,8 +950,8 @@ WHERE n3.level = 3)
             'end_date': time.strftime('%Y-%m-%d %H:%M:%S'),
         }, context=context)
 
-        if self.post_load_hook.get(impobj._name):
-            self.post_load_hook[impobj._name](impobj, cr, uid)
+        if import_data_obj.post_load_hook.get(impobj._name):
+            import_data_obj.post_load_hook[impobj._name](impobj, cr, uid)
 
         if impobj == 'product.product':
             # Clear the cache
