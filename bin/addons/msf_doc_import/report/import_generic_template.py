@@ -23,6 +23,7 @@ from report import report_sxw
 from report_webkit.webkit_report import XlsWebKitParser
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
 from tools.translate import _
+from tools import ustr
 from osv import osv
 
 
@@ -44,75 +45,37 @@ class report_generic_export_parser(report_sxw.rml_parse):
         })
         return
 
-    def getHeaders(self, model, field_list, rows):
+    def getHeaders(self, model, field_list, rows, context=None):
         '''
         get the column names of the table. Set the type of the column and the
         size of it.
         '''
-        headers = []
-        model_obj = self.pool.get(model)
-        for field_index, field in enumerate(field_list):
-            res = {'tech_name': field}
-            if '.' in field:
-                field = field.split('.')[0]
-            if field in model_obj._columns:
-                field_obj = model_obj._columns[field]
-            elif field in model_obj._inherit_fields:
-                field_obj = model_obj._inherit_fields[field][2]
-            else:
-                raise osv.except_osv(_('Error'),
-                                     _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                                     % (field, model))
+        import_export_obj = self.pool.get('msf.import.export')
+        return import_export_obj._get_headers(self.cr, self.uid, model,
+                selection=None, field_list=field_list, rows=rows, context=context)
 
-            if field_obj._type == 'boolean':
-                res['ftype'] = 'Boolean'
-                res['size'] = 40
-            elif field_obj._type == 'float':
-                res['ftype'] = 'Float'
-                res['size'] = 80
-            elif field_obj._type == 'integer':
-                res['ftype'] = 'Number'
-                res['size'] = 80
-            else:
-                res['ftype'] = 'String'
-
-            # automatically set the width of the column by searching for the
-            # biggest string in it
-            all_cells_chain = [x[field_index] for x in rows if
-                    isinstance(x[field_index], basestring)]
-            if all_cells_chain:
-                longest_chain = max(all_cells_chain, key=len)
-                if longest_chain:
-                    size = 8*len(longest_chain)  # 8 have been choosed by
-                                                 # empirical testing, it seems
-                                                 # that excel don't use width as
-                                                 # number of caraters width
-                    size = min(size, 300)
-                    size = max(size, 60)
-                    res['size'] = size
-            else:
-                res['size'] = 60
-            res['name'] = _(field_obj.string)
-            headers.append(ImportHeader(**res))
-        return headers
-
-    def getRows(self, model, fields, nb_lines=None):
+    def getRows(self, model, fields, nb_lines=None, domain=None,
+            template_only=False, context=None):
         """
         Return list of lines from given generic export
         """
+        if context is None:
+            context={}
+        if template_only:
+            return []
+        if not domain:
+            domain = []
         rows = []
         counter = 0
         chunk_size = 100
         model_obj = self.pool.get(model)
-        ids = model_obj.search(self.cr, self.uid, [], limit=nb_lines)
+        ids = model_obj.search(self.cr, self.uid, domain, limit=nb_lines)
         fields = [x.replace('.', '/') for x in fields]
         for i in range(0, len(ids), chunk_size):
             ids_chunk = ids[i:i + chunk_size]
             counter += len(ids_chunk)
-            rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields)['datas'])
-            #progression = float(counter) / len(ids)
-            #if bg_id:
-            #    bg_obj.update_percent(self.cr, self.uid, bg_id, progression)
+            context['translate_selection_field'] = True
+            rows.extend(model_obj.export_data(self.cr, self.uid, ids_chunk, fields, context=context)['datas'])
         return rows
 
 XlsWebKitParser(

@@ -24,21 +24,13 @@ import time
 import threading
 import logging
 import re
-import codecs
 
 import pooler
 import tools
 
-from mx import DateTime
 from osv import fields
 from osv import osv
 from tools.translate import _
-from tools.misc import file_open
-from tempfile import NamedTemporaryFile
-from mako.template import Template
-from mako import exceptions
-from mako.runtime import Context
-from report import report_sxw
 
 from tempfile import TemporaryFile
 from lxml import etree
@@ -91,7 +83,7 @@ MODEL_DICT = {
     'analytic_account': {
         'name': 'Analytic Accounts',
         'domain_type': 'finance',
-        'model': 'analytic.account'
+        'model': 'account.analytic.account'
     },
 
 
@@ -106,10 +98,35 @@ MODEL_DICT = {
         'domain_type': 'non_functionnal',
         'model': 'ir.rule'
     },
+    'access_control_list': {
+        'name': 'Access Control list',
+        'domain_type': 'non_functionnal',
+        'model': 'ir.model.access'
+    },
+    'field_access_rules': {
+        'name': 'Field Access Rules',
+        'domain_type': 'non_functionnal',
+        'model': 'msf_field_access_rights.field_access_rule'
+    },
+    'field_access_rule_lines': {
+        'name': 'Field Access Rule Lines',
+        'domain_type': 'non_functionnal',
+        'model': 'msf_field_access_rights.field_access_rule_line'
+    },
+    'button_access_rules': {
+        'name': 'Button Access Rules',
+        'domain_type': 'non_functionnal',
+        'model': 'msf_button_access_rights.button_access_rule'
+    },
+    'window_actions': {
+        'name': 'Window Actions',
+        'domain_type': 'non_functionnal',
+        'model': 'ir.actions.act_window'
+    },
 }
 
 MODEL_DATA_DICT = {
-    'product.product': {
+    'products': {
         'report_name': _('Product_Export'),
         'header_list': [
             'default_code',
@@ -173,7 +190,14 @@ MODEL_DATA_DICT = {
         ],
         'hide_download_all_entries': True,
     },
-    'product.nomenclature': {
+    'product_nomenclature': {
+        'header_list': [
+            'level',
+            'name',
+            'type',
+            'parent_id',
+            'msfid',
+        ],
         'required_field_list': [
             'level',
             'name',
@@ -181,20 +205,131 @@ MODEL_DATA_DICT = {
         'hide_download_3_entries': True,
         'hide_download_all_entries': True,
     },
-    'product.category': {
+    'product_category': {
+        'report_name': _('Product_Category_Export'),
+        'header_list': [
+            'type',
+            'property_account_expense_categ',
+            'property_account_income_categ',
+            'name',
+            'property_stock_journal',
+            'donation_expense_account',
+            'family_id',
+            'msfid',
+        ],
+        'required_field_list': [
+            'name',
+            'family_id',
+            'msfid',
+        ],
     },
-    'account.account': {
+    'suppliers': {
+        'header_list': [
+            'address.type',
+            'address.city',
+            'address.name',
+            'address.street',
+            'address.zip',
+            'address.country_id',
+            'address.email',
+            'property_account_payable',
+            'property_account_receivable',
+            'name',
+            'lang',
+            'partner_type',
+            'customer',
+            'supplier',
+            'property_product_pricelist_purchase',
+            'property_product_pricelist',
+        ],
+        'required_field_list': [
+            'property_account_payable',
+            'property_account_receivable',
+            'name',
+        ],
     },
-    'account.journal': {
+    'supplier_catalogues': {
+        'header_list': [
+            'product_id.code',
+            'product_id.name',
+            'line_uom_id',
+            'min_qty',
+            'unit_price',
+            'rounding',
+            'min_order_qty',
+            'comment',
+        ],
+        'required_field_list': [
+            'product_id.code',
+            'line_uom_id',
+            'min_qty',
+            'unit_price',
+        ],
     },
-    'analytic.account': {
+    'gl_accounts': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
     },
-    'res.groups': {
+    'gl_journals': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
     },
-    'ir.rule': {
+    'analytic_account': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'user_groups': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'record_rules': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'access_control_list': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'field_access_rules': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'field_access_rule_lines': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'button_access_rules': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
+    },
+    'window_actions': {
+        'header_list': [
+        ],
+        'required_field_list': [
+        ],
     },
 }
 
+MIN_COLUMN_SIZE = 40
+MAX_COLUMN_SIZE = 400
 
 class msf_import_export(osv.osv_memory):
     _name = 'msf.import.export'
@@ -228,10 +363,24 @@ class msf_import_export(osv.osv_memory):
         'display_test_import_button': lambda *a: False,
     }
 
+    def get_filename(self, cr, uid, model, template_only=False, context=None):
+        """Genberate a filename for the import/export
+        """
+        model_obj = self.pool.get(model)
+        file_name = ''
+        if hasattr(model_obj, '_description'):
+            file_name = _(model_obj._description).replace(' ', '_')
+        else:
+            file_name = model
+        if template_only:
+            file_name = _('%s_Import_Template') % file_name
+        else:
+            file_name = _('%s_Export_%s') % (file_name, time.strftime('%Y%m%d'))
+        return file_name
+
     def generic_download(self, cr, uid, ids, template_only=False,
             nb_lines=None, context=None):
-        """
-        mutualise the code of all download button in one place
+        """Mutualise the code of all download buttons in one place
         """
         if context is None:
             context = {}
@@ -239,13 +388,27 @@ class msf_import_export(osv.osv_memory):
             ids = [ids]
 
         wiz = self.browse(cr, uid, ids[0])
-        model = MODEL_DICT[wiz.model_list_selection]['model']
-        fields = MODEL_DATA_DICT[model]['header_list']
+        selection = wiz.model_list_selection
+        model = MODEL_DICT[selection]['model']
+        if selection not in MODEL_DATA_DICT:
+            raise osv.except_osv(_('Error'),
+                    _('Selection \'%s\' not found. '
+                    'Please contact the support team.') % (selection))
+
+        if 'header_list' not in MODEL_DATA_DICT[selection]:
+            raise osv.except_osv(_('Error'),
+                    _('The header_list for report \'%s\' is not'
+                    ' defined. Please contact the support team.') % (selection))
+        fields = MODEL_DATA_DICT[selection]['header_list']
+        domain = MODEL_DICT[selection].get('domain', [])
+        context['translate_selection_field'] = True
         data = {
             'model': model,
             'fields': fields,
             'nb_lines': nb_lines,
             'template_only': template_only,
+            'domain': domain,
+            'target_filename': self.get_filename(cr, uid, model, template_only),
         }
         return {
             'type': 'ir.actions.report.xml',
@@ -255,56 +418,90 @@ class msf_import_export(osv.osv_memory):
         }
 
     def download_all_entries_file(self, cr, uid, ids, context=None):
-        """
-        Download a template filled with all datas of the modele
+        """Download a template filled with all datas of the modele
         """
         return self.generic_download(cr, uid, ids, context=context)
 
     def download_3_entries_file(self, cr, uid, ids, context=None):
-        """
-        Download a template filled with the first 3 lines of data
+        """Download a template filled with the first 3 lines of data
         """
         return self.generic_download(cr, uid, ids, nb_lines=3, context=context)
 
     def download_template_file(self, cr, uid, ids, context=None):
-        """
-        Download the template file (without any data)
+        """Download the template file (without any data)
         """
         return self.generic_download(cr, uid, ids, template_only=True,
                 context=context)
 
-    def _get_headers(self, cr, uid, model, context=None):
-        '''
-        Generate a list of ImportHeader objects using the data that retived
+    def get_excel_size_from_string(self, string):
+        """Compute the string to get the size of it in a excel
+        understandable value
+        :param string: the str chain to get the excel size
+        :return: A int instance
+        """
+        # this complex calculation is used to translate the
+        # character len to an excel understandable len
+        size = round(7*len(string)*(3/4.)+15)
+
+        # set a max and min len for the columns to avoid ridiculus column size
+        size = min(size, MAX_COLUMN_SIZE)
+        size = max(size, MIN_COLUMN_SIZE)
+        return size
+
+    def _get_headers(self, cr, uid, model, selection=None, field_list=None, rows=None, context=None):
+        """Generate a list of ImportHeader objects using the data that retived
         from the field name.
-        '''
+        :param model: Model of the object imported/exported
+        :param selection: requried to get the list of fields to compose the header
+        :param field_list: if known, the list of the fields to display in the
+        header can be passed
+        :param rows: Data rows to export. In case of export, the size of the
+        columns matter and can be determinied according to the data string length
+        :param context: Context of the call, this is particularly important to
+        get the language for tranlsating the fields.
+        """
+        if context is None:
+            context = {}
         headers = []
-        field_list = MODEL_DATA_DICT[model]['header_list']
+        if not field_list:
+            field_list = MODEL_DATA_DICT[selection]['header_list']
         model_obj = self.pool.get(model)
-        for field in field_list:
+
+        fields_get_res = model_obj.fields_get(cr, uid,
+                [x.split('.')[0] for x in field_list], context=context)
+        for field_index, field in enumerate(field_list):
             res = {'tech_name': field}
-            if field in MODEL_DATA_DICT[model]['required_field_list']:
+            if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
             if '.' in field:
                 field = field.split('.')[0]
-            if field in model_obj._columns:
-                field_obj = model_obj._columns[field]
-            elif field in model_obj._inherit_fields:
-                field_obj = model_obj._inherit_fields[field][2]
-            else:
+            if field not in fields_get_res:
                 raise osv.except_osv(_('Error'),
-                                     _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                                     % (field, model))
-
-            if field_obj._type == 'boolean':
+                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                        % (field, model))
+            field_type = fields_get_res[field]['type']
+            if field_type == 'boolean':
                 res['ftype'] = 'Boolean'
-            elif field_obj._type == 'float':
+            elif field_type == 'float':
                 res['ftype'] = 'Float'
-            elif field_obj._type == 'integer':
+            elif field_type == 'integer':
                 res['ftype'] = 'Number'
             else:
                 res['ftype'] = 'String'
-            res['name'] = _(field_obj.string)
+            res['name'] = fields_get_res[field]['string']
+
+            if not rows:
+                # if no data passed, set the column size with the size of the header name
+                res['size'] = self.get_excel_size_from_string(res['name'])
+            else:
+                # automatically set the width of the column by searching for the
+                # biggest string in this column
+                all_cells_chain = [tools.ustr(x[field_index]) for x in rows]
+                res['size'] = MIN_COLUMN_SIZE
+                if all_cells_chain:
+                    longest_chain = max(all_cells_chain, key=len)
+                    if longest_chain:
+                        res['size'] = self.get_excel_size_from_string(longest_chain)
             headers.append(ImportHeader(**res))
         return headers
 
@@ -439,11 +636,10 @@ class msf_import_export(osv.osv_memory):
         if model_list_selection:
             result['value']['display_file_import'] = True
             result['value']['display_file_export'] = True
-            model = MODEL_DICT.get(model_list_selection) and MODEL_DICT[model_list_selection]['model']
-            if model and model in MODEL_DATA_DICT:
-                hide_3 = MODEL_DATA_DICT[model].get('hide_download_3_entries', False)
+            if model_list_selection and model_list_selection in MODEL_DATA_DICT:
+                hide_3 = MODEL_DATA_DICT[model_list_selection].get('hide_download_3_entries', False)
                 result['value']['hide_download_3_entries'] = hide_3
-                hide_all = MODEL_DATA_DICT[model].get('hide_download_all_entries', False)
+                hide_all = MODEL_DATA_DICT[model_list_selection].get('hide_download_all_entries', False)
                 result['value']['hide_download_all_entries'] = hide_all
             else:
                 result['value']['hide_download_3_entries'] = False
@@ -463,8 +659,8 @@ class msf_import_export(osv.osv_memory):
         return result
 
     def check_xml_syntax(self, cr, uid, xml_string, context=None):
-        '''Try to parse the xml file and raise if there is an error
-        '''
+        """Try to parse the xml file and raise if there is an error
+        """
         try:
             file_dom = etree.fromstring(xml_string)
         except XMLSyntaxError as e:
@@ -473,8 +669,8 @@ class msf_import_export(osv.osv_memory):
                 'export functionality.'))
 
     def test_import(self, cr, uid, ids, context=None):
-        '''Warn if file structure is correct
-        '''
+        """Warn if file structure is correct
+        """
         if self.check_import(cr, uid, ids, context=context):
             raise osv.except_osv(_('Info'), _('File structure is correct.'))
 
@@ -502,20 +698,25 @@ class msf_import_export(osv.osv_memory):
 
 
     def check_required_fields(self, cr, uid, wizard_brw, head, context=None):
-        model = MODEL_DICT[wizard_brw.model_list_selection]['model']
+        selection = wizard_brw.model_list_selection
+        model = MODEL_DICT[selection]['model']
         model_obj = self.pool.get(model)
         required_field_list = []
-        if 'required_field_list' in MODEL_DATA_DICT[model]:
-            required_field_list = MODEL_DATA_DICT[model]['required_field_list']
+        if 'required_field_list' in MODEL_DATA_DICT[selection]:
+            required_field_list = MODEL_DATA_DICT[selection]['required_field_list']
         header_columns = [_(head[i].data.upper()) for i in range(0, len(head))]
         missing_columns = []
+        fields_get_res = model_obj.fields_get(cr, uid,
+                [x.split('.')[0] for x in required_field_list], context=context)
         for field in required_field_list:
             if '.' in field:
                 field = field.split('.')[0]
-            if field in model_obj._columns:
-                column_name = _(model_obj._columns[field].string)
-            elif field in model_obj._inherit_fields:
-                column_name = model_obj._inherit_fields[field][2].string
+            if field in fields_get_res:
+                column_name = fields_get_res[field]['string']
+            else:
+                raise osv.except_osv(_('Error'),
+                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                        % (field, model))
             if column_name.upper() not in header_columns:
                 missing_columns.append(column_name)
         if missing_columns:
@@ -534,8 +735,9 @@ class msf_import_export(osv.osv_memory):
         for wiz in self.browse(cr, uid, ids, context=context):
             rows, nb_rows = self.read_file(wiz, context=context)
             head = rows.next()
-            model = MODEL_DICT[wiz.model_list_selection]['model']
-            expected_headers = self._get_headers(cr, uid, model, context=context)
+            selection = wiz.model_list_selection
+            model = MODEL_DICT[selection]['model']
+            expected_headers = self._get_headers(cr, uid, model, selection=selection, context=context)
             self.check_headers(head, expected_headers, context=context)
 
             self.write(cr, uid, [wiz.id], {
@@ -867,7 +1069,7 @@ WHERE n3.level = 3)
 - Total lines with errors: %s %s
 %s
         ''') % (
-            str(round(time.time() - start_time)),
+            str(round(time.time() - start_time, 1)),
             import_brw.total_lines_to_import-1,
             err_msg and _('without errors') or _('imported'),
             nb_lines_ok,
