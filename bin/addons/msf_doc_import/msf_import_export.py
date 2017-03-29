@@ -37,7 +37,7 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
-from msf_doc_import.wizard.abstract_wizard_import import UnifieldImportException
+
 
 MODEL_DICT = {
     # SUPPLY
@@ -767,12 +767,6 @@ class msf_import_export(osv.osv_memory):
         :param context: Context of the call
         :return: True
         """
-
-        prodlot_obj = self.pool.get('stock.production.lot')
-        product_obj = self.pool.get('product.product')
-        sequence_obj = self.pool.get('ir.sequence')
-        date_tools = self.pool.get('date.tools')
-
         if context is None:
             context = {}
 
@@ -939,9 +933,6 @@ WHERE n3.level = 3)
             delimiter = False
             o2mdatas = {}
             i += 1
-            if i%101 == 0 and obj['debug']:
-                logging.getLogger('import data').info('Object: %s, Item: %s'%(obj['object'],i))
-
             data = {}
             try:
                 n = 0

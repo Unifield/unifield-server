@@ -21,11 +21,6 @@
 
 from report import report_sxw
 from report_webkit.webkit_report import XlsWebKitParser
-from msf_doc_import.wizard.abstract_wizard_import import ImportHeader
-from tools.translate import _
-from tools import ustr
-from osv import osv
-
 
 
 XlsWebKitParser(
