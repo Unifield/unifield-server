@@ -76,15 +76,17 @@ class msf_import_export(osv.osv_memory):
         'display_test_import_button': lambda *a: False,
     }
 
-    def get_filename(self, cr, uid, model, template_only=False, context=None):
+    def get_filename(self, cr, uid, model, selection, template_only=False, context=None):
         """Genberate a filename for the import/export
         """
         model_obj = self.pool.get(model)
         file_name = ''
-        if hasattr(model_obj, '_description'):
-            file_name = _(model_obj._description).replace(' ', '_')
+        if hasattr(model_obj, '_description') and \
+                model_obj._description != model_obj._name:
+            file_name = _(model_obj._description)
         else:
-            file_name = model
+            file_name = MODEL_DICT[selection]['name']
+        file_name = file_name.replace(' ', '_')
         if template_only:
             file_name = _('%s_Import_Template') % file_name
         else:
@@ -121,7 +123,7 @@ class msf_import_export(osv.osv_memory):
             'nb_lines': nb_lines,
             'template_only': template_only,
             'domain': domain,
-            'target_filename': self.get_filename(cr, uid, model, template_only),
+            'target_filename': self.get_filename(cr, uid, model, selection, template_only),
         }
         return {
             'type': 'ir.actions.report.xml',
@@ -285,8 +287,8 @@ class msf_import_export(osv.osv_memory):
         return True
 
     def excel_col(self, col):
-        """Covert 1-relative column number to A,B,..Z,AA,AB,... excel-style
-        column label."""
+        """Covert column number (1,2,...26,27,28...) to excel-style column label
+        letters (A,B,..Z,AA,AB,...)."""
         quot, rem = divmod(col-1,26)
         return self.excel_col(quot) + chr(rem+ord('A')) if col!=0 else ''
 

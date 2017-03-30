@@ -126,6 +126,7 @@ MODEL_DICT = {
 }
 
 MODEL_DATA_DICT = {
+    # SUPPLY
     'products': {
         'header_list': [
             'default_code',
@@ -266,7 +267,7 @@ MODEL_DATA_DICT = {
     },
 
 
-
+    # FINANCE
     'gl_accounts': {
         'header_list': [
             'user_type',
@@ -390,6 +391,7 @@ MODEL_DATA_DICT = {
 
 
 
+    # NON FUNCTIONNAL
     'user_groups': {
         'header_list': [
         ],
@@ -398,8 +400,18 @@ MODEL_DATA_DICT = {
     },
     'record_rules': {
         'header_list': [
+            'model_id',
+            'name',
+            'global',
+            'domain_force',
+            'perm_read',
+            'perm_write',
+            'perm_create',
+            'perm_unlink',
         ],
         'required_field_list': [
+            'model_id',
+            'name',
         ],
     },
     'access_control_list': {
@@ -410,26 +422,61 @@ MODEL_DATA_DICT = {
     },
     'field_access_rules': {
         'header_list': [
+            'name',
+            'model_id',
+            'instance_level',
+            'domain_text',
+            'status',
         ],
         'required_field_list': [
+            'name',
+            'model_id',
+            'instance_level',
         ],
     },
     'field_access_rule_lines': {
         'header_list': [
+            'field_access_rule',
+            'field_access_rule_model_id',
+            'field',
+            'field_name',
+            'write_access',
+            'value_not_synchronized_on_create',
+            'value_not_synchronized_on_write',
         ],
         'required_field_list': [
+            'field_access_rule',
+            'field',
         ],
     },
     'button_access_rules': {
         'header_list': [
+            'model_id',
+            'view_id',
+            'label',
+            'name',
+            'group_names',
+            'type',
         ],
         'required_field_list': [
+            'model_id',
+            'view_id',
+            'name',
         ],
     },
     'window_actions': {
         'header_list': [
+            'name',
+            'res_model',
+            'view_type',
+            'view_id',
+            'domain',
+            'groups_id',
         ],
         'required_field_list': [
+            'name',
+            'res_model',
+            'view_type',
         ],
     },
 }
