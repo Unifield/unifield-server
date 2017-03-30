@@ -48,6 +48,8 @@ class msf_import_export(osv.osv_memory):
     _inherit = 'abstract.wizard.import'
 
     def _get_model_list(self, cr, uid, context=None):
+        """The list of available model depend on the menu entry selected
+        """
         if context is None:
             context = {}
         domain_type = None
@@ -170,6 +172,7 @@ class msf_import_export(osv.osv_memory):
         columns matter and can be determinied according to the data string length
         :param context: Context of the call, this is particularly important to
         get the language for tranlsating the fields.
+        :return: A list of ImportHeader
         """
         if context is None:
             context = {}
@@ -263,33 +266,43 @@ class msf_import_export(osv.osv_memory):
             raise osv.except_osv(_('Info'), _('File structure is correct.'))
 
     def check_import(self, cr, uid, ids, context=None):
+        """Verify that a file has been selected and all columns expected are
+        present
+        """
         obj = self.read(cr, uid, ids[0])
-        fileobj = TemporaryFile('w+')
         if not obj['import_file']:
             raise osv.except_osv(_('Error'), _('Nothing to import.'))
+        fileobj = TemporaryFile('w+')
         try:
             xml_string = base64.decodestring(obj['import_file'])
             self.check_xml_syntax(cr, uid, xml_string, context=context)
             for wiz in self.browse(cr, uid, ids, context=context):
                 rows, nb_rows = self.read_file(wiz, context=context)
                 head = rows.next()
-                self.check_required_fields(cr, uid, wiz, head, context=context)
+                self.check_missing_columns(cr, uid, wiz, head, context=context)
         finally:
             fileobj.close()
         return True
 
-    def check_required_fields(self, cr, uid, wizard_brw, head, context=None):
+    def excel_col(self, col):
+        """Covert 1-relative column number to A,B,..Z,AA,AB,... excel-style
+        column label."""
+        quot, rem = divmod(col-1,26)
+        return self.excel_col(quot) + chr(rem+ord('A')) if col!=0 else ''
+
+    def check_missing_columns(self, cr, uid, wizard_brw, head, context=None):
+        """Check that the column names in the file match the expexted property
+        names, raise if any column is missing.
+        """
         selection = wizard_brw.model_list_selection
         model = MODEL_DICT[selection]['model']
         model_obj = self.pool.get(model)
-        required_field_list = []
-        if 'required_field_list' in MODEL_DATA_DICT[selection]:
-            required_field_list = MODEL_DATA_DICT[selection]['required_field_list']
-        header_columns = [_(head[i].data.upper()) for i in range(0, len(head))]
+        header_columns = [_(head[i].data) for i in range(0, len(head))]
         missing_columns = []
+        field_list = MODEL_DATA_DICT[selection]['header_list']
         fields_get_res = model_obj.fields_get(cr, uid,
-                [x.split('.')[0] for x in required_field_list], context=context)
-        for field in required_field_list:
+                [x.split('.')[0] for x in field_list], context=context)
+        for field_index, field in enumerate(field_list):
             if '.' in field:
                 field = field.split('.')[0]
             if field in fields_get_res:
@@ -298,16 +311,18 @@ class msf_import_export(osv.osv_memory):
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
                         % (field, model))
-            if column_name.upper() not in header_columns:
-                missing_columns.append(column_name)
+            if column_name.upper() != header_columns[field_index].upper():
+                missing_columns.append(_('Column %s: get \'%s\' expexted \'%s\'.')
+                        % (self.excel_col(field_index+1), header_columns[field_index], column_name))
         if missing_columns:
-            raise osv.except_osv(_('Info'), _('The following required columns '
+            raise osv.except_osv(_('Info'), _('The following columns '
                 'are missing in the imported file: %s') % ', '.join(missing_columns))
 
     def import_xml(self, cr, uid, ids, context=None):
+        """Create a thread to import the data after import checking
+        """
         if context is None:
             context = {}
-
         if isinstance(ids, (int, long)):
             ids = [ids]
 
