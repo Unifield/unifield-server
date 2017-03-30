@@ -335,6 +335,10 @@ class msf_import_export(osv.osv_memory):
                 args=(cr.dbname, uid, wiz, expected_headers, rows, context),
             )
             thread.start()
+            # for now we don't want background but foreground
+            # in case background is needed, just set a value to wait time
+            wait_time = None
+            thread.join(wait_time)
         return True
 
     def bg_import(self, dbname, uid, import_brw, headers, rows, context=None):

@@ -84615,7 +84615,7 @@ msgstr "Créer un Menu pour le Tableau de Bord"
 #: code:addons/msf_doc_import/wizard/abstract_wizard_import.py:354
 #, python-format
 msgid "Import can be run only on draft wizard."
-msgstr "L'important ne peut être effectué que sur des assistants en état 'Non démarré'"
+msgstr "L'importation ne peut être effectuée que sur des assistants en état 'Non démarré'"
 
 #. module: account_payment
 #: field:payment.line,currency:0
