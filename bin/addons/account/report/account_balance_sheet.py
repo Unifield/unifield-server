@@ -222,16 +222,14 @@ class report_balancesheet_horizontal(report_sxw.rml_parse, common_report_header)
                     # US-227/2bis
                     # Account from company configuration
                     # "Debit Account for P&L>0 (B/S account)" or "Credit Account P&L<0 (B/S account)"
+                    # => add the "Net Profit" or "Net Loss" line below the appropriate account
                     if account.id == data['form']['bs_debit_account_id']:
-                        # position the "Net Profit/Loss" in the right line
-                        if (pl_dict['code'] == 'Net Loss' and pl_dict['balance'] >= 0) or \
-                                (pl_dict['code'] == 'Net Profit' and pl_dict['balance'] < 0):
+                        if pl_dict['balance'] >= 0:
                             # register debit to result account
                             pl_dict['level'] = account['level'] + 1
                             accounts_temp.append(pl_dict)
                     elif account.id == data['form']['bs_credit_account_id']:
-                        if (pl_dict['code'] == 'Net Loss' and pl_dict['balance'] < 0) or \
-                                (pl_dict['code'] == 'Net Profit' and pl_dict['balance'] >= 0):
+                        if pl_dict['balance'] < 0:
                             # register credit to result account
                             pl_dict['level'] = account['level'] + 1
                             accounts_temp.append(pl_dict)
