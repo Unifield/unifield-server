@@ -15,7 +15,7 @@
             </xpath>
             <xpath expr="//field[@name='target_move']" position="after">
                 <field name="result_selection" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
-                <field name="initial_balance"/>
+                <field name="initial_balance" attrs="{'readonly': [('fiscalyear_id', '=', False)]}"/>
                 <field name="reconcil"/>
                 <field name="amount_currency"/>
                 <field name="page_split"/>
@@ -43,6 +43,15 @@
                         <field name="name"/>
                     </tree>
                 </field>
+            </xpath>
+            <xpath expr="//field[@name='fiscalyear_id']" position="attributes">
+                <attribute name="on_change">onchange_fiscalyear(fiscalyear_id)</attribute>
+            </xpath>
+            <xpath expr="//field[@name='period_from']" position="attributes">
+                <attribute name="domain">[]</attribute>
+            </xpath>
+            <xpath expr="//field[@name='period_to']" position="attributes">
+                <attribute name="domain">[]</attribute>
             </xpath>
             </data>
             </field>
