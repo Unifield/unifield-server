@@ -99,8 +99,10 @@
                 <field name="display_partner"/>
                 <field name="output_currency" invisible="1" />
                 <field name="include_reconciled_entries"/>
-                <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
+                <field name="initial_balance" attrs="{'readonly': [('fiscalyear_id', '=', False)]}"/>
                 <field name="only_active_partners"/>
+                <field name="tax" on_change="onchange_result_selection_or_tax(result_selection, tax)"/>
+                <newline />
                 <field name="instance_ids" domain="[('instance_to_display_ids','=',True)]">
                     <tree noteditable="1" editable="top" string="Proprietary Instances">
                             <field name="code" />
@@ -123,6 +125,15 @@
                         <field name="name"/>
                     </tree>
                 </field>
+            </xpath>
+            <xpath expr="//field[@name='fiscalyear_id']" position="attributes">
+                <attribute name="on_change">onchange_fiscalyear(fiscalyear_id)</attribute>
+            </xpath>
+            <xpath expr="//field[@name='period_from']" position="attributes">
+                <attribute name="domain">[]</attribute>
+            </xpath>
+            <xpath expr="//field[@name='period_to']" position="attributes">
+                <attribute name="domain">[]</attribute>
             </xpath>
             
             <xpath expr="//group[1]" position="replace">

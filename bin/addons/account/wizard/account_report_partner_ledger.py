@@ -20,8 +20,6 @@
 ##############################################################################
 
 from osv import fields, osv
-import pooler
-from tools.translate import _
 
 class account_partner_ledger(osv.osv_memory):
     """
@@ -57,35 +55,6 @@ class account_partner_ledger(osv.osv_memory):
        'tax': False, # UFTP-312: Add an exclude tax account possibility
        'fiscalyear_id': False,
     }
-
-    def onchange_fiscalyear(self, cr, uid, ids, fiscalyear_id, context=None):
-        """
-        If a FY is selected:
-        resets the selected periods, and adapts the domain so that the selectable periods are inside the chosen FY.
-        If no FY is selected: unticks the "Initial Balance" tickbox.
-        """
-        if context is None:
-            context = {}
-        res = {}
-        if fiscalyear_id:
-            res['domain'] = {'period_from': [('fiscalyear_id', '=', fiscalyear_id)],
-                             'period_to': [('fiscalyear_id', '=', fiscalyear_id)],
-                             }
-            res['value'] = {'period_from': False, 'period_to': False, }
-        else:
-            res['domain'] = {'period_from': [], 'period_to': [], }
-            res['value'] = {'initial_balance': False, }
-        return res
-
-    def _check_dates_fy_consistency(self, cr, uid, data, context):
-        """
-        Raises a warning if the chosen dates aren't inside the selected period.
-        """
-        if data['form']['fiscalyear_id'] and data['form']['filter'] == 'filter_date':
-            fy_obj = pooler.get_pool(cr.dbname).get('account.fiscalyear')
-            fy = fy_obj.browse(cr, uid, data['form']['fiscalyear_id'], context=context, fields_to_fetch=['date_start', 'date_stop'])
-            if data['form']['date_from'] < fy.date_start or data['form']['date_to'] > fy.date_stop:
-                raise osv.except_osv(_('Warning !'), _('Only dates of the selected Fiscal Year can be chosen.'))
 
     def _print_report(self, cr, uid, ids, data, context=None):
         if context is None:

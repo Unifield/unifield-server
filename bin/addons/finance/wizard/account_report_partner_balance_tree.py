@@ -371,6 +371,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'account_ids': fields.many2many('account.account', 'account_partner_balance_account_rel', 'wizard_id', 'account_id',
                                         string='Accounts', help='Display the report for specific accounts only'),
         'include_reconciled_entries': fields.boolean('Include Reconciled Entries', help='Take reconciled entries into account'),
+        'initial_balance': fields.boolean('Include initial balances'),
     }
 
     def _get_journals(self, cr, uid, context=None):
@@ -386,6 +387,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         'tax': False,
         'only_active_partners': False,
         'include_reconciled_entries': True,
+        'fiscalyear_id': False,
     }
 
     def default_get(self, cr, uid, fields, context=None):
@@ -436,6 +438,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                                  uid, data,
                                                                  context=context)
+        self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.act_window',
             'name': 'Partner Balance ' + account_type,
@@ -456,6 +459,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             context = {}
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
+        self._check_dates_fy_consistency(cr, uid, data, context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',
@@ -467,6 +471,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
             context = {}
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
+        self._check_dates_fy_consistency(cr, uid, data, context)
         self.pool.get('account.partner.balance.tree').build_data(cr,
                                                                  uid, data,
                                                                  context=context)
