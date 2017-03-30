@@ -410,6 +410,7 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
         ],
+        'hide_export': True,
     },
     'record_rules': {
         'header_list': [

@@ -29,11 +29,13 @@
                             <button name="update" type="object" string="Update" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'progress')]}" colspan="4" />
                         </group>
                     </group>
-                    <group colspan="2" col="2" name="file_export" attrs="{'invisible':[('display_file_import', '=', False)]}">
+                    <group colspan="2" col="2" name="file_export">
                         <separator string="File Export" colspan="2"/>
-                        <button name="download_template_file" string="Export Empty Template" icon="gtk-save" help="Download template file" type="object" />
-                        <button name="download_3_entries_file" string="Export template with first 3 entries" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_download_3_entries', '=', True)]}"/>
-                        <button name="download_all_entries_file" string="Export templates with all data" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_download_all_entries', '=', True)]}"/>
+                        <group attrs="{'invisible':[('display_file_export', '=', False)]}">
+                            <button name="download_template_file" string="Export Empty Template" icon="gtk-save" help="Download template file" type="object" />
+                            <button name="download_3_entries_file" string="Export template with first 3 entries" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_download_3_entries', '=', True)]}"/>
+                            <button name="download_all_entries_file" string="Export templates with all data" type="object" icon="gtk-save" colspan="4" attrs="{'invisible':[('hide_download_all_entries', '=', True)]}"/>
+                        </group>
                     </group>
                     <group colspan="4" attrs="{'invisible': [('show_warning', '=', False)]}">
                         <separator colspan="4" string="Warning messages" />

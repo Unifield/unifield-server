@@ -234,6 +234,8 @@ class msf_import_export(osv.osv_memory):
             result['value']['display_file_import'] = True
             result['value']['display_file_export'] = True
             if model_list_selection and model_list_selection in MODEL_DATA_DICT:
+                hide_export = MODEL_DATA_DICT[model_list_selection].get('hide_export', False)
+                result['value']['display_file_export'] = not hide_export
                 hide_3 = MODEL_DATA_DICT[model_list_selection].get('hide_download_3_entries', False)
                 result['value']['hide_download_3_entries'] = hide_3
                 hide_all = MODEL_DATA_DICT[model_list_selection].get('hide_download_all_entries', False)
