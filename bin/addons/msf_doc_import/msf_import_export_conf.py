@@ -93,6 +93,11 @@ MODEL_DICT = {
         'domain_type': 'non_functionnal',
         'model': 'res.groups'
     },
+    'user_access': {
+        'name': 'User Access',
+        'domain_type': 'non_functionnal',
+        'model': 'user.access.configurator'
+    },
     'record_rules': {
         'name': 'Record Rules',
         'domain_type': 'non_functionnal',
@@ -394,6 +399,14 @@ MODEL_DATA_DICT = {
     # NON FUNCTIONNAL
     'user_groups': {
         'header_list': [
+            'name',
+        ],
+        'required_field_list': [
+            'name',
+        ],
+    },
+    'user_access': {
+        'header_list': [
         ],
         'required_field_list': [
         ],
@@ -416,8 +429,17 @@ MODEL_DATA_DICT = {
     },
     'access_control_list': {
         'header_list': [
+            'name',
+            'model_id',
+            'group_id',
+            'perm_read',
+            'perm_write',
+            'perm_create',
+            'perm_unlink',
         ],
         'required_field_list': [
+            'name',
+            'model_id',
         ],
     },
     'field_access_rules': {

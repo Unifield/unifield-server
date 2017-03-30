@@ -85,6 +85,8 @@ class msf_import_export(osv.osv_memory):
                 model_obj._description != model_obj._name:
             file_name = _(model_obj._description)
         else:
+            # if no correct name is available, take the one from the
+            # report selection
             file_name = MODEL_DICT[selection]['name']
         file_name = file_name.replace(' ', '_')
         if template_only:
@@ -279,6 +281,10 @@ class msf_import_export(osv.osv_memory):
             xml_string = base64.decodestring(obj['import_file'])
             self.check_xml_syntax(cr, uid, xml_string, context=context)
             for wiz in self.browse(cr, uid, ids, context=context):
+                selection = wiz.model_list_selection
+                model = MODEL_DICT[selection]['model']
+                if model == 'user.access.configurator':
+                    continue
                 rows, nb_rows = self.read_file(wiz, context=context)
                 head = rows.next()
                 self.check_missing_columns(cr, uid, wiz, head, context=context)
@@ -318,7 +324,7 @@ class msf_import_export(osv.osv_memory):
                         % (self.excel_col(field_index+1), header_columns[field_index], column_name))
         if missing_columns:
             raise osv.except_osv(_('Info'), _('The following columns '
-                'are missing in the imported file: %s') % ', '.join(missing_columns))
+                'are missing in the imported file:\n%s') % ',\n'.join(missing_columns))
 
     def import_xml(self, cr, uid, ids, context=None):
         """Create a thread to import the data after import checking
@@ -335,8 +341,19 @@ class msf_import_export(osv.osv_memory):
             head = rows.next()
             selection = wiz.model_list_selection
             model = MODEL_DICT[selection]['model']
+
+            if model == 'user.access.configurator':
+                # special case handling for this one
+                model_obj = self.pool.get(model)
+                wizard_id = model_obj.create(cr, uid, {}, context)
+                model_obj.write(cr, uid, [wizard_id], {'file_to_import_uac':
+                    wiz.import_file}, context=context)
+                osv.except_osv(_('Info'), _('The import can take long time, be patient after clicking OK.'))
+                return model_obj.do_process_uac(cr, uid, [wizard_id], context=context)
+
             expected_headers = self._get_headers(cr, uid, model, selection=selection, context=context)
-            self.check_headers(head, expected_headers, context=context)
+            if model != 'user.access.configurator':
+                self.check_headers(head, expected_headers, context=context)
 
             self.write(cr, uid, [wiz.id], {
                 'total_lines_to_import': nb_rows,
@@ -371,10 +388,13 @@ class msf_import_export(osv.osv_memory):
         """
         if context is None:
             context = {}
+        cr = pooler.get_db(dbname).cursor()
+        model = MODEL_DICT[import_brw.model_list_selection]['model']
+        impobj = self.pool.get(model)
+
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
-        cr = pooler.get_db(dbname).cursor()
         nb_imported_lines = 0
 
         # Manage errors
@@ -395,8 +415,6 @@ class msf_import_export(osv.osv_memory):
             import_warnings.setdefault(row_index+2, [])
             import_warnings[row_index+2].extend(warnings)
 
-        model = MODEL_DICT[import_brw.model_list_selection]['model']
-        impobj = self.pool.get(model)
         start_time = time.time()
 
         if model == 'product.product':
