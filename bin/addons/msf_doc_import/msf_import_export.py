@@ -370,6 +370,7 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         import_data_obj = self.pool.get('import_data')
+        prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
         cr = pooler.get_db(dbname).cursor()
         nb_imported_lines = 0
@@ -402,9 +403,9 @@ class msf_import_export(osv.osv_memory):
                 self._cache = {}
             self._cache.setdefault(dbname, {})
 
-            if not hasattr(self.pool.get('product.nomenclature'), '_cache'):
-                self.pool.get('product.nomenclature')._cache = {}
-            self.pool.get('product.nomenclature')._cache.setdefault(dbname, {})
+            if not hasattr(prod_nomenclature_obj, '_cache'):
+                prod_nomenclature_obj._cache = {}
+            prod_nomenclature_obj._cache.setdefault(dbname, {})
 
             # Clear the cache
             self._cache[dbname] = {'product.nomenclature': {'name': {}, 'complete_name': {}},
@@ -419,7 +420,7 @@ class msf_import_export(osv.osv_memory):
             # Product category
             cr.execute('SELECT id, family_id FROM product_category;')
             for pc in cr.dictfetchall():
-                self.pool.get('product.nomenclature')._cache[dbname].update({pc['family_id']: pc['id']})
+                prod_nomenclature_obj._cache[dbname].update({pc['family_id']: pc['id']})
             # Product nomenclature complete name
             cr.execute('''SELECT id, name FROM
 (
@@ -686,7 +687,7 @@ WHERE n3.level = 3)
         if impobj == 'product.product':
             # Clear the cache
             self._cache[dbname] = {}
-            self.pool.get('product.nomenclature')._cache[dbname] = {}
+            prod_nomenclature_obj._cache[dbname] = {}
 
 
         cr.commit()
