@@ -34,7 +34,11 @@ class expiry_report(report_sxw.rml_parse):
             'getAddress': self._get_instance_addr,
             'getCurrency': self._get_currency,
             'toDate': self.str_to_time,
+            'getSortedLines': self._get_sorted_lines,
         })
+
+    def _get_sorted_lines(self, report):
+        return sorted(report.line_ids, key=lambda x: (x.product_code, x.batch_number, x.expiry_date))
         
     def _get_lines(self, report, type='expired'):
         line_obj = self.pool.get('expiry.quantity.report.line')
