@@ -54,7 +54,7 @@
             header="False"
             menu="False"
             auto="False"
-            string="Export Generic" />
+            string="Generic Export" />
 
     </data>
 </openerp>

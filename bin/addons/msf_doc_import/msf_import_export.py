@@ -301,7 +301,7 @@ class msf_import_export(osv.osv_memory):
         return self.excel_col(quot) + chr(rem+ord('A')) if col!=0 else ''
 
     def check_missing_columns(self, cr, uid, wizard_brw, head, context=None):
-        """Check that the column names in the file match the expexted property
+        """Check that the column names in the file match the expected property
         names, raise if any column is missing.
         """
         selection = wizard_brw.model_list_selection
@@ -322,7 +322,7 @@ class msf_import_export(osv.osv_memory):
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
                         % (field, model))
             if column_name.upper() != header_columns[field_index].upper():
-                missing_columns.append(_('Column %s: get \'%s\' expexted \'%s\'.')
+                missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
                         % (self.excel_col(field_index+1), header_columns[field_index], column_name))
         if missing_columns:
             raise osv.except_osv(_('Info'), _('The following columns '
@@ -350,7 +350,6 @@ class msf_import_export(osv.osv_memory):
                 wizard_id = model_obj.create(cr, uid, {}, context)
                 model_obj.write(cr, uid, [wizard_id], {'file_to_import_uac':
                     wiz.import_file}, context=context)
-                osv.except_osv(_('Info'), _('The import can take long time, be patient after clicking OK.'))
                 return model_obj.do_process_uac(cr, uid, [wizard_id], context=context)
 
             expected_headers = self._get_headers(cr, uid, model, selection=selection, context=context)
@@ -561,7 +560,7 @@ WHERE n3.level = 3)
                 if import_data_obj.pre_hook.get(impobj._name):
                     import_data_obj.pre_hook[impobj._name](impobj, cr, uid, header_codes, line_data, col_datas)
 
-                for n,h in enumerate(header_codes):
+                for n, h in enumerate(header_codes):
                     if isinstance(line_data[n], basestring):
                         line_data[n] = line_data[n].rstrip()
 
@@ -647,14 +646,12 @@ WHERE n3.level = 3)
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
-                error = "Line %s, row: %s, %s"%(i, n, e.value)
-                save_error(error, row_index)
+                save_error(e.value, row_index)
                 nb_error += 1
             except Exception, e:
                 cr.rollback()
                 logging.getLogger('import data').info('Error %s' % e)
-                error = "Line %s, row: %s, %s"%(i, n, e)
-                save_error(error, row_index)
+                save_error(e, row_index)
                 nb_error += 1
 
             nb_imported_lines += 1
