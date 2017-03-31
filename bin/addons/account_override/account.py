@@ -241,25 +241,25 @@ class account_account(osv.osv):
             not context.get('is_debit_note', False)
 
         if args == [('restricted_area', '=', 'invoice_lines')]:
-            # LINES of Intermission Vouchers OUT or Stock Transfer Vouchers:
+            # LINES of Stock Transfer Vouchers:
             # restrict to Expense/Income/Receivable accounts
-            if context_ivo or context_stv:
+            if context_stv:
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
-            # LINES of Intermission Vouchers IN:
-            # restrict to Expense accounts only
-            if context_ivi:
-                arg.append(('user_type_code', '=', 'expense'))
         elif args == [('restricted_area', '=', 'intermission_header')]:
             if context_ivo:
                 # HEADER of Intermission Voucher OUT:
                 # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
-                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                # + prevent from using donation accounts
+                arg = [('type_for_register', '!=', 'donation'),
+                       '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
             elif context_ivi:
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
-                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                # + prevent from using donation accounts
+                arg = [('type_for_register', '!=', 'donation'),
+                       '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
         return arg
