@@ -31,6 +31,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
     def __init__(self, cr, uid, name, context=None):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
         self.init_bal_sum = 0.0
+        self.IB_DATE_TO = ''
+        self.IB_JOURNAL_REQUEST = ''
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
@@ -60,6 +62,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
     def set_context(self, objects, data, ids, report_type=None):
         obj_move = self.pool.get('account.move.line')
         obj_partner = self.pool.get('res.partner')
+        obj_journal = self.pool.get('account.journal')
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context', {}))
         ctx2 = data['form'].get('used_context',{}).copy()
         ctx2.update({'initial_bal': True})
@@ -80,6 +83,19 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         if self.target_move == 'posted':
             move_state = ['posted']
 
+        # if a FY is selected store data for the initial balance calculation no matter if dates or periods are selected
+        if self.fiscalyear_id:
+            fy_obj = self.pool.get('account.fiscalyear')
+            fy = fy_obj.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=data['form'].get('used_context', {}))
+            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
+            # all journals by default
+            journal_ids = data['form'].get('journal_ids', False) or obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
+                                                                                        context=data.get('context', {}))
+            if len(journal_ids) == 1:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
+            else:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
+
         # UFTP-312, UFTP-63: To have right initial balance, we have to fetch previous lines before a specific date.
         #+ To have right partner balance, we have to take all next lines after a specific date.
         #+ To do that, we need to make requests regarding a date. So first we take date_from
@@ -99,8 +115,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 self.DATE_TO = "AND l.date < '%s'" % period[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % period[0].get('date_start')
             elif self.fiscalyear_id:
-                fy_obj = pool.get('account.fiscalyear')
-                fy = fy_obj.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'])
                 self.DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % fy[0].get('date_start')
 
@@ -248,8 +262,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "AND m.state IN %s " \
             "AND account_id IN %s" \
             " " + RECONCILE_TAG + " "\
-            "AND " + self.init_query + "  "\
-            " " + self.DATE_TO + " ",
+            " " + self.IB_JOURNAL_REQUEST + " "
+            " " + self.IB_DATE_TO + " ",
             (partner.id, tuple(move_state), tuple(self.account_ids)))
         res = self.cr.fetchall()
         self.init_bal_sum = res[0][2]
@@ -276,9 +290,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                         "AND m.state IN %s "\
                         "AND account_id IN %s" \
                         " " + RECONCILE_TAG + " " \
-                        " " + self.DATE_TO + " "\
+                        " " + self.IB_DATE_TO + " " \
                         " " + self.INSTANCE_REQUEST + " "
-                        "AND " + self.init_query + " ",
+                        " " + self.IB_JOURNAL_REQUEST + " ",
                     (partner.id, tuple(move_state), tuple(self.account_ids)))
             contemp = self.cr.fetchone()
             if contemp != None:
@@ -329,9 +343,9 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                         "AND m.state IN %s "
                         "AND account_id IN %s" \
                         " " + RECONCILE_TAG + " " \
-                        " " + self.DATE_TO + " " \
+                        " " + self.IB_DATE_TO + " " \
                         " " + self.INSTANCE_REQUEST + " "\
-                        "AND " + self.init_query + " ",
+                        " " + self.IB_JOURNAL_REQUEST + " ",
                     (partner.id, tuple(move_state), tuple(self.account_ids)))
             contemp = self.cr.fetchone()
             if contemp != None:
