@@ -98125,3 +98125,12 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. module: product
+#: help:product.template,standard_price:0
+msgid "Price of product calculated according to the selected costing method."
+msgstr "Prix du produit calculé en fonction de la méthode de valorisation des stocks."
+
+#. module: product_attributes
+#: help:product.product,soq_quantity:0
+msgid "Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."
+msgstr "Standard Ordering Quantity. Quantité à laquelle le produit devrait être commandé. La SoQ est habituellement déterminée par le packaging du produit."
