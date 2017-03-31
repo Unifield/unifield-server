@@ -89,8 +89,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             fy = fy_obj.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=data['form'].get('used_context', {}))
             self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
             # all journals by default
-            journal_ids = data['form'].get('journal_ids', False) or obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
-                                                                                        context=data.get('context', {}))
+            journal_ids = data['form'].get('journal_ids', obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
+                                                                             context=data.get('context', {})))
             if len(journal_ids) == 1:
                 self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
             else:
