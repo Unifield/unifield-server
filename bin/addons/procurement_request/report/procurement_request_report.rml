@@ -52,10 +52,16 @@
         <blockTableStyle id="FooterInfo">
             <blockAlignment value="CENTER" />
             <blockValign value="MIDDLE" />
-            <lineStyle kind="LINEBEFORE" colorName="#000000" start="0,1" />
-            <lineStyle kind="LINEABOVE" colorName="#000000" start="1,0" />
+            <lineStyle kind="LINEBEFORE" colorName="#000000"/>
+            <lineStyle kind="LINEABOVE" colorName="#000000" />
             <lineStyle kind="LINEAFTER" colorName="#000000" />
             <lineStyle kind="LINEBELOW" colorName="#000000" />
+        </blockTableStyle>
+
+        <blockTableStyle id="RemarkTable">
+            <blockAlignment value="LEFT" />
+            <blockVAlign value="MIDDLE" />
+            <lineStyle kind="OUTLINE" colorName="black" />
         </blockTableStyle>
 
 
@@ -261,6 +267,29 @@
             <font color="white"> </font>
         </para>
         
+
+        <blockTable colWidths="663.0" style="RemarkTable" keepWithNext="1">
+            <tr>
+                <td>
+                    <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <para style="TextInformation"> </para>
+                </td>
+            </tr>
+        </blockTable>
         <blockTable colWidths="44.0,169.0,225.0,225.0" style="FooterInfo" keepWithNext="1">
             <tr>
                 <td>
