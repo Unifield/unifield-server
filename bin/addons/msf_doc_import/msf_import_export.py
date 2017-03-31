@@ -230,9 +230,10 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         result = {'value': {}}
+        result['value']['import_file'] = None
+        result['value']['display_file_import'] = True
+        result['value']['display_file_export'] = True
         if model_list_selection:
-            result['value']['display_file_import'] = True
-            result['value']['display_file_export'] = True
             if model_list_selection and model_list_selection in MODEL_DATA_DICT:
                 hide_export = MODEL_DATA_DICT[model_list_selection].get('hide_export', False)
                 result['value']['display_file_export'] = not hide_export
