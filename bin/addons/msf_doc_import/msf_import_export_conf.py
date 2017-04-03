@@ -256,9 +256,10 @@ MODEL_DATA_DICT = {
     },
     'supplier_catalogues': {
         'header_list': [
+            'catalogue_id.name',
             'product_id.code',
             'product_id.name',
-            'line_uom_id',
+            'line_uom_id.name',
             'min_qty',
             'unit_price',
             'rounding',
@@ -266,8 +267,9 @@ MODEL_DATA_DICT = {
             'comment',
         ],
         'required_field_list': [
+            'catalogue_id.name',
             'product_id.code',
-            'line_uom_id',
+            'line_uom_id.name',
             'min_qty',
             'unit_price',
         ],

@@ -328,14 +328,29 @@ class msf_import_export(osv.osv_memory):
         fields_get_res = model_obj.fields_get(cr, uid,
                 [x.split('.')[0] for x in field_list], context=context)
         for field_index, field in enumerate(field_list):
+            child = None
+            child_name = ''
             if '.' in field:
-                field = field.split('.')[0]
+                field, child = field.split('.')
             if field in fields_get_res:
                 column_name = fields_get_res[field]['string']
             else:
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
                         % (field, model))
+            if child and child !='id' and fields_get_res[field].get('relation'):
+                child_model = self.pool.get(fields_get_res[field]['relation'])
+                fields_get_res2 = child_model.fields_get(cr, uid, [child],
+                        context=context)
+                if child not in fields_get_res2:
+                    raise osv.except_osv(_('Error'),
+                            _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                            % (child, child_model))
+                child_name = fields_get_res2[child]['string']
+
+            if child_name:
+                column_name = '%s / %s' % (column_name, child_name)
+
             if column_name.upper() != header_columns[field_index].upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
                         % (self.excel_col(field_index+1), header_columns[field_index], column_name))
@@ -510,7 +525,7 @@ WHERE n3.level = 3)
             newids = new_obj.search(cr, uid, [(list_obj[1], '=', value)], limit=1)
             if not newids:
                 # no obj
-                raise osv.except_osv(_('Warning !'), _('%s does not exist')%(value,))
+                raise osv.except_osv(_('Warning !'), _('%s \'%s\' does not exist') % (new_obj._description, value,))
 
             if impobj._name == 'product.product':
                 self._cache[dbname].setdefault(relation, {})
