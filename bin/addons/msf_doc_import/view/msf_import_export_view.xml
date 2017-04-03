@@ -23,11 +23,6 @@
                         <button name="test_import" string="Test file" type="object" icon="gtk-ok" colspan="4" attrs="{'invisible':[('display_test_import_button', '=', False)]}" />
                         <button name="import_xml" string="Run import" type="object" icon="gtk-execute" colspan="4" attrs="{'invisible': [('state', '!=', 'draft')]}" />
                         <separator colspan="4" string="Information" />
-                        <group colspan="6" col="4">
-                            <field name="state" />
-                            <field name="progression" widget="progressbar" />
-                            <button name="update" type="object" string="Update" icon="gtk-execute" attrs="{'invisible': [('state', '!=', 'progress')]}" colspan="4" />
-                        </group>
                     </group>
                     <group colspan="2" col="2" name="file_export">
                         <separator string="File Export" colspan="2"/>

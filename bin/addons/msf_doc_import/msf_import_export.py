@@ -55,8 +55,8 @@ class msf_import_export(osv.osv_memory):
         domain_type = None
         if 'domain_type' in context:
             domain_type = context['domain_type']
-        result_list = [(key, value['name']) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
-        return sorted(result_list, key=lambda a: a[1])
+        result_list = [(key, _(value['name'])) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
+        return [('', '')] + sorted(result_list, key=lambda a: a[1])
 
     _columns = {
         'display_file_import': fields.boolean('File Import'),
@@ -189,14 +189,25 @@ class msf_import_export(osv.osv_memory):
                 [x.split('.')[0] for x in field_list], context=context)
         for field_index, field in enumerate(field_list):
             res = {'tech_name': field}
+            child = None
+            child_name = ''
             if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
             if '.' in field:
-                field = field.split('.')[0]
+                field, child = field.split('.')
             if field not in fields_get_res:
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
                         % (field, model))
+            if child and child !='id' and fields_get_res[field].get('relation'):
+                child_model = self.pool.get(fields_get_res[field]['relation'])
+                fields_get_res2 = child_model.fields_get(cr, uid, [child],
+                        context=context)
+                if child not in fields_get_res2:
+                    raise osv.except_osv(_('Error'),
+                            _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                            % (child, child_model))
+                child_name = fields_get_res2[child]['string']
             field_type = fields_get_res[field]['type']
             if field_type == 'boolean':
                 res['ftype'] = 'Boolean'
@@ -206,7 +217,10 @@ class msf_import_export(osv.osv_memory):
                 res['ftype'] = 'Number'
             else:
                 res['ftype'] = 'String'
-            res['name'] = fields_get_res[field]['string']
+            if child_name:
+                res['name'] = '%s / %s' % (fields_get_res[field]['string'], child_name)
+            else:
+                res['name'] = fields_get_res[field]['string']
 
             if not rows:
                 # if no data passed, set the column size with the size of the header name

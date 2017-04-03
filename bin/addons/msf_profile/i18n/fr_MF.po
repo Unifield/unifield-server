@@ -4544,13 +4544,14 @@ msgstr "No correction journal found!"
 msgid "Contact Titles"
 msgstr "Titre/Position Contact"
 
-#. module: msf_button_access_rights
+#. module: msf_button_access_rights, msf_doc_import
 #: model:ir.actions.act_window,name:msf_button_access_rights.button_access_rule_list
 #: model:ir.ui.menu,name:msf_button_access_rights.msf_button_access_rules
 #: view:ir.ui.view:0
 #: field:ir.ui.view,button_access_rules_ref:0
+#: code:addons/msf_doc_import/msf_import_export_conf.py:124
 msgid "Button Access Rules"
-msgstr "Button Access Rules"
+msgstr "Règles d'Accès de bouton"
 
 #. module: stock
 #: code:addons/stock/stock.py:1091
@@ -16003,7 +16004,7 @@ msgstr "Date d'expiration"
 #: field:claim.product.line,price_unit_claim_product_line:0
 #, python-format
 msgid "Currency"
-msgstr "Currency"
+msgstr "Devise"
 
 #. module: sale
 #: help:sale.order.line,delay:0
@@ -24834,11 +24835,12 @@ msgstr "Statut CT"
 msgid "This wizard will validate all journal entries of a particular journal and period. Once journal entries are validated, you can not update them anymore."
 msgstr "Cet assistant validera toutes les écritures comptables pour un journal particulier et une période. Une fois validées, les écritures comptables ne peuvent plus être modifiées."
 
-#. module: msf_field_access_rights
+#. module: msf_field_access_rights, msf_doc_import
 #: model:ir.actions.act_window,name:msf_field_access_rights.field_access_rules_list
 #: model:ir.ui.menu,name:msf_field_access_rights.msf_field_access_rules
+#: code:addons/msf_doc_import/msf_import_export_conf.py:114
 msgid "Field Access Rules"
-msgstr "Field Access Rules"
+msgstr "Règles d'Accès au Champs"
 
 #. modules: account, msf_outgoing, finance, sync_client, register_accounting, account_override, sourcing, sync_so, res_currency_functional, analytic_distribution
 #: code:addons/account/report/account_general_ledger.py:252
@@ -48370,7 +48372,8 @@ msgstr "Comptes Clients & Fournisseurs"
 msgid "Report can not be edited due to missing FX rates in specific currency table %s"
 msgstr "Report can not be edited due to missing FX rates in specific currency table %s"
 
-#. module: base
+#. module: base, msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export_conf.py:86
 #: model:ir.actions.act_window,name:base.ir_access_act
 #: model:ir.ui.menu,name:base.menu_ir_access_act
 msgid "Access Controls List"
@@ -56662,13 +56665,14 @@ msgstr "Quantité Sélectionnée doit être supérieure à 0.0."
 msgid "Choose Fiscal Year"
 msgstr "Choisir l'Exercice Comptable "
 
-#. module: msf_field_access_rights
+#. module: msf_field_access_rights, msf_doc_import
 #: model:ir.actions.act_window,name:msf_field_access_rights.field_access_rule_line_list
 #: model:ir.ui.menu,name:msf_field_access_rights.field_access_rule_line_list_menu
 #: view:msf_field_access_rights.field_access_rule:0
 #: field:msf_field_access_rights.field_access_rule,field_access_rule_line_ids:0
+#: code:addons/msf_doc_import/msf_import_export_conf.py:119
 msgid "Field Access Rule Lines"
-msgstr "Field Access Rule Lines"
+msgstr "Lignes de Règle d'Accès au Champs"
 
 #. module: analytic_distribution
 #: field:analytic.distribution.wizard,fp_line_ids:0
@@ -57809,9 +57813,10 @@ msgstr "Africa/Sao_Tome"
 msgid "Action to Trigger"
 msgstr "Action à Déclencher"
 
-#. module: base
+#. module: base, msf_doc_import
 #: model:ir.actions.act_window,name:base.ir_action_window
 #: model:ir.ui.menu,name:base.menu_ir_action_window
+#: code:addons/msf_doc_import/msf_import_export_conf.py:129
 msgid "Window Actions"
 msgstr "Fenêtre Actions"
 
@@ -61379,9 +61384,10 @@ msgstr "Zaire"
 msgid "%y - Year without century [00,99]."
 msgstr "%y - Année sans le siècle  (00 à 99)."
 
-#. module: base
+#. module: base, msf_doc_import
 #: model:ir.actions.act_window,name:base.action_rule
 #: model:ir.ui.menu,name:base.menu_action_rule
+#: code:addons/msf_doc_import/msf_import_export_conf.py:104
 msgid "Record Rules"
 msgstr "Règles d´Enregistrement"
 
@@ -80818,7 +80824,7 @@ msgstr "Product Code"
 msgid "Send a test email"
 msgstr "Send a test email"
 
-#. modules: tender_flow, product_nomenclature, product_asset, account_override, purchase_allocation_report, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, stock_schedule, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, product_attributes, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so
+#. modules: tender_flow, product_nomenclature, product_asset, account_override, purchase_allocation_report, register_accounting, product_expiry, procurement_cycle, return_claim, supplier_catalogue, import_data, stock_schedule, unifield_setup, stock_forecast, stock_batch_recall, order_types, msf_doc_import, purchase_followup, product, stock_override, service_purchasing, consumption_calculation, purchase_override, specific_rules, kit, sale_override, product_list, product_manufacturer, procurement_report, threshold_value, purchase, account, msf_outgoing, stock_move_tracking, product_attributes, procurement_auto, sale, transport_mgmt, procurement, sourcing, msf_audittrail, purchase_msf, stock, sync_so, base
 #: field:account.analytic.line,product_id:0
 #: view:account.entries.report:0
 #: field:account.entries.report,product_id:0
@@ -80972,6 +80978,47 @@ msgstr "Send a test email"
 #: field:threshold.value.line,product_id:0
 #: model:ir.model,name:transport_mgmt.model_product_product
 #: model:ir.model,name:unifield_setup.model_product_product
+#: report:allocation.invoices.report:0
+#: selection:res.request,ref_doc1:0
+#: selection:res.request,ref_doc2:0
+#: field:product.history.consumption.product,product_id:0
+#: selection:import_category,object:0
+#: selection:import_nomenclature,object:0
+#: report:kit.report:0
+#: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:149
+#: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:158
+#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:230
+#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:241
+#: report:po.simulation.screen:0
+#: field:product.product.import.line.qty,product_id:0
+#: field:wizard.import.in.line.simulation.screen,imp_product_id:0
+#: field:wizard.import.in.line.simulation.screen,move_product_id:0
+#: field:wizard.import.po.simulation.screen.line,imp_product_id:0
+#: field:wizard.import.po.simulation.screen.line,in_product_id:0
+#: view:create.picking.move.processor:0
+#: field:create.picking.move.processor,product_id:0
+#: view:internal.move.processor:0
+#: field:internal.move.processor,product_id:0
+#: view:outgoing.delivery.move.processor:0
+#: field:outgoing.delivery.move.processor,product_id:0
+#: view:ppl.move.processor:0
+#: field:ppl.move.processor,product_id:0
+#: view:return.ppl.move.processor:0
+#: field:return.ppl.move.processor,product_id:0
+#: view:stock.move.in.processor:0
+#: field:stock.move.in.processor,product_id:0
+#: view:stock.move.processor:0
+#: field:stock.move.processor,product_id:0
+#: view:validate.move.processor:0
+#: field:validate.move.processor,product_id:0
+#: field:stock.warehouse.orderpoint.line,product_id:0
+#: view:product.where.used:0
+#: field:product.where.used,product_id:0
+#: field:standard.price.track.changes,product_id:0
+#: field:account.direct.invoice.wizard.line,product_id:0
+#: field:unconsistent.stock.report.line,product_id:0
+#: view:stock.card.wizard:0
+#: field:stock.card.wizard,product_id:0
 msgid "Product"
 msgstr "Produit"
 
@@ -92880,51 +92927,6 @@ msgstr "Prix d'Achat :"
 msgid "Patches marked as 'not-installed' must have an emission date"
 msgstr "Patches marked as 'not-installed' must have an emission date"
 
-#. modules: register_accounting, msf_outgoing, product_attributes, import_data, stock_override, consumption_calculation, specific_rules, kit, account_override, procurement, base, msf_doc_import
-#: report:allocation.invoices.report:0
-#: selection:res.request,ref_doc1:0
-#: selection:res.request,ref_doc2:0
-#: field:product.history.consumption.product,product_id:0
-#: selection:import_category,object:0
-#: selection:import_nomenclature,object:0
-#: report:kit.report:0
-#: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:149
-#: report:addons/msf_doc_import/report/in_simulation_screen_xls_report.mako:158
-#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:230
-#: report:addons/msf_doc_import/report/po_simulation_screen_xls_report.mako:241
-#: report:po.simulation.screen:0
-#: field:product.product.import.line.qty,product_id:0
-#: field:wizard.import.in.line.simulation.screen,imp_product_id:0
-#: field:wizard.import.in.line.simulation.screen,move_product_id:0
-#: field:wizard.import.po.simulation.screen.line,imp_product_id:0
-#: field:wizard.import.po.simulation.screen.line,in_product_id:0
-#: view:create.picking.move.processor:0
-#: field:create.picking.move.processor,product_id:0
-#: view:internal.move.processor:0
-#: field:internal.move.processor,product_id:0
-#: view:outgoing.delivery.move.processor:0
-#: field:outgoing.delivery.move.processor,product_id:0
-#: view:ppl.move.processor:0
-#: field:ppl.move.processor,product_id:0
-#: view:return.ppl.move.processor:0
-#: field:return.ppl.move.processor,product_id:0
-#: view:stock.move.in.processor:0
-#: field:stock.move.in.processor,product_id:0
-#: view:stock.move.processor:0
-#: field:stock.move.processor,product_id:0
-#: view:validate.move.processor:0
-#: field:validate.move.processor,product_id:0
-#: field:stock.warehouse.orderpoint.line,product_id:0
-#: view:product.where.used:0
-#: field:product.where.used,product_id:0
-#: field:standard.price.track.changes,product_id:0
-#: field:account.direct.invoice.wizard.line,product_id:0
-#: field:unconsistent.stock.report.line,product_id:0
-#: view:stock.card.wizard:0
-#: field:stock.card.wizard,product_id:0
-msgid "Product"
-msgstr "Product"
-
 #. module: report_webkit
 #: view:ir.header_webkit:0
 msgid "Content and styling"
@@ -95396,11 +95398,11 @@ msgstr "Ligne de Relevé Bancaire"
 msgid "GRAND TOTAL"
 msgstr "GRAND TOTAL"
 
-#. module: msf_field_access_rights
+#. module: msf_field_access_right
 #: model:ir.model,name:msf_field_access_rights.model_msf_field_access_rights_field_access_rule_line
 #: view:msf_field_access_rights.field_access_rule_line:0
 msgid "Field Access Rule Line"
-msgstr "Field Access Rule Line"
+msgstr "Ligne de Règle d'Accès au Champs"
 
 #. module: account_mcdb
 #: view:account.mcdb:0
@@ -98261,3 +98263,18 @@ msgstr "Télécharger un fichier modèle"
 #, python-format
 msgid "Some employees have the same unique code: %s"
 msgstr "Certains employés ont le même code unique : %s"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export_conf.py:86
+msgid "Currency"
+msgstr "Devise"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export_conf.py:99
+msgid "User Access"
+msgstr "Accès utilisateur"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export_conf.py:99
+msgid "User Groups"
+msgstr "Groupes utilisateur"

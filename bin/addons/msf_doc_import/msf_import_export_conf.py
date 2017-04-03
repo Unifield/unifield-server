@@ -24,28 +24,28 @@ from tools.translate import _
 MODEL_DICT = {
     # SUPPLY
     'products': {
-        'name': _('Products'),
+        'name': 'Products',
         'domain_type': 'supply',
         'model': 'product.product',
     },
     'product_nomenclature': {
-        'name': _('Product Nomenclature'),
+        'name': 'Product Nomenclature',
         'domain_type': 'supply',
         'model': 'product.nomenclature',
     },
     'product_category': {
-        'name': _('Product Categories'),
+        'name': 'Product Categories',
         'domain_type': 'supply',
         'model': 'product.category',
     },
     'suppliers': {
-        'name': _('Suppliers'),
+        'name': 'Suppliers',
         'domain_type': 'supply',
         'model': 'res.partner',
         'domain': [('supplier', '=', True)],
-    },
+        },
     'supplier_catalogues': {
-        'name': _('Supplier Catalogues'),
+        'name': 'Supplier Catalogues',
         'domain_type': 'supply',
         'model': 'supplier.catalogue.line',
     },
@@ -53,37 +53,37 @@ MODEL_DICT = {
 
     # FINANCE
     'gl_accounts': {
-        'name': _('GL Accounts'),
+        'name': 'GL Accounts',
         'domain_type': 'finance',
         'model': 'account.account'
     },
     'gl_journals': {
-        'name': _('GL Journals'),
+        'name': 'GL Journals',
         'domain_type': 'finance',
         'model': 'account.journal'
     },
     'analytic_accounts': {
-        'name': _('Analytic Accounts'),
+        'name': 'Analytic Accounts',
         'domain_type': 'finance',
         'model': 'account.analytic.account'
     },
     'analytic_journals': {
-        'name': _('Analytic Journals'),
+        'name': 'Analytic Journals',
         'domain_type': 'finance',
         'model': 'account.analytic.journal'
     },
     'employees': {
-        'name': _('Employees'),
+        'name': 'Employees',
         'domain_type': 'finance',
         'model': 'hr.employee'
     },
     'hq_entries': {
-        'name': _('HQ Entries'),
+        'name': 'HQ Entries',
         'domain_type': 'finance',
         'model': 'hq.entries'
     },
     'currency': {
-        'name': _('Currency'),
+        'name': 'Currency',
         'domain_type': 'finance',
         'model': 'res.currency'
     },
@@ -91,42 +91,42 @@ MODEL_DICT = {
 
     # NON FUNCTIONNAL
     'user_groups': {
-        'name': _('User Groups'),
+        'name': 'User Groups',
         'domain_type': 'non_functionnal',
         'model': 'res.groups'
     },
     'user_access': {
-        'name': _('User Access'),
+        'name': 'User Access',
         'domain_type': 'non_functionnal',
         'model': 'user.access.configurator'
     },
     'record_rules': {
-        'name': _('Record Rules'),
+        'name': 'Record Rules',
         'domain_type': 'non_functionnal',
         'model': 'ir.rule'
     },
     'access_control_list': {
-        'name': _('Access Control list'),
+        'name': 'Access Controls List',
         'domain_type': 'non_functionnal',
         'model': 'ir.model.access'
     },
     'field_access_rules': {
-        'name': _('Field Access Rules'),
+        'name': 'Field Access Rules',
         'domain_type': 'non_functionnal',
         'model': 'msf_field_access_rights.field_access_rule'
     },
     'field_access_rule_lines': {
-        'name': _('Field Access Rule Lines'),
+        'name': 'Field Access Rule Lines',
         'domain_type': 'non_functionnal',
         'model': 'msf_field_access_rights.field_access_rule_line'
     },
     'button_access_rules': {
-        'name': _('Button Access Rules'),
+        'name': 'Button Access Rules',
         'domain_type': 'non_functionnal',
         'model': 'msf_button_access_rights.button_access_rule'
     },
     'window_actions': {
-        'name': _('Window Actions'),
+        'name': 'Window Actions',
         'domain_type': 'non_functionnal',
         'model': 'ir.actions.act_window'
     },
