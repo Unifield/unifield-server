@@ -143,10 +143,10 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.cr.execute(
             "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) "
             "FROM account_move_line AS l,  "
-            "account_move AS m "
+            "account_move AS am "
             "WHERE l.partner_id = %s "
-            "AND m.id = l.move_id "
-            "AND m.state IN %s "
+            "AND am.id = l.move_id "
+            "AND am.state IN %s "
             "AND account_id = %s"
             " " + self.RECONCILE_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
@@ -351,10 +351,10 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         if self.initial_balance:
             self.cr.execute(
                     "SELECT sum(debit) "
-                    "FROM account_move_line AS l, "
-                    "account_move AS m "
-                    "WHERE m.id = l.move_id "
-                    "AND m.state IN %s "
+                    "FROM account_move_line AS l "
+                    "INNER JOIN account_move AS am ON am.id = l.move_id "
+                    "INNER JOIN res_partner AS p ON l.partner_id = p.id "
+                    "AND am.state IN %s "
                     "AND account_id IN %s"
                     " " + self.RECONCILE_REQUEST + " "
                     " " + self.PARTNER_REQUEST + " "
@@ -368,8 +368,9 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
 
         self.cr.execute(
                 "SELECT sum(debit) " \
-                "FROM account_move_line AS l INNER JOIN res_partner p ON l.partner_id = p.id "
-                "JOIN account_move am ON (am.id = l.move_id)" \
+                "FROM account_move_line AS l "
+                "INNER JOIN account_move AS am ON am.id = l.move_id "
+                "INNER JOIN res_partner AS p ON l.partner_id = p.id "
                 "WHERE l.account_id IN %s"  \
                     "AND am.state IN %s" \
                     "AND " + self.query + " "
@@ -390,10 +391,10 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         if self.initial_balance:
             self.cr.execute(
                     "SELECT sum(credit) " 
-                    "FROM account_move_line AS l, "
-                    "account_move AS m "
-                    "WHERE m.id = l.move_id "
-                    "AND m.state IN %s "
+                    "FROM account_move_line AS l "
+                    "INNER JOIN account_move AS am ON am.id = l.move_id "
+                    "INNER JOIN res_partner AS p ON l.partner_id = p.id "
+                    "WHERE am.state IN %s "
                     "AND account_id IN %s"
                     " " + self.RECONCILE_REQUEST + " "
                     " " + self.PARTNER_REQUEST + " "
