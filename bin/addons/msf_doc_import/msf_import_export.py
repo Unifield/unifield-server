@@ -453,8 +453,6 @@ class msf_import_export(osv.osv_memory):
         import_data_obj = self.pool.get('import_data')
         prod_nomenclature_obj = self.pool.get('product.nomenclature')
 
-        nb_imported_lines = 0
-
         # Manage errors
         import_errors = {}
 
@@ -588,7 +586,7 @@ WHERE n3.level = 3)
         nb_succes = 0
         nb_update_success = 0
         col_datas = {}
-        nb_lines_ok = 0
+        nb_imported_lines = 0
         header_codes = [x[3] for x in headers]
         if import_data_obj.pre_hook.get(impobj._name):
             # for headers mod.
@@ -720,15 +718,17 @@ WHERE n3.level = 3)
             self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
 
         warn_msg = ''
-        for lnum, warnings in import_warnings.iteritems():
+        for line_number in sorted(import_warnings.keys()):
+            warnings = import_warnings[line_number]
             for warn in warnings:
-                warn_msg += _('Line %s: %s') % (lnum, warn)
+                warn_msg += _('Line %s: %s') % (line, warn)
                 warn_msg += '\n'
 
         err_msg = ''
-        for lnum, errors in import_errors.iteritems():
+        for line_number in sorted(import_errors.keys()):
+            errors = import_errors[line_number]
             for err in errors:
-                err_msg += _('Line %s: %s') % (lnum, err)
+                err_msg += _('Line %s: %s') % (line_number, err)
                 err_msg += '\n'
 
         if err_msg:
@@ -743,7 +743,7 @@ WHERE n3.level = 3)
             str(round(time.time() - start_time, 1)),
             import_brw.total_lines_to_import-1,
             err_msg and _('without errors') or _('imported'),
-            nb_lines_ok,
+            nb_imported_lines,
             warn_msg and _('(%s line(s) with warning - see warning messages below)') % (
                 len(import_warnings.keys()) or '',
             ),
