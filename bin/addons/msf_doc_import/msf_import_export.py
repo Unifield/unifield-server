@@ -56,7 +56,7 @@ class msf_import_export(osv.osv_memory):
         if 'domain_type' in context:
             domain_type = context['domain_type']
         result_list = [(key, _(value['name'])) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
-        return [('', '')] + sorted(result_list, key=lambda a: a[1])
+        return [('', '')] + result_list
 
     _columns = {
         'display_file_import': fields.boolean('File Import'),
@@ -165,6 +165,38 @@ class msf_import_export(osv.osv_memory):
         size = max(size, MIN_COLUMN_SIZE)
         return size
 
+    def get_child_field(self, cr, uid, field, model, fields_get_dict,
+            context=None):
+        if context is None:
+            context = {}
+        if '.' in field:
+            model_obj = self.pool.get(model)
+            if model not in fields_get_dict:
+                fields_get_res = model_obj.fields_get(cr, uid, context=context)
+                fields_get_dict[model] = fields_get_res
+            else:
+                fields_get_res = fields_get_dict[model]
+
+
+            child_field = field.split('.')[0]
+            rest = '.'.join(field.split('.')[1:])
+
+            if child_field not in fields_get_res:
+                raise osv.except_osv(_('Error'),
+                        _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
+                        % (child_field, model))
+
+            #if child and child !='id' and fields_get_res[child_field].get('relation'):
+            child_model = fields_get_res[child_field]['relation']
+            if child_model not in fields_get_dict:
+                model_obj = self.pool.get(child_model)
+                fields_get_res = model_obj.fields_get(cr, uid, context=context)
+                fields_get_dict[child_model] = fields_get_res
+            return self.get_child_field(cr, uid, rest, child_model, fields_get_dict,
+                    context=context)
+        else:
+            return field, model
+
     def _get_headers(self, cr, uid, model, selection=None, field_list=None, rows=None, context=None):
         """Generate a list of ImportHeader objects using the data that retived
         from the field name.
@@ -185,30 +217,32 @@ class msf_import_export(osv.osv_memory):
             field_list = MODEL_DATA_DICT[selection]['header_list']
         model_obj = self.pool.get(model)
 
-        fields_get_res = model_obj.fields_get(cr, uid,
-                [x.split('.')[0] for x in field_list], context=context)
+        fields_get_dict = {}  # keep fields_get result in cache
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
+
         for field_index, field in enumerate(field_list):
             res = {'tech_name': field}
-            child = None
-            child_name = ''
             if selection and field in MODEL_DATA_DICT[selection]['required_field_list']:
                 res['required'] = True
-            if '.' in field:
-                field, child = field.split('.')
-            if field not in fields_get_res:
+            child_field, child_model = self.get_child_field(cr, uid, field, model,
+                    fields_get_dict, context=context)
+            first_part = field.split('.')[0]
+            if first_part not in fields_get_dict[model]:
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                        % (field, model))
-            if child and child !='id' and fields_get_res[field].get('relation'):
-                child_model = self.pool.get(fields_get_res[field]['relation'])
-                fields_get_res2 = child_model.fields_get(cr, uid, [child],
-                        context=context)
-                if child not in fields_get_res2:
+                        % (first_part, model))
+            if first_part != child_field:
+                if child_field not in fields_get_dict[child_model]:
                     raise osv.except_osv(_('Error'),
                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                            % (child, child_model))
-                child_name = fields_get_res2[child]['string']
-            field_type = fields_get_res[field]['type']
+                            % (child_field, child_model))
+                res['name'] = '%s / %s' % (fields_get_dict[model][first_part]['string'],
+                        fields_get_dict[child_model][child_field]['string'])
+            else:
+                res['name'] = fields_get_dict[model][first_part]['string']
+
+
+            field_type = fields_get_dict[child_model][child_field]['type']
             if field_type == 'boolean':
                 res['ftype'] = 'Boolean'
             elif field_type == 'float':
@@ -217,10 +251,6 @@ class msf_import_export(osv.osv_memory):
                 res['ftype'] = 'Number'
             else:
                 res['ftype'] = 'String'
-            if child_name:
-                res['name'] = '%s / %s' % (fields_get_res[field]['string'], child_name)
-            else:
-                res['name'] = fields_get_res[field]['string']
 
             if not rows:
                 # if no data passed, set the column size with the size of the header name
@@ -325,31 +355,28 @@ class msf_import_export(osv.osv_memory):
         header_columns = [_(head[i].data) for i in range(0, len(head))]
         missing_columns = []
         field_list = MODEL_DATA_DICT[selection]['header_list']
+
+        fields_get_dict = {}  # keep fields_get result in cache
+        fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
         fields_get_res = model_obj.fields_get(cr, uid,
                 [x.split('.')[0] for x in field_list], context=context)
         for field_index, field in enumerate(field_list):
-            child = None
-            child_name = ''
-            if '.' in field:
-                field, child = field.split('.')
-            if field in fields_get_res:
-                column_name = fields_get_res[field]['string']
-            else:
+            child_field, child_model = self.get_child_field(cr, uid, field, model,
+                    fields_get_dict, context=context)
+            first_part = field.split('.')[0]
+            if first_part not in fields_get_dict[model]:
                 raise osv.except_osv(_('Error'),
                         _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                        % (field, model))
-            if child and child !='id' and fields_get_res[field].get('relation'):
-                child_model = self.pool.get(fields_get_res[field]['relation'])
-                fields_get_res2 = child_model.fields_get(cr, uid, [child],
-                        context=context)
-                if child not in fields_get_res2:
+                        % (first_part, model))
+            if first_part != child_field:
+                if child_field not in fields_get_dict[child_model]:
                     raise osv.except_osv(_('Error'),
                             _('field \'%s\' not found for model \'%s\'. Please contact the support team.')
-                            % (child, child_model))
-                child_name = fields_get_res2[child]['string']
-
-            if child_name:
-                column_name = '%s / %s' % (column_name, child_name)
+                            % (child_field, child_model))
+                column_name = '%s / %s' % (fields_get_dict[model][first_part]['string'],
+                        fields_get_dict[child_model][child_field]['string'])
+            else:
+                column_name = fields_get_dict[model][first_part]['string']
 
             if column_name.upper() != header_columns[field_index].upper():
                 missing_columns.append(_('Column %s: get \'%s\' expected \'%s\'.')
