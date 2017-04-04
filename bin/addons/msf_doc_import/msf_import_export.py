@@ -713,8 +713,9 @@ WHERE n3.level = 3)
                 logging.getLogger('import data').info('Error %s' % e)
                 save_error(e, row_index)
                 nb_error += 1
+            else:
+                nb_imported_lines += 1
 
-            nb_imported_lines += 1
             self.write(cr, uid, [import_brw.id], {'total_lines_imported': nb_imported_lines}, context=context)
 
         warn_msg = ''

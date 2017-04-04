@@ -87,10 +87,10 @@ MODEL_DICT = {
         'domain_type': 'finance',
         'model': 'hq.entries'
     },
-    'currency': {
-        'name': 'Currency',
+    'currency_rate': {
+        'name': 'Currency Rates',
         'domain_type': 'finance',
-        'model': 'res.currency'
+        'model': 'res.currency.rate'
     },
 
 
@@ -405,14 +405,16 @@ MODEL_DATA_DICT = {
             'analytic_id',
         ],
     },
-    'currency': {
+    'currency_rate': {
         'header_list': [
             'name',
             'rate',
+            'currency_id.name',
         ],
         'required_field_list': [
             'name',
             'rate',
+            'currency_id.name',
         ],
     },
 
