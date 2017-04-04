@@ -298,11 +298,11 @@ MODEL_DATA_DICT = {
     # FINANCE
     'gl_accounts': {
         'header_list': [
-            'user_type',
+            'user_type.code',
             'accrual_account',
             'activation_date',
             'code',
-            'default_destination_id',
+            'default_destination_id.code',
             'inactivation_date',
             'type',
             'name',
@@ -326,12 +326,12 @@ MODEL_DATA_DICT = {
     'gl_journals': {
         'header_list': [
             'code',
-            'currency',
-            'default_credit_account_id',
-            'default_debit_account_id',
+            'currency.name',
+            'default_credit_account_id.code',
+            'default_debit_account_id.code',
             'name',
             'type',
-            'analytic_journal_id',
+            'analytic_journal_id.code',
         ],
         'required_field_list': [
             'code',

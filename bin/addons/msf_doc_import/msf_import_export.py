@@ -80,14 +80,7 @@ class msf_import_export(osv.osv_memory):
         """Genberate a filename for the import/export
         """
         model_obj = self.pool.get(model)
-        file_name = ''
-        if hasattr(model_obj, '_description') and \
-                model_obj._description != model_obj._name:
-            file_name = _(model_obj._description)
-        else:
-            # if no correct name is available, take the one from the
-            # report selection
-            file_name = MODEL_DICT[selection]['name']
+        file_name = _(MODEL_DICT[selection]['name'])
         file_name = file_name.replace(' ', '_')
         if template_only:
             file_name = _('%s_Import_Template') % file_name
@@ -352,7 +345,7 @@ class msf_import_export(osv.osv_memory):
         selection = wizard_brw.model_list_selection
         model = MODEL_DICT[selection]['model']
         model_obj = self.pool.get(model)
-        header_columns = [_(head[i].data) for i in range(0, len(head))]
+        header_columns = [head[i].data for i in range(0, len(head))]
         missing_columns = []
         field_list = MODEL_DATA_DICT[selection]['header_list']
 
@@ -360,6 +353,11 @@ class msf_import_export(osv.osv_memory):
         fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
         fields_get_res = model_obj.fields_get(cr, uid,
                 [x.split('.')[0] for x in field_list], context=context)
+        if len(field_list) != len(header_columns):
+            raise osv.except_osv(_('Info'), _('The number of column is not same ' \
+                'than expected (get %s, expected %s). Check your import file and ' \
+                'the Object to import/export.') % (len(header_columns), len(field_list)))
+
         for field_index, field in enumerate(field_list):
             child_field, child_model = self.get_child_field(cr, uid, field, model,
                     fields_get_dict, context=context)
