@@ -62,7 +62,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.target_move = data['form'].get('target_move', 'all')
         self.instance_ids = data['form'].get('instance_ids', False)
         self.account_ids = data['form'].get('account_ids', False)
-        self.initial_balance = data['form'].get('initial_balance', True)
+        self.initial_balance = data['form'].get('initial_balance', False)
         self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if self.fiscalyear_id:
             fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'],

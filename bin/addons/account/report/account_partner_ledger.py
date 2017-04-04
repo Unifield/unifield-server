@@ -69,7 +69,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         ctx2.update({'initial_bal': True})
         self.init_query = obj_move._query_get(self.cr, self.uid, obj='l', context=ctx2)
         self.reconcil = data['form'].get('reconcil', True)
-        self.initial_balance = data['form'].get('initial_balance', True)
+        self.initial_balance = data['form'].get('initial_balance', False)
         self.result_selection = data['form'].get('result_selection', 'customer')
         self.amount_currency = data['form'].get('amount_currency', False)
         self.target_move = data['form'].get('target_move', 'all')
