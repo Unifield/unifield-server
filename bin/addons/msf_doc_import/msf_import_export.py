@@ -56,7 +56,7 @@ class msf_import_export(osv.osv_memory):
         if 'domain_type' in context:
             domain_type = context['domain_type']
         result_list = [(key, _(value['name'])) for key, value in MODEL_DICT.items() if value['domain_type'] == domain_type]
-        return [('', '')] + result_list
+        return [('', '')] + sorted(result_list, key=lambda a: a[0])
 
     _columns = {
         'display_file_import': fields.boolean('File Import'),
@@ -612,6 +612,11 @@ WHERE n3.level = 3)
             i += 1
             data = {}
             try:
+                if model == 'hq.entries':
+                    hq_entries_obj = self.pool.get('hq.entries.import')
+                    hq_entries_obj.update_hq_entries(cr, uid, line_data, context=context)
+                    continue
+
                 n = 0
                 line_ok = True
                 if import_data_obj.pre_hook.get(impobj._name):

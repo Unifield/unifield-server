@@ -390,7 +390,7 @@ MODEL_DATA_DICT = {
             'account_id',
             'partner_txt',
             'amount',
-            'currency_id',
+            'currency_id.name',
             'destination_id',
             'cost_center_id',
             'analytic_id',
@@ -400,7 +400,7 @@ MODEL_DATA_DICT = {
         'required_field_list': [
             'name',
             'account_id',
-            'currency_id',
+            'currency_id.name',
             'destination_id',
             'analytic_id',
         ],
