@@ -63,6 +63,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         obj_move = self.pool.get('account.move.line')
         obj_partner = self.pool.get('res.partner')
         obj_journal = self.pool.get('account.journal')
+        obj_fy = self.pool.get('account.fiscalyear')
         self.query = obj_move._query_get(self.cr, self.uid, obj='l', context=data['form'].get('used_context', {}))
         ctx2 = data['form'].get('used_context',{}).copy()
         ctx2.update({'initial_bal': True})
@@ -72,7 +73,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         self.result_selection = data['form'].get('result_selection', 'customer')
         self.amount_currency = data['form'].get('amount_currency', False)
         self.target_move = data['form'].get('target_move', 'all')
-        self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         self.period_id = data['form'].get('period_from', False)
         self.date_from = data['form'].get('date_from', False)
         self.exclude_tax = data['form'].get('tax', False)
@@ -82,19 +82,10 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         move_state = ['draft','posted']
         if self.target_move == 'posted':
             move_state = ['posted']
-
-        # if a FY is selected store data for the initial balance calculation no matter if dates or periods are selected
+        self.fiscalyear_id = data['form'].get('fiscalyear_id', False)
         if self.fiscalyear_id:
-            fy_obj = self.pool.get('account.fiscalyear')
-            fy = fy_obj.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'], context=data['form'].get('used_context', {}))
-            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
-            # all journals by default
-            journal_ids = data['form'].get('journal_ids', obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
-                                                                             context=data.get('context', {})))
-            if len(journal_ids) == 1:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
-            else:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
+            fy = obj_fy.read(self.cr, self.uid, [self.fiscalyear_id], ['date_start'],
+                             context=data['form'].get('used_context', {}))
 
         # UFTP-312, UFTP-63: To have right initial balance, we have to fetch previous lines before a specific date.
         #+ To have right partner balance, we have to take all next lines after a specific date.
@@ -102,21 +93,30 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         #+  then period_from (if no date_from)
         #+  finally fisalyear_id (if no period)
         #+ If no date, the report is wrong.
-        self.DATE_TO = ' '
+        # FROM US-1643: IB calculation takes only into account the FY
         self.DATE_FROM = ' '
         pool =  pooler.get_pool(self.cr.dbname)
         if self.fiscalyear_id or self.period_id or self.date_from:
             if self.date_from:
-                self.DATE_TO = "AND l.date < '%s'" % self.date_from
                 self.DATE_FROM = "AND l.date >= '%s'" % self.date_from
             elif self.period_id:
                 period_obj = pool.get('account.period')
                 period = period_obj.read(self.cr, self.uid, [self.period_id], ['date_start'])
-                self.DATE_TO = "AND l.date < '%s'" % period[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % period[0].get('date_start')
             elif self.fiscalyear_id:
-                self.DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
                 self.DATE_FROM = "AND l.date >= '%s'" % fy[0].get('date_start')
+
+        # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
+        if self.initial_balance and self.fiscalyear_id:
+            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
+            # all journals by default
+            journal_ids = data['form'].get('journal_ids',
+                                           obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
+                                                              context=data.get('context', {})))
+            if len(journal_ids) == 1:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
+            else:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
 
         # UFTP-312: Exclude tax if user ask it
         self.TAX_REQUEST = ' '

@@ -410,7 +410,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         data['build_ts'] = datetime.datetime.now().strftime(self.pool.get('date.tools').get_db_datetime_format(cr, uid, context=context))
         data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from',
                                                 'period_to',  'filter',  'chart_account_id', 'target_move', 'display_partner',
-                                                'output_currency', 'instance_ids', 'tax', 'partner_ids',
+                                                'output_currency', 'instance_ids', 'tax', 'partner_ids', 'initial_balance',
                                                 'only_active_partners', 'account_ids', 'include_reconciled_entries'])[0]
         if data['form']['journal_ids']:
             default_journals = self._get_journals(cr, uid, context=context)
