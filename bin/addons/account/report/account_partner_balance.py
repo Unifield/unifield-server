@@ -33,6 +33,9 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.account_ids = []
         self.IB_DATE_TO = ''
         self.IB_JOURNAL_REQUEST = ''
+        self.used_partners_list = []
+        self.used_accounts_list = []
+        self.result_lines = False
         self.localcontext.update( {
             'time': time,
             'lines': self.lines,
@@ -156,6 +159,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         return res
 
     def lines(self):
+        if self.result_lines:
+            return self.result_lines
         full_account = []
         self.cr.execute(
             "SELECT p.id as partner_id, ac.id as account_id, p.ref, l.account_id, ac.name AS account_name, "
@@ -202,12 +207,17 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             # add the initial balance for each "account + partner"
             ib = [(0.0, 0.0, 0.0)]
             if self.initial_balance:
-                ib = self._get_initial_balance(fa.get('partner_id', False), fa.get('account_id', False))
+                partner_id = fa.get('partner_id', False)
+                account_id = fa.get('account_id', False)
+                ib = self._get_initial_balance(partner_id, account_id)
+                # store the partners and accounts used in the lines
+                partner_id and self.used_partners_list.append(partner_id)
+                account_id and self.used_accounts_list.append(account_id)
             fa['initial_balance'] = ib
             full_account_ib.append(fa)
 
         ## We will now compute Total
-        subtotal_row = self._add_subtotal(full_account_ib)
+        self.result_lines = subtotal_row = self._add_subtotal(full_account_ib)
         return subtotal_row
 
     def _add_subtotal(self, cleanarray):
@@ -341,13 +351,37 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             i = i + 1
         return completearray
 
+    def _build_partner_and_account_request(self):
+        """
+        Returns a tuple containing (PARTNER_REQUEST, ACCOUNT_REQUEST)
+        used to restrict the total debit/credit calculation to partners and accounts where lines have been found for the period
+        (Otherwise it would accumulate the Initial Balances even for partners not present in the report)
+        """
+        self.lines()  # to get the correct values for self.used_partners_list and self.used_accounts_list
+        if self.used_partners_list:
+            if len(self.used_partners_list) == 1:
+                PARTNER_REQUEST = 'AND p.id = %s' % self.used_partners_list[0]
+            else:
+                PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(self.used_partners_list),)
+        else:
+            PARTNER_REQUEST = self.PARTNER_REQUEST
+        if self.used_accounts_list:
+            if len(self.used_accounts_list) == 1:
+                ACCOUNT_REQUEST = 'AND l.account_id = %s' % self.used_accounts_list[0]
+            else:
+                ACCOUNT_REQUEST = 'AND l.account_id IN %s' % (tuple(self.used_accounts_list),)
+        else:
+            ACCOUNT_REQUEST = 'l.account_id IN %s' % tuple(self.account_ids)
+        return PARTNER_REQUEST, ACCOUNT_REQUEST
+
     def _sum_debit(self):
         if not self.ids:
             return 0.0
         temp_res = 0.0
         init_res = 0.0
-
         # calculate the Initial Balance amount
+        # only for the partners where lines exist for the selected period
+        PARTNER_REQUEST, ACCOUNT_REQUEST = self._build_partner_and_account_request()
         if self.initial_balance:
             self.cr.execute(
                     "SELECT sum(debit) "
@@ -355,13 +389,13 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     "INNER JOIN account_move AS am ON am.id = l.move_id "
                     "INNER JOIN res_partner AS p ON l.partner_id = p.id "
                     "AND am.state IN %s "
-                    "AND account_id IN %s"
+                    " " + ACCOUNT_REQUEST + " "
                     " " + self.RECONCILE_REQUEST + " "
-                    " " + self.PARTNER_REQUEST + " "
+                    " " + PARTNER_REQUEST + " "
                     " " + self.IB_DATE_TO + " "
                     " " + self.INSTANCE_REQUEST + " "
                     " " + self.IB_JOURNAL_REQUEST + " ",
-                    (tuple(self.move_state), tuple(self.account_ids)))
+                    (tuple(self.move_state),))
             contemp = self.cr.fetchone()
             if contemp != None:
                 init_res = float(contemp[0] or 0.0)
@@ -386,7 +420,9 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             return 0.0
         temp_res = 0.0
         init_res = 0.0
-
+        # calculate the Initial Balance amount
+        # only for the partners where lines exist for the selected period
+        PARTNER_REQUEST, ACCOUNT_REQUEST = self._build_partner_and_account_request()
         # calculate the Initial Balance amount
         if self.initial_balance:
             self.cr.execute(
@@ -395,13 +431,13 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     "INNER JOIN account_move AS am ON am.id = l.move_id "
                     "INNER JOIN res_partner AS p ON l.partner_id = p.id "
                     "WHERE am.state IN %s "
-                    "AND account_id IN %s"
+                    " " + ACCOUNT_REQUEST + " "
                     " " + self.RECONCILE_REQUEST + " "
-                    " " + self.PARTNER_REQUEST + " "
+                    " " + PARTNER_REQUEST + " "
                     " " + self.IB_DATE_TO + " "
                     " " + self.INSTANCE_REQUEST + " "
                     " " + self.IB_JOURNAL_REQUEST + " ",
-                    (tuple(self.move_state), tuple(self.account_ids)))
+                    (tuple(self.move_state),))
             contemp = self.cr.fetchone()
             if contemp != None:
                 init_res = float(contemp[0] or 0.0)
