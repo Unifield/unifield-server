@@ -98279,3 +98279,8 @@ msgstr "Accès utilisateur"
 #: code:addons/msf_doc_import/msf_import_export_conf.py:99
 msgid "User Groups"
 msgstr "Groupes utilisateur"
+
+#. modules: msf_doc_import
+#: code:addons/msf_doc_import/msf_import_export_conf.py:99
+msgid "Currencies Rates"
+msgstr "Taux des Devises"

@@ -88,7 +88,7 @@ MODEL_DICT = {
         'model': 'hq.entries'
     },
     'currency_rate': {
-        'name': 'Currency Rates',
+        'name': 'Currencies Rates',
         'domain_type': 'finance',
         'model': 'res.currency.rate'
     },
