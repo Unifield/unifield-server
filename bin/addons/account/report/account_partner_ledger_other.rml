@@ -32,6 +32,10 @@
             <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="5,0" stop="5,-1"/>
             <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="5,0" stop="5,0"/>
             <lineStyle kind="LINEBELOW" colorName="#e6e6e6" start="5,-1" stop="5,-1"/>
+            <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="6,0" stop="6,-1"/>
+            <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="6,0" stop="6,0"/>
+            <lineStyle kind="LINEABOVE" colorName="#e6e6e6" start="7,0" stop="7,0"/>
+            <lineStyle kind="LINEAFTER" colorName="#e6e6e6" start="7,0" stop="7,-1"/>
         </blockTableStyle>
         <blockTableStyle id="Table4">
             <blockAlignment value="LEFT"/>
