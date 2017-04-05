@@ -51,6 +51,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             'get_end_period': self.get_end_period,
             'get_partners':self._get_partners,
             'get_target_move': self._get_target_move,
+            'get_instances': self._get_instances_from_data,
             'get_accounts': self._get_accounts,
         })
 

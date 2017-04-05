@@ -55,7 +55,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             'display_initial_balance':self._display_initial_balance,
             'display_currency':self._display_currency,
             'get_target_move': self._get_target_move,
-            'get_instances': self._get_instances,
+            'get_instances': self._get_instances_from_data,
             'get_accounts': self._get_accounts,
         })
 
@@ -416,19 +416,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 return [_('All Journals')]
         instance_ids = instance_ids or data.get('form', False) and data['form'].get('instance_ids', False)
         return super(third_party_ledger, self)._get_journal(data, instance_ids)
-
-    def _get_instances(self, data):
-        """
-        Return:
-        - "All Instances" if no specific instance is selected
-        - or the codes of all instances selected
-        """
-        instance_ids = data.get('form', False) and data['form'].get('instance_ids', False)
-        if instance_ids:
-            instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
-            return [i.code for i in instance_obj.browse(self.cr, self.uid, self.instance_ids,
-                                                       fields_to_fetch=['code'], context=data.get('context', {}))]
-        return [_('All Instances')]
 
 report_sxw.report_sxw('report.account.third_party_ledger', 'res.partner',
         'addons/account/report/account_partner_ledger.rml',parser=third_party_ledger,

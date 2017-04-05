@@ -133,6 +133,20 @@ class common_report_header(object):
                                                        fields_to_fetch=['code'], context=data.get('context', {}))]
         return [_('All Accounts')]
 
+    def _get_instances_from_data(self, data):
+        """
+        Return:
+        - "All Instances" if no specific instance have been selected in the form
+        - or the codes of all instances selected
+        :param data: dictionary of values coming from the form
+        """
+        instance_ids = data.get('form', False) and data['form'].get('instance_ids', False)
+        if instance_ids:
+            instance_obj = pooler.get_pool(self.cr.dbname).get('msf.instance')
+            return [i.code for i in instance_obj.browse(self.cr, self.uid, self.instance_ids,
+                                                       fields_to_fetch=['code'], context=data.get('context', {}))]
+        return [_('All Instances')]
+
     def _get_sortby(self, data):
         raise (_('Error'), _('Not implemented'))
 
