@@ -103,7 +103,7 @@ HEADER_DICT = {
 GET_EXPORT_REQUEST = '''SELECT
         l.product_id AS product_id,
         l.default_code as default_code,
-        pt.name as pt_name,
+        COALESCE(trans.value, pt.name) as pt_name,
         pu.name as pu_name,
         trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
         trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
@@ -123,6 +123,8 @@ GET_EXPORT_REQUEST = '''SELECT
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
          LEFT JOIN product_uom pu ON pt.uom_id = pu.id
          LEFT JOIN res_currency rc ON pp.currency_id = rc.id
+         LEFT JOIN ir_translation trans ON trans.src = pt.name AND
+             trans.name='product.template,name' AND lang = %s
     WHERE l.mission_report_id = %s
     ORDER BY l.default_code'''
 
@@ -439,7 +441,7 @@ class stock_mission_report(osv.osv):
                 return
 
             logging.getLogger('MSR').info("""____________________ Start the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
-            self.update(cr, uid, ids=[], context=None)
+            self.update(cr, uid, ids=[], context=context)
             msr_in_progress._delete_all(cr, uid, context)
             cr.commit()
             logging.getLogger('MSR').info("""____________________ Finished the update process of MSR, at %s""" % time.strftime('%Y-%m-%d %H:%M:%S'))
@@ -772,7 +774,8 @@ class stock_mission_report(osv.osv):
 
         for report_id in ids:
             logger.info('___ Start export SQL request...')
-            cr.execute(GET_EXPORT_REQUEST, (report_id, ))
+            lang = context.get('lang')
+            cr.execute(GET_EXPORT_REQUEST, (lang, report_id))
             request_result = cr.dictfetchall()
 
             logger.info('___ Start CSV and XLS generation...')
