@@ -43,7 +43,7 @@ CSV_DELIMITER = ';'
 HEADER_DICT = {
     'ns_nv_vals': (
         ('Reference', 'default_code'),
-        ('Name', 'pp_name'),
+        ('Name', 'pt_name'),
         ('UoM', 'pu_name'),
         ('Instance stock', 'l_internal_qty'),
         ('Warehouse stock', 'l_wh_qty'),
@@ -55,7 +55,7 @@ HEADER_DICT = {
         ('In Pipe Qty', 'l_in_pipe_qty'),),
     'ns_v_vals': (
         ('Reference', 'default_code'),
-        ('Name', 'pp_name'),
+        ('Name', 'pt_name'),
         ('UoM', 'pu_name'),
         ('Cost Price', 'pt_standard_price'),
         ('Func. Cur.', 'rc_name'),
@@ -70,7 +70,7 @@ HEADER_DICT = {
         ('In Pipe Qty', 'l_in_pipe_qty'),),
     's_nv_vals': (
         ('Reference', 'default_code'),
-        ('Name', 'pp_name'),
+        ('Name', 'pt_name'),
         ('UoM', 'pu_name'),
         ('Instance stock', 'l_internal_qty'),
         ('Stock Qty.', 'l_stock_qty'),
@@ -83,7 +83,7 @@ HEADER_DICT = {
         ('In Pipe Qty', 'l_in_pipe_qty'),),
     's_v_vals': (
         ('Reference', 'default_code'),
-        ('Name', 'pp_name'),
+        ('Name', 'pt_name'),
         ('UoM', 'pu_name'),
         ('Cost Price', 'pt_standard_price'),
         ('Func. Cur.', 'rc_name'),
@@ -103,7 +103,7 @@ HEADER_DICT = {
 GET_EXPORT_REQUEST = '''SELECT
         l.product_id AS product_id,
         l.default_code as default_code,
-        pp.name_template as pp_name,
+        pt.name as pt_name,
         pu.name as pu_name,
         trim(to_char(l.internal_qty, '999999999999.999')) as l_internal_qty,
         trim(to_char(l.wh_qty, '999999999999.999')) as l_wh_qty,
