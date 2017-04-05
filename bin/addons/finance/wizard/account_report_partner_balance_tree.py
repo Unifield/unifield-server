@@ -322,7 +322,7 @@ class account_partner_balance_tree(osv.osv):
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
-            sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, ABS(SUM(debit) - SUM(credit)) as total
+            sql = """SELECT a.code as account, SUM(aml.debit) as deb, SUM(aml.credit) as cred, SUM(debit) - SUM(credit) as total
                     FROM account_move_line as aml, account_account as a
                     WHERE aml.id in %s
                     AND aml.account_id = a.id
