@@ -152,6 +152,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             "AND am.state IN %s "
             "AND account_id = %s"
             " " + self.RECONCILE_REQUEST + " "
+            " " + self.INSTANCE_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
             " " + self.IB_DATE_TO + " ",
             (partner_id, tuple(self.move_state), account_id))

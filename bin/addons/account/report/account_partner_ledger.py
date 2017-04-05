@@ -262,6 +262,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
             "AND m.state IN %s " \
             "AND account_id IN %s" \
             " " + RECONCILE_TAG + " "\
+            " " + self.INSTANCE_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
             " " + self.IB_DATE_TO + " ",
             (partner.id, tuple(move_state), tuple(self.account_ids)))
