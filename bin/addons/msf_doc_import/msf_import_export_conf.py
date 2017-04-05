@@ -315,12 +315,12 @@ MODEL_DATA_DICT = {
             'currency_revaluation',
         ],
         'required_field_list': [
-            'name',
+            'user_type.code',
+            'activation_date',
             'code',
             'type',
+            'name',
             'type_for_register',
-            'user_type',
-            'activation_date',
         ],
     },
     'gl_journals': {
@@ -337,7 +337,7 @@ MODEL_DATA_DICT = {
             'code',
             'name',
             'type',
-            'analytic_journal_id',
+            'analytic_journal_id.code',
         ],
     },
     'analytic_accounts': {
@@ -419,8 +419,6 @@ MODEL_DATA_DICT = {
     },
 
 
-
-
     # NON FUNCTIONNAL
     'user_groups': {
         'header_list': [
@@ -439,7 +437,7 @@ MODEL_DATA_DICT = {
     },
     'record_rules': {
         'header_list': [
-            'model_id',
+            'model_id.model',
             'name',
             'global',
             'domain_force',
@@ -449,15 +447,15 @@ MODEL_DATA_DICT = {
             'perm_unlink',
         ],
         'required_field_list': [
-            'model_id',
+            'model_id.model',
             'name',
         ],
     },
     'access_control_list': {
         'header_list': [
             'name',
-            'model_id',
-            'group_id',
+            'model_id.model',
+            'group_id.name',
             'perm_read',
             'perm_write',
             'perm_create',
@@ -465,28 +463,28 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
             'name',
-            'model_id',
+            'model_id.model',
         ],
     },
     'field_access_rules': {
         'header_list': [
             'name',
-            'model_id',
+            'model_id.model',
             'instance_level',
             'domain_text',
             'status',
         ],
         'required_field_list': [
             'name',
-            'model_id',
+            'model_id.model',
             'instance_level',
         ],
     },
     'field_access_rule_lines': {
         'header_list': [
-            'field_access_rule',
+            'field_access_rule.name',
             'field_access_rule_model_id',
-            'field',
+            'field.name',
             'field_name',
             'write_access',
             'value_not_synchronized_on_create',
@@ -499,16 +497,16 @@ MODEL_DATA_DICT = {
     },
     'button_access_rules': {
         'header_list': [
-            'model_id',
-            'view_id',
+            'model_id.model',
+            'view_id.name',
             'label',
             'name',
             'group_names',
             'type',
         ],
         'required_field_list': [
-            'model_id',
-            'view_id',
+            'model_id.model',
+            'view_id.name',
             'name',
         ],
     },
@@ -517,7 +515,7 @@ MODEL_DATA_DICT = {
             'name',
             'res_model',
             'view_type',
-            'view_id',
+            'view_id.name',
             'domain',
             'groups_id',
         ],

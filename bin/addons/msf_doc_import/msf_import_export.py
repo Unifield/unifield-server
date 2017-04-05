@@ -267,7 +267,6 @@ class msf_import_export(osv.osv_memory):
         if context is None:
             context = {}
         result = {'value': {}}
-        result['value']['import_file'] = None
         result['value']['display_file_import'] = True
         result['value']['display_file_export'] = True
         if model_list_selection:
@@ -695,12 +694,10 @@ WHERE n3.level = 3)
                         del data['standard_price']
                     impobj.write(cr, uid, ids_to_update, data)
                     nb_update_success += 1
-                    cr.commit()
 
                 else:
                     impobj.create(cr, uid, data, context={'from_import_menu': True})
                     nb_succes += 1
-                    cr.commit()
             except osv.except_osv, e:
                 logging.getLogger('import data').info('Error %s' % e.value)
                 cr.rollback()
@@ -721,14 +718,16 @@ WHERE n3.level = 3)
             warnings = import_warnings[line_number]
             for warn in warnings:
                 warn_msg += _('Line %s: %s') % (line, warn)
-                warn_msg += '\n'
+                if not warn_msg.endswith('\n'):
+                    warn_msg += '\n'
 
         err_msg = ''
         for line_number in sorted(import_errors.keys()):
             errors = import_errors[line_number]
             for err in errors:
                 err_msg += _('Line %s: %s') % (line_number, err)
-                err_msg += '\n'
+                if not err_msg.endswith('\n'):
+                    err_msg += '\n'
 
         if err_msg:
             cr.rollback()
