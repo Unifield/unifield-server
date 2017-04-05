@@ -315,6 +315,10 @@ header_col_merge_count = col_count - 1
 <%
 partner_name = (p_obj.name or '')
 partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
+initial_balance = get_display_ib() and get_initial_balance(p_obj.partner_id and p_obj.partner_id.id or False, p_obj.account_type)
+debit_and_ib = (p_obj.debit or 0.) + (initial_balance and initial_balance[0][0] or 0.)
+credit_and_ib = (p_obj.credit or 0.) + (initial_balance and initial_balance[0][1] or 0.)
+balance_and_ib = (p_obj.balance or 0.) + (initial_balance and initial_balance[0][2] or 0.)
 %>
 <Row>
 <Cell ss:StyleID="ssPartner">
@@ -327,15 +331,42 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
+    <Data ss:Type="Number">${debit_and_ib}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.credit or 0.}</Data>
+    <Data ss:Type="Number">${credit_and_ib}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${p_obj.balance or 0.}</Data>
+    <Data ss:Type="Number">${balance_and_ib}</Data>
 </Cell>
 </Row>
+
+<!-- INITIAL BALANCE Section -->
+% if get_display_ib():
+% for ib in initial_balance:
+<Row>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">Initial Balance</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${ib[0] or 0.}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${ib[1] or 0.}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${ib[2] or 0.}</Data>
+</Cell>
+</Row>
+% endfor
+% endif
+
 ## account move line row
 % for aml in get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data):
 <Row>
