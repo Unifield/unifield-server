@@ -22,7 +22,6 @@
 from osv import osv,fields
 from osv.orm import except_orm
 import pickle
-from tools.translate import _
 import tools
 
 EXCLUDED_FIELDS = set((
@@ -177,7 +176,9 @@ class ir_values(osv.osv):
             ids_res.append(self.create(cr, uid_access, vals))
         return ids_res
 
-    def get(self, cr, uid, key, key2, models, meta=False, context={}, res_id_req=False, without_user=True, key2_req=True):
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
         result = []
         for m in models:
             if isinstance(m, (list, tuple)):
@@ -206,8 +207,11 @@ class ir_values(osv.osv):
                     where.append('res_id=%s')
                     params.append(res_id)
 
-            where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
-            params.append(uid)
+            if key == 'default' and (context.get('sync_update_execution') or context.get('sync_message_execution')):
+                where.append('user_id IS NULL order by sequence,id')
+            else:
+                where.append('(user_id=%s or (user_id IS NULL)) order by sequence,id')
+                params.append(uid)
             clause = ' and '.join(where)
             cr.execute('select id,name,value,object,meta, key from ir_values where ' + clause, params)
             result = cr.fetchall()
@@ -232,7 +236,7 @@ class ir_values(osv.osv):
 
                 try:
                     datas = self.pool.get(model).read(cr, uid, [int(id)], fields, context)
-                except except_orm, e:
+                except except_orm:
                     return False
                 datas = datas and datas[0]
                 if not datas:
