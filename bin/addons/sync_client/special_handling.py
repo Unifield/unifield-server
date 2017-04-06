@@ -78,7 +78,7 @@ class account_move(osv.osv):
         return super(account_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
+        if not ids or not vals:
             return True
         if not context:
             context = {}
