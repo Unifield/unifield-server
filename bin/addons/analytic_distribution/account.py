@@ -407,6 +407,8 @@ class account_move(osv.osv):
         if context is None:
             context = {}
         res = super(account_move, self).validate(cr, uid, ids, context)
+        if context.get('sync_update_execution'):
+            return res
         for m in self.browse(cr, uid, ids):
             if m.status and m.status == 'manu':
                 for ml in m.line_id:
