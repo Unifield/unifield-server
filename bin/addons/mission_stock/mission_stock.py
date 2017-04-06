@@ -123,7 +123,7 @@ GET_EXPORT_REQUEST = '''SELECT
          LEFT JOIN product_template pt ON pp.product_tmpl_id = pt.id
          LEFT JOIN product_uom pu ON pt.uom_id = pu.id
          LEFT JOIN res_currency rc ON pp.currency_id = rc.id
-         LEFT JOIN ir_translation trans ON trans.src = pt.name AND
+         LEFT JOIN ir_translation trans ON trans.res_id = pt.id AND
              trans.name='product.template,name' AND lang = %s
     WHERE l.mission_report_id = %s
     ORDER BY l.default_code'''
