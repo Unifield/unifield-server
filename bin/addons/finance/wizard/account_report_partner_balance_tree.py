@@ -46,11 +46,33 @@ class account_partner_balance_tree(osv.osv):
 
     _order = "account_type, partner_id"
 
+    def _get_initial_balance(self, cr, partner_id, account_type):
+        """
+        Returns the initial balance for the partner and account TYPE in parameter as: [(debit, credit, balance)]
+        """
+        if not partner_id or not account_type:
+            return [(0.0, 0.0, 0.0)]
+        cr.execute(
+            "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) "
+            "FROM account_move_line AS l INNER JOIN account_move AS am ON am.id = l.move_id "
+            "INNER JOIN account_account AS ac ON l.account_id = ac.id  "
+            "WHERE l.partner_id = %s "
+            "AND am.state IN %s "
+            "AND ac.type = %s"
+            " " + self.RECONCILE_REQUEST + " "
+            " " + self.INSTANCE_REQUEST + " "
+            " " + self.IB_JOURNAL_REQUEST + " "
+            " " + self.IB_DATE_TO + " ",
+            (partner_id, tuple(self.ib_move_state_list), account_type))
+        return cr.fetchall()
+
     def _execute_query_partners(self, cr, uid, data):
         """
         return res, account_type, move_state
         """
         obj_move = self.pool.get('account.move.line')
+        obj_journal = self.pool.get('account.journal')
+        obj_fy = self.pool.get('account.fiscalyear')
         where = obj_move._query_get(cr, uid, obj='l', context=data['form'].get('used_context',{}))
 
         result_selection = data['form'].get('result_selection', '')
@@ -65,13 +87,39 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('target_move', 'all') == 'posted':
             move_state = "('posted')"
 
+        self.initial_balance = data['form'].get('initial_balance', False)
+        fiscalyear_id = data['form'].get('fiscalyear_id', False)
+        if fiscalyear_id:
+            fy = obj_fy.read(cr, uid, [fiscalyear_id], ['date_start'],
+                             context=data['form'].get('used_context', {}))
+        # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
+        self.IB_DATE_TO = ''
+        self.IB_JOURNAL_REQUEST = ''
+        if self.initial_balance and fiscalyear_id:
+            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
+            # all journals by default
+            journal_ids = data['form'].get('journal_ids',
+                                           obj_journal.search(cr, uid, [], order='NO_ORDER',
+                                                              context=data.get('context', {})))
+            if len(journal_ids) == 1:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
+            else:
+                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
+        # state filter
+        self.ib_move_state_list = data['form'].get('target_move', 'all') == 'posted' and ['posted'] or ['draft', 'posted']
+        # reconciliation filter
+        self.RECONCILE_REQUEST = ''
+        if not data['form'].get('include_reconciled_entries', True):
+            self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
         # proprietary instances filter
+        self.INSTANCE_REQUEST = ''
         instance_ids = data['form']['instance_ids']
         if instance_ids:
             # we add instance filter in 'where'
             if where:
                 where += " AND "
-            where += "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
+            self.INSTANCE_REQUEST = "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
+            where += self.INSTANCE_REQUEST
 
         # UFTP-312: take tax exclusion in account if user asked for it
         TAX_REQUEST = ' '
@@ -96,10 +144,6 @@ class account_partner_balance_tree(osv.osv):
             else:
                 ACCOUNT_REQUEST = 'AND ac.id IN %s' % (tuple(account_ids),)
 
-        RECONCILE_REQUEST = ''
-        if not data['form'].get('include_reconciled_entries', True):
-            RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
-
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
         query = "SELECT ac.type as account_type," \
@@ -117,15 +161,25 @@ class account_partner_balance_tree(osv.osv):
             " " + TAX_REQUEST + " " \
             " " + PARTNER_REQUEST + " " \
             " " + ACCOUNT_REQUEST + " " \
-            " " + RECONCILE_REQUEST + " " \
+            " " + self.RECONCILE_REQUEST + " " \
             " GROUP BY ac.type,p.id,p.ref,p.name" \
             " ORDER BY ac.type,p.name"
         cr.execute(query)
         res = cr.dictfetchall()
+        res_ib = []
+        for r in res:
+            # add the initial balance for each "account type + partner"
+            ib = [(0.0, 0.0, 0.0)]
+            if self.initial_balance:
+                partner_id = r.get('partner_id', False)
+                account_type = r.get('account_type', False)
+                ib = self._get_initial_balance(cr, partner_id, account_type)
+            r['initial_balance'] = ib
+            res_ib.append(r)
         if data['form'].get('display_partner', '') == 'non-zero_balance':
-            res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
+            res2 = [r for r in res_ib if r['sdebit'] > 0 or r['scredit'] > 0]
         else:
-            res2 = [r for r in res]
+            res2 = [r for r in res_ib]
         return res2, account_type, move_state
 
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
@@ -210,6 +264,9 @@ class account_partner_balance_tree(osv.osv):
         for r in res[0]:
             if not r.get('partner_name', False):
                 r.update({'partner_name': _('Unknown Partner')})
+            debit = r['debit'] + (self.initial_balance and r['initial_balance'][0][0] or 0.0)
+            credit = r['credit'] + (self.initial_balance and r['initial_balance'][0][1] or 0.0)
+            balance = (r['debit'] - r['credit']) + (self.initial_balance and r['initial_balance'][0][2] or 0.0)
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
@@ -217,9 +274,9 @@ class account_partner_balance_tree(osv.osv):
                 'partner_id': r['partner_id'],
                 'name': r['partner_name'],
                 'partner_ref': r['partner_ref'],
-                'debit': self._currency_conv(cr, uid, r['debit'], comp_currency_id, output_currency_id),
-                'credit': self._currency_conv(cr, uid, r['credit'], comp_currency_id, output_currency_id),
-                'balance': self._currency_conv(cr, uid, r['debit'] - r['credit'], comp_currency_id, output_currency_id),
+                'debit': self._currency_conv(cr, uid, debit, comp_currency_id, output_currency_id),
+                'credit': self._currency_conv(cr, uid, credit, comp_currency_id, output_currency_id),
+                'balance': self._currency_conv(cr, uid, debit - credit, comp_currency_id, output_currency_id),
             }
             self.create(cr, uid, vals, context=context)
 

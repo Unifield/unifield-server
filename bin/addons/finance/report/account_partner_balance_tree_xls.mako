@@ -188,9 +188,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <%
 entries = get_partners(data)
-total_ib_debit = 0.0
-total_ib_credit = 0.0
-total_ib_balance = 0.0
 %>
 % if not entries:
 <Worksheet ss:Name="No entries">
@@ -318,13 +315,6 @@ header_col_merge_count = col_count - 1
 <%
 partner_name = (p_obj.name or '')
 partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
-initial_balance = get_display_ib() and get_initial_balance(p_obj.partner_id and p_obj.partner_id.id or False, p_obj.account_type)
-ib_debit = initial_balance and initial_balance[0][0] or 0.
-ib_credit = initial_balance and initial_balance[0][1] or 0.
-ib_balance = initial_balance and initial_balance[0][2] or 0.
-total_ib_debit += ib_debit
-total_ib_credit += ib_credit
-total_ib_balance += ib_balance
 %>
 <Row>
 <Cell ss:StyleID="ssPartner">
@@ -337,19 +327,19 @@ total_ib_balance += ib_balance
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${(p_obj.debit or 0.) + ib_debit}</Data>
+    <Data ss:Type="Number">${p_obj.debit or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${(p_obj.credit or 0.) + ib_credit}</Data>
+    <Data ss:Type="Number">${p_obj.credit or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${(p_obj.balance or 0.) + ib_balance}</Data>
+    <Data ss:Type="Number">${p_obj.balance or 0.}</Data>
 </Cell>
 </Row>
 
 <!-- INITIAL BALANCE Section -->
 % if get_display_ib():
-% for ib in initial_balance:
+% for ib in get_initial_balance(p_obj.partner_id and p_obj.partner_id.id or False, p_obj.account_type):
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>
@@ -415,13 +405,13 @@ balance = currency_conv(balance, False)
     <Data ss:Type="String">TOTAL</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${debit + total_ib_debit}</Data>
+    <Data ss:Type="Number">${debit}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${credit + total_ib_credit}</Data>
+    <Data ss:Type="Number">${credit}</Data>
 </Cell>
 <Cell ss:StyleID="ssHeaderNumber">
-    <Data ss:Type="Number">${balance + total_ib_balance}</Data>
+    <Data ss:Type="Number">${balance}</Data>
 </Cell>
 </Row>
 </Table>

@@ -63,41 +63,8 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         self.currency_id = self.apbt_obj._get_company_currency(cr, uid, context=context)
 
     def set_context(self, objects, data, ids, report_type=None):
-        obj_journal = self.pool.get('account.journal')
-        obj_fy = self.pool.get('account.fiscalyear')
         self.sortby = data['form'].get('sortby', 'sort_date')
         self.initial_balance = data['form'].get('initial_balance', False)
-        fiscalyear_id = data['form'].get('fiscalyear_id', False)
-        if fiscalyear_id:
-            fy = obj_fy.read(self.cr, self.uid, [fiscalyear_id], ['date_start'],
-                             context=data['form'].get('used_context', {}))
-        # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
-        self.IB_DATE_TO = ''
-        self.IB_JOURNAL_REQUEST = ''
-        if self.initial_balance and fiscalyear_id:
-            self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
-            # all journals by default
-            journal_ids = data['form'].get('journal_ids',
-                                           obj_journal.search(self.cr, self.uid, [], order='NO_ORDER',
-                                                              context=data.get('context', {})))
-            if len(journal_ids) == 1:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id = %s" % journal_ids[0]
-            else:
-                self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
-        # reconciliation filter
-        self.RECONCILE_REQUEST = ''
-        if not data['form'].get('include_reconciled_entries', True):
-            self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
-        # prop. instance filter
-        self.INSTANCE_REQUEST = ''
-        instance_ids = data['form']['instance_ids']
-        if instance_ids:
-            self.INSTANCE_REQUEST = "l.instance_id in(%s)" % (",".join(map(str, instance_ids)))
-        # state filter
-        self.move_state = ['draft', 'posted']
-        if data['form'].get('target_move', 'all') == 'posted':
-            self.move_state = ['posted']
-
         self.display_partner = data['form'].get('display_partner', 'non-zero_balance')
         self.result_selection = data['form'].get('result_selection')
         self.target_move = data['form'].get('target_move', 'all')
@@ -132,21 +99,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         """
         Returns the initial balance for the partner and account TYPE in parameter as: [(debit, credit, balance)]
         """
-        if not partner_id or not account_type:
-            return [(0.0, 0.0, 0.0)]
-        self.cr.execute(
-            "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) "
-            "FROM account_move_line AS l INNER JOIN account_move AS am ON am.id = l.move_id "
-            "INNER JOIN account_account AS ac ON l.account_id = ac.id  "
-            "WHERE l.partner_id = %s "
-            "AND am.state IN %s "
-            "AND ac.type = %s"
-            " " + self.RECONCILE_REQUEST + " "
-            " " + self.INSTANCE_REQUEST + " "
-            " " + self.IB_JOURNAL_REQUEST + " "
-            " " + self.IB_DATE_TO + " ",
-            (partner_id, tuple(self.move_state), account_type))
-        return self.cr.fetchall()
+        return self.apbt_obj._get_initial_balance(self.cr, partner_id, account_type)
 
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
