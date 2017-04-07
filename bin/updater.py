@@ -456,6 +456,7 @@ def reconnect_sync_server():
     sync_user_password = tools.config.get('sync_user_password')
     dbname_list = []
     password_from_file = None
+    cr = None
 
     try:
         if os.path.isfile(credential_filepath):
@@ -466,7 +467,6 @@ def reconnect_sync_server():
                 dbname = base64.decodestring(lines[0])
                 dbname_list.append(dbname)
                 password_from_file = base64.decodestring(lines[1])
-
 
         # in case there is no file for automatic reconnecion after patching,
         # then get the list of all db and try to set the login/password on all
@@ -489,48 +489,47 @@ def reconnect_sync_server():
             if pool.get("sync.server.entity"):
                 continue
 
-            try:
-                cr = db.cursor()
-                # delete the credential file
-                if os.path.isfile(credential_filepath):
-                    os.remove(credential_filepath)
+            cr = db.cursor()
+            # delete the credential file
+            if os.path.isfile(credential_filepath):
+                os.remove(credential_filepath)
 
-                connection_module = pool.get("sync.client.sync_server_connection")
-                if not connection_module:
-                    logger.error("Module 'sync.client.sync_server_connection' "
-                        "not found on %s, not possible to setup sync credentials"
-                        " automatically" % dbname)
-                    continue
+            connection_module = pool.get("sync.client.sync_server_connection")
+            if not connection_module:
+                logger.error("Module 'sync.client.sync_server_connection' "
+                    "not found on %s, not possible to setup sync credentials"
+                    " automatically" % dbname)
+                continue
 
-                if password_from_file:
-                    logger.info('Automatic reconnection to the SYNC_SERVER')
-                    # reconnect to SYNC_SERVER
-                    connection_module.connect(cr, 1, password=password_from_file)
+            if password_from_file:
+                logger.info('Automatic reconnection to the SYNC_SERVER')
+                # reconnect to SYNC_SERVER
+                connection_module.connect(cr, 1, password=password_from_file)
 
-                    # in caes of automatic patching, relaunch the sync
-                    # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
-                    if connection_module.is_automatic_patching_allowed(cr, 1):
-                        pool.get('sync.client.entity').sync_withbackup(cr, 1)
-                    break
-                else:
-                    connection_ids = connection_module.search(cr, 1, [])
-                    data_to_write = {
-                            'login': sync_user_login,
-                            'password': sync_user_password,
-                    }
-                    if connection_ids:
-                        logger.info('Automatic set up of sync connection credentials')
-                        connection_module.write(cr, 1, connection_ids, data_to_write)
-                        cr.commit()
-            finally:
-                cr.close()
+                # in caes of automatic patching, relaunch the sync
+                # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
+                if connection_module.is_automatic_patching_allowed(cr, 1):
+                    pool.get('sync.client.entity').sync_withbackup(cr, 1)
+                break
+            else:
+                connection_ids = connection_module.search(cr, 1, [])
+                data_to_write = {
+                        'login': sync_user_login,
+                        'password': sync_user_password,
+                }
+                if connection_ids:
+                    logger.info('Automatic set up of sync connection credentials')
+                    connection_module.write(cr, 1, connection_ids, data_to_write)
+                    cr.commit()
     except Exception as e:
         if os.path.isfile(credential_filepath) or password_from_file:
             message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file: %s"
         else:
-            message = "Error durring the automatic setting of synchronization "
-            "credentials on the sync_server_connection: %s"
+            message = "Error durring the automatic setting of synchronization credentials on the sync_server_connection: %s"
         logger.error(message % (unicode(e)))
+    finally:
+        if cr is not None:
+            cr.close()
 
 def check_mako_xml():
     """
