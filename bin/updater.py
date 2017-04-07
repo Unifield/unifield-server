@@ -445,42 +445,90 @@ def do_upgrade(cr, pool):
 def reconnect_sync_server():
     """Reconnect the connection manager to the SYNC_SERVER if password file
     exists
+    If password file is not found but sync_user_login and sync_user_password are
+    found in the config file, set them into the connection manager, this way
+    there is no need to enter them manually.
     """
     import tools
+    import pooler
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
-    if os.path.isfile(credential_filepath):
-        import base64
-        import pooler
-        f = open(credential_filepath, 'r')
-        lines = f.readlines()
-        f.close()
-        if lines:
-            try:
-                dbname = base64.decodestring(lines[0])
-                password = base64.decodestring(lines[1])
-                logger.info('dbname = %s' % dbname)
-                db, pool = pooler.get_db_and_pool(dbname)
-                db, pool = pooler.restart_pool(dbname) # do not remove this line, it is required to restart pool not to have
-                # strange behaviour with the connection on web interface
+    sync_user_login = tools.config.get('sync_user_login')
+    sync_user_password = tools.config.get('sync_user_password')
+    dbname_list = []
+    password_from_file = None
 
-                # do not execute this code on server side
-                if not pool.get("sync.server.entity"):
-                    cr = db.cursor()
-                    # delete the credential file
+    try:
+        if os.path.isfile(credential_filepath):
+            import base64
+            with open(credential_filepath, 'r') as f:
+                lines = f.readlines()
+            if lines:
+                dbname = base64.decodestring(lines[0])
+                dbname_list.append(dbname)
+                password_from_file = base64.decodestring(lines[1])
+
+
+        # in case there is no file for automatic reconnecion after patching,
+        # then get the list of all db and try to set the login/password on all
+        if not dbname_list and sync_user_login and sync_user_password:
+            from service.web_services import db
+            # try to set up the login/password on all databases listed
+            dbname_list = db().exp_list()
+
+        # remove database name that looks to be SYNC_SERVER
+        dbname_list = [x for x in dbname_list if 'SYNC' not in x]
+
+        for dbname in dbname_list:
+            logger.info('dbname = %s' % dbname)
+            db, pool = pooler.get_db_and_pool(dbname)
+            db, pool = pooler.restart_pool(dbname)  # do not remove this line,
+            # it is required to restart pool not to have strange behaviour
+            # with the connection on web interface
+
+            # do not execute this code on server side
+            if pool.get("sync.server.entity"):
+                continue
+
+            try:
+                cr = db.cursor()
+                # delete the credential file
+                if os.path.isfile(credential_filepath):
                     os.remove(credential_filepath)
+
+                connection_module = pool.get("sync.client.sync_server_connection")
+                if not connection_module:
+                    logger.error("Module 'sync.client.sync_server_connection' "
+                        "not found on %s, not possible to setup sync credentials"
+                        " automatically" % dbname)
+                    continue
+
+                if password_from_file:
                     # reconnect to SYNC_SERVER
-                    connection_module = pool.get("sync.client.sync_server_connection")
-                    connection_module.connect(cr, 1, password=password)
+                    connection_module.connect(cr, 1, password=password_from_file)
 
                     # in caes of automatic patching, relaunch the sync
                     # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
                     if connection_module.is_automatic_patching_allowed(cr, 1):
                         pool.get('sync.client.entity').sync_withbackup(cr, 1)
-                    cr.close()
-            except Exception as e:
-                message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file : %s"
-                logger.error(message % (unicode(e)))
-
+                    break
+                else:
+                    connection_ids = connection_module.search(cr, 1, [])
+                    data_to_write = {
+                            'login': sync_user_login,
+                            'password': sync_user_password,
+                    }
+                    if connection_ids:
+                        connection_module.write(cr, 1, connection_ids, data_to_write)
+                        cr.commit()
+            finally:
+                cr.close()
+    except Exception as e:
+        if os.path.isfile(credential_filepath) or password_from_file:
+            message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file: %s"
+        else:
+            message = "Error durring the automatic setting of synchronization "
+                "credentials on the sync_server_connection: %s"
+        logger.error(message % (unicode(e)))
 
 def check_mako_xml():
     """
