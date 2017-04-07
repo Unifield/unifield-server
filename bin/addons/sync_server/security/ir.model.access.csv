@@ -35,7 +35,6 @@
 "access_res_users_user_all","res_users_user all","res.users",1,0,0,0,
 "access_ir_translation_user_all","ir_translation_user all","ir.translation",1,0,0,0,
 "access_res_country_sync_user","res_country_for_sync_user","res.country",1,1,1,0,"sync_common.sync_read_group"
-"read_sync_manager_id","read_sync_manager","sync.server.sync_manager",1,0,0,0,"sync_common.instance_sync_user"
 "read_server_entity_id","read_server_entity","sync.server.entity",1,0,0,0,"sync_common.instance_sync_user"
 "read_sync_rule_id","read_sync_rule","sync_server.sync_rule",1,0,0,0,"sync_common.instance_sync_user"
 "read_entity_group_id","read_entity_group","sync.server.entity_group",1,0,0,0,"sync_common.instance_sync_user"
