@@ -527,7 +527,7 @@ def reconnect_sync_server():
             message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file: %s"
         else:
             message = "Error durring the automatic setting of synchronization "
-                "credentials on the sync_server_connection: %s"
+            "credentials on the sync_server_connection: %s"
         logger.error(message % (unicode(e)))
 
 def check_mako_xml():
