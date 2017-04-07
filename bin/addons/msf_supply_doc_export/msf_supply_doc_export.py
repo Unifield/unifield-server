@@ -727,7 +727,7 @@ class ir_values(osv.osv):
                 elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
                     new_act.append(v)
                 values = new_act
-        elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
+        elif key == 'action' and key2 == 'client_print_multi' and context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:
                 if v[2].get('report_name', False) :
