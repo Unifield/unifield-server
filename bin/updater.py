@@ -479,7 +479,7 @@ def reconnect_sync_server():
         dbname_list = [x for x in dbname_list if 'SYNC' not in x]
 
         for dbname in dbname_list:
-            logger.info('dbname = %s' % dbname)
+            logger.info('reconnect_sync_server: dbname = %s' % dbname)
             db, pool = pooler.get_db_and_pool(dbname)
             db, pool = pooler.restart_pool(dbname)  # do not remove this line,
             # it is required to restart pool not to have strange behaviour
@@ -503,6 +503,7 @@ def reconnect_sync_server():
                     continue
 
                 if password_from_file:
+                    logger.info('Automatic reconnection to the SYNC_SERVER')
                     # reconnect to SYNC_SERVER
                     connection_module.connect(cr, 1, password=password_from_file)
 
@@ -518,6 +519,7 @@ def reconnect_sync_server():
                             'password': sync_user_password,
                     }
                     if connection_ids:
+                        logger.info('Automatic set up of sync connection credentials')
                         connection_module.write(cr, 1, connection_ids, data_to_write)
                         cr.commit()
             finally:
