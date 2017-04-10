@@ -76,6 +76,7 @@
         'workflow/procurement_request_workflow.xml',
         'doc_import_report.xml',
         'wizard/wizard_import_batch_view.xml',
+        'wizard/wizard_import_invoice_line.xml',
     ],
     "demo_xml": [],
     "test": [

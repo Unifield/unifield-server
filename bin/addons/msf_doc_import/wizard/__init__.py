@@ -108,6 +108,23 @@ PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Comment'), 'string')]
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
 
+ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT = [
+    (_('Description'), 'string'), (_('Account'), 'string'), (_('Quantity'), 'number'), (_('Unit Price'), 'number'), (_('Destination'), 'string'), (_('Cost Center'), 'string'), (_('Funding Pool'), 'string')]
+ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT = [x for (x,y) in ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT]
+
+# if you update a file in NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
+# in NEW_COLUMNS_HEADER, you choose which columns you want to actually import (it is filtered on what you want if you compare with PO_COLUMNS_HEADER_FOR_INTEGRATION)
+NEW_COLUMNS_HEADER = [
+    ('Line', 'number'), ('Product Code', 'string'), ('Product Description', 'string'), ('Quantity', 'number'), ('UoM', 'string'), ('Price', 'number'), ('Delivery Request Date', 'date'),
+    ('Delivery Confirmed Date', 'date'),('Origin', 'string'), ('Comment', 'string'), ('Notes', 'string'), ('Supplier Reference', 'string'), ('Incoterm', 'string')]
+
+#Important NOTE: I didn't set the fields of type date with the attribute 'date' (2nd part of the tuple) because for Excel, when a date is empty, the field becomes '1899-30-12' as default. So I set 'string' instead for the fields date.
+
+PO_COLUMNS_HEADER_FOR_IMPORT=[
+    (_('Line Number'), 'number'), (_('Product Code'), 'string'), (_('Product Description'), 'string'), (_('Quantity'), 'number'), (_('UoM'), 'string'), (_('Price'), 'number'),
+    (_('Delivery Request Date'), 'date'), (_('Currency'), 'string'), (_('Comment'), 'string'), (_('Justification Code'), 'string'), (_('Justification Coordination'), 'string'), (_('HQ Remarks'), 'string'), (_('Justification Y/N'), 'string'),]
+PO_LINE_COLUMNS_FOR_IMPORT = [x for (x, y) in PO_COLUMNS_HEADER_FOR_IMPORT]
+
 SUPPLIER_CATALOG_COLUMNS_HEADER_FOR_IMPORT = [
     (_('Product Code'), 'string'),
     (_('Product Description'), 'string'),
@@ -123,6 +140,7 @@ SUPPLIER_CATALOG_COLUMNS_FOR_IMPORT = [x for (x,y) in SUPPLIER_CATALOG_COLUMNS_H
 import wizard_import_po
 import stock_partial_picking
 import wizard_import_po_line
+import wizard_import_invoice_line
 import wizard_import_fo_line
 import wizard_import_ir_line
 import wizard_import_picking_line
