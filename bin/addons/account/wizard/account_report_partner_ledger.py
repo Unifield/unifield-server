@@ -76,5 +76,30 @@ class account_partner_ledger(osv.osv_memory):
                 'datas': data,
         }
 
+    def print_report_xls(self, cr, uid, ids, data, context=None):
+        if context is None:
+            context = {}
+        if context is None:
+            context = {}
+        data = {}
+        data['keep_open'] = 1
+        data['ids'] = context.get('active_ids', [])
+        data['model'] = context.get('active_model', 'ir.ui.menu')
+        data['form'] = self.read(cr, uid, ids, ['date_from',  'date_to',  'fiscalyear_id', 'journal_ids', 'period_from', 'period_to',  'filter',  'chart_account_id', 'target_move'])[0]
+        used_context = self._build_contexts(cr, uid, ids, data, context=context)
+        data['form']['periods'] = used_context.get('periods', False) and used_context['periods'] or []
+        data['form']['used_context'] = used_context
+
+        data = self.pre_print_report(cr, uid, ids, data, context=context)
+        data['form'].update(self.read(cr, uid, ids, ['initial_balance', 'reconcil', 'page_split', 'amount_currency',
+                                                     'tax', 'partner_ids', 'only_active_partners', 'instance_ids',
+                                                     'account_ids'])[0])
+        self._check_dates_fy_consistency(cr, uid, data, context)
+        return {
+                'type': 'ir.actions.report.xml',
+                'report_name': 'account.third_party_ledger_xls',
+                'datas': data,
+        }
+
 account_partner_ledger()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

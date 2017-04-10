@@ -24,6 +24,7 @@ import re
 from report import report_sxw
 from common_report_header import common_report_header
 import pooler
+from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetReport
 from tools.translate import _
 
 class third_party_ledger(report_sxw.rml_parse, common_report_header):
@@ -184,7 +185,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         objects = obj_partner.browse(self.cr, self.uid, new_ids)
         res = super(third_party_ledger, self).set_context(objects, data, new_ids, report_type)
         common_report_header._set_context(self, data)
-
         if data['model'] == 'ir.ui.menu':
             # US-324: use of user LG instead of each partner in the report
             lang_dict = self.pool.get('res.users').read(self.cr,self.uid,self.uid,['context_lang'])
@@ -426,4 +426,6 @@ report_sxw.report_sxw('report.account.third_party_ledger_other', 'res.partner',
         'addons/account/report/account_partner_ledger_other.rml',parser=third_party_ledger,
         header='internal landscape')
 
+SpreadsheetReport('report.account.third_party_ledger_xls', 'res.partner',
+        'addons/account/report/account_partner_ledger.mako', parser=third_party_ledger)
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
