@@ -147,13 +147,15 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             "INNER JOIN res_partner p ON l.partner_id = p.id "
             "INNER JOIN account_account ac ON l.account_id = ac.id "
             "WHERE am.state IN %s "
+            "AND ac.id IN %s "
             " " + self.RECONCILE_REQUEST + " "
             " " + self.INSTANCE_REQUEST + " "
+            " " + self.PARTNER_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
             " " + self.IB_DATE_TO + " "
             "GROUP BY p.id, p.ref, p.name, l.account_id, ac.name, ac.code, ac.id "
             "ORDER BY l.account_id,p.name ",
-            (tuple(self.move_state),))
+            (tuple(self.move_state), tuple(self.account_ids)))
         return self.cr.dictfetchall()
 
     def lines(self):
@@ -417,7 +419,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     " " + self.RECONCILE_REQUEST + " "
                     " " + self.INSTANCE_REQUEST + " ",
                     (tuple(self.account_ids), tuple(self.move_state)))
-        temp_res = float(self.cr.fetchone()[0] or 0.0)
+        temp_res = float(self.cr.fetchone()[0] or 0.0))
         return temp_res + init_res
 
     def _sum_credit(self):
