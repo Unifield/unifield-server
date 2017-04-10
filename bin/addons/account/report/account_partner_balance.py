@@ -419,7 +419,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     " " + self.RECONCILE_REQUEST + " "
                     " " + self.INSTANCE_REQUEST + " ",
                     (tuple(self.account_ids), tuple(self.move_state)))
-        temp_res = float(self.cr.fetchone()[0] or 0.0))
+        temp_res = float(self.cr.fetchone()[0] or 0.0)
         return temp_res + init_res
 
     def _sum_credit(self):
