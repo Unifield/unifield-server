@@ -53,8 +53,12 @@
             <xpath expr="//field[@name='period_to']" position="attributes">
                 <attribute name="domain">[]</attribute>
             </xpath>
-            <xpath expr="//button[@name='check_report']" position="after">
-                <button icon="gtk-print" name="print_report_xls" string="Print Excel" type="object" colspan="2" />
+            <xpath expr="//group[1]" position="replace">
+                <group col="4" colspan="4">
+                    <button icon="gtk-print" name="check_report" string="Print PDF" type="object" colspan="2" default_focus="1" />
+                    <button icon="gtk-print" name="print_report_xls" string="Print Excel" type="object" colspan="2" />
+                    <button icon="gtk-cancel" special="cancel" string="Cancel" colspan="4"/>
+                </group>
             </xpath>
             </data>
             </field>

@@ -79,8 +79,6 @@ class account_partner_ledger(osv.osv_memory):
     def print_report_xls(self, cr, uid, ids, data, context=None):
         if context is None:
             context = {}
-        if context is None:
-            context = {}
         data = {}
         data['keep_open'] = 1
         data['ids'] = context.get('active_ids', [])
