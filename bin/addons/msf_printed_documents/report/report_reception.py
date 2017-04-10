@@ -100,7 +100,7 @@ class report_reception(report_sxw.rml_parse):
         # Back Order amount = PO amount - all receipts
 
         # get PO qty
-        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else line.product_qty
+        qtyPO = line.purchase_line_id.product_qty if line.purchase_line_id else 0
         # get received qty (current and previous INs)
         cr, uid = self.cr, self.uid
         val = 0.00
