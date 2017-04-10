@@ -172,7 +172,6 @@
   </stylesheet>
 
   <story>
-
     <blockTable colWidths="539.0" style="Table_Company_Name">
       <tr>
         <td>
@@ -257,17 +256,17 @@
             <tr>
               <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ a['type']==3 and a['code'] ]]</para></td>
               <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ a['name'] ]][[ a['ref'] and ' - %s' % a['ref'] ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['debit']) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['credit']) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['balance']) ]] [[ company.currency_id.name ]]</para></td>
+              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['debit'] or 0.0) ]]</para></td>
+              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['credit'] or 0.0) ]]</para></td>
+              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['balance'] or 0.0) ]] [[ company.currency_id.name ]]</para></td>
               <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['enlitige'] or 0.0) ]] [[ company.currency_id.name ]]</para></td>
             </tr>
             <tr> [[data['form']['initial_balance'] == True and ' ' or removeParentNode('tr') ]]
               <td><para style="P3"></para></td>
               <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>Initial Balance</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['initial_balance'][0][0] or 0.0) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['initial_balance'][0][1] or 0.0) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['initial_balance'][0][2] or 0.0) ]]</para></td>
+              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['ib_debit'] or 0.0) ]]</para></td>
+              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['ib_credit'] or 0.0) ]]</para></td>
+              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['ib_balance'] or 0.0) ]]</para></td>
               <td><para style="P4"></para></td>
             </tr>
           </blockTable>

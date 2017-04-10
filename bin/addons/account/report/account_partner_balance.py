@@ -33,8 +33,6 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.account_ids = []
         self.IB_DATE_TO = ''
         self.IB_JOURNAL_REQUEST = ''
-        self.result_lines = False
-        self.partner_account_used_for_ib = []
         self.localcontext.update( {
             'time': time,
             'lines': self.lines,
@@ -137,32 +135,28 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         common_report_header._set_context(self, data)
         return res
 
-    def _get_initial_balance(self, partner_id, account_id):
+    def _get_initial_balance(self):
         """
-        Returns the initial balance for the partner and account in parameter as: [(debit, credit, balance)]
+        Returns the initial balances by partner and account
         """
-        if not partner_id or not account_id:
-            return [(0.0, 0.0, 0.0)]
         self.cr.execute(
-            "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) "
-            "FROM account_move_line AS l,  "
-            "account_move AS am "
-            "WHERE l.partner_id = %s "
-            "AND am.id = l.move_id "
-            "AND am.state IN %s "
-            "AND account_id = %s"
+            "SELECT p.id as partner_id, ac.id as account_id, p.ref, l.account_id, ac.name AS account_name, "
+            "ac.code AS code, p.name, COALESCE(SUM(l.debit), 0.0) as ib_debit, COALESCE(SUM(l.credit), 0.0) as ib_credit, "
+            "COALESCE(sum(debit-credit), 0.0) as ib_balance "
+            "FROM account_move_line AS l INNER JOIN account_move am ON am.id = l.move_id "
+            "INNER JOIN res_partner p ON l.partner_id = p.id "
+            "INNER JOIN account_account ac ON l.account_id = ac.id "
+            "WHERE am.state IN %s "
             " " + self.RECONCILE_REQUEST + " "
             " " + self.INSTANCE_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
-            " " + self.IB_DATE_TO + " ",
-            (partner_id, tuple(self.move_state), account_id))
-        # store the tuple (partner, account) where an IB has been calculated
-        self.partner_account_used_for_ib.append((partner_id, account_id))
-        return self.cr.fetchall()
+            " " + self.IB_DATE_TO + " "
+            "GROUP BY p.id, p.ref, p.name, l.account_id, ac.name, ac.code, ac.id "
+            "ORDER BY l.account_id,p.name ",
+            (tuple(self.move_state),))
+        return self.cr.dictfetchall()
 
     def lines(self):
-        if self.result_lines:
-            return self.result_lines
         full_account = []
         self.cr.execute(
             "SELECT p.id as partner_id, ac.id as account_id, p.ref, l.account_id, ac.name AS account_name, "
@@ -204,19 +198,46 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             if not rec.get('name', False):
                 rec.update({'name': _('Unknown Partner')})
 
-        full_account_ib = []
+        # add the initial balances if requested
+        if self.initial_balance:
+            initial_balances = self._get_initial_balance()
+            for ib in initial_balances:
+                partner_id = ib['partner_id']
+                account_id = ib['account_id']
+                found = False
+                # update the result lines with the corresponding IB result
+                for fa in full_account:
+                    if partner_id == fa['partner_id'] and account_id == fa['account_id']:
+                        fa.update({'ib_debit': ib['ib_debit'],
+                                   'ib_credit': ib['ib_credit'],
+                                   'ib_balance': ib['ib_balance'],
+                                   })
+                        found = True
+                        break
+                # use case: IB lines existing for an "account-partner" association where no "standard values" have been found:
+                # put the standard values to zero
+                if not found:
+                    ib.update({
+                        'debit': 0,
+                        'credit': 0,
+                        'sdebit': 0,
+                        'scredit': 0,
+                        'balance': 0,
+                        'enlitige': 0})
+                    full_account.append(ib)
+        # use case: "standard values" existing for an "account-partner" association where no IB values have been found
+        # OR "IB" tickbox not ticked:
+        # put the IB values to zero
         for fa in full_account:
-            # add the initial balance for each "account + partner"
-            ib = [(0.0, 0.0, 0.0)]
-            if self.initial_balance:
-                partner_id = fa.get('partner_id', False)
-                account_id = fa.get('account_id', False)
-                ib = self._get_initial_balance(partner_id, account_id)
-            fa['initial_balance'] = ib
-            full_account_ib.append(fa)
+            if 'ib_balance' not in fa.keys():
+                fa.update({
+                    'ib_debit': 0,
+                    'ib_credit': 0,
+                    'ib_balance': 0,
+                })
 
         ## We will now compute Total
-        self.result_lines = subtotal_row = self._add_subtotal(full_account_ib)
+        subtotal_row = self._add_subtotal(full_account)
         return subtotal_row
 
     def _add_subtotal(self, cleanarray):
@@ -245,9 +266,9 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 new_header['credit'] = r['credit']
                 new_header['scredit'] = tot_scredit
                 new_header['sdebit'] = tot_sdebit
-                new_header['initial_balance'] = []
-                # Initial Balance values are stored in a tuple in the following order: (debit, credit, balance)
-                new_header['initial_balance'].append((tot_ib_debit, tot_ib_credit, r['initial_balance'][0][0] - r['initial_balance'][0][1]))
+                new_header['ib_debit'] = tot_ib_debit
+                new_header['ib_credit'] = tot_ib_credit
+                new_header['ib_balance'] = r['ib_debit'] - r['ib_credit']
                 new_header['enlitige'] = tot_enlitige
                 new_header['balance'] = r['debit'] - r['credit']
                 new_header['type'] = 3
@@ -256,7 +277,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 #
                 r['type'] = 1
                 r['balance'] = float(r['sdebit']) - float(r['scredit'])
-                r['initial_balance'][0] = (r['initial_balance'][0][0], r['initial_balance'][0][1], float(r['initial_balance'][0][0]) - float(r['initial_balance'][0][1]))
+
+                r['ib_balance'] = float(r['ib_debit']) - float(r['ib_credit'])
 
                 completearray.append(r)
                 #
@@ -264,8 +286,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 tot_credit = r['credit']
                 tot_scredit = r['scredit']
                 tot_sdebit = r['sdebit']
-                tot_ib_debit = r['initial_balance'][0][0]
-                tot_ib_credit = r['initial_balance'][0][1]
+                tot_ib_debit = r['ib_debit']
+                tot_ib_credit = r['ib_credit']
                 tot_enlitige = (r['enlitige'] or 0.0)
                 #
             else:
@@ -275,8 +297,11 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     new_header['credit'] = tot_credit
                     new_header['scredit'] = tot_scredit
                     new_header['sdebit'] = tot_sdebit
-                    new_header['initial_balance'] = []
-                    new_header['initial_balance'].append((tot_ib_debit, tot_ib_credit, float(tot_ib_debit) - float(tot_ib_credit)))
+
+                    new_header['ib_debit'] = tot_ib_debit
+                    new_header['ib_credit'] = tot_ib_credit
+                    new_header['ib_balance'] = float(tot_ib_debit) - float(tot_ib_credit)
+
                     new_header['enlitige'] = tot_enlitige
                     new_header['balance'] = float(tot_sdebit) - float(tot_scredit)
                     new_header['type'] = 3
@@ -285,8 +310,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     tot_credit = r['credit']
                     tot_scredit = r['scredit']
                     tot_sdebit = r['sdebit']
-                    tot_ib_debit = r['initial_balance'][0][0]
-                    tot_ib_credit = r['initial_balance'][0][1]
+                    tot_ib_debit = r['ib_debit']
+                    tot_ib_credit = r['ib_credit']
                     tot_enlitige = (r['enlitige'] or 0.0)
                     #
                     ##
@@ -298,8 +323,11 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     new_header['credit'] = tot_credit
                     new_header['scredit'] = tot_scredit
                     new_header['sdebit'] = tot_sdebit
-                    new_header['initial_balance'] = []
-                    new_header['initial_balance'].append((tot_ib_debit, tot_ib_credit, float(tot_ib_debit) - float(tot_ib_credit)))
+
+                    new_header['ib_debit'] = tot_ib_debit
+                    new_header['ib_credit'] = tot_ib_credit
+                    new_header['ib_balance'] = float(tot_ib_debit) - float(tot_ib_credit)
+
                     new_header['enlitige'] = tot_enlitige
                     new_header['balance'] = float(tot_sdebit) - float(tot_scredit)
                     new_header['type'] = 3
@@ -312,7 +340,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     r['type'] = 1
                     #
                     r['balance'] = float(r['sdebit']) - float(r['scredit'])
-                    r['initial_balance'][0] = (r['initial_balance'][0][0], r['initial_balance'][0][1], float(r['initial_balance'][0][0]) - float(r['initial_balance'][0][1]))
+                    r['ib_balance'] = float(r['ib_debit']) - float(r['ib_credit'])
 
                     completearray.append(r)
 
@@ -325,16 +353,19 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     tot_credit = tot_credit + r['credit']
                     tot_scredit = tot_scredit + r['scredit']
                     tot_sdebit = tot_sdebit + r['sdebit']
-                    tot_ib_debit = tot_ib_debit + r['initial_balance'][0][0]
-                    tot_ib_credit = tot_ib_credit + r['initial_balance'][0][1]
+                    tot_ib_debit = tot_ib_debit + r['ib_debit']
+                    tot_ib_credit = tot_ib_credit + r['ib_credit']
                     tot_enlitige = tot_enlitige + (r['enlitige'] or 0.0)
 
                     new_header['debit'] = tot_debit
                     new_header['credit'] = tot_credit
                     new_header['scredit'] = tot_scredit
                     new_header['sdebit'] = tot_sdebit
-                    new_header['initial_balance'] = []
-                    new_header['initial_balance'].append((tot_ib_debit, tot_ib_credit, float(tot_ib_debit) - float(tot_ib_credit)))
+
+                    new_header['ib_debit'] = tot_ib_debit
+                    new_header['ib_credit'] = tot_ib_credit
+                    new_header['ib_balance'] = float(tot_ib_debit) - float(tot_ib_credit)
+
                     new_header['enlitige'] = tot_enlitige
                     new_header['balance'] = float(tot_sdebit) - float(tot_scredit)
 
@@ -342,7 +373,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                     r['type'] = 2
                     #
                     r['balance'] = float(r['sdebit']) - float(r['scredit'])
-                    r['initial_balance'][0] = (r['initial_balance'][0][0], r['initial_balance'][0][1], float(r['initial_balance'][0][0]) - float(r['initial_balance'][0][1]))
+                    r['ib_balance'] = float(r['ib_debit']) - float(r['ib_credit'])
                     #
 
                     completearray.append(r)
@@ -355,26 +386,24 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             return 0.0
         temp_res = 0.0
         init_res = 0.0
-        # calculate the Initial Balance ONLY for partner-account associations having IB lines displayed in the report
+        # calculate the Initial Balance
         if self.initial_balance:
-            self.lines()  # to get the correct values for self.partner_account_used_for_ib
-            for partner_account in self.partner_account_used_for_ib:
-                self.cr.execute(
-                        "SELECT sum(debit) "
-                        "FROM account_move_line AS l "
-                        "INNER JOIN account_move AS am ON am.id = l.move_id "
-                        "INNER JOIN res_partner AS p ON l.partner_id = p.id "
-                        "AND am.state IN %s "
-                        " " + self.RECONCILE_REQUEST + " "
-                        " AND p.id = %s "
-                        " AND l.account_id = %s "
-                        " " + self.IB_DATE_TO + " "
-                        " " + self.INSTANCE_REQUEST + " "
-                        " " + self.IB_JOURNAL_REQUEST + " ",
-                        (tuple(self.move_state), partner_account[0], partner_account[1]))
-                contemp = self.cr.fetchone()
-                if contemp != None:
-                    init_res += float(contemp[0] or 0.0)
+            self.cr.execute(
+                    "SELECT sum(debit) "
+                    "FROM account_move_line AS l "
+                    "INNER JOIN account_move AS am ON am.id = l.move_id "
+                    "INNER JOIN res_partner AS p ON l.partner_id = p.id "
+                    "AND am.state IN %s "
+                    "AND l.account_id IN %s"
+                    " " + self.RECONCILE_REQUEST + " "
+                    " " + self.PARTNER_REQUEST + " "
+                    " " + self.IB_DATE_TO + " "
+                    " " + self.INSTANCE_REQUEST + " "
+                    " " + self.IB_JOURNAL_REQUEST + " ",
+                    (tuple(self.move_state), tuple(self.account_ids)))
+            contemp = self.cr.fetchone()
+            if contemp != None:
+                init_res = float(contemp[0] or 0.0)
 
         self.cr.execute(
                 "SELECT sum(debit) " \
@@ -396,26 +425,24 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             return 0.0
         temp_res = 0.0
         init_res = 0.0
-        # calculate the Initial Balance ONLY for partner-account associations having IB lines displayed in the report
+        # calculate the Initial Balance
         if self.initial_balance:
-            self.lines()  # to get the correct values for self.partner_account_used_for_ib
-            for partner_account in self.partner_account_used_for_ib:
-                self.cr.execute(
-                        "SELECT sum(credit) "
-                        "FROM account_move_line AS l "
-                        "INNER JOIN account_move AS am ON am.id = l.move_id "
-                        "INNER JOIN res_partner AS p ON l.partner_id = p.id "
-                        "AND am.state IN %s "
-                        " " + self.RECONCILE_REQUEST + " "
-                        " AND p.id = %s "
-                        " AND l.account_id = %s "
-                        " " + self.IB_DATE_TO + " "
-                        " " + self.INSTANCE_REQUEST + " "
-                        " " + self.IB_JOURNAL_REQUEST + " ",
-                        (tuple(self.move_state), partner_account[0], partner_account[1]))
-                contemp = self.cr.fetchone()
-                if contemp != None:
-                    init_res += float(contemp[0] or 0.0)
+            self.cr.execute(
+                    "SELECT sum(credit) "
+                    "FROM account_move_line AS l "
+                    "INNER JOIN account_move AS am ON am.id = l.move_id "
+                    "INNER JOIN res_partner AS p ON l.partner_id = p.id "
+                    "AND am.state IN %s "
+                    "AND l.account_id IN %s"
+                    " " + self.RECONCILE_REQUEST + " "
+                    " " + self.PARTNER_REQUEST + " "
+                    " " + self.IB_DATE_TO + " "
+                    " " + self.INSTANCE_REQUEST + " "
+                    " " + self.IB_JOURNAL_REQUEST + " ",
+                    (tuple(self.move_state), tuple(self.account_ids)))
+            contemp = self.cr.fetchone()
+            if contemp != None:
+                init_res = float(contemp[0] or 0.0)
 
         self.cr.execute(
                 "SELECT sum(credit) " \
