@@ -24,7 +24,7 @@
 from osv import osv
 from osv import fields
 from tools.translate import _
-from register_tools import create_cashbox_lines
+from register_tools import create_cashbox_lines, previous_register_id
 
 class account_cash_statement(osv.osv):
     _name = "account.bank.statement"
@@ -111,6 +111,15 @@ class account_cash_statement(osv.osv):
             # accountant manual field
             if journal.type == 'bank':
                 vals.update({'balance_start': prev_reg.balance_end_real})
+
+        if not prev_reg and sync_update and vals.get('period_id') and vals.get('journal_id'):
+            prev_reg_id = previous_register_id(cr, uid, vals['period_id'], vals['journal_id'], context=context)
+            if prev_reg_id:
+                prev_reg = self.browse(cr, uid, [prev_reg_id], fields_to_fetch=['responsible_ids'], context=context)[0]
+
+        if 'responsible_ids' not in vals and prev_reg and prev_reg.responsible_ids:
+            vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
+
         res_id = osv.osv.create(self, cr, uid, vals, context=context)
         # take on previous lines if exists (or discard if they come from sync)
         if prev_reg_id and not sync_update:
