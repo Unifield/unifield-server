@@ -25,6 +25,7 @@ from osv import osv, fields
 from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
+from account_override import ACCOUNT_RESTRICTED_AREA
 import time
 from msf_doc_import.wizard import ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT as columns_for_account_line_import
 
@@ -156,9 +157,36 @@ class wizard_import_invoice_line(osv.osv_memory):
                         continue
                     account_id = account_ids[0]
                     account = account_obj.browse(cr, uid, account_id)
+                    # like in US-2170, account of type donation are not allowed
+                    if account.type_for_register == 'donation':
+                        add_error(_('Line %s. Account %s is donation type which is forbidden.') % (line_num, account_value))
+                        continue
 
+                    domain = [('id', '=', account_id)]
+                    if context.get('intermission_type', False):
+                        domain.extend(ACCOUNT_RESTRICTED_AREA['intermission_lines'])
+                        error_domain = _('Line %s: Some restrictions prevent account %s to be used to import this line:\n'
+                        '- the account cannot be of type view\n'
+                        '- \'User Type Code\' should be in (\'expense\', \'income\', \'receivables\')\n'
+                        '- \'P&L / BS Category\' cannot be None.') % (line_num, account_value)
+                    else:
+                        domain.extend(ACCOUNT_RESTRICTED_AREA['invoice_lines'])
+                        error_domain = _('Line %s: Some restrictions prevent account %s to be used to import this line:\n'
+                        '- the account cannot be of type view or liquidity\n'
+                        '- the account should be editable on HQ\n'
+                        '- \'Type for specific treatment\' cannot be \'donation\'\n'
+                        '- \'Internal Type\' should be different from \'other\' OR \'User Type Code\' should be different from \'stock\'\n'
+                        '- \'User Type Code\' should be different from \'expense\' OR \'P&L / BS Category\' not None.'
+                        ) % (line_num, account_value)
+                        # US-2170, special case for Stock Transfer Vouchers
+                        is_stock_transfer_voucher = context.get('journal_type') == 'sale' and context.get('type') == 'out_invoice'
+                        if is_stock_transfer_voucher:
+                            domain.extend([('user_type_code', 'in', ['expense', 'income', 'receivables'])])
+                            error_domain += _('\n- \'User Type Code\' should be in (\'expense\', \'income\', \'receivables\').')
 
-
+                    if not account_obj.search_exist(cr, uid, domain, context=context):
+                        add_error(error_domain)
+                        continue
 
                     ## Cell 2: Quantity
                     quantity_value = line[header_index[_('Quantity')]]

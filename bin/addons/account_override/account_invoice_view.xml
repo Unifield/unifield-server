@@ -508,6 +508,9 @@
                             <field name="account_id" domain="[('company_id', '=', company_id), ('restricted_area', '=', 'intermission_header')]"/>
                             <field name="name" string="Reference"/>
                             <newline/>
+                            <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                                <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                            </group>
                             <field colspan="4" name="invoice_line" nolabel="1" widget="one2many_list" context="{'is_intermission': True}">
                                 <tree string="Intermission Voucher Lines">
                                     <field name="is_corrected" invisible="1"/>
@@ -606,7 +609,12 @@
                     <field name="tax_line" position="replace"/>
                     <button name="button_reset_taxes" position="replace"/>
                     <button name="invoice_proforma2" position="replace"/>
-                    <xpath expr="/form/notebook/page[@string='Invoice']/group[2]" position="replace">
+                    <xpath expr="/form/notebook/page[@string='Invoice']/field[@name='invoice_line']" position="before" >
+                        <group name="import" string=" Import Lines " colspan="4" col="4" attrs="{'invisible':[('state', '!=', 'draft')]}">
+                            <button name="wizard_import_si_line" string="Import lines" icon="gtk-dnd" type="object" attrs="{'invisible':[('state', '!=', 'draft')]}"/>
+                        </group>
+                    </xpath>
+                    <xpath expr="/form/notebook/page[@string='Invoice']/group[3]" position="replace">
                         <group col="8" colspan="4">
                             <label string="" colspan="3"/>
                             <field name="reconciled"/>
