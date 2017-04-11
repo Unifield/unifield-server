@@ -276,21 +276,7 @@
                     <para style="TextRemarks">REMARKS : [[ objects[0].notes ]]</para>
                 </td>
             </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <para style="TextInformation"> </para>
-                </td>
-            </tr>
+            <tr></tr>
         </blockTable>
         <blockTable colWidths="44.0,169.0,225.0,225.0" style="FooterInfo" keepWithNext="1">
             <tr>
