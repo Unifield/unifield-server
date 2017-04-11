@@ -171,7 +171,11 @@ now = time.strftime('%Y-%m-%d')
 <Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.real_stock or 0.0}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.uom_id and l.uom_id.name|x}</Data></Cell>
 <Cell ss:StyleID="line"><Data ss:Type="String">${l.batch_number|x}</Data></Cell>
+% if isDate(l.expiry_date):
 <Cell ss:StyleID="short_date"><Data ss:Type="DateTime">${l.expiry_date|n}T00:00:00.000</Data></Cell>
+% else:
+<Cell ss:StyleID="line"><Data ss:Type="String"></Data></Cell>
+% endif
 <Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.expired_qty or 0.00}</Data></Cell>
 <Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.product_id and l.product_id.standard_price or 0.00}</Data></Cell>
 <Cell ss:StyleID="lineNumber"><Data ss:Type="Number">${l.product_id and l.product_id.standard_price*l.expired_qty or 0.0}</Data></Cell>
