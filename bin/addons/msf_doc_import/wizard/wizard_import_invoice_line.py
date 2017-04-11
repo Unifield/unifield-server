@@ -165,24 +165,24 @@ class wizard_import_invoice_line(osv.osv_memory):
                     domain = [('id', '=', account_id)]
                     if context.get('intermission_type', False):
                         domain.extend(ACCOUNT_RESTRICTED_AREA['intermission_lines'])
-                        error_domain = _('Line %s: Some restrictions prevent account %s to be used to import this line:\n'
-                        '- the account cannot be of type view\n'
-                        '- \'User Type Code\' should be in (\'expense\', \'income\', \'receivables\')\n'
-                        '- \'P&L / BS Category\' cannot be None.') % (line_num, account_value)
+                        error_domain = _("Line %s: Some restrictions prevent account %s to be used to import this line:\n"
+                        "- the account cannot be of type view\n"
+                        "- 'User Type Code' should be in ('expense', 'income', 'receivables')\n"
+                        "- 'P&L / BS Category' cannot be None.") % (line_num, account_value)
                     else:
                         domain.extend(ACCOUNT_RESTRICTED_AREA['invoice_lines'])
-                        error_domain = _('Line %s: Some restrictions prevent account %s to be used to import this line:\n'
-                        '- the account cannot be of type view or liquidity\n'
-                        '- the account should be editable on HQ\n'
-                        '- \'Type for specific treatment\' cannot be \'donation\'\n'
-                        '- \'Internal Type\' should be different from \'other\' OR \'User Type Code\' should be different from \'stock\'\n'
-                        '- \'User Type Code\' should be different from \'expense\' OR \'P&L / BS Category\' not None.'
+                        error_domain = _("Line %s: Some restrictions prevent account %s to be used to import this line:\n"
+                        "- the account cannot be of type view or liquidity\n"
+                        "- the account should be editable on HQ\n"
+                        "- 'Type for specific treatment' cannot be 'donation'\n"
+                        "- 'Internal Type' should be different from 'other' OR 'User Type Code' should be different from 'stock'\n"
+                        "- 'User Type Code' should be different from 'expense' OR 'P&L / BS Category' not None."
                         ) % (line_num, account_value)
                         # US-2170, special case for Stock Transfer Vouchers
                         is_stock_transfer_voucher = context.get('journal_type') == 'sale' and context.get('type') == 'out_invoice'
                         if is_stock_transfer_voucher:
                             domain.extend([('user_type_code', 'in', ['expense', 'income', 'receivables'])])
-                            error_domain += _('\n- \'User Type Code\' should be in (\'expense\', \'income\', \'receivables\').')
+                            error_domain += _("\n- 'User Type Code' should be in ('expense', 'income', 'receivables').")
 
                     if not account_obj.search_exist(cr, uid, domain, context=context):
                         add_error(error_domain)
@@ -198,37 +198,44 @@ class wizard_import_invoice_line(osv.osv_memory):
                     analytic_obj = self.pool.get('account.analytic.account')
                     if account.is_analytic_addicted:
                         # Check Destination
-                        if not line[header_index['Destination']]:
+                        if not line[header_index[_('Destination')]]:
                             add_error(_('Line %s. No destination specified!') % (line_num,))
                             continue
-                        destination_ids = analytic_obj.search(cr, uid, [('category', '=', 'DEST'), '|', ('name', '=', line[header_index['Destination']]), ('code', '=', line[header_index['Destination']])])
+                        destination_ids = analytic_obj.search(cr, uid, [('category', '=', 'DEST'),
+                            '|', ('name', '=', line[header_index[_('Destination')]]),
+                            ('code', '=', line[header_index[_('Destination')]])])
                         if not destination_ids:
-                            add_error(_('Line %s. Destination %s not found!') % (line_num, line[header_index['Destination']],))
+                            add_error(_('Line %s. Destination %s not found!') % (line_num,
+                                line[header_index[_('Destination')]],))
                             continue
                         r_destination = destination_ids[0]
                         # Check Cost Center
-                        if not line[header_index['Cost Center']]:
+                        if not line[header_index[_('Cost Center')]]:
                             add_error(_('Line %s. No cost center specified!') % (line_num,))
                             continue
                         # If necessary cast the CC into a string, otherwise the below search would crash
-                        if not isinstance(line[header_index['Cost Center']], basestring):
-                            line[header_index['Cost Center']] = '%s' % (line[header_index['Cost Center']])
-                        cc_ids = analytic_obj.search(cr, uid, [('category', '=', 'OC'), '|', ('name', '=', line[header_index['Cost Center']]), ('code', '=', line[header_index['Cost Center']])])
+                        if not isinstance(line[header_index[_('Cost Center')]], basestring):
+                            line[header_index[_('Cost Center')]] = '%s' % (line[header_index[_('Cost Center')]])
+                        cc_ids = analytic_obj.search(cr, uid, [('category', '=', 'OC'),
+                            '|', ('name', '=', line[header_index[_('Cost Center')]]),
+                            ('code', '=', line[header_index[_('Cost Center')]])])
                         if not cc_ids:
-                            add_error(_('Line %s. Cost Center %s not found!') % (line_num, line[header_index['Cost Center']]))
+                            add_error(_('Line %s. Cost Center %s not found!') % (line_num, line[header_index[_('Cost Center')]]))
                             continue
                         r_cc = cc_ids[0]
                         # Check Cost Center type
                         cc = analytic_obj.browse(cr, uid, r_cc, context)
                         if cc.type == 'view':
-                            add_error(_('Line %s. %s is a VIEW type Cost Center!') % (line_num, line[header_index['Cost Center']]))
+                            add_error(_('Line %s. %s is a VIEW type Cost Center!') % (line_num, line[header_index[_('Cost Center')]]))
                             continue
                         # Check Funding Pool
                         r_fp = msf_fp_id
-                        if line[header_index['Funding Pool']]:
-                            fp_ids = analytic_obj.search(cr, uid, [('category', '=', 'FUNDING'), '|', ('name', '=', line[header_index['Funding Pool']]), ('code', '=', line[header_index['Funding Pool']])])
+                        if line[header_index[_('Funding Pool')]]:
+                            fp_ids = analytic_obj.search(cr, uid, [('category', '=', 'FUNDING'),
+                                '|', ('name', '=', line[header_index[_('Funding Pool')]]),
+                                ('code', '=', line[header_index[_('Funding Pool')]])])
                             if not fp_ids:
-                                add_error(_('Line %s. Funding Pool %s not found!') % (line_num, line[header_index['Funding Pool']]))
+                                add_error(_('Line %s. Funding Pool %s not found!') % (line_num, line[header_index[_('Funding Pool')]]))
                                 continue
                             r_fp = fp_ids[0]
 
@@ -262,11 +269,6 @@ class wizard_import_invoice_line(osv.osv_memory):
                     invoice_line_obj.create(cr, uid, to_write, context=context)
                     self.created_lines += 1
 
-                except IndexError, e:
-                    add_message(_("Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-                                 ) % (line_num, template_col_count, e))
-                    cr.rollback()
-                    continue
                 except osv.except_osv as osv_error:
                     osv_value = osv_error.value
                     osv_name = osv_error.name
