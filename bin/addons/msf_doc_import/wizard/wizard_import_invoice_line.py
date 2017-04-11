@@ -26,9 +26,7 @@ from tools.translate import _
 import base64
 from spreadsheet_xml.spreadsheet_xml import SpreadsheetXML
 import time
-from msf_doc_import import check_line
 from msf_doc_import.wizard import ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT as columns_for_account_line_import
-import itertools
 
 
 class wizard_import_invoice_line(osv.osv_memory):
@@ -79,11 +77,8 @@ class wizard_import_invoice_line(osv.osv_memory):
             cr = dbname
         context.update({'import_in_progress': True, 'noraise': True})
         start_time = time.time()
-        wiz_common_import = self.pool.get('wiz.common.import')
-        product_obj = self.pool.get('product.product')
         invoice_line_obj = self.pool.get('account.invoice.line')
         categ_log = False
-        vals = {'invoice_line': []}
         account_id = False
         r_cc = False
         line_num = 0
@@ -100,7 +95,6 @@ class wizard_import_invoice_line(osv.osv_memory):
             header_index = context['header_index']
             template_col_count = len(header_index)
             mandatory_fields = ['Description', 'Account', 'Quantity', 'Unit Price']
-            mandatory_col_count = len(mandatory_fields)
 
             file_obj = SpreadsheetXML(xmlstring=base64.decodestring(wiz.file))
             row_iterator = file_obj.getRows()
@@ -112,7 +106,7 @@ class wizard_import_invoice_line(osv.osv_memory):
                 percent_completed = 100
                 break
             # ignore the header line
-            header = row_iterator.next()
+            row_iterator.next()
 
             def add_error(error):
                 self.error_list.append(error)
@@ -133,10 +127,6 @@ class wizard_import_invoice_line(osv.osv_memory):
                     'quantity': 1,
                     'line_number': '',
                 }
-                destination = False
-                cost_center = False
-                funding_pool = False
-
                 col_count = len(row)
                 if col_count != template_col_count:
                     add_message(_("Line %s: You should have exactly %s columns in this order: %s \n") % (
@@ -175,9 +165,6 @@ class wizard_import_invoice_line(osv.osv_memory):
 
                     ## Cell 3: Unit Price
                     unit_price_value = line[header_index[_('Unit Price')]]
-
-                    ## Cell 4: Destination
-                    destination_value = line[header_index[_('Destination')]]
 
                     # Check analytic axis only if account is analytic-a-holic
                     analytic_obj = self.pool.get('account.analytic.account')
@@ -310,7 +297,6 @@ Importation completed in %s!
         if isinstance(ids, (int, long)):
             ids = [ids]
         wiz_common_import = self.pool.get('wiz.common.import')
-        invoice_obj = self.pool.get('account.invoice')
         for wiz_read in self.read(cr, uid, ids, ['invoice_id', 'file']):
             invoice_id = wiz_read['invoice_id']
             if not wiz_read['file']:

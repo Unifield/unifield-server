@@ -21,7 +21,6 @@
 
 from osv import osv
 from osv import fields
-import tools
 import base64
 from tools.translate import _
 from spreadsheet_xml.spreadsheet_xml_write import SpreadsheetCreator
