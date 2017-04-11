@@ -2134,42 +2134,47 @@ class stock_picking(osv.osv):
         # pack.family.memory are long to read, read all in on time is much faster
         picking_to_families = dict((x['id'], x['pack_family_memory_ids']) for x in self.read(cr, uid, ids, ['pack_family_memory_ids'], context=context))
         family_set = set()
+
         for val in picking_to_families.values():
             family_set.update(val)
 
         family_read_result = pack_fam_obj.read(cr, uid,
                                                list(family_set),
-                                               ['num_of_packs', 'total_weight', 'total_volume', 'shipment_id', 'not_shipped'],
+                                               ['num_of_packs', 'total_weight', 'total_volume', 'shipment_id', 'not_shipped', 'move_lines'],
                                                context=context)
 
-        family_dict = dict((x['id'], x) for x in family_read_result)
-
-        for current_id, family_ids in picking_to_families.items():
+        for picking_id in picking_to_families:
             default_values = {
-                'num_of_packs': 0,
-                'total_weight': 0.0,
-                'total_volume': 0.0,
-
+               'num_of_packs': 0,
+               'total_weight': 0.0,
+               'total_volume': 0.0,
             }
-            result[current_id] = default_values
-            if family_ids:
-                num_of_packs = 0
-                total_weight = 0
-                total_volume = 0
-                for family_id in family_ids:
-                    if family_id in family_dict:
-                        family = family_dict[family_id]
-                        if family['shipment_id'] and family['not_shipped']:
-                            if self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context):
-                                continue
-                    num_of_packs += int(family['num_of_packs'])
-                    total_weight += float(family['total_weight'])
-                    total_volume += float(family['total_volume'])
+            result[picking_id] = default_values
 
-                result[current_id]['num_of_packs'] = num_of_packs
-                result[current_id]['total_weight'] = total_weight
-                result[current_id]['total_volume'] = total_volume
+            # get move lines from this stock_picking:
+            move_lines = set()
+            for fam in family_read_result:
+                if fam['id'] in picking_to_families[picking_id]: # if pack_family is from current picking
+                    move_lines.update(fam['move_lines'])
+
+            num_of_packs = 0
+            total_weight = 0.0
+            total_volume = 0.0
+            # get num_of_pack value from stock_move:
+            for move_line in self.pool.get('stock.move').browse(cr, uid, list(move_lines), context=context):
+                num_of_packs = max(num_of_packs, move_line.to_pack)
+
+            # get weight and volume from family_pack:
+            for fam in family_read_result:
+                total_weight += fam['total_weight']
+                total_volume += fam['total_volume']
+
+            result[picking_id]['num_of_packs'] = num_of_packs
+            result[picking_id]['total_weight'] = total_weight
+            result[picking_id]['total_volume'] = total_volume
+
         return result
+        
 
     def is_completed(self, cr, uid, ids, context=None):
         '''
