@@ -98162,3 +98162,9 @@ msgstr "Vous pouvez rafraichir l'écran si vous avez besoin de suivre la progres
 #: model:ir.model,name:msf_doc_import.model_wizard_import_invoice_line
 msgid "Import Invoice Lines from Excel sheet"
 msgstr "Importer des lignes depuis un fichier Excel"
+
+#. module: finance
+#: code:addons/finance/invoice.py:57
+#, python-format
+msgid "%s_template.xls"
+msgstr "modèle_%s.xls"

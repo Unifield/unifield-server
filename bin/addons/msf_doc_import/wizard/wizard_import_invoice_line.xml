@@ -7,8 +7,6 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
                 <form string="Import of lines">
-                    <separator colspan="4" string="Purchase information" />
-                    <field name="invoice_id" readonly="1" />
                     <separator colspan="4" string="File to import" />
                     <field name="file" filename="filename_template" />
                     <field name="percent_completed" widget="progressbar" attrs="{'invisible':[('state', '=', 'draft')]}"/>
