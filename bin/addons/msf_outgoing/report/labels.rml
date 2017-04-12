@@ -84,90 +84,87 @@
   <story>
     <para style="P8">[[repeatIn(objects,'stock_picking')]]</para>
     <section>
-      <para style="P7">[[repeatIn(stock_picking.pack_family_memory_ids,'pack_family')]]</para>
-      <section>
-        <para style="P7">[[repeatIn(range(pack_family.from_pack,pack_family.to_pack+1),'titi')]]</para>
-        <blockTable colWidths="186.0,351.0" style="Table6">
-          <tr>
-            <td><image>[[ company.logo or removeParentNode('image') ]]</image></td>
-            <td></td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and translate('Your Order:') or ' ' ]]</para>
-            </td>
-            <td>
-              <parawrap style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</parawrap>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.packing_parcel_number and translate('Parcel No:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.packing_parcel_number and '%s / %s'%(titi, stock_picking.num_of_packs) or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and translate('Our Pre Packing List Reference:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and stock_picking.name or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.destination_partner and translate('Project Destination:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.destination_partner and stock_picking.sale_id.partner_id.name or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.destination_address and translate('Project Destination Address:') or '' ]]</para>
-            </td>
-            <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
-              <para style="P3">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
-              <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.weight and translate('Weight:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P3">[[ stock_picking.ppl_customize_label.weight and str(pack_family.weight or '0.0') + ' kg' or ' ' ]]</para>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and translate('Specific Information:') or ' ' ]]</para>
-            </td>
-            <td>
-              <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and translate('CS') or ' ' ]]</para>
-            </td>
-          </tr>
-        </blockTable>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <para style="P1">
-          <font color="white"> </font>
-        </para>
-        <condPageBreak height="10cm" />
-      </section>
+      <para style="P7">[[repeatIn(range(1,stock_picking.num_of_packs+1),'titi')]]</para>
+      <blockTable colWidths="186.0,351.0" style="Table6">
+        <tr>
+          <td><image>[[ company.logo or removeParentNode('image') ]]</image></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.requestor_order_reference and translate('Your Order:') or ' ' ]]</para>
+          </td>
+          <td>
+            <parawrap style="P2">[[ stock_picking.ppl_customize_label.requestor_order_reference and stock_picking.sale_id.client_order_ref or ' ' ]]</parawrap>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.packing_parcel_number and translate('Parcel No:') or ' ' ]]</para>
+          </td>
+          <td>
+            <para style="P2">[[ stock_picking.ppl_customize_label.packing_parcel_number and '%s / %s'%(titi, stock_picking.num_of_packs) or ' ' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and translate('Our Pre Packing List Reference:') or ' ' ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ stock_picking.ppl_customize_label.pre_packing_list_reference and stock_picking.name or ' ' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.destination_partner and translate('Project Destination:') or ' ' ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ stock_picking.ppl_customize_label.destination_partner and stock_picking.sale_id.partner_id.name or ' ' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.destination_address and translate('Project Destination Address:') or '' ]]</para>
+          </td>
+          <td>
+            <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].street or ' ' ]]</para>
+            <para style="P3">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].city or ' ' ]]</para>
+            <para style="P2">[[ stock_picking.ppl_customize_label.destination_address and stock_picking.sale_id.partner_id.address[0].country_id.name or ' ' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.weight and translate('Weight:') or ' ' ]]</para>
+          </td>
+          <td>
+            <para style="P3">[[ stock_picking.ppl_customize_label.weight and str(pack_family.weight or '0.0') + ' kg' or ' ' ]]</para>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <para style="P4">[[ stock_picking.ppl_customize_label.specific_information and translate('Specific Information:') or ' ' ]]</para>
+          </td>
+          <td>
+            <para style="P2">[[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_keep_cool and translate('KC / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_dangerous_good and translate('DG / ') or ' ' ]][[ stock_picking.ppl_customize_label.specific_information and stock_picking.is_narcotic and translate('CS') or ' ' ]]</para>
+          </td>
+        </tr>
+      </blockTable>
+      <para style="P1">
+        <font color="white"> </font>
+      </para>
+      <para style="P1">
+        <font color="white"> </font>
+      </para>
+      <para style="P1">
+        <font color="white"> </font>
+      </para>
+      <para style="P1">
+        <font color="white"> </font>
+      </para>
+      <para style="P1">
+        <font color="white"> </font>
+      </para>
+      <condPageBreak height="10cm" />
     </section>
   </story>
 </document>

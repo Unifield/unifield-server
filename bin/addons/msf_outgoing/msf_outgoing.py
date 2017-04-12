@@ -2151,7 +2151,7 @@ class stock_picking(osv.osv):
             }
             result[picking_id] = default_values
 
-            # get move lines from this stock_picking:
+            # get all move lines from this stock_picking:
             move_lines = set()
             for fam in family_read_result:
                 if fam['id'] in picking_to_families[picking_id]: # if pack_family is from current picking
@@ -2174,7 +2174,7 @@ class stock_picking(osv.osv):
             result[picking_id]['total_volume'] = total_volume
 
         return result
-        
+
 
     def is_completed(self, cr, uid, ids, context=None):
         '''
