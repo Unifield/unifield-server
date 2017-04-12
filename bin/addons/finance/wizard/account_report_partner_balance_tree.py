@@ -79,12 +79,14 @@ class account_partner_balance_tree(osv.osv):
             "FROM account_move_line AS l INNER JOIN account_move am ON am.id = l.move_id "
             "INNER JOIN res_partner p ON l.partner_id = p.id "
             "INNER JOIN account_account ac ON l.account_id = ac.id "
+            "INNER JOIN account_account_type at ON ac.user_type = at.id "
             "WHERE am.state IN %s"
             " " + ACCOUNT_TYPE_REQUEST + " "
             " " + self.ACCOUNT_REQUEST + " "
             " " + self.RECONCILE_REQUEST + " "
             " " + self.INSTANCE_REQUEST + " "
             " " + self.PARTNER_REQUEST + " "
+            " " + self.TAX_REQUEST + " "
             " " + self.IB_JOURNAL_REQUEST + " "
             " " + self.IB_DATE_TO + " "
             "GROUP BY ac.type, p.id, p.ref, p.name, ac.name, ac.code "
@@ -204,9 +206,9 @@ class account_partner_balance_tree(osv.osv):
             where += self.INSTANCE_REQUEST
 
         # UFTP-312: take tax exclusion in account if user asked for it
-        TAX_REQUEST = ' '
+        self.TAX_REQUEST = ' '
         if data['form'].get('tax', False):
-            TAX_REQUEST = "AND at.code != 'tax'"
+            self.TAX_REQUEST = "AND at.code != 'tax'"
 
         self.PARTNER_REQUEST = 'AND l.partner_id IS NOT NULL'
         if data['form'].get('partner_ids', False):  # some partners are specifically selected
@@ -240,7 +242,7 @@ class account_partner_balance_tree(osv.osv):
             " WHERE ac.type IN " + self.account_type + "" \
             " AND am.state IN " + move_state + "" \
             " AND " + where + "" \
-            " " + TAX_REQUEST + " " \
+            " " + self.TAX_REQUEST + " " \
             " " + self.PARTNER_REQUEST + " " \
             " " + self.ACCOUNT_REQUEST + " " \
             " " + self.RECONCILE_REQUEST + " " \
