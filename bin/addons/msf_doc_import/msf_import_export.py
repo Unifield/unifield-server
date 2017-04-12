@@ -77,7 +77,7 @@ class msf_import_export(osv.osv_memory):
     }
 
     def get_filename(self, cr, uid, model, selection, template_only=False, context=None):
-        """Genberate a filename for the import/export
+        """Generate a filename for the import/export
         """
         model_obj = self.pool.get(model)
         file_name = _(MODEL_DICT[selection]['name'])
@@ -149,9 +149,16 @@ class msf_import_export(osv.osv_memory):
         :param string: the str chain to get the excel size
         :return: A int instance
         """
-        # this complex calculation is used to translate the
+        # this calculation is used to translate the
         # character len to an excel understandable len
-        size = round(7*len(string)*(3/4.)+15)
+
+        max_digit_width = 7  # For Calabri 11 which is the font used in our reports
+        conversion_factor = 3/4.  # to convert from pixel to points
+        padding = 15
+
+        # this formule partially come from readings here:
+        # http://stackoverflow.com/questions/4577546/calculating-height-width-and-ysplit-xsplit-for-open-xml-spreadsheets?answertab=votes#tab-top
+        size = round(max_digit_width*len(string)*conversion_factor+padding)
 
         # set a max and min len for the columns to avoid ridiculus column size
         size = min(size, MAX_COLUMN_SIZE)
