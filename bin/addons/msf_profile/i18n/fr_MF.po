@@ -8473,6 +8473,7 @@ msgstr "Soit les Journaux Comptables sont mal configurés, soit il n'y a pas de 
 #: selection:tender,internal_state:0
 #: selection:tender,state:0
 #: selection:tender.line,state:0
+#: selection:wizard.import.invoice.line,state:0
 #, python-format
 msgid "Draft"
 msgstr "Brouillon"
@@ -21912,7 +21913,7 @@ msgstr "Le type de partnenaire et le type de commande sont incompatibles. Veuill
 msgid "The logging message."
 msgstr "Le message d'enregistrement"
 
-#. modules: msf_doc_import, consumption_calculation, procurement_request
+#. modules: msf_doc_import, consumption_calculation, procurement_request, msf_tools, kit
 #: view:wizard.import.fmc:0
 #: view:wizard.import.rac:0
 #: view:wizard.import.auto.supply.line:0
@@ -21926,6 +21927,11 @@ msgstr "Le message d'enregistrement"
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
 #: view:procurement.request.import:0
+#: view:kit.mass.import:0
+#: view:wizard.import.po:0
+#: view:wizard.import.supplier.catalogue:0
+#: view:automated.import.job:0
+#: view:wizard.import.invoice.line:0
 msgid "Import file"
 msgstr "Importer le fichier"
 
@@ -26483,30 +26489,6 @@ msgstr "Agira comme compte par défaut pour le montant du crédit"
 msgid "Error, packing in wrong state !"
 msgstr "Error, packing in wrong state !"
 
-#. modules: product_attributes, import_data, tender_flow, purchase_override, msf_doc_import
-#: view:import_category:0
-#: view:import_nomenclature:0
-#: view:sale.order.line:0
-#: view:wizard.delete.lines:0
-#: view:wizard.export.po:0
-#: view:wizard.export.po.validated:0
-#: view:wizard.import.auto.supply.line:0
-#: view:wizard.import.order.cycle.line:0
-#: view:wizard.import.pick.line:0
-#: view:wizard.import.po:0
-#: view:wizard.import.product.list:0
-#: view:wizard.import.stock.warehouse.orderpoint.line:0
-#: view:wizard.import.supplier.catalogue:0
-#: view:wizard.import.threshold.value.line:0
-#: view:product.deactivation.error:0
-#: view:purchase.order.cancel.wizard:0
-#: view:purchase.order.line.unlink.wizard:0
-#: view:purchase.order.cancel.wizard:0
-#: view:purchase.order.line.unlink.wizard:0
-#: view:tender.line.cancel.wizard:0
-msgid "Close window"
-msgstr "Close window"
-
 #. modules: purchase, account, msf_outgoing, stock_override, procurement_auto, sale, product, specific_rules, kit, account_override, purchase_allocation_report, sourcing, order_types, tender_flow, return_claim, purchase_followup
 #: view:account.invoice.report:0
 #: field:account.invoice.report,product_qty:0
@@ -28688,15 +28670,6 @@ msgstr "You should have exactly 6 columns in this order:\n"
 #: model:res.currency,currency_name:base.CLP
 msgid "CHILEAN PESO"
 msgstr "CHILEAN PESO"
-
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:314
-#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:374
-#, python-format
-msgid " Import in progres... \n"
-" Please wait that the import is finished before editing %s."
-msgstr "Import en cours…\n"
-"Veuillez attendre la fin de l'import avant d'éditer %s."
 
 #. modules: procurement_auto, procurement_cycle, procurement_report, account_subscription
 #: view:account.subscription:0
@@ -47674,12 +47647,6 @@ msgstr "If checked, the user has access to write on this field."
 msgid "Default Unit Of Measure"
 msgstr "Unité de Mesure par défaut"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:222
-#, python-format
-msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-msgstr "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
-
 #. module: msf_outgoing
 #: help:create.picking.processor,picking_id:0
 #: help:internal.picking.processor,picking_id:0
@@ -61148,7 +61115,7 @@ msgstr "Has processing info"
 #: code:addons/msf_doc_import/wizard/wiz_common_import.py:108
 #, python-format
 msgid "The column \"%s\" is not taken into account. Please correct it. The list of columns accepted is: %s"
-msgstr "The column \"%s\" is not taken into account. Please correct it. The list of columns accepted is: %s"
+msgstr "La colone \"%s\" n'est pas prise en compte. Merci de corriger. La liste des colonnes acceptée est : %s"
 
 #. module: account
 #: code:addons/account/invoice.py:411
@@ -64666,6 +64633,7 @@ msgstr "Achat - Devise par Défaut"
 #: field:wizard.import.ir.line,import_error_ok:0
 #: field:wizard.import.po.line,import_error_ok:0
 #: field:wizard.import.tender.line,import_error_ok:0
+#: field:wizard.import.invoice.line,import_error_ok:0
 msgid "Error at import"
 msgstr "Erreur lors de l'import"
 
@@ -72184,7 +72152,7 @@ msgstr "Appliquer Type d'affichage "
 msgid "Pacific/Kwajalein"
 msgstr "Pacific/Kwajalein"
 
-#. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_doc_import
+#. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_doc_import, product_attributes, tender_flow
 #: view:wizard.export.fmc:0
 #: view:wizard.export.rac:0
 #: view:wizard.import.fmc:0
@@ -72196,6 +72164,26 @@ msgstr "Pacific/Kwajalein"
 #: view:wizard.import.po.line:0
 #: view:wizard.import.tender.line:0
 #: view:purchase.order.confirm.wizard:0
+#: view:import_category:0
+#: view:import_nomenclature:0
+#: view:sale.order.line:0
+#: view:wizard.delete.lines:0
+#: view:wizard.export.po:0
+#: view:wizard.export.po.validated:0
+#: view:wizard.import.auto.supply.line:0
+#: view:wizard.import.order.cycle.line:0
+#: view:wizard.import.pick.line:0
+#: view:wizard.import.po:0
+#: view:wizard.import.product.list:0
+#: view:wizard.import.stock.warehouse.orderpoint.line:0
+#: view:wizard.import.supplier.catalogue:0
+#: view:wizard.import.threshold.value.line:0
+#: view:product.deactivation.error:0
+#: view:purchase.order.cancel.wizard:0
+#: view:purchase.order.line.unlink.wizard:0
+#: view:purchase.order.cancel.wizard:0
+#: view:purchase.order.line.unlink.wizard:0
+#: view:tender.line.cancel.wizard:0
 msgid "Close window"
 msgstr "Ferme la fenêtre"
 
@@ -74591,6 +74579,7 @@ msgstr "GB-Eire"
 #: code:addons/consumption_calculation/wizard/wizard_import_rac.py:258
 #: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:202
 #: code:addons/msf_doc_import/wizard/wizard_import_auto_supply_line.py:211
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:271
 #: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:253
 #: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:191
 #: code:addons/msf_doc_import/wizard/wizard_import_order_cycle_line.py:200
@@ -76648,14 +76637,6 @@ msgstr "Bon de Commande à partir duquel la facture a été générée"
 #: model:process.node,note:product.process_node_supplier0
 msgid "Supplier name, price, product code, ..."
 msgstr "Fournisseur: nom, prix, code produit,…"
-
-#. modules: msf_doc_import, msf_tools, kit
-#: view:kit.mass.import:0
-#: view:wizard.import.po:0
-#: view:wizard.import.supplier.catalogue:0
-#: view:automated.import.job:0
-msgid "Import file"
-msgstr "Import file"
 
 #. module: import_data
 #: field:import_category,import_mode:0
@@ -80091,6 +80072,7 @@ msgstr "Confirmer les factures sélectionnées"
 #: field:automated.import.job,state:0
 #: field:export.report.inconsistencies,state:0
 #: field:export.report.stopped.products,state:0
+#: field:wizard.import.invoice.line,state:0
 msgid "State"
 msgstr "État"
 
@@ -81109,6 +81091,7 @@ msgstr "Sélectionner un fournisseur"
 #: selection:stock.inventory,state:0
 #: view:stock.move:0
 #: view:stock.picking:0
+#: selection:wizard.import.invoice.line,state:0
 msgid "Done"
 msgstr "Terminé"
 
@@ -87264,15 +87247,6 @@ msgstr "Nouvelle date de Livraison"
 msgid "LITHUANIAN LITAS"
 msgstr "LITHUANIAN LITAS"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:370
-#: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:378
-#, python-format
-msgid "Line %s in the Excel file, uncaught error: %s\n"
-""
-msgstr "Line %s in the Excel file, uncaught error: %s\n"
-""
-
 #. module: vertical_integration
 #: report:addons/vertical_integration/report/open_invoices_xls.mako:265
 msgid "Report Date"
@@ -88938,6 +88912,7 @@ msgstr "Signe Code de Base"
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:408
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:215
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:235
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:299
 #, python-format
 msgid " second(s)"
 msgstr " seconde(s)"
@@ -91915,6 +91890,7 @@ msgstr "PME"
 #: code:addons/msf_doc_import/wizard/wizard_import_ir_line.py:243
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:351
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:186
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:222
 #, python-format
 msgid "Line %s in the Excel file was added to the file of the lines with errors, it got elements outside the defined %s columns. Details: %s"
 msgstr "La ligne %s du fichier a été ajoutée au fichier des erreurs, il y a des données en dehors des %s colonnes définies. Détails: %s"
@@ -94902,6 +94878,7 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:ocba.export.wizard:0
 #: view:wizard.hq.report.oca:0
 #: view:wizard.import.mapping:0
+#: view:wizard.import.invoice.line:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -96901,6 +96878,8 @@ msgstr "%s Stock Transfer Voucher(s)"
 #: code:addons/msf_doc_import/wizard/wizard_import_supplier_catalogue.py:492
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:290
 #: code:addons/msf_doc_import/wizard/wizard_import_threshold_value_line.py:305
+#: code:addons/msf_doc_import/wizard/wizard_import_product_list.py:314
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:374
 #, python-format
 msgid " Import in progress... \n"
 " Please wait that the import is finished before editing %s."
@@ -98178,3 +98157,8 @@ msgstr "Ligne %s du fichier Excel, erreur non détectée: %s\n"
 #, python-format
 msgid "You can refresh the screen if you need to follow the upload progress by clicking on 'Update'."
 msgstr "Vous pouvez rafraichir l'écran si vous avez besoin de suivre la progresion du téléchargement en cliquant sur le bouton 'Mettre à jour'."
+
+#. module: msf_doc_import
+#: model:ir.model,name:msf_doc_import.model_wizard_import_invoice_line
+msgid "Import Invoice Lines from Excel sheet"
+msgstr "Importer des lignes depuis un fichier Excel"
