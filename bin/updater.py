@@ -452,7 +452,7 @@ def reconnect_sync_server():
     import tools
     import pooler
     credential_filepath = os.path.join(tools.config['root_path'], 'unifield-socket.py')
-    sync_user_login = tools.config.get('sync_user_login')
+    sync_user_login = tools.config.get('sync_user_login', None)
     sync_user_password = tools.config.get('sync_user_password')
     dbname_list = []
     password_from_file = None
@@ -471,6 +471,9 @@ def reconnect_sync_server():
         # in case there is no file for automatic reconnecion after patching,
         # then get the list of all db and try to set the login/password on all
         if not dbname_list and sync_user_login and sync_user_password:
+            if sync_user_login == 'admin':
+                raise Exception("You can't connect automatically to the sync server with 'admin' user, please change it in the configuration file.")
+
             from service.web_services import db
             # try to set up the login/password on all databases listed
             dbname_list = db().exp_list()
@@ -479,57 +482,61 @@ def reconnect_sync_server():
         dbname_list = [x for x in dbname_list if 'SYNC' not in x]
 
         for dbname in dbname_list:
-            logger.info('reconnect_sync_server: dbname = %s' % dbname)
-            db, pool = pooler.get_db_and_pool(dbname)
-            db, pool = pooler.restart_pool(dbname)  # do not remove this line,
-            # it is required to restart pool not to have strange behaviour
-            # with the connection on web interface
+            try:
+                logger.info('reconnect_sync_server: dbname = %s' % dbname)
+                db, pool = pooler.get_db_and_pool(dbname)
+                db, pool = pooler.restart_pool(dbname)  # do not remove this line,
+                # it is required to restart pool not to have strange behaviour
+                # with the connection on web interface
 
-            # do not execute this code on server side
-            if pool.get("sync.server.entity"):
-                continue
+                # do not execute this code on server side
+                if pool.get("sync.server.entity"):
+                    continue
 
-            cr = db.cursor()
-            # delete the credential file
-            if os.path.isfile(credential_filepath):
-                os.remove(credential_filepath)
+                cr = db.cursor()
+                connection_module = pool.get("sync.client.sync_server_connection")
+                if not connection_module:
+                    logger.error("Module 'sync.client.sync_server_connection' "
+                        "not found on %s, not possible to setup sync credentials"
+                        " automatically" % dbname)
+                    continue
 
-            connection_module = pool.get("sync.client.sync_server_connection")
-            if not connection_module:
-                logger.error("Module 'sync.client.sync_server_connection' "
-                    "not found on %s, not possible to setup sync credentials"
-                    " automatically" % dbname)
-                continue
-
-            if password_from_file:
                 logger.info('Automatic reconnection to the SYNC_SERVER')
                 # reconnect to SYNC_SERVER
-                connection_module.connect(cr, 1, password=password_from_file)
+                password = password_from_file or sync_user_password
 
-                # in caes of automatic patching, relaunch the sync
-                # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
-                if connection_module.is_automatic_patching_allowed(cr, 1):
-                    pool.get('sync.client.entity').sync_withbackup(cr, 1)
-                break
-            else:
-                connection_ids = connection_module.search(cr, 1, [])
-                data_to_write = {
-                        'login': sync_user_login,
-                        'password': sync_user_password,
-                }
-                if connection_ids:
-                    logger.info('Automatic set up of sync connection credentials')
-                    connection_module.write(cr, 1, connection_ids, data_to_write)
-                    cr.commit()
+                if password_from_file:
+                    # in caes of automatic patching, relaunch the sync
+                    # (as the sync that launch the silent upgrade was aborted to do the upgrade first)
+                    connection_module.connect(cr, 1, password=password)
+                    if connection_module.is_automatic_patching_allowed(cr, 1):
+                        pool.get('sync.client.entity').sync_withbackup(cr, 1)
+                    break
+                else:
+                    # set up the new credentials from the config file
+                    connection_ids = connection_module.search(cr, 1, [])
+                    data_to_write = {
+                            'login': sync_user_login,
+                            'password': sync_user_password,
+                    }
+                    if connection_ids:
+                        logger.info('Automatic set up of sync connection credentials')
+                        connection_module.write(cr, 1, connection_ids, data_to_write)
+                        cr.commit()
+                    connection_module.connect(cr, 1, password=password, login=sync_user_login)
+            finally:
+                cr.close()
     except Exception as e:
         if os.path.isfile(credential_filepath) or password_from_file:
             message = "Impossible to automatically re-connect to the SYNC_SERVER using credentials file: %s"
         else:
-            message = "Error durring the automatic setting of synchronization credentials on the sync_server_connection: %s"
+            message = "Error during the automatic setting of synchronization credentials on the sync_server_connection: %s"
         logger.error(message % (unicode(e)))
     finally:
-        if cr is not None:
-            cr.close()
+        # delete the credential file
+        if os.path.isfile(credential_filepath):
+            os.remove(credential_filepath)
+
 
 def check_mako_xml():
     """

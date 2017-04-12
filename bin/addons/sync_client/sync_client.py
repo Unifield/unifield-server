@@ -1344,7 +1344,7 @@ class Connection(osv.osv):
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
 
-    def connect(self, cr, uid, ids=None, password=None, context=None):
+    def connect(self, cr, uid, ids=None, password=None, login=None, context=None):
         """
         connect the instance to the SYNC_SERVER instance for synchronization
         """
@@ -1364,7 +1364,9 @@ class Connection(osv.osv):
                     con.password = password
                 else:
                     self._password = con.login
-            cnx = rpc.Connection(connector, con.database, con.login, self._password)
+            if login is None:
+                login=con.login
+            cnx = rpc.Connection(connector, con.database, login, self._password)
             con._cache = {}
             if cnx.user_id:
                 self._uid = cnx.user_id
