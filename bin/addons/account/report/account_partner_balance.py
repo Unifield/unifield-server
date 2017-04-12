@@ -33,6 +33,9 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self.account_ids = []
         self.IB_DATE_TO = ''
         self.IB_JOURNAL_REQUEST = ''
+        self.total_credit = 0.0
+        self.total_debit = 0.0
+        self.result_lines = False
         self.localcontext.update( {
             'time': time,
             'lines': self.lines,
@@ -215,6 +218,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 })
 
     def lines(self):
+        if self.result_lines:
+            return self.result_lines
         full_account = []
         self.cr.execute(
             "SELECT p.id as partner_id, ac.id as account_id, p.ref, l.account_id, ac.name AS account_name, "
@@ -260,8 +265,8 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
         self._add_initial_balances(full_account)
 
         ## We will now compute Total
-        subtotal_row = self._add_subtotal(full_account)
-        return subtotal_row
+        self.result_lines = self._add_subtotal(full_account)
+        return self.result_lines
 
     def _add_subtotal(self, cleanarray):
         i = 0
@@ -401,85 +406,18 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
 
                     completearray.append(r)
 
+            self.total_credit += r['credit'] + r['ib_credit']
+            self.total_debit += r['debit'] + r['ib_debit']
             i = i + 1
         return completearray
 
     def _sum_debit(self):
-        if not self.ids:
-            return 0.0
-        temp_res = 0.0
-        init_res = 0.0
-        # calculate the Initial Balance
-        if self.initial_balance:
-            self.cr.execute(
-                    "SELECT sum(debit) "
-                    "FROM account_move_line AS l "
-                    "INNER JOIN account_move AS am ON am.id = l.move_id "
-                    "INNER JOIN res_partner AS p ON l.partner_id = p.id "
-                    "AND am.state IN %s "
-                    "AND l.account_id IN %s"
-                    " " + self.RECONCILE_REQUEST + " "
-                    " " + self.PARTNER_REQUEST + " "
-                    " " + self.IB_DATE_TO + " "
-                    " " + self.INSTANCE_REQUEST + " "
-                    " " + self.IB_JOURNAL_REQUEST + " ",
-                    (tuple(self.move_state), tuple(self.account_ids)))
-            contemp = self.cr.fetchone()
-            if contemp != None:
-                init_res = float(contemp[0] or 0.0)
-
-        self.cr.execute(
-                "SELECT sum(debit) " \
-                "FROM account_move_line AS l "
-                "INNER JOIN account_move AS am ON am.id = l.move_id "
-                "INNER JOIN res_partner AS p ON l.partner_id = p.id "
-                "WHERE l.account_id IN %s"  \
-                    "AND am.state IN %s" \
-                    "AND " + self.query + " "
-                    " " + self.PARTNER_REQUEST + " "
-                    " " + self.RECONCILE_REQUEST + " "
-                    " " + self.INSTANCE_REQUEST + " ",
-                    (tuple(self.account_ids), tuple(self.move_state)))
-        temp_res = float(self.cr.fetchone()[0] or 0.0)
-        return temp_res + init_res
+        self.lines()  # to get the right total_debit value
+        return self.total_debit
 
     def _sum_credit(self):
-        if not self.ids:
-            return 0.0
-        temp_res = 0.0
-        init_res = 0.0
-        # calculate the Initial Balance
-        if self.initial_balance:
-            self.cr.execute(
-                    "SELECT sum(credit) "
-                    "FROM account_move_line AS l "
-                    "INNER JOIN account_move AS am ON am.id = l.move_id "
-                    "INNER JOIN res_partner AS p ON l.partner_id = p.id "
-                    "AND am.state IN %s "
-                    "AND l.account_id IN %s"
-                    " " + self.RECONCILE_REQUEST + " "
-                    " " + self.PARTNER_REQUEST + " "
-                    " " + self.IB_DATE_TO + " "
-                    " " + self.INSTANCE_REQUEST + " "
-                    " " + self.IB_JOURNAL_REQUEST + " ",
-                    (tuple(self.move_state), tuple(self.account_ids)))
-            contemp = self.cr.fetchone()
-            if contemp != None:
-                init_res = float(contemp[0] or 0.0)
-
-        self.cr.execute(
-                "SELECT sum(credit) " \
-                "FROM account_move_line AS l INNER JOIN res_partner p ON l.partner_id = p.id "
-                "JOIN account_move am ON (am.id = l.move_id)" \
-                "WHERE l.account_id IN %s" \
-                    "AND am.state IN %s" \
-                    "AND " + self.query + ""
-                    " " + self.PARTNER_REQUEST + " "
-                    " " + self.RECONCILE_REQUEST + " "
-                    " " + self.INSTANCE_REQUEST + " ",
-                    (tuple(self.account_ids), tuple(self.move_state)))
-        temp_res = float(self.cr.fetchone()[0] or 0.0)
-        return temp_res + init_res
+        self.lines()  # to get the right total_credit value
+        return self.total_credit
 
     def _sum_litige(self):
         #gives the total of move lines with blocked boolean set to TRUE for the report selection
