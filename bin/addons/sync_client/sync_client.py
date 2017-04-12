@@ -62,6 +62,10 @@ class SkipStep(StandardError):
     pass
 
 
+class AdminLoginException(Exception):
+    pass
+
+
 class BackgroundProcess(Thread):
 
     def __init__(self, cr, uid, method, context=None):
@@ -80,6 +84,16 @@ class BackgroundProcess(Thread):
             # Check if we are not already syncing
             entity.is_syncing(raise_on_syncing=True)
             # Check if connection is up
+            connection_obj = pool.get('sync.client.sync_server_connection')
+            try:
+                connection_obj.get_connection_from_config_file(cr, uid, context=context)
+            except AdminLoginException:
+                connected = False
+                raise osv.except_osv(_("Error!"), _("Not connected to server. "
+                        "You cannot use 'admin' in the config file for "
+                        "automatic connection, please use a user dedicated "
+                        "to the synchronization or manually connect before "
+                        "launching a sync."))
             if not pool.get('sync.client.sync_server_connection').is_connected:
                 connected = False
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
@@ -222,11 +236,21 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
 
                     if need_connection:
                         # Check if connection is up
-                        if not self.pool.get('sync.client.sync_server_connection').is_connected:
+                        connection_obj = self.pool.get('sync.client.sync_server_connection')
+                        if not connection_obj.is_connected:
                             if fn.__name__ == 'sync_manual_withbackup':
                                 self.pool.get('backup.config').exp_dump_for_state(cr, uid, 'beforemanualsync', context=context)
-
-                            raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                            # try to coonect from the file
+                            try:
+                                if not connection_obj.get_connection_from_config_file(cr,
+                                            uid, context=context):
+                                    raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
+                            except AdminLoginException:
+                                raise osv.except_osv(_("Error!"), _("Not connected to server. "
+                                        "You cannot use 'admin' in the config file for "
+                                        "automatic connection, please use a user dedicated "
+                                        "to the synchronization or manually connect before "
+                                        "launching a sync."))
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update
@@ -1343,6 +1367,32 @@ class Connection(osv.osv):
         else:
             raise osv.except_osv('Connection Error','Unknown protocol: %s' % con.protocol)
         return connector
+
+    def get_connection_from_config_file(self, cr, uid, ids=None, context=None):
+        '''
+        get credentials from config file if any and try to connect to the sync
+        server with them. Return True if it has been connected using this
+        credentials, False otherwise
+
+        '''
+        logger = logging.getLogger('sync.client')
+        if not self.is_connected:
+            sync_user_login = tools.config.get('sync_user_login')
+            if sync_user_login == 'admin':
+                raise AdminLoginException
+            sync_user_password = tools.config.get('sync_user_password')
+            if sync_user_login and sync_user_password:
+                connection_ids = self.search(cr, 1, [])
+                if connection_ids:
+                    logger.info('Automatic set up of sync connection credentials')
+                    data_to_write = {
+                        'login': sync_user_login,
+                        'password': sync_user_password,
+                    }
+                    self.write(cr, 1, connection_ids, data_to_write)
+                    cr.commit()
+                return self.connect(cr, 1, password=sync_user_password, login=sync_user_login)
+        return False
 
     def connect(self, cr, uid, ids=None, password=None, login=None, context=None):
         """
