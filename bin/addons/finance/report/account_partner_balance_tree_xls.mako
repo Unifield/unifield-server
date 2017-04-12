@@ -339,7 +339,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 
 <!-- INITIAL BALANCE Section -->
 % if get_display_ib():
-% for ib in get_initial_balance(p_obj.partner_id and p_obj.partner_id.id or False, p_obj.account_type):
+% for ib in get_initial_balance_by_partner_and_account(p_obj.partner_id and p_obj.partner_id.id or False, p_obj.account_type):
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>

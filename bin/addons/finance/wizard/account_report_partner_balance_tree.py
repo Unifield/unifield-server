@@ -46,7 +46,7 @@ class account_partner_balance_tree(osv.osv):
 
     _order = "account_type, partner_id"
 
-    def _get_initial_balance(self, cr, partner_id, account_type):
+    def _get_initial_balance_by_partner_and_account(self, cr, partner_id, account_type):
         """
         Returns the initial balance for the partner and account TYPE in parameter as: [(debit, credit, balance)]
         """
@@ -66,6 +66,88 @@ class account_partner_balance_tree(osv.osv):
             (partner_id, tuple(self.ib_move_state_list), account_type))
         return cr.fetchall()
 
+    def _get_initial_balance(self, cr):
+        """
+        Returns the initial balances by partner and account TYPE
+        """
+        ACCOUNT_TYPE_REQUEST = self.account_type and "AND ac.type IN %s" % self.account_type or ""
+        cr.execute(
+            "SELECT p.id as partner_id, ac.type as account_type, p.ref as partner_ref, ac.name AS account_name, "
+            "ac.code AS code, p.name as partner_name, COALESCE(SUM(l.debit), 0.0) as ib_debit, "
+            "COALESCE(SUM(l.credit), 0.0) as ib_credit, "
+            "COALESCE(sum(debit-credit), 0.0) as ib_balance "
+            "FROM account_move_line AS l INNER JOIN account_move am ON am.id = l.move_id "
+            "INNER JOIN res_partner p ON l.partner_id = p.id "
+            "INNER JOIN account_account ac ON l.account_id = ac.id "
+            "WHERE am.state IN %s"
+            " " + ACCOUNT_TYPE_REQUEST + " "
+            " " + self.ACCOUNT_REQUEST + " "
+            " " + self.RECONCILE_REQUEST + " "
+            " " + self.INSTANCE_REQUEST + " "
+            " " + self.PARTNER_REQUEST + " "
+            " " + self.IB_JOURNAL_REQUEST + " "
+            " " + self.IB_DATE_TO + " "
+            "GROUP BY ac.type, p.id, p.ref, p.name, ac.name, ac.code "
+            "ORDER BY ac.type, p.name ",
+            (tuple(self.ib_move_state_list),))
+        return cr.dictfetchall()
+
+    def _cmp_account_partner(self, a, b):
+        """
+        Comparison function to sort by account TYPE and then partner name 
+        """
+        if a['account_type'] > b['account_type']:
+            return 1
+        elif a['account_type'] < b['account_type']:
+            return -1
+        else:
+            if a['partner_name'] > b['partner_name']:
+                return 1
+            elif a['partner_name'] < b['partner_name']:
+                return -1
+        return 0
+
+    def _add_initial_balances(self, cr, full_account):
+        """
+        Add the initial balances values to the report lines
+        """
+        if self.initial_balance:
+            initial_balances = self._get_initial_balance(cr)
+            for ib in initial_balances:
+                found = False
+                # update the result lines with the corresponding IB result
+                for fa in full_account:
+                    if ib['partner_id'] == fa['partner_id'] and ib['account_type'] == fa['account_type']:
+                        fa.update({'ib_debit': ib['ib_debit'],
+                                   'ib_credit': ib['ib_credit'],
+                                   'ib_balance': ib['ib_balance'],
+                                   })
+                        found = True
+                        break
+                # use case: IB lines existing for an "account-partner" association where no "standard value" found:
+                # put the standard values to zero
+                if not found:
+                    ib.update({
+                        'debit': 0,
+                        'credit': 0,
+                        'sdebit': 0,
+                        'scredit': 0,
+                        'balance': 0,
+                        'enlitige': 0})
+                    full_account.append(ib)
+            # sort the elements of the list per account and partner
+            full_account.sort(self._cmp_account_partner)
+        # use case: "standard values" existing for an "account-partner" association where no IB value found
+        # OR "IB" tickbox not ticked:
+        # put the IB values to zero
+        for fa in full_account:
+            if 'ib_balance' not in fa.keys():
+                fa.update({
+                    'ib_debit': 0,
+                    'ib_credit': 0,
+                    'ib_balance': 0,
+                })
+
     def _execute_query_partners(self, cr, uid, data):
         """
         return res, account_type, move_state
@@ -77,11 +159,11 @@ class account_partner_balance_tree(osv.osv):
 
         result_selection = data['form'].get('result_selection', '')
         if (result_selection == 'customer'):
-            account_type = "('receivable')"
+            self.account_type = "('receivable')"
         elif (result_selection == 'supplier'):
-            account_type = "('payable')"
+            self.account_type = "('payable')"
         else:
-            account_type = "('payable', 'receivable')"
+            self.account_type = "('payable', 'receivable')"
 
         move_state = "('draft','posted')"
         if data['form'].get('target_move', 'all') == 'posted':
@@ -126,23 +208,23 @@ class account_partner_balance_tree(osv.osv):
         if data['form'].get('tax', False):
             TAX_REQUEST = "AND at.code != 'tax'"
 
-        PARTNER_REQUEST = ''
+        self.PARTNER_REQUEST = 'AND l.partner_id IS NOT NULL'
         if data['form'].get('partner_ids', False):  # some partners are specifically selected
             partner_ids = data['form']['partner_ids']
             if len(partner_ids) == 1:
-                PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
+                self.PARTNER_REQUEST = 'AND p.id = %s' % partner_ids[0]
             else:
-                PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
+                self.PARTNER_REQUEST = 'AND p.id IN %s' % (tuple(partner_ids),)
         elif data['form'].get('only_active_partners'):  # check if we should include only active partners
-            PARTNER_REQUEST = "AND p.active = 't'"
+            self.PARTNER_REQUEST = "AND p.active = 't'"
 
-        ACCOUNT_REQUEST = ''
+        self.ACCOUNT_REQUEST = ''
         if data['form'].get('account_ids', False):  # some accounts are specifically selected
             account_ids = data['form']['account_ids']
             if len(account_ids) == 1:
-                ACCOUNT_REQUEST = 'AND ac.id = %s' % account_ids[0]
+                self.ACCOUNT_REQUEST = 'AND ac.id = %s' % account_ids[0]
             else:
-                ACCOUNT_REQUEST = 'AND ac.id IN %s' % (tuple(account_ids),)
+                self.ACCOUNT_REQUEST = 'AND ac.id IN %s' % (tuple(account_ids),)
 
         # inspired from account_report_balance.py report query
         # but group only per 'account type'/'partner'
@@ -155,32 +237,25 @@ class account_partner_balance_tree(osv.osv):
             " JOIN account_account ac ON (l.account_id = ac.id)" \
             " JOIN account_move am ON (am.id = l.move_id)" \
             " JOIN account_account_type at ON (ac.user_type = at.id)" \
-            " WHERE ac.type IN " + account_type + "" \
+            " WHERE ac.type IN " + self.account_type + "" \
             " AND am.state IN " + move_state + "" \
             " AND " + where + "" \
             " " + TAX_REQUEST + " " \
-            " " + PARTNER_REQUEST + " " \
-            " " + ACCOUNT_REQUEST + " " \
+            " " + self.PARTNER_REQUEST + " " \
+            " " + self.ACCOUNT_REQUEST + " " \
             " " + self.RECONCILE_REQUEST + " " \
             " GROUP BY ac.type,p.id,p.ref,p.name" \
             " ORDER BY ac.type,p.name"
         cr.execute(query)
         res = cr.dictfetchall()
-        res_ib = []
-        for r in res:
-            # add the initial balance for each "account type + partner"
-            ib = [(0.0, 0.0, 0.0)]
-            if self.initial_balance:
-                partner_id = r.get('partner_id', False)
-                account_type = r.get('account_type', False)
-                ib = self._get_initial_balance(cr, partner_id, account_type)
-            r['initial_balance'] = ib
-            res_ib.append(r)
+        # add the initial balances if requested
+        self._add_initial_balances(cr, res)
+
         if data['form'].get('display_partner', '') == 'non-zero_balance':
-            res2 = [r for r in res_ib if r['sdebit'] > 0 or r['scredit'] > 0]
+            res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
         else:
-            res2 = [r for r in res_ib]
-        return res2, account_type, move_state
+            res2 = [r for r in res]
+        return res2, self.account_type, move_state
 
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
         obj_move = self.pool.get('account.move.line')
@@ -264,9 +339,9 @@ class account_partner_balance_tree(osv.osv):
         for r in res[0]:
             if not r.get('partner_name', False):
                 r.update({'partner_name': _('Unknown Partner')})
-            debit = r['debit'] + (self.initial_balance and r['initial_balance'][0][0] or 0.0)
-            credit = r['credit'] + (self.initial_balance and r['initial_balance'][0][1] or 0.0)
-            balance = (r['debit'] - r['credit']) + (self.initial_balance and r['initial_balance'][0][2] or 0.0)
+            debit = r['debit'] + (self.initial_balance and r['ib_debit'] or 0.0)
+            credit = r['credit'] + (self.initial_balance and r['ib_credit'] or 0.0)
+            balance = (r['debit'] - r['credit']) + (self.initial_balance and r['ib_balance'] or 0.0)
             vals = {
                 'uid': uid,
                 'build_ts': data['build_ts'],
