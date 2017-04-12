@@ -1832,6 +1832,7 @@ class stock_move(osv.osv):
         """
         if context is None:
             context = {}
+
         if context.get('move_line', []):
             try:
                 return context['move_line'][0][2]['location_id']
@@ -1839,7 +1840,9 @@ class stock_move(osv.osv):
                 pass
         if context.get('address_in_id', False):
             part_obj_add = self.pool.get('res.partner.address').browse(cr, uid, context['address_in_id'], context=context)
-            if part_obj_add.partner_id:
+            if part_obj_add.partner_id and part_obj_add.partner_id.property_stock_customer and part_obj_add.partner_id.property_stock_customer.location_category == 'consumption_unit':
+                return part_obj_add.partner_id.property_stock_customer.id
+            elif part_obj_add.partner_id:
                 return part_obj_add.partner_id.property_stock_supplier.id
         return False
 
