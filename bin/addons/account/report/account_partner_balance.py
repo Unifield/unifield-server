@@ -158,6 +158,62 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             (tuple(self.move_state), tuple(self.account_ids)))
         return self.cr.dictfetchall()
 
+    def _cmp_account_partner(self, a, b):
+        """
+        Comparison function to sort by account id and then partner name 
+        """
+        if a['account_id'] > b['account_id']:
+            return 1
+        elif a['account_id'] < b['account_id']:
+            return -1
+        else:
+            if a['name'] > b['name']:
+                return 1
+            elif a['name'] < b['name']:
+                return -1
+        return 0
+
+    def _add_initial_balances(self, full_account):
+        """
+        Add the initial balances values to the report lines
+        """
+        if self.initial_balance:
+            initial_balances = self._get_initial_balance()
+            for ib in initial_balances:
+                found = False
+                # update the result lines with the corresponding IB result
+                for fa in full_account:
+                    if ib['partner_id'] == fa['partner_id'] and ib['account_id'] == fa['account_id']:
+                        fa.update({'ib_debit': ib['ib_debit'],
+                                   'ib_credit': ib['ib_credit'],
+                                   'ib_balance': ib['ib_balance'],
+                                   })
+                        found = True
+                        break
+                # use case: IB lines existing for an "account-partner" association where no "standard value" found:
+                # put the standard values to zero
+                if not found:
+                    ib.update({
+                        'debit': 0,
+                        'credit': 0,
+                        'sdebit': 0,
+                        'scredit': 0,
+                        'balance': 0,
+                        'enlitige': 0})
+                    full_account.append(ib)
+            # sort the elements of the list per account and partner
+            full_account.sort(self._cmp_account_partner)
+        # use case: "standard values" existing for an "account-partner" association where no IB value found
+        # OR "IB" tickbox not ticked:
+        # put the IB values to zero
+        for fa in full_account:
+            if 'ib_balance' not in fa.keys():
+                fa.update({
+                    'ib_debit': 0,
+                    'ib_credit': 0,
+                    'ib_balance': 0,
+                })
+
     def lines(self):
         full_account = []
         self.cr.execute(
@@ -201,42 +257,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                 rec.update({'name': _('Unknown Partner')})
 
         # add the initial balances if requested
-        if self.initial_balance:
-            initial_balances = self._get_initial_balance()
-            for ib in initial_balances:
-                partner_id = ib['partner_id']
-                account_id = ib['account_id']
-                found = False
-                # update the result lines with the corresponding IB result
-                for fa in full_account:
-                    if partner_id == fa['partner_id'] and account_id == fa['account_id']:
-                        fa.update({'ib_debit': ib['ib_debit'],
-                                   'ib_credit': ib['ib_credit'],
-                                   'ib_balance': ib['ib_balance'],
-                                   })
-                        found = True
-                        break
-                # use case: IB lines existing for an "account-partner" association where no "standard values" have been found:
-                # put the standard values to zero
-                if not found:
-                    ib.update({
-                        'debit': 0,
-                        'credit': 0,
-                        'sdebit': 0,
-                        'scredit': 0,
-                        'balance': 0,
-                        'enlitige': 0})
-                    full_account.append(ib)
-        # use case: "standard values" existing for an "account-partner" association where no IB values have been found
-        # OR "IB" tickbox not ticked:
-        # put the IB values to zero
-        for fa in full_account:
-            if 'ib_balance' not in fa.keys():
-                fa.update({
-                    'ib_debit': 0,
-                    'ib_credit': 0,
-                    'ib_balance': 0,
-                })
+        self._add_initial_balances(full_account)
 
         ## We will now compute Total
         subtotal_row = self._add_subtotal(full_account)
