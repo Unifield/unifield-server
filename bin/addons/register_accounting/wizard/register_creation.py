@@ -209,11 +209,6 @@ class register_creation(osv.osv_memory):
                     'prev_reg_id': prev_reg.id,
                     'name': prev_reg.name,
                 })
-                # FIXME: search old caracteristics from previous register
-
-                # UF-1750: copy responsible
-                if prev_reg.journal_id and prev_reg.responsible_ids:
-                    reg_vals['responsible_ids'] = [(6, 0, [x.id for x in prev_reg.responsible_ids])]
 
             # Create the register
             reg_id = abs_obj.create(cr, uid, reg_vals, context=context)
