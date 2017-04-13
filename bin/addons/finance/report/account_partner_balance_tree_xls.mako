@@ -340,22 +340,22 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <!-- INITIAL BALANCE Section -->
 % if get_display_ib():
 <Row>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssPartner">
+<Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">Initial Balance</Data>
 </Cell>
-<Cell ss:StyleID="ssPartnerNumber">
+<Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_debit or 0.}</Data>
 </Cell>
-<Cell ss:StyleID="ssPartnerNumber">
+<Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_credit or 0.}</Data>
 </Cell>
-<Cell ss:StyleID="ssPartnerNumber">
+<Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${p_obj.ib_balance or 0.}</Data>
 </Cell>
 </Row>
