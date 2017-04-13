@@ -55,16 +55,6 @@ if os.name == 'nt':
             "collected_libs_data_relocate": "pytz",
             "package_build_extra_dirs": join(os.path.abspath(os.path.dirname(__file__)), "bin"),
             "dist_dir": 'dist',
-            "packages": [
-                "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
-                "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
-                "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
-                "pydot", "asyncore","asynchat", "reportlab",
-                "HTMLParser", "select", "mako", "poplib",
-                "imaplib", "smtplib", "email", "yaml", "DAV",
-                "uuid", "commands", "mx.DateTime", "json",
-                "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
-            ],
             "excludes" : ["Tkconstants","Tkinter","tcl"],
         }
     }
