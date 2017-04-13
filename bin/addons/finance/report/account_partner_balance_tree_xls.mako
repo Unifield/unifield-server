@@ -339,7 +339,6 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 
 <!-- INITIAL BALANCE Section -->
 % if get_display_ib():
-% for ib in get_initial_balance_by_partner_and_account(p_obj.partner_id and p_obj.partner_id.id or False, p_obj.account_type):
 <Row>
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>
@@ -351,16 +350,15 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String">Initial Balance</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${ib[0] or 0.}</Data>
+    <Data ss:Type="Number">${p_obj.ib_debit or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${ib[1] or 0.}</Data>
+    <Data ss:Type="Number">${p_obj.ib_credit or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${ib[2] or 0.}</Data>
+    <Data ss:Type="Number">${p_obj.ib_balance or 0.}</Data>
 </Cell>
 </Row>
-% endfor
 % endif
 
 ## account move line row

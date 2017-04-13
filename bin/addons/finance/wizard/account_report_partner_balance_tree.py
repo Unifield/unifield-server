@@ -42,29 +42,12 @@ class account_partner_balance_tree(osv.osv):
         'debit': fields.float('Debit', digits_compute=dp.get_precision('Account')),
         'credit': fields.float('Credit', digits_compute=dp.get_precision('Account')),
         'balance': fields.float('Balance', digits_compute=dp.get_precision('Account')),
+        'ib_debit': fields.float('Initial Balance Debit', digits_compute=dp.get_precision('Account')),
+        'ib_credit': fields.float('Initial Balance Credit', digits_compute=dp.get_precision('Account')),
+        'ib_balance': fields.float('IB Balance', digits_compute=dp.get_precision('Account')),
     }
 
     _order = "account_type, partner_id"
-
-    def _get_initial_balance_by_partner_and_account(self, cr, partner_id, account_type):
-        """
-        Returns the initial balance for the partner and account TYPE in parameter as: [(debit, credit, balance)]
-        """
-        if not partner_id or not account_type:
-            return [(0.0, 0.0, 0.0)]
-        cr.execute(
-            "SELECT COALESCE(SUM(l.debit),0.0), COALESCE(SUM(l.credit),0.0), COALESCE(sum(debit-credit), 0.0) "
-            "FROM account_move_line AS l INNER JOIN account_move AS am ON am.id = l.move_id "
-            "INNER JOIN account_account AS ac ON l.account_id = ac.id  "
-            "WHERE l.partner_id = %s "
-            "AND am.state IN %s "
-            "AND ac.type = %s"
-            " " + self.RECONCILE_REQUEST + " "
-            " " + self.INSTANCE_REQUEST + " "
-            " " + self.IB_JOURNAL_REQUEST + " "
-            " " + self.IB_DATE_TO + " ",
-            (partner_id, tuple(self.ib_move_state_list), account_type))
-        return cr.fetchall()
 
     def _get_initial_balance(self, cr):
         """
@@ -120,9 +103,10 @@ class account_partner_balance_tree(osv.osv):
                 # update the result lines with the corresponding IB result
                 for fa in full_account:
                     if ib['partner_id'] == fa['partner_id'] and ib['account_type'] == fa['account_type']:
-                        fa.update({'ib_debit': ib['ib_debit'],
-                                   'ib_credit': ib['ib_credit'],
-                                   'ib_balance': ib['ib_balance'],
+                        # add up the values to the existing ones
+                        fa.update({'ib_debit': fa.get('ib_debit', 0.0) + ib['ib_debit'],
+                                   'ib_credit': fa.get('ib_credit', 0.0) + ib['ib_credit'],
+                                   'ib_balance': fa.get('ib_balance', 0.0) + ib['ib_balance'],
                                    })
                         found = True
                         break
@@ -134,8 +118,7 @@ class account_partner_balance_tree(osv.osv):
                         'credit': 0,
                         'sdebit': 0,
                         'scredit': 0,
-                        'balance': 0,
-                        'enlitige': 0})
+                    })
                     full_account.append(ib)
             # sort the elements of the list per account and partner
             full_account.sort(self._cmp_account_partner)
@@ -250,13 +233,13 @@ class account_partner_balance_tree(osv.osv):
             " ORDER BY ac.type,p.name"
         cr.execute(query)
         res = cr.dictfetchall()
-        # add the initial balances if requested
-        self._add_initial_balances(cr, res)
 
         if data['form'].get('display_partner', '') == 'non-zero_balance':
             res2 = [r for r in res if r['sdebit'] > 0 or r['scredit'] > 0]
         else:
             res2 = [r for r in res]
+        # add the initial balances if requested
+        self._add_initial_balances(cr, res2)
         return res2, self.account_type, move_state
 
     def _execute_query_selected_partner_move_line_ids(self, cr, uid, account_type, partner_id, data):
@@ -354,6 +337,9 @@ class account_partner_balance_tree(osv.osv):
                 'debit': self._currency_conv(cr, uid, debit, comp_currency_id, output_currency_id),
                 'credit': self._currency_conv(cr, uid, credit, comp_currency_id, output_currency_id),
                 'balance': self._currency_conv(cr, uid, debit - credit, comp_currency_id, output_currency_id),
+                'ib_debit': self._currency_conv(cr, uid, r['ib_debit'] or 0.0, comp_currency_id, output_currency_id),
+                'ib_credit': self._currency_conv(cr, uid, r['ib_credit'] or 0.0, comp_currency_id, output_currency_id),
+                'ib_balance': self._currency_conv(cr, uid, r['ib_balance'] or 0.0, comp_currency_id, output_currency_id),
             }
             self.create(cr, uid, vals, context=context)
 
