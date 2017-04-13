@@ -1129,6 +1129,11 @@ class Form(SecuredController):
         # consistent with accessing the object by is own module
         current['_terp_view_id'] = None
         current['_terp_view_ids'] = []
+
+        # remove the limit. On a click on the dashboard title more results are
+        # displayed than in the dashboard itself
+        if '_terp_limit' in current:
+            current.pop('_terp_limit')
         return self.create(current)
 
     @expose('json')
