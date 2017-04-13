@@ -65,7 +65,6 @@ class wizard_import_invoice_line(osv.osv_memory):
             string=u"State", required=True, readonly=True),
     }
 
-
     def _import(self, dbname, uid, ids, context=None):
         '''
         Import file
@@ -318,7 +317,6 @@ Importation completed in %s!
             if not context.get('yml_test', False):
                 cr.commit()
                 cr.close(True)
-
 
     def import_file(self, cr, uid, ids, context=None):
         """
