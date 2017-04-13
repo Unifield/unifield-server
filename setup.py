@@ -73,14 +73,15 @@ setup(
     url=url,
     download_url=download_url,
     license=license,
+    python_requires = ">=2.7.13",
     install_requires=[
-        "CherryPy == 3.1.2",
-        "Mako >= 0.2.4",
-        "Babel >= 0.9.4",
-        "FormEncode >= 1.2.2",
-        "simplejson >= 2.0.9",
-        "python-dateutil >= 1.4.1",
-        "pytz >= 2009j"
+        "CherryPy==10.2.1",
+        "Mako==1.0.6",
+        "Babel==2.4.0",
+        "FormEncode==2.0.0.a1",
+        "simplejson==3.10.0",
+        "python-dateutil==2.6.0",
+        "pytz==2017.2"
     ],
     zip_safe=False,
     packages=[
