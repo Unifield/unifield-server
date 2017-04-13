@@ -1373,25 +1373,27 @@ class Connection(osv.osv):
         get credentials from config file if any and try to connect to the sync
         server with them. Return True if it has been connected using this
         credentials, False otherwise
-
         '''
         logger = logging.getLogger('sync.client')
         if not self.is_connected:
-            sync_user_login = tools.config.get('sync_user_login')
-            if sync_user_login == 'admin':
+            login = tools.config.get('sync_user_login')
+            if login == 'admin':
                 raise AdminLoginException
-            sync_user_password = tools.config.get('sync_user_password')
-            if sync_user_login and sync_user_password:
+            password = tools.config.get('sync_user_password')
+            if login and password:
+                # write this credentials in the connection manager to be
+                # consistent with the credentials used for the current
+                # connection and what is in the connection manager
                 connection_ids = self.search(cr, 1, [])
                 if connection_ids:
                     logger.info('Automatic set up of sync connection credentials')
                     data_to_write = {
-                        'login': sync_user_login,
-                        'password': sync_user_password,
+                        'login': login,
+                        'password': password,
                     }
                     self.write(cr, 1, connection_ids, data_to_write)
                     cr.commit()
-                return self.connect(cr, 1, password=sync_user_password, login=sync_user_login)
+                return self.connect(cr, 1, password=password, login=login)
         return False
 
     def connect(self, cr, uid, ids=None, password=None, login=None, context=None):
