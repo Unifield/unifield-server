@@ -1124,7 +1124,11 @@ class Form(SecuredController):
     def dashlet(self, **kw):
         params, data = TinyDict.split(kw)
         current = params.chain_get(str(params.source) or '') or params
-
+        # US-2704 remove the view_id of the dashboard, this will result in the
+        # use of the default object view to display the listbox which is more
+        # consistent with accessing the object by is own module
+        current['_terp_view_id'] = None
+        current['_terp_view_ids'] = []
         return self.create(current)
 
     @expose('json')
