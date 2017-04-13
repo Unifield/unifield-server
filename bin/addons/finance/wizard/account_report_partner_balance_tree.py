@@ -77,7 +77,7 @@ class account_partner_balance_tree(osv.osv):
             (tuple(self.ib_move_state_list),))
         return cr.dictfetchall()
 
-    def _cmp_account_partner(self, a, b):
+    def _cmp_account_type_partner(self, a, b):
         """
         Comparison function to sort by account TYPE and then partner name 
         """
@@ -121,7 +121,7 @@ class account_partner_balance_tree(osv.osv):
                     })
                     full_account.append(ib)
             # sort the elements of the list per account and partner
-            full_account.sort(self._cmp_account_partner)
+            full_account.sort(self._cmp_account_type_partner)
         # use case: "standard values" existing for an "account-partner" association where no IB value found
         # OR "IB" tickbox not ticked:
         # put the IB values to zero

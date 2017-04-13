@@ -161,7 +161,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
             (tuple(self.move_state), tuple(self.account_ids)))
         return self.cr.dictfetchall()
 
-    def _cmp_account_partner(self, a, b):
+    def _cmp_account_id_partner(self, a, b):
         """
         Comparison function to sort by account id and then partner name 
         """
@@ -205,7 +205,7 @@ class partner_balance(report_sxw.rml_parse, common_report_header):
                         'enlitige': 0})
                     full_account.append(ib)
             # sort the elements of the list per account and partner
-            full_account.sort(self._cmp_account_partner)
+            full_account.sort(self._cmp_account_id_partner)
         # use case: "standard values" existing for an "account-partner" association where no IB value found
         # OR "IB" tickbox not ticked:
         # put the IB values to zero
