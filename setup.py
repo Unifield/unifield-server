@@ -59,7 +59,7 @@ if os.name == 'nt':
                 "lxml", "lxml.builder", "lxml._elementpath", "lxml.etree",
                 "lxml.objectify", "decimal", "xml", "xml", "xml.dom",
                 "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
-                "pydot", "asyncore","asynchat", "reportlab", "vobject",
+                "pydot", "asyncore","asynchat", "reportlab",
                 "HTMLParser", "select", "mako", "poplib",
                 "imaplib", "smtplib", "email", "yaml", "DAV",
                 "uuid", "commands", "mx.DateTime", "json",
