@@ -52,7 +52,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_partners': self._get_partners,
             'get_partner_account_move_lines': self._get_partner_account_move_lines,
             'get_partners_total_debit_credit_balance_by_account_type': self._get_partners_total_debit_credit_balance_by_account_type,
-            'get_initial_balance_by_partner_and_account': self._get_initial_balance_by_partner_and_account,
 
             # currency
             'get_output_currency_code': self._get_output_currency_code,
@@ -94,12 +93,6 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         Returns True if the IB data must be displayed
         """
         return self.initial_balance
-
-    def _get_initial_balance_by_partner_and_account(self, partner_id, account_type):
-        """
-        Returns the initial balance for the partner and account TYPE in parameter as: [(debit, credit, balance)]
-        """
-        return self.apbt_obj._get_initial_balance_by_partner_and_account(self.cr, partner_id, account_type)
 
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
