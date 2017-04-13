@@ -63,7 +63,7 @@
             <field name="res_model">account.commitment</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
-            <field name="domain">[('state', 'in', ('draft','open'))]</field>
+            <field name="domain">[('state', '=', 'draft')]</field>
             <field name="context">{'board_view': True}</field>
             <field ref="account_board_commitment_voucher_view" name="view_id"/>
             <field name="limit">5</field>
@@ -94,7 +94,7 @@
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
-            <field name="domain">[('state', '=', 'draft'), ('is_direct_invoice', '=', False)]</field>
+            <field name="domain">[('state', '=', 'draft'), ('type','=','in_invoice'), ('is_direct_invoice', '=', False), ('is_inkind_donation', '=', False), ('is_debit_note', "=", False), ('is_intermission', '=', False)]</field>
             <field name="context">{'board_view': True, 'type': 'in_invoice'}</field>
             <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
             <field name="limit">5</field>
@@ -105,7 +105,7 @@
             <field name="res_model">account.invoice</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form,calendar,graph</field>
-            <field name="domain">[('state', '=', 'open')]</field>
+            <field name="domain">[('state', '=', 'open'), ('type','=','in_invoice')]</field>
             <field name="context">{'board_view': True, 'type': 'in_invoice'}</field>
             <field ref="account_board_supplier_invoice_draft_view" name="view_id"/>
             <field name="limit">5</field>
@@ -170,7 +170,7 @@
             <field name="type">tree</field>
             <field name="priority">80</field>
             <field name="arch" type="xml">
-                <tree string="HQ Entries to be validated" limit="5">
+                <tree string="HQ Entries to be validated" limit="5" editable="top">
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="date"/>
@@ -202,7 +202,7 @@
             <field name="type">tree</field>
             <field name="priority">80</field>
             <field name="arch" type="xml">
-                <tree string="Payroll Entries to be validated" limit="5">
+                <tree string="Payroll Entries to be validated" limit="5" editable="top">
                     <field name="name"/>
                     <field name="ref"/>
                     <field name="period_id"/>

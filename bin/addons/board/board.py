@@ -23,6 +23,7 @@ from osv import fields, osv
 import time
 import tools
 
+
 class board_board(osv.osv):
     """
     Board
@@ -236,6 +237,7 @@ class board_note(osv.osv):
     }
 
 board_note()
+
 
 class res_log_report(osv.osv):
     """ Log Report """
