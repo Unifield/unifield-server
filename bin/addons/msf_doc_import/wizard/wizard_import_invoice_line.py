@@ -166,13 +166,14 @@ class wizard_import_invoice_line(osv.osv_memory):
                         domain.extend(ACCOUNT_RESTRICTED_AREA['intermission_lines'])
                         error_domain = _("Line %s: Some restrictions prevent account %s to be used to import this line:\n"
                         "- the account cannot be of type view\n"
+                        "- account cannot be corrected on HQ entries\n"
                         "- 'User Type Code' should be in ('expense', 'income', 'receivables')\n"
                         "- 'P&L / BS Category' cannot be None.") % (line_num, account_value)
                     else:
                         domain.extend(ACCOUNT_RESTRICTED_AREA['invoice_lines'])
                         error_domain = _("Line %s: Some restrictions prevent account %s to be used to import this line:\n"
                         "- the account cannot be of type view or liquidity\n"
-                        "- the account should be editable on HQ\n"
+                        "- account cannot be corrected on HQ entries\n"
                         "- 'Type for specific treatment' cannot be 'donation'\n"
                         "- 'Internal Type' should be different from 'other' OR 'User Type Code' should be different from 'stock'\n"
                         "- 'User Type Code' should be different from 'expense' OR 'P&L / BS Category' not None."
