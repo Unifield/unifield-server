@@ -20,10 +20,10 @@ class group_type(osv.osv):
                 ('group_type_hq_mission', 'HQ + MISSION'),
             ]:
                 cr.execute("select id from sync_server_group_type where name=%s", (group_name, ))
-                res_id = cr.fetchone()[0]
-                if res_id:
+                res_id = cr.fetchone()
+                if res_id and res_id[0]:
                     cr.execute("select id from ir_model_data where name=%s and module='msf_sync_data_server'", (xmlid, ))
-                    if not cr.fetchone()[0]:
+                    if not cr.fetchone():
                         cr.execute("""insert into ir_model_data (name, module, model, res_id, noupdate, force_recreation)
                             values (%s, 'msf_sync_data_server', 'sync.server.group_type', %s, 'f', 'f') """, (xmlid, res_id))
 group_type()
