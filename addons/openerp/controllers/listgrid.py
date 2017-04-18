@@ -47,6 +47,10 @@ class List(SecuredController):
         ids = params.ids or []
 
         model = params.parent.model
+        dashboard = False
+        if model == 'board.board':
+            dashboard = True
+            model = params.model
         if model != params.model and not params.parent.id:
             error = _("Parent record doesn't exists...")
 
@@ -70,9 +74,13 @@ class List(SecuredController):
                 if '__id' in data: data.pop('__id')
                 if 'id' in data: data.pop('id')
 
-                fld = source.split('/')[-1]
-                data = {fld : [(id and 1, id, data.copy())]}
-                proxy.write([params.parent.id], data, ctx)
+                if not dashboard:
+                    fld = source.split('/')[-1]
+                    data = {fld : [(id and 1, id, data.copy())]}
+                    proxy.write([params.parent.id], data, ctx)
+                else:
+                    data = data.copy()
+                    proxy.write([id], data, ctx)
 
                 if not id:
                     all_ids = proxy.read([params.parent.id], [fld])[0][fld]
@@ -81,7 +89,6 @@ class List(SecuredController):
                     ids = all_ids
                     if new_ids:
                         id = new_ids[0]
-
             else:
                 data = frm.copy()
                 if 'id' in data: data.pop('id')
