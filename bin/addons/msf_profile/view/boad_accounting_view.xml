@@ -14,7 +14,7 @@
                     <form string="Account Board">
                         <hpaned>
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(finance.account_board_commitment_voucher)d" string="Commitment Voucher to validate" menu_ref="%(analytic_distribution.menu_commitment)d,%(analytic_distribution.menu_commitment_entries)d" />
+                                <action colspan="4" height="160" width="400" name="%(finance.account_board_commitment_voucher)d" string="Commitment Vouchers to validate" menu_ref="%(analytic_distribution.menu_commitment)d,%(analytic_distribution.menu_commitment_entries)d" />
                                 <action colspan="4" height="160" width="400" name="%(finance.account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" />
                                 <action colspan="4" height="160" width="400" name="%(finance.account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" />
                             </child1>

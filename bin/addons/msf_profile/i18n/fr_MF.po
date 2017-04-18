@@ -2267,7 +2267,7 @@ msgstr "Vous ne pouvez pas supprimer un mouvement basé sur un type de motif sta
 #: view:hq.entries:0
 #: model:ir.actions.act_window,name:finance.account_hq_entries
 msgid "HQ Entries to be validated"
-msgstr "HQ Entries to be validated"
+msgstr "Écritures HQ à valider"
 
 #. module: return_claim
 #: view:return.claim:0
@@ -4735,7 +4735,7 @@ msgstr "Report of lines' import"
 #. module: account_period_closing_level
 #: view:account.period:0
 msgid "Supplier invoices"
-msgstr "Facture Fournisseur"
+msgstr "Factures Fournisseur"
 
 #. module: consumption_calculation
 #: report:product.likely.expire.report_pdf:0
@@ -12011,7 +12011,7 @@ msgstr "Date d'expédition prévue :"
 #: code:addons/account_hq_entries/hq_entries.py:396
 #, python-format
 msgid "HQ Entries Validation"
-msgstr "HQ Entries Validation"
+msgstr "Validation des Écritures HQ"
 
 #. module: specific_rules
 #: field:initial.stock.inventory.line,average_cost:0
@@ -17034,7 +17034,7 @@ msgstr "Appel d'Offres - Référence"
 #. module: msf_profile
 #: view:board.board:0
 msgid "HQ Entries to validate"
-msgstr "HQ Entries to validate"
+msgstr "Écritures HQ à valider"
 
 #. module: procurement
 #: model:process.transition,name:procurement.process_transition_confirmed_exception
@@ -24168,7 +24168,7 @@ msgstr "Commentaire"
 #. module: msf_profile
 #: view:board.board:0
 msgid "Payroll Entries to validate"
-msgstr "Payroll Entries to validate"
+msgstr "Écritures de paie à valider"
 
 #. module: tender_flow
 #: field:tender,internal_state:0
@@ -41407,8 +41407,9 @@ msgstr "Africa/Khartoum"
 
 #. module: finance
 #: view:hr.payroll.msf:0
+#: model:ir.actions.act_window,name:finance.hr_payroll_board
 msgid "Payroll Entries to be validated"
-msgstr "Payroll Entries to be validated"
+msgstr "Écritures de paie à valider"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/check_line.py:184
@@ -46953,11 +46954,6 @@ msgstr "Vous ne pouvez pas supprimer cette restriction car elle est utilisée pa
 #: field:account.journal.fake,name:0
 msgid "Journal Name"
 msgstr "Nom du Journal"
-
-#. module: finance
-#: model:ir.actions.act_window,name:finance.hr_payroll_board
-msgid "Payroll entries to be validated"
-msgstr "Payroll entries to be validated"
 
 #. module: msf_outgoing
 #: model:process.node,name:msf_outgoing.process_node_out_draft
@@ -52987,12 +52983,6 @@ msgstr "File with errors"
 msgid "You cannot duplicate a catalogue because you musn't have overlapped catalogue !"
 msgstr "Vous ne pouvez pas reproduire un catalogue car vous ne pouvez pas avoir des catalogues qui se chevauchent !"
 
-#. modules: finance, msf_profile
-#: model:ir.actions.act_window,name:finance.account_board_commitment_voucher
-#: view:board.board:0
-msgid "Commitment Voucher"
-msgstr "Commitment Voucher"
-
 #. module: account
 #: view:account.aged.trial.balance:0
 #: model:ir.actions.act_window,name:account.action_account_aged_balance_view
@@ -55976,8 +55966,10 @@ msgstr "Vous devez sélectionné un UdM produit de la même catégorie que l'UdM
 msgid "New Subscription"
 msgstr "Nouvel Abonnement"
 
-#. module: analytic_distribution_supply
+#. module: analytic_distribution_supply, finance, msf_profile
 #: field:purchase.order,commitment_ids:0
+#: model:ir.actions.act_window,name:finance.account_board_commitment_voucher
+#: view:board.board:0
 msgid "Commitment Vouchers"
 msgstr "Bons d'Engagement"
 
@@ -66746,7 +66738,7 @@ msgstr "Sauvegardez en tant que Pièce Jointe au Préfix"
 #: model:ir.actions.act_window,name:finance.account_board_supplier_invoice_open
 #: view:board.board:0
 msgid "Suppliers invoices pending payment"
-msgstr "Suppliers invoices pending payment"
+msgstr "Factures Fournisseurs en attente de paiement"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -68895,7 +68887,7 @@ msgstr "Import Catégorie"
 #: model:ir.actions.act_window,name:finance.account_board_period
 #: view:board.board:0
 msgid "Account Periods"
-msgstr "Account Periods"
+msgstr "Périodes comptable"
 
 #. module: product
 #: view:product.product:0
@@ -76509,7 +76501,7 @@ msgstr "Etat Civil"
 #: model:ir.actions.act_window,name:finance.account_board_supplier_invoice_draft
 #: view:board.board:0
 msgid "Suppliers invoices pending validation"
-msgstr "Suppliers invoices pending validation"
+msgstr "Factures Fournisseurs en attente de validation"
 
 #. module: msf_tools
 #: field:automated.import,interval_unit:0
@@ -86247,7 +86239,7 @@ msgstr "Description Produit"
 #: view:res.currency:0
 #: view:board.board:0
 msgid "Latest FX rates"
-msgstr "Latest FX rates"
+msgstr "Derniers taux de change"
 
 #. modules: base_setup, unifield_setup
 #: selection:base.setup.company,country_id:0
@@ -98125,3 +98117,8 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. modules: finance, msf_profile
+#: model:ir.actions.act_window,name:finance.account_board_commitment_voucher
+#: view:board.board:0
+msgid "Commitment Vouchers to validate"
+msgstr "Bons d'Engagement à valider"
