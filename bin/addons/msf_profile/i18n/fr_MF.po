@@ -50402,7 +50402,7 @@ msgstr "No register found for the period selected %s"
 #: code:addons/register_accounting/wizard/wizard_register_import.py:482
 #, python-format
 msgid "Line %s. Third party not found: %s"
-msgstr "Line %s. Third party not found: %s"
+msgstr "Ligne %s. Tiers non trouvé : %s"
 
 #. modules: supplier_catalogue, unifield_setup
 #: field:res.currency,is_esc_currency:0
