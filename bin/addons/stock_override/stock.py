@@ -2065,7 +2065,7 @@ class stock_move(osv.osv):
         kwargs['move'] is the current move
         '''
         move = kwargs['move']
-        return move.location_id.usage == 'supplier'
+        return move.location_id.usage == 'supplier' or (move.location_id.usage == 'customer' and move.location_id.location_category == 'consumption_unit')
 
     def _hook_cancel_assign_batch(self, cr, uid, ids, context=None):
         '''
