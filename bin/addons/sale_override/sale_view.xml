@@ -67,7 +67,7 @@
                         <!-- <field name="order_type" on_change="shipping_policy_change(order_policy, order_type, partner_id, 'order_type')" /> -->
                         <field name="is_a_counterpart" invisible="1" />
                         <field name="fo_created_by_po_sync" invisible="1" />
-                        <field name="order_type" attrs="{'readonly': ['|', '|', ('state', 'not in', ['draft', 'validated']), ('is_a_counterpart', '=', True), ('fo_created_by_po_sync', '=', True)]}" />
+                        <field name="order_type" />
                         <field name="priority" />
                         <field name="categ" on_change="onchange_categ(categ)" />
                         <group colspan="2" col="2">
