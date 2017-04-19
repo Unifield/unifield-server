@@ -185,7 +185,7 @@
 	    		</td>
 	    	</tr>
 	    	<tr>
-	    		[[ repeatIn(objects[0].line_ids, 'l') ]]
+	    		[[ repeatIn(getSortedLines(objects[0]), 'l') ]]
 	    		<td>
 	    			<para style="TextInfo">[[ l.expiry_date &lt; time.strftime('%Y-%m-%d') and l.product_code or removeParentNode('tr') ]]</para>
 	    		</td>
@@ -299,7 +299,7 @@
 	    		</td>
 	    	</tr>
 	    	<tr>
-	    		[[ repeatIn(objects[0].line_ids, 'l') ]]
+	    		[[ repeatIn(getSortedLines(objects[0]), 'l') ]]
 	    		<td>
 	    			<para style="TextInfo">[[ l.expiry_date &gt;= time.strftime('%Y-%m-%d') and l.product_code or removeParentNode('tr') ]]</para>
 	    		</td>
