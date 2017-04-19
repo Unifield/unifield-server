@@ -51,7 +51,7 @@ class supplier_catalogue(osv.osv):
         Disallow the possibility to duplicate a catalogue.
         '''
         raise osv.except_osv(_('Error'), _('You cannot duplicate a catalogue because you musn\'t have ' \
-                               'overlapped catalogue !'))
+                                           'overlapped catalogue !'))
 
         default = default or {}
         default.update({'state': 'draft'})
@@ -107,9 +107,9 @@ class supplier_catalogue(osv.osv):
         equal_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('period_from', '=', period_from),
                                                                                         ('currency_id', '=', currency_id),
                                                                                         ('partner_id', '=', partner_id)],
-                                                                                        order='period_from asc',
-                                                                                        limit=1,
-                                                                                        context=context)
+                                order='period_from asc',
+                                limit=1,
+                                context=context)
 
         # If overrided catalogues exist, display an error message
         if equal_ids:
@@ -161,10 +161,10 @@ class supplier_catalogue(osv.osv):
         from_update_ids = self.search(cr, uid, [('id', 'not in', context.get('cat_ids', [])), ('currency_id', '=', currency_id),
                                                                                               ('partner_id', '=', partner_id),
                                                                                               ('period_from', '<=', period_from),
-                                                                                              '|',
+                                                '|',
                                                                                               ('period_to', '>=', period_from),
                                                                                               ('period_to', '=', False)],
-                                                                                              order='NO_ORDER', context=context)
+                                      order='NO_ORDER', context=context)
 
         # Update these catalogues with an end date which is the start date - 1 day of
         # the new catalogue
@@ -186,9 +186,9 @@ class supplier_catalogue(osv.osv):
         # after the starting date of the new catalogue.
         if vals.get('active', True):
             self._update_other_catalogue(cr, uid, None, vals.get('period_from', False),
-                                                        vals.get('currency_id', False),
-                                                        vals.get('partner_id', context.get('partner_id', False)),
-                                                        vals.get('period_to', False), context=context)
+                                         vals.get('currency_id', False),
+                                         vals.get('partner_id', context.get('partner_id', False)),
+                                         vals.get('period_to', False), context=context)
         res = super(supplier_catalogue, self).create(cr, uid, vals, context=context)
 
         # UTP-746: now check if the partner is inactive, then set this catalogue also to become inactive
@@ -214,6 +214,8 @@ class supplier_catalogue(osv.osv):
         supinfo_obj = self.pool.get('product.supplierinfo')
         price_obj = self.pool.get('pricelist.partnerinfo')
         user_obj = self.pool.get('res.users')
+        line_obj = self.pool.get('supplier.catalogue.line')
+        partner_obj = self.pool.get('res.partner')
 
         if context is None:
             context = {}
@@ -225,16 +227,16 @@ class supplier_catalogue(osv.osv):
             # after the starting date of the updated catalogue.
             if vals.get('active', catalogue.active):
                 self._update_other_catalogue(cr, uid, catalogue.id, vals.get('period_from', catalogue.period_from),
-                                                                    vals.get('currency_id', catalogue.currency_id.id),
-                                                                    vals.get('partner_id', catalogue.partner_id.id),
-                                                                    vals.get('period_to', catalogue.period_to), context=context)
+                                             vals.get('currency_id', catalogue.currency_id.id),
+                                             vals.get('partner_id', catalogue.partner_id.id),
+                                             vals.get('period_to', catalogue.period_to), context=context)
 
             current_partner_id = user_obj.browse(cr, uid, uid, context=context).company_id.partner_id.id
             if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
                 if vals['partner_id'] == current_partner_id:
                     # If the new partner is the instance partner, remove the supplier info
                     supplierinfo_ids = supinfo_obj.search(cr, uid,
-                            [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
+                                                          [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
                     supinfo_obj.unlink(cr, uid, supplierinfo_ids, context=context)
                 elif catalogue.partner_id.id == current_partner_id:
                     # If the catalogue was for teh instance partner, set it to False, then confirm it again
@@ -246,29 +248,40 @@ class supplier_catalogue(osv.osv):
 
                 # Change the partner of all supplier info instances
                 if 'partner_id' in vals and vals['partner_id'] != catalogue.partner_id.id:
-                    delay = self.pool.get('res.partner').browse(cr, uid, vals['partner_id'], context=context).default_delay
+                    delay = partner_obj.browse(cr, uid, vals['partner_id'], context=context).default_delay
                     new_supinfo_vals.update({'name': vals['partner_id'],
                                              'delay': delay})
 
-                # Change pricelist data according to new data
-                new_price_vals = {'valid_till': vals.get('period_to', None),
-                                  'valid_from': vals.get('period_from', catalogue.period_from),
-                                  'currency_id': vals.get('currency_id', catalogue.currency_id.id),
-                                  'name': vals.get('name', catalogue.name),}
+                # Change pricelist data according to new data (only if there is change)
+                new_price_vals = {}
+                for prop in ('period_to', 'period_from', 'currency_id',
+                             'name'):
+                    if prop in vals:
+                        new_price_vals[prop] = vals[prop]
 
-                # utp1033 optimisation
-                pricelist_ids = []
-                #for line in catalogue.line_ids:
-                #    if line.partner_info_id:
-                #        pricelist_ids.append(line.partner_info_id.id)
-                cr.execute('''select partner_info_id from supplier_catalogue_line where catalogue_id = %s ''' % (ids[0]))
-                pricelist_ids += [x[0] for x in cr.fetchall() if x[0] is not None]
-                #pricelist_ids =  cr.fetchall()  returns tuples - may be a problem
                 # Update the supplier info and price lines
                 supplierinfo_ids = supinfo_obj.search(cr, uid,
-                        [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
-                supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
-                price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
+                                                      [('catalogue_id', 'in', ids)], order='NO_ORDER', context=context)
+                if new_supinfo_vals:
+                    supinfo_obj.write(cr, uid, supplierinfo_ids, new_supinfo_vals, context=context)
+
+                pricelist_ids = []
+                if 'line_ids' in vals:
+                    # lines are being edited
+                    line_ids = [x[1] for x in vals['line_ids'] if x]
+                    line_result = line_obj.read(cr, uid, line_ids,
+                                                ['partner_info_id'], context=context)
+                    pricelist_ids = [x['partner_info_id'][0] for x in
+                                     line_result if x['partner_info_id']]
+
+                if new_price_vals:
+                    # the catalog itself has been edited, all the related lines
+                    # should be updated accordingly (that could be long operation)
+                    cr.execute('''SELECT partner_info_id
+                    FROM supplier_catalogue_line
+                    WHERE catalogue_id = %s ''' % (ids[0]))
+                    pricelist_ids = [x[0] for x in cr.fetchall() if x[0]]
+                    price_obj.write(cr, uid, pricelist_ids, new_price_vals, context=context)
 
         res = super(supplier_catalogue, self).write(cr, uid, ids, vals, context=context)
 
@@ -287,14 +300,16 @@ class supplier_catalogue(osv.osv):
         line_obj = self.pool.get('supplier.catalogue.line')
 
         line_ids = line_obj.search(cr, uid, [('catalogue_id', 'in', ids)],
-                order='NO_ORDER', context=context)
+                                   order='NO_ORDER', context=context)
 
         if not all(x['state'] == 'draft' for x in self.read(cr, uid, ids, ['state'], context=context)):
             raise osv.except_osv(_('Error'), _('The catalogue you try to confirm is already confirmed. Please reload the page to update the status of this catalogue'))
 
         # Update catalogues
         self.write(cr, uid, ids, {'state': 'confirmed'}, context=context)
-        # Update lines
+
+        # Update lines, this is required as many operations are done in the
+        # suppliser.catatogue.line.write() when the catalog state change
         line_obj.write(cr, uid, line_ids, {}, context=context)
 
         return True
@@ -321,8 +336,6 @@ class supplier_catalogue(osv.osv):
                         'message': _('Warning! There is already another inactive catalogue for this Supplier! This could have implications on the synching of catalogue to instances below, please check'),
                     },
                 })
-
-
 
         return res
 
@@ -381,7 +394,7 @@ class supplier_catalogue(osv.osv):
             args.append(('partner_id', '=', context.get('search_default_partner_id', False)))
 
         return super(supplier_catalogue, self)._search(cr, uid, args, offset,
-                limit, order, context, count, access_rights_uid)
+                                                       limit, order, context, count, access_rights_uid)
 
     def _get_active(self, cr, uid, ids, field_name, arg, context=None):
         '''
@@ -423,7 +436,7 @@ class supplier_catalogue(osv.osv):
                                                context=context)
         if rs and rs[0] and rs[0]['partner_type'] \
            and rs[0]['partner_type'] == 'esc':
-                return True
+            return True
         return False
 
     def _is_esc(self, cr, uid, ids, fieldname, args, context=None):
@@ -434,12 +447,12 @@ class supplier_catalogue(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         for r in self.read(cr, uid, ids, ['partner_id'],
-                            context=context):
+                           context=context):
             res[r['id']] = False
             if r['partner_id']:
                 res[r['id']] = self._is_esc_from_partner_id(cr, uid,
-                                                    r['partner_id'][0],
-                                                    context=context)
+                                                            r['partner_id'][0],
+                                                            context=context)
 
         return res
 
@@ -626,9 +639,9 @@ class supplier_catalogue(osv.osv):
                         else:
                             default_code = code_ids[0]
                     except Exception:
-                         default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
-                         to_correct_ok = True
-                         error_list_line.append(_("The product '%s' was not found.") % product_code)
+                        default_code = obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]
+                        to_correct_ok = True
+                        error_list_line.append(_("The product '%s' was not found.") % product_code)
 
                 #Product UoM
                 p_uom = len(row.cells)>=3 and row.cells[2].data
@@ -647,9 +660,9 @@ class supplier_catalogue(osv.osv):
                         else:
                             uom_id = uom_ids[0]
                     except Exception:
-                         uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
-                         error_list_line.append(_("The UoM '%s' was not found.") % p_uom)
-                         to_correct_ok = True
+                        uom_id = obj_data.get_object_reference(cr, uid, 'msf_doc_import','uom_tbd')[1]
+                        error_list_line.append(_("The UoM '%s' was not found.") % p_uom)
+                        to_correct_ok = True
                 #[utp-129]: check consistency of uom
                 # I made the check on uom_id according to the constraint _check_uom in unifield-addons/product/product.py (l.744) so that we keep the consistency even when we create a supplierinfo directly from the product
                 if default_code != obj_data.get_object_reference(cr, uid, 'msf_doc_import','product_tbd')[1]:
@@ -659,7 +672,7 @@ class supplier_catalogue(osv.osv):
                         uom_id = browse_product.uom_id.id
                         to_correct_ok = True
                         error_list_line.append(_('The UoM "%s" was not consistent with the UoM\'s category ("%s") of the product "%s".'
-                                            ) % (browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
+                                                 ) % (browse_uom.name, browse_product.uom_id.category_id.name, browse_product.default_code))
 
                 #Product Min Qty
                 if not len(row.cells)>=4 or not row.cells[3].data :
@@ -807,13 +820,13 @@ class supplier_catalogue(osv.osv):
         res = super(supplier_catalogue, self).default_get(cr, uid, fields, context=context)
         if 'partner_id' in context:
             res['is_esc'] = self._is_esc_from_partner_id(cr, uid,
-                                                context['partner_id'],
-                                                context=context)
+                                                         context['partner_id'],
+                                                         context=context)
             if res['is_esc']:
                 supplier_r = self.pool.get('res.partner').read(cr, uid,
-                                                    [context['partner_id']],
-                                                    ['partner_type'],
-                                                    context=context)
+                                                               [context['partner_id']],
+                                                               ['partner_type'],
+                                                               context=context)
                 if supplier_r and supplier_r[0] \
                    and supplier_r[0]['partner_type'] \
                    and supplier_r[0]['partner_type'] == 'esc':
@@ -829,11 +842,11 @@ class supplier_catalogue(osv.osv):
                             user = users[0]
                             if user.company_id and user.company_id.instance_id:
                                 if user.company_id.instance_id.level and \
-                                    user.company_id.instance_id.level !=  'section':
-                                        raise osv.except_osv(
-                                            _('Error'),
-                                            'For an ESC Supplier you must create the catalogue on a HQ instance.'
-                                        )
+                                        user.company_id.instance_id.level !=  'section':
+                                    raise osv.except_osv(
+                                        _('Error'),
+                                        'For an ESC Supplier you must create the catalogue on a HQ instance.'
+                                    )
 
                 # ESC supplier catalogue: no period date
                 res['period_from'] = False
@@ -874,7 +887,7 @@ class supplier_catalogue_line(osv.osv):
         # Search if a product_supplierinfo exists for the catalogue, if not, create it !
         sup_ids = supinfo_obj.search(cr, uid, [('product_id', '=', tmpl_id),
                                                ('catalogue_id', '=', vals['catalogue_id'])],
-                                               context=context)
+                                     context=context)
         sup_id = sup_ids and sup_ids[0] or False
         if not sup_id:
             sup_id = supinfo_obj.create(cr, uid, {'name': catalogue.partner_id.id,
@@ -883,7 +896,7 @@ class supplier_catalogue_line(osv.osv):
                                                   'product_id': tmpl_id,
                                                   'catalogue_id': vals['catalogue_id'],
                                                   },
-                                                  context=context)
+                                        context=context)
 
         # Pass 'no_store_function' to False to compute the sequence on the pricelist.partnerinfo object
         create_context = context.copy()
@@ -900,7 +913,7 @@ class supplier_catalogue_line(osv.osv):
                                               'currency_id': catalogue.currency_id.id,
                                               'valid_from': catalogue.period_from,
                                               'valid_till': catalogue.period_to,},
-                                              context=create_context)
+                                    context=create_context)
 
         vals.update({'supplier_info_id': sup_id,
                      'partner_info_id': price_id})
@@ -971,14 +984,14 @@ class supplier_catalogue_line(osv.osv):
                 new_vals = self._create_supplier_info(cr, uid, new_vals, context=context)
             elif cat_state != 'draft' and line.partner_info_id:
                 pinfo_data = {'min_quantity': new_vals.get('min_qty', line.min_qty),
-                          'price': new_vals.get('unit_price', line.unit_price),
-                          'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
-                          'rounding': new_vals.get('rounding', line.rounding),
-                          'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty)
-                          }
+                              'price': new_vals.get('unit_price', line.unit_price),
+                              'uom_id': new_vals.get('line_uom_id', line.line_uom_id.id),
+                              'rounding': new_vals.get('rounding', line.rounding),
+                              'min_order_qty': new_vals.get('min_order_qty', line.min_order_qty)
+                              }
                 # Update the pricelist line on product supplier information tab
                 self.pool.get('pricelist.partnerinfo').write(cr, uid, [line.partner_info_id.id],
-                                                         pinfo_data, context=context)
+                                                             pinfo_data, context=context)
             elif cat_state != 'draft':
                 new_vals.update({'catalogue_id': new_vals.get('catalogue_id', line.catalogue_id.id),
                                  'product_id': new_vals.get('product_id', line.product_id.id),
@@ -1041,10 +1054,12 @@ class supplier_catalogue_line(osv.osv):
             ids = [ids]
 
         if not context.get('noraise'):
-            for line in self.browse(cr, uid, ids, context=context):
-                if line.min_qty <= 0.00:
-                    raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
-                    return False
+            read_result = self.read(cr, uid, ids, ['min_qty'],
+                                    context=context)
+            negative_qty = [x['id'] for x in read_result if x['min_qty'] <= 0.00]
+            if negative_qty:
+                line = self.browse(cr, uid, negative_qty[0], context=context)
+                raise osv.except_osv(_('Error'), _('The line of product [%s] %s has a negative or zero min. qty !') % (line.product_id.default_code, line.product_id.name))
 
         return True
 
@@ -1053,12 +1068,12 @@ class supplier_catalogue_line(osv.osv):
         'catalogue_id': fields.many2one('supplier.catalogue', string='Catalogue', required=True, ondelete='cascade'),
         'product_id': fields.many2one('product.product', string='Product', required=True, ondelete='cascade'),
         'min_qty': fields.float(digits=(16,2), string='Min. Qty', required=True,
-                                  help='Minimal order quantity to get this unit price.'),
+                                help='Minimal order quantity to get this unit price.'),
         'line_uom_id': fields.many2one('product.uom', string='Product UoM', required=True,
-                                  help='UoM of the product used to get this unit price.'),
+                                       help='UoM of the product used to get this unit price.'),
         'unit_price': fields.float(string='Unit Price', required=True, digits_compute=dp.get_precision('Purchase Price Computation')),
         'rounding': fields.float(digits=(16,2), string='SoQ rounding',
-                                   help='The ordered quantity must be a multiple of this rounding value.'),
+                                 help='The ordered quantity must be a multiple of this rounding value.'),
         'min_order_qty': fields.float(digits=(16,2), string='Min. Order Qty'),
         'comment': fields.char(size=64, string='Comment'),
         'supplier_info_id': fields.many2one('product.supplierinfo', string='Linked Supplier Info'),
@@ -1081,9 +1096,10 @@ class supplier_catalogue_line(osv.osv):
         res = {}
 
         if product_id:
-            product = self.pool.get('product.product').browse(cr, uid, product_id, context=context)
-            v.update({'line_uom_id': product.uom_id.id})
-            res = self.change_uom_qty(cr, uid, ids, product.uom_id.id, min_qty, min_order_qty)
+            product = self.pool.get('product.product').read(cr, uid,
+                                                            product_id, ['uom_id'], context=context)
+            v.update({'line_uom_id': product['uom_id'][0]})
+            res = self.change_uom_qty(cr, uid, ids, product['uom_id'][0], min_qty, min_order_qty)
         else:
             return {}
 
@@ -1304,8 +1320,8 @@ class from_supplier_choose_catalogue(osv.osv_memory):
         partner_id = context.get('active_id')
 
         if not self.pool.get('supplier.catalogue').search(cr, uid,
-                [('partner_id', '=', partner_id)],
-                limit=1, context=context, order='NO_ORDER'):
+                                                          [('partner_id', '=', partner_id)],
+                                                          limit=1, context=context, order='NO_ORDER'):
             raise osv.except_osv(_('Error'), _('No catalogue found !'))
 
         res = super(from_supplier_choose_catalogue, self).default_get(cr, uid, fields, context=context)
