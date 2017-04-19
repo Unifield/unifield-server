@@ -698,6 +698,7 @@ class update_received(osv.osv,fv_formatter):
         rule_seq_list.sort()
         for rule_seq in rule_seq_list:
             updates = update_groups[rule_seq]
+            context['sync_update_session'] = rule_seq[0]
             obj, do_deletion, force_recreation = self.pool.get(updates[0].model), updates[0].is_deleted, updates[0].force_recreation
             assert obj is not None, "Cannot find object model=%s" % updates[0].model
             # Remove updates about deleted records in the list

@@ -754,6 +754,7 @@ class account_move(osv.osv):
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
         'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
+        'posted_sync_sequence': fields.integer('Seq. number of sync update that posted the move', readonly=True, internal=True),
     }
 
     _defaults = {
@@ -965,6 +966,8 @@ class account_move(osv.osv):
             if context.get('from_web_menu', False):
                 fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
+                if context.get('sync_update_session') and vals.get('state') == 'posted' and m.state == 'draft':
+                    vals['posted_sync_sequence'] = context['sync_update_session']
                 if context.get('from_web_menu', False):
                     if m.status == 'sys':
                         raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))

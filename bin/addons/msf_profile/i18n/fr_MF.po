@@ -98168,3 +98168,9 @@ msgstr "Forcer la recréation de l'enregistrement"
 #, python-format
 msgid "Line %s. Description is missing for the given account: %s."
 msgstr "Ligne %s. La description est manquante pour le compte : %s."
+
+#. module: account_override
+#: field:account.move,posted_sync_sequence:0
+msgid "Seq. number of sync update that posted the move"
+msgstr "Num. de séquence de la synchro qui a validé le mouvement"
+
