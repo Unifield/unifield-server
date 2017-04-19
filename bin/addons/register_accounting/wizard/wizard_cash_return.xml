@@ -30,7 +30,7 @@
                     </group>
                     <group colspan="4">
                         <field name='invoice_ids' nolabel="1"
-                           domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), ('currency_id', '=', currency_id)]"
+                           domain="[('type', '=', 'in_invoice'), ('state', '=', 'open'), ('currency_id', '=', currency_id), ('type_for_register', '!=', 'donation')]"
                            context="{ 'type': 'in_invoice', 'journal_type': 'purchase' }"
                         />
                         <button string='Add invoice(s)' name='action_add_invoice' type='object' icon='gtk-add' />
