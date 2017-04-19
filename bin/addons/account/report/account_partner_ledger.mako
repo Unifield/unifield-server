@@ -186,85 +186,79 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Protection/>
 </Style>
 </Styles>
-<Worksheet ss:Name="Sheet">
+<Worksheet ss:Name="Accounts">
 <Table x:FullColumns="1" x:FullRows="1">
-<Column ss:AutoFitWidth="1" ss:Width="140" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="60" />
-<Column ss:AutoFitWidth="1" ss:Width="50" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-<Column ss:AutoFitWidth="1" ss:Width="80" />
-% for p in objects:
+<%
+selected_filter = get_filter(data) or ''
+%>
 <Row>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Chart of Account</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Fiscal Year</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journals</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Display Account</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filter By ${(get_filter(data) or '')|x}</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Entries Sorted By</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Output Currency</Data></Cell>
- <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Journal</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Filters By ${(selected_filter != _('No Filter') and selected_filter or '')|x}</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Partner's</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Accounts</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 </Row>
+<%
+if selected_filter == _('Date'):
+    filter = '%s - %s' % (formatLang(get_start_date(data), date=True), formatLang(get_end_date(data), date=True))
+elif selected_filter == _('Periods'):
+    filter = '%s - %s' % (get_start_period(data), get_end_period(data))
+else:
+    filter = selected_filter
+%>
 <Row>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
+    <Data ss:Type="String">${(get_account(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${', '.join([ lt or '' for lt in get_journal(data)])|x}</Data>
+    <Data ss:Type="String">${(get_fiscalyear(data) or '')|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${(', '.join([ lt or '' for lt in get_journal(data) ]) )|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${(filter)|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${( get_partners() )|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${(', '.join([ acc or '' for acc in get_accounts(data) ]) )|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${( get_target_move(data) )|x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${(', '.join([ inst or '' for inst in get_instances(data) ]) )|x}</Data>
  </Cell>
 </Row>
-<Row>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner</Data>
-</Cell>
-<Cell ss:StyleID="ssHeader">
-    <Data ss:Type="String">Partner Ref.</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Account</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Debit</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Credit</Data>
-</Cell>
-<Cell ss:StyleID="ssHeaderRight">
-    <Data ss:Type="String">Balance</Data>
-</Cell>
-</Row>
-% for line in lines(p):
-<Row>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${line['date']|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${line['code']|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${line['move_name']|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${line['a_code']|x}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-</Cell>
-<Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${line['debit']}</Data>
-</Cell>
-<Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${line['credit']}</Data>
-</Cell>
-</Row>
-% endfor
 
-<!-- INITIAL BALANCE Section -->
-% endfor
+
 </Table>
+<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <PageSetup>
+    <Layout x:Orientation="Landscape"/>
+    <Header x:Data="&amp;C&amp;&quot;Arial,Bold&quot;&amp;14Partner Ledger"/>
+    <Footer x:Data="Page &amp;P of &amp;N"/>
+   </PageSetup>
+   <Print>
+    <ValidPrinterInfo/>
+    <PaperSizeIndex>9</PaperSizeIndex>
+    <HorizontalResolution>600</HorizontalResolution>
+    <VerticalResolution>600</VerticalResolution>
+   </Print>
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>17</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+</WorksheetOptions>
 </Worksheet>
 </Workbook>
