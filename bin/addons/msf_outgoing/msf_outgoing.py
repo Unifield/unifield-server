@@ -2125,6 +2125,7 @@ class stock_picking(osv.osv):
                     break
         return result
 
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -2143,7 +2144,7 @@ class stock_picking(osv.osv):
                                                context=context)
 
         family_dict = dict((x['id'], x) for x in family_read_result)
-
+        parent_id_ship = {}
         for current_id, family_ids in picking_to_families.items():
             default_values = {
                 'num_of_packs': 0,
@@ -2160,11 +2161,13 @@ class stock_picking(osv.osv):
                     if family_id in family_dict:
                         family = family_dict[family_id]
                         if family['shipment_id'] and family['not_shipped']:
-                            if self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context):
+                            if family['shipment_id'][0] not in parent_id_ship:
+                                parent_id_ship[family['shipment_id'][0]] = self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context)['parent_id']
+                            if parent_id_ship.get(family['shipment_id'][0]):
                                 continue
-                    num_of_packs += int(family['num_of_packs'])
-                    total_weight += float(family['total_weight'])
-                    total_volume += float(family['total_volume'])
+                        num_of_packs += int(family['num_of_packs'])
+                        total_weight += float(family['total_weight'])
+                        total_volume += float(family['total_volume'])
 
                 result[current_id]['num_of_packs'] = num_of_packs
                 result[current_id]['total_weight'] = total_weight
