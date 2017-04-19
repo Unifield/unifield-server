@@ -25,5 +25,5 @@ class group_type(osv.osv):
                     cr.execute("select id from ir_model_data where name=%s and module='msf_sync_data_server'", (xmlid, ))
                     if not cr.fetchone():
                         cr.execute("""insert into ir_model_data (name, module, model, res_id, noupdate, force_recreation)
-                            values (%s, 'msf_sync_data_server', 'sync.server.group_type', %s, 'f', 'f') """, (xmlid, res_id))
+                            values (%s, 'msf_sync_data_server', 'sync.server.group_type', %s, 'f', 'f') """, (xmlid, res_id[0]))
 group_type()
