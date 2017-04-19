@@ -236,7 +236,7 @@ class account_cash_statement(osv.osv):
         for st in self.browse(cr, uid, ids, context=context):
             st_prev_ids = self.search(cr, uid, [('prev_reg_id', '=', st.id)], context=context)
             if len(st_prev_ids) > 1:
-                raise osv.except_osv(_('Error'), _('A problem occured: More than one register have this one as previous register!'))
+                raise osv.except_osv(_('Error'), _('A problem occurred: More than one register have this one as previous register!'))
             # Verify that the closing balance have been freezed
             if not st.closing_balance_frozen:
                 raise osv.except_osv(_('Error'), _("Please confirm closing balance before closing register named '%s'") % st.name or '')

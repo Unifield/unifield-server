@@ -596,7 +596,7 @@ class wizard_register_import(osv.osv_memory):
                             vals.update({'employee_id': r_partner,})
                     line_res = self.pool.get('wizard.register.import.lines').create(cr, uid, vals, context)
                     if not line_res:
-                        errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
+                        errors.append(_('Line %s. A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
                         continue
                     created += 1
 
@@ -633,12 +633,12 @@ class wizard_register_import(osv.osv_memory):
         except osv.except_osv as osv_error:
             logging.getLogger('import register').warn('OSV Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred %s: %s") % (osv_error.name, osv_error.value), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         except Exception as e:
             logging.getLogger('import register').warn('Exception', exc_info=True)
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred: %s") % (e and e.args and e.args[0] or ''), 'state': 'done', 'progression': 100.0})
             cr.close(True)
         return True
 

@@ -7552,7 +7552,7 @@ msgstr "Taxe de Remplacement"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_register_import.py:613
 #, python-format
-msgid "An error occured %s: %s"
+msgid "An error occurred %s: %s"
 msgstr "Une erreur est survenue %s: %s"
 
 #. module: base
@@ -26390,7 +26390,7 @@ msgstr "Cette vue est utilisée par les comptables afin d'enregistrer des écrit
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/cashbox_write_off.py:99
 #, python-format
-msgid "An error has occured !"
+msgid "An error has occurred !"
 msgstr "Une erreur est survenue !"
 
 #. module: account
@@ -28764,7 +28764,7 @@ msgstr "Produit Spécifique"
 #. module: register_accounting
 #: code:addons/register_accounting/account_bank_statement.py:2051
 #, python-format
-msgid "An error occured on down_payment check. Please contact an administrator to resolve this problem."
+msgid "An error occurred on down_payment check. Please contact an administrator to resolve this problem."
 msgstr "Une erreur est survenue sur la vérification de la transaction acompte. Veuillez contacter votre administrateur pour résoudre ce problème."
 
 #. modules: vertical_integration, finance, msf_currency_revaluation, analytic_distribution
@@ -42053,7 +42053,7 @@ msgstr "Freight number"
 #: code:addons/analytic_distribution_supply/invoice.py:104
 #: code:addons/analytic_distribution_supply/invoice.py:114
 #, python-format
-msgid "An error occured for analytic distribution copy for invoice."
+msgid "An error occurred for analytic distribution copy for invoice."
 msgstr "Une erreur est survenue lors de la copie de la distribution analytique pour la facture."
 
 #. modules: purchase_override, sale
@@ -48320,7 +48320,7 @@ msgstr "Analyse du Suivi des Mouvements"
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:573
 #, python-format
-msgid "An error occured on balance and no payroll rounding line found."
+msgid "An error occurred on balance and no payroll rounding line found."
 msgstr "Une erreur est survenue lors du calcul de la balance et aucune ligne de paie arrondie n'a été trouvée."
 
 #. modules: purchase, account, sale, account_voucher, stock_schedule, board, stock
@@ -48515,8 +48515,8 @@ msgstr "Ligne Analytique"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/register_reopen.py:82
 #, python-format
-msgid "An error has occured !"
-msgstr "An error has occured !"
+msgid "An error has occurred !"
+msgstr "An error has occurred !"
 
 #. module: msf_outgoing
 #: help:return.shipment.family.processor,wizard_id:0
@@ -53642,8 +53642,8 @@ msgstr "Vous ne pouvez pas avoir de même code ou nom qu'une instance active!"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:296
 #, python-format
-msgid "Line %s in the Excel file was added to the file of the lines with error, an error is occured. Details : %s"
-msgstr "Line %s in the Excel file was added to the file of the lines with error, an error is occured. Details : %s"
+msgid "Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s"
+msgstr "Line %s in the Excel file was added to the file of the lines with error, an error is occurred. Details : %s"
 
 #. module: account
 #: view:account.invoice:0
@@ -55097,7 +55097,7 @@ msgstr "Période du calcul"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:538
 #, python-format
-msgid "An error occured. %s: %s"
+msgid "An error occurred. %s: %s"
 msgstr "Une erreur est survenue. %s: %s"
 
 #. module: base_setup
@@ -55563,7 +55563,7 @@ msgstr "Is merged by account"
 #: code:addons/register_accounting/account_bank_statement.py:451
 #: code:addons/register_accounting/account_cash_statement.py:230
 #, python-format
-msgid "A problem occured: More than one register have this one as previous register!"
+msgid "A problem occurred: More than one register have this one as previous register!"
 msgstr "Un problème est survenu: Il y a plus d'un registre qui ait celui-ci comme registre précédent!"
 
 #. modules: purchase, account, base_setup, hr, purchase_double_validation, msf_instance, sale, msf_config_locations, base, base_report_designer, unifield_setup
@@ -59389,7 +59389,7 @@ msgstr "Lignes à lettrer"
 #: code:addons/msf_doc_import/account.py:497
 #: code:addons/register_accounting/wizard/wizard_register_import.py:576
 #, python-format
-msgid "Line %s. A problem occured for line registration. Please contact an Administrator."
+msgid "Line %s. A problem occurred for line registration. Please contact an Administrator."
 msgstr "Ligne %s. Un problème est survenu lors de l'enregistrement de la ligne. Veuillez contacter un administrateur."
 
 #. modules: sales_followup, account, stock_override, supplier_catalogue, msf_instance, documents_done, consumption_calculation, tender_flow, specific_rules, purchase_compare_rfq, mission_stock, msf_doc_import
@@ -59577,7 +59577,7 @@ msgstr "Générer les Ecritures d'Ouverture"
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_confirm_bank.py:51
 #, python-format
-msgid "An unknown error has occured on Bank confirmation wizard. Please contact an administrator to solve this problem."
+msgid "An unknown error has occurred on Bank confirmation wizard. Please contact an administrator to solve this problem."
 msgstr "Une erreur inconnue est survenue sur l'Assistant Confirmation Bancaire. Veuillez contacter un administrateur pour résoudre ce problème."
 
 #. module: stock_override
@@ -67557,7 +67557,7 @@ msgstr "Fichier binaire ou URL externe"
 #. module: account_mcdb
 #: code:addons/account_mcdb/wizard/output_currency_for_export.py:107
 #, python-format
-msgid "An error has occured. Please contact an administrator."
+msgid "An error has occurred. Please contact an administrator."
 msgstr "Une erreur est survenue, veuillez contacter votre administrateur."
 
 #. module: product
@@ -69251,7 +69251,7 @@ msgstr "picking.tools"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:319
 #, python-format
-msgid "An unknow error occured, please contact the support team. Error message: %s"
+msgid "An unknow error occurred, please contact the support team. Error message: %s"
 msgstr "Une erreur inconnue est survenue, veuillez contacter votre équipe support. Message d'erreur : %s"
 
 #. module: purchase
@@ -73434,7 +73434,7 @@ msgstr "Pending Cheques"
 #. module: msf_homere_interface
 #: code:addons/msf_homere_interface/wizard/hr_payroll_employee_import.py:376
 #, python-format
-msgid "An error occured on nationality. Please verify all nationalities."
+msgid "An error occurred on nationality. Please verify all nationalities."
 msgstr "Une erreur est survenue sous nationalité. Veuillez vérifier toutes les nationalités."
 
 #. module: transport_mgmt
@@ -74525,8 +74525,8 @@ msgstr "Référence Devise"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_picking_line.py:308
 #, python-format
-msgid "An error is occured. Details : %s"
-msgstr "An error is occured. Details : %s"
+msgid "An error is occurred. Details : %s"
+msgstr "An error is occurred. Details : %s"
 
 #. modules: account, account_voucher
 #: view:account.unreconcile:0
@@ -76048,7 +76048,7 @@ msgstr "Reçu Vente"
 #: code:addons/account_mcdb/report/account_mcdb_export.py:177
 #: code:addons/account_mcdb/report/account_mcdb_export.py:278
 #, python-format
-msgid "An error occured. Please contact an administrator to resolve this problem."
+msgid "An error occurred. Please contact an administrator to resolve this problem."
 msgstr "Une erreur est survenue, veuillez contacter votre administrateur pour résoudre ce problème."
 
 #. module: export_import_lang
@@ -77304,10 +77304,10 @@ msgid "This is the list of all packing that have been picked."
 msgstr "Ceci est la liste de tous les colis qui ont été prélevés."
 
 #. modules: msf_doc_import, register_accounting
-#: code:addons/msf_doc_import/account.py:543
+#: code:addons/msf_doc_import/account.py:551
 #: code:addons/register_accounting/wizard/wizard_register_import.py:618
 #, python-format
-msgid "An error occured: %s"
+msgid "An error occurred: %s"
 msgstr "Une erreur est survenue : %s"
 
 #. modules: purchase, account, product_attributes, hr, msf_instance, sale, procurement, base, object_query
@@ -83337,7 +83337,7 @@ msgstr "Toujours"
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:400
 #, python-format
-msgid "An error occured on engagement lines deletion."
+msgid "An error occurred on engagement lines deletion."
 msgstr "Une erreur s'est produite lors de la phase de suppression de lignes"
 
 #. module: analytic_distribution
@@ -91199,8 +91199,8 @@ msgstr "Quantité Maximale"
 #. module: account_override
 #: code:addons/account_override/finance_export.py:241
 #, python-format
-msgid "An error occured: %s"
-msgstr "An error occured: %s"
+msgid "An error occurred: %s"
+msgstr "Une erreur est survenue: %s"
 
 #. modules: account, register_accounting
 #: help:account.invoice,date_due:0
@@ -98350,3 +98350,9 @@ msgstr "Une erreur est survenue à la ligne %s: %s"
 #, python-format
 msgid "Line %s, the column 'Document Date' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example)."
 msgstr "Ligne %s, la colonne 'Date du Document' doit être de type DateTime. Vérifier le format de votre feuille de calcul (ou exporter un document pour avoir un exemple)."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:549
+#, python-format
+msgid "An error occurred on line %s: %s"
+msgstr "Une erreur est survenue à la ligne %s: %s"

@@ -516,7 +516,7 @@ class msf_doc_import_accounting(osv.osv_memory):
 
                     line_res = self.pool.get('msf.doc.import.accounting.lines').create(cr, uid, vals, context)
                     if not line_res:
-                        errors.append(_('Line %s. A problem occured for line registration. Please contact an Administrator.') % (current_line_num,))
+                        errors.append(_('Line %s. A problem occurred for line registration. Please contact an Administrator.') % (current_line_num,))
                         continue
                     created += 1
                 # Check if all is ok for the file
@@ -557,15 +557,15 @@ class msf_doc_import_accounting(osv.osv_memory):
                 cr.close(True)
         except osv.except_osv as osv_error:
             cr.rollback()
-            self.write(cr, uid, ids, {'message': _("An error occured. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
+            self.write(cr, uid, ids, {'message': _("An error occurred. %s: %s") % (osv_error.name, osv_error.value,), 'state': 'done', 'progression': 100.0})
             if not from_yml:
                 cr.close(True)
         except Exception as e:
             cr.rollback()
             if current_line_num is not None:
-                message = _("An error occured on line %s: %s") % (current_line_num, e.args and e.args[0] or '',)
+                message = _("An error occurred on line %s: %s") % (current_line_num, e.args and e.args[0] or '')
             else:
-                message = _("An error occured: %s") % (e.args and e.args[0] or '',)
+                message = _("An error occurred: %s") % (e.args and e.args[0] or '',)
             self.write(cr, uid, ids, {'message': message, 'state': 'done', 'progression': 100.0})
             if not from_yml:
                 cr.close(True)

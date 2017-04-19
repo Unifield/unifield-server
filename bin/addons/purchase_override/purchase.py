@@ -781,7 +781,7 @@ class purchase_order(osv.osv):
             elif partner['partner_type'] not in ('external', 'esc') and order_type == 'direct':
                 v.update({'partner_address_id': False, 'partner_id': False, 'pricelist_id': False,})
                 w.update({'message': 'You cannot have a Direct Purchase Order with a partner which is not external or an ESC',
-                          'title': 'An error has occured !'})
+                          'title': 'An error has occurred !'})
         elif partner_id and partner_id == local_market and order_type != 'purchase_list':
             v['partner_id'] = None
             v['partner_address_id'] = None

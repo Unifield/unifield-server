@@ -48,7 +48,7 @@ class wizard_confirm_bank(osv.osv_memory):
         # Then close wizard
         if res:
             return { 'type': 'ir.actions.act_window_close', }
-        raise osv.except_osv(_('Error'), _('An unknown error has occured on Bank confirmation wizard. Please contact an administrator to solve this problem.'))
+        raise osv.except_osv(_('Error'), _('An unknown error has occurred on Bank confirmation wizard. Please contact an administrator to solve this problem.'))
 
 wizard_confirm_bank()
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

@@ -34,4 +34,4 @@
 -
   !python {model: product.product}: |
     res = self.deactivate_product(cr, uid, ref('product2'))
-    assert type(res) == type({}) and res.get('res_model') == 'product.deactivation.error', "No error occured when the de-activation of the product"
+    assert type(res) == type({}) and res.get('res_model') == 'product.deactivation.error', "No error occurred when the de-activation of the product"
