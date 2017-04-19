@@ -98163,5 +98163,8 @@ msgstr "Messages après la dernière execution"
 msgid "Force record recreation"
 msgstr "Forcer la recréation de l'enregistrement"
 
-
-
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:463
+#, python-format
+msgid "Line %s. Description is missing for the given account: %s."
+msgstr "Ligne %s. La description est manquante pour le compte : %s."
