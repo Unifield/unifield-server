@@ -93,7 +93,7 @@ class report_reception(report_sxw.rml_parse):
 
     def getQtyPO(self,line):
         # line amount from the PO, always the same on all INs for a given PO
-        val = line.purchase_line_id.product_qty if line.purchase_line_id else 0
+        val = line.purchase_line_id.product_qty if line.purchase_line_id else line.product_qty
         return "{0:.2f}".format(val)
 
     def getQtyBO(self,line,o):
@@ -147,16 +147,34 @@ class report_reception(report_sxw.rml_parse):
         return time.strftime('%d/%m/%Y', time.strptime(o.min_date,'%Y-%m-%d %H:%M:%S'))
 
     def getPartnerCity(self,o):
-        return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.city or False
+        if o.purchase_id:
+            return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.city or False
+        elif o.partner_id and len(o.partner_id.address):
+            return o.partner_id.address[0].city
+        else:
+            return False
 
     def getPartnerPhone(self,o):
-        return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.phone or False
+        if o.purchase_id:
+            return o.purchase_id and o.purchase_id.partner_address_id and o.purchase_id.partner_address_id.phone or False
+        elif o.partner_id and len(o.partner_id.address):
+            return o.partner_id.address[0].phone
+        else:
+            return False
 
     def getPartnerName(self,o):
-        return o.purchase_id and o.purchase_id.partner_id and o.purchase_id.partner_id.name or False
+        if o.purchase_id:
+            return o.purchase_id and o.purchase_id.partner_id and o.purchase_id.partner_id.name or False
+        elif o.partner_id:
+            return o.partner_id.name
+        else:
+            return False
 
     def getPartnerAddress(self,o):
-        temp = o.purchase_id and o.purchase_id.partner_address_id.name_get()
+        if o.purchase_id:
+            temp = o.purchase_id and o.purchase_id.partner_address_id.name_get()
+        elif o.partner_id and len(o.partner_id.address):
+            temp = o.partner_id.address[0].name_get()
         if temp:
             return temp[0][1]
 
