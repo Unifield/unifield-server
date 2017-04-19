@@ -98356,3 +98356,13 @@ msgstr "Ligne %s, la colonne 'Date du Document' doit être de type DateTime. Vé
 #, python-format
 msgid "An error occurred on line %s: %s"
 msgstr "Une erreur est survenue à la ligne %s: %s"
+
+#. module: product
+#: help:product.template,standard_price:0
+msgid "Price of product calculated according to the selected costing method."
+msgstr "Prix du produit calculé suivant la méthode de coût sélectionnée."
+
+#. module: product_attributes
+#: help:product.product,soq_quantity:0
+msgid "Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."
+msgstr "Standard Ordering Quantity. Quantité à laquelle le produit devrait être commandé. La SoQ est habituellement déterminée par le packaging du produit."
