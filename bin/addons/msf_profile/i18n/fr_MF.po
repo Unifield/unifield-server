@@ -98344,3 +98344,9 @@ msgstr "Ligne %s. Il n'est pas possible d'importer un compte de type Liquidité,
 #, python-format
 msgid "An error occured on line %s: %s"
 msgstr "Une erreur est survenue à la ligne %s: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:261
+#, python-format
+msgid "Line %s, the column 'Document Date' have to be of type DateTime. Check the spreadsheet format (or export a document to have an example)."
+msgstr "Ligne %s, la colonne 'Date du Document' doit être de type DateTime. Vérifier le format de votre feuille de calcul (ou exporter un document pour avoir un exemple)."
