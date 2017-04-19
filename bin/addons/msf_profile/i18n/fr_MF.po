@@ -98338,3 +98338,9 @@ msgstr "Ligne %s. %s est un(e) %s de type VUE !"
 #, python-format
 msgid "Line %s. It is not possible to import account of type 'Liquidity', please check the account %s."
 msgstr "Ligne %s. Il n'est pas possible d'importer un compte de type Liquidité, veuillez vérifier le compte %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:545
+#, python-format
+msgid "An error occured on line %s: %s"
+msgstr "Une erreur est survenue à la ligne %s: %s"
