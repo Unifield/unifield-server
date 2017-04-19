@@ -83,10 +83,8 @@
   </stylesheet>
   <story>
     <para style="P8">[[repeatIn(objects,'stock_picking')]]</para>
-    <section>
-      <para style="P7">[[repeatIn(stock_picking.pack_family_memory_ids,'pack_family')]]</para>
       <section>
-        <para style="P7">[[repeatIn(range(pack_family.from_pack,pack_family.to_pack+1),'titi')]]</para>
+        <para style="P7">[[repeatIn(range(1,stock_picking.num_of_packs+1),'titi')]]</para>
         <blockTable colWidths="186.0,351.0" style="Table6">
           <tr>
             <td><image>[[ company.logo or removeParentNode('image') ]]</image></td>
@@ -166,8 +164,6 @@
         <para style="P1">
           <font color="white"> </font>
         </para>
-        <condPageBreak height="10cm" />
-      </section>
     </section>
   </story>
 </document>
