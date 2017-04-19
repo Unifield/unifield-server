@@ -98322,3 +98322,13 @@ msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Employé
 #, python-format
 msgid "Line %s of the imported file, the date has a wrong format: %s"
 msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct : %s"
+
+#. module: register_accounting
+#: code:addons/register_accounting/wizard/wizard_register_import.py:507
+#: code:addons/register_accounting/wizard/wizard_register_import.py:519
+#: code:addons/register_accounting/wizard/wizard_register_import.py:532
+#: code:addons/register_accounting/wizard/wizard_register_import.py:544
+#: code:addons/register_accounting/wizard/wizard_register_import.py:556
+#, python-format
+msgid "Line %s. %s is a VIEW type %s!"
+msgstr "Ligne %s. %s est un(e) %s de type VUE !"
