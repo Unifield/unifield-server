@@ -1241,12 +1241,13 @@ class product_attributes(osv.osv):
                     }, context=context)
 
         if 'default_code' in vals:
-            vals['default_code'] = vals['default_code'].strip()
-            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('White spaces are not allowed in product code'),
-                )
+            if not context.get('sync_update_execution'):
+                vals['default_code'] = vals['default_code'].strip()
+                if ' ' in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('White spaces are not allowed in product code'),
+                    )
         if 'xmlid_code' in vals:
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
@@ -1310,19 +1311,20 @@ class product_attributes(osv.osv):
                 vals['perishable'] = True
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
-                vals.update({'duplicate_ok': True})
+                vals['duplicate_ok'] = True
             else:
-                vals.update({
-                    'duplicate_ok': False,
-                    'default_code': vals['default_code'].strip(),
-                })
-            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
-                # Check if the old code was 'XXX'
-                if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('White spaces are not allowed in product code'),
-                    )
+                vals['duplicate_ok'] = False
+            if not context.get('sync_update_execution'):
+                vals['default_code'] = vals['default_code'].strip()
+                if ' ' in vals['default_code']:
+                    # Check if the old code was 'XXX'
+                    # in case there is, it mean it is a duplicate and spaces
+                    # are not allowed.
+                    if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('White spaces are not allowed in product code'),
+                        )
 
         # update local stock mission report lines :
         if 'state' in vals:
