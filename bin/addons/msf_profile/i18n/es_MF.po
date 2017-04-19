@@ -20412,7 +20412,6 @@ msgid "Expected Shipped Date :"
 msgstr "Expected Shipped Date :"
 
 #. module: sync_client
-#: field:sync.client.activate_entity,name:0
 #: field:sync.client.child_entity,name:0
 #: field:sync.client.entity,name:0
 #: field:sync.client.register_entity,name:0
@@ -33937,11 +33936,6 @@ msgid "\n"
 "    "
 msgstr "     Modificación de tercero con nuevos plazos de entrega     "
 
-#. module: sync_client
-#: view:sync.client.activate_entity:0
-msgid "Activate entity"
-msgstr "Activar entidad"
-
 #. modules: account, register_accounting
 #: selection:account.journal.column,field:0
 #: field:account.bank.statement.line,imported_invoice_line_ids:0
@@ -35422,11 +35416,6 @@ msgstr "Recurso"
 #: view:account.vat.declaration:0
 msgid "Print Tax Statement"
 msgstr "Imprimir extracto de impuestos"
-
-#. module: sync_client
-#: model:ir.model,name:sync_client.model_sync_client_activate_entity
-msgid "sync.client.activate_entity"
-msgstr "sync.client.activate_entity"
 
 #. modules: msf_doc_import, register_accounting
 #: code:addons/msf_doc_import/account.py:400
@@ -47634,11 +47623,6 @@ msgstr "¿El sistema utilizará los movimientos no asignados desde la perspectiv
 #: selection:res.users,context_tz:0
 msgid "America/Cancun"
 msgstr "América / Cancun"
-
-#. module: sync_client
-#: view:sync.client.activate_entity:0
-msgid "Activate"
-msgstr "Activar"
 
 #. module: base
 #: selection:ir.translation,lang:0
