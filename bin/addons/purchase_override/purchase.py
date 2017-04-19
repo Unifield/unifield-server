@@ -871,18 +871,20 @@ class purchase_order(osv.osv):
         proc_obj = self.pool.get('procurement.order')
         if order_type == 'direct':
             if not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids)]):
-                po = self.read(cr, uid, ids, ['order_type'])[0]
+                order_type_value = self.read(cr, uid, ids, ['order_type'])
+                order_type_value = order_type_value[0] if order_type_value else 'regular'
                 return {
-                    'value': {'order_type': po['order_type']},
+                    'value': {'order_type': order_type_value},
                     'warning': {
                         'title': _('Error'),
                         'message': _('You cannot create a direct purchase order from scratch')
                     },
                 }
             elif not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids), ('po_cft', '=', 'dpo')]):
-                po = self.read(cr, uid, ids, ['order_type'])[0]
+                order_type_value = self.read(cr, uid, ids, ['order_type'])
+                order_type_value = order_type_value[0] if order_type_value else 'regular'
                 return {
-                    'value': {'order_type': po['order_type']},
+                    'value': {'order_type': order_type_value},
                     'warning': {
                         'title': _('Error'),
                         'message': _('You cannot select Direct Purchase order for a lines sourced to a normal PO'),
