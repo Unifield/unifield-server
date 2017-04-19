@@ -2330,8 +2330,6 @@ stock moves which are already processed : '''
                     'product_uos_qty': order_line.product_qty,
                     'product_uom': order_line.product_uom.id,
                     'product_uos': order_line.product_uom.id,
-                    'date': order_line.date_planned,
-                    'date_expected': order_line.date_planned,
                     'location_id': loc_id,
                     'location_dest_id': dest,
                     'picking_id': picking_id,
@@ -3279,6 +3277,9 @@ class purchase_order_line(osv.osv):
             context = {}
         if not default:
             default = {}
+
+        if 'origin' not in default:
+            default.update({'origin': False})
 
         if 'move_dest_id' not in default:
             default.update({'move_dest_id': False})
