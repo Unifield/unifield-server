@@ -98121,6 +98121,57 @@ msgstr "À cause du volume de donnée, votre rapport ne peut pas être affiché 
 msgid "When the report will be ready, you can access to it by the menu Tools / Product Status Inconsistencies"
 msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils / Incohérences du statut des produits"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:703
+#, python-format
+msgid "You cannot set an expiry date before %s"
+msgstr "Vous ne pouvez pas mettre un date d'expiration antérieure à %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:726
+#, python-format
+msgid "Product Qty cannot be < 0. It has been reset to 0."
+msgstr "La qté du produit ne peut être inférieure à 0. La qté a été mise à 0."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:442
+#: code:addons/msf_doc_import/initial_stock_inventory.py:936
+#, python-format
+msgid "Incorrectly formatted expiry date. Batch not created.\n"
+""
+msgstr "Format incorrect pour la date d'expiration. Lot non créé.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:711
+#, python-format
+msgid "Incorrectly formatted expiry date: %s"
+msgstr "Format de date d'expiration incorrect: %s"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:200
+#: code:addons/msf_doc_import/initial_stock_inventory.py:452
+#: code:addons/msf_doc_import/initial_stock_inventory.py:459
+#: code:addons/msf_doc_import/initial_stock_inventory.py:715
+#: code:addons/msf_doc_import/initial_stock_inventory.py:984
+#, python-format
+msgid "Incorrectly formatted expiry date.\n"
+""
+msgstr "Format incorrect pour la date d'expiration.\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/initial_stock_inventory.py:730
+#, python-format
+msgid "Incorrect number format: %s"
+msgstr "Format de nombre incorrect: %s"
+
+#. module: spreadsheet_xml
+#: code:addons/spreadsheet_xml/spreadsheet_xml.py:152
+#, python-format
+msgid "File format problem: no Table found in the file, check the file format."
+msgstr "Problem de format de fichier :  aucun tableau trouvé dans le fichier, veuillez vérifier le format de celui-ci."
+
 #. module: product_attributes
 #: model:product.justification.code,description:product_attributes.justification_code_jpa
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
