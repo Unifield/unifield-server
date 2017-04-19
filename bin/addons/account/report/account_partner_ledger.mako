@@ -188,6 +188,7 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Styles>
 <Worksheet ss:Name="Accounts">
 <Table x:FullColumns="1" x:FullRows="1">
+<!-- LIST OF SELECTED FILTERS -->
 <%
 selected_filter = get_filter(data) or ''
 %>
@@ -236,6 +237,98 @@ else:
  </Cell>
 </Row>
 
+<!-- TABLE HEADER -->
+<Row></Row>
+<Row>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Date</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">JNRL</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Ref</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Account</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Entry Label</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Debit</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Credit</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Balance</Data>
+</Cell>
+</Row>
+
+% for p in objects:
+<!-- PARTNER HEADER -->
+<Row></Row>
+<Row>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${p.name or ''|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${p.ref or ''|x}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${formatLang(sum_debit_partner(p)) or 0.}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${formatLang(sum_credit_partner(p))}</Data>
+</Cell>
+<Cell ss:StyleID="ssPartnerNumber">
+    <Data ss:Type="Number">${'%s %s' % (formatLang(sum_debit_partner(p) - sum_credit_partner(p)) or 0., company.currency_id.name)}</Data>
+</Cell>
+</Row>
+<!-- PARTNER LINES -->
+% for line in lines(p):
+<Row>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${formatLang(line['date'],date=True)|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${line['code']|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${line['move_name']|x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${line['a_code']|x}</Data>
+  </Cell>
+  <%
+  entry_label = '%s - %s' % (line['ref'] or '', line['name'] or '')
+  %>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${ entry_label |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${ formatLang(line['debit']) |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${ formatLang(line['credit']) |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${ '%s %s' % (formatLang(line['progress']), company.currency_id.name) |x}</Data>
+  </Cell>
+
+</Row>
+% endfor
+% endfor
 
 </Table>
 <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
