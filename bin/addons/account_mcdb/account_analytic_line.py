@@ -96,7 +96,7 @@ class account_analytic_line(osv.osv):
             return []
 
         m_ids = self.pool.get('account.move.line').search(cr, uid,
-            [('cheque_number', 'ilike', args[0][2])], context=context)
+                                                          [('cheque_number', 'ilike', args[0][2])], context=context)
         return [('move_id', 'in', m_ids)] if m_ids else [('id', 'in', [])]
 
     _columns = {
@@ -104,10 +104,10 @@ class account_analytic_line(osv.osv):
         'output_amount_debit': fields.function(_get_output, string="Output debit", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_amount_credit': fields.function(_get_output, string="Output credit", type='float', method=True, store=False, multi="analytic_output_currency"),
         'output_currency': fields.function(_get_output, string="Output curr.", type='many2one', relation='res.currency', method=True, store=False,
-            multi="analytic_output_currency"),
+                                           multi="analytic_output_currency"),
         'cheque_number': fields.function(_get_cheque_number, type='char',
-            method=True, string='Cheque Number',
-            fnct_search=_search_cheque_number)  # BKLG-7: move cheque number
+                                         method=True, string='Cheque Number',
+                                         fnct_search=_search_cheque_number)  # BKLG-7: move cheque number
     }
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
@@ -125,7 +125,7 @@ class account_analytic_line(osv.osv):
             view['arch'] = etree.tostring(tree)
 
         if view_type == 'tree' and \
-            context.get('selector_display_cheque_number', False):
+                context.get('selector_display_cheque_number', False):
             # BKLG-7: cheque_number used in analytic selector: display it
             view['fields']['cheque_number'] = {
                 'function': '_get_cheque_number',
@@ -142,7 +142,7 @@ class account_analytic_line(osv.osv):
             # insert it after entry sequence
             es_node = tree.find('.//field[@name="entry_sequence"]')
             tree.insert(es_node.getparent().index(es_node) + 1,
-                cheque_number_node)
+                        cheque_number_node)
 
             view['arch'] = etree.tostring(tree)
         return view
@@ -155,6 +155,7 @@ class account_analytic_line(osv.osv):
         default.update({
             'output_currency': False,
             'output_amount': 0.0,
+            'exported': False,
         })
         return super(account_analytic_line, self).copy(cr, uid, id, default, context=context)
 
