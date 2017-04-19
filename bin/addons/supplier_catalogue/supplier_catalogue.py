@@ -1107,7 +1107,7 @@ class supplier_catalogue_line(osv.osv):
 
         return res
 
-    def change_uom_qty(self, cr, uid, ids, uom_id, min_qty, min_order_qty):
+    def change_uom_qty(self, cr, uid, ids, uom_id, min_qty, min_order_qty, rounding=True):
         '''
         Check round qty according to UoM
         '''
@@ -1120,8 +1120,9 @@ class supplier_catalogue_line(osv.osv):
         if min_order_qty:
             res = uom_obj._change_round_up_qty(cr, uid, uom_id, min_order_qty, 'min_order_qty', result=res)
 
-        res.setdefault('value', {})
-        res['value']['rounding'] = 0.00
+        if rounding:
+            res.setdefault('value', {})
+            res['value']['rounding'] = 0.00
 
         return res
 

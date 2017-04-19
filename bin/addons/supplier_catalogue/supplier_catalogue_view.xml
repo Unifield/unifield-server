@@ -186,10 +186,10 @@
                     <field name="product_id" on_change="product_change(product_id, min_qty, min_order_qty)" />
                     <field name="line_uom_id" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" 
                            domain="[('uom_by_product', '=', product_id)]" />
-                    <field name="min_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" />
+                    <field name="min_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty, False)" />
                     <field name="unit_price" />
                     <field name="rounding" on_change="change_soq_quantity(rounding, line_uom_id)" />
-                    <field name="min_order_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty)" />
+                    <field name="min_order_qty" on_change="change_uom_qty(line_uom_id, min_qty, min_order_qty, False)" />
                     <field name="comment" />
                     <field name="to_correct_ok" invisible="1"/>
                 </tree>
