@@ -108,7 +108,7 @@
                                     <field name="name"/>
                                     <field name="note"/>
                                     <field name="inactivated_for_dest" invisible="True"/>
-                                    <button name="activate_destination" type="object" context="{'destination_id': previous_record_id}" attrs="{'invisible': [('inactivated_for_dest', '=', False)]}" icon="terp-camera_test" string="Re-activate"/>
+                                    <button name="activate_destination" type="object" context="{'destination_id': previous_active_id}" attrs="{'invisible': [('inactivated_for_dest', '=', False)]}" icon="terp-camera_test" string="Re-activate"/>
                                 </tree>
                             </field>
                         </page>

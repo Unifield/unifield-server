@@ -47,7 +47,7 @@ def get_db_and_pool(db_name, force_demo=False, status=None,
     else:
         # If they only wanted open ones, do not continue
         if if_open:
-            return
+            return db, None
 
         import addons
         import osv.osv

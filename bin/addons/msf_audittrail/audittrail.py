@@ -600,6 +600,8 @@ class audittrail_rule(osv.osv):
 
 
     def audit_log(self, cr, uid, ids, obj, objids, method, previous_value=None, current=None, context=None):
+        if context is None:
+            context = {}
         uid_orig = hasattr(uid, 'realUid') and uid.realUid or uid
         uid = 1
         log_line_obj = self.pool.get('audittrail.log.line')
@@ -795,7 +797,7 @@ class audittrail_log_line(osv.osv):
     """
     _name = 'audittrail.log.line'
     _description = "Log Line"
-    _order = 'timestamp desc, id desc'
+    _order = 'timestamp desc, log desc'
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form', context=None, toolbar=False, submenu=False):
         """
@@ -818,11 +820,24 @@ class audittrail_log_line(osv.osv):
         view = super(audittrail_log_line, self).fields_view_get(cr, uid, view_id, view_type, context, toolbar, submenu)
         return view
 
+    def create(self, cr, uid, vals, context=None):
+        """
+        get text values at create step because in some cases the text values
+        will not be available (when a object link to this one is deleted, then
+        the delete track log cannot get the text value cause the object is
+        deleted)
+        """
+        line_id = super(audittrail_log_line, self).create(cr, uid, vals, context=context)
+        self._get_values(cr, uid, line_id, None, None, context=context)
+        return line_id
+
     def _get_values(self, cr, uid, ids, field_name, arg, context=None):
         '''
         Return the value of the field according to his type
         '''
         res = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
 
         for line in self.browse(cr, uid, ids, context=context):
             res[line.id] = {'old_value_fct': False, 'new_value_fct': False}
@@ -961,8 +976,8 @@ class audittrail_log_line(osv.osv):
         'log': fields.integer("Log ID"),
         'old_value_fct': fields.function(_get_values, method=True, string='Old Value Fct', type='char', store=False, multi='values'),
         'new_value_fct': fields.function(_get_values, method=True, string='New Value Fct', type='char', store=False, multi='values'),
-        'old_value_text': fields.char(size=256, string='Old Value'),
-        'new_value_text': fields.char(size=256, string='New Value'),
+        'old_value_text': fields.char(size=1024, string='Old Value'),
+        'new_value_text': fields.char(size=1024, string='New Value'),
         'old_value': fields.text("Old Value"),
         'new_value': fields.text("New Value"),
         'field_description': fields.char('Field Description', size=64),
@@ -1050,9 +1065,8 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
             res = []
             if values and values != '[]':
                 values = values[1:-1].split(',')
-                values = (int(v) for v in values)
-                res = [x[1] for x in relation_model_pool.name_get(cr, uid,
-                                                                  [long(values[0])])]
+                values = [int(v) for v in values]
+                res = [x[1] for x in relation_model_pool.name_get(cr, uid, values)]
             return res
         elif field['ttype'] == 'date':
             res = False
@@ -1076,15 +1090,16 @@ def get_value_text(self, cr, uid, field_id, field_name, values, model, context=N
         elif field['ttype'] == 'selection':
             res = False
             if values:
+                translation_obj = self.pool.get('ir.translation')
                 fct_object = model_pool.browse(cr, uid, model.id, context=context).model
                 sel = self.pool.get(fct_object).fields_get(cr, uid, [field['name']])
                 if field['name'] in sel:
                     res = dict(sel[field['name']]['selection']).get(values)
                     name = '%s,%s' % (fct_object, field['name'])
                     # Search translation
-                    res_tr_ids = self.pool.get('ir.translation').search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
+                    res_tr_ids = translation_obj.search(cr, uid, [('type', '=', 'selection'), ('name', '=', name), ('src', 'in', [values])])
                     if res_tr_ids:
-                        res = self.pool.get('ir.translation').read(cr, uid, res_tr_ids, ['value'])[0]['value']
+                        res = translation_obj.read(cr, uid, res_tr_ids, ['value'])[0]['value']
                 else:
                     res = values
             return res

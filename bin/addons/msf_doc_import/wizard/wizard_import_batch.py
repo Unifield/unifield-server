@@ -39,7 +39,7 @@ def get_import_batch_headers(context=None):
         ImportHeader(name=_('get_import_batch_headers_type'), ftype='String', size=80, tech_name='type', required=True),
         ImportHeader(name=_('get_import_batch_headers_life_date'), ftype='DateTime', size=60, tech_name='life_date', required=True),
         ImportHeader(name=_('get_import_batch_headers_product_code'), ftype='String', size=80, tech_name='product_id', required=True),
-        ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=True),
+        ImportHeader(name=_('get_import_batch_headers_product_desc'), ftype='String', size=120, required=False),
     ]
 
 # Get header list and information
@@ -104,7 +104,7 @@ class wizard_import_batch(osv.osv_memory):
                 'state': 'progress',
                 'start_date': time.strftime('%Y-%m-%d %H:%M:%S'),
                 'info_message': _('Import in progress, please leave this window open and press the button \'Update\' '
-                                  'to show the progression of the import. Otherwise, you can continue tu use Unifield'),
+                                  'to show the progression of the import. Otherwise, you can continue to use Unifield'),
             }, context=context)
             wiz.total_lines_to_import = nb_rows
 
@@ -127,6 +127,7 @@ class wizard_import_batch(osv.osv_memory):
         :param context: Context of the call
         :return: True
         """
+
         prodlot_obj = self.pool.get('stock.production.lot')
         product_obj = self.pool.get('product.product')
         sequence_obj = self.pool.get('ir.sequence')
@@ -182,7 +183,7 @@ class wizard_import_batch(osv.osv_memory):
             batch_type = get_cell(line_data, 'type').strip()
             if batch_type.upper() not in (_('Standard').upper(), _('Internal').upper()):
                 save_error(
-                    _('The Type of the batch number should be \'Standard\' or \'Internal\''),
+                    _('The type of the batch number should be \'Standard\' or \'Internal\''),
                 )
                 batch_type = None
             elif batch_type.upper() == _('Standard').upper():
@@ -197,14 +198,23 @@ class wizard_import_batch(osv.osv_memory):
             # Make consistency checks
             name = get_cell(line_data, 'name').strip()
             life_date = get_cell(line_data, 'life_date')
-            if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 01, 01, 0, 0, 0):
-                date_format = date_tools.get_date_format(cr, uid, context=context)
-                save_error(
-                    _('You cannot create a batch number with an expiry date before %s') % (
-                        datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
-                    ),
-                )
-                continue
+            try:
+                # US-2492: In case we've ended up with a mx.DateTime.DateTime here
+                # make it into the string we were expecting.
+                if life_date and type(life_date) != str:
+                    life_date = str(life_date)
+                    # now we have 2018-12-31 00:00:00.00, remove the .00
+                    life_date = life_date[:-3]
+                if life_date and datetime.strptime(life_date, '%Y-%m-%d %H:%M:%S') < datetime(1900, 01, 01, 0, 0, 0):
+                    date_format = date_tools.get_date_format(cr, uid, context=context)
+                    save_error(
+                        _('You cannot create a batch number with an expiry date before %s') % (
+                            datetime(1900, 01, 01, 0, 0, 0).strftime(date_format),
+                        ),
+                    )
+                    continue
+            except Exception as e:
+                save_error(e)
 
             product_brw = product_obj.read(cr, uid, product_id, ['batch_management', 'perishable'], context=context)
 
@@ -226,7 +236,7 @@ class wizard_import_batch(osv.osv_memory):
                 continue
             elif product_brw['batch_management'] and not name:
                 save_error(
-                    _('For a \'Standard\' batch number, you have to define value in the \'Name\' column')
+                    _('For a \'Standard\' batch number, you have to put a value in the \'Batch Number\' column')
                 )
                 continue
 

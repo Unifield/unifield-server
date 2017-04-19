@@ -1108,7 +1108,7 @@ class orm_template(object):
                 else:
                     translated_msg = trans._get_source(cr, uid, self._name, 'constraint', lng, source=msg) or msg
                 error_msgs.append(
-                    _("Error occurred while validating the field(s) %s: %s") % (','.join(fields), translated_msg)
+                    _("Error at data validation: %s") % translated_msg
                 )
                 self._invalids.update(fields)
         if error_msgs:
@@ -1173,7 +1173,7 @@ class orm_template(object):
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')
-        res = ir_values_obj.get(cr, uid, 'default', False, [self._name])
+        res = ir_values_obj.get(cr, uid, 'default', False, [self._name], context=context)
         for id, field, field_value in res:
             if field in fields_list:
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
@@ -1736,6 +1736,7 @@ class orm_template(object):
 
         result = {'type': view_type, 'model': self._name}
 
+        model = True
         is_inherited_view = True
         sql_res = False
         parent_view_model = None
@@ -1752,6 +1753,9 @@ class orm_template(object):
             if view_id:
                 query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
+                if model:
+                    query += " AND model = %s"
+                    params += (self._name,)
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
@@ -1769,6 +1773,7 @@ class orm_template(object):
 
             is_inherited_view = sql_res[5]
             view_id = is_inherited_view or sql_res[3]
+            model = False
             parent_view_model = sql_res[6]
 
         # if a view was found
@@ -4915,6 +4920,35 @@ class orm(orm_template):
             else:
                 results[k] = ''
         return results
+
+    def is_linked(self, cr, uid, ids):
+        if not ids:
+            return False
+
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # get fk constaint names that point to self._table
+        cr.execute("""
+            SELECT ccu.constraint_name
+            FROM information_schema.constraint_column_usage ccu
+            WHERE ccu.table_name = %s AND ccu.table_catalog = %s""", (self._table, cr.dbname))
+        constraints = cr.fetchall()
+
+        # get table and column names
+        cr.execute("""
+            SELECT kcu.column_name, kcu.table_name
+            FROM information_schema.key_column_usage kcu
+            WHERE kcu.table_catalog = %s AND kcu.constraint_name IN %s""", (cr.dbname, tuple([x[0] for x in constraints])))
+        for column, table in cr.fetchall():
+            if table == self._table:
+                continue
+            cr.execute("""SELECT count(id) FROM %s WHERE %s IN %%s""" % (table, column), (tuple(ids),))
+            res = cr.fetchall()
+            if res[0][0]:
+                return True
+
+        return False
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
 

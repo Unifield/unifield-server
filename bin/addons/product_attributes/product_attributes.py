@@ -251,7 +251,7 @@ class product_justification_code(osv.osv):
     _rec_name = 'code'
     _columns = {
         'code': fields.char('Justification Code', size=32, required=True, translate=True),
-        'description': fields.char('Justification Description', size=256, required=True),
+        'description': fields.char('Justification Description', size=256, required=True, translate=True),
     }
 
     def name_get(self, cr, user, ids, context=None):
@@ -1334,7 +1334,9 @@ class product_attributes(osv.osv):
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
 
         if 'international_status' in vals:
             intstat_code = ''
@@ -1351,7 +1353,9 @@ class product_attributes(osv.osv):
                 ('mission_report_id.local_report', '=', True)
             ], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=no_sync_context)
 
         if 'state_ud' in vals:
             # just update SMRL that belongs to our instance:
@@ -1362,7 +1366,9 @@ class product_attributes(osv.osv):
                 ('state_ud', '!=', vals['state_ud'] or ''),
             ], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=no_sync_context)
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1405,7 +1411,9 @@ class product_attributes(osv.osv):
                 ('product_active', '!=', vals['active'])
             ], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=no_sync_context)
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':

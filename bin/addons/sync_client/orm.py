@@ -3,12 +3,11 @@ from osv.orm import browse_record, browse_record_list
 import tools
 from tools.safe_eval import safe_eval as eval
 from tools.translate import _
-import logging
 import functools
 import types
-from datetime import date, datetime
+from datetime import datetime
 
-from sync_common import MODELS_TO_IGNORE, xmlid_to_sdref
+from sync_common import WHITE_LIST_MODEL, xmlid_to_sdref
 
 #import cProfile
 ## Helpers ###################################################################
@@ -125,7 +124,7 @@ SELECT res_id
           """+add_sql+"""
           ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
           (create_date is NULL or create_date <= NOW())""",
-sql_params)
+                       sql_params)
         # NOW() is the sql transaction begin date
         # can't use (sync_date IS NULL or last_modification <= NOW()) bc UTP-1201 use case failed
         # can't use (last_modification <= NOW()) bc a record created before the sync but updated during the sync will not be sent
@@ -141,10 +140,10 @@ SELECT res_id, touched
           """+add_sql+"""
           ("""+field+""" < last_modification OR """+field+""" IS NULL) AND
           (create_date is NULL or create_date <= NOW())""",
-sql_params)
+                       sql_params)
             result = [row[0] for row in cr.fetchall()
                       if row[1] is None \
-                          or touched_fields.intersection(eval(row[1]) if row[1] else [])]
+                      or touched_fields.intersection(eval(row[1]) if row[1] else [])]
         return result if result_iterable else len(result) > 0
 
     def get_sd_ref(self, cr, uid, ids, field='name', context=None):
@@ -177,7 +176,7 @@ sql_params)
         sdref_ids = model_data_obj.search(cr, uid, [('model','=',self._name),('res_id','in',ids),('module','=','sd')])
         try:
             result = RejectingDict((data.res_id, get_fields(data))
-                for data in model_data_obj.browse(cr, uid, sdref_ids))
+                                   for data in model_data_obj.browse(cr, uid, sdref_ids))
         except DuplicateKey, e:
             raise Exception("Duplicate definition of 'sd' xml_id: %d@ir.model.data" % e.key)
         missing_ids = filter(lambda id:id and not id in result, ids)
@@ -185,10 +184,10 @@ sql_params)
             xmlids = dict(
                 (data.res_id, "%(module)s_%(name)s" % data)
                 for data in model_data_obj.browse(cr, uid,
-                    model_data_obj.search(cr, uid,
-                        [('model','=',self._name),('res_id','in',missing_ids),
-                         '!',('module','in',['sd','__export__']),
-                         '!','&',('module','=','base'),('name','=like','main_%')])))
+                                                  model_data_obj.search(cr, uid,
+                                                                        [('model','=',self._name),('res_id','in',missing_ids),
+                                                                         '!',('module','in',['sd','__export__']),
+                                                                            '!','&',('module','=','base'),('name','=like','main_%')])))
             now = fields.datetime.now()
             identifier = self.pool.get('sync.client.entity')._get_entity(cr).identifier
             for res_id in missing_ids:
@@ -219,26 +218,8 @@ sql_params)
         """
         return self.get_sd_ref(cr, uid, ids, field='version', context=context)
 
-    def get_touched_fields(self, cr, uid, ids, context=None):
-        """
-        For each id, get a list of fields that has been touch since the last
-        synchronization
-
-        :param cr: database cursor
-        :param uid: current user id
-        :param ids: id or list of the ids of the records to read
-        :param context: optional context arguments, like lang, time zone
-        :type context: dictionary
-        :return: dictionary with list of touched fields per id
-
-        """
-        return dict(
-            (id, (eval(touched) if touched else []))
-            for id, touched_fields
-            in self.get_sd_ref(cr, uid, ids, field='touched', context=context).items())
-
     def touch(self, cr, uid, ids, previous_values, synchronize, current_values=None,
-            _previous_calls=None, context=None):
+              _previous_calls=None, context=None):
         """
         Touch the fields that has changed and/or mark the records to be
         synchronized. If previous_values is None, touch all the fields of every
@@ -315,8 +296,8 @@ sql_params)
                 touched_fields.append('transfer_journal_id')
             if synchronize:
                 data.write(cr, uid, data_ids,
-                    dict(data_base_values, touched=str(sorted(touched_fields))),
-                    context=context)
+                           dict(data_base_values, touched=str(sorted(touched_fields))),
+                           context=context)
 
         def filter_o2m(field_list):
             return [(f, self._all_columns[f].column)
@@ -343,7 +324,7 @@ sql_params)
         if previous_values is None:
             touch(
                 self.get_sd_ref(cr, uid, ids, field='id',
-                    context=context).values(),
+                                context=context).values(),
                 whole_fields+['id'])
             # handle one2many
             o2m_fields = filter_o2m(whole_fields)
@@ -364,7 +345,7 @@ sql_params)
                 "Missing previous values: %s got, %s expected" \
                 % (previous_values.keys(), ids)
             for res_id, (data_id, touched) in self.get_sd_ref(cr, uid, ids, \
-                    field=['id','touched'], context=context).items():
+                                                              field=['id','touched'], context=context).items():
                 prev_rec, next_rec = \
                     previous_values[res_id], current_values[res_id]
                 modified = set(filter(
@@ -379,8 +360,8 @@ sql_params)
                 if synchronize:
                     for field, column in filter_o2m(whole_fields):
                         if context.get('from_orm_write', False) and \
-                            self._name in write_skip_o2m and \
-                            (not write_skip_o2m.get(self._name) or field in write_skip_o2m[self._name]):
+                                self._name in write_skip_o2m and \
+                                (not write_skip_o2m.get(self._name) or field in write_skip_o2m[self._name]):
                             # UF-2272 skip model's one2many(s)
                             continue
                         self.pool.get(column._obj).touch(
@@ -407,11 +388,11 @@ sql_params)
                                  current_values[res_id][field]))
                         for field in whole_fields
                         if not previous_values[res_id][field] == \
-                            current_values[res_id][field] )
+                        current_values[res_id][field] )
                 else:
                     for field in whole_fields:
                         if previous_values[res_id][field] == \
-                             current_values[res_id][field]:
+                                current_values[res_id][field]:
                             continue
                         if field in changes[res_id]:
                             changes[res_id][field] = \
@@ -436,7 +417,7 @@ sql_params)
     def clear_synchronization(self, cr, uid, ids, context=None):
         data_ids = self.get_sd_ref(cr, uid, ids, field='id', context=context)
         return self.pool.get('ir.model.data').write(cr, uid, data_ids.values(),
-            {'force_recreation':False,'touched':False}, context=context)
+                                                    {'force_recreation':False,'touched':False}, context=context)
 
     def find_sd_ref(self, cr, uid, sdrefs, field=None, context=None):
         """
@@ -489,7 +470,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
-            self._name not in MODELS_TO_IGNORE and
+            self._name in WHITE_LIST_MODEL and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 
@@ -501,11 +482,11 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
 
         if to_be_synchronized:
             self.touch(cr, uid, [id], None,
-                to_be_synchronized, current_values=current_values, context=context)
+                       to_be_synchronized, current_values=current_values, context=context)
         if hasattr(self, 'on_create'):
             self.on_create(cr, uid, id,
-                current_values[id],
-                context=context)
+                           current_values[id],
+                           context=context)
         return id
 
     def check_audit(self, cr, uid, method):
@@ -528,7 +509,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             funct_field = audit_obj.get_functionnal_fields(cr, 1, self._name, audit_rule_ids)
 
         to_be_synchronized = (
-            self._name not in MODELS_TO_IGNORE and
+            self._name in WHITE_LIST_MODEL and
             (not context.get('sync_update_execution') and
              not context.get('sync_update_creation')))
 
@@ -550,7 +531,7 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
             from_orm_write = context.get('from_orm_write', True)
             context['from_orm_write'] = from_orm_write
             changes = self.touch(cr, uid, ids, previous_values,
-                to_be_synchronized, current_values=current_values, context=context)
+                                 to_be_synchronized, current_values=current_values, context=context)
             if hasattr(self, 'on_change'):
                 self.on_change(cr, uid, changes, context=context)
 
@@ -607,17 +588,17 @@ SELECT name, %s FROM ir_model_data WHERE module = 'sd' AND model = %%s AND name 
         if self._name == 'ir.model.data' \
            and context.get('avoid_sdref_deletion'):
             return original_unlink(self, cr, uid,
-                [rec.id for rec
-                    in self.browse(cr, uid, (ids if hasattr(ids, '__iter__') else [ids]), context=context)
-                   if not rec.module == 'sd'],
-                context=context)
+                                   [rec.id for rec
+                                    in self.browse(cr, uid, (ids if hasattr(ids, '__iter__') else [ids]), context=context)
+                                       if not rec.module == 'sd'],
+                                   context=context)
 
         # In an update creation context, references are deleted normally
         # In an update execution context, references are kept, but no
         # synchronization is made.
         # Otherwise, references are kept and synchronization is triggered
         # ...see?
-        if self._name not in MODELS_TO_IGNORE \
+        if self._name in WHITE_LIST_MODEL \
            and not context.get('sync_update_creation'):
             context = dict(context, avoid_sdref_deletion=True)
             if not context.get('sync_update_execution'):
@@ -754,6 +735,23 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
             return dest.partner_type == 'section'
         return False
 
+    def get_coordo_and_project_dest(self, cr, uid, ids, dest_field, context=None):
+        res = dict.fromkeys(ids, False)
+        for target_line in self.browse(cr, uid, ids, context=context, fields_to_fetch=[dest_field]):
+            if hasattr(target_line, dest_field):
+                instance = getattr(target_line, dest_field)
+                if instance and instance.state == 'active':
+                    res_data = [instance.instance]
+                    if instance.level == 'coordo':
+                        project_instances = []
+                        for project in instance.child_ids:
+                            if project.state == 'active':
+                                project_instances.append(project.instance)
+                        if project_instances:
+                            res_data = project_instances
+                    res[target_line.id] = res_data
+        return res
+
     def get_destination_name(self, cr, uid, ids, dest_field, context=None):
         """
             @param ids : ids of the record from which we need to find the destination
@@ -806,105 +804,105 @@ DELETE FROM ir_model_data WHERE model = %s AND res_id IN %s
         return res['datas']
 
     def export_data_json(self, cr, uid, ids, fields_to_export, destination=False, rule_dest_field=False, context=None):
-            """
-            Export fields for selected objects
+        """
+        Export fields for selected objects
 
-            :param cr: database cursor
-            :param uid: current user id
-            :param ids: list of ids
-            :param fields_to_export: list of fields
-            :param destination: browse object of destination
-            :param rule_dest_field: if destination if False field on object with destination
-            :param context: context arguments, like lang, time zone
-            :rtype: dictionary with a *datas* matrix
+        :param cr: database cursor
+        :param uid: current user id
+        :param ids: list of ids
+        :param fields_to_export: list of fields
+        :param destination: browse object of destination
+        :param rule_dest_field: if destination if False field on object with destination
+        :param context: context arguments, like lang, time zone
+        :rtype: dictionary with a *datas* matrix
 
-            This method is used when exporting data via client menu
+        This method is used when exporting data via client menu
 
-            """
-            def __export_row_json(self, cr, uid, row, fields, json_data, intersection=False, context=None):
-                    if context is None:
-                        context = {}
+        """
+        def __export_row_json(self, cr, uid, row, fields, json_data, intersection=False, context=None):
+            if context is None:
+                context = {}
 
-                    def get_name(row):
-                        name_relation = self.pool.get(row._table_name)._rec_name
-                        if isinstance(row[name_relation], browse_record):
-                            row = row[name_relation]
-                        row_name = self.pool.get(row._table_name).name_get(cr, uid, [row.id], context=context)
-                        return row_name and row_name[0] and row_name[0][1] or ''
+            def get_name(row):
+                name_relation = self.pool.get(row._table_name)._rec_name
+                if isinstance(row[name_relation], browse_record):
+                    row = row[name_relation]
+                row_name = self.pool.get(row._table_name).name_get(cr, uid, [row.id], context=context)
+                return row_name and row_name[0] and row_name[0][1] or ''
 
-                    def export_list(field, record_list, json_list):
-                        if not json_list: #if the list was not created before
-                            json_list = [{} for i in record_list]
+            def export_list(field, record_list, json_list):
+                if not json_list: #if the list was not created before
+                    json_list = [{} for i in record_list]
 
-                        for i in xrange(0, len(record_list)):
-                            if len(field) > 1:
-                                if not record_list[i]:
-                                    json_list[i] = {}
-                                json_list[i] = export_field(field[1:], record_list[i], json_list[i])
-                            else:
-                                json_list[i] = get_name(record_list[i])
+                for i in xrange(0, len(record_list)):
+                    if len(field) > 1:
+                        if not record_list[i]:
+                            json_list[i] = {}
+                        json_list[i] = export_field(field[1:], record_list[i], json_list[i])
+                    else:
+                        json_list[i] = get_name(record_list[i])
 
-                        return json_list
+                return json_list
 
-                    def export_relation(field, record, json):
+            def export_relation(field, record, json):
+                if len(field) > 1:
+                    if not json: #if the list was not create before
+                        json = {}
+                    return export_field(field[1:], record, json)
+                else:
+                    return get_name(record)
+
+            def export_field(field, row, json_data):
+                """
+                    @param field: a list
+                        size = 1 ['cost_price']
+                        size > 1 ['partner_id', 'id']
+                    @param row: the browse record for which field[0] is a valid field
+                    @param json_data: json seralisation of row
+
+                """
+                if field[0] == 'id':
+                    if intersection and row._name == 'product.product':
+                        json_data['msfid'] = row['msfid']
+                    json_data[field[0]] = row.get_xml_id(cr, uid, [row.id]).get(row.id)
+                elif field[0] == '.id':
+                    json_data[field[0]] = row.id
+                else:
+                    r = row[field[0]]
+                    if isinstance(r, (browse_record_list, list)):
+                        json_data[field[0]] = export_list(field, r, json_data.get(field[0]))
+                    elif isinstance(r, (browse_record)):
+                        json_data[field[0]] = export_relation(field, r, json_data.get(field[0]))
+                    elif not r:
+                        json_data[field[0]] = False
+                    else:
                         if len(field) > 1:
-                            if not json: #if the list was not create before
-                                json = {}
-                            return export_field(field[1:], record, json)
-                        else:
-                            return get_name(record)
+                            raise ValueError('%s is not a relational field cannot use / to go deeper' % field[0])
+                        json_data[field[0]] = r
 
-                    def export_field(field, row, json_data):
-                        """
-                            @param field: a list
-                                size = 1 ['cost_price']
-                                size > 1 ['partner_id', 'id']
-                            @param row: the browse record for which field[0] is a valid field
-                            @param json_data: json seralisation of row
+                return json_data
 
-                        """
-                        if field[0] == 'id':
-                            if intersection and row._name == 'product.product':
-                                json_data['msfid'] = row['msfid']
-                            json_data[field[0]] = row.get_xml_id(cr, uid, [row.id]).get(row.id)
-                        elif field[0] == '.id':
-                            json_data[field[0]] = row.id
-                        else:
-                            r = row[field[0]]
-                            if isinstance(r, (browse_record_list, list)):
-                                json_data[field[0]] = export_list(field, r, json_data.get(field[0]))
-                            elif isinstance(r, (browse_record)):
-                                json_data[field[0]] = export_relation(field, r, json_data.get(field[0]))
-                            elif not r:
-                                json_data[field[0]] = False
-                            else:
-                                if len(field) > 1:
-                                    raise ValueError('%s is not a relational field cannot use / to go deeper' % field[0])
-                                json_data[field[0]] = r
+            json_data = {}
+            for field in fields:
+                export_field(field, row, json_data)
 
-                        return json_data
+            return json_data
 
-                    json_data = {}
-                    for field in fields:
-                        export_field(field, row, json_data)
+        def fsplit(x):
+            if x=='.id': return [x]
+            return x.replace(':id','/id').replace('.id','/.id').split('/')
 
-                    return json_data
-
-            def fsplit(x):
-                if x=='.id': return [x]
-                return x.replace(':id','/id').replace('.id','/.id').split('/')
-
-            fields_to_export = map(fsplit, fields_to_export)
-            datas = []
-            for row in self.browse(cr, uid, ids, context):
-                intersection = False
-                if not destination and rule_dest_field and hasattr(row, rule_dest_field):
-                    destination = row[rule_dest_field]
-                if destination:
-                    intersection = self.is_intersection(cr, uid, destination)
-                # context is json_data ???
-                datas.append(__export_row_json(self, cr, uid, row, fields_to_export, context, intersection=intersection))
-            return {'datas': datas}
+        fields_to_export = map(fsplit, fields_to_export)
+        datas = []
+        for row in self.browse(cr, uid, ids, context):
+            intersection = False
+            if not destination and rule_dest_field and hasattr(row, rule_dest_field):
+                destination = row[rule_dest_field]
+            if destination:
+                intersection = self.is_intersection(cr, uid, destination)
+            # context is json_data ???
+            datas.append(__export_row_json(self, cr, uid, row, fields_to_export, context, intersection=intersection))
+        return {'datas': datas}
 
     def get_unique_xml_name(self, cr, uid, uuid, table_name, res_id):
         return uuid + '/' + table_name + '/' + str(res_id)

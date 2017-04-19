@@ -490,7 +490,7 @@ class po_follow_up_mixin(object):
                 report_lines.extend(self.printAnalyticLines(analytic_lines))
                 first_line = False
 
-            for spsul in same_product_same_uom:
+            for spsul in sorted(same_product_same_uom, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
@@ -512,13 +512,14 @@ class po_follow_up_mixin(object):
 
                 report_lines.append(report_line)
 
+                if spsul.get('backorder_id') and spsul.get('state') != 'done':
+                    report_line['qty_backordered'] = spsul.get('product_qty', '')
+
                 if first_line:
-                    if spsul.get('backorder_id') and spsul.get('state') != 'done':
-                        report_line['qty_backordered'] = spsul.get('product_qty', '')
                     report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
-            for spl in same_product:
+            for spl in sorted(same_product, key=lambda spsu: spsu.get('backorder_id'), reverse=True):
                 report_line = {
                     'order_ref': order.name or '',
                     'order_created': order.date_order or '',
@@ -539,9 +540,10 @@ class po_follow_up_mixin(object):
                 }
                 report_lines.append(report_line)
 
+                if spl.get('backorder_id') and spl.get('state') != 'done':
+                    report_line['qty_backordered'] = spl.get('product_qty', '')
+
                 if first_line:
-                    if spl.get('backorder_id') and spl.get('state') != 'done':
-                        report_line['qty_backordered'] = spl.get('product_qty', '')
                     report_lines.extend(self.printAnalyticLines(analytic_lines))
                     first_line = False
 
@@ -597,7 +599,7 @@ class po_follow_up_mixin(object):
               AND
                 sm.picking_id = sp.id
             ORDER BY
-                sp.name, sm.id asc''', tuple([po_line_id]))
+                sp.name, sp.backorder_id, sm.id asc''', tuple([po_line_id]))
         for res in self.cr.dictfetchall():
             yield res
 
@@ -725,7 +727,7 @@ class ir_values(osv.osv):
                 elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
                     new_act.append(v)
                 values = new_act
-        elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
+        elif key == 'action' and key2 == 'client_print_multi' and context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:
                 if v[2].get('report_name', False) :

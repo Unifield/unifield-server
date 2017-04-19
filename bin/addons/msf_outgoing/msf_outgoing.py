@@ -132,9 +132,21 @@ class shipment(osv.osv):
         '''
         picking_obj = self.pool.get('stock.picking')
         add_items = self.pool.get('shipment.additionalitems')
+        pack_family_obj = self.pool.get('pack.family.memory')
 
         result = {}
-        for shipment in self.read(cr, uid, ids, ['pack_family_memory_ids', 'state', 'additional_items_ids'], context=context):
+        shipment_result = self.read(cr, uid, ids, ['pack_family_memory_ids',
+                                                   'state', 'additional_items_ids'], context=context)
+        pack_family_list = []
+        for shipment in shipment_result:
+            pack_family_list.extend(shipment['pack_family_memory_ids'])
+        pack_family_result = pack_family_obj.read(cr, uid, pack_family_list,
+                                                  ['not_shipped', 'state', 'num_of_packs', 'total_weight',
+                                                   'total_volume', 'total_amount', 'currency_id'])
+
+        pack_family_dict = dict((x['id'], x) for x in pack_family_result)
+
+        for shipment in shipment_result:
             default_values = {
                 'total_amount': 0.0,
                 'currency_id': False,
@@ -148,7 +160,7 @@ class shipment(osv.osv):
             current_result = result[shipment['id']]
             # gather the state from packing objects, all packing must have the same state for shipment
             # for draft shipment, we can have done packing and draft packing
-            packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment['id']), ], context=context)
+            packing_ids = picking_obj.search(cr, uid, [('shipment_id', '=', shipment['id'])], order='NO_ORDER', context=context)
             # fields to check and get
             state = None
             first_shipment_packing_id = None
@@ -156,7 +168,12 @@ class shipment(osv.osv):
             # delivery validated
             delivery_validated = None
             # browse the corresponding packings
-            for packing in picking_obj.browse(cr, uid, packing_ids, context=context):
+            for packing in picking_obj.browse(cr, uid, packing_ids,
+                                              fields_to_fetch=[
+                                                  'state',
+                                                  'delivered',
+                                                  'first_shipment_packing_id',
+                                                  'backorder_id'], context=context):
                 # state check
                 # because when the packings are validated one after the other, it triggers the compute of state, and if we have multiple packing for this shipment, it will fail
                 # if one packing is draft, even if other packing have been shipped, the shipment must stay draft until all packing are done
@@ -195,7 +212,8 @@ class shipment(osv.osv):
             current_result['backshipment_id'] = backshipment_id
 
             pack_fam_ids = shipment['pack_family_memory_ids']
-            for memory_family in self.pool.get('pack.family.memory').read(cr, uid, pack_fam_ids, ['not_shipped', 'state', 'num_of_packs', 'total_weight', 'total_volume', 'total_amount', 'currency_id']):
+            for pack_fam_id in pack_fam_ids:
+                memory_family = pack_family_dict[pack_fam_id]
                 # taken only into account if not done (done means returned packs)
                 if not memory_family['not_shipped'] and (shipment['state'] in ('delivered', 'done') or memory_family['state'] not in ('done',)):
                     # num of packs
@@ -327,7 +345,7 @@ class shipment(osv.osv):
                 'partner_type': fields.related('partner_id', 'partner_type', type='selection', selection=PARTNER_TYPE, readonly=True),
                 'total_amount': fields.function(_vals_get, method=True, type='float', string='Total Amount', multi='get_vals',),
                 'currency_id': fields.function(_vals_get, method=True, type='many2one', relation='res.currency', string='Currency', multi='get_vals',),
-                'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # old_multi ship_vals
+                'num_of_packs': fields.function(_vals_get, method=True, fnct_search=_packs_search, type='integer', string='Number of Packs', multi='get_vals_X',),  # interger fields.function need their own multi not to be considered as string
                 'total_weight': fields.function(_vals_get, method=True, type='float', string='Total Weight[kg]', multi='get_vals',),
                 'total_volume': fields.function(_vals_get, method=True, type='float', string=u'Total Volume[dm³]', multi='get_vals',),
                 'state': fields.function(_vals_get, method=True, type='selection', selection=[('draft', 'Draft'),
@@ -817,6 +835,7 @@ class shipment(osv.osv):
                     ('picking_id', '=', picking.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack),
+                    ('comment', '=', family.comment),
                 ], context=context)
 
                 # Update the moves, decrease the quantities
@@ -1045,6 +1064,7 @@ class shipment(osv.osv):
                     ('picking_id', '=', family.draft_packing_id.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack),
+                    ('comment', '=', family.comment)
                 ], context=context)
 
                 stay = []
@@ -1400,6 +1420,7 @@ class shipment(osv.osv):
 
         for shipment in self.browse(cr, uid, ids, context=context):
             make_invoice = False
+            move = False
             for pack in shipment.pack_family_memory_ids:
                 for move in pack.move_lines:
                     if move.state != 'cancel' and (not move.sale_line_id or move.sale_line_id.order_id.order_policy == 'picking'):
@@ -1460,6 +1481,27 @@ class shipment(osv.osv):
             if not journal_ids:
                 raise osv.except_osv(_('Warning'), _('No %s journal found!') % (journal_type,))
             invoice_vals['journal_id'] = journal_ids[0]
+
+            # US-1669 Use cases "IVO from supply / Shipment" and "STV from supply / Shipment":
+            # - add FO to the Source Doc. WARNING: only one FO ref is taken into account even if there are several FO
+            # - add Customer References (partner + PO) to the Description
+            out_invoice = inv_type == 'out_invoice'
+            debit_note = 'is_debit_note' in invoice_vals and invoice_vals['is_debit_note']
+            inkind_donation = 'is_inkind_donation' in invoice_vals and invoice_vals['is_inkind_donation']
+            intermission = 'is_intermission' in invoice_vals and invoice_vals['is_intermission']
+            is_ivo = out_invoice and not debit_note and not inkind_donation and intermission
+            is_stv = out_invoice and not debit_note and not inkind_donation and not intermission
+            if is_ivo or is_stv:
+                origin_inv = 'origin' in invoice_vals and invoice_vals['origin'] or False
+                fo = move and move.sale_line_id and move.sale_line_id.order_id or False
+                new_origin = origin_inv and fo and "%s:%s" % (origin_inv, fo.name)
+                new_origin = new_origin and new_origin[:64]  # keep only 64 characters (because of the JE ref size)
+                if new_origin:
+                    invoice_vals.update({'origin': new_origin})
+                name_inv = 'name' in invoice_vals and invoice_vals['name'] or False
+                new_name_inv = name_inv and fo and fo.client_order_ref and "%s : %s" % (fo.client_order_ref, name_inv)
+                if new_name_inv:
+                    invoice_vals.update({'name': new_name_inv})
 
             invoice_id = invoice_obj.create(cr, uid, invoice_vals,
                                             context=context)
@@ -2790,6 +2832,7 @@ class stock_picking(osv.osv):
                         ('picking_id', '=', family.draft_packing_id.id),
                         ('from_pack', '=', family.from_pack),
                         ('to_pack', '=', family.to_pack),
+                        ('state', '!=', 'done'),
                     ], context=context)
 
                     # For corresponding moves

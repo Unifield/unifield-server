@@ -252,10 +252,10 @@ class account_account(osv.osv):
         elif args == [('restricted_area', '=', 'intermission_header')]:
             if context_ivo:
                 # HEADER of Intermission Voucher OUT:
-                # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Receivable/Receivables
+                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
                 arg = ['|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
-                       '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable')]
+                       '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
             elif context_ivi:
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables

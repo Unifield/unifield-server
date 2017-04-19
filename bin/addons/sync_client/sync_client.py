@@ -42,6 +42,7 @@ import pooler
 
 import functools
 
+from sync_common import WHITE_LIST_MODEL
 from datetime import datetime, timedelta
 
 from sync_common import OC_LIST_TUPLE
@@ -205,6 +206,17 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                         self.pool.get('sync.monitor').get_logger(cr, uid, defaults_logger, context=context)
                     context['log_sale_purchase'] = True
 
+                    # generate a white list of models
+                    if self.pool.get('sync.client.rule') and\
+                            self.pool.get('sync.client.message_rule'):
+                        server_model_white_set = self.get_model_white_list(cr, uid)
+                        # check all models are in the hardcoded white list
+                        difference = server_model_white_set.difference(WHITE_LIST_MODEL)
+                        if difference:
+                            msg = 'Warning: Some models used in the synchronization '\
+                                'rule are not present in the WHITE_LIST_MODEL: %s'
+                            logger.append(_(msg) % ' ,'.join(list(difference)))
+
                     # create a specific cursor for the call
                     self.sync_cursor = pooler.get_db(cr.dbname).cursor()
 
@@ -328,24 +340,17 @@ def generate_new_hwid():
     logger = logging.getLogger('sync.client')
     mac_list = []
     if sys.platform == 'win32':
-        # generate a new hwid on windows
-        for line in os.popen("ipconfig /all"):
-            if line.lstrip().startswith('Physical Address'):
-                mac_list.append(line.split(':')[1].strip().replace('-',':'))
-
+        # generate a new hwid with uuid library
+        hw_hash = uuid.uuid1().hex
     else:
         for line in os.popen("/sbin/ifconfig"):
             if line.find('Ether') > -1:
                 mac_list.append(line.split()[4])
-
-    if not mac_list:
-        executable = sys.platform == 'win32' and 'ipconfig /all' or '/sbin/ifconfig'
-        raise Exception, '%s give no result, please check it is correctly installed' % executable
-
-    mac_list.sort()
-
-    logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
-    hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
+        if not mac_list:
+            raise Exception, '/sbin/ifconfig give no result, please check it is correctly installed'
+        mac_list.sort()
+        logger.info('Mac addresses used to compute hardware indentifier: %s' % ', '.join(x for x in mac_list))
+        hw_hash = hashlib.md5(''.join(mac_list)).hexdigest()
     logger.info('Hardware identifier: %s' % hw_hash)
     return hw_hash
 
@@ -496,6 +501,78 @@ class Entity(osv.osv):
             self.sync_lock = RLock()
         finally:
             self.renew_lock.release()
+
+    def get_model_white_list(self, cr, uid):
+        '''
+        return a set of all models involved in the synchronization process
+        '''
+        model_field_dict = {}
+
+        # search for model of sync_server.sync_rule
+        if self.pool.get('sync_server.sync_rule'):
+            rule_module = self.pool.get('sync_server.sync_rule')
+            model_field_name = 'model_id'
+        else:
+            rule_module = self.pool.get('sync.client.rule')
+            model_field_name = 'model'
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'included_fields']):
+            if obj[model_field_name] not in model_field_dict:
+                model_field_dict[obj[model_field_name]] = set()
+            model_field_dict[obj[model_field_name]].update(eval(obj['included_fields']))
+
+        # search for model of sync_server.message_rule
+        if self.pool.get('sync_server.message_rule'):
+            rule_module = self.pool.get('sync_server.message_rule')
+            model_field_name = 'model_id'
+        else:
+            rule_module = self.pool.get('sync.client.message_rule')
+            model_field_name = 'model'
+        obj_ids = rule_module.search(cr, uid, [('active', '=', True)])
+        for obj in rule_module.read(cr, uid, obj_ids, [model_field_name, 'arguments']):
+            if obj[model_field_name] not in model_field_dict:
+                model_field_dict[obj[model_field_name]] = set()
+            model_field_dict[obj[model_field_name]].update(eval(obj['arguments']))
+       
+        model_set = set(model_field_dict.keys())
+
+        def get_field_obj(model, field_name):
+            model_obj = self.pool.get(model)
+            field_obj = None
+            if field_name in model_obj._columns:
+                field_obj = model_obj._columns[field_name]
+            elif field_name in model_obj._inherit_fields:
+                field_obj = model_obj._inherit_fields[field_name][2]
+            return field_obj
+
+
+        # for each field corresponding to each model, check if it is a m2m m2o or o2m
+        # if yes, add the model of the relation to the model set
+
+        for model, field_list in model_field_dict.items():
+            field_list_to_parse = [x for x in field_list if '/id' in x]
+            if not field_list_to_parse:
+                continue
+
+            for field in field_list_to_parse:
+                field = field.replace('/id', '')
+                if len(field.split('/')) == 2:
+                    related_field, field = field.split('/')
+                    field_obj = get_field_obj(model, related_field)
+                    related_model = field_obj._obj
+                    field_obj = get_field_obj(related_model, field)
+                else:
+                    field_obj = get_field_obj(model, field)
+                if field_obj._type in ('many2one', 'many2many', 'one2many'):
+                    model_set.add(field_obj._obj)
+
+        # specific cases to sync BAR and FAR
+        to_remove = ['ir.ui.view', 'ir.model.fields', 'ir.sequence']
+        for f in to_remove:
+            if f in model_set:
+                model_set.remove(f) 
+
+        return model_set
 
     @sync_process('data_push')
     def push_update(self, cr, uid, context=None):
@@ -1094,6 +1171,26 @@ class Entity(osv.osv):
             self.aborting = True
             self.sync_cursor.close(True)
         return True
+
+    def clean_updates(self, cr, uid):
+        '''delete old updates older than 6 months
+        '''
+        nb_month_to_clean = 6
+
+        # delete sync_client_update_received older than 6 month
+        cr.execute("""DELETE FROM sync_client_update_received
+        WHERE create_date < now() - interval '%d month' AND
+        execution_date IS NOT NULL AND run='t'""" % nb_month_to_clean)
+        deleted_update_received = cr.rowcount
+        self._logger.info('clean_updates method has deleted %d sync_client_update_received' % deleted_update_received)
+
+        # delete sync_client_update_to_send older than 6 month
+        cr.execute("""DELETE FROM sync_client_update_to_send
+        WHERE create_date < now() - interval '%d month' AND
+        sent_date IS NOT NULL AND sent='t'""" % nb_month_to_clean)
+        deleted_update_to_send = cr.rowcount
+        self._logger.info('clean_updates method has deleted %d sync_client_update_to_send' % deleted_update_to_send)
+
 
 Entity()
 

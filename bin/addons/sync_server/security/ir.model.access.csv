@@ -34,3 +34,4 @@
 "access_ir_mode_data_user_all","ir_model_data_user all","ir.model.data",1,1,1,1,"sync_common.sync_read_group"
 "access_res_users_user_all","res_users_user all","res.users",1,0,0,0,
 "access_ir_translation_user_all","ir_translation_user all","ir.translation",1,0,0,0,
+"access_res_country_sync_user","res_country_for_sync_user","res.country",1,1,1,0,"sync_common.sync_read_group"

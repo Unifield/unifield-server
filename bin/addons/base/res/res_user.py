@@ -31,43 +31,138 @@ from service import security
 import netsvc
 import logging
 from passlib.hash import bcrypt
+from service import http_server
+from msf_field_access_rights.osv_override import _get_instance_level
 
 class groups(osv.osv):
     _name = "res.groups"
     _order = 'name'
     _description = "Access Groups"
+
     _columns = {
         'name': fields.char('Group Name', size=64, required=True),
         'model_access': fields.one2many('ir.model.access', 'group_id', 'Access Controls'),
         'rule_groups': fields.many2many('ir.rule', 'rule_group_rel',
                                         'group_id', 'rule_group_id', 'Rules', domain=[('global', '=', False)]),
         'menu_access': fields.many2many('ir.ui.menu', 'ir_ui_menu_group_rel', 'gid', 'menu_id', 'Access Menu'),
-        'comment' : fields.text('Comment',size=250),
+        'comment': fields.text('Comment',size=250),
+        'level': fields.selection([('hq', 'HQ'),
+                                   ('coordo', 'Coordination'),
+                                   ('project', 'Project')],
+                                  'Level',
+                                  help="Level selected and all higher ones will be able to use this group.",),
     }
+
+    _defaults = {
+        'level': lambda *a: False,
+    }
+
     _sql_constraints = [
         ('name_uniq', 'unique (name)', 'The name of the group must be unique !')
     ]
+
+    def is_higher_level(self, cr, uid, from_level=None, to_level=None):
+        '''
+        Return True if from_level is upper level than to_level
+        '''
+
+        if from_level is None:
+            from_level = _get_instance_level(self, cr, uid)
+        if not from_level:
+            # SYNC_SERVER doesn't have instance level
+            return True
+        if not to_level or to_level == 'project':
+            return True
+        elif from_level == 'hq':
+            return True
+        elif from_level == 'coordo' and to_level in ('coordo', 'project'):
+            return True
+        elif from_level == 'project' and to_level == 'project':
+            return True
+        return False
 
     def copy(self, cr, uid, id, default=None, context=None):
         group_name = self.read(cr, uid, [id], ['name'])[0]['name']
         default.update({'name': _('%s (copy)')%group_name})
         return super(groups, self).copy(cr, uid, id, default, context)
 
+    def check_level(self, cr, uid, level):
+        '''
+        Raise an error message if the group level is higher than instance level
+
+        '''
+        instance_level = _get_instance_level(self, cr, uid)
+        if level and instance_level and not self.is_higher_level(cr, uid, from_level=instance_level, to_level=level):
+            selection_dict = dict(self._columns['level'].selection)
+            group_level = level and _(selection_dict[level])
+            instance_level = instance_level and _(selection_dict[instance_level])
+            raise osv.except_osv(_('Error'),
+                                 _('You cannot edit a group level higher than your instance level (%s is higher than %s).') % (group_level, instance_level))
+
     def write(self, cr, uid, ids, vals, context=None):
+        if context is None:
+            context = {}
         if not ids:
             return True
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
+
+        user_obj = self.pool.get('res.users')
         old_users = []
         if 'users' in vals:
-            old_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+            old_users = user_obj.search(cr, uid, [('groups_id', 'in', ids)], context=context)
+
+        bypass_level = context.get('sync_update_execution', False) or context.get('bypass_group_level', False)
+        if 'level' in vals and not bypass_level:
+            self.check_level(cr, uid, vals['level'])
+        elif 'level' in vals and bypass_level:
+            # in case of update received with higher group, disassociate the related users
+            if vals['level'] and not self.is_higher_level(cr, uid, to_level=vals['level']):
+                # remove all users from this groups except uid 1 (admin)
+                group_ids_with_admin = []
+                group_ids_without_admin = []
+                for group in self.read(cr, uid, ids, ['users']):
+                    if 1 in group['users']:
+                        group_ids_with_admin.append(group['id'])
+                    else:
+                        group_ids_without_admin.append(group['id'])
+                if group_ids_with_admin:
+                    self.write(cr, uid, group_ids_with_admin, {'users':[(6, 0, [1])]})
+                if group_ids_without_admin:
+                    self.write(cr, uid, group_ids_without_admin, {'users':[(6, 0, [])]})
+
+        old_level_dict = {}
+        if 'level' in vals:
+            # get the old group level
+            read_old_level = self.read(cr, uid, ids, ['level'], context=context)
+            old_level_dict = dict((x['id'], x['level']) for x in read_old_level)
 
         res = super(groups, self).write(cr, uid, ids, vals, context=context)
+
+
+        if 'level' in vals:
+            # if the new level is lower level, touch the related users
+            user_to_touch_ids = []
+            for group_id, group_level in old_level_dict.items():
+                if self.is_higher_level(cr, uid,
+                                        from_level=group_level,
+                                        to_level=vals.get('level', 'project')):  # no level is same as 'project' level
+                    users_ids = self.pool.get('res.users').search(cr, uid,
+                                                                  [('groups_id', '=', group_id),
+                                                                   ('id', '!=', 1),
+                                                                   ], context=context)
+                    user_to_touch_ids.extend(users_ids)
+
+            if user_to_touch_ids:
+                cr.execute('''UPDATE ir_model_data
+                              SET touched = '[''groups_id'']', last_modification = now()
+                              WHERE model =  'res.users' AND res_id in %s''', (tuple(user_to_touch_ids),))
+
         self.pool.get('ir.model.access').call_cache_clearing_methods(cr)
         if 'users' in vals:
-            new_users = self.pool.get('res.users').search(cr, uid, [('groups_id', 'in', ids)], context=context)
+            new_users = user_obj.search(cr, uid, [('groups_id', 'in', ids)], context=context)
             diff_users = set(old_users).symmetric_difference(new_users)
             if diff_users:
                 clear = partial(self.pool.get('ir.rule').clear_cache, cr, old_groups=ids)
@@ -77,10 +172,16 @@ class groups(osv.osv):
         return res
 
     def create(self, cr, uid, vals, context=None):
+        if context is None:
+            context = {}
         if 'name' in vals:
             if vals['name'].startswith('-'):
                 raise osv.except_osv(_('Error'),
                                      _('The name of the group can not start with "-"'))
+        bypass_level = context.get('sync_update_execution', False) or context.get('bypass_group_level', False)
+        if 'level' in vals and not bypass_level:
+            self.check_level(cr, uid, vals['level'])
+
         gid = super(groups, self).create(cr, uid, vals, context=context)
         if context and context.get('noadmin', False):
             pass
@@ -91,6 +192,27 @@ class groups(osv.osv):
             if aid:
                 aid.write({'groups_id': [(4, gid)]})
         return gid
+
+    def search(self, cr, uid, args, offset=0, limit=None, order=None, context=None, count=False):
+        '''
+        An instance can only view groups of the same level or lower than its own
+        '''
+        if context is None:
+            context = {}
+
+        if 'show_all_level' in context and not context.get('show_all_level'):
+            new_args = []
+            instance_level = _get_instance_level(self, cr, uid)
+            if instance_level == 'project':
+                new_args = [('level', 'in', ['project', False])]
+            elif instance_level == 'coordo':
+                new_args = [('level', 'in', ['project', 'coordo', False])]
+            for arg in args:
+                new_args.append(arg)
+
+            args = new_args
+        return super(groups, self).search(cr, uid, args, offset=offset,
+                                          limit=limit, order=order, context=context, count=count)
 
     def get_extended_interface_group(self, cr, uid, context=None):
         data_obj = self.pool.get('ir.model.data')
@@ -114,6 +236,7 @@ class users(osv.osv):
     _uid_cache = {}
     _name = "res.users"
     _order = 'name'
+    _trace = True
 
     WELCOME_MAIL_SUBJECT = u"Welcome to OpenERP"
     WELCOME_MAIL_BODY = u"An OpenERP account has been created for you, "\
@@ -178,36 +301,6 @@ class users(osv.osv):
                                 body=self.get_welcome_mail_body(
                                     cr, uid, context=context) % user)
 
-    def _set_interface_type(self, cr, uid, ids, name, value, arg, context=None):
-        """Implementation of 'view' function field setter, sets the type of interface of the users.
-        @param name: Name of the field
-        @param arg: User defined argument
-        @param value: new value returned
-        @return:  True/False
-        """
-        if not value or value not in ['simple','extended']:
-            return False
-        group_obj = self.pool.get('res.groups')
-        extended_group_id = group_obj.get_extended_interface_group(cr, uid, context=context)
-        # First always remove the users from the group (avoids duplication if called twice)
-        self.write(cr, uid, ids, {'groups_id': [(3, extended_group_id)]}, context=context)
-        # Then add them back if requested
-        if value == 'extended':
-            self.write(cr, uid, ids, {'groups_id': [(4, extended_group_id)]}, context=context)
-        return True
-
-
-    def _get_interface_type(self, cr, uid, ids, name, args, context=None):
-        """Implementation of 'view' function field getter, returns the type of interface of the users.
-        @param field_name: Name of the field
-        @param arg: User defined argument
-        @return:  Dictionary of values
-        """
-        group_obj = self.pool.get('res.groups')
-        extended_group_id = group_obj.get_extended_interface_group(cr, uid, context=context)
-        extended_users = group_obj.read(cr, uid, extended_group_id, ['users'], context=context)['users']
-        return dict(zip(ids, ['extended' if user in extended_users else 'simple' for user in ids]))
-
     def _email_get(self, cr, uid, ids, name, arg, context=None):
         # perform this as superuser because the current user is allowed to read users, and that includes
         # the email, even without any direct read access on the res_partner_address object.
@@ -265,6 +358,41 @@ class users(osv.osv):
                     result[current_user['id']] = True
         return result
 
+    def _search_role(self, cr, uid, obj, name, args, context=None):
+        '''
+        Return ids matching the condition if research contain is_erp_manager or
+        is_sync_config
+        '''
+        res = []
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'is_erp_manager':
+                dataobj = self.pool.get('ir.model.data')
+
+                manager_group_id = None
+                try:
+                    dataobj = self.pool.get('ir.model.data')
+                    dummy, manager_group_id = dataobj.get_object_reference(cr, 1, 'base',
+                                                                           'group_erp_manager')
+                except ValueError:
+                    # If these groups does not exists anymore
+                    pass
+                if manager_group_id:
+                    if arg[1] == '=' and arg[2] == False:
+                        res.append(('groups_id', 'not in', manager_group_id))
+                    if arg[1] == '=' and arg[2] == True:
+                        res.append(('groups_id', 'in', manager_group_id))
+
+            elif len(arg) > 2 and arg[0] == 'is_sync_config':
+                res_group_obj = self.pool.get('res.groups')
+                group_ids = res_group_obj.search(cr, uid,
+                                                 [('name', '=', 'Sync_Config')], context=context)
+                if group_ids:
+                    if arg[1] == '=' and arg[2] == False:
+                        res.append(('groups_id', 'not in', group_ids[0]))
+                    if arg[1] == '=' and arg[2] == True:
+                        res.append(('groups_id', 'in', group_ids[0]))
+        return res
+
     def _is_sync_config(self, cr, uid, ids, name=None, arg=None, context=None):
         '''
         return True if the user is member of the Sync_Config
@@ -272,7 +400,6 @@ class users(osv.osv):
         if isinstance(ids, (int, long)):
             ids = [ids]
         result = dict.fromkeys(ids, False)
-        group_id = None
         res_group_obj = self.pool.get('res.groups')
         group_ids = res_group_obj.search(cr, uid,
                                          [('name', '=', 'Sync_Config')], context=context)
@@ -284,23 +411,34 @@ class users(osv.osv):
                     result[current_user['id']] = True
         return result
 
-    def _get_instance_level(self, cr, uid, ids, name=None, arg=None, context=None):
+    def _get_instance_level(self, cr, uid, ids, name=None, arg=None,
+                            context=None):
         '''
         return the level of the instance related to the company of the user
         '''
         if isinstance(ids, (int, long)):
             ids = [ids]
-        result = {}
-        for user_id in ids:
-            level = False
-            company_id = self._get_company(cr, user_id, context=context)
-            instance_id = self.pool.get('res.company').read(cr, uid, company_id,
-                                                            ['instance_id'], context=context)['instance_id']
-            instance_id = instance_id and instance_id[0] or False
-            if instance_id:
-                level = self.pool.get('msf.instance').read(cr, uid, instance_id, ['level'], context=context)['level']
-            result[user_id] = level
+
+        level = _get_instance_level(self, cr, uid)
+        result = {}.fromkeys(ids, level)
         return result
+
+
+    def _search_instance_level(self, cr, uid, obj, name, args, context=None):
+        res = []
+        for arg in args:
+            if len(arg) > 2 and arg[0] == 'instance_level':
+                level = _get_instance_level(self, cr, uid)
+                if arg[1] == '=':
+                    if level != arg[2]:
+                        res.append(('id', '=', '0'))
+                elif arg[1] == '!=':
+                    if level == arg[2]:
+                        res.append(('id', '=', '0'))
+                elif arg[1] == 'in':
+                    if level not in arg[2]:
+                        res.append(('id', '=', '0'))
+        return res
 
     _columns = {
         'name': fields.char('User Name', size=64, required=True, select=True,
@@ -341,16 +479,17 @@ class users(osv.osv):
         'context_tz': fields.selection(_tz_get,  'Timezone', size=64,
                                        help="The user's timezone, used to perform timezone conversions "
                                        "between the server and the client."),
-        'view': fields.function(_get_interface_type, method=True, type='selection', fnct_inv=_set_interface_type,
-                                selection=[('simple','Simplified'),('extended','Extended')],
-                                string='Interface', help="Choose between the simplified interface and the extended one"),
+        'view': fields.selection([('simple','Simplified'),('extended','Extended')],
+                                 string='Interface', help="Choose between the simplified interface and the extended one"),
         'user_email': fields.function(_email_get, method=True, fnct_inv=_email_set, string='Email', type="char", size=240),
         'menu_tips': fields.boolean('Menu Tips', help="Check out this box if you want to always display tips on each menu action"),
         'date': fields.datetime('Last Connection', readonly=True),
         'synchronize': fields.boolean('Synchronize', help="Synchronize down this user"),
-        'is_erp_manager': fields.function(_is_erp_manager, method=True, string='Is ERP Manager ?', type="boolean"),
-        'is_sync_config': fields.function(_is_sync_config, method=True, string='Is Sync Config ?', type="boolean"),
-        'instance_level': fields.function(_get_instance_level, method=True, string='Instance level', type="char"),
+        'is_synchronizable': fields.boolean('Is Synchronizable?', help="Can this user be synchronized? The Synchronize checkbox is available only for the synchronizable users."),
+        'is_erp_manager': fields.function(_is_erp_manager, fnct_search=_search_role, method=True, string='Is ERP Manager ?', type="boolean"),
+        'is_sync_config': fields.function(_is_sync_config, fnct_search=_search_role, method=True, string='Is Sync Config ?', type="boolean"),
+        'instance_level': fields.function(_get_instance_level, fnct_search=_search_instance_level, method=True, string='Instance level', type="char"),
+        'log_xmlrpc': fields.boolean('Log XMLRPC requests', help="Log the XMLRPC requests of this user into a dedicated file"),
     }
 
     def on_change_company_id(self, cr, uid, ids, company_id):
@@ -452,6 +591,8 @@ class users(osv.osv):
         'address_id': False,
         'menu_tips':True,
         'force_password_change': False,
+        'view': 'simple',
+        'is_synchronizable': False,
     }
 
     @tools.cache()
@@ -461,10 +602,57 @@ class users(osv.osv):
     # User can write to a few of her own fields (but not her groups for example)
     SELF_WRITEABLE_FIELDS = ['menu_tips','view', 'password', 'signature', 'action_id', 'company_id', 'user_email']
 
+    def remove_higer_level_groups(self, cr, uid, ids, context=None):
+        '''
+        check the groups of the given user ids and remove those which have
+        higher level than the current instance one.
+        '''
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        # if the groups change, check all this groups are allowed on this level
+        # instance. If not remove the unauthorised ones
+        instance_level = _get_instance_level(self, cr, uid)
+        if instance_level != 'hq':  # all users and all groups are available on hq
+            current_groups = self.read(cr, uid, ids, ['groups_id'],
+                                       context=context)
+            group_obj = self.pool.get('res.groups')
+            for user in current_groups:
+                if user['id'] == 1:
+                    # do not remove groups from admin
+                    continue
+                group_ids = user['groups_id']
+                if group_ids:
+                    # remove the groups that are not visible from this instance level
+                    new_group_ids = []
+                    for group in group_obj.read(cr, uid, group_ids, ['level'],
+                                                context=context):
+                        if group_obj.is_higher_level(cr, uid,
+                                                     from_level=instance_level, to_level=group['level']):
+                            new_group_ids.append(group['id'])
+
+                    if set(group_ids) != set(new_group_ids):
+                        # replace the old groups with the authorized ones
+                        super(users, self).write(cr, uid, user['id'], {'groups_id':
+                                                                       [(6, 0, new_group_ids)]}, context=context)
+
     def create(self, cr, uid, values, context=None):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
-        return super(users, self).create(cr, uid, values, context)
+
+        if not values.get('is_synchronizable', False):
+            # a user which is not synchronizable should not be synchronized
+            values['synchronize'] = False
+
+        user_id = super(users, self).create(cr, uid, values, context)
+        if 'log_xmlrpc' in values:
+            # clear the cache of the list of uid to log
+            xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
+            if cr.dbname in xmlrpc_uid_cache:
+                xmlrpc_uid_cache[cr.dbname] = None
+        if values.get('groups_id'):
+            self.remove_higer_level_groups(cr, uid, user_id, context=context)
+
+        return user_id
 
     def write(self, cr, uid, ids, values, context=None):
         if not ids:
@@ -483,18 +671,38 @@ class users(osv.osv):
         if values.get('login'):
             values['login'] = tools.ustr(values['login']).lower()
 
+        if 'is_synchronizable' in values and not values.get('is_synchronizable',
+                                                            False):
+            # desactivate synchronize if is_synchronizable is set to False
+            values['synchronize'] = False
+
         old_groups = []
         if values.get('groups_id'):
             old_groups = self.pool.get('res.groups').search(cr, uid, [('users', 'in', ids)], context=context)
 
+        if 'log_xmlrpc' in values:
+            # clear the cache of the list of uid to log
+            xmlrpc_uid_cache = http_server.XMLRPCRequestHandler.xmlrpc_uid_cache
+            if cr.dbname in xmlrpc_uid_cache:
+                xmlrpc_uid_cache[cr.dbname] = None
+
         res = super(users, self).write(cr, uid, ids, values, context=context)
 
-        # uncheck synchronize checkbox if the user is manager or sync config
         if values.get('groups_id'):
-            if any(self._is_sync_config(cr, uid, ids, context=context).values()) or\
-               any(self._is_erp_manager(cr, uid, ids, context=context).values()):
-                vals = {'synchronize': False}
-                res = super(users, self).write(cr, uid, ids, vals, context=context)
+            self.remove_higer_level_groups(cr, uid, ids, context=context)
+            if values.get('synchronize', False) or values.get('is_synchronizable',
+                                                              False):
+                # uncheck synchronize checkbox if the user is manager
+                vals_sync = {
+                    'synchronize': False,
+                    'is_synchronizable': False,
+                }
+                erp_manager_res = self._is_erp_manager(cr, uid, ids,
+                                                       context=context)
+                if any(erp_manager_res.values()):
+                    for user_id, is_erp_manager in erp_manager_res.items():
+                        if is_erp_manager:
+                            super(users, self).write(cr, uid, user_id, vals_sync, context=context)
             self.pool.get('ir.ui.menu')._clean_cache(cr.dbname)
 
         # clear caches linked to the users
@@ -731,6 +939,56 @@ class users(osv.osv):
 
 users()
 
+class wizard_add_users_synchronized(osv.osv_memory):
+    _name = 'wizard.add.users.synchronized'
+
+    _columns = {
+        'user_ids': fields.many2many('res.users', 'res_add_users_synchronized_rel', 'gid', 'uid', 'Users'),
+    }
+
+
+    def add_users_to_white_list(self, cr, uid, ids, context=None):
+        '''
+        Set users as synchronizable
+        '''
+        context = context is None and {} or context
+        ids = isinstance(ids, (int, long)) and [ids] or ids
+        user_obj = self.pool.get('res.users')
+        for wiz in self.read(cr, uid, ids, ['user_ids'], context=context):
+            user_obj.write(cr, uid, wiz['user_ids'], {'is_synchronizable': True}, context=context)
+        return {'type': 'ir.actions.act_window_close'}
+
+wizard_add_users_synchronized()
+
+class ir_values(osv.osv):
+    """
+    we override ir.values because we need to filter where the button add users to the white list is displayed
+    """
+
+    _name = 'ir.values'
+    _inherit = 'ir.values'
+
+    def get(self, cr, uid, key, key2, models, meta=False, context=None, res_id_req=False, without_user=True, key2_req=True):
+        if context is None:
+            context = {}
+        values = super(ir_values, self).get(cr, uid, key, key2, models, meta, context, res_id_req, without_user, key2_req)
+        new_values = values
+        if context.get('user_white_list', False):
+            # add the action_open_wizard_add_users_to_white_list only if 'user_white_list' is in context
+            return new_values
+
+        if key == 'action' and key2 == 'client_action_multi' and 'res.users' in [x[0] for x in models]:
+            action_list = [x[1] for x in values if x]
+            if 'action_open_wizard_add_users_to_white_list' in action_list:
+                new_values = []
+                for v in values:
+                    if v[1] != 'action_open_wizard_add_users_to_white_list':
+                        new_values.append(v)
+        return new_values
+
+ir_values()
+
+
 class config_users(osv.osv_memory):
     _name = 'res.config.users'
     _inherit = ['res.users', 'res.config']
@@ -789,6 +1047,83 @@ class groups2(osv.osv): ##FIXME: Is there a reason to inherit this object ?
         'users': fields.many2many('res.users', 'res_groups_users_rel', 'gid', 'uid', 'Users'),
     }
 
+    def _track_change_of_users(self, cr, uid, previous_values, user_ids,
+                               vals, context=None):
+        '''add audittrail entry to the related users if their groups were changed
+        @param previous_values: list of dict containing groups_ids of the users
+        @param user_ids: related user ids
+        @param vals: vals parameter from the write/create
+        '''
+        current_values = {}
+        audit_obj = self.pool.get('audittrail.rule')
+        if context is None:
+            context = {}
+        if isinstance(user_ids, (int, long)):
+            user_ids = [user_ids]
+        if 'users' in vals:
+            if vals['users'] and len(vals['users'][0]) > 2:
+                users_deleted = list(set(user_ids).difference(vals['users'][0][2]))
+                users_added = list(set(vals['users'][0][2]).difference(user_ids))
+                user_obj = self.pool.get('res.users')
+                if not hasattr(user_obj, 'check_audit'):
+                    return
+                audit_rule_ids = user_obj.check_audit(cr, uid, 'write')
+                if users_deleted:
+                    previous_values = [x for x in previous_values if x['id'] in users_deleted]
+                    current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_deleted, ['groups_id'], context=context))
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_deleted, 'write', previous_values, current_values, context=context)
+                if users_added:
+                    previous_values = [x for x in previous_values if x['id'] in users_added]
+                    current_values = dict((x['id'], x) for x in user_obj.read(cr, uid, users_added, ['groups_id'], context=context))
+                    audit_obj.audit_log(cr, uid, audit_rule_ids, user_obj, users_added, 'write', previous_values, current_values, context=context)
+
+    def create(self, cr, uid, vals, context=None):
+        '''
+        In case user have been added, a new audit line should be created on the related users
+        '''
+        change_user_group = False
+        previous_values = []
+        if context is None:
+            context = {}
+        if 'users' in vals and vals['users'] and len(vals['users'][0]) > 2:
+            user_obj = self.pool.get('res.users')
+            previous_values = user_obj.read(cr, uid, vals['users'][0][2], ['groups_id'], context=context)
+            if previous_values:
+                change_user_group = True
+        group_id = super(groups2, self).create(cr, uid, vals, context=context)
+        if change_user_group:
+            self._track_change_of_users(cr, uid, previous_values, [],
+                                        vals, context=context)
+        return group_id
+
+    def write(self, cr, uid, ids, vals, context=None):
+        '''
+        In case user have been added or deleted, a new audit line should be created on the related users
+        '''
+        all_user_ids = [] # previous user ids + current
+        previous_values = []
+        user_ids = []
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+        if 'users' in vals:
+            new_user_ids = []
+            if vals['users'] and len(vals['users'][0]) > 2:
+                new_user_ids = vals['users'][0][2]
+            for record in self.read(cr, uid, ids, ['users'], context=context):
+                if record['users']:
+                    user_ids.extend(record['users'])
+            all_user_ids = set(new_user_ids).union(user_ids)
+            user_obj = self.pool.get('res.users')
+            previous_values = user_obj.read(cr, uid, all_user_ids, ['groups_id'], context=context)
+
+        res = super(groups2, self).write(cr, uid, ids, vals, context=context)
+        if 'users' in vals:
+            self._track_change_of_users(cr, uid, previous_values, user_ids,
+                                        vals, context=context)
+        return res
+
     def unlink(self, cr, uid, ids, context=None):
         group_users = []
         for record in self.read(cr, uid, ids, ['users'], context=context):
@@ -814,10 +1149,10 @@ class res_config_view(osv.osv_memory):
         'name':fields.char('Name', size=64),
         'view': fields.selection([('simple','Simplified'),
                                   ('extended','Extended')],
-                                 'Interface', required=True ),
+                                 'Interface', required=False ),
     }
     _defaults={
-        'view':lambda self,cr,uid,*args: self.pool.get('res.users').browse(cr, uid, uid).view or 'simple',
+        'view': 'simple',
     }
 
     def execute(self, cr, uid, ids, context=None):

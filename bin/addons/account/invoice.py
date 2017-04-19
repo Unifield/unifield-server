@@ -887,7 +887,15 @@ class account_invoice(osv.osv):
             if inv.type in ('in_invoice', 'in_refund'):
                 # UTP-594: Get ref and name
                 if inv.type == 'in_invoice':
-                    name = inv.origin and inv.origin or '/'
+                    is_ivi = inv.is_intermission and not inv.is_debit_note and not inv.is_inkind_donation
+                    is_si = not inv.is_direct_invoice and not inv.is_inkind_donation and not inv.is_debit_note and not inv.is_intermission
+                    intersection = inv.partner_id.partner_type == 'section'
+                    external = inv.partner_id.partner_type == 'external'
+                    if is_ivi or (is_si and intersection) or (is_si and external):
+                        # For an IVI, or an SI with an intersection or external supplier, use the doc description
+                        name = inv.name or '/'
+                    else:
+                        name = inv.origin and inv.origin or '/'
                     ref = inv.origin and inv.origin or inv.reference and inv.reference
                 else:
                     name = inv.name and inv.name or '/'
@@ -1051,18 +1059,16 @@ class account_invoice(osv.osv):
             number = obj_inv.number
             move_id = obj_inv.move_id and obj_inv.move_id.id or False
             reference = obj_inv.reference or ''
+            is_ivo = invtype == 'out_invoice' and not obj_inv.is_debit_note and not obj_inv.is_inkind_donation and obj_inv.is_intermission or False
+            is_stv = invtype == 'out_invoice' and not obj_inv.is_debit_note and not obj_inv.is_inkind_donation and not obj_inv.is_intermission or False
 
             self.write(cr, uid, ids, {'internal_number':number})
 
-            if invtype in ('in_invoice'):
-                if not reference:
-                    ref = self._convert_ref(cr, uid, number)
-                else:
-                    ref = reference
-            elif invtype in ('in_refund'):
-                ref = obj_inv.origin
+            if invtype in ('in_invoice') and reference:
+                ref = reference
             else:
-                ref = self._convert_ref(cr, uid, number)
+                # US-1669 For the JI/AJI ref: use the source doc if it exists, else use the Entry Sequence
+                ref = obj_inv.origin or self._convert_ref(cr, uid, number)
 
             # UTP-594: for invoice, the ref on move, move lines and analytic lines must be checked and updated
             if invtype in ('in_invoice'):
@@ -1090,6 +1096,13 @@ class account_invoice(osv.osv):
                     analytic_lines = analytic_line_obj.search(cr, uid, [('move_id','=',line.id)])
                     for an in analytic_line_obj.browse(cr, uid, analytic_lines, context=context):
                         cr.execute('UPDATE account_analytic_line SET ref=%s where id =%s ', (ref, an.id))
+            elif is_ivo or is_stv:
+                # US-1669 Ref for lines coming from IVO or STV: always use Source Doc if possible, else Entry Sequence
+                cr.execute('UPDATE account_move SET ref=%s WHERE id=%s', (ref, move_id))
+                cr.execute('UPDATE account_move_line SET ref=%s, reference=%s WHERE move_id=%s', (ref, ref, move_id))
+                cr.execute('UPDATE account_analytic_line SET ref=%s FROM account_move_line ' \
+                           'WHERE account_move_line.move_id = %s AND account_analytic_line.move_id = account_move_line.id',
+                           (ref, move_id))
             else:
                 cr.execute('UPDATE account_move SET ref=%s ' \
                            'WHERE id=%s AND (ref is null OR ref = \'\')',

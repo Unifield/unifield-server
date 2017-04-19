@@ -17,7 +17,7 @@
             <field name="type">form</field>
             <field name="arch" type="xml">
       		<xpath expr="/form/hpaned/child1/action[@string='Incoming Product']" position="before">
-				<action colspan="4" name="%(procurement_action_board)d" string="Procurements in Exception" width="510" />
+				<action colspan="4" name="%(procurement_action_board)d" string="Procurements in Exception" width="510" menu_res="%(procurement.menu_stock_procurement_action)d"/>
 			</xpath>
             </field>
         </record>

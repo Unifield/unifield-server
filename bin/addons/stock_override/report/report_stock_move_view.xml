@@ -147,7 +147,7 @@
             <field name="model">export.report.stock.move</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Moves Analysis">
+                <form string="Export Moves Analysis" noteditable="state!='draft'">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />

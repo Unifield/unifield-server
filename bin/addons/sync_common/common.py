@@ -8,100 +8,147 @@ import traceback
 import tools
 from tools.translate import _
 
+# model related to synchronization, this model don't have to be ignored.
+# list build by getting models of update rules and message rules
+WHITE_LIST_MODEL = [
+    'account.account',
+    'account.account.type',
+    'account.analytic.account',
+    'account.analytic.journal',
+    'account.analytic.line',
+    'account.bank.statement',
+    'account.bank.statement.line',
+    'account.bank.statement.line.deleted',
+    'account.cashbox.line',
+    'account.destination.link',
+    'account.fiscal.position',
+    'account.fiscalyear',
+    'account.fiscalyear.state',
+    'account.invoice',
+    'account.journal',
+    'account.move',
+    'account.move.line',
+    'account.move.reconcile',
+    'account.payment.term',
+    'account.period',
+    'account.period.state',
+    'account.target.costcenter',
+    'account.tax',
+    'account.tax.code',
+    'analytic.distribution',
+    'claim.event',
+    'claim.product.line',
+    'composition.item',
+    'composition.kit',
+    'cost.center.distribution.line',
+    'country.export.mapping',
+    'distribution.line',
+    'financing.contract.contract',
+    'financing.contract.donor',
+    'financing.contract.format',
+    'financing.contract.format.line',
+    'financing.contract.funding.pool.line',
+    'free.1.distribution.line',
+    'free.2.distribution.line',
+    'funding.pool.distribution.line',
+    'hr.department',
+    'hq.entries',
+    'hr.employee',
+    'hr.employee.marital.status',
+    'hr.job',
+    'initial.stock.inventory',
+    'initial.stock.inventory.line',
+    'ir.actions.act_window',
+    'ir.filters',
+    'ir.model',
+    'ir.model.access',
+    #'ir.model.fields',
+    'ir.rule',
+    #'ir.sequence',
+    'ir.translation',
+    'ir.ui.menu',
+    #'ir.ui.view', to allow BAR sync
+    'kit.creation',
+    'kit.creation.to.consume',
+    'monthly.review.consumption',
+    'monthly.review.consumption.line',
+    'msf.budget',
+    'msf.budget.decision.moment',
+    'msf.budget.line',
+    'msf.instance',
+    'msf_button_access_rights.button_access_rule',
+    'msf_field_access_rights.field_access_rule',
+    'msf_field_access_rights.field_access_rule_line',
+    'pack.type',
+    'procurement.order',
+    'product.asset',
+    'product.asset.type',
+    'product.category',
+    'product.cold_chain',
+    'product.heat_sensitive',
+    'product.international.status',
+    'product.justification.code',
+    'product.list',
+    'product.list.line',
+    'product.nomenclature',
+    'product.pricelist',
+    'product.pricelist.type',
+    'product.pricelist.version',
+    'product.product',
+    'product.uom',
+    'product.uom.categ',
+    'purchase.order',
+    'purchase.order.line',
+    'real.average.consumption',
+    'real.average.consumption.line',
+    'res.company',
+    'res.country',
+    'res.country.restriction',
+    'res.country.state',
+    'res.currency',
+    'res.currency.rate',
+    'res.currency.table',
+    'res.groups',
+    'res.partner',
+    'res.partner.address',
+    'res.partner.title',
+    'res.users',
+    'return.claim',
+    'sale.order',
+    'sale.order.line',
+    'sale.order.line.cancel',
+    'shipment',
+    'stock.frequence',
+    'stock.inventory',
+    'stock.inventory.line',
+    'stock.journal',
+    'stock.location',
+    'stock.location.chained.options',
+    'stock.mission.report',
+    'stock.mission.report.line',
+    'stock.move',
+    'stock.picking',
+    'stock.production.lot',
+    'stock.reason.type',
+    'stock.warehouse',
+    'stock.warehouse.automatic.supply',
+    'stock.warehouse.automatic.supply.line',
+    'stock.warehouse.order.cycle',
+    'stock.warehouse.order.cycle.line',
+    'stock.warehouse.orderpoint',
+    'supplier.catalogue',
+    'supplier.catalogue.line',
+    'sync.monitor',
+    'sync.sale.order.line.split',
+    'sync.version.instance.monitor',
+    'tender',
+    'tender.line',
+    'threshold.value',
+    'threshold.value.line',
+]
+
 OC_LIST = ['OCA', 'OCB', 'OCBA', 'OCG', 'OCP']
 OC_LIST_TUPLE = zip([x.lower() for x in OC_LIST], OC_LIST)
-
-MODELS_TO_IGNORE = [
-    'ir.actions.wizard',
-    'ir.actions.act_window.view',
-    'ir.report.custom',
-    'ir.actions.act_window.view',
-    'ir.actions.wizard',
-    'ir.report.custom',
-    'ir.ui.view',
-    'ir.sequence',
-    'ir.actions.url',
-    'ir.values',
-    'ir.report.custom.fields',
-    'ir.cron',
-    'ir.actions.report.xml',
-    'ir.property',
-    'ir.actions.todo',
-    'ir.sequence.type',
-    #'ir.actions.act_window',
-    'ir.module.module',
-    'ir.ui.view',
-    'ir.module.repository',
-    'ir.model.data',
-    'ir.model.fields',
-    'ir.ui.view_sc',
-    'ir.config_parameter',
-
-    #'sync.monitor',
-    'sync.client.rule',
-    'sync.client.push.data.information',
-    'sync.client.update_to_send',
-    'sync.client.update_received',
-    'sync.client.entity',
-    'sync.client.sync_server_connection',
-    'sync.client.message_rule',
-    'sync.client.message_to_send',
-    'sync.client.message_received',
-    'sync.client.message_sync',
-    'sync.client.orm_extended',
-
-    'sync.server.test',
-    'sync_server.version.manager',
-    'sync.server.entity_group',
-    'sync.server.entity',
-    'sync.server.group_type',
-    'sync.server.entity_group',
-    'sync.server.entity',
-    'sync.server.sync_manager',
-    'sync_server.sync_rule',
-    'sync_server.message_rule',
-    'sync_server.sync_rule.forced_values',
-    'sync_server.sync_rule.fallback_values',
-    'sync_server.rule.validation.message',
-    'sync.server.update',
-    'sync.server.message',
-    'sync_server.version',
-    'sync.server.puller_logs',
-    'audittrail.log.sequence',
-    'audittrail.log.line',
-
-    'res.widget',
-    'product.likely.expire.report',
-    'product.likely.expire.report.line',
-    'operations.event',
-]
-
-MODELS_TO_IGNORE_DOMAIN = [
-    'sync_client.%',
-    'sync_server.%',
-    'res.widget%',
-    'base%',
-    'board%',
-    'audittrail%',
-    'workflow%',
-]
-
-def __compile_models_to_ignore():
-    global MODELS_TO_IGNORE_DOMAIN
-    simple_patterns = []
-    exact_models = []
-    for model in MODELS_TO_IGNORE_DOMAIN:
-        if model.find('%') >= 0:
-            simple_patterns.append(model)
-        else:
-            exact_models.append(model)
-    MODELS_TO_IGNORE_DOMAIN[:] = [('model','not in',exact_models)]
-    for pattern in simple_patterns:
-        MODELS_TO_IGNORE_DOMAIN.extend(['!',('model','=like',pattern)])
-
-__compile_models_to_ignore()
-
-
 
 def xmlid_to_sdref(xmlid):
     if not xmlid: return None
@@ -111,8 +158,6 @@ def xmlid_to_sdref(xmlid):
         return tail
     else:
         return head
-
-
 
 # TODO deprecated, should disappear
 def sync_log(obj, message=None, level='debug', ids=None, data=None, tb=False):

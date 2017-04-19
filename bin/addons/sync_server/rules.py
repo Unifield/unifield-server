@@ -27,7 +27,7 @@ from psycopg2 import IntegrityError
 from datetime import datetime
 
 import logging
-from sync_common import MODELS_TO_IGNORE_DOMAIN, sync_log
+from sync_common import sync_log, WHITE_LIST_MODEL
 
 _field2type = {
     'text'      : 'str',
@@ -829,7 +829,7 @@ class fallback_values(osv.osv):
 
     def _get_fallback_value(self, cr, uid, context=None):
         model = self.pool.get('ir.model')
-        ids = model.search(cr, uid, MODELS_TO_IGNORE_DOMAIN)
+        ids = model.search(cr, uid, [('model', 'not in', WHITE_LIST_MODEL)])
         res = model.read(cr, uid, ids, ['model'], context)
         return [(r['model'], r['model']) for r in res]
 

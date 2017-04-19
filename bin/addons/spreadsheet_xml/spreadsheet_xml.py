@@ -123,7 +123,7 @@ class SpreadsheetXML(SpreadsheetTools):
                 self.xmlobj = etree.parse(xmlfile)
             else:
                 self.xmlobj = etree.XML(xmlstring)
-        except etree.XMLSyntaxError as e:
+        except etree.XMLSyntaxError:
             raise osv.except_osv(_('Error'), _('Wrong format: it should be in Spreadsheet XML 2003'))
 
     def getWorksheets(self):
@@ -137,7 +137,7 @@ class SpreadsheetXML(SpreadsheetTools):
 
     def getRows(self,worksheet=1):
         table = self.xmlobj.xpath('//ss:Worksheet[%d]/ss:Table[1]'%(worksheet, ), **self.xa)
-        return SpreadsheetRow(table[0].getiterator(etree.QName(self.defaultns, 'Row')))
+        return SpreadsheetRow(table[0].iter('{%s}Row' % self.defaultns))
 
     def enc(self, s):
         if isinstance(s, unicode):
@@ -150,10 +150,10 @@ class SpreadsheetXML(SpreadsheetTools):
         else:
             data = []
         for row in self.getRows(worksheet):
-                if to_file:
-                    writer.writerow([self.enc(x.data) for x in row.iter_cells()])
-                else:
-                    data.append([self.enc(x.data) for x in row.iter_cells()])
+            if to_file:
+                writer.writerow([self.enc(x.data) for x in row.iter_cells()])
+            else:
+                data.append([self.enc(x.data) for x in row.iter_cells()])
         if to_file:
             return True
         return data

@@ -33,7 +33,7 @@
             <field name="model">export.report.stock.inventory</field>
             <field name="type">form</field>
             <field name="arch" type="xml">
-                <form string="Export Inventory Level">
+                <form string="Export Inventory Level" noteditable="state!='draft'">
                     <separator colspan="4" string="Request information" />
                     <field name="name" />
                     <field name="company_id" />
