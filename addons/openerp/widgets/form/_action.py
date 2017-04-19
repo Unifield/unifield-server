@@ -39,7 +39,8 @@ class Action(TinyInputWidget):
         self.nolabel = True
 
         self.act_id= self.name
-        
+        self.target_action_id = attrs.get('target_action_id') and int(attrs.get('target_action_id')) or False
+
         proxy = rpc.RPCProxy("ir.actions.actions")
         res = proxy.read([self.act_id], ['type'], rpc.session.context)
         if not res:
@@ -80,6 +81,7 @@ class Action(TinyInputWidget):
                     id=False,
                     ids=None,
                     view_ids=view_ids,
+                    target_action_id=self.target_action_id,
                     view_mode=view_mode,
                     context=self.context,
                     domain=self.domain,

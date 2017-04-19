@@ -338,19 +338,21 @@ class Form(SecuredController):
     def _read_form(self, context, count, domain, filter_domain, id, ids, kw,
                    limit, model, offset, search_data, search_domain, source,
                    view_ids, view_mode, view_type, notebook_tab, o2m_edit=False,
-                   editable=False, sidebar_closed=False, approximation=False):
+                   editable=False, sidebar_closed=False, approximation=False,
+                   target_action_id=False):
         """ Extract parameters for form reading/creation common to both
         self.edit and self.view
         """
         params, data = TinyDict.split({'_terp_model': model,
-                                       '_terp_id' : id,
-                                       '_terp_ids' : ids,
-                                       '_terp_view_ids' : view_ids,
-                                       '_terp_view_mode' : view_mode,
-                                       '_terp_view_type' : view_type,
-                                       '_terp_source' : source,
-                                       '_terp_domain' : domain,
-                                       '_terp_context' : context,
+                                       '_terp_id': id,
+                                       '_terp_ids': ids,
+                                       '_terp_view_ids': view_ids,
+                                       '_terp_target_action_id': target_action_id,
+                                       '_terp_view_mode': view_mode,
+                                       '_terp_view_type': view_type,
+                                       '_terp_source': source,
+                                       '_terp_domain': domain,
+                                       '_terp_context': context,
                                        '_terp_offset': offset,
                                        '_terp_limit': limit,
                                        '_terp_count': count,
@@ -385,7 +387,7 @@ class Form(SecuredController):
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
              search_data=None, filter_domain=None, o2m_edit=False,
-             sidebar_closed=False, approximation=False, **kw):
+             sidebar_closed=False, approximation=False, target_action_id=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
         if search_domain != '[]':
@@ -395,7 +397,8 @@ class Form(SecuredController):
                                  search_domain, source, view_ids, view_mode,
                                  view_type, notebook_tab, o2m_edit=o2m_edit,
                                  editable=True, sidebar_closed=sidebar_closed,
-                                 approximation=approximation)
+                                 approximation=approximation,
+                                 target_action_id=target_action_id)
 
         if not params.ids:
             params.count = 0
@@ -413,7 +416,7 @@ class Form(SecuredController):
              view_mode=['form', 'tree'], view_type='form', source=None, domain=[], context={},
              offset=0, limit=50, count=0, search_domain=None,
              search_data=None, filter_domain=None, sidebar_closed=False,
-             approximation=False, **kw):
+             approximation=False, target_action_id=False, **kw):
 
         notebook_tab = kw.get('notebook_tab') or 0
         if search_domain != '[]':
@@ -423,7 +426,8 @@ class Form(SecuredController):
                                  search_domain, source, view_ids, view_mode,
                                  view_type, notebook_tab,
                                  sidebar_closed=sidebar_closed,
-                                 approximation=approximation)
+                                 approximation=approximation,
+                                 target_action_id=target_action_id)
 
         if not params.ids:
             params.count = 1
@@ -1124,11 +1128,16 @@ class Form(SecuredController):
     def dashlet(self, **kw):
         params, data = TinyDict.split(kw)
         current = params.chain_get(str(params.source) or '') or params
-        # US-2704 remove the view_id of the dashboard, this will result in the
-        # use of the default object view to display the listbox which is more
-        # consistent with accessing the object by is own module
-        current['_terp_view_id'] = None
-        current['_terp_view_ids'] = []
+
+        if hasattr(current, 'target_action_id') and current.target_action_id:
+            action_id = current.target_action_id
+            action_type = rpc.RPCProxy('ir.actions.actions').read(action_id,
+                    ['type'], params.context)['type']
+            action = rpc.session.execute('object', 'execute', action_type,
+                    'read', action_id, ['views'], params.context)
+            current.view_ids = [x[0] for x in action['views']]
+            while len(current.view_ids) < len(current.view_mode):
+                current.view_ids.append(False)
 
         # remove the limit. On a click on the dashboard title more results are
         # displayed than in the dashboard itself
