@@ -98332,3 +98332,9 @@ msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct :
 #, python-format
 msgid "Line %s. %s is a VIEW type %s!"
 msgstr "Ligne %s. %s est un(e) %s de type VUE !"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/account.py:507
+#, python-format
+msgid "Line %s. It is not possible to import account of type 'Liquidity', please check the account %s."
+msgstr "Ligne %s. Il n'est pas possible d'importer un compte de type Liquidité, veuillez vérifier le compte %s."
