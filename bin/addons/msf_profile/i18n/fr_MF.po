@@ -10138,7 +10138,7 @@ msgstr "Certificat"
 #. module: msf_outgoing
 #: view:stock.incoming.processor:0
 msgid "Import IN"
-msgstr "Import IN"
+msgstr "Importer IN"
 
 #. module: account_hq_entries
 #: code:addons/account_hq_entries/wizard/hq_entries_validation.py:424
@@ -12941,6 +12941,15 @@ msgstr "Tax/Base Amount"
 #, python-format
 msgid "Line %s of the imported file: UoM [%s] not found ! Details: %s"
 msgstr "Line %s of the imported file: UoM [%s] not found ! Details: %s"
+
+#. modules: msf_doc_import, msf_outgoing, product_list
+#: view:product.list:0
+#: view:stock.picking:0
+#: view:supplier.catalogue:0
+#: view:stock.incoming.processor:0
+#: view:product.list:0
+msgid "Import Lines"
+msgstr "Importer des Lignes"
 
 #. module: msf_accrual
 #: selection:msf.accrual.line,accrual_type:0
@@ -16691,15 +16700,6 @@ msgstr "Positions Fiscales"
 #: constraint:account.tax.code.template:0
 msgid "Error ! You can not create recursive Tax Codes."
 msgstr "Erreur ! Vous ne pouvez pas créer des Codes de Taxe récursifs."
-
-#. modules: msf_doc_import, msf_outgoing, product_list
-#: view:product.list:0
-#: view:stock.picking:0
-#: view:supplier.catalogue:0
-#: view:stock.incoming.processor:0
-#: view:product.list:0
-msgid "Import Lines"
-msgstr "Importer les Lignes"
 
 #. module: purchase_compare_rfq
 #: view:wizard.compare.rfq:0
@@ -22665,7 +22665,7 @@ msgstr "Vous n'avez pas sélectionné d'article!"
 #. module: msf_doc_import
 #: view:purchase.order:0
 msgid "Export PO Validated"
-msgstr "Export PO Validated"
+msgstr "Export BC validé"
 
 #. module: base
 #: view:res.partner:0
@@ -23056,7 +23056,7 @@ msgstr "Nombre de modules mis à jour"
 #: field:wizard.import.in.simulation.screen,percent_completed:0
 #: field:wizard.import.po.simulation.screen,percent_completed:0
 msgid "Percent completed"
-msgstr "Percent completed"
+msgstr "Pourcentage terminé"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/account.py:317
@@ -30096,7 +30096,7 @@ msgstr "Répéter tous les x."
 #. module: msf_doc_import
 #: view:purchase.order:0
 msgid "Import PO confirmation"
-msgstr "Import PO confirmation"
+msgstr "Importer confirmation BC"
 
 #. modules: account, supplier_catalogue, product, product_asset, mission_stock, msf_doc_import, return_claim
 #: selection:report.account.receivable,type:0
@@ -31416,11 +31416,6 @@ msgstr "Date d'expiration manquante pour %s."
 #: model:res.country,name:base.kw
 msgid "Kuwait"
 msgstr "Koweït"
-
-#. module: stock
-#: view:stock.picking:0
-msgid "Export file"
-msgstr "Export file"
 
 #. module: msf_config_locations
 #: help:stock.location,picking_ticket_src:0
@@ -33209,9 +33204,21 @@ msgstr "Tous les Stocks"
 msgid "30 Days End of Month"
 msgstr "30 Jours Fin de Mois"
 
-#. modules: msf_outgoing, specific_rules
+#. modules: msf_outgoing, specific_rules, consumption_calculation
 #: code:addons/msf_outgoing/wizard/shipment.py:216
 #: code:addons/specific_rules/wizard/stock_partial_picking.py:42
+#: view:real.average.consumption:0
+#: code:addons/msf_outgoing/wizard/create_picking_processor.py:488
+#: view:create.picking.processor:0
+#: view:internal.picking.processor:0
+#: view:outgoing.delivery.processor:0
+#: view:return.pack.shipment.processor:0
+#: view:return.ppl.processor:0
+#: view:return.shipment.processor:0
+#: view:shipment.processor:0
+#: view:stock.incoming.processor:0
+#: view:stock.picking.processor:0
+#: view:validate.picking.processor:0
 #, python-format
 msgid "Copy all"
 msgstr "Copier tout"
@@ -36145,7 +36152,7 @@ msgstr "Assistant pour retourner les produits de la LPC"
 #. module: msf_doc_import
 #: view:wizard.import.in.simulation.screen:0
 msgid "Return to IN"
-msgstr "Return to IN"
+msgstr "Retourner au IN"
 
 #. module: analytic
 #: field:account.analytic.account,user_id:0
@@ -38141,7 +38148,7 @@ msgstr "Integrity status (e.g: check if a batch is set for a line with a batch m
 #. module: msf_doc_import
 #: view:wizard.import.po.simulation.screen:0
 msgid "Return to PO"
-msgstr "Return to PO"
+msgstr "Retourner au BC"
 
 #. module: msf_outgoing
 #: selection:return.pack.shipment.processor,step:0
@@ -42067,17 +42074,6 @@ msgstr "Preparé par"
 msgid "Path to save the attachments to"
 msgstr "Dossier d'enregistrement des pièces jointes"
 
-#. modules: supplier_catalogue, msf_doc_import
-#: view:composition.kit:0
-#: view:initial.stock.inventory:0
-#: view:purchase.order:0
-#: view:sale.order:0
-#: view:stock.cost.reevaluation:0
-#: view:tender:0
-#: view:supplier.catalogue:0
-msgid " Import Lines "
-msgstr "Importer des Lignes"
-
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_po.py:469
 #, python-format
@@ -43631,12 +43627,6 @@ msgstr "Pas de période définie pour cette date : %s !\n"
 msgid "This Month"
 msgstr "Ce mois"
 
-#. module: msf_doc_import
-#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:479
-#, python-format
-msgid "Line %s of the imported file: The header     information must be on two columns: Column A for name of the field and column     B for value."
-msgstr "Line %s of the imported file: The header     information must be on two columns: Column A for name of the field and column     B for value."
-
 #. module: msf_budget
 #: report:addons/msf_budget/report/budget_criteria_xls.mako:696
 msgid "BUDGET VS. ACTUALS"
@@ -43729,7 +43719,7 @@ msgstr "Articles Supplémentaires"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:621
 #, python-format
 msgid "Line %s of the Excel file: This line is mandatory and must have at least %s columns. The values on this line must be the name of the field for PO lines."
-msgstr "Line %s of the Excel file: This line is mandatory and must have at least %s columns. The values on this line must be the name of the field for PO lines."
+msgstr "Ligne %s du fichier Excel : Cette ligne est obligatoire et doit comporter %s colonnes. Les valeurs sur cette ligne doivent être les noms des champs des lignes de BC."
 
 #. module: base
 #: field:ir.actions.act_window,empty_ids:0
@@ -44588,16 +44578,6 @@ msgstr "Bien - Type Information"
 #: model:ir.model,name:procurement_report.model_auto_supply_rules_report
 msgid "auto.supply.rules.report"
 msgstr "auto.supply.rules.report"
-
-#. module: product_list
-#: code:addons/product_list/wizard/product_to_list.py:165
-#, python-format
-msgid "Some selected products are not in\n"
-"the parent list of the selected sublist. Please select only products thate are\n"
-"in the parent list."
-msgstr "Some selected products are not in\n"
-"the parent list of the selected sublist. Please select only products thate are\n"
-"in the parent list."
 
 #. module: base
 #: view:res.config.users:0
@@ -46214,9 +46194,11 @@ msgstr "Description du champ"
 
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_import_batch.py:211
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1247
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1257
 #, python-format
 msgid "You cannot create a batch number with an expiry date before %s"
-msgstr "You cannot create a batch number with an expiry date before %s"
+msgstr "Vous ne pouvez pas pas créer un numéro de lot avec une date d'expiration antérieure à %s"
 
 #. module: product_nomenclature
 #: code:addons/product_nomenclature/product_nomenclature.py:295
@@ -48621,7 +48603,7 @@ msgstr "Importer les lignes"
 #: code:addons/msf_doc_import/wizard/wizard_po_simulation_screen.py:629
 #, python-format
 msgid "Line %s of the imported file: The line information must be on at least %s columns. The line %s has %s columns"
-msgstr "Line %s of the imported file: The line information must be on at least %s columns. The line %s has %s columns"
+msgstr "Ligne %s du fichier importé : les informations de l'en-tête doivent être sur au moins %s colonnes. La ligne %s comporte %s colonnes"
 
 #. modules: sync_client, base, procurement_report
 #: model:ir.model,name:base.model_ir_cron
@@ -49999,13 +49981,20 @@ msgstr "Corresponding bank journal"
 msgid "Indian/Mayotte"
 msgstr "Indien/Mayotte"
 
-#. module: msf_doc_import
+#. modules: supplier_catalogue, msf_doc_import
 #: view:stock.inventory:0
 #: view:stock.picking:0
 #: view:stock.warehouse.automatic.supply:0
 #: view:stock.warehouse.order.cycle:0
 #: view:stock.warehouse.orderpoint:0
 #: view:threshold.value:0
+#: view:composition.kit:0
+#: view:initial.stock.inventory:0
+#: view:purchase.order:0
+#: view:sale.order:0
+#: view:stock.cost.reevaluation:0
+#: view:tender:0
+#: view:supplier.catalogue:0
 msgid " Import Lines "
 msgstr "Importer les Lignes"
 
@@ -62069,10 +62058,32 @@ msgstr "ZAMBIAN KWACHA"
 
 #. modules: vertical_integration, base
 #: view:wizard.add.users.synchronized:0
+#: view:wizard.account.partner.balance.tree:0
+#: view:wizard.currency.revaluation:0
+#: view:wizard.import.supplier.catalogue:0
+#: view:create.picking.processor:0
+#: view:internal.picking.processor:0
+#: view:outgoing.delivery.processor:0
+#: view:ppl.processor:0
+#: view:return.pack.shipment.processor:0
+#: view:return.ppl.processor:0
+#: view:return.shipment.processor:0
+#: view:shipment.processor:0
+#: view:validate.picking.processor:0
+#: view:po.follow.up:0
+#: view:automated.import.job:0
+#: view:product.where.used:0
+#: view:register.reopen:0
+#: field:sale.followup.multi.wizard,cancel_ok:0
+#: view:change.dest.location:0
+#: view:stock.card.wizard:0
+#: view:ocb.export.wizard:0
+#: view:ocb.matching.export.wizard:0
+#: view:ocba.export.wizard:0
 #: view:ocp.export.wizard:0
 #: view:ocp.matching.export.wizard:0
 msgid "Cancel"
-msgstr "Cancel"
+msgstr "Annuler"
 
 #. module: register_accounting
 #: code:addons/register_accounting/register_tools.py:232
@@ -65249,6 +65260,12 @@ msgstr "Boite"
 #: view:wizard.add.users.synchronized:0
 msgid "Please note that users can be added to the white list only if:"
 msgstr "Veuillez noter que les utilisateurs ne peuvent être ajoutés à la liste blanche que si:"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:493
+#, python-format
+msgid "Line %s of the imported file: The line information must be on %s columns. The line %s has %s columns"
+msgstr "Ligne %s du fichier importé : les informations de l'en-tête doivent être sur au moins %s colonnes. La ligne %s comporte %s colonnes"
 
 #. modules: msf_budget, financing_contract, analytic_override, analytic_distribution
 #: view:account.analytic.account:0
@@ -68796,8 +68813,8 @@ msgstr "Nb treated lines"
 #. module: msf_doc_import
 #: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:485
 #, python-format
-msgid "Line 8 of the Excel file: This line is     mandatory and must have %s columns. The values on this line must be the name     of the field for IN lines."
-msgstr "Line 8 of the Excel file: This line is     mandatory and must have %s columns. The values on this line must be the name     of the field for IN lines."
+msgid "Line 8 of the Excel file: This line is mandatory and must have %s columns. The values on this line must be the name of the field for IN lines."
+msgstr "Ligne 8 du fichier Excel : Cette ligne est obligatoire et doit comporter %s colonnes. Les valeurs sur cette ligne doivent être les noms des champs des lignes de IN."
 
 #. module: base
 #: model:ir.actions.act_window,help:base.res_partner_canal-act
@@ -70499,6 +70516,8 @@ msgstr "Pas de Compte de Donation trouvé pour cette ligne: %s. (produit: %s)"
 #: view:process.process:0
 #: view:stock.move:0
 #: view:stock.picking:0
+#: view:stock.incoming.processor:0
+#: view:stock.picking.processor:0
 msgid "Process"
 msgstr "Traiter"
 
@@ -86121,15 +86140,23 @@ msgstr "Total Project - Balance"
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:291
 #: code:addons/msf_doc_import/wizard/wizard_import_stock_warehouse_order_point_line.py:206
 #: code:addons/msf_doc_import/wizard/wizard_import_tender_line.py:172
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1147
 #, python-format
 msgid "Product Qty should be greater than 0.00"
 msgstr "La qté du produit doit être supérieure à 0.00"
 
-#. module: msf_homere_interface
+#. modules: msf_homere_interface msf_doc_import
 #: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:170
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1180
 #, python-format
 msgid "The accounting code '%s' doesn't exist!"
 msgstr "Le code comptabe '%s' n'existe pas!"
+
+#. modules: msf_homere_interface msf_doc_import
+#: code:addons/msf_homere_interface/wizard/hr_payroll_import.py:170
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:1180
+msgid "Unit Price should be greater than 0.00"
+msgstr "Le prix unitaire doit être supérieure à 0.00"
 
 #. modules: account_override, analytic
 #: field:account.account,activation_date:0
@@ -90010,6 +90037,11 @@ msgstr "commitment_validate - (account.commitment)"
 msgid "JAPANESE YEN"
 msgstr "JAPANESE YEN"
 
+#. module: stock
+#: view:stock.picking:0
+msgid "Export file"
+msgstr "Exporter le fichier"
+
 #. modules: account, msf_button_access_rights
 #: selection:report.account.receivable,type:0
 #: field:msf_button_access_rights.button_access_rule,view_id:0
@@ -93257,6 +93289,36 @@ msgstr "Vous devez sélectionner une ligne pour retourner dans un Registre."
 msgid "Paper size"
 msgstr "Taille du papier"
 
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:511
+#, python-format
+msgid "## IMPORT STOPPED ##\n"
+"\n"
+"Nothing has been imported because of %s. See below:\n"
+"\n"
+"    ## File errors ##\n"
+"\n"
+""
+msgstr "## IMPORT STOPPÉ ##\n"
+"\n"
+"Rien n'a été importé du à %s. Voir ci-après:\n"
+"\n"
+"    ## Erreur de fichier ##\n"
+"\n"
+""
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:515
+#, python-format
+msgid "a bad file format"
+msgstr "un mauvais format de fichier"
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:515
+#, python-format
+msgid "a file parse error"
+msgstr "une erreur d'anaylyse de fichier"
+
 #. module: mission_stock
 #: field:stock.mission.report.line,stock_qty:0
 msgid "Stock Qty."
@@ -94903,6 +94965,8 @@ msgstr "Rechercher Lignes non-facturées"
 #: view:ocba.export.wizard:0
 #: view:wizard.hq.report.oca:0
 #: view:wizard.import.mapping:0
+#: view:stock.incoming.processor:0
+#: view:stock.picking.processor:0
 #, python-format
 msgid "Cancel"
 msgstr "Annuler"
@@ -98252,3 +98316,9 @@ msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Partenai
 #, python-format
 msgid "The account \"%s - %s\" is only compatible with an Employee Third Party."
 msgstr "Le compte \"%s - %s\" n'est compatible qu'avec un Tiers de type Employé."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_in_simulation_screen.py:377
+#, python-format
+msgid "Line %s of the imported file, the date has a wrong format: %s"
+msgstr "Ligne %s du fichier importé, la date n'est pas dans un format correct : %s"
