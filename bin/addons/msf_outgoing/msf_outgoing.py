@@ -5012,7 +5012,7 @@ class pack_family_memory(osv.osv):
     _name = 'pack.family.memory'
     _auto = False
     def init(self, cr):
-        tools.sql.drop_view_if_exists(cr, 'view pack_family_memory')
+        tools.sql.drop_view_if_exists(cr, 'pack_family_memory')
         cr.execute('''create or replace view pack_family_memory as (
             select
                 min(m.id) as id,
