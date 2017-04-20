@@ -1134,10 +1134,11 @@ class Form(SecuredController):
             action_type = rpc.RPCProxy('ir.actions.actions').read(action_id,
                     ['type'], params.context)['type']
             action = rpc.session.execute('object', 'execute', action_type,
-                    'read', action_id, ['views'], params.context)
+                    'read', action_id, ['views', 'domain'], params.context)
             current.view_ids = [x[0] for x in action['views']]
             while len(current.view_ids) < len(current.view_mode):
                 current.view_ids.append(False)
+            current.domain = action['domain']
 
         # remove the limit. On a click on the dashboard title more results are
         # displayed than in the dashboard itself
