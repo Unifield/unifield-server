@@ -671,6 +671,8 @@ receivable, item have not been corrected, item have not been reversed and accoun
         success_move_line_ids = []
 
         # New account
+        # Check the compatibility between the new account selected for the COR lines and the posting date
+        self._check_date(cr, uid, {'date': date, 'account_id': new_account_id}, context=context)
         new_account = self.pool.get('account.account').browse(cr, uid,
             new_account_id, context=context)
 
