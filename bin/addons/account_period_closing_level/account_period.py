@@ -366,12 +366,23 @@ class account_period(osv.osv):
             return False
         if isinstance(ids, (int, long, )):
             ids = [ids]
+        if context is None:
+            context = {}
 
         is_system = [ rec.is_system \
             for rec in self.browse(cr, uid, ids, context=context) ]
         if any(is_system):
             raise osv.except_osv(_('Warning'), _('System period not deletable'))
-        return super(account_period, self).unlink(cr, uid, ids, context=context)
+        # First delete the period itself
+        res = super(account_period, self).unlink(cr, uid, ids, context=context)
+        # (US-2672) Then delete the related entry in ir_model_data
+        # so that the period can be recreated later via sync if needed
+        ir_model_data_obj = self.pool.get('ir.model.data')
+        mdids = ir_model_data_obj.search(cr, uid,
+                                         [('module', '=', 'sd'), ('model', '=', 'account.period'), ('res_id', 'in', ids)],
+                                         order='NO_ORDER', context=context)
+        ir_model_data_obj.unlink(cr, uid, mdids, context=context)
+        return res
 
     _defaults = {
         'state': lambda *a: 'created',
