@@ -14,14 +14,14 @@
                     <form string="Account Board">
                         <hpaned>
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(finance.account_board_commitment_voucher)d" string="Commitment Vouchers to validate" menu_ref="%(analytic_distribution.menu_commitment)d,%(analytic_distribution.menu_commitment_entries)d" />
-                                <action colspan="4" height="160" width="400" name="%(finance.account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" />
-                                <action colspan="4" height="160" width="400" name="%(finance.account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" />
+                                <action colspan="4" height="160" width="400" name="%(finance.account_board_commitment_voucher)d" string="Commitment Vouchers to validate" menu_ref="%(analytic_distribution.menu_commitment)d,%(analytic_distribution.menu_commitment_entries)d" target_action_id="%(analytic_distribution.action_account_commitment_tree)d" />
+                                <action colspan="4" height="160" width="400" name="%(finance.account_board_supplier_invoice_draft)d" string="Suppliers invoices pending validation" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" target_action_id="%(account.action_invoice_tree2)d" />
+                                <action colspan="4" height="160" width="400" name="%(finance.account_board_supplier_invoice_open)d" string="Suppliers invoices pending payment" menu_ref="%(account.menu_finance_payables)d,%(account.menu_action_invoice_tree2)d" target_action_id="%(account.action_invoice_tree2)d" />
                             </child1>
 
                             <child1>
-                                <action colspan="4" height="160" width="400" name="%(finance.hr_payroll_board)d" string="Payroll Entries to validate" menu_ref="%(msf_homere_interface.menu_finance_payroll)d,%(msf_homere_interface.menu_finance_payroll_entries)d" />
-                                <action colspan="4" height="160" width="400" name="%(finance.account_hq_entries)d" string="HQ Entries to validate" menu_ref="%(account_hq_entries.menu_hq)d,%(account_hq_entries.menu_hq_entries)d" />
+                                <action colspan="4" height="160" width="400" name="%(finance.hr_payroll_board)d" string="Payroll Entries to validate" menu_ref="%(msf_homere_interface.menu_finance_payroll)d,%(msf_homere_interface.menu_finance_payroll_entries)d" target_action_id="%(msf_homere_interface.action_payroll_tree)d" />
+                                <action colspan="4" height="160" width="400" name="%(finance.account_hq_entries)d" string="HQ Entries to validate" menu_ref="%(account_hq_entries.menu_hq)d,%(account_hq_entries.menu_hq_entries)d" target_action_id="%(account_hq_entries.action_hq_entries_tree)d" />
                                 <action colspan="4" height="160" width="400" name="%(finance.account_board_period)d" string="Account Periods" menu_ref="%(account.menu_action_account_period_close_tree)d,%(account.menu_action_account_period_form)d" />
                                 <action colspan="4" height="160" width="400" name="%(finance.account_board_currency)d" string="Latest FX rates" menu_ref="%(res_currency_tables.menu_action_report_currency_table_form)d" />
                             </child1>

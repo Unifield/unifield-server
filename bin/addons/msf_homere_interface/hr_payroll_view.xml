@@ -112,6 +112,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="view_hr_payroll_msf_tree"/>
             <field name="search_view_id" ref="view_hr_payroll_msf_filter"/>
+            <!-- US-2704 if the domain change, do not forget to update the domain of hr_payroll_board in finance/board_account_view.xml -->
             <field name="domain">[('state', '=', 'draft'), ('account_id.is_analytic_addicted', '=', True)]</field>
         </record>
 

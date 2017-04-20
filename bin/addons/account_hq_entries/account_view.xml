@@ -224,6 +224,7 @@
             <field name="view_mode">tree,form</field>
             <field name="view_id" ref="hq_entries_tree"/>
             <field name="search_view_id" ref="hq_entries_filter"/>
+            <!-- US-2704 if a domain is added here, do not forget to update the domain of account_hq_entries in finance/board_account_view.xml -->
             <field name="context">{'search_default_non_validated': 1}</field>
         </record>
 
