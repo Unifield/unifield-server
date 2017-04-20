@@ -112,7 +112,8 @@ We suggest you to put bank information here:
 IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
         'logo':fields.binary('Logo'),
         'account_no':fields.char('Bank Account No', size=64),
-        'website': fields.char('Company Website', size=64, help="Example: http://openerp.com"),
+        'website': fields.char('Company Website', size=64, help="Example: http://www.msf.org/"),
+        'contact_name': fields.char('Contact Name', size=64, select=1, required=True)
     }
 
     def execute(self, cr, uid, ids, context=None):
@@ -138,7 +139,7 @@ IBAN: BE74 1262 0121 6907 - SWIFT: CPDF BE71 - VAT: BE0477.472.701'''),
         })
 
         address_data = {
-            'name':payload.name,
+            'name':payload.contact_name,
             'street':payload.street,
             'street2':payload.street2,
             'zip':payload.zip,
