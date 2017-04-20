@@ -150,7 +150,7 @@ class act_window(osv.osv):
     _name = 'ir.actions.act_window'
     _table = 'ir_act_window'
     _sequence = 'ir_actions_id_seq'
-    _order = 'name'
+    _order = 'name, id'
     _replace_exported_fields = {
         'groups_txt': [
             (['groups_id', 'Groups'], 10)

@@ -46,7 +46,10 @@ class import_data(osv.osv_memory):
 
         if data.get('parent_id', False):
             n_obj = self.pool.get('product.nomenclature')
-            parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
+            if isinstance(data['parent_id'], (int, long)):
+                parent_ids = [data['parent_id']]
+            else:
+                parent_ids = n_obj.search(cr, uid, [('msfid', '=', data['parent_id'])], limit=1)
             if parent_ids:
                 parent_id = parent_ids[0]
 
