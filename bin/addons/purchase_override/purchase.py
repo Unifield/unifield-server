@@ -880,16 +880,6 @@ class purchase_order(osv.osv):
                         'message': _('You cannot create a direct purchase order from scratch')
                     },
                 }
-            elif not proc_obj.search_exist(cr, uid, [('purchase_id', 'in', ids), ('po_cft', '=', 'dpo')]):
-                order_type_value = self.read(cr, uid, ids, ['order_type'])
-                order_type_value = order_type_value[0].get('order_type', 'regular') if order_type_value else 'regular'
-                return {
-                    'value': {'order_type': order_type_value},
-                    'warning': {
-                        'title': _('Error'),
-                        'message': _('You cannot select Direct Purchase order for a lines sourced to a normal PO'),
-                    },
-                }
 
         # Search the local market partner id
         data_obj = self.pool.get('ir.model.data')
