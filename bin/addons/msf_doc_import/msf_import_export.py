@@ -81,7 +81,6 @@ class msf_import_export(osv.osv_memory):
     def get_filename(self, cr, uid, model, selection, template_only=False, context=None):
         """Generate a filename for the import/export
         """
-        model_obj = self.pool.get(model)
         file_name = _(MODEL_DICT[selection]['name'])
         file_name = file_name.replace(' ', '_')
         if template_only:
@@ -369,8 +368,6 @@ class msf_import_export(osv.osv_memory):
 
         fields_get_dict = {}  # keep fields_get result in cache
         fields_get_dict[model] = model_obj.fields_get(cr, uid, context=context)
-        fields_get_res = model_obj.fields_get(cr, uid,
-                [x.split('.')[0] for x in field_list], context=context)
         if len(field_list) != len(header_columns):
             raise osv.except_osv(_('Info'), _('The number of column is not same ' \
                 'than expected (get %s, expected %s). Check your import file and ' \
@@ -736,7 +733,7 @@ WHERE n3.level = 3)
         for line_number in sorted(import_warnings.keys()):
             warnings = import_warnings[line_number]
             for warn in warnings:
-                warn_msg += _('Line %s: %s') % (line, warn)
+                warn_msg += _('Line %s: %s') % (line_number, warn)
                 if not warn_msg.endswith('\n'):
                     warn_msg += '\n'
 
