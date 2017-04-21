@@ -63,6 +63,7 @@ class msf_import_export(osv.osv_memory):
         'display_file_export': fields.boolean('File Export'),
         'model_list_selection': fields.selection(selection=_get_model_list, string='Object to Import/Export', required=True),
         'import_file': fields.binary('File to import .xml'),
+        'hide_download_template': fields.boolean('Hide download template button'),
         'hide_download_3_entries': fields.boolean('Hide export 3 entries button'),
         'hide_download_all_entries': fields.boolean('Hide export all entries button'),
         'display_test_import_button': fields.boolean('Display test import button'),
@@ -71,6 +72,7 @@ class msf_import_export(osv.osv_memory):
     _default = {
         'display_file_import': lambda *a: False,
         'display_file_export': lambda *a: False,
+        'hide_download_template': lambda *a: False,
         'hide_download_3_entries': lambda *a: False,
         'hide_download_all_entries': lambda *a: False,
         'display_test_import_button': lambda *a: False,
@@ -120,9 +122,15 @@ class msf_import_export(osv.osv_memory):
             'domain': domain,
             'target_filename': self.get_filename(cr, uid, model, selection, template_only),
         }
+
+        if model == 'user.access.configurator':
+            report_name = 'wizard.export.user.access'
+        else:
+            report_name = 'wizard.export.generic'
+
         return {
             'type': 'ir.actions.report.xml',
-            'report_name': 'wizard.export.generic',
+            'report_name': report_name,
             'datas': data,
             'context': context,
         }
@@ -143,7 +151,8 @@ class msf_import_export(osv.osv_memory):
         return self.generic_download(cr, uid, ids, template_only=True,
                 context=context)
 
-    def get_excel_size_from_string(self, string):
+    @staticmethod
+    def get_excel_size_from_string(string):
         """Compute the string to get the size of it in a excel
         understandable value
         :param string: the str chain to get the excel size
@@ -280,11 +289,14 @@ class msf_import_export(osv.osv_memory):
             if model_list_selection and model_list_selection in MODEL_DATA_DICT:
                 hide_export = MODEL_DATA_DICT[model_list_selection].get('hide_export', False)
                 result['value']['display_file_export'] = not hide_export
+                hide_template = MODEL_DATA_DICT[model_list_selection].get('hide_download_template', False)
+                result['value']['hide_download_template'] = hide_template
                 hide_3 = MODEL_DATA_DICT[model_list_selection].get('hide_download_3_entries', False)
                 result['value']['hide_download_3_entries'] = hide_3
                 hide_all = MODEL_DATA_DICT[model_list_selection].get('hide_download_all_entries', False)
                 result['value']['hide_download_all_entries'] = hide_all
             else:
+                result['value']['hide_download_template'] = False
                 result['value']['hide_download_3_entries'] = False
                 result['value']['hide_download_all_entries'] = False
         return result

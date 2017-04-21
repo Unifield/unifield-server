@@ -433,7 +433,8 @@ MODEL_DATA_DICT = {
         ],
         'required_field_list': [
         ],
-        'hide_export': True,
+        'hide_download_template': True,
+        'hide_download_3_entries': True,
     },
     'record_rules': {
         'header_list': [
