@@ -94,6 +94,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
         Get all lines with OUT/PICK for an order
         '''
         keys = []
+        data = {}
 
         if only_bo:
             grouped = True
@@ -184,6 +185,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 'shipment': shipment,
                             })
 
+
                     if key in keys:
                         for rline in lines:
                             if rline['packing'] == key[0] and rline['shipment'] == key[1] and rline['delivered_uom'] == key[2]:
@@ -198,9 +200,16 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                             fl_index= m_index
                         m_index += 1
 
+                if not data.get('packing', False):
+                    stock_picking_ppl = self.pool.get('stock.picking').search(self.cr, self.uid, [('previous_step_id', '=', move.picking_id.id)])
+                    for sp_ppl in self.pool.get('stock.picking').browse(self.cr, self.uid, stock_picking_ppl):
+                        data.update({
+                            'packing': sp_ppl.name,
+                        })
+
             # No move found
             if first_line:
-                data = {
+                data.update({
                     'line_number': line.line_number,
                     'po_name': po_name,
                     'product_code': line.product_id.default_code,
@@ -212,7 +221,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     'delivered_uom': '',
                     'backordered_qty': line.product_uom_qty,
                     'cdd': cdd,
-                }
+                })
                 lines.append(data)
 
             # Put the backorderd qty on the first line
