@@ -164,6 +164,7 @@
         <para style="P1">
           <font color="white"> </font>
         </para>
+        <condPageBreak height="10cm">[[ titi==stock_picking.num_of_packs and removeParentNode('condPageBreak') ]]</condPageBreak>
     </section>
   </story>
 </document>
