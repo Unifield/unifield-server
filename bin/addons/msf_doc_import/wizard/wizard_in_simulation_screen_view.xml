@@ -38,6 +38,9 @@
                     </group>
 
                     <notebook colspan="4">
+                        <page string="Information" attrs="{'invisible': [('message', '=', False)]}">
+                            <field name="message" colspan="4" nolabel="1" readonly="1" />
+                        </page>
 
                         <page string="Incoming shipment">
                             <separator colspan="2" string="Origin values"/>
@@ -56,10 +59,6 @@
 
                         <page string="Details">
                             <field name="line_ids" mode="tree" colspan="4" nolabel="1" readonly="1" />
-                        </page>
-
-                        <page string="Information">
-                            <field name="message" colspan="4" nolabel="1" readonly="1" />
                         </page>
 
                     </notebook>
