@@ -109,7 +109,8 @@ class report_user_access_export_parser(report_generic_export_parser):
         if menu_id is None:
             # take first level : the ones that don't have parent_id
             menu_ids = menu_obj.search(self.cr, self.uid,
-                    [('parent_id', '=', None)],
+                    [('parent_id', '=', None),
+                     ('name', '!=', 'Hidden Menu')],
                     order='name')
             for menu_id in menu_ids:
                 menu_list.append((level, menu_id))
