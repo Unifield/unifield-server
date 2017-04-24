@@ -33,6 +33,7 @@ import warnings
 import pooler
 from tools import cache
 import time
+import traceback
 
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 
@@ -165,7 +166,7 @@ class Cursor(object):
                     self._oe.remember_slow_query(query, delta)
         except psycopg2.ProgrammingError, pe:
             if log_exceptions:
-                self.__logger.error("Programming error: %s, in query %s", pe, query)
+                self.__logger.error("Programming error: %s, in query %s %s", pe, query, tools.ustr(traceback.format_exc()))  #TODO REMOVE AT INT
             raise
         except psycopg2.IntegrityError, ie:
             if log_exceptions:
