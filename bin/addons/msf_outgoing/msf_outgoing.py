@@ -1066,7 +1066,6 @@ class shipment(osv.osv):
                     ('to_pack', '=', family.to_pack),
                     ('comment', '=', family.comment)
                 ], context=context)
-
                 stay = []
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
