@@ -461,6 +461,7 @@ class user_access_configurator(osv.osv_memory):
             self._set_active_user_ids(cr, uid, ids, context=context, user_ids=user_ids_list, active_value=True)
             # get admin group id
             group_ids_list.append(self._get_admin_user_rights_group_id(cr, uid, context=context))
+            group_ids_list = list(set(group_ids_list))  # remove duplicates
             # for admin user, set all unifield groups + admin group (only user to have this group)
             user_obj.write(cr, uid, admin_ids, {'groups_id': [(6, 0, group_ids_list)]}, context=context)
 
