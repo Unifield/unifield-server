@@ -230,11 +230,13 @@ class stock_mission_report(osv.osv):
         'move_ids': fields.many2many('stock.move', 'mission_move_rel', 'mission_id', 'move_id', string='Noves'),
         'export_ok': fields.boolean(string='Export file possible ?'),
         'export_state': fields.selection([('draft', 'Draft'), ('in_progress', 'In Progress'), ('done', 'Done'), ('error', 'Error')], string="Export state"),
+        'export_error_msg': fields.text('Error message', readonly=True)
     }
 
     _defaults = {
         'full_view': lambda *a: False,
         'export_state': lambda *a: 'draft',
+        'export_error_msg': lambda *a: False,
         #'export_ok': False,
     }
 
@@ -554,7 +556,8 @@ class stock_mission_report(osv.osv):
         logger = logging.getLogger('MSR')
 
         line_obj = self.pool.get('stock.mission.report.line')
-        self.write(cr, uid, report_ids, {'export_state': 'in_progress'}, context=context)
+        self.write(cr, uid, report_ids, {'export_state': 'in_progress',
+            'export_error_msg': False}, context=context)
         for report in self.read(cr, uid, report_ids, ['local_report', 'full_view'], context=context):
             try:
                 # Create one line by product
@@ -608,11 +611,17 @@ class stock_mission_report(osv.osv):
             except Exception as e:
                 logger.error('Error: %s' % e, exc_info=True)
                 new_cr = pooler.get_db(cr.dbname).cursor()
-                self.write(new_cr, uid, [report['id']], {'export_state': 'error'}, context=context)
+                import traceback
+                error_vals = {
+                        'export_state': 'error',
+                        'export_error_msg': traceback.format_exc() + '\n' + str(e),
+                }
+                self.write(new_cr, uid, [report['id']], error_vals, context=context)
                 new_cr.commit()
                 new_cr.close()
             else:
-                self.write(cr, uid, [report['id']], {'export_state': 'done'}, context=context)
+                self.write(cr, uid, [report['id']], {'export_state': 'done',
+                    'export_error_msg': False}, context=context)
 
             # Update the update date on report
             self.write(cr, uid, [report['id']], {'last_update': time.strftime('%Y-%m-%d %H:%M:%S')}, context=context)

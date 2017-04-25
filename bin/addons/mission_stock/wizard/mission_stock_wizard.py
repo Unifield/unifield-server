@@ -96,6 +96,7 @@ class mission_stock_wizard(osv.osv_memory):
             size=128,
             readonly=True,
         ),
+        'export_error_msg': fields.text('Error message', readonly=True)
     }
 
     _defaults = {
@@ -103,6 +104,7 @@ class mission_stock_wizard(osv.osv_memory):
         'split_stock': lambda *a: 'true',
         'fname': lambda *a: 'Mission stock report',
         'processed_value': lambda *a: _('Not started'),
+        'export_error_msg': lambda *a: False,
     }
 
     def default_get(self, cr, uid, fields_list, context=None):
@@ -121,6 +123,7 @@ class mission_stock_wizard(osv.osv_memory):
             report = self.pool.get('stock.mission.report').browse(cr, uid, local_id[0], context=context)
             res['last_update'] = report.last_update
             res['export_ok'] = report.export_ok and self._get_processed_value(cr, uid, local_id[0], context=context, state=True) == 'done'
+            res['export_error_msg'] = report.export_error_msg
             res['processed_value'] = self._get_processed_value(cr, uid, local_id[0], context=context)
 
         return res
