@@ -614,7 +614,7 @@ class stock_mission_report(osv.osv):
                 import traceback
                 error_vals = {
                         'export_state': 'error',
-                        'export_error_msg': traceback.format_exc() + '\n' + str(e),
+                        'export_error_msg': traceback.format_exc(),
                 }
                 self.write(new_cr, uid, [report['id']], error_vals, context=context)
                 new_cr.commit()
