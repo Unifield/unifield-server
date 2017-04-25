@@ -63,7 +63,15 @@ class SkipStep(StandardError):
 
 
 class AdminLoginException(Exception):
-    pass
+    def __init__(self):
+        self.value = "Not connected to server. "\
+        "You cannot use 'admin' in the config file for "\
+        "automatic connection, please use a user dedicated "\
+        "to the synchronization or manually connect before "\
+        "launching a sync."
+
+    def __str__(self):
+        return repr(self.value)
 
 
 class BackgroundProcess(Thread):
@@ -87,13 +95,10 @@ class BackgroundProcess(Thread):
             connection_obj = pool.get('sync.client.sync_server_connection')
             try:
                 connection_obj.get_connection_from_config_file(cr, uid, context=context)
-            except AdminLoginException:
+            except AdminLoginException as e:
                 connected = False
-                raise osv.except_osv(_("Error!"), _("Not connected to server. "
-                        "You cannot use 'admin' in the config file for "
-                        "automatic connection, please use a user dedicated "
-                        "to the synchronization or manually connect before "
-                        "launching a sync."))
+                raise osv.except_osv(_("Error!"),
+                        _(e.value))
             if not pool.get('sync.client.sync_server_connection').is_connected:
                 connected = False
                 raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
@@ -245,12 +250,9 @@ def sync_process(step='status', need_connection=True, defaults_logger={}):
                                 if not connection_obj.get_connection_from_config_file(cr,
                                             uid, context=context):
                                     raise osv.except_osv(_("Error!"), _("Not connected: please try to log on in the Connection Manager"))
-                            except AdminLoginException:
-                                raise osv.except_osv(_("Error!"), _("Not connected to server. "
-                                        "You cannot use 'admin' in the config file for "
-                                        "automatic connection, please use a user dedicated "
-                                        "to the synchronization or manually connect before "
-                                        "launching a sync."))
+                            except AdminLoginException as e:
+                                raise osv.except_osv(_("Error!"),
+                                        _(e.value))
                         # Check for update (if connection is up)
                         if hasattr(self, 'upgrade'):
                             # TODO: replace the return value of upgrade to a status and raise an error on required update

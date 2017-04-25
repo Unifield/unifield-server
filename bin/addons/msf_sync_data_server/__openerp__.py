@@ -33,6 +33,8 @@
         'data/sync.server.group_type.csv',
         'data/sync_server.sync_rule.csv',
         'data/sync_server.message_rule.csv',
+        'security/group.xml',
+        'security/ir.model.access.csv',
     ],
     'demo_xml': [
     ],

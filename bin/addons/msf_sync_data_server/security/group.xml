@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+	<data>
+		<record id="instance_sync_user" model="res.groups">
+        	<field name="name">Instance Sync</field>
+    	</record>
+    </data>
+</openerp>
+
