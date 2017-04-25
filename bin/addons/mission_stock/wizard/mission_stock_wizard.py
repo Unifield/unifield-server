@@ -39,6 +39,7 @@ class mission_stock_wizard(osv.osv_memory):
         :return: The percentage of processed lines
         """
         msr_in_progress = self.pool.get('msr_in_progress')
+        msr_obj = self.pool.get('stock.mission.report')
         date_tools = self.pool.get('date.tools')
 
         if context is None:
@@ -53,7 +54,14 @@ class mission_stock_wizard(osv.osv_memory):
                                                     datetime=msr_in_progress.browse(cr, uid, msr_ids[0], context=context).start_date)
             return state and 'progress' or _('In progress since %s') % ustr(st_date)
 
-        return state and 'done' or _('Done')
+        export_state = msr_obj.read(cr, uid, report_id, ['export_state'],
+                context=context)['export_state']
+        if state:
+            return export_state
+
+        ir_model_obj = self.pool.get('ir.model.fields')
+        return ir_model_obj.get_selection(cr, uid, 'stock.mission.report',
+                'export_state', export_state, context)
 
     _columns = {
         'report_id': fields.many2one(
