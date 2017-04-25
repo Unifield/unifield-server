@@ -781,8 +781,6 @@ class stock_mission_report(osv.osv):
                 attachment_ids = ir_attachment_obj.search(cr, uid,
                         [('datas_fname', 'in', file_name_list)],
                         context=context)
-
-                logger.info('___ Delete :%s' % attachment_ids)
                 ir_attachment_obj.unlink(cr, uid, attachment_ids)
         cr.commit()
 
