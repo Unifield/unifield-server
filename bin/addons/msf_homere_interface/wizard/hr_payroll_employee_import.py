@@ -276,13 +276,15 @@ class hr_payroll_employee_import(osv.osv_memory):
         return res
 
     def update_employee_infos(self, cr, uid, employee_data='', wizard_id=None,
-                              line_number=None, registered_keys=None):
+                              line_number=None, registered_keys=None, context=None):
         """
         Get employee infos and set them to DB.
         """
         # Some verifications
         created = 0
         updated = 0
+        if context is None:
+            context = {}
         if not employee_data or not wizard_id:
             message = _('No data found for this line: %s.') % line_number
             self.pool.get('hr.payroll.employee.import.errors').create(cr, uid, {'wizard_id': wizard_id, 'msg': message})
@@ -417,10 +419,15 @@ class hr_payroll_employee_import(osv.osv_memory):
                 res = self.pool.get('hr.employee').create(cr, uid, vals, {'from': 'import'})
                 if res:
                     created += 1
+                    # add the employee created to the list in context
+                    context and 'imported_employee_list' in context and context['imported_employee_list'].append(res)
             else:
                 res = self.pool.get('hr.employee').write(cr, uid, e_ids, vals, {'from': 'import'})
                 if res:
                     updated += 1
+                    # add the employee edited to the list in context
+                    for e_id in e_ids:
+                        context and 'imported_employee_list' in context and context['imported_employee_list'].append(e_id)
             registered_keys[codeterrain + id_staff + uniq_id] = True
         else:
             message = _('Line %s. One of this column is missing: code_terrain, id_unique or id_staff. This often happens when the line is empty.') % (line_number)
@@ -564,6 +571,7 @@ class hr_payroll_employee_import(osv.osv_memory):
         processed = 0
         filename = ""
         registered_keys = {}
+        employee_obj = self.pool.get('hr.employee')
         # Delete old errors
         error_ids = self.pool.get('hr.payroll.employee.import.errors').search(cr, uid, [])
         if error_ids:
@@ -615,15 +623,23 @@ class hr_payroll_employee_import(osv.osv_memory):
                 updated = 0
                 # UF-2504 read staff file again for next enumeration
                 # (because already read/looped above for staff codes)
+                context.update({'imported_employee_list': []})
                 for i, employee_data in enumerate(staff_seen):
                     update, nb_created, nb_updated = self.update_employee_infos(
                         cr, uid, employee_data, wiz.id, i,
-                        registered_keys=registered_keys)
+                        registered_keys=registered_keys, context=context)
                     if not update:
                         res = False
                     created += nb_created
                     updated += nb_updated
                     processed += 1
+                # every existing local employee who isn't included in the per_mois file is set to inactive
+                set_to_inactive_domain = [('id', 'not in', context['imported_employee_list']),
+                                          ('employee_type', '=', 'local'),
+                                          ('active', '=', True),
+                                          ]
+                set_to_inactive_ids = employee_obj.search(cr, uid, set_to_inactive_domain, order='NO_ORDER', context=context)
+                employee_obj.write(cr, uid, set_to_inactive_ids, {'active': False}, context=context)
             else:
                 res = False
                 message = _('Several employees have the same unique code: %s.') % (';'.join(details))
