@@ -7,6 +7,7 @@
             <field name="name">user.connection.tree</field>
             <field name="model">res.users</field>
             <field name="type">tree</field>
+            <field name="priority" eval="10" />
             <field name="arch" type="xml">
                 <tree string="Latest Connections">
                     <field name="name"/>

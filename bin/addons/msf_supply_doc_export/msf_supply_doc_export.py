@@ -122,6 +122,9 @@ purchase_order_report_xls('report.purchase.order_xls','purchase.order','addons/m
 # VALIDATED PURCHASE ORDER (Excel XML)
 class validated_purchase_order_report_xls(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_MF'
         super(validated_purchase_order_report_xls, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
@@ -146,6 +149,9 @@ SpreadsheetReport('report.validated.purchase.order_xls', 'purchase.order', 'addo
 # VALIDATE PURCHASE ORDER (Pure XML)
 class parser_validated_purchase_order_report_xml(report_sxw.rml_parse):
     def __init__(self, cr, uid, name, context):
+        if context is None:
+            context = {}
+        context['lang'] = 'en_MF'
         super(parser_validated_purchase_order_report_xml, self).__init__(cr, uid, name, context=context)
         self.localcontext.update({
             'time': time,
@@ -727,7 +733,7 @@ class ir_values(osv.osv):
                 elif context['_terp_view_name'] in (Shipment_Lists, Shipment_List, Shipments, Shipment):
                     new_act.append(v)
                 values = new_act
-        elif context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
+        elif key == 'action' and key2 == 'client_print_multi' and context.get('picking_screen') and context.get('from_so') and context.get('picking_type', False) != 'incoming_shipment':
             new_act = []
             for v in values:
                 if v[2].get('report_name', False) :

@@ -97,7 +97,7 @@
     except osv.except_osv, e:
       error = e.value
     finally:
-      assert error is None, "Error occured: %s" % (error or '')
+      assert error is None, "Error occurred: %s" % (error or '')
     # I check that the date is the original one and not the 17 of this month in 10 years
     import time, logging
     logging.getLogger('tests').log(logging.TEST, 'I check resulted analytic lines (date and period)')
@@ -147,7 +147,7 @@
     except osv.except_osv, e:
       error = e.value
     finally:
-      assert error == "The analytic account selected 'Cost Center 2' is not active.", "Another error occured: %s" % (error or '')
+      assert error == "The analytic account selected 'Cost Center 2' is not active.", "Another error occurred: %s" % (error or '')
 -
   I create an expense to test CC changes on a closed period.
 -
@@ -224,7 +224,7 @@
     except osv.except_osv, e:
       error = e.value
     finally:
-      assert error is None, "Error occured: %s" % (error or '')
+      assert error is None, "Error occurred: %s" % (error or '')
     # I check that the date is the original one and not the 20 of this month in 10 years
     logging.getLogger('tests').log(logging.TEST, 'I check resulted analytic lines.')
     ana_ids = ana_obj.search(cr, uid, [('general_account_id', '=', ref('account_6102'))])
