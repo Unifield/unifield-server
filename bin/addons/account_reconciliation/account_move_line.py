@@ -174,14 +174,14 @@ class account_move_line(osv.osv):
             'line_partial_ids': map(lambda x: (4,x,False), merges+unmerge),
             'is_multi_instance': different_level,
         })
-        # US-533: date of JI reconciliation for line_partial_ids linked with
-        # above (4, 0)
-        self.pool.get('account.move.line').write(cr, uid, merges+unmerge, {
-            'reconcile_date': time.strftime('%Y-%m-%d'),
-            'unreconcile_date': False,
-            'unreconcile_txt': '',
-        })
 
+        # do not delete / recreate AJIs
+        cr.execute("""
+            update account_move_line set
+            reconcile_date=%s, unreconcile_date=NULL, unreconcile_txt=''
+            where id in %s
+            """, (time.strftime('%Y-%m-%d'), tuple(merges+unmerge), )
+        )
         # UF-2011: synchronize move lines (not "marked" after reconcile creation)
         if self.pool.get('sync.client.orm_extended'):
             self.pool.get('account.move.line').synchronize(cr, uid, merges+unmerge, context=context)
