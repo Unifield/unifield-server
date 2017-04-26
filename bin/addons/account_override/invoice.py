@@ -149,7 +149,6 @@ class account_invoice(osv.osv):
                     if user[0].company_id.intermission_default_counterpart:
                         res[i.id] = user[0].company_id.intermission_default_counterpart.id
                 elif name == 'journal_id':
-                    int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
                     int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                     if int_journal_id:
                         res[i.id] = int_journal_id
