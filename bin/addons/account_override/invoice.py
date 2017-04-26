@@ -124,13 +124,23 @@ class account_invoice(osv.osv):
         ]
         return dom1+[('is_debit_note', '=', False)]
 
+    def _get_int_journal_for_current_instance(self, cr, uid, context=None):
+        """
+        Returns the id of the Intermission journal of the current instance if it exists, else returns False.
+        """
+        if context is None:
+            context = {}
+        journal_obj = self.pool.get('account.journal')
+        int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
+        int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
+        return int_journal_id and int_journal_id[0] or False
+
     def _get_fake_m2o_id(self, cr, uid, ids, field_name=None, arg=None, context=None):
         """
         Get many2one field content
         """
         res = {}
         name = field_name.replace("fake_", '')
-        journal_obj = self.pool.get('account.journal')
         for i in self.browse(cr, uid, ids):
             if context and context.get('is_intermission', False):
                 res[i.id] = False
@@ -140,11 +150,9 @@ class account_invoice(osv.osv):
                         res[i.id] = user[0].company_id.intermission_default_counterpart.id
                 elif name == 'journal_id':
                     int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
-                    int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
+                    int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                     if int_journal_id:
-                        if isinstance(int_journal_id, (int, long)):
-                            int_journal_id = [int_journal_id]
-                        res[i.id] = int_journal_id[0]
+                        res[i.id] = int_journal_id
                 elif name == 'currency_id':
                     user = self.pool.get('res.users').browse(cr, uid, [uid], context=context)
                     if user[0].company_id.currency_id:
@@ -451,7 +459,6 @@ class account_invoice(osv.osv):
         """
         defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
         if context and context.get('is_intermission', False):
-            journal_obj = self.pool.get('account.journal')
             intermission_type = context.get('intermission_type', False)
             if intermission_type in ('in', 'out'):
                 # UF-2270: manual intermission (in or out)
@@ -469,12 +476,9 @@ class account_invoice(osv.osv):
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
                 # 'INT' intermission journal
-                int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
-                int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
+                int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 if int_journal_id:
-                    if isinstance(int_journal_id, (int, long)):
-                        int_journal_id = [int_journal_id]
-                    defaults['fake_journal_id'] = int_journal_id[0]
+                    defaults['fake_journal_id'] = int_journal_id
                     defaults['journal_id'] = defaults['fake_journal_id']
         return defaults
 
@@ -682,7 +686,6 @@ class account_invoice(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        journal_obj = self.pool.get('account.journal')
         invoice_obj = self.pool.get('account.invoice')
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
@@ -701,13 +704,11 @@ class account_invoice(osv.osv):
             is_iv = context and context.get('type') in ['in_invoice', 'out_invoice'] and not context.get('is_debit_note') \
                         and not context.get('is_inkind_donation') and context.get('is_intermission')
             if is_iv:
-                int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
-                int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1,
-                                                    context=context)
+                int_journal_id = self._get_int_journal_for_current_instance(cr, uid, context)
                 # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
                 if int_journal_id:
-                    if not inv.journal_id or inv.journal_id.id != int_journal_id[0]:
-                        invoice_obj.write(cr, uid, inv.id, {'journal_id': int_journal_id[0]}, context=context)
+                    if not inv.journal_id or inv.journal_id.id != int_journal_id:
+                        invoice_obj.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
                 else:
                     raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
             if not inv.date_invoice and not inv.document_date:
