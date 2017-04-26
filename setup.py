@@ -60,7 +60,7 @@ if os.name == 'nt':
                 "encodings", "dateutil", "wizard", "pychart", "PIL", "pyparsing",
                 "pydot", "asyncore","asynchat", "reportlab",
                 "HTMLParser", "select", "mako", "poplib",
-                "imaplib", "smtplib", "email", "yaml", "DAV",
+                "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
             ],
