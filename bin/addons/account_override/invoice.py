@@ -686,7 +686,6 @@ class account_invoice(osv.osv):
         # Some verifications
         if context is None:
             context = {}
-        invoice_obj = self.pool.get('account.invoice')
         self._check_invoice_merged_lines(cr, uid, ids, context=context)
         self.check_accounts_for_partner(cr, uid, ids, context=context)
 
@@ -708,7 +707,7 @@ class account_invoice(osv.osv):
                 # update the IV if the INT journal exists but isn't used in the IV (= journal created after the IV creation)
                 if int_journal_id:
                     if not inv.journal_id or inv.journal_id.id != int_journal_id:
-                        invoice_obj.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
+                        self.write(cr, uid, inv.id, {'journal_id': int_journal_id}, context=context)
                 else:
                     raise osv.except_osv(_('Warning'), _('No Intermission journal found for the current instance.'))
             if not inv.date_invoice and not inv.document_date:
