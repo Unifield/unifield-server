@@ -113,8 +113,8 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         self.socket.listen(5)
         self.threads = []
 
-        netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO, 
-                         "starting NET-RPC service at %s port %d" % (interface or '0.0.0.0', port,))
+        netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO,
+                         "starting NET-RPC service at %s port %d" % (interface or '127.0.0.0', port,))
         self.is_gzip = is_gzip
 
     def run(self):
