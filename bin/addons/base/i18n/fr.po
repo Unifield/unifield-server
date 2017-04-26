@@ -9695,3 +9695,10 @@ msgstr "Sri Lanka"
 #: selection:base.language.install,lang:0
 msgid "Russian / русский язык"
 msgstr "Russie / русский язык"
+
+#. module: base
+#: code:addons/orm.py:2348
+#, python-format
+msgid "Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)"
+msgstr "L'object d'id \'%s\' n'a pas été trouvé pour \'%s\'. Vous essayez probablement d'accéder à un objet temporaire qui n'existe plus (ex. un assistant)"
+
