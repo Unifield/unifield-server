@@ -130,6 +130,7 @@ class account_invoice(osv.osv):
         """
         res = {}
         name = field_name.replace("fake_", '')
+        journal_obj = self.pool.get('account.journal')
         for i in self.browse(cr, uid, ids):
             if context and context.get('is_intermission', False):
                 res[i.id] = False
@@ -138,7 +139,8 @@ class account_invoice(osv.osv):
                     if user[0].company_id.intermission_default_counterpart:
                         res[i.id] = user[0].company_id.intermission_default_counterpart.id
                 elif name == 'journal_id':
-                    int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                    int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
+                    int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
                     if int_journal_id:
                         if isinstance(int_journal_id, (int, long)):
                             int_journal_id = [int_journal_id]
@@ -449,6 +451,7 @@ class account_invoice(osv.osv):
         """
         defaults = super(account_invoice, self).default_get(cr, uid, fields, context=context)
         if context and context.get('is_intermission', False):
+            journal_obj = self.pool.get('account.journal')
             intermission_type = context.get('intermission_type', False)
             if intermission_type in ('in', 'out'):
                 # UF-2270: manual intermission (in or out)
@@ -466,7 +469,8 @@ class account_invoice(osv.osv):
                     else:
                         raise osv.except_osv("Error","Company Intermission Counterpart Account must be set")
                 # 'INT' intermission journal
-                int_journal_id = self.pool.get('account.journal').search(cr, uid, [('type', '=', 'intermission')], context=context)
+                int_journal_domain = [('type', '=', 'intermission'), ('is_current_instance', '=', True)]
+                int_journal_id = journal_obj.search(cr, uid, int_journal_domain, order='NO_ORDER', limit=1, context=context)
                 if int_journal_id:
                     if isinstance(int_journal_id, (int, long)):
                         int_journal_id = [int_journal_id]
