@@ -2333,6 +2333,7 @@ class orm_memory(orm_template):
             return True
         if isinstance(ids, (int, long)):
             ids = [ids]
+        from osv import osv_memory
         vals2 = {}
         upd_todo = []
         for field in vals:
@@ -2342,6 +2343,11 @@ class orm_memory(orm_template):
                 upd_todo.append(field)
         for object_id in ids:
             self._check_access(user, object_id, mode='write')
+            if object_id not in self.datas and \
+                    osv_memory in self.__class__.__bases__:
+                error_message = _('Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)')
+                error_message = error_message % (object_id, self._name)
+                raise except_orm(_('Error'), error_message)
             self.datas[object_id].update(vals2)
             self.datas[object_id]['internal.date_access'] = time.time()
             for field in upd_todo:
