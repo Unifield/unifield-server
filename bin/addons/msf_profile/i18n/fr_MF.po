@@ -98131,3 +98131,9 @@ msgstr "L'article doit être uniquement utilisé dans un programme correctement 
 #, python-format
 msgid "Not connected to server. You cannot use 'admin' in the config file for automatic connection, please use a user dedicated to the synchronization or manually connect before launching a sync."
 msgstr "Non connecté au serveur. Vous ne pouvez pas utiliser 'admin' dans le fichier de configuration pour une connexion automatique, veuillez utiliser un utilisateur dédié à la synchronisation ou vous connecter manuellement avant de lancer une synchronisation."
+
+#. module: base
+#: code:addons/orm.py:2348
+#, python-format
+msgid "Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)"
+msgstr "L'object d'id \'%s\' n'a pas été trouvé pour \'%s\'. Vous essayez probablement d'accéder à un objet temporaire qui n'existe plus (ex. un assistant)"

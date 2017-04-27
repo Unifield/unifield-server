@@ -4,9 +4,6 @@
 		<record id="sync_read_group" model="res.groups">
         	<field name="name">Sync / User</field>
     	</record>
-		<record id="instance_sync_user" model="res.groups">
-        	<field name="name">Instance Sync</field>
-    	</record>
     </data>
 </openerp>
 
