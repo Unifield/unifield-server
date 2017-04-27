@@ -205,11 +205,11 @@ class account_invoice_refund(osv.osv_memory):
                     self._get_reconcilable_amls(movelines, to_reconcile)
                     self._get_reconcilable_amls(refund.move_id.line_id, to_reconcile)
                     # reconcile the lines grouped by account
-                    for account in to_reconcile:
-                        account_m_line_obj.reconcile(cr, uid, to_reconcile[account],
+                    for account_id in to_reconcile:
+                        account_m_line_obj.reconcile(cr, uid, to_reconcile[account_id],
                                                      writeoff_period_id=period,
                                                      writeoff_journal_id = inv.journal_id.id,
-                                                     writeoff_acc_id=inv.account_id.id
+                                                     writeoff_acc_id=account_id
                                                      )
                     if mode == 'modify':
                         invoice = inv_obj.read(cr, uid, [inv.id], self._hook_fields_for_modify_refund(cr, uid), context=context)
