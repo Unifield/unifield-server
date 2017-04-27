@@ -98125,3 +98125,9 @@ msgstr "Lorsque le rapport sera prêt, vous pouvez y accéder via le menu Outils
 msgid "Article must be used only in a properly designed programme, need a more detailed description."
 msgstr "L'article doit être uniquement utilisé dans un programme correctement construit, à besoin d'une description plus détaillée."
 
+#. module: sync_client
+#: code:addons/sync_client/sync_client.py:92
+#: code:addons/sync_client/sync_client.py:249
+#, python-format
+msgid "Not connected to server. You cannot use 'admin' in the config file for automatic connection, please use a user dedicated to the synchronization or manually connect before launching a sync."
+msgstr "Non connecté au serveur. Vous ne pouvez pas utiliser 'admin' dans le fichier de configuration pour une connexion automatique, veuillez utiliser un utilisateur dédié à la synchronisation ou vous connecter manuellement avant de lancer une synchronisation."
