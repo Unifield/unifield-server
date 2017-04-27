@@ -296,6 +296,15 @@ class product_list_line(osv.osv):
         ),
     }
 
+    def create(self, cr, uid, vals, context=None):
+        # check if product already exists in the list:
+        if self.search_exist(cr, uid, [('list_id', '=', vals['list_id']), ('name', '=', vals['name'])], context=context):
+            raise osv.except_osv(
+                _('Warning'),
+                _('This product cannot be added as it already exists in this list.')
+            )
+        return super(product_list_line, self).create(cr, uid, vals, context)
+
     def unlink(self, cr, uid, ids, context=None):
         '''
         Create old product list line on product list line deletion
