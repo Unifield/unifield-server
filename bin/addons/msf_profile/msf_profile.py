@@ -1210,6 +1210,9 @@ class patch_scripts(osv.osv):
         return True
 
 
+    def us_2815_remove_null_in_comment(self, cr, uid, *a, **b):
+        cr.execute("update stock_move set comment='' where comment is null");
+
 patch_scripts()
 
 

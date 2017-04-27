@@ -783,7 +783,7 @@ class stock_picking(osv.osv):
             'prodlot_id': line.prodlot_id and line.prodlot_id.id or False,
             'asset_id': line.asset_id and line.asset_id.id or False,
             'change_reason': line.change_reason,
-            'comment': line.comment or move.comment,
+            'comment': line.comment or move.comment or '',
             # Values from incoming wizard
             'direct_incoming': line.wizard_id.direct_incoming,
             # Values for Direct Purchase Order
@@ -1610,7 +1610,7 @@ class procurement_order(osv.osv):
             if (sol.order_id.procurement_request or procurement.supplier.partner_type == 'esc') and not sol.product_id and sol.comment:
                 line.update({'product_id': False,
                              'name': 'Description: %s' % sol.comment,
-                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment,
+                             'comment': procurement.tender_line_id and procurement.tender_line_id.comment or sol.comment or '',
                              'product_qty': sol.product_uom_qty,
                              'price_unit': sol.price_unit,
                              'date_planned': sol.date_planned,

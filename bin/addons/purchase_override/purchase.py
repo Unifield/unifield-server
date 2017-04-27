@@ -2330,8 +2330,6 @@ stock moves which are already processed : '''
                     'product_uos_qty': order_line.product_qty,
                     'product_uom': order_line.product_uom.id,
                     'product_uos': order_line.product_uom.id,
-                    'date': order_line.date_planned,
-                    'date_expected': order_line.date_planned,
                     'location_id': loc_id,
                     'location_dest_id': dest,
                     'picking_id': picking_id,
@@ -2344,7 +2342,7 @@ stock moves which are already processed : '''
                     'date': order_line.confirmed_delivery_date,
                     'date_expected': order_line.confirmed_delivery_date,
                     'line_number': order_line.line_number,
-                    'comment': order_line.comment,
+                    'comment': order_line.comment or '',
                 }
 
                 if reason_type_id:

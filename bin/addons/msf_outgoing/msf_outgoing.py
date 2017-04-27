@@ -1066,7 +1066,6 @@ class shipment(osv.osv):
                     ('to_pack', '=', family.to_pack),
                     ('comment', '=', family.comment)
                 ], context=context)
-
                 stay = []
                 if family.to_pack >= family.return_to:
                     if family.return_from == family.from_pack:
@@ -2125,6 +2124,7 @@ class stock_picking(osv.osv):
                     break
         return result
 
+
     def _vals_get(self, cr, uid, ids, fields, arg, context=None):
         '''
         get functional values
@@ -2143,7 +2143,7 @@ class stock_picking(osv.osv):
                                                context=context)
 
         family_dict = dict((x['id'], x) for x in family_read_result)
-
+        parent_id_ship = {}
         for current_id, family_ids in picking_to_families.items():
             default_values = {
                 'num_of_packs': 0,
@@ -2160,11 +2160,13 @@ class stock_picking(osv.osv):
                     if family_id in family_dict:
                         family = family_dict[family_id]
                         if family['shipment_id'] and family['not_shipped']:
-                            if self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context):
+                            if family['shipment_id'][0] not in parent_id_ship:
+                                parent_id_ship[family['shipment_id'][0]] = self.pool.get('shipment').read(cr, uid, family['shipment_id'][0], ['parent_id'], context=context)['parent_id']
+                            if parent_id_ship.get(family['shipment_id'][0]):
                                 continue
-                    num_of_packs += int(family['num_of_packs'])
-                    total_weight += float(family['total_weight'])
-                    total_volume += float(family['total_volume'])
+                        num_of_packs += int(family['num_of_packs'])
+                        total_weight += float(family['total_weight'])
+                        total_volume += float(family['total_volume'])
 
                 result[current_id]['num_of_packs'] = num_of_packs
                 result[current_id]['total_weight'] = total_weight
@@ -5009,6 +5011,7 @@ class pack_family_memory(osv.osv):
     _name = 'pack.family.memory'
     _auto = False
     def init(self, cr):
+        tools.sql.drop_view_if_exists(cr, 'pack_family_memory')
         cr.execute('''create or replace view pack_family_memory as (
             select
                 min(m.id) as id,
@@ -5033,14 +5036,14 @@ class pack_family_memory(osv.osv):
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
                 bool_and(m.not_shipped) as not_shipped,
-                m.comment as comment
+                COALESCE(m.comment, '') as comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, m.comment
+            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, COALESCE(m.comment, '')
     )
     ''')
 
