@@ -1460,7 +1460,7 @@ class stock_picking(osv.osv):
             'in': 'view_picking_in_form',
             'internal': 'view_picking_form',
         }
-        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form')) 
+        return self.pool.get('ir.model.data').get_object_reference(cr, uid, 'stock', view_list.get(pick.type, 'view_picking_form'))
 
     def _hook_log_picking_log_cond(self, cr, uid, ids, context=None, *args, **kwargs):
         '''

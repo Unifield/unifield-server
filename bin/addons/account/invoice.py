@@ -369,6 +369,30 @@ class account_invoice(osv.osv):
         context.update({'view_id': view_id})
         return context
 
+    def get_invoice_view(self, cr, uid, ids, name=_('Invoice'), domain=[],
+            module='account', view_name='invoice_tree', context=None):
+        if context is None:
+            context = {}
+        if isinstance(ids, (int, long)):
+            ids = [ids]
+
+        # prepare view
+        view_id = self.pool.get('ir.model.data').get_object_reference(cr, uid, module, view_name)
+        view_id = view_id and view_id[1] or False
+        context.update({'search_default_draft': 0})
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'account.invoice',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': [view_id],
+            'target': 'current',
+            'domain': domain,
+            'context': context,
+            'name': name,
+        }
+
+
     def create(self, cr, uid, vals, context=None):
         if context is None:
             context = {}

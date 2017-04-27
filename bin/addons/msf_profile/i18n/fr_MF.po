@@ -1922,7 +1922,6 @@ msgstr "Configuration des Pays avec Restrictions"
 #: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:301
 #, python-format
 msgid "\n"
-"    %s\n"
 "    Importation completed in %s!\n"
 "# of imported lines : %s on %s lines\n"
 "# of ignored lines: %s\n"
@@ -1932,7 +1931,6 @@ msgid "\n"
 "    %s\n"
 "    "
 msgstr "\n"
-"    %s\n"
 "    Importation terminée en %s!\n"
 "# de lignes importées : %s sur %s lignes\n"
 "# de lignes ignorées : %s\n"
@@ -96885,6 +96883,12 @@ msgid " Import in progress... \n"
 " Please wait that the import is finished before editing %s."
 msgstr "Import en cours…\n"
 "Veuillez attendre la fin de l'import avant d'éditer %s."
+
+#. module: msf_doc_import
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:373
+#, python-format
+msgid "the object"
+msgstr "l'objet"
 
 #. modules: specific_rules, stock
 #: model:ir.model,name:specific_rules.model_stock_production_lot_revision
