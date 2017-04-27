@@ -402,17 +402,6 @@ Otherwise, you can continue to use Unifield.""")
         '''
         Return to the initial view
         '''
-        if isinstance(ids, (int, long)):
-            ids=[ids]
-        for wiz_obj in self.read(cr, uid, ids, ['fo_id']):
-            fo_id = wiz_obj['fo_id']
-        return {'type': 'ir.actions.act_window',
-                'res_model': 'sale.order',
-                'view_type': 'form',
-                'view_mode': 'form, tree',
-                'target': 'crush',
-                'res_id': fo_id,
-                'context': context,
-                }
+        return self.cancel(cr, uid, ids, context=context)
 
 wizard_import_fo_line()
