@@ -82,15 +82,17 @@
                                     </group>
                                     <field name="manual_name" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('state', '=', 'posted'), ('imported', '=', True)], 'invisible': [('status', '=', 'sys')]}"/>
                                 </group>
-                                <field name="ref" attrs="{'readonly': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
+                                <field name="ref" attrs="{'readonly': ['|', '|', ('status', '=', 'sys'), ('imported', '=', True), ('state', '=', 'posted')]}"/>
                                 <group colspan="2" col="2">
                                     <field name="manual_currency_id" attrs="{'required': [('status', '=', 'manu')], 'readonly': ['|', '|', ('status', '=', 'sys'), ('block_manual_currency_id', '=', True), ('state', '=', 'posted')], 'invisible': ['|', ('status', '=', 'sys'), ('imported', '=', True)]}"/>
                                     <field name="currency_id" readonly="True" attrs="{'invisible': [('status', '=', 'manu')]}"/>
                                 </group>
                           </group>
                         </group>
-                        <field name="partner_id" invisible="1"/>
-                        <field name="block_manual_currency_id" invisible="1"/>
+                        <group attrs="{'readonly': [('state', '=', 'posted')]}">
+                        <field name="partner_id" invisible="1" />
+                        <field name="block_manual_currency_id" invisible="1" />
+                        </group>
                         <field name="amount" invisible="1"/>
                         <field name="imported" invisible="1"/>
                         <notebook colspan="4">

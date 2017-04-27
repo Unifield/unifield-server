@@ -4884,7 +4884,7 @@ msgstr ""
 #: code:addons/analytic_distribution_supply/invoice.py:76
 #: code:addons/analytic_distribution_supply/invoice.py:92
 #, python-format
-msgid "An error occured for analytic distribution copy for invoice."
+msgid "An error occurred for analytic distribution copy for invoice."
 msgstr ""
 
 #. module: base
@@ -7356,7 +7356,7 @@ msgstr ""
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:539
 #, python-format
-msgid "An error occured on the automatic reconciliation in advance return."
+msgid "An error occurred on the automatic reconciliation in advance return."
 msgstr ""
 
 #. module: analytic_distribution
@@ -10883,7 +10883,7 @@ msgstr ""
 #: code:addons/account_mcdb/account_mcdb_export.py:52
 #: code:addons/account_mcdb/account_mcdb_export.py:149
 #, python-format
-msgid "An error occured. Please contact an administrator to resolve this problem."
+msgid "An error occurred. Please contact an administrator to resolve this problem."
 msgstr ""
 
 #. module: purchase
@@ -24259,7 +24259,7 @@ msgstr ""
 #. module: analytic_distribution
 #: code:addons/analytic_distribution/account_commitment.py:327
 #, python-format
-msgid "An error occured on engagement lines deletion."
+msgid "An error occurred on engagement lines deletion."
 msgstr ""
 
 #. module: analytic_distribution
@@ -26376,7 +26376,7 @@ msgstr ""
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:470
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:530
 #, python-format
-msgid "An error has occured: The journal entries cannot be posted."
+msgid "An error has occurred: The journal entries cannot be posted."
 msgstr ""
 
 #. module: base
@@ -26782,7 +26782,7 @@ msgstr ""
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_cash_return.py:483
 #, python-format
-msgid "An error occured on invoice reconciliation: Invoice line not found."
+msgid "An error occurred on invoice reconciliation: Invoice line not found."
 msgstr ""
 
 #. module: sale
@@ -30741,7 +30741,7 @@ msgstr ""
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/wizard_confirm_bank.py:49
 #, python-format
-msgid "An unknown error has occured on Bank confirmation wizard. Please contact an administrator to solve this problem."
+msgid "An unknown error has occurred on Bank confirmation wizard. Please contact an administrator to solve this problem."
 msgstr ""
 
 #. module: account
@@ -31679,7 +31679,7 @@ msgstr ""
 #. module: account_period_closing_level
 #: code:addons/account_period_closing_level/wizard/wizard_confirm_closing_period.py:50
 #, python-format
-msgid "An unknown error has occured on Period closing confirmation wizard. Please contact an administrator to solve this problem."
+msgid "An unknown error has occurred on Period closing confirmation wizard. Please contact an administrator to solve this problem."
 msgstr ""
 
 #. module: base
@@ -37813,7 +37813,7 @@ msgstr ""
 #. module: register_accounting
 #: code:addons/register_accounting/wizard/cashbox_write_off.py:200
 #, python-format
-msgid "An error has occured !"
+msgid "An error has occurred !"
 msgstr ""
 
 #. module: procurement
@@ -40481,7 +40481,7 @@ msgstr ""
 #: code:addons/register_accounting/account_bank_statement.py:449
 #: code:addons/register_accounting/account_cash_statement.py:137
 #, python-format
-msgid "A problem occured: More than one register have this one as previous register!"
+msgid "A problem occurred: More than one register have this one as previous register!"
 msgstr ""
 
 #. module: analytic
@@ -45371,7 +45371,7 @@ msgstr ""
 #. module: account_mcdb
 #: code:addons/account_mcdb/wizard/output_currency_for_export.py:60
 #, python-format
-msgid "An error has occured. Please contact an administrator."
+msgid "An error has occurred. Please contact an administrator."
 msgstr ""
 
 #. module: base_setup

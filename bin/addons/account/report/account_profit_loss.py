@@ -135,12 +135,12 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                             accounts_temp.append(account)
                     else:
                         accounts_temp.append(account)
-            if self.result_sum_dr > self.result_sum_cr:
+            # The balance is always "Total expense + Total income", no matter if it's a profit or a loss
+            self.res_pl['balance'] = self.result_sum_dr + self.result_sum_cr
+            if self.res_pl['balance'] >= 0:
                 self.res_pl['type'] = _('Net Loss')
-                self.res_pl['balance'] = (self.result_sum_dr - self.result_sum_cr)
             else:
                 self.res_pl['type'] = _('Net Profit')
-                self.res_pl['balance'] = (self.result_sum_cr - self.result_sum_dr)
             self.result[typ] = accounts_temp
             cal_list[typ] = self.result[typ]
         if cal_list:
@@ -148,7 +148,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
             for i in range(0,max(len(cal_list['expense']),len(cal_list['income']))):
                 if i < len(cal_list['expense']) and i < len(cal_list['income']):
                     temp={
-                          'code': cal_list['expense'][i].code,
+                        'code': cal_list['expense'][i].code,
                           'name': cal_list['expense'][i].name,
                           'level': cal_list['expense'][i].level,
                           'balance':cal_list['expense'][i].balance,
@@ -156,12 +156,12 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                           'name1': cal_list['income'][i].name,
                           'level1': cal_list['income'][i].level,
                           'balance1':cal_list['income'][i].balance,
-                          }
+                    }
                     self.result_temp.append(temp)
                 else:
                     if i < len(cal_list['income']):
                         temp={
-                              'code': '',
+                            'code': '',
                               'name': '',
                               'level': False,
                               'balance':False,
@@ -169,11 +169,11 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                               'name1': cal_list['income'][i].name,
                               'level1': cal_list['income'][i].level,
                               'balance1':cal_list['income'][i].balance,
-                              }
+                        }
                         self.result_temp.append(temp)
                     if  i < len(cal_list['expense']):
                         temp={
-                              'code': cal_list['expense'][i].code,
+                            'code': cal_list['expense'][i].code,
                               'name': cal_list['expense'][i].name,
                               'level': cal_list['expense'][i].level,
                               'balance':cal_list['expense'][i].balance,
@@ -181,7 +181,7 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
                               'name1': '',
                               'level1': False,
                               'balance1':False,
-                              }
+                        }
                         self.result_temp.append(temp)
         return None
 
@@ -193,8 +193,6 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
 
     def get_display_info(self, data):
         info_data = []
-        yes_str = _('Yes')
-        no_str = _('No')
         all_str = _('All')
 
         display_account = all_str
@@ -238,26 +236,26 @@ class report_pl_account_horizontal(report_sxw.rml_parse, common_report_header):
         if data.get('form', False):
             if data['form'].get('instance_ids', False):
                 self.cr.execute('select code from msf_instance where id IN %s',
-                    (tuple(data['form']['instance_ids']),))
+                                (tuple(data['form']['instance_ids']),))
                 instances = [x for x, in self.cr.fetchall()]
             else:
                 # US-1166: mission only instances if none provided
                 instances = self._get_instances(get_code=True,
-                    mission_filter=True)
+                                                mission_filter=True)
         return ', '.join(instances)
 
 report_sxw.report_sxw('report.pl.account.horizontal', 'account.account',
-    'addons/account/report/account_profit_horizontal.rml',parser=report_pl_account_horizontal, header='internal landscape')
+                      'addons/account/report/account_profit_horizontal.rml',parser=report_pl_account_horizontal, header='internal landscape')
 
 report_sxw.report_sxw('report.pl.account', 'account.account',
-    'addons/account/report/account_profit_loss.rml',parser=report_pl_account_horizontal, header='internal')
+                      'addons/account/report/account_profit_loss.rml',parser=report_pl_account_horizontal, header='internal')
 
 
 class profit_loss_xls(SpreadsheetReport):
     def __init__(self, name, table, rml=False, parser=report_sxw.rml_parse,
-        header='external', store=False):
+                 header='external', store=False):
         super(profit_loss_xls, self).__init__(name, table, rml=rml,
-            parser=parser, header=header, store=store)
+                                              parser=parser, header=header, store=store)
 
     def create(self, cr, uid, ids, data, context=None):
         #ids = getIds(self, cr, uid, ids, context)
@@ -265,7 +263,7 @@ class profit_loss_xls(SpreadsheetReport):
         return (a[0], 'xls')
 
 profit_loss_xls('report.account.profit.loss_xls', 'account.account',
-    'addons/account/report/account_profit_loss_xls.mako',
-    parser=report_pl_account_horizontal, header='internal')
+                'addons/account/report/account_profit_loss_xls.mako',
+                parser=report_pl_account_horizontal, header='internal')
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

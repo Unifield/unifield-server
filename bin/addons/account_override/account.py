@@ -241,25 +241,25 @@ class account_account(osv.osv):
             not context.get('is_debit_note', False)
 
         if args == [('restricted_area', '=', 'invoice_lines')]:
-            # LINES of Intermission Vouchers OUT or Stock Transfer Vouchers:
+            # LINES of Stock Transfer Vouchers:
             # restrict to Expense/Income/Receivable accounts
-            if context_ivo or context_stv:
+            if context_stv:
                 arg.append(('user_type_code', 'in', ['expense', 'income', 'receivables']))
-            # LINES of Intermission Vouchers IN:
-            # restrict to Expense accounts only
-            if context_ivi:
-                arg.append(('user_type_code', '=', 'expense'))
         elif args == [('restricted_area', '=', 'intermission_header')]:
             if context_ivo:
                 # HEADER of Intermission Voucher OUT:
-                # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Receivable/Receivables
-                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                # restrict to 'is_intermission_counterpart', or Regular/Cash or Income, or Receivable/Receivables or Cash
+                # + prevent from using donation accounts
+                arg = [('type_for_register', '!=', 'donation'),
+                       '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
-                       '&', ('user_type_code', '=', 'receivables'), ('type', '=', 'receivable')]
+                       '&', ('type', '=', 'receivable'), ('user_type_code', 'in', ['receivables', 'cash'])]
             elif context_ivi:
                 # HEADER of Intermission Voucher IN:
                 # restrict to 'is_intermission_counterpart' or Regular/Cash or Regular/Income or Payable/Payables
-                arg = ['|', '|', ('is_intermission_counterpart', '=', True),
+                # + prevent from using donation accounts
+                arg = [('type_for_register', '!=', 'donation'),
+                       '|', '|', ('is_intermission_counterpart', '=', True),
                        '&', ('type', '=', 'other'), ('user_type_code', 'in', ['cash', 'income']),
                        '&', ('user_type_code', '=', 'payables'), ('type', '=', 'payable')]
         return arg
@@ -754,6 +754,7 @@ class account_move(osv.osv):
         'manual_name': fields.char('Description', size=64, required=True),
         'imported': fields.boolean('Imported', help="Is this Journal Entry imported?", required=False, readonly=True),
         'register_line_id': fields.many2one('account.bank.statement.line', required=False, readonly=True),
+        'posted_sync_sequence': fields.integer('Seq. number of sync update that posted the move', readonly=True, internal=True),
     }
 
     _defaults = {
@@ -965,6 +966,8 @@ class account_move(osv.osv):
             if context.get('from_web_menu', False):
                 fields += ['document_date', 'date']
             for m in self.browse(cr, uid, ids):
+                if context.get('sync_update_session') and vals.get('state') == 'posted' and m.state == 'draft':
+                    vals['posted_sync_sequence'] = context['sync_update_session']
                 if context.get('from_web_menu', False):
                     if m.status == 'sys':
                         raise osv.except_osv(_('Warning'), _('You cannot edit a Journal Entry created by the system.'))

@@ -48,9 +48,10 @@
             <field name="type">form</field>
             <field eval="1" name="priority"/>
             <field name="arch" type="xml">
-                <form string="Journal Item" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1">
+                <form string="Journal Item" hide_new_button="1" hide_delete_button="1" hide_duplicate_button="1" noteditable="1">
                     <group col="4" colspan="4">
                         <separator colspan="4" string="General Information"/>
+                        <field name="move_id"/>
                         <newline />
                         <field name="name" select="1"/>
                         <field name="ref"/>

@@ -27,7 +27,7 @@
 #
 ##############################################################################
 
-from osv import fields, osv
+from osv import osv
 from tools.translate import _
 from sync_common import xmlid_to_sdref
 
@@ -78,7 +78,7 @@ class account_move(osv.osv):
         return super(account_move, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
-        if not ids:
+        if not ids or not vals:
             return True
         if not context:
             context = {}
@@ -154,14 +154,14 @@ class account_move_line(osv.osv):
             t = (l.journal_id.id, l.period_id.id)
             if t not in done:
                 if not self._update_journal_check(cr, uid, l.journal_id.id,
-                    l.period_id.id, context=context, raise_hq_closed=False):
+                                                  l.period_id.id, context=context, raise_hq_closed=False):
                     # US 1214: HQ closed check more field not updated
                     self._hook_call_update_check_hq_closed_rec(cr, uid, l,
-                        vals, context=context)
+                                                               vals, context=context)
                 done[t] = True
 
     def _hook_call_update_check_hq_closed_rec(self, cr, uid, ji_rec, vals,
-        context=None):
+                                              context=None):
         # US 1214: HQ closed tolerate update under certains conditions only
         # Enable the sync on account.move.line field only if they are not : Dates / Journal / Sequence / Description / Reference / all field amounts / Third party / Currency / State
         # http://jira.unifield.org/browse/US-1214?focusedCommentId=47237&page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel#comment-47237
@@ -210,7 +210,7 @@ class account_move_line(osv.osv):
 
             if has_diff:
                 raise osv.except_osv(_('Error !'),
-                    _('You can not modify entries in a HQ closed journal. Field: %s, db value: %s, update value: %s') % (f, rec_val, val))
+                                     _('You can not modify entries in a HQ closed journal. Field: %s, db value: %s, update value: %s') % (f, rec_val, val))
 
 account_move_line()
 

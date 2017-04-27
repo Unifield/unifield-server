@@ -1047,7 +1047,7 @@ class orm_template(object):
                 #US-88: If this from an import account analytic, and there is sql error, AND not sync context, then just clear the cache
                 if 'account.analytic.account' in self._name and not context.get('sync_update_execution', False):
                     cache.clean_caches_for_db(cr.dbname)
-                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e), '')
+                return (-1, res, 'Line ' + str(position) +' : ' + tools.ustr(e) + "\n" + tools.ustr(traceback.format_exc()), '')
 
             if config.get('import_partial', False) and filename and (not (position%100)):
                 data = pickle.load(file(config.get('import_partial')))
@@ -1173,7 +1173,7 @@ class orm_template(object):
         # get the default values set by the user and override the default
         # values defined in the object
         ir_values_obj = self.pool.get('ir.values')
-        res = ir_values_obj.get(cr, uid, 'default', False, [self._name])
+        res = ir_values_obj.get(cr, uid, 'default', False, [self._name], context=context)
         for id, field, field_value in res:
             if field in fields_list:
                 fld_def = (field in self._columns) and self._columns[field] or self._inherit_fields[field][2]
@@ -1736,6 +1736,7 @@ class orm_template(object):
 
         result = {'type': view_type, 'model': self._name}
 
+        model = True
         is_inherited_view = True
         sql_res = False
         parent_view_model = None
@@ -1752,6 +1753,9 @@ class orm_template(object):
             if view_id:
                 query = "SELECT arch,name,field_parent,id,type,inherit_id,model FROM ir_ui_view WHERE id=%s"
                 params = (view_id,)
+                if model:
+                    query += " AND model = %s"
+                    params += (self._name,)
                 cr.execute(query, params)
             else:
                 cr.execute('''SELECT
@@ -1769,6 +1773,7 @@ class orm_template(object):
 
             is_inherited_view = sql_res[5]
             view_id = is_inherited_view or sql_res[3]
+            model = False
             parent_view_model = sql_res[6]
 
         # if a view was found

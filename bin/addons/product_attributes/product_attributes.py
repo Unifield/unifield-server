@@ -251,7 +251,7 @@ class product_justification_code(osv.osv):
     _rec_name = 'code'
     _columns = {
         'code': fields.char('Justification Code', size=32, required=True, translate=True),
-        'description': fields.char('Justification Description', size=256, required=True),
+        'description': fields.char('Justification Description', size=256, required=True, translate=True),
     }
 
     def name_get(self, cr, user, ids, context=None):
@@ -913,7 +913,7 @@ class product_attributes(osv.osv):
         ),
         'soq_weight': fields.float(digits=(16,5), string='SoQ Weight'),
         'soq_volume': fields.float(digits=(16,5), string='SoQ Volume'),
-        'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity'),
+        'soq_quantity': fields.float(digits=(16,2), string='SoQ Quantity', help="Standard Ordering Quantity. Quantity according to which the product should be ordered. The SoQ is usually determined by the typical packaging of the product."),
         'vat_ok': fields.function(_get_vat_ok, method=True, type='boolean', string='VAT OK', store=False, readonly=True),
         'uf_write_date': fields.datetime(_('Write date')),
         'uf_create_date': fields.datetime(_('Creation date')),
@@ -1241,12 +1241,13 @@ class product_attributes(osv.osv):
                     }, context=context)
 
         if 'default_code' in vals:
-            vals['default_code'] = vals['default_code'].strip()
-            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
-                raise osv.except_osv(
-                    _('Error'),
-                    _('White spaces are not allowed in product code'),
-                )
+            if not context.get('sync_update_execution'):
+                vals['default_code'] = vals['default_code'].strip()
+                if ' ' in vals['default_code']:
+                    raise osv.except_osv(
+                        _('Error'),
+                        _('White spaces are not allowed in product code'),
+                    )
         if 'xmlid_code' in vals:
             if not context.get('sync_update_execution') and ' ' in vals['xmlid_code']:
                 raise osv.except_osv(
@@ -1310,19 +1311,20 @@ class product_attributes(osv.osv):
                 vals['perishable'] = True
         if 'default_code' in vals:
             if vals['default_code'] == 'XXX':
-                vals.update({'duplicate_ok': True})
+                vals['duplicate_ok'] = True
             else:
-                vals.update({
-                    'duplicate_ok': False,
-                    'default_code': vals['default_code'].strip(),
-                })
-            if not context.get('sync_update_execution') and ' ' in vals['default_code']:
-                # Check if the old code was 'XXX'
-                if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
-                    raise osv.except_osv(
-                        _('Error'),
-                        _('White spaces are not allowed in product code'),
-                    )
+                vals['duplicate_ok'] = False
+            if not context.get('sync_update_execution'):
+                vals['default_code'] = vals['default_code'].strip()
+                if ' ' in vals['default_code']:
+                    # Check if the old code was 'XXX'
+                    # in case there is, it mean it is a duplicate and spaces
+                    # are not allowed.
+                    if any(prd['default_code'] == 'XXX' for prd in self.read(cr, uid, ids, ['default_code'], context=context)):
+                        raise osv.except_osv(
+                            _('Error'),
+                            _('White spaces are not allowed in product code'),
+                        )
 
         # update local stock mission report lines :
         if 'state' in vals:
@@ -1334,7 +1336,9 @@ class product_attributes(osv.osv):
                 prod_state = prod_status_obj.read(cr, uid, state_id, ['code'], context=context)[0]['code']
             local_smrl_ids = smrl_obj.search(cr, uid, [('product_state', '!=', prod_state), ('product_id', 'in', ids), ('full_view', '=', False), ('mission_report_id.local_report', '=', True)], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_state': prod_state}, context=no_sync_context)
 
         if 'international_status' in vals:
             intstat_code = ''
@@ -1351,7 +1355,9 @@ class product_attributes(osv.osv):
                 ('mission_report_id.local_report', '=', True)
             ], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'international_status_code': intstat_code or ''}, context=no_sync_context)
 
         if 'state_ud' in vals:
             # just update SMRL that belongs to our instance:
@@ -1362,7 +1368,9 @@ class product_attributes(osv.osv):
                 ('state_ud', '!=', vals['state_ud'] or ''),
             ], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'state_ud': vals['state_ud'] or ''}, context=no_sync_context)
 
         product_uom_categ = []
         if 'uom_id' in vals or 'uom_po_id' in vals:
@@ -1405,7 +1413,9 @@ class product_attributes(osv.osv):
                 ('product_active', '!=', vals['active'])
             ], context=context)
             if local_smrl_ids:
-                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=context)
+                no_sync_context = context.copy()
+                no_sync_context['sync_update_execution'] = False
+                smrl_obj.write(cr, 1, local_smrl_ids, {'product_active': vals['active']}, context=no_sync_context)
 
         if 'narcotic' in vals or 'controlled_substance' in vals:
             if vals.get('narcotic') == True or tools.ustr(vals.get('controlled_substance', '')) == 'True':

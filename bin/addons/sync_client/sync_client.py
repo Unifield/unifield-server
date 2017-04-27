@@ -1169,6 +1169,8 @@ class Entity(osv.osv):
             #except StandardError:
             #    return False
             self.aborting = True
+            # US-2306 : before to close the cursor, clear the _get_id caches
+            self.pool.get('ir.model.data')._get_id.clear_cache(cr.dbname)
             self.sync_cursor.close(True)
         return True
 

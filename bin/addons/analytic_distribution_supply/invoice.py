@@ -33,7 +33,7 @@ class account_invoice_line(osv.osv):
     _columns = {
         'sale_order_lines': fields.many2many('sale.order.line', 'sale_order_line_invoice_rel', 'invoice_id', 'order_line_id', 'Sale Order Lines', readonly=True),
         'sale_order_line_id': fields.many2one('sale.order.line', string="Sale Order Line", readonly=True,
-            help="Sale Order Line from which this line have been generated (when coming from a sale order)"),
+                                              help="Sale Order Line from which this line have been generated (when coming from a sale order)"),
     }
 
 account_invoice_line()
@@ -44,7 +44,7 @@ class account_invoice(osv.osv):
 
     _columns = {
         'order_ids': fields.many2many('sale.order', 'sale_order_invoice_rel', 'invoice_id', 'order_id', 'Sale Order',
-            help="Sale Order from which invoice have been generated"),
+                                      help="Sale Order from which invoice have been generated"),
     }
 
     def fetch_analytic_distribution(self, cr, uid, ids, context=None):
@@ -74,7 +74,7 @@ class account_invoice(osv.osv):
                     if distrib_id:
                         new_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
                         if not new_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                            raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
                         # create default funding pool lines
                         ana_obj.create_funding_pool_lines(cr, uid, [new_distrib_id])
                         self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
@@ -85,7 +85,7 @@ class account_invoice(osv.osv):
                     if distrib_id:
                         new_distrib_id = self.pool.get('analytic.distribution').copy(cr, uid, distrib_id, {})
                         if not new_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                            raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
                         # create default funding pool lines
                         self.pool.get('analytic.distribution').create_funding_pool_lines(cr, uid, [new_distrib_id])
                         self.pool.get('account.invoice').write(cr, uid, [inv.id], {'analytic_distribution_id': new_distrib_id,})
@@ -101,7 +101,7 @@ class account_invoice(osv.osv):
                     if distrib_id:
                         new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
                         if not new_invl_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                            raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
                         # create default funding pool lines
                         ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
                         invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
@@ -111,7 +111,7 @@ class account_invoice(osv.osv):
                     if distrib_id:
                         new_invl_distrib_id = ana_obj.copy(cr, uid, distrib_id, {})
                         if not new_invl_distrib_id:
-                            raise osv.except_osv(_('Error'), _('An error occured for analytic distribution copy for invoice.'))
+                            raise osv.except_osv(_('Error'), _('An error occurred for analytic distribution copy for invoice.'))
                         # create default funding pool lines
                         ana_obj.create_funding_pool_lines(cr, uid, [new_invl_distrib_id], invl.account_id.id)
                         invl_obj.write(cr, uid, [invl.id], {'analytic_distribution_id': new_invl_distrib_id})
@@ -177,7 +177,7 @@ class account_invoice(osv.osv):
                     total_amount += line.price_subtotal
                 # search for matching commitment line
                 cl_ids = self.pool.get('account.commitment.line').search(cr, uid, [('commit_id', '=', co.id), ('account_id', '=', account_id)], limit=1,
-                    context=context)
+                                                                         context=context)
                 # Do nothing if no commitment line exists for this invoice line. FIXME: waiting for a decision about this case
                 if not cl_ids:
                     continue
@@ -231,10 +231,10 @@ class account_invoice(osv.osv):
                                         # Update analytic line with new amount
                                         anal_amount = (distrib_line.percentage * diff) / 100
                                         amount = -1 * self.pool.get('res.currency').compute(cr, uid, inv.currency_id.id, company_currency,
-                                            anal_amount, round=False, context=context)
+                                                                                            anal_amount, round=False, context=context)
                                         # write new amount to corresponding engagement line
                                         self.pool.get('account.analytic.line').write(cr, uid, [eng_line.id],
-                                            {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
+                                                                                     {'amount': amount, 'amount_currency': -1 * anal_amount}, context=context)
                                         # delete processed engagement lines
                                         engagement_lines[i] = None
                     # update existent commitment line with new amount (new_mnt)

@@ -263,16 +263,16 @@
       <% period = getPeriod() %>
       <Row>
         <Cell ss:StyleID="s25b" >
-          <Data ss:Type="String">${_('LIQUIDITY POSITION')}</Data>
+          <Data ss:Type="String">${_('LIQUIDITY POSITION')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s25b" >
-          <Data ss:Type="String">${period.name}</Data>
+          <Data ss:Type="String">${period.name|x}</Data>
         </Cell>
       </Row>
       <Row ss:Height="13.5"/>
       <Row>
         <Cell>
-          <Data ss:Type="String">${_('Period end date:')}</Data>
+          <Data ss:Type="String">${_('Period end date:')|x}</Data>
         </Cell>
         % if isDate(period.date_stop):
         <Cell ss:StyleID="short_date2">
@@ -286,7 +286,7 @@
       </Row>
       <Row>
         <Cell>
-          <Data ss:Type="String">${_('Prop Instance: ')}</Data>
+          <Data ss:Type="String">${_('Prop Instance: ')|x}</Data>
         </Cell>
         <Cell ss:StyleID="pop">
           <Data ss:Type="String">${( company.instance_id and company.instance_id.code or '')|x}</Data>
@@ -305,93 +305,93 @@
       % for reg_type in getRegistersByType():
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s34" >
-          <Data ss:Type="String">${ reg_type.title() }</Data>
+          <Data ss:Type="String">${ reg_type.title()|x }</Data>
         </Cell>
       </Row>
       <Row  ss:AutoFitHeight="1" ss:StyleID="s35">
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Proprietary instance')}</Data>
+          <Data ss:Type="String">${_('Proprietary instance')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Journal Code')}</Data>
+          <Data ss:Type="String">${_('Journal Code')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Journal Name')}</Data>
+          <Data ss:Type="String">${_('Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Status')}</Data>
+          <Data ss:Type="String">${_('Status')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Period')}</Data>
+          <Data ss:Type="String">${_('Period')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Opening Balance in register currency')}</Data>
+          <Data ss:Type="String">${_('Opening Balance in register currency')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Calculated Balance in register currency')}</Data>
-        </Cell>
-        <Cell ss:StyleID="s34">
-          % if reg_type == 'cash':
-            <Data ss:Type="String">${_('Cash Box Balance in register currency')}</Data>
-          % else:
-            <Data ss:Type="String">${_('Bank Statement Balance in register currency')}</Data>
-          % endif
-        </Cell>
-        <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Currency')}</Data>
-        </Cell>
-        <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Calculated Balance in functional currency')}</Data>
+          <Data ss:Type="String">${_('Calculated Balance in register currency')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
           % if reg_type == 'cash':
-            <Data ss:Type="String">${_('Cash Box Balance in functional currency')}</Data>
+            <Data ss:Type="String">${_('Cash Box Balance in register currency')|x}</Data>
           % else:
-            <Data ss:Type="String">${_('Bank Statement Balance in functional currency')}</Data>
+            <Data ss:Type="String">${_('Bank Statement Balance in register currency')|x}</Data>
           % endif
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Functional Currency')}</Data>
+          <Data ss:Type="String">${_('Register Currency')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="s34">
+          <Data ss:Type="String">${_('Calculated Balance in functional currency')|x}</Data>
+        </Cell>
+        <Cell ss:StyleID="s34">
+          % if reg_type == 'cash':
+            <Data ss:Type="String">${_('Cash Box Balance in functional currency')|x}</Data>
+          % else:
+            <Data ss:Type="String">${_('Bank Statement Balance in functional currency')|x}</Data>
+          % endif
+        </Cell>
+        <Cell ss:StyleID="s34">
+          <Data ss:Type="String">${_('Functional Currency')|x}</Data>
         </Cell>
       </Row>
       
       % for reg in getReg()[reg_type]['registers']: 
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (reg['instance']) }</Data>
+          <Data ss:Type="String">${ (reg['instance'])|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (reg['journal_code']) }</Data>
+          <Data ss:Type="String">${ (reg['journal_code'])|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (reg['journal_name']) }</Data>
+          <Data ss:Type="String">${ (reg['journal_name'])|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (reg['state']) }</Data>
+          <Data ss:Type="String">${ (reg['state'])|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (period.name) }</Data>
+          <Data ss:Type="String">${ (period.name)|x }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['opening_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (reg['opening_balance'] or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['calculated_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (reg['calculated_balance'] or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['register_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (reg['register_balance'] or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (reg['currency']) }</Data>
+          <Data ss:Type="String">${ (reg['currency'])|x }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['func_calculated_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (reg['func_calculated_balance'] or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ (formatLang(reg['func_register_balance'], digits=2, grouping=True) or '0.00') }</Data>
+          <Data ss:Type="Number">${ (reg['func_register_balance'] or '0.00') }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ (getFuncCurrency()) }</Data>
+          <Data ss:Type="String">${ (getFuncCurrency())|x }</Data>
         </Cell>
       </Row>
       % endfor
@@ -403,28 +403,28 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">Subtotal ${ str(cur) }</Data>
+          <Data ss:Type="String">Subtotal ${ str(cur)|x }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-            <Data ss:Type="Number">${ formatLang(getOpeningBalance(reg_type, cur), digits=2, grouping=True) or '0.00' }</Data>
+            <Data ss:Type="Number">${ getOpeningBalance(reg_type, cur) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getReg()[reg_type]['currency_amounts'][cur]['amount_calculated'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getReg()[reg_type]['currency_amounts'][cur]['amount_balanced'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ str(cur) }</Data>
+          <Data ss:Type="String">${ str(cur)|x }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']), digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_calculated']) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']), digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getConvert(getReg()[reg_type]['currency_amounts'][cur]['id'], getReg()[reg_type]['currency_amounts'][cur]['amount_balanced']) or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
         </Cell>
       </Row>
       % endfor
@@ -440,16 +440,16 @@
         <Cell ss:StyleID="s25c"/>
 
         <Cell ss:StyleID="s49">
-          <Data ss:Type="String">Total ${ reg_type.title() }:</Data>
+          <Data ss:Type="String">Total ${ reg_type.title()|x }:</Data>
         </Cell>
         <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['func_amount_calculated'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getReg()[reg_type]['func_amount_calculated'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(getReg()[reg_type]['func_amount_balanced'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getReg()[reg_type]['func_amount_balanced'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s51">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
         </Cell>
       </Row>
       % endfor
@@ -457,42 +457,42 @@
       <!-- PENDING CHEQUES -->
       <Row ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s34" >
-          <Data ss:Type="String">${_('Pending Cheques')}</Data>
+          <Data ss:Type="String">${_('Pending Cheques')|x}</Data>
         </Cell>
       </Row>
       <Row  ss:AutoFitHeight="1" ss:StyleID="s35">
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Proprietary instance')}</Data>
+          <Data ss:Type="String">${_('Proprietary instance')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Journal Code')}</Data>
+          <Data ss:Type="String">${_('Journal Code')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Journal Name')}</Data>
+          <Data ss:Type="String">${_('Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Status')}</Data>
+          <Data ss:Type="String">${_('Status')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Period')}</Data>
+          <Data ss:Type="String">${_('Period')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Bank Journal Code')}</Data>
+          <Data ss:Type="String">${_('Bank Journal Code')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Bank Journal Name')}</Data>
+          <Data ss:Type="String">${_('Bank Journal Name')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Pending cheque amount in register currency')}</Data>
+          <Data ss:Type="String">${_('Pending cheque amount in register currency')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Register Currency')}</Data>
+          <Data ss:Type="String">${_('Register Currency')|x}</Data>
         </Cell>
         <Cell ss:MergeAcross="1" ss:StyleID="s34">
-          <Data ss:Type="String">${_('Pending cheque amount in functional currency')}</Data>
+          <Data ss:Type="String">${_('Pending cheque amount in functional currency')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s34">
-          <Data ss:Type="String">${_('Functional Currency')}</Data>
+          <Data ss:Type="String">${_('Functional Currency')|x}</Data>
         </Cell>
       </Row>
 
@@ -500,38 +500,38 @@
       % for journal in pending_cheques['registers']:
       <Row  ss:AutoFitHeight="0" ss:Height="25.5" ss:StyleID="s35">
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ pending_cheques['registers'][journal]['instance'] }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['instance'] |x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
           <!-- journal code -->
-          <Data ss:Type="String">${ journal }</Data>
+          <Data ss:Type="String">${ journal|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ pending_cheques['registers'][journal]['journal_name'] }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['journal_name']|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ pending_cheques['registers'][journal]['state'] }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['state']|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ period.name }</Data>
+          <Data ss:Type="String">${ period.name|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ pending_cheques['registers'][journal]['bank_journal_code'] }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['bank_journal_code']|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ pending_cheques['registers'][journal]['bank_journal_name'] }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['bank_journal_name']|x }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(pending_cheques['registers'][journal]['amount_reg_currency'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ pending_cheques['registers'][journal]['amount_reg_currency'] or '0.00'|x }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ pending_cheques['registers'][journal]['reg_currency'] }</Data>
+          <Data ss:Type="String">${ pending_cheques['registers'][journal]['reg_currency']|x }</Data>
         </Cell>
         <Cell ss:MergeAcross="1" ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(pending_cheques['registers'][journal]['amount_func_currency'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ pending_cheques['registers'][journal]['amount_func_currency'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
         </Cell>
       </Row>
       % endfor
@@ -545,19 +545,19 @@
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25c"/>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">Subtotal ${ str(cur) }</Data>
+          <Data ss:Type="String">Subtotal ${ str(cur)|x }</Data>
         </Cell>
         <Cell ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(pending_cheques['currency_amounts'][cur]['total_amount_reg_currency'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ pending_cheques['currency_amounts'][cur]['total_amount_reg_currency'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ str(cur) }</Data>
+          <Data ss:Type="String">${ str(cur)|x }</Data>
         </Cell>
         <Cell ss:MergeAcross="1" ss:StyleID="s26">
-          <Data ss:Type="Number">${ formatLang(pending_cheques['currency_amounts'][cur]['total_amount_func_currency'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ pending_cheques['currency_amounts'][cur]['total_amount_func_currency'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s25">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
         </Cell>
       </Row>
       % endfor
@@ -573,13 +573,13 @@
         <Cell ss:StyleID="s25c"/>
 
         <Cell ss:MergeAcross="1" ss:StyleID="s49">
-          <Data ss:Type="String">${_('Total Cheque:')}</Data>
+          <Data ss:Type="String">${_('Total Cheque:')|x}</Data>
         </Cell>
         <Cell ss:StyleID="s50">
-          <Data ss:Type="Number">${ formatLang(pending_cheques['total_cheque'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ pending_cheques['total_cheque'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s51">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
         </Cell>
       </Row>
 
@@ -601,10 +601,10 @@
         </Cell>
         <Cell ss:StyleID="s50">
           <!-- total of register balances + pendinq cheque amount in register currency -->
-          <Data ss:Type="Number">${ formatLang(getGrandTotalRegCurrency()[cur], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getGrandTotalRegCurrency()[cur] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s51">
-          <Data ss:Type="String">${ str(cur) }</Data>
+          <Data ss:Type="String">${ str(cur)|x }</Data>
         </Cell>
       </Row>
       % endfor
@@ -624,10 +624,10 @@
         </Cell>
         <Cell ss:StyleID="s50">
           <!-- total of register balances + pendinq cheque amount in func. currency -->
-          <Data ss:Type="Number">${ formatLang(getTotalCalc() + pending_cheques['total_cheque'], digits=2, grouping=True) or '0.00' }</Data>
+          <Data ss:Type="Number">${ getTotalCalc() + pending_cheques['total_cheque'] or '0.00' }</Data>
         </Cell>
         <Cell ss:StyleID="s51">
-          <Data ss:Type="String">${ getFuncCurrency() }</Data>
+          <Data ss:Type="String">${ getFuncCurrency()|x }</Data>
         </Cell>
       </Row>
 
