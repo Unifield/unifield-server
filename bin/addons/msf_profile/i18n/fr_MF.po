@@ -98389,3 +98389,10 @@ msgstr "Non connecté au serveur. Vous ne pouvez pas utiliser 'admin' dans le fi
 #, python-format
 msgid "Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)"
 msgstr "L'object d'id \'%s\' n'a pas été trouvé pour \'%s\'. Vous essayez probablement d'accéder à un objet temporaire qui n'existe plus (ex. un assistant)"
+
+#. module: account_override
+#: code:addons/account_override/invoice.py:387
+#, python-format
+msgid "Intermission Vouchers linked to a PO can be deleted only in Draft state."
+msgstr "Les Bons Intermission liés à un BC ne peuvent être supprimés qu'à l'état Brouillon."
+
