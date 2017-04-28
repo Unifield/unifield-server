@@ -389,6 +389,7 @@ Importation completed in %s!
                 'res_id': invoice_id,
                 'context': context,
             }
+        # if no view_name match, return the defaut accout.invoice view
         return {'type': 'ir.actions.act_window',
                 'res_model': 'account.invoice',
                 'view_type': 'form',
@@ -460,7 +461,6 @@ Importation completed in %s!
             domain = domain_dict['domain']
             domain += [('id', '=', invoice_id)]
             if invoice_obj.search_exist(cr, uid, domain, context=context):
-                print domain_dict['view_name']
                 return domain_dict['view_name']
         return None
 

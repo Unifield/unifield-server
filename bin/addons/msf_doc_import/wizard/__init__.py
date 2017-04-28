@@ -109,7 +109,7 @@ PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT = [
 PRODUCT_LIST_COLUMNS_FOR_IMPORT = [x for (x,y) in PRODUCT_LIST_COLUMNS_HEADER_FOR_IMPORT]
 
 ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT = [
-    (_('Description'), 'string'), (_('Account'), 'string'), (_('Quantity'), 'number'), (_('Unit Price'), 'number'), (_('Destination'), 'string'), (_('Cost Center'), 'string'), (_('Funding Pool'), 'string')]
+    ('Description', 'string'), ('Account', 'string'), ('Quantity', 'number'), ('Unit Price', 'number'), ('Destination', 'string'), ('Cost Center', 'string'), ('Funding Pool', 'string')]
 ACCOUNT_INVOICE_COLUMNS_FOR_IMPORT = [x for (x,y) in ACCOUNT_INVOICE_COLUMNS_HEADER_FOR_IMPORT]
 
 # if you update a file in NEW_COLUMNS_HEADER, you also need to modify the method export_po_integration, get_po_row_values and get_po_header_row_values.
