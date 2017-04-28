@@ -4897,9 +4897,6 @@ class stock_move(osv.osv):
             if pick_type == 'in' and move.purchase_line_id:
                 sol_ids = pol_obj.get_sol_ids_from_pol_ids(cr, uid, [move.purchase_line_id.id], context=context)
                 for sol in sol_obj.browse(cr, uid, sol_ids, context=context):
-                    if sol.order_id.procurement_request and pick_cancel:
-                        continue
-
                     # If the line will be sourced in another way, do not cancel the OUT move
                     if solc_obj.search(cr, uid, [('fo_sync_order_line_db_id', '=', sol.sync_order_line_db_id), ('resource_sync_line_db_id', '!=', False)],
                                        limit=1, order='NO_ORDER', context=context):
