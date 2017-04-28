@@ -799,13 +799,17 @@ Nothing has been imported because of %s. See below:
                 We generate the message which will be displayed on the simulation
                 screen. This message is a merge between all errors.
                 '''
+
+                import_error_ok = False
                 # Generate the message
                 if len(values_header_errors):
+                    import_error_ok = True
                     message += '\n## Error on header values ##\n\n'
                     for err in values_header_errors:
                         message += '%s\n' % err
 
                 if len(values_line_errors):
+                    import_error_ok = True
                     message += '\n## Error on line values ##\n\n'
                     for err in values_line_errors:
                         message += '%s\n' % err
@@ -813,6 +817,7 @@ Nothing has been imported because of %s. See below:
                 header_values['message'] = message
                 header_values['state'] = 'simu_done'
                 header_values['percent_completed'] = 100.0
+                header_values['import_error_ok'] = import_error_ok
                 self.write(cr, uid, [wiz.id], header_values, context=context)
 
                 res = self.go_to_simulation(cr, uid, [wiz.id], context=context)
