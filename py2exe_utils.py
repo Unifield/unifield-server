@@ -1,12 +1,6 @@
 import os
 import glob
-
 import babel.localedata
-
-def babel_localedata():
-    return glob.glob(
-        os.path.join(babel.localedata._dirname, '*.dat')
-    )
 
 __all__ = ['opts']
 
@@ -35,6 +29,7 @@ opts = {
         ]
     }},
     'data_files' : [
-        ('babel/localedata', babel_localedata())
+        ('babel/localedata', glob.glob(os.path.join(babel.localedata._dirname, '*.dat'))),
+        ('babel', glob.glob(os.path.join(os.path.dirname(babel.__file__), 'global.dat'))),
     ]
 }

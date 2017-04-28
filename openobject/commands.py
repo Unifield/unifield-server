@@ -43,6 +43,12 @@ def get_config_file():
     return configfile
 
 def start():
+    import babel.localedata
+    if not os.path.exists(babel.localedata._dirname):
+        # try to use the one py2exe uses, without a dash on the end
+        n = os.path.join(os.path.dirname(babel.localedata._dirname),
+                         "localedata")
+        babel.localedata._dirname = n
 
     parser = OptionParser(version="%s" % (openobject.release.version))
     parser.add_option("-c", "--config", metavar="FILE", dest="config",
