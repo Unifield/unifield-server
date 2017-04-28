@@ -10,7 +10,7 @@ import time
 import urllib
 import tempfile
 import cherrypy
-from cherrypy.lib import cptools, http, file_generator_limited
+from cherrypy.lib import cptools, httputil, file_generator_limited
 
 def serve_file(path, content_type=None, disposition=None, name=None, delete=False):
     """Set status, headers, and body in order to serve the given file.
@@ -47,7 +47,7 @@ def serve_file(path, content_type=None, disposition=None, name=None, delete=Fals
     
     # Set the Last-Modified response header, so that
     # modified-since validation code can work.
-    response.headers['Last-Modified'] = http.HTTPDate(st.st_mtime)
+    response.headers['Last-Modified'] = httputil.HTTPDate(st.st_mtime)
     cptools.validate_since()
     
     if content_type is None:

@@ -30,6 +30,19 @@ try:
         optimize=0,
         collected_libs_dir='libs',
         collected_libs_data_relocate='babel,pytz',
+        packages=[
+            "Queue",
+            "pkg_resources._vendor.packaging",
+            "pyparsing",
+            "email.mime.application",
+            "email.mime.audio",
+            "email.mime.base",
+            "email.mime.image",
+            "email.mime.message",
+            "email.mime.multipart",
+            "email.mime.nonmultipart",
+            "email.mime.text",
+        ],
     )
     opts.setdefault('data_files', []).extend(fixup_data_pytz_zoneinfo())
     opts.update(cmdclass={'py2exe': custom_py2exe},)
