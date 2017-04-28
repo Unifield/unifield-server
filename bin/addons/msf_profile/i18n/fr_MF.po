@@ -1798,11 +1798,6 @@ msgstr "Code Produit Fabricant"
 msgid "Asia/Aqtau"
 msgstr "Asie/Aqtau"
 
-#. module: msf_tools
-#: selection:export.report.inconsistencies,state:0
-msgid "In Progress"
-msgstr "In Progress"
-
 #. module: msf_supply_doc_export
 #: model:ir.actions.report.xml,name:msf_supply_doc_export.report_composition_kit_xls
 msgid "Composition Kit Excel Export"
@@ -1922,6 +1917,7 @@ msgstr "Configuration des Pays avec Restrictions"
 #: code:addons/msf_doc_import/wizard/wizard_import_fo_line.py:301
 #, python-format
 msgid "\n"
+"    %s\n"
 "    Importation completed in %s!\n"
 "# of imported lines : %s on %s lines\n"
 "# of ignored lines: %s\n"
@@ -1931,6 +1927,7 @@ msgid "\n"
 "    %s\n"
 "    "
 msgstr "\n"
+"    %s\n"
 "    Importation terminée en %s!\n"
 "# de lignes importées : %s sur %s lignes\n"
 "# de lignes ignorées : %s\n"
@@ -42595,6 +42592,7 @@ msgstr "Total:"
 #: selection:return.claim,fake_state_return_claim:0
 #: selection:return.claim,state:0
 #: code:addons/sales_followup/sale_followup.py:437
+#: selection:export.report.inconsistencies,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En Cours"
@@ -68209,6 +68207,7 @@ msgstr "23e"
 #: view:wizard.import.stock.warehouse.orderpoint.line:0
 #: view:wizard.import.tender.line:0
 #: view:wizard.import.threshold.value.line:0
+#: view:wizard.import.invoice.line:0
 msgid "Import of lines"
 msgstr "Importation de lignes"
 
@@ -72150,7 +72149,7 @@ msgstr "Appliquer Type d'affichage "
 msgid "Pacific/Kwajalein"
 msgstr "Pacific/Kwajalein"
 
-#. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_doc_import, product_attributes, tender_flow
+#. modules: mission_stock, import_data, consumption_calculation, purchase_override, msf_doc_import, product_attributes, tender_flow, msf_doc_import
 #: view:wizard.export.fmc:0
 #: view:wizard.export.rac:0
 #: view:wizard.import.fmc:0
@@ -72182,6 +72181,7 @@ msgstr "Pacific/Kwajalein"
 #: view:purchase.order.cancel.wizard:0
 #: view:purchase.order.line.unlink.wizard:0
 #: view:tender.line.cancel.wizard:0
+#: view:wizard.import.invoice.line:0
 msgid "Close window"
 msgstr "Ferme la fenêtre"
 
@@ -79493,6 +79493,14 @@ msgstr "Is a Dangerous Goods ?"
 #: field:wizard.register.import.lines,cost_center_id:0
 #: report:sale.order.allocation.report:0
 #: field:purchase.report,cost_center_id:0
+#: code:addons/msf_doc_import/wizard/__init__.py:112
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:210
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:214
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:215
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:217
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:218
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:220
+#: code:addons/msf_doc_import/wizard/wizard_import_invoice_line.py:226
 #, python-format
 msgid "Cost Center"
 msgstr "Centre de Coût"
@@ -82011,6 +82019,7 @@ msgstr "OPW"
 #: view:sale.order.line:0
 #: selection:export.report.stock.inventory,state:0
 #: selection:export.report.stock.move,state:0
+#: selection:wizard.import.invoice.line,state:0
 #, python-format
 msgid "In Progress"
 msgstr "En cours"
@@ -93603,7 +93612,6 @@ msgstr "\n"
 #: code:addons/msf_doc_import/wizard/wizard_import_po_line.py:403
 #, python-format
 msgid "\n"
-"%s\n"
 "Importation completed in %s!\n"
 "# of imported lines : %s on %s lines (%s updated and %s created)\n"
 "# of ignored lines: %s\n"
@@ -93613,7 +93621,6 @@ msgid "\n"
 "%s\n"
 ""
 msgstr "\n"
-"%s\n"
 "Importation terminée en %s!\n"
 "# de lignes importées : %s sur %s lignes (%s mises à jour et %s créées)\n"
 "# de lignes ignorées : %s\n"
