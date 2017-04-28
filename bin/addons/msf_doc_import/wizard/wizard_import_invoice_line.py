@@ -140,8 +140,6 @@ class wizard_import_invoice_line(osv.osv_memory):
                         if not line[cell_nb]:
                             self.error_list.append(_('Line %s. %s was not set. This field is mandatory.') % (line_num, _(mandatory_field)))
                             break
-                    if self.error_list:
-                        continue
 
                     ## Cell 0: Description
                     desc_value = line[header_index[_('Description')]]
