@@ -20,9 +20,7 @@
 ##############################################################################
 
 import logging
-import math
 from os import path
-import re
 
 from osv import osv, fields
 import tools
@@ -157,6 +155,10 @@ class stock_inventory_line(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
     }
 
+    _defaults = {
+        'comment': lambda *a: '',
+    }
+
     def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
@@ -178,7 +180,6 @@ class stock_inventory(osv.osv):
         @param move_vals:
         @return:
         """
-        location_obj = self.pool.get('stock.location')
 
         # Copy the comment
         move_vals.update({
@@ -243,7 +244,6 @@ class stock_picking(osv.osv):
         '''
         Take into account all stock_picking with reason_type_id is a children
         '''
-        reason_obj = self.pool.get('stock.reason.type')
 
         new_args = []
 
@@ -255,8 +255,8 @@ class stock_picking(osv.osv):
             new_args.append(new_arg)
 
         return super(stock_picking, self).search(cr, uid, new_args,
-                offset=offset, limit=limit, order=order,
-                context=context, count=False)
+                                                 offset=offset, limit=limit, order=order,
+                                                 context=context, count=False)
 
     def create(self, cr, uid, vals, context=None):
         '''
@@ -350,7 +350,6 @@ class stock_move(osv.osv):
         '''
         Take into account all stock_picking with reason_type_id is a children
         '''
-        reason_obj = self.pool.get('stock.reason.type')
 
         new_args = []
 
@@ -362,7 +361,7 @@ class stock_move(osv.osv):
             new_args.append(new_arg)
 
         return super(stock_move, self).search(cr, uid, new_args, offset=offset,
-                limit=limit, order=order, context=context, count=count)
+                                              limit=limit, order=order, context=context, count=count)
 
     def _get_product_type(self, cr, uid, ids, field_name, args, context=None):
         res = {}
@@ -415,6 +414,7 @@ class stock_move(osv.osv):
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context = {}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
         'not_chained': lambda *a: False,
+        'comment': lambda *a: '',
     }
 
     _constraints = [
@@ -476,12 +476,12 @@ class stock_return_picking(osv.osv_memory):
         if context is None:
             context = {}
         default_value = super(stock_return_picking, self).\
-                        _hook_default_return_data(cr, uid, ids,
+            _hook_default_return_data(cr, uid, ids,
                                       context=context,
                                       default_value=kwargs['default_value'])
 
         reason_type_id = self.pool.get('ir.model.data').\
-                         get_object_reference(cr, uid, 'reason_types_moves',
+            get_object_reference(cr, uid, 'reason_types_moves',
                                           'reason_type_return_from_unit')[1]
 
         default_value.update({'reason_type_id': reason_type_id})

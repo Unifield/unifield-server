@@ -2342,7 +2342,12 @@ class orm_memory(orm_template):
                 upd_todo.append(field)
         for object_id in ids:
             self._check_access(user, object_id, mode='write')
-            self.datas[object_id].update(vals2)
+            try:
+                self.datas[object_id].update(vals2)
+            except KeyError:
+                error_message = _('Object id \'%s\' not found in \'%s\'. You may try to access a deleted temporary object (ie. wizard)')
+                error_message = error_message % (object_id, self._name)
+                raise except_orm(_('Error'), error_message)
             self.datas[object_id]['internal.date_access'] = time.time()
             for field in upd_todo:
                 self._columns[field].set_memory(cr, self, object_id, field, vals[field], user, context)
