@@ -3788,6 +3788,9 @@ class orm(orm_template):
             # Step 2. Marching towards the real deletion of referenced records
             pool_model_data.unlink(cr, uid, referenced_ids, context=context)
 
+            if context.get('avoid_sdref_deletion') and hasattr(self, '_unlink_sdref') and self._unlink_sdref:
+                cr.execute("DELETE FROM ir_model_data WHERE model=%s AND res_id in %s AND module='sd'", (self._name, sub_ids))
+
             # For the same reason, removing the record relevant to ir_values
             ir_value_ids = pool_ir_values.search(cr, uid,
                                                  ['|',('value','in',['%s,%s' % (self._name, sid) for sid in sub_ids]),'&',('res_id','in',list(sub_ids)),('model','=',self._name)],
