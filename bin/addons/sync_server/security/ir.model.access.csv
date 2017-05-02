@@ -42,3 +42,6 @@
 "read_server_message_id","read_server_message","sync.server.message",1,0,0,0,"sync_server.instance_sync_user"
 "read_message_rule_id","read_message_rule","sync_server.message_rule",1,0,0,0,"sync_server.instance_sync_user"
 "read_group_type_id","read_group_type","sync.server.group_type",1,0,0,0,"sync_server.instance_sync_user"
+"sync_read_ir_exports_id","sync_read_ir_exports","ir.exports",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_ir_exports_line_id","sync_read_ir_exports_line","ir.exports.line",1,0,0,0,"sync_common.sync_read_group"
+"sync_read_ir_ui_view_sc_id","sync_read_ir_ui_view_sc","ir.ui.view_sc",1,0,0,0,"sync_common.sync_read_group"
