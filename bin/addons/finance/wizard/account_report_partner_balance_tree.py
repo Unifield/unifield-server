@@ -49,6 +49,10 @@ class account_partner_balance_tree(osv.osv):
 
     _order = "account_type, partner_id"
 
+    def __init__(self, pool, cr):
+        super(account_partner_balance_tree, self).__init__(pool, cr)
+        self.total_debit_credit_balance = {}
+
     def _get_initial_balance(self, cr):
         """
         Returns the initial balances by partner and account TYPE
@@ -458,15 +462,21 @@ class account_partner_balance_tree(osv.osv):
         for given account_types (tuple) payable/receivable or both
         return total_debit, total_credit (tuple)
         """
-        query = "SELECT" \
-            " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
-            " FROM account_partner_balance_tree" \
-            " WHERE account_type IN ('" + account_type + "')" \
-            " AND uid = " + str(uid) + "" \
-            " AND build_ts='" + data['build_ts'] + "'"
-        cr.execute(query)
-        res = cr.dictfetchall()
-        return res[0]['debit'], res[0]['credit'], res[0]['balance']
+        # recalculate the result only if the criteria have changed
+        if not self.total_debit_credit_balance or account_type != self.total_debit_credit_balance['account_type'] \
+                or data != self.total_debit_credit_balance['data']:
+            query = "SELECT" \
+                " sum(debit) AS debit, sum(credit) AS credit, sum(balance) as balance" \
+                " FROM account_partner_balance_tree" \
+                " WHERE account_type IN ('" + account_type + "')" \
+                " AND uid = " + str(uid) + "" \
+                " AND build_ts='" + data['build_ts'] + "'"
+            cr.execute(query)
+            res = cr.dictfetchall()
+            self.total_debit_credit_balance['account_type'] = account_type
+            self.total_debit_credit_balance['data'] = data
+            self.total_debit_credit_balance['res'] = res[0]['debit'], res[0]['credit'], res[0]['balance']
+        return self.total_debit_credit_balance['res']
 account_partner_balance_tree()
 
 

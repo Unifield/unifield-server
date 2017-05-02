@@ -275,6 +275,14 @@
           </blockTable>
         </td>
       </tr>
+      <tr>
+        <td><para style="P7">Total:</para></td>
+        <td><para style="P8"></para></td>
+        <td><para style="P8"></para></td>
+        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0], False)) ]]</u></para></td>
+        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[1], False)) ]]</u></para></td>
+        <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[2], False)) ]]</u></para></td>
+      </tr>
     </blockTable>
   </story>
 </document>
