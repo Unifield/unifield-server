@@ -39,7 +39,6 @@
     'data': [
         'security/purchase_security.xml',
         'security/ir.model.access.csv',
-        'purchase_workflow.xml',
         'purchase_sequence.xml',
         'company_view.xml',
         'purchase_data.xml',
@@ -55,7 +54,7 @@
         'board_purchase_view.xml',
     ],
     'test': [
-             'test/purchase_from_order.yml',
+        'test/purchase_from_order.yml',
              'test/purchase_from_manual.yml',
              'test/purchase_from_picking.yml',
              'purchase_unit_test.xml',

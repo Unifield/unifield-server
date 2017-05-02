@@ -55,7 +55,6 @@
         'security/sale_security.xml',
         'security/ir.model.access.csv',
         'company_view.xml',
-        'sale_workflow.xml',
         'sale_sequence.xml',
         'sale_data.xml',
         'sale_view.xml',
