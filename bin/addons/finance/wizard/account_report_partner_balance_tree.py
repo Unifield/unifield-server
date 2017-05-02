@@ -427,7 +427,8 @@ class account_partner_balance_tree(osv.osv):
         ]
         if account_types:
             domain += [('account_type', 'in', account_types)]
-        ids = self.search(cr, uid, domain, context=context)
+        # get the ids in the order in which the entries have been created (to keep the sorting criteria used)
+        ids = self.search(cr, uid, domain, context=context, order='id')
         if ids:
             if isinstance(ids, (int, long)):
                 ids = [ids]
@@ -580,6 +581,7 @@ class wizard_account_partner_balance_tree(osv.osv_memory):
         uid = hasattr(buid, 'realUid') and buid.realUid or buid
         data, account_type = self._get_data(cr, uid, ids, context=context)
         self._check_dates_fy_consistency(cr, uid, data, context)
+        self.pool.get('account.partner.balance.tree').build_data(cr, uid, data, context=context)
         return {
             'type': 'ir.actions.report.xml',
             'report_name': 'account.partner.balance',

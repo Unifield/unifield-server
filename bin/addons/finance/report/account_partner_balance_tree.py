@@ -45,6 +45,7 @@ class account_partner_balance_tree(report_sxw.rml_parse):
             'get_end_period': self.get_end_period,
             'get_target_move': self._get_target_move,
             'get_prop_instances': self._get_prop_instances,
+            'get_type_of_accounts': self._get_type_of_accounts,
             'get_accounts': self._get_accounts,
             'get_display_ib': self._get_display_ib,
 
@@ -93,6 +94,15 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         Returns True if the IB data must be displayed
         """
         return self.initial_balance
+
+    def _get_type_of_accounts(self):
+        if self.result_selection == 'customer':
+            return _('Receivable Accounts')
+        elif self.result_selection == 'supplier':
+            return _('Payable Accounts')
+        elif self.result_selection == 'customer_supplier':
+            return _('Receivable and Payable Accounts')
+        return ''
 
     def _get_partners(self, data):
         """ return a list of 1 or 2 elements each element containing browse objects
@@ -201,6 +211,11 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         return ''
 
     def _get_journal(self, data):
+        """
+        Returns the codes of the journals selected (or "All Journals") 
+        """
+        if data.get('form', False) and 'all_journals' in data['form']:
+            return [_('All Journals')]
         codes = []
         if data.get('form', False) and data['form'].get('journal_ids', False):
             self.cr.execute('select code from account_journal where id IN %s',(tuple(data['form']['journal_ids']),))
@@ -213,11 +228,13 @@ class account_partner_balance_tree(report_sxw.rml_parse):
         return self.output_currency_code
 
     def _get_prop_instances(self, data):
-        instances = []
+        """
+        Returns the codes of the instances selected (or "All Instances") 
+        """
         if data.get('form', False) and data['form'].get('instance_ids', False):
             self.cr.execute('select code from msf_instance where id IN %s',(tuple(data['form']['instance_ids']),))
-            instances = [x for x, in self.cr.fetchall()]
-        return instances
+            return [lt or '' for lt, in self.cr.fetchall()]
+        return [_('All Instances')]
 
     def _currency_conv(self, amount, date):
         return self.apbt_obj._currency_conv(self.cr, self.uid, amount,
@@ -233,5 +250,9 @@ class account_partner_balance_tree_xls(SpreadsheetReport):
         a = super(account_partner_balance_tree_xls, self).create(cr, uid, ids, data, context)
         return (a[0], 'xls')
 
+# XLS report
 account_partner_balance_tree_xls('report.account.partner.balance.tree_xls', 'account.partner.balance.tree', 'finance/report/account_partner_balance_tree_xls.mako', parser=account_partner_balance_tree, header='internal')
+# PDF report
+report_sxw.report_sxw('report.account.partner.balance', 'res.partner', 'account/report/account_partner_balance.rml', parser=account_partner_balance_tree, header='internal')
+
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

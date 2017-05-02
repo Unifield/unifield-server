@@ -220,10 +220,25 @@
             </tr>
           </blockTable>
         </td>
-        <td> <para style="terp_default_Centre_9">[[ get_partners()  ]]</para></td>
+        <td> <para style="terp_default_Centre_9">[[ get_type_of_accounts() ]]</para></td>
         <td><para style="terp_default_Centre_8">[[', '.join([ acc or '' for acc in get_accounts(data) ]) ]]</para></td>
         <td><para style="terp_default_Centre_8">[[ get_target_move(data) ]] </para></td>
-        <td><para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_instances(data) ]) ]]</para></td>
+        <td><para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_prop_instances(data) ]) ]]</para></td>
+      </tr>
+      <tr>
+        [[ repeatIn(get_partners(data), 'a') ]]
+        <td>
+          <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0">
+            <tr>
+              <td><para style="P3"></para></td>
+              <td><para style="P3"></para></td>
+              <td><para style="P4"></para></td>
+              <td><para style="P4"></para></td>
+              <td><para style="P4"></para></td>
+              <td><para style="P4"></para></td>
+            </tr>
+          </blockTable>
+        </td>
       </tr>
     </blockTable>
 
@@ -233,45 +248,14 @@
     <para style="P12a"></para>
     <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0" repeatRows="1" style="Table2">
       <tr>
-        <td><para style="P12a">Code</para></td>
-        <td><para style="P12a">(Account/Partner) Name</para></td>
+        <td><para style="P12a">Partner</para></td>
+        <td><para style="P12a">Partner Ref</para></td>
+        <td><para style="P12b">Account</para></td>
         <td><para style="P12b">Debit</para></td>
         <td><para style="P12b">Credit</para></td>
         <td><para style="P12b">Balance</para></td>
-        <td><para style="P12b">In dispute</para></td>
       </tr>
-      <tr>
-        <td><para style="P7">Total:</para></td>
-        <td><para style="P8"></para></td>
-        <td><para style="P8"><u>[[ formatLang(sum_debit()) ]]</u></para></td>
-        <td><para style="P8"><u>[[ formatLang(sum_credit()) ]]</u></para></td>
-        <td><para style="P8"><u>[[ formatLang((sum_debit()-sum_credit())) ]] [[ company.currency_id.name ]]</u></para></td>
-        <td><para style="P8"><u>[[ formatLang(sum_litige()) ]] [[ company.currency_id.name ]]</u></para></td>
-      </tr>
-      <tr>
-        [[ repeatIn(lines(), 'a') ]]
-        <!-- For each partner: show one line by default, or two lines if the initial balance must be displayed -->
-        <td>
-          <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0">
-            <tr>
-              <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ a['type']==3 and a['code'] ]]</para></td>
-              <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ a['name'] ]][[ a['ref'] and ' - %s' % a['ref'] ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['debit'] or 0.0) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['credit'] or 0.0) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['balance'] or 0.0) ]] [[ company.currency_id.name ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['enlitige'] or 0.0) ]] [[ company.currency_id.name ]]</para></td>
-            </tr>
-            <tr> [[data['form']['initial_balance'] == True and ' ' or removeParentNode('tr') ]]
-              <td><para style="P3"></para></td>
-              <td><para style="P3"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>Initial Balance</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['ib_debit'] or 0.0) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['ib_credit'] or 0.0) ]]</para></td>
-              <td><para style="P4"><font>[[ (a['type']==3 and setTag('para','para',{'fontName':'Helvetica-Bold'})) or removeParentNode('font') ]]</font>[[ formatLang(a['ib_balance'] or 0.0) ]]</para></td>
-              <td><para style="P4"></para></td>
-            </tr>
-          </blockTable>
-        </td>
-      </tr>
+
     </blockTable>
   </story>
 </document>

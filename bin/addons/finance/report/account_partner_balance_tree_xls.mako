@@ -213,19 +213,10 @@ else:
         header_company_or_chart_of_account = 'Company'
     else:
         header_company_or_chart_of_account = 'Chart of Account'
-    if 'all_journals' in data['form']:
-       journals = 'All Journals'
-    else:
-       journals = ', '.join([lt or '' for lt in get_journal(data)])
     if data['form'].get('display_partner', '') == 'non-zero_balance':
         display_account = 'With balance is not equal to 0'
     else:
         display_account = 'All'
-    prop_instances_list = get_prop_instances(data)
-    if prop_instances_list:
-        prop_instances = ', '.join([lt or '' for lt in get_prop_instances(data)])
-    else:
-        prop_instances = 'All Instances'
 %>
 <Table x:FullColumns="1" x:FullRows="1">
 <Column ss:AutoFitWidth="1" ss:Width="140" />
@@ -257,7 +248,7 @@ header_col_merge_count = col_count - 1
      <Data ss:Type="String">${(get_account(data) or '')|x}&#10;&#10;${(get_fiscalyear(data) or '')|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(journals or '')|x}</Data>
+     <Data ss:Type="String">${(', '.join([ journal or '' for journal in get_journal(data) ]))|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
      <Data ss:Type="String">${(display_account or '')|x}</Data>
@@ -275,7 +266,7 @@ header_col_merge_count = col_count - 1
      <Data ss:Type="String">${get_output_currency_code()|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
-     <Data ss:Type="String">${(prop_instances or '')|x}</Data>
+     <Data ss:Type="String">${(', '.join([ inst or '' for inst in get_prop_instances(data) ]))|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${(', '.join([ acc or '' for acc in get_accounts(data) ]))|x}</Data>
