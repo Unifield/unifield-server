@@ -241,10 +241,10 @@
         <td><para style="P12b">Credit</para></td>
         <td><para style="P12b">Balance</para></td>
       </tr>
-
       <tr>
         [[ repeatIn(p_entries, 'p_obj') ]]
-        <!-- For each partner: show one line by default, or two lines if the initial balance must be displayed -->
+        <!-- For each partner: show one header line, another optional line if the initial balance must be displayed,
+             and the detail per account -->
         <td>
           <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0">
             <tr>
@@ -253,7 +253,7 @@
               <td><para style="P4"></para>[[ ]]</td>
               <td><para style="P4"></para>[[ formatLang(p_obj.debit or 0.0) ]]</td>
               <td><para style="P4"></para>[[ formatLang(p_obj.credit or 0.0) ]]</td>
-              <td><para style="P4"></para>[[ formatLang(p_obj.balance or 0.0) ]]</td>
+              <td><para style="P4"></para>[[ formatLang(p_obj.balance or 0.0) ]] [[ company.currency_id.name ]]</td>
             </tr>
             <tr> [[data['form']['initial_balance'] == True and ' ' or removeParentNode('tr') ]]
               <td><para style="P3"></para></td>
@@ -263,10 +263,18 @@
               <td><para style="P4">[[ formatLang(p_obj.ib_credit or 0.0) ]]</para></td>
               <td><para style="P4">[[ formatLang(p_obj.ib_balance or 0.0) ]]</para></td>
             </tr>
+            <tr>
+              [[ repeatIn(get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data), 'aml') ]]
+              <td><para style="P3"></para></td>
+              <td><para style="P3"></para></td>
+              <td><para style="P4"></para>[[ aml.get('account', '') ]]</td>
+              <td><para style="P4"></para>[[ formatLang(aml.get('deb') or 0) ]]</td>
+              <td><para style="P4"></para>[[ formatLang(aml.get('cred') or 0) ]]</td>
+              <td><para style="P4"></para>[[ formatLang(aml.get('total') or 0) ]]</td>
+            </tr>
           </blockTable>
         </td>
       </tr>
-
     </blockTable>
   </story>
 </document>
