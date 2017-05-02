@@ -183,6 +183,7 @@
       <font color="white"> </font>
     </para>
     <blockTable colWidths="80.0,55.0,55.0,130.0,55.0,55.0,55.0,55.0" style="Table2_header">
+      [[ repeatIn(get_partners(data), 'p_entries') ]]
       <tr>
         <td><para style="terp_tblheader_General_Centre">Chart of Account</para></td>
         <td><para style="terp_tblheader_General_Centre">Fiscal Year</para></td>
@@ -225,21 +226,6 @@
         <td><para style="terp_default_Centre_8">[[ get_target_move(data) ]] </para></td>
         <td><para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_prop_instances(data) ]) ]]</para></td>
       </tr>
-      <tr>
-        [[ repeatIn(get_partners(data), 'a') ]]
-        <td>
-          <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0">
-            <tr>
-              <td><para style="P3"></para></td>
-              <td><para style="P3"></para></td>
-              <td><para style="P4"></para></td>
-              <td><para style="P4"></para></td>
-              <td><para style="P4"></para></td>
-              <td><para style="P4"></para></td>
-            </tr>
-          </blockTable>
-        </td>
-      </tr>
     </blockTable>
 
     <para style="terp_default_8">
@@ -254,6 +240,31 @@
         <td><para style="P12b">Debit</para></td>
         <td><para style="P12b">Credit</para></td>
         <td><para style="P12b">Balance</para></td>
+      </tr>
+
+      <tr>
+        [[ repeatIn(p_entries, 'p_obj') ]]
+        <!-- For each partner: show one line by default, or two lines if the initial balance must be displayed -->
+        <td>
+          <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0">
+            <tr>
+              <td><para style="P3">[[ p_obj.name or '' ]]</para></td>
+              <td><para style="P3"></para>[[ p_obj.partner_id and p_obj.partner_id.ref or '' ]]</td>
+              <td><para style="P4"></para>[[ ]]</td>
+              <td><para style="P4"></para>[[ formatLang(p_obj.debit or 0.0) ]]</td>
+              <td><para style="P4"></para>[[ formatLang(p_obj.credit or 0.0) ]]</td>
+              <td><para style="P4"></para>[[ formatLang(p_obj.balance or 0.0) ]]</td>
+            </tr>
+            <tr> [[data['form']['initial_balance'] == True and ' ' or removeParentNode('tr') ]]
+              <td><para style="P3"></para></td>
+              <td><para style="P3"></para></td>
+              <td><para style="P4">Initial Balance</para></td>
+              <td><para style="P4">[[ formatLang(p_obj.ib_debit or 0.0) ]]</para></td>
+              <td><para style="P4">[[ formatLang(p_obj.ib_credit or 0.0) ]]</para></td>
+              <td><para style="P4">[[ formatLang(p_obj.ib_balance or 0.0) ]]</para></td>
+            </tr>
+          </blockTable>
+        </td>
       </tr>
 
     </blockTable>
