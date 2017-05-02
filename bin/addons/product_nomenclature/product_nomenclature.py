@@ -24,6 +24,8 @@ from tools.translate import _
 import tools
 from os import path
 import logging
+import random
+import string
 
 # maximum depth of level
 _LEVELS = 4
@@ -821,7 +823,12 @@ class product_product(osv.osv):
             if not default_code or not vals.get('xmlid_code', False):
                 raise Exception, "Problem creating product: Missing xmlid_code/default_code in the data"
         elif default_code:  # cases 3, 4
-            vals['xmlid_code'] = default_code
+            cr.execute("SELECT * FROM product_product pp where pp.xmlid_code = '%s'" % default_code)
+            duplicate = cr.fetchall()
+            if duplicate: # generate random xmlid_code
+                vals['xmlid_code'] = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(15))
+            else: # use default code
+                vals['xmlid_code'] = default_code
         else:
             # not default_code, as this is a mandatory field a default_value will be set later in the code
             to_overwrite = 1
