@@ -200,6 +200,7 @@ selected_filter = get_filter(data) or ''
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Partner's</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Accounts</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Target Moves</Data></Cell>
+ <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Currency</Data></Cell>
  <Cell ss:StyleID="ssHeader"><Data ss:Type="String">Proprietary Instances</Data></Cell>
 </Row>
 <%
@@ -233,6 +234,9 @@ else:
     <Data ss:Type="String">${( get_target_move(data) )|x}</Data>
  </Cell>
  <Cell ss:StyleID="ssHeaderCell">
+    <Data ss:Type="String">${ company.currency_id.name |x}</Data>
+ </Cell>
+ <Cell ss:StyleID="ssHeaderCell">
     <Data ss:Type="String">${(', '.join([ inst or '' for inst in get_instances(data) ]) )|x}</Data>
  </Cell>
 </Row>
@@ -264,6 +268,14 @@ else:
 <Cell ss:StyleID="ssHeaderRight">
     <Data ss:Type="String">Balance</Data>
 </Cell>
+% if display_currency(data) == True:
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Book. Amount</Data>
+</Cell>
+<Cell ss:StyleID="ssHeaderRight">
+    <Data ss:Type="String">Book. Curr.</Data>
+</Cell>
+% endif
 </Row>
 
 % for p in objects:
@@ -295,11 +307,40 @@ else:
     <Data ss:Type="Number">${'%s %s' % (formatLang(sum_debit_partner(p) - sum_credit_partner(p)) or 0., company.currency_id.name)}</Data>
 </Cell>
 </Row>
+<!-- INITIAL BALANCE SECTION -->
+% if data['form']['initial_balance'] == True:
+<Row>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">Initial Balance</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][0]) |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][1]) |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="Number">${ '%s %s' % (formatLang(get_intial_balance(p)[0][2]), company.currency_id.name) |x}</Data>
+  </Cell>
+</Row>
+% endif
 <!-- PARTNER LINES -->
 % for line in lines(p):
 <Row>
   <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${formatLang(line['date'],date=True)|x}</Data>
+    <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
   </Cell>
   <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${line['code']|x}</Data>
@@ -317,15 +358,22 @@ else:
     <Data ss:Type="String">${ entry_label |x}</Data>
   </Cell>
   <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${ formatLang(line['debit']) |x}</Data>
+    <Data ss:Type="Number">${ formatLang(line['debit']) |x}</Data>
   </Cell>
   <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${ formatLang(line['credit']) |x}</Data>
+    <Data ss:Type="Number">${ formatLang(line['credit']) |x}</Data>
   </Cell>
   <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String">${ '%s %s' % (formatLang(line['progress']), company.currency_id.name) |x}</Data>
+    <Data ss:Type="Number">${ formatLang(line['progress']) |x}</Data>
   </Cell>
-
+  % if display_currency(data) == True:
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="Number">${ formatLang(line['amount_currency']) |x}</Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
+  </Cell>
+  % endif
 </Row>
 % endfor
 % endfor
