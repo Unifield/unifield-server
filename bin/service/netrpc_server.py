@@ -106,7 +106,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         threading.Thread.__init__(self, name="NetRPCDaemon-%d"%port)
         netsvc.Server.__init__(self)
         self.__port = port
-        self.__interface = interface
+        self.__interface = interface or '127.0.0.0'
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.bind((self.__interface, self.__port))
@@ -114,7 +114,7 @@ class TinySocketServerThread(threading.Thread,netsvc.Server):
         self.threads = []
 
         netsvc.Logger().notifyChannel("web-services", netsvc.LOG_INFO,
-                         "starting NET-RPC service at %s port %d" % (interface or '127.0.0.0', port,))
+                         "starting NET-RPC service at %s port %d" % (self.__interface, port,))
         self.is_gzip = is_gzip
 
     def run(self):
