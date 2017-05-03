@@ -134,6 +134,7 @@
             <field name="name">ir.values.tree</field>
             <field name="model">ir.values</field>
             <field name="type">tree</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree string="Values">
                     <field name="name"/>
@@ -745,6 +746,7 @@
             <field name="name">res.users.tree</field>
             <field name="model">res.users</field>
             <field name="type">tree</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree string="Users" hide_new_button="1" hide_delete_button="1" editable="top">
                     <field name="name"/>

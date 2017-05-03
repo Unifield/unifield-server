@@ -36,6 +36,7 @@
             <field name="name">account.use.model.create.entry.form</field>
             <field name="model">account.use.model</field>
             <field name="type">form</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <form string="Use Model">
                     <label string = "Are you sure you want to create entries?" colspan="2"/>

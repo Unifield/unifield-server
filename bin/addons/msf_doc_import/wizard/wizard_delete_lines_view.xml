@@ -121,7 +121,7 @@
             <field name="name">stock.move.search.delete.view</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
-            <field name="priority" eval="99" />
+            <field name="priority" eval="100" />
             <field name="arch" type="xml">
                 <search string="Stock moves to remove">
                     <field name="product_id" />

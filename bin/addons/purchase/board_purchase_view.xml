@@ -30,6 +30,7 @@
             <field name="name">purchase.order.monthly.categ.tree</field>
             <field name="model">purchase.report</field>
             <field name="type">tree</field>
+            <field name="priority">21</field>
             <field name="arch" type="xml">
                 <tree string="Monthly Purchase by Category">
                     <field name="month"/>
@@ -53,6 +54,7 @@
             <field name="name">purchase.order.monthly.categ.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">24</field>
             <field name="arch" type="xml">
                 <graph string="Monthly Purchase by Category" type="bar">
                     <field name="month"/>
@@ -86,6 +88,7 @@
             <field name="name">negotiation.by.supplier.tree</field>
             <field name="model">purchase.report</field>
             <field name="type">tree</field>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
                 <tree string="Negotiation by Supplier">
                     <field name="partner_id"/>
@@ -97,6 +100,7 @@
             <field name="name">negotiation.by.supplier.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <graph string="Negotiation by Supplier" type="bar">
                     <field name="partner_id"/>
@@ -129,6 +133,7 @@
             <field name="name">board.purchase.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
+            <field name="priority">22</field>
             <field name="arch" type="xml">
                 <form string="My Board">
                     <hpaned>

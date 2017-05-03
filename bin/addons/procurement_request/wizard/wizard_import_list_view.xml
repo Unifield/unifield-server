@@ -23,6 +23,7 @@
             <field name="name">wizard.import.list.done</field>
             <field name="model">procurement.request.import</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Result of importation">
                     <separator colspan="4" string="Result of importation" />

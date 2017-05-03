@@ -61,6 +61,7 @@
             <field name="name">account.analytic.line.csv.export.form</field>
             <field name="model">account.line.csv.export</field>
             <field name="type">form</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <form string="Analytic Lines Export">
                     <separator colspan="4" string="Message" />

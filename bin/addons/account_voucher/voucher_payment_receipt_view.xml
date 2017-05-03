@@ -46,6 +46,7 @@
             <field name="name">account.voucher.purchase.pay.select</field>
             <field name="model">account.voucher</field>
             <field name="type">search</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Search Vouchers">
                     <group col='8' colspan='4'>
@@ -148,6 +149,7 @@
             <field name="name">account.voucher.payment.form</field>
             <field name="model">account.voucher</field>
             <field name="type">form</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <form string="Bill Payment">
                     <group col="6" colspan="4">
@@ -285,6 +287,7 @@
             <field name="name">account.voucher.receipt.form</field>
             <field name="model">account.voucher</field>
             <field name="type">form</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <form string="Customer Payment">
                     <group col="6" colspan="4">

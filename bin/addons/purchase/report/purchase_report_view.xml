@@ -121,6 +121,7 @@
             <field name="name">purchase.order.qty.amount.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <graph string="Total Qty and Amount by month" type="bar">
                     <field name="month"/>
@@ -134,6 +135,7 @@
             <field name="name">purchase.order.by.user.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <graph string="Total Orders Lines by User per month" orientation="vertical" type="bar">
                     <field name="month" />
@@ -189,6 +191,7 @@
             <field name="name">purchase.by.supplier.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">19</field>
             <field name="arch" type="xml">
                 <graph string="Purchase by supplier" type="bar">
                     <field name="partner_id"/>
@@ -210,6 +213,7 @@
             <field name="name">total.price.by.product.by.state.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
                 <graph string="Total price by product by state"  type="pie">
                     <field name="product_id"/>
@@ -232,6 +236,7 @@
             <field name="name">qty.per.product.graph</field>
             <field name="model">purchase.report</field>
             <field name="type">graph</field>
+            <field name="priority">21</field>
             <field name="arch" type="xml">
                 <graph string="Qty. per product" type="bar">
                     <field name="product_id"/>
@@ -253,6 +258,7 @@
             <field name="name">qty.per.product.tree</field>
             <field name="model">purchase.report</field>
             <field name="type">tree</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree string="Purchase order per month" >
                     <field name="month"/>

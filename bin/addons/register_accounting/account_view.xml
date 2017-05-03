@@ -525,6 +525,7 @@
             <field name="name">view.audittrail.log.line.tree.other.column</field>
             <field name="model">audittrail.log.line</field>
             <field name="type">tree</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <tree string="Logs" hide_new_button="1" hide_delete_button="1" noteditable="1" editable="top">
                     <field name="log" />
@@ -873,6 +874,7 @@
             <field name="name">account.cheque.register.search</field>
             <field name="model">account.bank.statement</field>
             <field name="type">search</field>
+            <field name="priority" eval="17"/>
             <field name="arch" type="xml">
                 <search string="Search Cheque Registers">
                     <group col="8" colspan="4">

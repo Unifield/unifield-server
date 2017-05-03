@@ -6,7 +6,7 @@
             <field name="name">account.move.line.from.cheque.lines.tree</field>
             <field name="model">account.move.line</field>
             <field name="type">tree</field>
-            <field name="priority" eval="17" />
+            <field name="priority" eval="18" />
             <field name="arch" type="xml">
                 <tree string="Account Entry Lines" noteditable="1" editable="top">
                     <field name="cheque_number"/>

@@ -7,6 +7,7 @@
             <field name="name">board.hr.manager.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
+            <field name="priority">19</field>
             <field name="arch" type="xml">
                 <form string="HR Manager Board">
                     <hpaned>

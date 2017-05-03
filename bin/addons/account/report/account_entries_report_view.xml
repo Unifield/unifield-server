@@ -52,6 +52,7 @@
          <field name="name">account.company.analysis.tree</field>
          <field name="model">account.entries.report</field>
          <field name="type">tree</field>
+         <field name="priority" eval="17"/>
          <field name="arch" type="xml">
              <tree string="Company Analysis" >
                 <field name="user_type"/>

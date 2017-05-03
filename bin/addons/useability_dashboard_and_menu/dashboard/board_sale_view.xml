@@ -78,6 +78,7 @@
             <field name="name">board.sales.manager.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
+            <field name="priority">25</field>
             <field name="arch" type="xml">
                 <form string="Sales Manager Dashboard">
                     <hpaned position="100">

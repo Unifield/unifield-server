@@ -330,7 +330,7 @@
             <field name="name">inkind.donation.form</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
-            <field name="priority">19</field>
+            <field name="priority">20</field>
             <field name="arch" type="xml">
                 <tree string="In-kind Donation" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="document_date" />
@@ -453,7 +453,7 @@
             <field name="name">intermission.tree</field>
             <field name="model">account.invoice</field>
             <field name="type">tree</field>
-            <field name="priority">19</field>
+            <field name="priority">21</field>
             <field name="arch" type="xml">
                 <tree string="Intermission Voucher" colors="blue:state in ('draft');black:state in ('proforma','proforma2','open');gray:state in ('cancel')">
                     <field name="document_date" string="I/MI voucher date"/>

@@ -268,6 +268,7 @@
             <field name="model">stock.location</field>
             <field name="type">tree</field>
             <field name="field_parent">child_ids</field>
+            <field name="priority">18</field>
             <field name="arch" type="xml">
                 <tree string="Stock Location" colors="blue:usage=='view';darkred:usage=='internal'" toolbar="1" expand_button="1">
                     <field name="name"/>
@@ -529,6 +530,7 @@
         	<field name="name">view.picking.in.form</field>
         	<field name="model">stock.picking</field>
         	<field name="type">form</field>
+            <field name="priority">17</field>
         	<field name="arch" type="xml">
         		<form string="Incoming Shipments">
                     <field name="progress_memory_not_done" invisible="1" />

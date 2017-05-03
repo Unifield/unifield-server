@@ -260,6 +260,7 @@
             <field name="model">stock.tracking</field>
             <field name="type">tree</field>
             <field name="field_parent">child_ids</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree colors="grey:not active" string="Packs">
                     <field name="name" />
@@ -447,6 +448,7 @@
             <field name="model">stock.move</field>
             <field name="type">tree</field>
             <field name="field_parent">move_history_ids2</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree colors="grey:state in ('cancel')" string="Moves">
                     <field name="product_id" />
@@ -549,6 +551,7 @@
             <field name="name">stock.location.search</field>
             <field name="model">stock.location</field>
             <field name="type">search</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Stock Locations">
                     <filter icon="terp-go-home" name="in_location"
@@ -596,6 +599,7 @@
             <field name="model">stock.location</field>
             <field name="type">tree</field>
             <field name="field_parent">child_ids</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree toolbar="1">
                     <field icon="icon" name="name"/>
@@ -867,6 +871,7 @@
             <field name="name">stock.picking.out.tree</field>
             <field name="model">stock.picking</field>
             <field name="type">tree</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <tree colors="blue:state in ('draft');grey:state in ('cancel');red:state not in ('cancel', 'done') and date &lt; current_date" string="Delivery Orders">
                     <field name="name"/>
@@ -1021,6 +1026,7 @@
             <field name="name">stock.picking.out.search</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
+            <field name="priority">17</field>
             <field name="arch" type="xml">
                 <search string="Picking list">
                     <group col="8" colspan="4">
@@ -1310,6 +1316,7 @@
             <field name="name">stock.picking.internal.search</field>
             <field name="model">stock.picking</field>
             <field name="type">search</field>
+            <field name="priority">19</field>
             <field name="arch" type="xml">
                 <search string="Internal Picking List">
                     <group col="8" colspan="4">
@@ -1552,7 +1559,7 @@
             <field name="name">stock.move.tree2</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
-            <field name="priority" eval="6" />
+            <field name="priority" eval="7" />
             <field name="arch" type="xml">
                 <tree colors="grey:state in ('cancel')" string="Moves">
                     <field name="picking_id" string="Reference"/>
@@ -1593,7 +1600,7 @@
             <field name="name">stock.move.tree3</field>
             <field name="model">stock.move</field>
             <field name="type">tree</field>
-            <field eval="6" name="priority"/>
+            <field eval="8" name="priority"/>
             <field name="arch" type="xml">
                 <tree string="Moves">
                     <field name="picking_id" string="Reference"/>
@@ -1718,7 +1725,7 @@
             <field name="name">stock.move.outgoing.search2</field>
             <field name="model">stock.move</field>
             <field name="type">search</field>
-            <field eval="6" name="priority"/>
+            <field eval="7" name="priority"/>
             <field name="arch" type="xml">
                 <search string="Stock Moves">
                     <group col="8" colspan="4">

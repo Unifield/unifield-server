@@ -45,6 +45,7 @@
             <field name="name">board.warehouse.form</field>
             <field name="model">board.board</field>
             <field name="type">form</field>
+            <field name="priority">21</field>
             <field name="arch" type="xml">
                 <form string="Warehouse board">
                     <hpaned position="200">

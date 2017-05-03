@@ -62,6 +62,7 @@
         	<field name="name">purchase.order.followup.split.form.view</field>
         	<field name="model">purchase.order.followup</field>
         	<field name="type">form</field>
+            <field name="priority">17</field>
         	<field name="arch" type="xml">
         		<form string="Purchase Order Followup">
         			<field name="order_id" readonly="1" />
