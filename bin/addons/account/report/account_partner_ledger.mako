@@ -332,7 +332,7 @@ else:
     <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][1]) |x}</Data>
   </Cell>
   <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="Number">${ '%s %s' % (formatLang(get_intial_balance(p)[0][2]), company.currency_id.name) |x}</Data>
+    <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][2]) |x}</Data>
   </Cell>
 </Row>
 % endif
