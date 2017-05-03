@@ -182,7 +182,7 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <blockTable colWidths="80.0,55.0,55.0,130.0,55.0,55.0,55.0,55.0" style="Table2_header">
+    <blockTable colWidths="75.0,50.0,50.0,124.0,50.0,50.0,50.0,91.0" style="Table2_header">
       [[ repeatIn(get_partners(data), 'p_entries') ]]
       <tr>
         <td><para style="terp_tblheader_General_Centre">Chart of Account</para></td>
@@ -200,7 +200,7 @@
         <td> <para style="terp_default_Centre_8">[[', '.join([ lt or '' for lt in get_journal(data) ]) ]] </para></td>
 
         <td><para style="terp_default_Centre_8">[[ get_filter(data)=='No Filter' and get_filter(data) or removeParentNode('para') ]] </para>
-          <blockTable colWidths="60.0,60.0" style="Table3">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]]
+          <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)=='Date' or removeParentNode('blockTable') ]]
             <tr>
               <td><para style="terp_tblheader_General_Centre">Start Date</para></td>
               <td><para style="terp_tblheader_General_Centre">End Date</para></td>
@@ -210,7 +210,7 @@
               <td><para style="terp_default_Centre_8">[[ formatLang(get_end_date(data),date=True) ]]</para></td>
             </tr>
           </blockTable>
-          <blockTable colWidths="60.0,60.0" style="Table3">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]]
+          <blockTable colWidths="57.0,57.0" style="Table3">[[ get_filter(data)=='Periods' or removeParentNode('blockTable') ]]
             <tr>
               <td><para style="terp_tblheader_General_Centre">Start Period</para></td>
               <td><para style="terp_tblheader_General_Centre">End Period</para></td>
@@ -224,7 +224,7 @@
         <td> <para style="terp_default_Centre_8">[[ get_type_of_accounts() ]]</para></td>
         <td><para style="terp_default_Centre_8">[[', '.join([ acc or '' for acc in get_accounts(data) ]) ]]</para></td>
         <td><para style="terp_default_Centre_8">[[ get_target_move(data) ]] </para></td>
-        <td><para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_prop_instances(data) ]) ]]</para></td>
+        <td><para style="terp_default_Centre_8">[[',\n'.join([ inst and strip_name(inst, 20) or '' for inst in get_prop_instances(data) ]) ]]</para></td>
       </tr>
     </blockTable>
 
