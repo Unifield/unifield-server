@@ -5033,7 +5033,7 @@ class pack_family_memory(osv.osv):
                 '_name'::varchar(5) as name,
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
-                bool_and(m.not_shipped) as not_shipped,
+                bool_and(m.not_shipped) as not_shipped
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
