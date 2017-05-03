@@ -268,7 +268,7 @@ class stock_move_processor(osv.osv):
                 'location_id': location_id,
                 'location_supplier_customer_mem_out': loc_supplier or loc_cust or valid_pt,
                 'type_check': line.move_id.picking_id.type,
-                'comment': line.move_id.comment or '',
+                'comment': line.move_id.comment,
             }
 
         return res
@@ -699,7 +699,6 @@ class stock_move_processor(osv.osv):
     _defaults = {
         'quantity': 0.00,
         'integrity_status': 'empty',
-        'comment': '',
     }
 
     def _fill_expiry_date(self, cr, uid, prodlot_id=False, expiry_date=False, vals=None, context=None):

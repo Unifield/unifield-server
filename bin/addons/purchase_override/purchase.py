@@ -2342,7 +2342,7 @@ stock moves which are already processed : '''
                     'date': order_line.confirmed_delivery_date,
                     'date_expected': order_line.confirmed_delivery_date,
                     'line_number': order_line.line_number,
-                    'comment': order_line.comment or '',
+                    'comment': order_line.comment,
                 }
 
                 if reason_type_id:

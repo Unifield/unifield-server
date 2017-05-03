@@ -155,10 +155,6 @@ class stock_inventory_line(osv.osv):
         'comment': fields.char(size=128, string='Comment'),
     }
 
-    _defaults = {
-        'comment': lambda *a: '',
-    }
-
     def create(self, cr, uid, vals, context=None):
         '''
         Set default values for datas.xml and tests.yml
@@ -414,7 +410,6 @@ class stock_move(osv.osv):
     _defaults = {
         'reason_type_id': lambda obj, cr, uid, context = {}: context.get('reason_type_id', False) and context.get('reason_type_id') or False,
         'not_chained': lambda *a: False,
-        'comment': lambda *a: '',
     }
 
     _constraints = [
