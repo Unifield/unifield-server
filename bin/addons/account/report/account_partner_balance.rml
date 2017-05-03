@@ -221,7 +221,7 @@
             </tr>
           </blockTable>
         </td>
-        <td> <para style="terp_default_Centre_9">[[ get_type_of_accounts() ]]</para></td>
+        <td> <para style="terp_default_Centre_8">[[ get_type_of_accounts() ]]</para></td>
         <td><para style="terp_default_Centre_8">[[', '.join([ acc or '' for acc in get_accounts(data) ]) ]]</para></td>
         <td><para style="terp_default_Centre_8">[[ get_target_move(data) ]] </para></td>
         <td><para style="terp_default_Centre_8">[[', '.join([ inst or '' for inst in get_prop_instances(data) ]) ]]</para></td>
@@ -232,10 +232,9 @@
       <font color="white"> </font>
     </para>
     <para style="P12a"></para>
-    <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0" repeatRows="1" style="Table2">
+    <blockTable colWidths="160.0,95.0,95.0,95.0,95.0" repeatRows="1" style="Table2">
       <tr>
         <td><para style="P12a">Partner</para></td>
-        <td><para style="P12a">Partner Ref</para></td>
         <td><para style="P12b">Account</para></td>
         <td><para style="P12b">Debit</para></td>
         <td><para style="P12b">Credit</para></td>
@@ -246,38 +245,34 @@
         <!-- For each partner: show one header line, another optional line if the initial balance must be displayed,
              and the detail per account -->
         <td>
-          <blockTable colWidths="80.0,140.0,80.0,80.0,80.0,80.0">
+          <blockTable colWidths="160.0,95.0,95.0,95.0,95.0">
             <tr>
-              <td><para style="P3">[[ p_obj.name or '' ]]</para></td>
-              <td><para style="P3"></para>[[ p_obj.partner_id and p_obj.partner_id.ref or '' ]]</td>
-              <td><para style="P4"></para>[[ ]]</td>
-              <td><para style="P4"></para>[[ formatLang(p_obj.debit or 0.0) ]]</td>
-              <td><para style="P4"></para>[[ formatLang(p_obj.credit or 0.0) ]]</td>
-              <td><para style="P4"></para>[[ formatLang(p_obj.balance or 0.0) ]] [[ company.currency_id.name ]]</td>
+              <td><para style="P3" fontName="Helvetica-Bold">[[ p_obj.name or '' ]][[ p_obj.partner_id and p_obj.partner_id.ref and ' - %s' % p_obj.partner_id.ref ]]</para></td>
+              <td><para style="P3"></para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">[[ formatLang(p_obj.debit or 0.0) ]]</para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">[[ formatLang(p_obj.credit or 0.0) ]]</para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">[[ formatLang(p_obj.balance or 0.0) ]] [[ company.currency_id.name ]]</para></td>
             </tr>
             <tr> [[data['form']['initial_balance'] == True and ' ' or removeParentNode('tr') ]]
-              <td><para style="P3"></para></td>
-              <td><para style="P3"></para></td>
-              <td><para style="P4">Initial Balance</para></td>
-              <td><para style="P4">[[ formatLang(p_obj.ib_debit or 0.0) ]]</para></td>
-              <td><para style="P4">[[ formatLang(p_obj.ib_credit or 0.0) ]]</para></td>
-              <td><para style="P4">[[ formatLang(p_obj.ib_balance or 0.0) ]]</para></td>
+              <td><para style="P4"></para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">Initial Balance</para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">[[ formatLang(p_obj.ib_debit or 0.0) ]]</para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">[[ formatLang(p_obj.ib_credit or 0.0) ]]</para></td>
+              <td><para style="P4" fontName="Helvetica-Bold">[[ formatLang(p_obj.ib_balance or 0.0) ]]</para></td>
             </tr>
             <tr>
               [[ repeatIn(get_partner_account_move_lines(p_entries[0].account_type, p_obj.partner_id.id, data), 'aml') ]]
-              <td><para style="P3"></para></td>
-              <td><para style="P3"></para></td>
-              <td><para style="P4"></para>[[ aml.get('account', '') ]]</td>
-              <td><para style="P4"></para>[[ formatLang(aml.get('deb') or 0) ]]</td>
-              <td><para style="P4"></para>[[ formatLang(aml.get('cred') or 0) ]]</td>
-              <td><para style="P4"></para>[[ formatLang(aml.get('total') or 0) ]]</td>
+              <td><para style="P4"></para></td>
+              <td><para style="P4">[[ aml.get('account', '') ]]</para></td>
+              <td><para style="P4">[[ formatLang(aml.get('deb') or 0) ]]</para></td>
+              <td><para style="P4">[[ formatLang(aml.get('cred') or 0) ]]</para></td>
+              <td><para style="P4">[[ formatLang(aml.get('total') or 0) ]]</para></td>
             </tr>
           </blockTable>
         </td>
       </tr>
       <tr>
         <td><para style="P7">Total:</para></td>
-        <td><para style="P8"></para></td>
         <td><para style="P8"></para></td>
         <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[0], False)) ]]</u></para></td>
         <td><para style="P8"><u>[[ formatLang(currency_conv(get_partners_total_debit_credit_balance_by_account_type(p_entries[0].account_type, data)[1], False)) ]]</u></para></td>
