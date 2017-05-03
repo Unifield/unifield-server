@@ -77,8 +77,6 @@ class account_partner_ledger(osv.osv_memory):
         }
 
     def print_report_xls(self, cr, uid, ids, data, context=None):
-        # TODO (this is not the final version!)
-        raise osv.except_osv('Warning !', 'Not implemented yet.')
         if context is None:
             context = {}
         data = {}
