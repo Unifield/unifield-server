@@ -301,10 +301,10 @@ else:
     <Data ss:Type="Number">${formatLang(sum_debit_partner(p)) or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${formatLang(sum_credit_partner(p))}</Data>
+    <Data ss:Type="Number">${formatLang(sum_credit_partner(p)) or 0.}</Data>
 </Cell>
 <Cell ss:StyleID="ssPartnerNumber">
-    <Data ss:Type="Number">${'%s %s' % (formatLang(sum_debit_partner(p) - sum_credit_partner(p)) or 0., company.currency_id.name)}</Data>
+    <Data ss:Type="String">${formatLang(sum_debit_partner(p) - sum_credit_partner(p)) or 0.}</Data>
 </Cell>
 </Row>
 <!-- INITIAL BALANCE SECTION -->
