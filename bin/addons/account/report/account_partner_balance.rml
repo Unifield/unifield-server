@@ -231,7 +231,10 @@
     <para style="terp_default_8">
       <font color="white"> </font>
     </para>
-    <para style="P12a"></para>
+    <para style="P12a"><u>[[ p_entries and (p_entries[0].account_type == 'payable' and 'Payable Accounts' or 'Receivable Accounts') ]]</u></para>
+    <para style="terp_default_8">
+      <font color="white"> </font>
+    </para>
     <blockTable colWidths="160.0,95.0,95.0,95.0,95.0" repeatRows="1" style="Table2">
       <tr>
         <td><para style="P12a">Partner</para></td>
