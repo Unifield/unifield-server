@@ -25,6 +25,15 @@ import math
 import re
 import time
 
+BINARY_FIELD_STORAGE_CLASS = cgi.FieldStorage
+try:
+    # binary data send/get with cherrypy >= 3.2.X
+    # are wrapper inside 'Part' class
+    from cherrypy._cpreqbody import Part
+    BINARY_FIELD_STORAGE_CLASS = ( cgi.FieldStorage, Part )
+except ImportError:
+    pass
+
 import formencode.validators
 import formencode.api
 
@@ -110,7 +119,9 @@ class DateTime(BaseValidator):
     def _to_python(self, value, state):
         # do validation
         try:
-            res = time.strptime(value, self.format)
+            # parse it but throw away the result: we just want to see if
+            # we get an exception here.
+            time.strptime(value, self.format)
         except ValueError:
             raise formencode.api.Invalid(_('Invalid datetime format'), value, state)
         # return str instead of real datetime object
@@ -154,13 +165,13 @@ class Reference(BaseValidator):
 
 class Binary(BaseValidator):
     if_empty = False
+    accept_iterator = True
 
     def _to_python(self, value, state):
-
         if isinstance(value, list):
             value = value[0]
 
-        if isinstance(value, cgi.FieldStorage):
+        if isinstance(value, BINARY_FIELD_STORAGE_CLASS):
             if value.filename:
                 return base64.encodestring(value.file.read())
             elif self.not_empty:
@@ -191,7 +202,7 @@ class URL(formencode.validators.URL):
 
 class Email(formencode.validators.Email):
     if_empty = False
-    
+
     domainRE = re.compile(r'''
         (^(?:[a-z0-9][a-z0-9\-]{0,62}\.)+ # (sub)domain - alpha followed by 62max chars (63 total)
         [a-z]{2,}[\s,.]*$)*                     # TLD
@@ -237,9 +248,9 @@ class many2one(BaseValidator):
             value = (len(value) or False) and value[0]
 
         return value or ''
-    
+
 class one2many(formencode.validators.FancyValidator):
-    
+
     if_empty = []
 
 
