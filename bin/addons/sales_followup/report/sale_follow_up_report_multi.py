@@ -150,6 +150,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                     if ppl:
                         packing = move.picking_id.previous_step_id.name or ''
                         shipment = move.picking_id.shipment_id.name or ''
+                        shipment_state = move.picking_id.shipment_id.state
                         eta = datetime.strptime(move.picking_id.shipment_id.shipment_expected_date[0:10], '%Y-%m-%d')
                         eta += timedelta(days=line.order_id.partner_id.supplier_lt or 0.00)
                         if not grouped:
@@ -159,6 +160,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         data.update({
                             'packing': packing,
                             'shipment': shipment,
+                            'shipment_state': shipment_state,
                             'delivered_qty': not only_bo and move.product_qty or 0.00,
                             'delivered_uom': not only_bo and move.product_uom.name or 0.00,
                             'rts': not only_bo and move.picking_id.shipment_id.shipment_expected_date[0:10] or '',
@@ -169,6 +171,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                         if move.picking_id.type == 'out' and move.picking_id.subtype == 'packing':
                             packing = move.picking_id.previous_step_id.name
                             shipment = move.picking_id.shipment_id.name
+                            shipment_state = move.picking_id.shipment_id.state
                         else:
                             shipment = move.picking_id.name
                             packing = ''
@@ -183,6 +186,7 @@ class sale_follow_up_multi_report_parser(report_sxw.rml_parse):
                                 'delivered_uom': move.product_uom.name,
                                 'rts': line.order_id.ready_to_ship_date,
                                 'shipment': shipment,
+                                'shipment_state': shipment_state,
                             })
 
 
