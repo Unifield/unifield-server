@@ -32,6 +32,7 @@ try:
         collected_libs_data_relocate='babel,pytz',
         packages=[
             "Queue",
+            "appdirs",
             "pkg_resources._vendor.packaging",
             "pyparsing",
             "email.mime.application",
@@ -94,7 +95,8 @@ setup(
         "FormEncode==2.0.0.a1",
         "simplejson==3.10.0",
         "python-dateutil==2.6.0",
-        "pytz==2017.2"
+        "pytz==2017.2",
+        "appdirs==1.4.3",
     ],
     zip_safe=False,
     packages=[
