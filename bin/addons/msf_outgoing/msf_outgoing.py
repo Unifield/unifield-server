@@ -834,8 +834,7 @@ class shipment(osv.osv):
                 move_ids = move_obj.search(cr, uid, [
                     ('picking_id', '=', picking.id),
                     ('from_pack', '=', family.from_pack),
-                    ('to_pack', '=', family.to_pack),
-                    ('comment', '=', family.comment),
+                    ('to_pack', '=', family.to_pack)
                 ], context=context)
 
                 # Update the moves, decrease the quantities
@@ -1064,7 +1063,6 @@ class shipment(osv.osv):
                     ('picking_id', '=', family.draft_packing_id.id),
                     ('from_pack', '=', family.from_pack),
                     ('to_pack', '=', family.to_pack),
-                    ('comment', '=', family.comment)
                 ], context=context)
                 stay = []
                 if family.to_pack >= family.return_to:
@@ -5036,14 +5034,13 @@ class pack_family_memory(osv.osv):
                 min(pl.currency_id) as currency_id,
                 sum(sol.price_unit * m.product_qty) as total_amount,
                 bool_and(m.not_shipped) as not_shipped,
-                COALESCE(m.comment, '') as comment
             from stock_picking p
             inner join stock_move m on m.picking_id = p.id and m.state != 'cancel' and m.product_qty > 0
             left join sale_order so on so.id = p.sale_id
             left join sale_order_line sol on sol.id = m.sale_line_id
             left join product_pricelist pl on pl.id = so.pricelist_id
             where p.shipment_id is not null
-            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id, COALESCE(m.comment, '')
+            group by p.shipment_id, p.description_ppl, to_pack, sale_id, p.subtype, p.id, p.previous_step_id
     )
     ''')
 
