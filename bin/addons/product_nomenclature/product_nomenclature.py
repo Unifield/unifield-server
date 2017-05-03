@@ -826,7 +826,7 @@ class product_product(osv.osv):
             cr.execute("SELECT * FROM product_product pp where pp.xmlid_code = '%s'" % default_code)
             duplicate = cr.fetchall()
             if duplicate: # generate random xmlid_code
-                vals['xmlid_code'] = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(15))
+                vals['xmlid_code'] = 'XMLID-' + ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9))
             else: # use default code
                 vals['xmlid_code'] = default_code
         else:
