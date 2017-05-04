@@ -92,11 +92,13 @@ class wizard_import_fmc(osv.osv_memory):
         # iterator on rows
         rows = fileobj.getRows()
         
-        # ignore the first row
-        rows.next()
-        rows.next()
-        rows.next()
-        rows.next()
+        # check import template:
+        for i in range(3):
+            row = rows.next()
+            if any([cell.data for cell in row.cells[2:]]): # if cells #2 to end are not empty
+                raise osv.except_osv(_('Error'), _('Import template not recognized, please use the same as exports'))
+        rows.next() # skip main table header
+
         line_num = 1
         to_write = {}
         error = ''
