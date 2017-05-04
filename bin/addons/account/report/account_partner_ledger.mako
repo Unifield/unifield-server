@@ -245,6 +245,12 @@ else:
 <Row></Row>
 <Row>
 <Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Partner</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
+    <Data ss:Type="String">Partner Ref.</Data>
+</Cell>
+<Cell ss:StyleID="ssHeader">
     <Data ss:Type="String">Date</Data>
 </Cell>
 <Cell ss:StyleID="ssHeader">
@@ -297,6 +303,12 @@ else:
 <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String"></Data>
 </Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
+<Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+</Cell>
 <Cell ss:StyleID="ssPartnerNumber">
     <Data ss:Type="Number">${formatLang(sum_debit_partner(p)) or 0.}</Data>
 </Cell>
@@ -311,19 +323,25 @@ else:
 % if data['form']['initial_balance'] == True:
 <Row>
   <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">Initial Balance</Data>
-  </Cell>
-  <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
-  </Cell>
-  <Cell ss:StyleID="ssPartner">
-    <Data ss:Type="String"></Data>
   </Cell>
   <Cell ss:StyleID="ssPartner">
     <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][0]) |x}</Data>
@@ -339,6 +357,12 @@ else:
 <!-- PARTNER LINES -->
 % for line in lines(p):
 <Row>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
+  <Cell ss:StyleID="ssPartner">
+    <Data ss:Type="String"></Data>
+  </Cell>
   <Cell ss:StyleID="ssPartner">
     <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
   </Cell>
