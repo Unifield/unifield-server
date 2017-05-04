@@ -98396,3 +98396,8 @@ msgstr "L'object d'id \'%s\' n'a pas été trouvé pour \'%s\'. Vous essayez pro
 msgid "Intermission Vouchers linked to a PO can be deleted only in Draft state."
 msgstr "Les Bons Intermission liés à un BC ne peuvent être supprimés qu'à l'état Brouillon."
 
+#. module: consumption_calculation
+#: code:addons/consumption_calculation/wizard/wizard_import_fmc.py:99
+#, python-format
+msgid "Import template not recognized, please use the same as exports"
+msgstr "Le template d'import n'est pas reconnu, merci d'utiliser le même que les exports."
