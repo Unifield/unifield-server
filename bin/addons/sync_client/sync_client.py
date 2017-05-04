@@ -533,7 +533,7 @@ class Entity(osv.osv):
             if obj[model_field_name] not in model_field_dict:
                 model_field_dict[obj[model_field_name]] = set()
             model_field_dict[obj[model_field_name]].update(eval(obj['arguments']))
-       
+
         model_set = set(model_field_dict.keys())
 
         def get_field_obj(model, field_name):
@@ -1328,13 +1328,10 @@ class Connection(osv.osv):
         return self.browse(cr, uid, ids, context=context)[0]
 
     def connector_factory(self, con):
-        if con.protocol == 'xmlrpc':
+        # xmlrpc now does gzip by default
+        if con.protocol == 'xmlrpc' or con.protocol == 'gzipxmlrpc':
             connector = rpc.XmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
-        elif con.protocol == 'gzipxmlrpc':
-            connector = rpc.GzipXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
-        elif con.protocol == 'gzipxmlrpcs':
-            connector = rpc.GzipXmlRPCSConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
-        elif con.protocol == 'xmlrpcs':
+        elif con.protocol == 'xmlrpcs' or con.protocol == 'gzipxmlrpcs':
             connector = rpc.SecuredXmlRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.xmlrpc_retry)
         elif con.protocol == 'netrpc':
             connector = rpc.NetRPCConnector(con.host, con.port, timeout=con.timeout, retry=con.netrpc_retry)

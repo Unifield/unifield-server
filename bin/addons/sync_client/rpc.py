@@ -10,7 +10,6 @@ import socket
 import zlib
 import xmlrpclib
 from timeout_transport import TimeoutTransport
-from gzip_xmlrpclib import GzipTransport, GzipSafeTransport
 from osv import osv
 from tools.translate import _
 import tools
@@ -93,6 +92,8 @@ class XmlRPCConnector(Connector):
     def send(self, service_name, method, *args):
         url = '%s/%s' % (self.url, service_name)
         transport = TimeoutTransport(timeout=self.timeout)
+        # Enable gzip on all payloads
+        transport.encode_threshold = 0
         service = xmlrpclib.ServerProxy(url, allow_none=1, transport=transport)
         return self._send(service, method, *args)
 
@@ -158,31 +159,6 @@ class SecuredXmlRPCConnector(XmlRPCConnector):
         service = xmlrpclib.ServerProxy(url, allow_none=1)
         return self._send(service, method, *args)
 
-class GzipXmlRPCConnector(XmlRPCConnector):
-    """
-    This class supports the XmlRPC protocol with gzipped payload
-    """
-    PROTOCOL = 'gzipxmlrpc'
-
-    def send(self, service_name, method, *args):
-        url = '%s/%s' % (self.url, service_name)
-        gzip_transport = GzipTransport(timeout=self.timeout)
-        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_transport)
-        return self._send(service, method, *args)
-
-class GzipXmlRPCSConnector(GzipXmlRPCConnector):
-    PROTOCOL = 'gzipxmlrpcs'
-
-    def __init__(self, hostname, port=8069, *args, **kwargs):
-        GzipXmlRPCConnector.__init__(self, hostname, port, *args, **kwargs)
-        self.url = 'https://%s:%s/xmlrpc' % (self.hostname, self.port)
-
-    def send(self, service_name, method, *args):
-        url = '%s/%s' % (self.url, service_name)
-        gzip_safe_transport = GzipSafeTransport(timeout=self.timeout)
-        service = xmlrpclib.ServerProxy(url, allow_none=1, transport=gzip_safe_transport)
-        return getattr(service, method)(*args)
-
 class NetRPC_Exception(Exception):
     def __init__(self, faultCode, faultString):
         self.faultCode = faultCode
@@ -217,11 +193,7 @@ class NetRPC:
         #self._logger.debug("rpc message : %s", msg)
         msg = pickle.dumps([msg,traceback])
         if self.is_gzip:
-            #raw_size = len(msg)
             msg = zlib.compress(msg, zlib.Z_BEST_COMPRESSION)
-            #gzipped_size = len(msg)
-            #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         size = len(msg)
         self.sock.send('%8d' % size)
         self.sock.send(exception and "1" or "0")
@@ -252,11 +224,7 @@ class NetRPC:
                 raise RuntimeError, "socket connection broken"
             msg = msg + chunk
         if msg.startswith(GZIP_MAGIC):
-            #gzipped_size = len(msg)
             msg = zlib.decompress(msg)
-            #raw_size = len(msg)
-            #saving = 100*(float(raw_size-gzipped_size))/gzipped_size if gzipped_size else 0
-            #self._logger.debug('payload size: raw %s, gzipped %s, saving %.2f%%', raw_size, gzipped_size, saving)
         res = SafeUnpickler.loads(msg)
 
         if isinstance(res[0],Exception):
