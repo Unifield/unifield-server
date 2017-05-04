@@ -158,16 +158,6 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
   <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
 </Borders>
 </Style>
-<Style ss:ID="ssAccountLineItalicLeft">
-<Alignment ss:Vertical="Top" ss:Horizontal="Left" ss:WrapText="1"/>
-<Font ss:Size="8" ss:Italic="1"/>
-<Borders>
-  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
-  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
-</Borders>
-</Style>
 <Style ss:ID="ssAccountLineWrap">
    <Alignment ss:Horizontal="Left" ss:Vertical="Center" ss:WrapText="1"/>
    <Borders>
@@ -192,6 +182,17 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 </Borders>
 <NumberFormat ss:Format="#,##0.00"/>
 </Style>
+<Style ss:ID="ssAccountLineNumberBold">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Bold="1"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<NumberFormat ss:Format="#,##0.00"/>
+</Style>
 <Style ss:ID="ssAccountLineNumberItalic">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8" ss:Italic="1"/>
@@ -206,6 +207,19 @@ xmlns:html="http://www.w3.org/TR/REC-html40">
 <Style ss:ID="ssAccountLineAccountCode">
 <Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
 <Font ss:Size="8"/>
+<Borders>
+  <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" />
+  <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" />
+</Borders>
+<Interior/>
+<NumberFormat ss:Format="0" />
+<Protection/>
+</Style>
+<Style ss:ID="ssAccountLineAccountCodeBold">
+<Alignment ss:Horizontal="Right" ss:Vertical="Top" ss:WrapText="1"/>
+<Font ss:Size="8" ss:Bold="1"/>
 <Borders>
   <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" />
   <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" />
@@ -392,16 +406,16 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineAccountCode">
+<Cell ss:StyleID="ssAccountLineAccountCodeBold">
     <Data ss:Type="Number">${aml.get('account', '')|x}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
+<Cell ss:StyleID="ssAccountLineNumberBold">
     <Data ss:Type="Number">${aml.get('deb') or 0}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
+<Cell ss:StyleID="ssAccountLineNumberBold">
     <Data ss:Type="Number">${aml.get('cred') or 0}</Data>
 </Cell>
-<Cell ss:StyleID="ssAccountLineNumber">
+<Cell ss:StyleID="ssAccountLineNumberBold">
     <Data ss:Type="Number">${aml.get('total') or 0}</Data>
 </Cell>
 </Row>
@@ -416,7 +430,7 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
     <Data ss:Type="String"></Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineItalicRight">
-    <Data ss:Type="String">Subtotal</Data>
+    <Data ss:Type="String">${'Subtotal %s' % detail_line.get('currency_booking') or ''|x}</Data>
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
     <Data ss:Type="Number">${detail_line.get('debit_booking') or 0}</Data>
@@ -426,9 +440,6 @@ partner_ref = (p_obj.partner_id and p_obj.partner_id.ref or '')
 </Cell>
 <Cell ss:StyleID="ssAccountLineNumberItalic">
     <Data ss:Type="Number">${detail_line.get('total_booking') or 0}</Data>
-</Cell>
-<Cell ss:StyleID="ssAccountLineItalicLeft">
-    <Data ss:Type="String">${detail_line.get('currency_booking') or ''|x}</Data>
 </Cell>
 </Row>
 % endfor
