@@ -2860,6 +2860,41 @@ class orm(orm_template):
         '''
         pass
 
+    def _create_fk(self, cr, col_name, field_def, update=False):
+        ref = self.pool.get(field_def._obj)._table
+        # ir_actions is inherited so foreign key doesn't work on it
+        if ref != 'ir_actions':
+            to_create = True
+            if update:
+                to_create = False
+                # check if fk already exist on should be changed
+                cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
+                           'pg_attribute as att1, pg_attribute as att2 '
+                           'WHERE con.conrelid = cl1.oid '
+                           'AND cl1.relname = %s '
+                           'AND con.confrelid = cl2.oid '
+                           'AND cl2.relname = %s '
+                           'AND array_lower(con.conkey, 1) = 1 '
+                           'AND con.conkey[1] = att1.attnum '
+                           'AND att1.attrelid = cl1.oid '
+                           'AND att1.attname = %s '
+                           'AND array_lower(con.confkey, 1) = 1 '
+                           'AND con.confkey[1] = att2.attnum '
+                           'AND att2.attrelid = cl2.oid '
+                           'AND att2.attname = %s '
+                           "AND con.contype = 'f'", (self._table, ref, col_name, 'id'))
+                res2 = cr.dictfetchall()
+                if res2:
+                    if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(field_def.ondelete.upper(), 'a'):
+                        cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"')
+                        to_create = True
+
+            if to_create:
+                cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, col_name, ref, field_def.ondelete))
+                self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
+                                    self._table, col_name, ref, field_def.ondelete)
+                cr.commit()
+
     def _auto_init(self, cr, context=None):
         if context is None:
             context = {}
@@ -2868,6 +2903,7 @@ class orm(orm_template):
         todo_end = []
         self._field_create(cr, context=context)
         to_migrate = []
+        missing_fk = {}
         if getattr(self, '_auto', True):
             cr.execute("SELECT relname FROM pg_class WHERE relkind IN ('r','v') AND relname=%s", (self._table,))
             if not cr.rowcount:
@@ -3119,31 +3155,11 @@ class orm(orm_template):
                                 self.__schema.debug(msg, self._table, k, f._type)
 
                             if isinstance(f, fields.many2one):
-                                ref = self.pool.get(f._obj)._table
-                                if ref != 'ir_actions':
-                                    cr.execute('SELECT confdeltype, conname FROM pg_constraint as con, pg_class as cl1, pg_class as cl2, '
-                                               'pg_attribute as att1, pg_attribute as att2 '
-                                               'WHERE con.conrelid = cl1.oid '
-                                               'AND cl1.relname = %s '
-                                               'AND con.confrelid = cl2.oid '
-                                               'AND cl2.relname = %s '
-                                               'AND array_lower(con.conkey, 1) = 1 '
-                                               'AND con.conkey[1] = att1.attnum '
-                                               'AND att1.attrelid = cl1.oid '
-                                               'AND att1.attname = %s '
-                                               'AND array_lower(con.confkey, 1) = 1 '
-                                               'AND con.confkey[1] = att2.attnum '
-                                               'AND att2.attrelid = cl2.oid '
-                                               'AND att2.attname = %s '
-                                               "AND con.contype = 'f'", (self._table, ref, k, 'id'))
-                                    res2 = cr.dictfetchall()
-                                    if res2:
-                                        if res2[0]['confdeltype'] != POSTGRES_CONFDELTYPES.get(f.ondelete.upper(), 'a'):
-                                            cr.execute('ALTER TABLE "' + self._table + '" DROP CONSTRAINT "' + res2[0]['conname'] + '"')
-                                            cr.execute('ALTER TABLE "' + self._table + '" ADD FOREIGN KEY ("' + k + '") REFERENCES "' + ref + '" ON DELETE ' + f.ondelete)
-                                            cr.commit()
-                                            self.__schema.debug("Table '%s': column '%s': XXX",
-                                                                self._table, k)
+                                if self.pool.get(f._obj):
+                                    self._create_fk(cr, k, f, True)
+                                else:
+                                    missing_fk.setdefault(f._obj, [])
+                                    missing_fk[f._obj].append((self, k, f, True))
                     elif len(res) > 1:
                         netsvc.Logger().notifyChannel('orm', netsvc.LOG_ERROR, "Programming error, column %s->%s has multiple instances !" % (self._table, k))
                     else:
@@ -3176,14 +3192,11 @@ class orm(orm_template):
                             # and add constraints if needed
                             elif isinstance(f, fields.many2one):
                                 if not self.pool.get(f._obj):
-                                    raise except_orm('Programming Error', ('There is no reference available for %s') % (f._obj,))
-                                ref = self.pool.get(f._obj)._table
-#                                ref = f._obj.replace('.', '_')
-                                # ir_actions is inherited so foreign key doesn't work on it
-                                if ref != 'ir_actions':
-                                    cr.execute('ALTER TABLE "%s" ADD FOREIGN KEY ("%s") REFERENCES "%s" ON DELETE %s' % (self._table, k, ref, f.ondelete))
-                                    self.__schema.debug("Table '%s': added foreign key '%s' with definition=REFERENCES \"%s\" ON DELETE %s",
-                                                        self._table, k, ref, f.ondelete)
+                                    missing_fk.setdefault(f._obj, [])
+                                    missing_fk[f._obj].append((self, k, f, False))
+                                else:
+                                    self._create_fk(cr, k, f, False)
+
                             if f.select:
                                 cr.execute('CREATE INDEX "%s_%s_index" ON "%s" ("%s")' % (self._table, k, self._table, k))
                             if f.required:
@@ -3270,7 +3283,7 @@ class orm(orm_template):
         if store_compute:
             self._parent_store_compute(cr)
             cr.commit()
-        return todo_end
+        return todo_end, missing_fk
 
     def __init__(self, cr):
         super(orm, self).__init__(cr)

@@ -409,9 +409,16 @@ def upgrade_graph(graph, cr, module_list, force=None):
 def init_module_objects(cr, module_name, obj_list):
     logger.notifyChannel('init', netsvc.LOG_INFO, 'module %s: creating or updating database tables' % module_name)
     todo = []
+    missing_fk = {}
     for obj in obj_list:
         try:
-            result = obj._auto_init(cr, {'module': module_name})
+            auto_init = obj._auto_init(cr, {'module': module_name})
+            result = None
+            if auto_init:
+                result, fk = auto_init
+                for obj, missing in fk.iteritems():
+                    missing_fk.setdefault(obj, [])
+                    missing_fk[obj] += missing
         except Exception, e:
             raise
         if result:
@@ -423,7 +430,7 @@ def init_module_objects(cr, module_name, obj_list):
     for t in todo:
         t[1](cr, *t[2])
     cr.commit()
-
+    return missing_fk
 
 def register_class(m):
     """
@@ -512,7 +519,7 @@ class MigrationManager(object):
         assert stage in ('pre', 'post')
         stageformat = {'pre': '[>%s]',
                        'post': '[%s>]',
-                      }
+                       }
 
         if not (hasattr(pkg, 'update') or pkg.state == 'to upgrade'):
             return
@@ -541,7 +548,7 @@ class MigrationManager(object):
 
             mapping = {'module': opj(pkg.name, 'migrations'),
                        'maintenance': opj('base', 'maintenance', 'migrations', pkg.name),
-                      }
+                       }
 
             for x in mapping.keys():
                 if version in m[x]:
@@ -722,6 +729,7 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
     modobj = None
     logger.notifyChannel('init', netsvc.LOG_DEBUG, 'loading %d packages..' % len(graph))
 
+    missing_fk = {}
     for package in graph:
         if skip_modules and package.name in skip_modules:
             continue
@@ -730,9 +738,15 @@ def load_module_graph(cr, graph, status=None, perform_checks=True, skip_modules=
         register_class(package.name)
         modules = pool.instanciate(package.name, cr)
         if hasattr(package, 'init') or hasattr(package, 'update') or package.state in ('to install', 'to upgrade'):
-            init_module_objects(cr, package.name, modules)
+            fk = init_module_objects(cr, package.name, modules)
+            for obj, missing in fk.iteritems():
+                missing_fk.setdefault(obj, [])
+                missing_fk[obj] += missing
         cr.commit()
 
+    for related_obj, to_create in missing_fk.iteritems():
+        for x in to_create:
+            x[0]._create_fk(cr, x[1], x[2], x[3])
     for package in graph:
         status['progress'] = (float(statusi)+0.1) / len(graph)
         m = package.name
