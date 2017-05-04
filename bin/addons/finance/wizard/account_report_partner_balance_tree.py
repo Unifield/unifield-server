@@ -53,8 +53,6 @@ class account_partner_balance_tree(osv.osv):
         super(account_partner_balance_tree, self).__init__(pool, cr)
         self.total_debit_credit_balance = {}
         self.move_line_ids = {}
-        self.RECONCILE_REQUEST = self.PARTNER_REQUEST = self.IB_DATE_TO = self.IB_JOURNAL_REQUEST \
-            = self.INSTANCE_REQUEST = self.TAX_REQUEST = self.ACCOUNT_REQUEST = ''
 
     def _get_initial_balance(self, cr):
         """
@@ -167,6 +165,8 @@ class account_partner_balance_tree(osv.osv):
             fy = obj_fy.read(cr, uid, [fiscalyear_id], ['date_start'],
                              context=data['form'].get('used_context', {}))
         # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
+        self.IB_DATE_TO = ''
+        self.IB_JOURNAL_REQUEST = ''
         if self.initial_balance and fiscalyear_id:
             self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
             # all journals by default
@@ -180,9 +180,11 @@ class account_partner_balance_tree(osv.osv):
         # state filter
         self.ib_move_state_list = data['form'].get('target_move', 'all') == 'posted' and ['posted'] or ['draft', 'posted']
         # reconciliation filter
+        self.RECONCILE_REQUEST = ''
         if not data['form'].get('include_reconciled_entries', True):
             self.RECONCILE_REQUEST = 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
         # proprietary instances filter
+        self.INSTANCE_REQUEST = ''
         instance_ids = data['form']['instance_ids']
         if instance_ids:
             # we add instance filter in 'where'
@@ -192,6 +194,7 @@ class account_partner_balance_tree(osv.osv):
             where += self.INSTANCE_REQUEST
 
         # UFTP-312: take tax exclusion in account if user asked for it
+        self.TAX_REQUEST = ''
         if data['form'].get('tax', False):
             self.TAX_REQUEST = "AND at.code != 'tax'"
 
@@ -205,6 +208,7 @@ class account_partner_balance_tree(osv.osv):
         elif data['form'].get('only_active_partners'):  # check if we should include only active partners
             self.PARTNER_REQUEST = "AND p.active = 't'"
 
+        self.ACCOUNT_REQUEST = ''
         if data['form'].get('account_ids', False):  # some accounts are specifically selected
             account_ids = data['form']['account_ids']
             if len(account_ids) == 1:

@@ -32,7 +32,6 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
     def __init__(self, cr, uid, name, context=None):
         super(third_party_ledger, self).__init__(cr, uid, name, context=context)
         self.init_bal_sum = 0.0
-        self.IB_DATE_TO = self.IB_JOURNAL_REQUEST = self.DATE_FROM = self.TAX_REQUEST = self.INSTANCE_REQUEST = ''
         self.localcontext.update({
             'time': time,
             'lines': self.lines,
@@ -95,6 +94,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
         #+ If no date, the report is wrong.
         # FROM US-1643: IB calculation takes only into account the FY
         pool = pooler.get_pool(self.cr.dbname)
+        self.DATE_FROM = ''
         if self.fiscalyear_id or self.period_id or self.date_from:
             if self.date_from:
                 self.DATE_FROM = "AND l.date >= '%s'" % self.date_from
@@ -106,6 +106,8 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 self.DATE_FROM = "AND l.date >= '%s'" % fy[0].get('date_start')
 
         # if "Initial Balance" and FY are selected, store data for the IB calculation whatever the dates or periods selected
+        self.IB_DATE_TO = ''
+        self.IB_JOURNAL_REQUEST = ''
         if self.initial_balance and self.fiscalyear_id:
             self.IB_DATE_TO = "AND l.date < '%s'" % fy[0].get('date_start')
             # all journals by default
@@ -118,6 +120,7 @@ class third_party_ledger(report_sxw.rml_parse, common_report_header):
                 self.IB_JOURNAL_REQUEST = "AND l.journal_id IN %s" % (tuple(journal_ids),)
 
         # UFTP-312: Exclude tax if user ask it
+        self.TAX_REQUEST = ''
         if self.exclude_tax is True:
             self.TAX_REQUEST = "AND t.code != 'tax'"
 
