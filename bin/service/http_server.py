@@ -271,6 +271,11 @@ class XMLRPCRequestHandler(netsvc.OpenERPDispatcher,websrv_lib.FixSendError,Http
 
     xmlrpc_uid_cache = {}
 
+    def __init__(self, conn, addr, svr):
+        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, conn, addr, svr)
+        # Always use gzip.
+        self.encode_threshold = 0
+
     def get_uid_list2log(self, db_name):
         '''
         return a list of user id for which the xmlrpc requests should be logged
