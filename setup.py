@@ -63,7 +63,6 @@ if os.name == 'nt':
                 "imaplib", "smtplib", "email", "yaml",
                 "uuid", "commands", "mx.DateTime", "json",
                 "pylzma", "xlwt", "passlib", "bcrypt", "six", "cffi",
-                "Queue",
             ],
             "dist_dir": 'dist',
             "excludes" : ["Tkconstants","Tkinter","tcl"],
