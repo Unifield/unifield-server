@@ -35,6 +35,8 @@ class hr_department(osv.osv):
             if record['parent_id']:
                 name = record['parent_id'][1]+' / '+name
             res.append((record['id'], name))
+        # sort result
+        res.sort(lambda x, y: cmp(x[1], y[1]))
         return res
 
     def _dept_name_get_fnc(self, cr, uid, ids, prop, unknow_none, context=None):
@@ -44,7 +46,8 @@ class hr_department(osv.osv):
     _name = "hr.department"
     _columns = {
         'name': fields.char('Department Name', size=64, required=True),
-        'complete_name': fields.function(_dept_name_get_fnc, method=True, type="char", string='Name'),
+        'complete_name': fields.function(_dept_name_get_fnc, method=True,
+            type="char", string='Name', store=True, size=512),
         'company_id': fields.many2one('res.company', 'Company', select=True, required=False),
         'parent_id': fields.many2one('hr.department', 'Parent Department', select=True),
         'child_ids': fields.one2many('hr.department', 'parent_id', 'Child Departments'),
@@ -54,6 +57,8 @@ class hr_department(osv.osv):
     _defaults = {
         'company_id': lambda self, cr, uid, c: self.pool.get('res.company')._company_default_get(cr, uid, 'hr.department', context=c),
                 }
+
+    _order = 'complete_name, name, id'
 
     def _get_members(self, cr, uid, context=None):
         mids = self.search(cr, uid, [('manager_id', '=', uid)], context=context)
