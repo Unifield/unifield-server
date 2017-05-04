@@ -116,7 +116,6 @@
     "update_xml": [
         "security/ir.model.access.csv",
         "report.xml",
-        "purchase_double_validation_workflow.xml",
         "usability.xml",
         "user_access_configurator_view.xml",
         "unifield_version_view.xml",
@@ -131,20 +130,20 @@
     "function": [
         ('user.access.configurator', 'do_update_after_module_install'),
         ('patch.scripts', 'launch_patch_scripts'),
-#        ('ir.model.data', 'us_254_fix_reconcile'),
-#        ('ir.model.data', 'us_268_fix_seq'),
+        #        ('ir.model.data', 'us_254_fix_reconcile'),
+        #        ('ir.model.data', 'us_268_fix_seq'),
     ],
-# add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
+    # add this to function to apply patch13 AND REMOVE export_import_lang FROM depends ('ir.model.data', 'patch13_install_export_import_lang')],
     "test": [
         'test/unique_fields_views.yml',
         'test/inherited_views.yml',
         'test/user_rights.yml',
-# the tests below are for the module msf_doc_import (written here because they need the translation)
-#        'test/data.yml',
-#        'test/fr_import_ir.yml',
-#        'test/fr_import_po.yml',
-#        'test/fr_import_so.yml',
-#        'test/fr_import_tender.yml',
+        # the tests below are for the module msf_doc_import (written here because they need the translation)
+        #        'test/data.yml',
+        #        'test/fr_import_ir.yml',
+        #        'test/fr_import_po.yml',
+        #        'test/fr_import_so.yml',
+        #        'test/fr_import_tender.yml',
     ],
     "installable": True,
     "active": False,

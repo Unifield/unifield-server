@@ -2,7 +2,7 @@
 ##############################################################################
 #
 #    OpenERP, Open Source Management Solution
-#    Copyright (C) 2011 TeMPO Consulting, MSF 
+#    Copyright (C) 2011 TeMPO Consulting, MSF
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -22,16 +22,16 @@
 {
     "name": "Internal Request",
     "version": "1.0",
-    "depends": ["base", 
-                "sale", 
-                "sale_override", 
-                "stock_override", 
-                "msf_order_date", 
+    "depends": ["base",
+                "sale",
+                "sale_override",
+                "stock_override",
+                "msf_order_date",
                 "stock",
                 "threshold_value",
                 "procurement_cycle",
                 "procurement_auto",
-		],
+                ],
     "author": "TeMPO Consulting, MSF",
     "website": "",
     "category": "Sales & Purchases",
@@ -44,7 +44,6 @@
     'update_xml': [
         'procurement_request_view.xml',
         'procurement_request_sequence.xml',
-        'procurement_request_workflow.xml',
         'procurement_request_wizard.xml',
         'procurement_request_report.xml',
         'wizard/wizard_import_list_view.xml',
@@ -59,7 +58,7 @@
     ],
     'installable': True,
     'active': False,
-#    'certificate': 'certificate',
+    #    'certificate': 'certificate',
 }
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:

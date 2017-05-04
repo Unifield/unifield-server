@@ -70,8 +70,6 @@
         'wizard/wiz_common_import_view.xml',
         'data/msf_doc_import_data.xml',
         'data/inactive_categ.xml',
-        'workflow/purchase_workflow.xml',
-        'workflow/sale_workflow.xml',
         'workflow/tender_flow_workflow.xml',
         'workflow/procurement_request_workflow.xml',
         'doc_import_report.xml',
@@ -80,7 +78,7 @@
     "demo_xml": [],
     "test": [
         'test/data.yml',
-# test for the import in English
+        # test for the import in English
         'test/import_ir.yml',
         'test/import_po.yml',
         'test/import_migration.yml',
