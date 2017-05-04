@@ -332,34 +332,34 @@ else:
 <!-- INITIAL BALANCE SECTION -->
 % if data['form']['initial_balance'] == True:
 <Row>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">Initial Balance</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][0]) |x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][1]) |x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(get_intial_balance(p)[0][2]) |x}</Data>
   </Cell>
 </Row>
@@ -367,44 +367,44 @@ else:
 <!-- PARTNER LINES -->
 % for line in lines(p):
 <Row>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String"></Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${formatLang(line['date'], date=True)|x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${line['code']|x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${line['move_name']|x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${line['a_code']|x}</Data>
   </Cell>
   <%
   entry_label = '%s - %s' % (line['ref'] or '', line['name'] or '')
   %>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${ entry_label |x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(line['debit']) |x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(line['credit']) |x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(line['progress']) |x}</Data>
   </Cell>
   % if display_currency(data) == True:
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLineNumber">
     <Data ss:Type="Number">${ formatLang(line['amount_currency']) |x}</Data>
   </Cell>
-  <Cell ss:StyleID="ssPartner">
+  <Cell ss:StyleID="ssAccountLine">
     <Data ss:Type="String">${ line['currency_code'] or '' |x}</Data>
   </Cell>
   % endif
