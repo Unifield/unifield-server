@@ -272,7 +272,8 @@ class account_partner_balance_tree(osv.osv):
             # UFTP-312: Filtering regarding tax account (if user asked it)
             if data['form'].get('tax', False):
                 query += " AND at.code != 'tax' "
-            query += " %s " % self.RECONCILE_REQUEST
+            if not data['form'].get('include_reconciled_entries', True):
+                query += 'AND l.reconcile_id IS NULL'  # include only non-reconciled entries
             if where:
                 query += " AND " + where + ""
 
