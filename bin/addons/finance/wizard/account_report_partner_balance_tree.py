@@ -53,13 +53,8 @@ class account_partner_balance_tree(osv.osv):
         super(account_partner_balance_tree, self).__init__(pool, cr)
         self.total_debit_credit_balance = {}
         self.move_line_ids = {}
-        self.RECONCILE_REQUEST = ''
-        self.PARTNER_REQUEST = ''
-        self.IB_DATE_TO = ''
-        self.IB_JOURNAL_REQUEST = ''
-        self.INSTANCE_REQUEST = ''
-        self.TAX_REQUEST = ''
-        self.ACCOUNT_REQUEST = ''
+        self.RECONCILE_REQUEST = self.PARTNER_REQUEST = self.IB_DATE_TO = self.IB_JOURNAL_REQUEST \
+            = self.INSTANCE_REQUEST = self.TAX_REQUEST = self.ACCOUNT_REQUEST = ''
 
     def _get_initial_balance(self, cr):
         """
